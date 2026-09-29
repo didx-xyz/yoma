@@ -190,6 +190,8 @@ DECLARE
     V_CommitmentIntervalName VARCHAR(100);
     V_CommitmentIntervalCount INT;
     V_CommitmentIntervalDays INT;
+    V_OpportunityTypeId UUID;
+    V_OpportunityIsJob BOOLEAN;
     V_DateStart TIMESTAMP;
     V_DateEnd TIMESTAMP;
 BEGIN
@@ -276,6 +278,10 @@ BEGIN
             RAISE EXCEPTION 'Unsupported TimeInterval: %', V_CommitmentIntervalName;
         END IF;
 
+        -- New seed rows must respect Job reward restrictions; existing records are not changed.
+        SELECT "Id", "Name" = 'Job' INTO V_OpportunityTypeId, V_OpportunityIsJob
+        FROM "Opportunity"."OpportunityType" ORDER BY RANDOM() LIMIT 1;
+
         --start date
         V_DateStart := date_trunc('day', V_DateStartRunning);
 
@@ -286,7 +292,7 @@ BEGIN
 	    -- Insert into the Opportunity table
 	    INSERT INTO "Opportunity"."Opportunity"(
 	        "Id", "Title", "Description", "TypeId", "OrganizationId", "Summary", "Instructions", "URL", "ZltoReward", "ZltoRewardPool",
-	        "ZltoRewardCumulative", "VerificationEnabled", "VerificationMethod",
+	        "ZltoRewardCumulative", "RewardType", "Incentivized", "VerificationEnabled", "VerificationMethod",
 	        "DifficultyId", "CommitmentIntervalId", "CommitmentIntervalCount", "ParticipantLimit", "ParticipantCount", "StatusId",
 	        "Keywords", "DateStart", "DateEnd", "CredentialIssuanceEnabled", "SSISchemaName", "Featured", "EngagementTypeId", "DateCreated", "CreatedByUserId",
 	        "DateModified", "ModifiedByUserId"
@@ -295,14 +301,16 @@ BEGIN
 	        gen_random_uuid() as "Id",
           V_OppTitle as "Title",
           V_OppDesc as "Description",
-	        (SELECT "Id" FROM "Opportunity"."OpportunityType" ORDER BY RANDOM() LIMIT 1) as "TypeId",
+	        V_OpportunityTypeId as "TypeId",
 	        (SELECT "Id" FROM "Entity"."Organization" ORDER BY RANDOM() LIMIT 1) as "OrganizationId",
 	        V_OppSummary as "Summary",
 	        V_OppInstructions as "Instructions",
 	        'https://www.google.com/' as "URL",
-            (SELECT ROUND((100 + (350 - 100) * RANDOM()))::numeric) as "ZltoReward",
-            (SELECT ROUND((1000 + (3500 - 1000) * RANDOM()))::numeric) as "ZltoRewardPool",
+            CASE WHEN V_OpportunityIsJob THEN NULL ELSE ROUND((100 + (350 - 100) * RANDOM()))::numeric END as "ZltoReward",
+            CASE WHEN V_OpportunityIsJob THEN NULL ELSE ROUND((1000 + (3500 - 1000) * RANDOM()))::numeric END as "ZltoRewardPool",
 	        NULL as "ZltoRewardCumulative",
+            CASE WHEN V_OpportunityIsJob THEN 'None' ELSE 'ZLTO' END as "RewardType",
+            CASE WHEN V_OpportunityIsJob THEN NULL ELSE true END as "Incentivized",
 	        V_VerificationEnabled as "VerificationEnabled",
 	        CASE WHEN V_VerificationEnabled = true THEN 'Manual' ELSE NULL END as "VerificationMethod",
 	        (SELECT "Id" FROM "Opportunity"."OpportunityDifficulty" ORDER BY RANDOM() LIMIT 1) as "DifficultyId",

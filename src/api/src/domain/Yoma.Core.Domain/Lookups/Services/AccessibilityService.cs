@@ -18,7 +18,8 @@ namespace Yoma.Core.Domain.Lookups.Services
 
     #region Constructor
     public AccessibilityService(IOptions<AppSettings> appSettings,
-      IMemoryCache memoryCache, IRepository<Accessibility> repository)
+        IMemoryCache memoryCache,
+        IRepository<Accessibility> repository)
     {
       _appSettings = appSettings?.Value ?? throw new ArgumentNullException(nameof(appSettings));
       _memoryCache = memoryCache ?? throw new ArgumentNullException(nameof(memoryCache));
@@ -35,7 +36,9 @@ namespace Yoma.Core.Domain.Lookups.Services
     public Accessibility? GetByNameOrNull(string name)
     {
       if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
+
       name = name.Trim();
+
       return List().SingleOrDefault(o => string.Equals(o.Name, name, StringComparison.OrdinalIgnoreCase));
     }
 
@@ -47,19 +50,21 @@ namespace Yoma.Core.Domain.Lookups.Services
     public Accessibility? GetByIdOrNull(Guid id)
     {
       if (id == Guid.Empty) throw new ArgumentNullException(nameof(id));
+
       return List().SingleOrDefault(o => o.Id == id);
     }
 
     public List<Accessibility> List()
     {
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
-        return [.. _repository.Query().OrderBy(o => o.Name == "Other").ThenBy(o => o.Name)];
+        return [.. _repository.Query().OrderBy(o => o.Name == Core.AccessibilityOption.Other.ToString()).ThenBy(o => o.Name)];
 
       return _memoryCache.GetOrCreate(CacheHelper.GenerateKey<Accessibility>(), entry =>
       {
         entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
-        return _repository.Query().OrderBy(o => o.Name == "Other").ThenBy(o => o.Name).ToList();
+
+        return _repository.Query().OrderBy(o => o.Name == Core.AccessibilityOption.Other.ToString()).ThenBy(o => o.Name).ToList();
       }) ?? throw new InvalidOperationException("Failed to retrieve cached accessibility options");
     }
     #endregion

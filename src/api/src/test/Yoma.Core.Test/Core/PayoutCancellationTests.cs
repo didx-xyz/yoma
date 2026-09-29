@@ -325,7 +325,7 @@ namespace Yoma.Core.Test.Core
           Id = Payout.Id,
           Status = Payout.Status,
           Amount = Payout.Amount,
-          Currency = Currency.USD,
+          Currency = CurrencyOption.USD,
           DateCreated = Payout.DateCreated
         });
         locks.Setup(p => p.RunWithLockAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<Func<Task>>(), It.IsAny<string>()))

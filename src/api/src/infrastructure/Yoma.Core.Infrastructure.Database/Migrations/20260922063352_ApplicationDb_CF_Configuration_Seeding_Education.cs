@@ -6,6 +6,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
   {
     internal static void Seed(MigrationBuilder migrationBuilder)
     {
+      #region Lookups
       // Existing user EducationId values remain valid; only the lookup labels change.
       migrationBuilder.UpdateData(
         schema: "Lookup",
@@ -28,6 +29,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           { new Guid("28E84F2C-EE70-4E88-883E-EAFAEC396216"), "Tertiary - Master’s Degree", DateTimeOffset.UtcNow },
           { new Guid("F78D77CF-83A4-46DF-B145-8C0742CB9D09"), "Tertiary - PhD", DateTimeOffset.UtcNow }
         });
+      #endregion Lookups
     }
   }
 }

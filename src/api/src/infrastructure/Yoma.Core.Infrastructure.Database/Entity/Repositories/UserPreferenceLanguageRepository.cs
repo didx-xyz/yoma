@@ -55,6 +55,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
     {
       var entity = _context.UserPreferenceLanguages.SingleOrDefault(value => value.Id == item.Id)
         ?? throw new ArgumentOutOfRangeException(nameof(item), $"User preference language with id '{item.Id}' does not exist");
+
       _context.UserPreferenceLanguages.Remove(entity);
       await _context.SaveChangesAsync();
     }

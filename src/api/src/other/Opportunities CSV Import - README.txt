@@ -338,3 +338,50 @@ Example:
 
 ✅ “I’ve added the Title, Summary, and Languages.”  
 ⚠️ “The Skills field is still missing for 3 rows. Please provide them.”
+
+------------------------------------------------------------------------
+
+Core metadata additions (CF implementation)
+
+The new columns are optional in CSV. When updating an existing opportunity,
+an omitted new column preserves its stored value. A present blank cell clears
+the corresponding optional value or selection. Manual API capture additionally
+requires an explicit Incentivized selection.
+
+- Provider: informational provider name, maximum 255 characters. This does not
+  change the organisation that owns the opportunity.
+- Incentivized: Yes / No / blank (not specified). Not restricted to jobs.
+- RewardType: None / ZLTO / PartnerIncentive (use the exact enum names).
+- PartnerIncentiveAmount: positive amount, up to four decimal places, only for
+  PartnerIncentive.
+- PartnerIncentiveCurrency: current ISO 4217 code from GET /api/v3/lookup/currency,
+  required together with PartnerIncentiveAmount. ZLTO is not a currency code.
+- AccessibilitySupport: Yes / No / AvailableOnRequest / blank.
+- Accommodations: approved names from GET /api/v3/lookup/accessibility, separated
+  by |. Yes requires at least one; No/blank cannot carry accommodations.
+- AccommodationOtherDescription: required only when Other is selected, maximum
+  500 characters.
+- AgeFrom / AgeTo: optional non-negative whole years, inclusive; AgeTo must not
+  be less than AgeFrom.
+- TargetedGroups: approved names from GET /api/v3/lookup/targeted/group, separated
+  by |. Open to all must be selected alone.
+- SustainableDevelopmentGoals: official goal numbers (1–17) or exact lookup
+  names from GET /api/v3/lookup/sustainable/development/goal, separated by |.
+  Exports use numbers.
+
+Jobs cannot offer ZLTO rewards or pools. A Job may be incentivized without a
+reward type because its remuneration belongs to the job salary custom fields.
+An incentivized non-Job requires ZLTO or PartnerIncentive. An opportunity with a
+reward cannot be marked No. Partner incentives are informational: Yoma does not
+pay or convert them.
+
+For older CSVs without RewardType, a supplied ZltoReward establishes ZLTO.
+For updates, an existing PartnerIncentive type is retained when its column is
+omitted. An omitted Incentivized column is inferred as Yes when a reward is
+explicit. Send the complete reward fields together when changing reward type.
+
+Region, city and coordinates remain excluded from CSV. Location remains the
+country-code selection; retained countries preserve their stored details.
+
+Only the API samples are updated here. Jason must copy the approved samples
+to the web application as part of the UI work.

@@ -150,7 +150,10 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
 
     public async Task<Domain.Entity.Models.User> Update(Domain.Entity.Models.User item)
     {
-      var entity = _context.User.Where(o => o.Id == item.Id).SingleOrDefault() ?? throw new ArgumentOutOfRangeException(nameof(item), $"User with id '{item.Id}' does not exist");
+      var entity = _context.User
+        .Where(o => o.Id == item.Id)
+        .SingleOrDefault()
+        ?? throw new ArgumentOutOfRangeException(nameof(item), $"User with id '{item.Id}' does not exist");
 
       item.DateModified = DateTimeOffset.UtcNow;
 

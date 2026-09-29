@@ -36,13 +36,12 @@ namespace Yoma.Core.Domain.Payout.Services
     #endregion
 
     #region Constructor
-    public PayoutTransactionService(
-      IPayoutTransactionStatusService payoutTransactionStatusService,
-      IRepositoryValueContains<PayoutTransaction> payoutTransactionRepository,
-      IUserService userService,
-      IRewardService rewardService,
-      IExecutionStrategyService executionStrategyService,
-      PayoutTransactionSearchFilterValidator payoutTransactionSearchFilterValidator)
+    public PayoutTransactionService(IPayoutTransactionStatusService payoutTransactionStatusService,
+        IRepositoryValueContains<PayoutTransaction> payoutTransactionRepository,
+        IUserService userService,
+        IRewardService rewardService,
+        IExecutionStrategyService executionStrategyService,
+        PayoutTransactionSearchFilterValidator payoutTransactionSearchFilterValidator)
     {
       _payoutTransactionStatusService = payoutTransactionStatusService ?? throw new ArgumentNullException(nameof(payoutTransactionStatusService));
       _payoutTransactionRepository = payoutTransactionRepository ?? throw new ArgumentNullException(nameof(payoutTransactionRepository));
@@ -103,7 +102,7 @@ namespace Yoma.Core.Domain.Payout.Services
         Id = payout.Id,
         Status = payout.Status,
         Amount = payout.Amount,
-        Currency = Enum.Parse<Currency>(payout.Currency, true),
+        Currency = Enum.Parse<CurrencyOption>(payout.Currency, true),
         DateCreated = payout.DateCreated,
         CanResume = Statuses_Active.Contains(payout.Status) && !string.IsNullOrWhiteSpace(payout.TransactionId)
       };
@@ -114,7 +113,7 @@ namespace Yoma.Core.Domain.Payout.Services
     {
       var statusIds = Statuses_Active.Select(o => _payoutTransactionStatusService.GetByName(o.ToString()).Id).ToList();
       return _payoutTransactionRepository.Query()
-        .Where(o => statusIds.Contains(o.StatusId) && o.Currency == Currency.USD.ToString())
+        .Where(o => statusIds.Contains(o.StatusId) && o.Currency == CurrencyOption.USD.ToString())
         .Sum(o => o.Amount);
     }
 
@@ -225,7 +224,7 @@ namespace Yoma.Core.Domain.Payout.Services
         StatusId = status.Id,
         Status = PayoutTransactionStatus.Initiated,
         Amount = amount,
-        Currency = Currency.USD.ToString(),
+        Currency = CurrencyOption.USD.ToString(),
         RewardReservationExpiresAt = rewardReservationExpiresAt
       };
 

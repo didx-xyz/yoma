@@ -12,6 +12,23 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
   public static class OpportunityExtensions
   {
     #region Public Members
+    /// <summary>
+    /// Soft age gate when submitting for verification, using the current self-declared birth date.
+    /// Unknown birth dates are allowed. Supplied limits apply regardless of opportunity source.
+    /// Partner-reported verifications bypass this gate at the calling service boundary.
+    /// Browsing is unrestricted. Accepted submissions and existing completions are not re-evaluated.
+    /// </summary>
+    public static void AssertAgeEligibility(this Models.Opportunity opportunity, DateTimeOffset? dateOfBirth)
+    {
+      ArgumentNullException.ThrowIfNull(opportunity);
+
+      if (!dateOfBirth.HasValue) return;
+
+      var age = Core.Helpers.DateTimeHelper.CalculateAge(dateOfBirth.Value, DateTimeOffset.UtcNow);
+      if (opportunity.AgeFrom.HasValue && age < opportunity.AgeFrom || opportunity.AgeTo.HasValue && age > opportunity.AgeTo)
+        throw new ValidationException("Your profile date of birth does not meet this opportunity's age requirements. Please check your profile details.");
+    }
+
     public static int? TimeIntervalToHours(this Models.Opportunity opportunity)
     {
       ArgumentNullException.ThrowIfNull(opportunity, nameof(opportunity));
@@ -152,6 +169,18 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         Summary = value.Summary,
         Instructions = value.Instructions,
         URL = value.URL,
+        Provider = value.Provider,
+        Incentivized = value.Incentivized,
+        RewardType = value.RewardType,
+        PartnerIncentiveAmount = value.PartnerIncentiveAmount,
+        PartnerIncentiveCurrency = value.PartnerIncentiveCurrency,
+        AccessibilitySupport = value.AccessibilitySupport,
+        AccommodationOtherDescription = value.AccommodationOtherDescription,
+        AgeFrom = value.AgeFrom,
+        AgeTo = value.AgeTo,
+        Accommodations = value.Accommodations,
+        TargetedGroups = value.TargetedGroups,
+        SustainableDevelopmentGoals = value.SustainableDevelopmentGoals,
         ZltoReward = value.ZltoReward,
         ZltoRewardEstimate = CalculateEstimatedReward(value.ZltoReward, treasuryZltoRewardBalanceCurrentFinancialYear, value.OrganizationZltoRewardBalanceCurrentFinancialYear, value.ZltoRewardBalance),
         ZltoRewardCumulative = value.ZltoRewardCumulative,
@@ -220,6 +249,18 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         Summary = item.Summary,
         Instructions = item.Instructions,
         URL = item.URL,
+        Provider = item.Provider,
+        Incentivized = item.Incentivized,
+        RewardType = item.RewardType,
+        PartnerIncentiveAmount = item.PartnerIncentiveAmount,
+        PartnerIncentiveCurrency = item.PartnerIncentiveCurrency,
+        AccessibilitySupport = item.AccessibilitySupport,
+        AccommodationOtherDescription = item.AccommodationOtherDescription,
+        AgeFrom = item.AgeFrom,
+        AgeTo = item.AgeTo,
+        Accommodations = item.Accommodations,
+        TargetedGroups = item.TargetedGroups,
+        SustainableDevelopmentGoals = item.SustainableDevelopmentGoals,
         ZltoReward = item.ZltoReward,
         ZltoRewardPool = item.ZltoRewardPool,
         VerificationEnabled = item.VerificationEnabled,
@@ -238,13 +279,13 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         Hidden = applyHidden ? item.Hidden : null,
         ExternalId = item.ExternalId,
         Categories = [.. item.Categories],
-        Countries = item.Countries.Select(o => new OpportunityRequestCountry
+        Countries = [.. item.Countries.Select(o => new OpportunityRequestCountry
         {
           CountryId = o.CountryId,
           Region = o.Region,
           City = o.City,
           Coordinates = o.Coordinates?.ToArray()
-        }).ToList(),
+        })],
         Languages = [.. item.Languages],
         Skills = item.Skills?.ToList(),
         VerificationTypes = item.VerificationTypes?.Select(o => new OpportunityRequestVerificationType

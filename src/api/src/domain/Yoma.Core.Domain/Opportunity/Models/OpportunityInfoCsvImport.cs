@@ -63,6 +63,35 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public int? ParticipantLimit { get; set; }
 
+    public string? Provider { get; set; }
+
+    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
+    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
+    public bool? Incentivized { get; set; }
+
+    public RewardType? RewardType { get; set; }
+
+    public decimal? PartnerIncentiveAmount { get; set; }
+
+    public string? PartnerIncentiveCurrency { get; set; }
+
+    public AccessibilitySupport? AccessibilitySupport { get; set; }
+
+    public string? AccommodationOtherDescription { get; set; }
+
+    public short? AgeFrom { get; set; }
+
+    public short? AgeTo { get; set; }
+
+    [TypeConverter(typeof(CsvDelimitedStringConverter))]
+    public List<string>? Accommodations { get; set; }
+
+    [TypeConverter(typeof(CsvDelimitedStringConverter))]
+    public List<string>? TargetedGroups { get; set; }
+
+    [TypeConverter(typeof(CsvDelimitedStringConverter))]
+    public List<string>? SustainableDevelopmentGoals { get; set; }
+
     public decimal? ZltoReward { get; set; }
 
     public decimal? ZltoRewardPool { get; set; }
@@ -88,6 +117,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
     /// Raw values for only the CF columns present in the CSV file. A null value means
     /// the column was present but blank (explicit PATCH deletion); an absent key means preserve.
     /// </summary>
+    internal HashSet<string> FieldsPresent { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
     internal Dictionary<string, string?>? CustomFieldValues { get; set; }
 
     internal void Validate(List<CSVImportErrorRow> errors, int? rowNumber)

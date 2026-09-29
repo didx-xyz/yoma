@@ -82,7 +82,7 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Repositories
             ZltoReward = o.Opportunity.ZltoReward,
             ZltoRewardPool = o.Opportunity.ZltoRewardPool,
             ZltoRewardCumulative = o.Opportunity.ZltoRewardCumulative,
-            Countries = o.Opportunity.Countries.Select(oc => new Domain.Opportunity.Models.OpportunityCountryInfo
+            Countries = o.Opportunity.Countries.Select(oc => new OpportunityCountryInfo
             {
               Id = oc.Country.Id,
               Name = oc.Country.Name,

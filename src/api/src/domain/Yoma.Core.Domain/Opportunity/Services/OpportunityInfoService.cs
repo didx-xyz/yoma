@@ -32,13 +32,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     #region Constructor
     public OpportunityInfoService(IOptions<AppSettings> appSettings,
-      IHttpContextAccessor httpContextAccessor,
-      IOpportunityService opportunityService,
-      IMyOpportunityService myOpportunityService,
-      ILinkService linkService,
-      IUserService userService,
-      IDownloadService downloadService,
-      ITreasuryService treasuryService)
+        IHttpContextAccessor httpContextAccessor,
+        IOpportunityService opportunityService,
+        IMyOpportunityService myOpportunityService,
+        ILinkService linkService,
+        IUserService userService,
+        IDownloadService downloadService,
+        ITreasuryService treasuryService)
     {
       _appSettings = appSettings.Value ?? throw new ArgumentNullException(nameof(appSettings));
       _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
@@ -134,6 +134,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
         PublishedStates = filter.PublishedStates == null || filter.PublishedStates.Count == 0 ?
           [PublishedState.NotStarted, PublishedState.Active] : filter.PublishedStates,
         Types = filter.Types,
+        Provider = filter.Provider,
+        Incentivized = filter.Incentivized,
+        RewardTypes = filter.RewardTypes,
+        AccessibilitySupport = filter.AccessibilitySupport,
+        AccommodationOtherDescription = filter.AccommodationOtherDescription,
+        Age = filter.Age,
+        Accommodations = filter.Accommodations,
+        TargetedGroups = filter.TargetedGroups,
+        SustainableDevelopmentGoals = filter.SustainableDevelopmentGoals,
         Categories = filter.Categories,
         Languages = filter.Languages,
         Countries = filter.Countries,

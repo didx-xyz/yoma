@@ -8,6 +8,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
   public partial class ApplicationDb_CF_Configuration : Migration
   {
     private static readonly string[] TrigramIndexOperators = ["gin_trgm_ops"];
+    private static readonly string[] AccommodationIndexColumns = ["OpportunityId", "AccommodationId"];
+    private static readonly string[] TargetedGroupIndexColumns = ["OpportunityId", "TargetedGroupId"];
+    private static readonly string[] SustainableDevelopmentGoalIndexColumns = ["OpportunityId", "SustainableDevelopmentGoalId"];
 
     /// <inheritdoc />
     protected override void Up(MigrationBuilder migrationBuilder)
@@ -379,6 +382,334 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
         oldClrType: typeof(string),
         oldType: "varchar(125)",
         oldNullable: true);
+      migrationBuilder.AddColumn<string>(
+          name: "AccessibilitySupport",
+          schema: "Opportunity",
+          table: "Opportunity",
+          type: "varchar(30)",
+          nullable: true);
+
+      migrationBuilder.AddColumn<string>(
+          name: "AccommodationOtherDescription",
+          schema: "Opportunity",
+          table: "Opportunity",
+          type: "varchar(500)",
+          nullable: true);
+
+      migrationBuilder.AddColumn<short>(
+          name: "AgeFrom",
+          schema: "Opportunity",
+          table: "Opportunity",
+          type: "smallint",
+          nullable: true);
+
+      migrationBuilder.AddColumn<short>(
+          name: "AgeTo",
+          schema: "Opportunity",
+          table: "Opportunity",
+          type: "smallint",
+          nullable: true);
+
+      migrationBuilder.AddColumn<bool>(
+          name: "Incentivized",
+          schema: "Opportunity",
+          table: "Opportunity",
+          type: "boolean",
+          nullable: true);
+
+      migrationBuilder.AddColumn<decimal>(
+          name: "PartnerIncentiveAmount",
+          schema: "Opportunity",
+          table: "Opportunity",
+          type: "numeric(18,4)",
+          nullable: true);
+
+      migrationBuilder.AddColumn<string>(
+          name: "PartnerIncentiveCurrency",
+          schema: "Opportunity",
+          table: "Opportunity",
+          type: "varchar(3)",
+          nullable: true);
+
+      migrationBuilder.AddColumn<string>(
+          name: "Provider",
+          schema: "Opportunity",
+          table: "Opportunity",
+          type: "varchar(255)",
+          nullable: true);
+
+      migrationBuilder.AddColumn<string>(
+          name: "RewardType",
+          schema: "Opportunity",
+          table: "Opportunity",
+          type: "varchar(30)",
+          nullable: false,
+          defaultValue: "None");
+
+      migrationBuilder.CreateTable(
+          name: "Currency",
+          schema: "Lookup",
+          columns: table => new
+          {
+            Id = table.Column<Guid>(type: "uuid", nullable: false),
+            Code = table.Column<string>(type: "varchar(3)", nullable: false),
+            Name = table.Column<string>(type: "varchar(125)", nullable: false),
+            DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+          },
+          constraints: table =>
+          {
+            table.PrimaryKey("PK_Currency", x => x.Id);
+            table.UniqueConstraint("AK_Currency_Code", x => x.Code);
+          });
+
+      migrationBuilder.CreateTable(
+          name: "OpportunityAccommodations",
+          schema: "Opportunity",
+          columns: table => new
+          {
+            Id = table.Column<Guid>(type: "uuid", nullable: false),
+            OpportunityId = table.Column<Guid>(type: "uuid", nullable: false),
+            AccommodationId = table.Column<Guid>(type: "uuid", nullable: false),
+            DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+          },
+          constraints: table =>
+          {
+            table.PrimaryKey("PK_OpportunityAccommodations", x => x.Id);
+            table.ForeignKey(
+                name: "FK_OpportunityAccommodations_Accessibility_AccommodationId",
+                column: x => x.AccommodationId,
+                principalSchema: "Lookup",
+                principalTable: "Accessibility",
+                principalColumn: "Id");
+            table.ForeignKey(
+                name: "FK_OpportunityAccommodations_Opportunity_OpportunityId",
+                column: x => x.OpportunityId,
+                principalSchema: "Opportunity",
+                principalTable: "Opportunity",
+                principalColumn: "Id");
+          });
+
+      migrationBuilder.CreateTable(
+          name: "SustainableDevelopmentGoal",
+          schema: "Lookup",
+          columns: table => new
+          {
+            Id = table.Column<Guid>(type: "uuid", nullable: false),
+            Number = table.Column<short>(type: "smallint", nullable: false),
+            Name = table.Column<string>(type: "varchar(125)", nullable: false),
+            DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+          },
+          constraints: table =>
+          {
+            table.PrimaryKey("PK_SustainableDevelopmentGoal", x => x.Id);
+          });
+
+      migrationBuilder.CreateTable(
+          name: "TargetedGroup",
+          schema: "Lookup",
+          columns: table => new
+          {
+            Id = table.Column<Guid>(type: "uuid", nullable: false),
+            Name = table.Column<string>(type: "varchar(125)", nullable: false),
+            DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+          },
+          constraints: table =>
+          {
+            table.PrimaryKey("PK_TargetedGroup", x => x.Id);
+          });
+
+      migrationBuilder.CreateTable(
+          name: "OpportunitySustainableDevelopmentGoals",
+          schema: "Opportunity",
+          columns: table => new
+          {
+            Id = table.Column<Guid>(type: "uuid", nullable: false),
+            OpportunityId = table.Column<Guid>(type: "uuid", nullable: false),
+            SustainableDevelopmentGoalId = table.Column<Guid>(type: "uuid", nullable: false),
+            DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+          },
+          constraints: table =>
+          {
+            table.PrimaryKey("PK_OpportunitySustainableDevelopmentGoals", x => x.Id);
+            table.ForeignKey(
+                name: "FK_OpportunitySustainableDevelopmentGoals_Opportunity_Opportun~",
+                column: x => x.OpportunityId,
+                principalSchema: "Opportunity",
+                principalTable: "Opportunity",
+                principalColumn: "Id");
+            table.ForeignKey(
+                name: "FK_OpportunitySustainableDevelopmentGoals_SustainableDevelopme~",
+                column: x => x.SustainableDevelopmentGoalId,
+                principalSchema: "Lookup",
+                principalTable: "SustainableDevelopmentGoal",
+                principalColumn: "Id");
+          });
+
+      migrationBuilder.CreateTable(
+          name: "OpportunityTargetedGroups",
+          schema: "Opportunity",
+          columns: table => new
+          {
+            Id = table.Column<Guid>(type: "uuid", nullable: false),
+            OpportunityId = table.Column<Guid>(type: "uuid", nullable: false),
+            TargetedGroupId = table.Column<Guid>(type: "uuid", nullable: false),
+            DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+          },
+          constraints: table =>
+          {
+            table.PrimaryKey("PK_OpportunityTargetedGroups", x => x.Id);
+            table.ForeignKey(
+                name: "FK_OpportunityTargetedGroups_Opportunity_OpportunityId",
+                column: x => x.OpportunityId,
+                principalSchema: "Opportunity",
+                principalTable: "Opportunity",
+                principalColumn: "Id");
+            table.ForeignKey(
+                name: "FK_OpportunityTargetedGroups_TargetedGroup_TargetedGroupId",
+                column: x => x.TargetedGroupId,
+                principalSchema: "Lookup",
+                principalTable: "TargetedGroup",
+                principalColumn: "Id");
+          });
+
+      migrationBuilder.CreateIndex(
+          name: "IX_Opportunity_PartnerIncentiveCurrency",
+          schema: "Opportunity",
+          table: "Opportunity",
+          column: "PartnerIncentiveCurrency");
+
+      migrationBuilder.CreateIndex(
+          name: "IX_Opportunity_AccommodationOtherDescription",
+          schema: "Opportunity",
+          table: "Opportunity",
+          column: "AccommodationOtherDescription")
+          .Annotation("Npgsql:IndexMethod", "gin")
+          .Annotation("Npgsql:IndexOperators", TrigramIndexOperators);
+
+      migrationBuilder.CreateIndex(
+          name: "IX_Opportunity_Provider",
+          schema: "Opportunity",
+          table: "Opportunity",
+          column: "Provider")
+          .Annotation("Npgsql:IndexMethod", "gin")
+          .Annotation("Npgsql:IndexOperators", TrigramIndexOperators);
+
+      migrationBuilder.CreateIndex(
+          name: "IX_Currency_Name",
+          schema: "Lookup",
+          table: "Currency",
+          column: "Name");
+
+      migrationBuilder.CreateIndex(
+          name: "IX_OpportunityAccommodations_AccommodationId",
+          schema: "Opportunity",
+          table: "OpportunityAccommodations",
+          column: "AccommodationId");
+
+      migrationBuilder.CreateIndex(
+          name: "IX_OpportunityAccommodations_OpportunityId_AccommodationId",
+          schema: "Opportunity",
+          table: "OpportunityAccommodations",
+          columns: AccommodationIndexColumns,
+          unique: true);
+
+      migrationBuilder.CreateIndex(
+          name: "IX_OpportunitySustainableDevelopmentGoals_OpportunityId_Sustai~",
+          schema: "Opportunity",
+          table: "OpportunitySustainableDevelopmentGoals",
+          columns: SustainableDevelopmentGoalIndexColumns,
+          unique: true);
+
+      migrationBuilder.CreateIndex(
+          name: "IX_OpportunitySustainableDevelopmentGoals_SustainableDevelopme~",
+          schema: "Opportunity",
+          table: "OpportunitySustainableDevelopmentGoals",
+          column: "SustainableDevelopmentGoalId");
+
+      migrationBuilder.CreateIndex(
+          name: "IX_OpportunityTargetedGroups_OpportunityId_TargetedGroupId",
+          schema: "Opportunity",
+          table: "OpportunityTargetedGroups",
+          columns: TargetedGroupIndexColumns,
+          unique: true);
+
+      migrationBuilder.CreateIndex(
+          name: "IX_OpportunityTargetedGroups_TargetedGroupId",
+          schema: "Opportunity",
+          table: "OpportunityTargetedGroups",
+          column: "TargetedGroupId");
+
+      migrationBuilder.CreateIndex(
+          name: "IX_SustainableDevelopmentGoal_Name",
+          schema: "Lookup",
+          table: "SustainableDevelopmentGoal",
+          column: "Name",
+          unique: true);
+
+      migrationBuilder.CreateIndex(
+          name: "IX_SustainableDevelopmentGoal_Number",
+          schema: "Lookup",
+          table: "SustainableDevelopmentGoal",
+          column: "Number",
+          unique: true);
+
+      migrationBuilder.CreateIndex(
+          name: "IX_TargetedGroup_Name",
+          schema: "Lookup",
+          table: "TargetedGroup",
+          column: "Name",
+          unique: true);
+
+      migrationBuilder.AddForeignKey(
+          name: "FK_Opportunity_Currency_PartnerIncentiveCurrency",
+          schema: "Opportunity",
+          table: "Opportunity",
+          column: "PartnerIncentiveCurrency",
+          principalSchema: "Lookup",
+          principalTable: "Currency",
+          principalColumn: "Code");
+
+      ApplicationDb_CF_Configuration_Seeding_CoreOpportunityLookups.Seed(migrationBuilder);
+
+      // Seed currency codes before validating existing payout rows. Preserve stored values;
+      // the foreign key rejects unknown codes without rewriting historical transactions.
+      migrationBuilder.AlterColumn<string>(
+          name: "Currency",
+          schema: "Payout",
+          table: "Transaction",
+          type: "varchar(3)",
+          nullable: false,
+          oldClrType: typeof(string),
+          oldType: "varchar(10)");
+
+      migrationBuilder.CreateIndex(
+          name: "IX_Payout_Transaction_Currency",
+          schema: "Payout",
+          table: "Transaction",
+          column: "Currency");
+
+      migrationBuilder.AddForeignKey(
+          name: "FK_Transaction_Currency_Currency",
+          schema: "Payout",
+          table: "Transaction",
+          column: "Currency",
+          principalSchema: "Lookup",
+          principalTable: "Currency",
+          principalColumn: "Code",
+          onDelete: ReferentialAction.NoAction);
+
+      // Preserve historical allocations; a Job with configured ZLTO rewards needs explicit resolution.
+      migrationBuilder.Sql("""
+        DO $$ BEGIN
+          IF EXISTS (SELECT 1 FROM "Opportunity"."Opportunity" o
+            JOIN "Opportunity"."OpportunityType" t ON t."Id" = o."TypeId"
+            WHERE t."Name" = 'Job' AND (o."ZltoReward" IS NOT NULL OR o."ZltoRewardPool" IS NOT NULL)) THEN
+            RAISE EXCEPTION 'Jobs with configured ZLTO rewards must be resolved before applying CF configuration';
+          END IF;
+        END $$;
+        UPDATE "Opportunity"."Opportunity"
+        SET "RewardType" = CASE WHEN "ZltoReward" IS NOT NULL THEN 'ZLTO' ELSE 'None' END;
+        """);
     }
 
     /// <inheritdoc />

@@ -6,6 +6,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
   {
     internal static void Seed(MigrationBuilder migrationBuilder)
     {
+      #region Entity
       migrationBuilder.InsertData(
         schema: "Entity",
         table: "UserGoal",
@@ -18,6 +19,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           { new Guid("830eacf5-86e9-4d31-869b-119d5f951fc8"), "Volunteer / make an impact", DateTimeOffset.UtcNow },
           { new Guid("d26bb533-226f-4138-91b8-c6a48592f739"), "Attend events", DateTimeOffset.UtcNow }
         });
+      #endregion Entity
     }
   }
 }

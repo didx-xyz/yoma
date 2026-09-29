@@ -34,6 +34,18 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
     List<Domain.Lookups.Models.Language> ListOpportunitySearchCriteriaLanguages(List<PublishedState>? publishedStates, string? languageCodeAlpha2Site);
 
+    List<Domain.Lookups.Models.Accessibility> ListOpportunitySearchCriteriaAccommodationsAdmin(List<Guid>? organizations, bool ensureOrganizationAuthorization);
+
+    List<Domain.Lookups.Models.Accessibility> ListOpportunitySearchCriteriaAccommodations(List<PublishedState>? publishedStates);
+
+    List<Domain.Lookups.Models.TargetedGroup> ListOpportunitySearchCriteriaTargetedGroupsAdmin(List<Guid>? organizations, bool ensureOrganizationAuthorization);
+
+    List<Domain.Lookups.Models.TargetedGroup> ListOpportunitySearchCriteriaTargetedGroups(List<PublishedState>? publishedStates);
+
+    List<Domain.Lookups.Models.SustainableDevelopmentGoal> ListOpportunitySearchCriteriaSustainableDevelopmentGoalsAdmin(List<Guid>? organizations, bool ensureOrganizationAuthorization);
+
+    List<Domain.Lookups.Models.SustainableDevelopmentGoal> ListOpportunitySearchCriteriaSustainableDevelopmentGoals(List<PublishedState>? publishedStates);
+
     List<OrganizationInfoAdmin> ListOpportunitySearchCriteriaOrganizationsAdmin();
 
     List<OrganizationInfo> ListOpportunitySearchCriteriaOrganizations(List<PublishedState>? publishedStates);
@@ -66,7 +78,7 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
     Task<Models.Opportunity> RemoveCategories(Guid id, List<Guid> categoryIds, bool ensureOrganizationAuthorization);
 
-    Task<Models.Opportunity> AssignCountries(Guid id, List<Models.OpportunityRequestCountry> countries, bool ensureOrganizationAuthorization);
+    Task<Models.Opportunity> AssignCountries(Guid id, List<OpportunityRequestCountry> countries, bool ensureOrganizationAuthorization);
 
     Task<Models.Opportunity> RemoveCountries(Guid id, List<Guid> countryIds, bool ensureOrganizationAuthorization);
 

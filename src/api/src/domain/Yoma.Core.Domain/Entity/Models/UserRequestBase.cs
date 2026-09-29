@@ -10,6 +10,17 @@ namespace Yoma.Core.Domain.Entity.Models
     [JsonIgnore]
     internal string? DisplayName { get; set; }
 
+    public string? Region { get; set; }
+
+    public string? City { get; set; }
+
+    /// <summary>
+    /// Optional city centre as [longitude, latitude], without elevation.
+    /// </summary>
+    public double[]? Coordinates { get; set; }
+
+    public Core.LocationSource? LocationSource { get; set; }
+
     public Guid? EducationId { get; set; }
 
     public Guid? GenderId { get; set; }

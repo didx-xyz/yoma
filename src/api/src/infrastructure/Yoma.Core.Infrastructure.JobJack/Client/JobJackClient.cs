@@ -118,6 +118,9 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
         Description = BuildDescription(item, summary),
         TypeId = type.Id,
         OrganizationId = organizationId.Value,
+        Provider = item.Company.HtmlDecode()?.RemoveHtmlTags(),
+        // A positive advertised salary is evidence of an incentive; absence is not evidence of unpaid work.
+        Incentivized = item.SalaryLow > 0 || item.SalaryHigh > 0 ? true : null,
         Summary = summary,
         URL = item.URL,
         VerificationEnabled = false,
@@ -191,7 +194,8 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
       {
         0 => null,
         1 => $"**Requirements:** {requirements[0]}",
-        _ => $"**Requirements:**\n{string.Join("\n", requirements)}"
+        > 1 => $"**Requirements:**\n{string.Join("\n", requirements)}",
+        _ => throw new InvalidOperationException($"Requirements count of '{requirements.Count}' is not supported")
       };
     }
 

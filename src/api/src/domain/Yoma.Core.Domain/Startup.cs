@@ -124,11 +124,14 @@ namespace Yoma.Core.Domain
       #region Lookups
       services.AddScoped<IAccessibilityService, AccessibilityService>();
       services.AddScoped<ICountryService, CountryService>();
+      services.AddScoped<ICurrencyService, CurrencyService>();
       services.AddScoped<IEducationService, EducationService>();
       services.AddScoped<IEngagementTypeService, EngagementTypeService>();
       services.AddScoped<IGenderService, GenderService>();
       services.AddScoped<ILanguageService, LanguageService>();
       services.AddScoped<ISkillService, SkillService>();
+      services.AddScoped<ISustainableDevelopmentGoalService, SustainableDevelopmentGoalService>();
+      services.AddScoped<ITargetedGroupService, TargetedGroupService>();
       services.AddScoped<ITimeIntervalService, TimeIntervalService>();
       #endregion Lookups
 

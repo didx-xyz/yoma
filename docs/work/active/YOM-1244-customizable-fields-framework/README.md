@@ -65,7 +65,7 @@ Job opportunity skills represent role requirements, not evidence of attainment. 
 
 ### User preset foundations — Education (2026-09-28)
 
-User location extends the existing profile country. Profile create/update accepts flat `region`, `city`, `coordinates` and `locationSource` fields, and `PATCH /api/v3/user/location` provides a focused update returning the full profile. Both reuse the dedicated location-request validator, without a Location model or interface. The dedicated request is `{ countryId, region, city, coordinates: [longitude, latitude] | null, locationSource }`; country remains solely the parent profile `countryId`. Source uses provider-neutral enum names `Lookup`, `Device`, `Manual`; provider place IDs are not persisted or exposed. Coordinates are the city centre, with no elevation or precise device fix, persisted in one nullable PostGIS geography(point,4326) column. The Yoma profile editor continues synchronizing country to Keycloak; the new location fields remain only in Yoma and are not UserPreferences. Jason should refresh cached profile state from either update response and clear/reselect the place when changing country. Opportunity location and radius search are now implemented under YOM-1254; see its 2026-09-28-b handover before wiring and enabling `LOCATION_SEARCH_LIVE`. See the [user-preferences handover](YOM-1257-api-extend-the-user-model-with-user-presets/handoffs/2026-09-28-a.md) for payload and clearing rules.
+User location extends the existing profile country. User/profile upsert requests carry flat `region`, `city`, `coordinates` and `locationSource` fields; User and UserProfile responses return them. There is no standalone location endpoint. Shared UserRequestValidatorBase validates these core fields through the injected CoordinatesValidator. Save through the complete `PATCH /api/v3/user` profile payload, including required profile fields; omitted/null optional location values clear them. Internal user upserts assign them directly inside the existing new/unlinked-user guard, and ToUserRequest copies them when constructing an update from a stored user. Country remains the existing parent field; source uses Lookup, Device or Manual. Coordinates are `[longitude, latitude]`, the city centre without elevation, stored in one nullable PostGIS geography(point,4326) column. No provider place ID is persisted. Country identity synchronization is unchanged; location remains Yoma-only and preferences stay separate. Refresh the cached profile from the save response and clear/reselect location when changing country. See the [current user/profile handover](YOM-1257-api-extend-the-user-model-with-user-presets/handoffs/2026-09-28-a.md). Opportunity location/search remains covered by YOM-1254.
 
 - [x] Keep the existing optional `User.EducationId` / `UserProfile.EducationId`; no new user column.
 - [x] Expand the controlled Education lookup to eleven values, retaining all five existing IDs and mapping the old tertiary row to "Tertiary (Qualification not specified)"; new qualifications use "Tertiary - …".
@@ -141,6 +141,17 @@ When adding a gate: never write `...(CUSTOM_FIELDS_ENABLED ? [x] : [])` at modul
 type-checks and compiles, then fails the production build with a bare-identifier `ReferenceError`.
 
 ## Shared API Contract
+
+### Opportunity core metadata (2026-09-28)
+
+Provider through SDGs are implemented as core fields, not custom-field values. The
+[consolidated API handover](YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/handoffs/2026-09-28-a.md#core-metadata)
+defines Jason's request/response and reference endpoints, incentive/accessibility rules,
+CSV/partner mappings and the explicit filter semantics. Age is checked only when
+submitting for verification; browsing and finalization of accepted submissions are not
+blocked by age. Difficulty, final CF configurations and preference-to-search mappings
+remain separate work. Currency, targeting and SDG vocabularies are shared lookups;
+opportunity associations and business rules remain opportunity-domain concerns.
 
 Verified against a running API on `feature/custom-fields-framework` — **the ticket
 descriptions on YOM-1244 are stale and should not be trusted over this table.**
@@ -358,7 +369,7 @@ Decisions 2026-09-22.
 
 ## Cross-Area Notes
 
-**Final country/location contract (2026-09-28):** [API handover for Jason](./YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/handoffs/2026-09-28-b.md). Country write/search collections now contain country-scoped objects, with one optional location per country; text and radius filtering run in the database. This supersedes the prototype location asks below. User coordinate storage is PostGIS, not the earlier JSONB design, without a user wire-contract change. [SRE rollout handover](./handoffs/2026-09-28-sre.md) covers PostGIS and Keycloak; Dev provisioning remains outstanding with Robbie, Stage/Prod fixed per Adrian.
+**Final country/location contract (2026-09-28):** [API handover for Jason](./YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/handoffs/2026-09-28-a.md#country-and-location). Country write/search collections now contain country-scoped objects, with one optional location per country; text and radius filtering run in the database. This supersedes the prototype location asks below. User coordinate storage is PostGIS, not the earlier JSONB design, without a user wire-contract change. [SRE rollout handover](./handoffs/2026-09-28-sre.md) covers PostGIS and Keycloak; Dev provisioning remains outstanding with Robbie, Stage/Prod fixed per Adrian.
 
 **Cash-out-first release (2026-09-15):** temporary CF seeding is disabled in the consolidated migration; the sample helper remains for reference. Fresh deployments receive no CF definitions/options. Jason must hide the CF UI for this release. Existing Local/Dev samples remain until reset or separately cleaned; this edit does not delete persisted data. Approved definitions will require a new migration once this migration has shipped.
 

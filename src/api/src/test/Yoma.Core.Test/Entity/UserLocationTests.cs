@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using FluentValidation;
+using Yoma.Core.Domain.Core.Validators;
 using Moq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -21,14 +22,14 @@ namespace Yoma.Core.Test.Entity
     [Fact]
     public void LocationAcceptsCityCentreAndTrimsNamesWithoutChangingLanguage()
     {
-      var location = JsonConvert.DeserializeObject<UserRequestUpdateLocation>(
+      var location = JsonConvert.DeserializeObject<UserRequest>(
         "{\"city\":\"  Cape Town  \",\"region\":\" Western Cape \",\"coordinates\":[18.4231,-33.9221]}",
         new Domain.Core.Converters.StringTrimmingConverter())!;
 
       Assert.True(Validator().Validate(location).IsValid);
       Assert.Equal("Cape Town", location.City);
       Assert.Equal("Western Cape", location.Region);
-      var empty = JsonConvert.DeserializeObject<UserRequestUpdateLocation>(
+      var empty = JsonConvert.DeserializeObject<UserRequest>(
         "{\"city\":\"   \",\"region\":\"\"}", new Domain.Core.Converters.StringTrimmingConverter())!;
       Assert.Null(empty.City);
       Assert.Null(empty.Region);
@@ -53,7 +54,7 @@ namespace Yoma.Core.Test.Entity
     [Fact]
     public void RegionOnlyAndManualLocationsDoNotRequireCoordinates()
     {
-      var location = new UserRequestUpdateLocation { Region = "Gauteng", LocationSource = LocationSource.Lookup };
+      var location = new UserRequest { Region = "Gauteng", LocationSource = LocationSource.Lookup };
       Assert.True(Validator().Validate(location).IsValid);
       location.Coordinates = City().Coordinates;
       Assert.False(Validator().Validate(location).IsValid);
@@ -69,9 +70,9 @@ namespace Yoma.Core.Test.Entity
     public void EmptyLocationIsAllowedButOrphanedMetadataIsRejected()
     {
       var validator = Validator();
-      Assert.True(validator.Validate(new UserRequestUpdateLocation()).IsValid);
-      Assert.False(validator.Validate(new UserRequestUpdateLocation { LocationSource = LocationSource.Lookup }).IsValid);
-      Assert.True(validator.Validate(new UserRequestUpdateLocation { City = "Cape Town" }).IsValid);
+      Assert.True(validator.Validate(new UserRequest()).IsValid);
+      Assert.False(validator.Validate(new UserRequest { LocationSource = LocationSource.Lookup }).IsValid);
+      Assert.True(validator.Validate(new UserRequest { City = "Cape Town" }).IsValid);
     }
 
     [Fact]
@@ -89,7 +90,7 @@ namespace Yoma.Core.Test.Entity
       var json = JsonConvert.SerializeObject(City(), new StringEnumConverter());
       Assert.Contains("\"Lookup\"", json);
       Assert.DoesNotContain("PlaceId", json);
-      var roundTrip = JsonConvert.DeserializeObject<UserRequestUpdateLocation>(json, new StringEnumConverter());
+      var roundTrip = JsonConvert.DeserializeObject<UserRequest>(json, new StringEnumConverter());
       Assert.Equal(LocationSource.Lookup, roundTrip!.LocationSource);
       Assert.Equal(new[] { 18.4231, -33.9221 }, roundTrip.Coordinates);
     }
@@ -108,7 +109,28 @@ namespace Yoma.Core.Test.Entity
       Assert.Equal("Cape Town", profile.City);
       Assert.Equal(user.Coordinates, profile.Coordinates);
       Assert.Null(typeof(UserProfile).GetProperty("Location"));
-      Assert.Null(typeof(UserRequest).GetProperty("Region"));
+      Assert.NotNull(typeof(UserRequest).GetProperty("Region"));
+    }
+
+    [Fact]
+    public void ToUserRequestPreservesCountryAndLocation()
+    {
+      var user = new User
+      {
+        CountryId = Guid.NewGuid(),
+        Region = "Western Cape",
+        City = "Cape Town",
+        Coordinates = [18.4231, -33.9221],
+        LocationSource = LocationSource.Lookup
+      };
+
+      var request = user.ToUserRequest();
+
+      Assert.Equal(user.CountryId, request.CountryId);
+      Assert.Equal(user.Region, request.Region);
+      Assert.Equal(user.City, request.City);
+      Assert.Equal(user.Coordinates, request.Coordinates);
+      Assert.Equal(user.LocationSource, request.LocationSource);
     }
 
     [Fact]
@@ -122,7 +144,7 @@ namespace Yoma.Core.Test.Entity
       Assert.DoesNotContain("UserSkills", query);
     }
 
-    private static UserRequestUpdateLocation City() => new()
+    private static UserRequest City() => new()
     {
       Region = "Western Cape",
       City = "Cape Town",
@@ -130,31 +152,12 @@ namespace Yoma.Core.Test.Entity
       LocationSource = LocationSource.Lookup
     };
 
-    private static UserRequestUpdateLocationValidator Validator() => new(Mock.Of<ICountryService>());
-
-    [Fact]
-    public void DedicatedLocationRequiresExistingNonWorldwideCountry()
+    private sealed class LocationRulesValidator : UserRequestValidatorBase<UserRequest>
     {
-      var countryId = Guid.NewGuid();
-      var worldwideId = Guid.NewGuid();
-      var countries = new Mock<ICountryService>();
-      var country = new Domain.Lookups.Models.Country { Id = countryId, Name = "South Africa" };
-      var worldwide = new Domain.Lookups.Models.Country { Id = worldwideId, Name = "Worldwide" };
-      countries.Setup(x => x.GetByIdOrNull(countryId)).Returns(country);
-      countries.Setup(x => x.GetByIdOrNull(worldwideId)).Returns(worldwide);
-      countries.Setup(x => x.GetByCodeAlpha2(It.IsAny<string>())).Returns(worldwide);
-      var validator = new UserRequestUpdateLocationValidator(countries.Object);
-      var request = new UserRequestUpdateLocation();
-      Assert.False(validator.Validate(request, o => o.IncludeAllRuleSets()).IsValid);
-      request.CountryId = Guid.NewGuid();
-      Assert.False(validator.Validate(request, o => o.IncludeAllRuleSets()).IsValid);
-      request.CountryId = worldwideId;
-      Assert.False(validator.Validate(request, o => o.IncludeAllRuleSets()).IsValid);
-      request.CountryId = countryId;
-      Assert.True(validator.Validate(request, o => o.IncludeAllRuleSets()).IsValid);
-      request.Coordinates = [181, 0];
-      Assert.False(validator.Validate(request, o => o.IncludeAllRuleSets()).IsValid);
+      public LocationRulesValidator() : base(Mock.Of<IEducationService>(), Mock.Of<IGenderService>(), new CoordinatesValidator()) { }
     }
+
+    private static LocationRulesValidator Validator() => new();
 
     [Fact]
     public void ProfileUpdateRequiresCountryEvenWithoutLocationDetails()
@@ -167,7 +170,7 @@ namespace Yoma.Core.Test.Entity
         .Returns(new Domain.Lookups.Models.Country { Id = Guid.NewGuid(), Name = "Worldwide" });
       var validator = new UserRequestUpdateProfileValidator(countries.Object,
         Mock.Of<IEducationService>(), Mock.Of<IGenderService>(),
-        new UserRequestUpdateLocationValidator(countries.Object));
+        new CoordinatesValidator());
       var request = new UserRequestUpdateProfile { FirstName = "Test", Surname = "User" };
       Assert.Contains(validator.Validate(request).Errors, x => x.PropertyName == nameof(request.CountryId));
       request.CountryId = Guid.Empty;
@@ -189,7 +192,7 @@ namespace Yoma.Core.Test.Entity
       var genderId = Guid.NewGuid();
       genders.Setup(x => x.GetByIdOrNull(genderId))
         .Returns(new Domain.Lookups.Models.Gender { Id = genderId, Name = "Other" });
-      var location = new UserRequestUpdateLocationValidator(countries);
+      var location = new CoordinatesValidator();
       IValidator validator = create
         ? new UserRequestCreateProfileValidator(countries, education, genders.Object, location)
         : new UserRequestUpdateProfileValidator(countries, education, genders.Object, location);
@@ -207,7 +210,7 @@ namespace Yoma.Core.Test.Entity
       Assert.False(IsValid());
       request.DateOfBirth = DateTimeOffset.UtcNow.Date;
       Assert.True(IsValid());
-      var internalValidator = new UserRequestValidator(countries, education, genders.Object);
+      var internalValidator = new UserRequestValidator(countries, education, genders.Object, new CoordinatesValidator());
       Assert.True(internalValidator.Validate(new UserRequest { Username = "test@example.com" }).IsValid);
     }
   }

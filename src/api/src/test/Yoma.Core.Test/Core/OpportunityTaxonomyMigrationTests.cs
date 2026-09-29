@@ -20,6 +20,42 @@ namespace Yoma.Core.Test.Core
 {
   public class OpportunityTaxonomyMigrationTests
   {
+    [Fact]
+    public void SpecialLookupEnumsMatchPersistedSeedNames()
+    {
+      var seeds = new ApplicationDb_CF_Configuration().UpOperations.OfType<InsertDataOperation>().ToList();
+      var accessibility = Assert.Single(seeds, o => o.Schema == "Lookup" && o.Table == "Accessibility");
+      var targetedGroups = Assert.Single(seeds, o => o.Schema == "Lookup" && o.Table == "TargetedGroup");
+
+      Assert.Contains(Domain.Core.AccessibilityOption.Other.ToString(), accessibility.Values.Cast<object>());
+      Assert.Contains(Domain.Core.TargetedGroupOption.OpenToAll.ToDescription(), targetedGroups.Values.Cast<object>());
+    }
+
+    [Fact]
+    public void PayoutCurrencyUsesSeededLookupCodeWithoutChangingStoredValues()
+    {
+      var operations = new ApplicationDb_CF_Configuration().UpOperations.ToList();
+      var foreignKey = Assert.Single(operations.OfType<AddForeignKeyOperation>(),
+        item => item.Schema == "Payout" && item.Table == "Transaction" && item.Columns.Contains("Currency"));
+      Assert.Equal("Lookup", foreignKey.PrincipalSchema);
+      Assert.Equal("Currency", foreignKey.PrincipalTable);
+      Assert.Equal("Code", Assert.Single(foreignKey.PrincipalColumns!));
+      Assert.Equal(Microsoft.EntityFrameworkCore.Migrations.ReferentialAction.NoAction, foreignKey.OnDelete);
+
+      var seed = Assert.Single(operations.OfType<InsertDataOperation>(),
+        item => item.Schema == "Lookup" && item.Table == "Currency");
+      Assert.True(operations.IndexOf(seed) < operations.IndexOf(foreignKey));
+      Assert.Contains(seed.Values.Cast<object>(), value => Equals(value, "USD"));
+
+      var column = Assert.Single(operations.OfType<AlterColumnOperation>(),
+        item => item.Schema == "Payout" && item.Table == "Transaction" && item.Name == "Currency");
+      Assert.Equal("varchar(3)", column.ColumnType);
+      Assert.False(column.IsNullable);
+      Assert.Equal("varchar(10)", column.OldColumn.ColumnType);
+      Assert.Contains(operations.OfType<CreateIndexOperation>(), item =>
+        item.Schema == "Payout" && item.Table == "Transaction" && item.Columns.SequenceEqual(new[] { "Currency" }));
+    }
+
     private static readonly (Guid Id, string Name)[] LegacyCategories =
     [
       (new Guid("2ccbacf7-1ed9-4e20-bb7c-43edfdb3f950"), "Agriculture"),
@@ -484,7 +520,9 @@ namespace Yoma.Core.Test.Core
           ('D306BEA3-04AA-4778-969F-4F92DA45559E', 'No formal education (No schooling attended)', CURRENT_TIMESTAMP),
           ('D0DDBF9F-6AF1-46BE-9465-BD6B8D47B752', 'Other', CURRENT_TIMESTAMP);
         CREATE SCHEMA "Opportunity";
-        CREATE TABLE "Opportunity"."Opportunity" ("Id" uuid PRIMARY KEY);
+        CREATE TABLE "Opportunity"."Opportunity" (
+          "Id" uuid PRIMARY KEY, "TypeId" uuid NULL,
+          "ZltoReward" numeric(8,2) NULL, "ZltoRewardPool" numeric(12,2) NULL);
         CREATE TABLE "Opportunity"."OpportunityCountries" (
           "Id" uuid PRIMARY KEY, "DateCreated" timestamptz NOT NULL);
         CREATE TABLE "Opportunity"."OpportunityType" (

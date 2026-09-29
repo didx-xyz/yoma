@@ -59,6 +59,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
     {
       var entity = _context.UserPreferenceCategories.Where(o => o.Id == item.Id).SingleOrDefault()
         ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(UserPreferenceCategory)} with id '{item.Id}' does not exist");
+
       _context.UserPreferenceCategories.Remove(entity);
       await _context.SaveChangesAsync();
     }

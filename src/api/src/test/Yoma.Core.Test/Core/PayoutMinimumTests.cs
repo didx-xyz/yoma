@@ -41,7 +41,7 @@ namespace Yoma.Core.Test.Core
       var country = new PayoutCountryAvailability
       {
         MinimumAmount = minimum == null ? null : decimal.Parse(minimum, System.Globalization.CultureInfo.InvariantCulture),
-        Currency = Currency.USD
+        Currency = CurrencyOption.USD
       };
       var value = decimal.Parse(amount, System.Globalization.CultureInfo.InvariantCulture);
       if (rejected) Assert.Throws<ValidationException>(() => country.ValidateMinimumAmount(value));
@@ -52,7 +52,7 @@ namespace Yoma.Core.Test.Core
     public void MalformedLimitIsNotSilentlyIgnored()
     {
       Assert.Throws<DataInconsistencyException>(() => new PayoutCountryAvailability
-      { MinimumAmount = -1, Currency = Currency.USD }.ValidateMinimumAmount(10));
+      { MinimumAmount = -1, Currency = CurrencyOption.USD }.ValidateMinimumAmount(10));
       Assert.Throws<DataInconsistencyException>(() => new PayoutCountryAvailability
       { MinimumAmount = 1, Currency = null }.ValidateMinimumAmount(10));
     }
@@ -65,12 +65,12 @@ namespace Yoma.Core.Test.Core
       var profile = new UserProfilePayout
       {
         CountryAvailability = new PayoutCountryAvailability
-        { Supported = true, MinimumAmount = minimum, Currency = Currency.USD }
+        { Supported = true, MinimumAmount = minimum, Currency = CurrencyOption.USD }
       };
       Assert.Equal(minimum.HasValue ? (decimal?)minimum.Value : null, profile.CountryAvailability.MinimumAmount);
       Assert.Null(profile.Amount);
       Assert.Null(profile.Currency);
-      Assert.Equal(Currency.USD, profile.CountryAvailability.Currency);
+      Assert.Equal(CurrencyOption.USD, profile.CountryAvailability.Currency);
       Assert.False(profile.Active);
       Assert.False(profile.CanResume);
       var json = Newtonsoft.Json.Linq.JObject.Parse(Newtonsoft.Json.JsonConvert.SerializeObject(profile,
@@ -96,20 +96,20 @@ namespace Yoma.Core.Test.Core
         Status = PayoutTransactionStatus.Processing,
         CanResume = true,
         Amount = 10m,
-        Currency = Currency.USD,
+        Currency = CurrencyOption.USD,
         CountryAvailability = new PayoutCountryAvailability
-        { Supported = true, MinimumAmount = 7m, Currency = Currency.USD }
+        { Supported = true, MinimumAmount = 7m, Currency = CurrencyOption.USD }
       };
       // Separate sources even if future currencies are added; do not invent another enum value today.
       profile.CountryAvailability = new PayoutCountryAvailability();
       Assert.Null(profile.CountryAvailability.MinimumAmount);
       Assert.Null(profile.CountryAvailability.Currency);
       Assert.Equal(10m, profile.Amount);
-      Assert.Equal(Currency.USD, profile.Currency);
+      Assert.Equal(CurrencyOption.USD, profile.Currency);
       Assert.True(profile.Active);
       Assert.True(profile.CanResume);
       profile.CountryAvailability = new PayoutCountryAvailability
-      { Supported = true, MinimumAmount = 12m, Currency = Currency.USD };
+      { Supported = true, MinimumAmount = 12m, Currency = CurrencyOption.USD };
       Assert.Equal(12m, profile.CountryAvailability.MinimumAmount);
       Assert.Equal(10m, profile.Amount);
       Assert.True(profile.CanResume);
@@ -137,7 +137,7 @@ namespace Yoma.Core.Test.Core
       var supported = await fixture.Service.IsCountrySupported(fixture.User.CountryId);
       Assert.True(supported.Supported);
       Assert.Equal(7m, supported.MinimumAmount);
-      Assert.Equal(Currency.USD, supported.Currency);
+      Assert.Equal(CurrencyOption.USD, supported.Currency);
       fixture.Provider.Verify(p => p.ListCountriesSupported(), Times.Once);
       var unsupported = await fixture.Service.IsCountrySupported(Guid.NewGuid());
       Assert.False(unsupported.Supported);

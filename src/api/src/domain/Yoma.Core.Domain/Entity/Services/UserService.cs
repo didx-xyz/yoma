@@ -54,8 +54,7 @@ namespace Yoma.Core.Domain.Entity.Services
     #endregion
 
     #region Constructor
-    public UserService(
-        IOptions<AppSettings> appSettings,
+    public UserService(IOptions<AppSettings> appSettings,
         IBlobService blobService,
         ISkillService skillService,
         IOpportunityCategoryService opportunityCategoryService,
@@ -330,15 +329,11 @@ namespace Yoma.Core.Domain.Entity.Services
         result.Surname = request.Surname;
         result.DisplayName = request.DisplayName;
         result.SetDisplayName();
-        // Region/city belong to the profile country and are Yoma-only. Identity updates cannot relocate them.
-        if (result.CountryId != request.CountryId)
-        {
-          result.Region = null;
-          result.City = null;
-          result.Coordinates = null;
-          result.LocationSource = null;
-        }
         result.CountryId = request.CountryId;
+        result.Region = request.Region;
+        result.City = request.City;
+        result.Coordinates = request.Coordinates;
+        result.LocationSource = request.LocationSource;
         result.EducationId = request.EducationId;
         result.GenderId = request.GenderId;
         result.DateOfBirth = request.DateOfBirth.RemoveTime();

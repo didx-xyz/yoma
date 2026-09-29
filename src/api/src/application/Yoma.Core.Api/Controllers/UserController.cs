@@ -203,22 +203,6 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Update the user's location (Authenticated User)",
-      Description = "Updates the required profile country and replaces its optional region, city, city-centre coordinates and source. Send only countryId to clear the optional details. Uses profile validation and returns the updated profile.")]
-    [HttpPatch("location")]
-    [ProducesResponseType(typeof(UserProfile), (int)HttpStatusCode.OK)]
-    [Authorize(Roles = Constants.Role_User)]
-    public async Task<IActionResult> UpdateLocation([FromBody] UserRequestUpdateLocation request)
-    {
-      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(UpdateLocation));
-
-      var result = await _userProfileService.UpdateLocation(request);
-
-      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(UpdateLocation));
-
-      return StatusCode((int)HttpStatusCode.OK, result);
-    }
-
     [SwaggerOperation(Summary = "Get the user's preferences (Authenticated User)")]
     [HttpGet("preferences")]
     [ProducesResponseType(typeof(UserPreferences), (int)HttpStatusCode.OK)]

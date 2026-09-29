@@ -2,6 +2,26 @@ using System.ComponentModel;
 
 namespace Yoma.Core.Domain.Opportunity
 {
+  public enum RewardType
+  {
+    [Description("None")]
+    None,
+    [Description("ZLTO")]
+    ZLTO,
+    [Description("Partner incentive")]
+    PartnerIncentive,
+  }
+
+  public enum AccessibilitySupport
+  {
+    [Description("Yes")]
+    Yes,
+    [Description("No")]
+    No,
+    [Description("Available on request")]
+    AvailableOnRequest,
+  }
+
   public enum Status
   {
     Active, //flagged as expired provided ended (notified)

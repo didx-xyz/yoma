@@ -66,6 +66,7 @@ namespace Yoma.Core.Domain.Lookups.Services
       {
         entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
+
         return _engagementTypeRepository.Query().OrderBy(o => o.Name).ToList();
       }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(EngagementType)}s'");
       return result;

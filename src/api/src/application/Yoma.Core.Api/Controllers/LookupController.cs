@@ -15,6 +15,9 @@ namespace Yoma.Core.Api.Controllers
   {
     #region Class Variables
     private readonly ILogger<UserController> _logger;
+    private readonly ITargetedGroupService _targetedGroupService;
+    private readonly ISustainableDevelopmentGoalService _sustainableDevelopmentGoalService;
+    private readonly ICurrencyService _currencyService;
     private readonly IAccessibilityService _accessibilityService;
     private readonly ICountryService _countryService;
     private readonly IEducationService _educationService;
@@ -28,6 +31,9 @@ namespace Yoma.Core.Api.Controllers
     #region Constructor
     public LookupController(
         ILogger<UserController> logger,
+        ITargetedGroupService targetedGroupService,
+        ISustainableDevelopmentGoalService sustainableDevelopmentGoalService,
+        ICurrencyService currencyService,
         IAccessibilityService accessibilityService,
         ICountryService countryService,
         IEducationService educationService,
@@ -38,6 +44,9 @@ namespace Yoma.Core.Api.Controllers
         ITimeIntervalService timeIntervalService)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+      _targetedGroupService = targetedGroupService ?? throw new ArgumentNullException(nameof(targetedGroupService));
+      _sustainableDevelopmentGoalService = sustainableDevelopmentGoalService ?? throw new ArgumentNullException(nameof(sustainableDevelopmentGoalService));
+      _currencyService = currencyService ?? throw new ArgumentNullException(nameof(currencyService));
       _accessibilityService = accessibilityService ?? throw new ArgumentNullException(nameof(accessibilityService));
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _educationService = educationService ?? throw new ArgumentNullException(nameof(educationService));
@@ -51,6 +60,48 @@ namespace Yoma.Core.Api.Controllers
 
     #region Public Members
     #region Anonymous Actions
+    [SwaggerOperation(Summary = "Return a list of targeted groups")]
+    [HttpGet("targeted/group")]
+    [ProducesResponseType(typeof(List<TargetedGroup>), (int)HttpStatusCode.OK)]
+    public IActionResult ListTargetedGroup()
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListTargetedGroup));
+
+      var result = _targetedGroupService.List();
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListTargetedGroup));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Return a list of Sustainable Development Goals")]
+    [HttpGet("sustainable/development/goal")]
+    [ProducesResponseType(typeof(List<SustainableDevelopmentGoal>), (int)HttpStatusCode.OK)]
+    public IActionResult ListSustainableDevelopmentGoal()
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListSustainableDevelopmentGoal));
+
+      var result = _sustainableDevelopmentGoalService.List();
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListSustainableDevelopmentGoal));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Return a list of ISO currencies")]
+    [HttpGet("currency")]
+    [ProducesResponseType(typeof(List<Currency>), (int)HttpStatusCode.OK)]
+    public IActionResult ListCurrency()
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListCurrency));
+
+      var result = _currencyService.List();
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListCurrency));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
     [SwaggerOperation(Summary = "Return a list of accessibility options")]
     [HttpGet("accessibility")]
     [ProducesResponseType(typeof(List<Accessibility>), (int)HttpStatusCode.OK)]

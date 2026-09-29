@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Yoma.Core.Domain.Opportunity;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Yoma.Core.Infrastructure.Database.Entity.Entities;
@@ -45,6 +46,28 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
 
     [Column(TypeName = "varchar(2048)")]
     public string? URL { get; set; }
+
+    [Column(TypeName = "varchar(255)")]
+    public string? Provider { get; set; }
+
+    public bool? Incentivized { get; set; }
+
+    public RewardType RewardType { get; set; }
+
+    [Column(TypeName = "decimal(18,4)")]
+    public decimal? PartnerIncentiveAmount { get; set; }
+
+    [Column(TypeName = "varchar(3)")]
+    public string? PartnerIncentiveCurrency { get; set; }
+
+    public AccessibilitySupport? AccessibilitySupport { get; set; }
+
+    [Column(TypeName = "varchar(500)")]
+    public string? AccommodationOtherDescription { get; set; }
+
+    public short? AgeFrom { get; set; }
+
+    public short? AgeTo { get; set; }
 
     [Column(TypeName = "decimal(8,2)")]
     public decimal? ZltoReward { get; set; }
@@ -122,6 +145,12 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
     [ForeignKey("ModifiedByUserId")]
     public Guid ModifiedByUserId { get; set; }
     public User ModifiedByUser { get; set; } = null!;
+
+    public ICollection<OpportunityAccommodation> Accommodations { get; set; } = null!;
+
+    public ICollection<OpportunityTargetedGroup> TargetedGroups { get; set; } = null!;
+
+    public ICollection<OpportunitySustainableDevelopmentGoal> SustainableDevelopmentGoals { get; set; } = null!;
 
     public ICollection<OpportunityCategory> Categories { get; set; } = null!;
 

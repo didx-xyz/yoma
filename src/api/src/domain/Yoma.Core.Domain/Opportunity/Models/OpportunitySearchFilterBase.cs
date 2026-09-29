@@ -8,6 +8,52 @@ namespace Yoma.Core.Domain.Opportunity.Models
 {
   public abstract class OpportunitySearchFilterBase : PaginationFilter, IHashableObject
   {
+    /// <summary>
+    /// Case-insensitive provider substring. Unspecified providers remain included.
+    /// This is independent of the owning organisation filter.
+    /// </summary>
+    public string? Provider { get; set; }
+
+    /// <summary>
+    /// Match the incentive selection, also including opportunities where it is not specified.
+    /// </summary>
+    public bool? Incentivized { get; set; }
+
+    public List<RewardType>? RewardTypes { get; set; }
+
+    public AccessibilitySupport? AccessibilitySupport { get; set; }
+
+    /// <summary>
+    /// Case-insensitive substring of the Other accommodation description; requires Other in Accommodations.
+    /// Selecting Other without text matches any Other accommodation. Missing descriptions are excluded
+    /// when text is supplied. Combined with selected accommodations using AND; no user needs are disclosed.
+    /// </summary>
+    public string? AccommodationOtherDescription { get; set; }
+
+    /// <summary>
+    /// Match ALL selected accommodations. Unlike the other optional filters, missing
+    /// accommodations are excluded: unknown support cannot satisfy an accessibility need.
+    /// This is an explicit discovery filter, not disclosure of a user's needs to partners.
+    /// </summary>
+    public List<Guid>? Accommodations { get; set; }
+
+    /// <summary>
+    /// Match ANY selected group, including opportunities with no targeting specified.
+    /// Targeting is informational and never an eligibility restriction.
+    /// </summary>
+    public List<Guid>? TargetedGroups { get; set; }
+
+    /// <summary>
+    /// Match ANY selected goal, including opportunities with no goals specified.
+    /// </summary>
+    public List<Guid>? SustainableDevelopmentGoals { get; set; }
+
+    /// <summary>
+    /// Optional age in whole years to compare with inclusive opportunity age bounds.
+    /// Unspecified bounds remain unrestricted. This does not apply the user's profile automatically.
+    /// </summary>
+    public short? Age { get; set; }
+
     public List<Guid>? Types { get; set; }
 
     public List<Guid>? Categories { get; set; }
@@ -90,6 +136,10 @@ namespace Yoma.Core.Domain.Opportunity.Models
     {
       SanitizeCollections();
 
+      RewardTypes = RewardTypes?.OrderBy(o => o).ToList();
+      Accommodations = Accommodations?.OrderBy(o => o).ToList();
+      TargetedGroups = TargetedGroups?.OrderBy(o => o).ToList();
+      SustainableDevelopmentGoals = SustainableDevelopmentGoals?.OrderBy(o => o).ToList();
       Types = Types?.OrderBy(o => o).ToList();
       Categories = Categories?.OrderBy(o => o).ToList();
       Languages = Languages?.OrderBy(o => o).ToList();
@@ -102,6 +152,14 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public virtual void SanitizeCollections()
     {
+      RewardTypes = RewardTypes?.Distinct().ToList();
+      if (RewardTypes?.Count == 0) RewardTypes = null;
+      Accommodations = Accommodations?.Distinct().ToList();
+      if (Accommodations?.Count == 0) Accommodations = null;
+      TargetedGroups = TargetedGroups?.Distinct().ToList();
+      if (TargetedGroups?.Count == 0) TargetedGroups = null;
+      SustainableDevelopmentGoals = SustainableDevelopmentGoals?.Distinct().ToList();
+      if (SustainableDevelopmentGoals?.Count == 0) SustainableDevelopmentGoals = null;
       Types = Types?.Distinct().ToList();
       if (Types?.Count == 0) Types = null;
 

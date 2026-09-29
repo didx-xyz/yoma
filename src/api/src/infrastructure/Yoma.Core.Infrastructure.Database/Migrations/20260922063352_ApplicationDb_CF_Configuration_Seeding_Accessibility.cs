@@ -6,6 +6,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
   {
     internal static void Seed(MigrationBuilder migrationBuilder)
     {
+      #region Lookups
       migrationBuilder.InsertData(
         schema: "Lookup",
         table: "Accessibility",
@@ -29,6 +30,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           { new Guid("b8dd2526-c252-48a3-a7c8-3df79298ef0f"), "Service animals permitted", DateTimeOffset.UtcNow },
           { new Guid("b8dd2526-c252-48a3-a7c8-3df79298ef10"), "Other", DateTimeOffset.UtcNow }
         });
+      #endregion Lookups
     }
   }
 }

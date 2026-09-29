@@ -97,6 +97,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     private readonly ICountryService _countryService;
     private readonly ILanguageService _languageService;
     private readonly ISkillService _skillService;
+    private readonly ISustainableDevelopmentGoalService _sustainableDevelopmentGoalService;
     private readonly IOpportunityDifficultyService _opportunityDifficultyService;
     private readonly ITimeIntervalService _timeIntervalService;
     private readonly IEngagementTypeService _engagementTypeService;
@@ -117,6 +118,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       ICountryService countryService,
       ILanguageService languageService,
       ISkillService skillService,
+      ISustainableDevelopmentGoalService sustainableDevelopmentGoalService,
       IOpportunityDifficultyService opportunityDifficultyService,
       ITimeIntervalService timeIntervalService,
       IEngagementTypeService engagementTypeService,
@@ -134,6 +136,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
       _skillService = skillService ?? throw new ArgumentNullException(nameof(skillService));
+      _sustainableDevelopmentGoalService = sustainableDevelopmentGoalService ?? throw new ArgumentNullException(nameof(sustainableDevelopmentGoalService));
       _opportunityDifficultyService = opportunityDifficultyService ?? throw new ArgumentNullException(nameof(opportunityDifficultyService));
       _timeIntervalService = timeIntervalService ?? throw new ArgumentNullException(nameof(timeIntervalService));
       _engagementTypeService = engagementTypeService ?? throw new ArgumentNullException(nameof(engagementTypeService));
@@ -437,11 +440,11 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       // Title and summary are shaped to satisfy Yoma validation limits.
       // Summary is plain text only.
       // Description is converted from Alison HTML to Yoma markdown-style formatting.
-      // Description also appends selected Alison metadata such as publisher and course type.
+      // Description retains course type and certificate guidance; publisher is exposed as Provider.
       var publisherName = GetPublisherName(course);
       var title = GetTitle(course);
       var summary = GetSummary(course, title);
-      var description = GetDescription(course, title, publisherName);
+      var description = GetDescription(course, title);
 
       // Dates:
       // DateStart = published_at -> created_at -> UtcNow.
@@ -499,6 +502,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
           TypeId = opportunityType.Id,
           Summary = summary,
           URL = course.ToCourseUrl(_options.WebBaseUrl),
+          Provider = publisherName,
 
           OrganizationId = _options.OrganizationIdYoma,
 
@@ -535,8 +539,9 @@ namespace Yoma.Core.Infrastructure.Alison.Client
           Hidden = false,
 
           Keywords = keywords,
+          SustainableDevelopmentGoals = GetSustainableDevelopmentGoals(course),
           Categories = [.. categories.Select(o => o.Id)],
-          Countries = [.. countries.Select(o => new Domain.Opportunity.Models.OpportunityRequestCountry { CountryId = o.Id })],
+          Countries = [.. countries.Select(o => new OpportunityRequestCountry { CountryId = o.Id })],
           Languages = [.. languages.Select(o => o.Id)],
 
           // Populate when available. Partner sync uses PatchAllowMissingRequired:
@@ -746,7 +751,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return (summary ?? title).TrimToLengthWithEllipsis(OpportunityService.Summary_MaxLength);
     }
 
-    private static string GetDescription(Course course, string title, string? publisherName)
+    private static string GetDescription(Course course, string title)
     {
       ArgumentNullException.ThrowIfNull(course);
 
@@ -760,10 +765,6 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         ?? title;
 
       var metadata = new List<string>();
-
-      publisherName = publisherName?.Trim();
-      if (!string.IsNullOrEmpty(publisherName))
-        metadata.Add($"**Publisher:** {publisherName}");
 
       var courseType = course.Type?.Trim().HtmlDecode().RemoveHtmlTags();
       if (!string.IsNullOrEmpty(courseType))
@@ -846,6 +847,22 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         return;
 
       keywords.Add(value);
+    }
+
+    private List<Guid>? GetSustainableDevelopmentGoals(Course course)
+    {
+      // Only explicit SDG tags identify a goal. Do not infer goals from general course topics.
+      var numbers = course.Tags.Select(tag => tag.GetName()?.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        .Where(parts => parts is { Length: >= 2 } && string.Equals(parts[0], "SDG", StringComparison.OrdinalIgnoreCase))
+        .Select(parts => int.TryParse(parts![1], NumberStyles.None, CultureInfo.InvariantCulture, out var number) ? number : 0)
+        .Where(number => number >= 1 && number <= 17)
+        .Distinct()
+        .ToList();
+
+      if (numbers.Count == 0) return null;
+
+      return _sustainableDevelopmentGoalService.List().Where(goal => numbers.Contains(goal.Number))
+        .OrderBy(goal => goal.Number).Select(goal => goal.Id).ToList();
     }
 
     private List<Domain.Lookups.Models.Skill>? GetSkills(Course course)

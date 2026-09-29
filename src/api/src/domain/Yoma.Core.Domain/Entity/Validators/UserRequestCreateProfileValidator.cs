@@ -2,6 +2,7 @@ using FluentValidation;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
+using Yoma.Core.Domain.Core.Validators;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
 
@@ -14,54 +15,64 @@ namespace Yoma.Core.Domain.Entity.Validators
     #endregion
 
     #region Constructor
-    public UserRequestCreateProfileValidator(ICountryService countryService, IEducationService educationService,
-        IGenderService genderService, UserRequestUpdateLocationValidator locationValidator) : base(educationService, genderService)
+    public UserRequestCreateProfileValidator(ICountryService countryService,
+        IEducationService educationService,
+        IGenderService genderService,
+        CoordinatesValidator coordinatesValidator) : base(educationService, genderService, coordinatesValidator)
     {
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
-      ArgumentNullException.ThrowIfNull(locationValidator);
-      RuleFor(x => new UserRequestUpdateLocation
-      {
-        Region = x.Region,
-        City = x.City,
-        Coordinates = x.Coordinates,
-        LocationSource = x.LocationSource
-      }).SetValidator(locationValidator);
 
-      RuleFor(x => x.GenderId).NotEmpty().WithMessage("'Gender' is required.");
-      RuleFor(x => x.DateOfBirth).NotNull().WithMessage("'Date of Birth' is required.")
+      RuleFor(x => x.GenderId)
+          .NotEmpty()
+          .WithMessage("'Gender' is required.");
+
+      RuleFor(x => x.DateOfBirth)
+          .NotNull()
+          .WithMessage("'Date of Birth' is required.")
         .DependentRules(() =>
         {
-          RuleFor(x => x.DateOfBirth).Must(date => date!.Value.Date >= new DateTime(1900, 1, 1))
-            .WithMessage("'Date of Birth' must be on or after 1 January 1900.");
+          RuleFor(x => x.DateOfBirth)
+              .Must(date => date!.Value.Date >= new DateTime(1900, 1, 1))
+              .WithMessage("'Date of Birth' must be on or after 1 January 1900.");
         });
 
-      RuleFor(x => x.FirstName).NotEmpty().WithMessage("'First Name' is required.")
+      RuleFor(x => x.FirstName)
+          .NotEmpty()
+          .WithMessage("'First Name' is required.")
         .DependentRules(() =>
         {
-          RuleFor(x => x.FirstName).Length(1, 125).WithMessage("'First Name' must be between 1 and 125 characters.");
+          RuleFor(x => x.FirstName)
+              .Length(1, 125)
+              .WithMessage("'First Name' must be between 1 and 125 characters.");
         });
 
       RuleFor(x => x.Surname)
-        .NotEmpty().WithMessage("'{PropertyName}' is required.")
+          .NotEmpty()
+          .WithMessage("'{PropertyName}' is required.")
         .DependentRules(() =>
         {
-          RuleFor(x => x.Surname).Length(1, 125).WithMessage("'{PropertyName}' must be between 1 and 125 characters.");
+          RuleFor(x => x.Surname)
+              .Length(1, 125)
+              .WithMessage("'{PropertyName}' must be between 1 and 125 characters.");
         });
 
-      RuleFor(x => x.PhoneNumber).Must(PhoneNumberValidator.IsValidPhoneNumber).When(x => !string.IsNullOrEmpty(x.PhoneNumber))
-        .WithMessage("'Phone Number' must be a valid phone number in international format (e.g. +27831234567).");
+      RuleFor(x => x.PhoneNumber)
+          .Must(PhoneNumberValidator.IsValidPhoneNumber)
+          .When(x => !string.IsNullOrEmpty(x.PhoneNumber))
+          .WithMessage("'Phone Number' must be a valid phone number in international format (e.g. +27831234567).");
 
       RuleFor(x => new { x.PhoneNumber, x.Email })
-        .Must(x => !string.IsNullOrWhiteSpace(x.PhoneNumber) || !string.IsNullOrWhiteSpace(x.Email))
-        .WithMessage("Either 'Phone Number' or 'Email' is required.");
+          .Must(x => !string.IsNullOrWhiteSpace(x.PhoneNumber) || !string.IsNullOrWhiteSpace(x.Email))
+          .WithMessage("Either 'Phone Number' or 'Email' is required.");
 
       RuleFor(x => x.CountryCodeAlpha2)
-        .NotEmpty().WithMessage("'Country' is required.")
+          .NotEmpty()
+          .WithMessage("'Country' is required.")
         .DependentRules(() =>
         {
           RuleFor(x => x.CountryCodeAlpha2)
-          .Must(CountryExists)
-          .WithMessage("Specified 'Country' is invalid or not allowed (e.g., 'Worldwide' is not permitted).");
+              .Must(CountryExists)
+              .WithMessage("Specified 'Country' is invalid or not allowed (e.g., 'Worldwide' is not permitted).");
         });
     }
     #endregion

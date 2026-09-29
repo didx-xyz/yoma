@@ -18,11 +18,29 @@ namespace Yoma.Core.Domain.Opportunity.Validators
         ILanguageService languageService,
         ISkillService skillService,
         IOpportunityVerificationTypeService opportunityVerificationTypeService,
-        OpportunityRequestCountryValidator opportunityRequestCountryValidator)
-        : base(opportunityTypeService, organizationService, opportunityDifficultyService, engagementTypeService, timeIntervalService,
-              opportunityCategoryService, countryService, languageService, skillService, opportunityVerificationTypeService, opportunityRequestCountryValidator)
+        OpportunityRequestCountryValidator opportunityRequestCountryValidator,
+        ICurrencyService currencyService,
+        IAccessibilityService accessibilityService,
+        ITargetedGroupService targetedGroupService,
+        ISustainableDevelopmentGoalService sustainableDevelopmentGoalService)
+        : base(opportunityTypeService,
+        organizationService,
+        opportunityDifficultyService,
+        engagementTypeService,
+        timeIntervalService,
+        opportunityCategoryService,
+        countryService,
+        languageService,
+        skillService,
+        opportunityVerificationTypeService,
+        opportunityRequestCountryValidator,
+        currencyService,
+        accessibilityService,
+        targetedGroupService,
+        sustainableDevelopmentGoalService)
     {
-      RuleFor(x => x.Id).NotEmpty();
+      RuleFor(x => x.Id)
+          .NotEmpty();
     }
     #endregion
   }

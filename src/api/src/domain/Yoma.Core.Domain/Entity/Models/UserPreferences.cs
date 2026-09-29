@@ -10,7 +10,9 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public string? Goal { get; set; }
 
-    /// <summary>Maximum total time preferred per Opportunity; null when not specified.</summary>
+    /// <summary>
+    /// Maximum total time preferred per Opportunity; null when not specified.
+    /// </summary>
     public Guid? CommitmentIntervalId { get; set; }
 
     public Core.TimeIntervalOption? CommitmentInterval { get; set; }
@@ -21,7 +23,9 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public Core.EngagementTypeOption? EngagementType { get; set; }
 
-    /// <summary>True prefers opportunities with an incentive, false those without one; null means no preference.</summary>
+    /// <summary>
+    /// True prefers opportunities with an incentive, false those without one; null means no preference.
+    /// </summary>
     public bool? Incentivized { get; set; }
 
     public List<Opportunity.Models.Lookups.OpportunityCategory> Categories { get; set; } = [];

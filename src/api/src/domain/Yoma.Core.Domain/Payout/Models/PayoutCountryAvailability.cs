@@ -1,3 +1,5 @@
+using Yoma.Core.Domain.Core;
+
 namespace Yoma.Core.Domain.Payout.Models
 {
   /// <summary>
@@ -24,6 +26,6 @@ namespace Yoma.Core.Domain.Payout.Models
     /// May be supplied even when MinimumAmount is null. Changing country does not relabel an active payout.
     /// Currently USD only; keeping this separate does not add multi-currency processing.
     /// </summary>
-    public Currency? Currency { get; set; }
+    public CurrencyOption? Currency { get; set; }
   }
 }

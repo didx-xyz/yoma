@@ -51,7 +51,6 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly UserRequestCreateProfileValidator _userRequestCreateProfileValidator;
     private readonly UserRequestUpdateProfileValidator _userRequestUpdateProfileValidator;
     private readonly UserPreferencesRequestValidator _userPreferencesRequestValidator;
-    private readonly UserRequestUpdateLocationValidator _locationValidator;
     private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
     private readonly IRepository<UserPreferences> _userPreferencesRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
@@ -59,29 +58,28 @@ namespace Yoma.Core.Domain.Entity.Services
 
     #region Constructor
     public UserProfileService(ILogger<UserProfileService> logger,
-      IHttpContextAccessor httpContextAccessor,
-      IIdentityProviderClientFactory identityProviderClientFactory,
-      IUserService userService,
-      IGenderService genderService,
-      ICountryService countryService,
-      IEducationService educationService,
-      IOrganizationService organizationService,
-      IMyOpportunityService myOpportunityService,
-      IWalletService walletService,
-      IRewardService rewardService,
-      IPayoutTransactionService payoutTransactionService,
-      IPayoutService payoutService,
-      ISettingsDefinitionService settingsDefinitionService,
-      IBlockService referralBlockService,
-      ILinkService linkService,
-      ILinkUsageService linkUsageService,
-      UserRequestCreateProfileValidator userRequestCreateProfileValidator,
-      UserRequestUpdateProfileValidator userRequestUpdateProfileValidator,
-      UserPreferencesRequestValidator userPreferencesRequestValidator,
-      UserRequestUpdateLocationValidator locationValidator,
-      IRepositoryValueContainsWithNavigation<User> userRepository,
-      IRepository<UserPreferences> userPreferencesRepository,
-      IExecutionStrategyService executionStrategyService)
+        IHttpContextAccessor httpContextAccessor,
+        IIdentityProviderClientFactory identityProviderClientFactory,
+        IUserService userService,
+        IGenderService genderService,
+        ICountryService countryService,
+        IEducationService educationService,
+        IOrganizationService organizationService,
+        IMyOpportunityService myOpportunityService,
+        IWalletService walletService,
+        IRewardService rewardService,
+        IPayoutTransactionService payoutTransactionService,
+        IPayoutService payoutService,
+        ISettingsDefinitionService settingsDefinitionService,
+        IBlockService referralBlockService,
+        ILinkService linkService,
+        ILinkUsageService linkUsageService,
+        UserRequestCreateProfileValidator userRequestCreateProfileValidator,
+        UserRequestUpdateProfileValidator userRequestUpdateProfileValidator,
+        UserPreferencesRequestValidator userPreferencesRequestValidator,
+        IRepositoryValueContainsWithNavigation<User> userRepository,
+        IRepository<UserPreferences> userPreferencesRepository,
+        IExecutionStrategyService executionStrategyService)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _identityProviderClient = (identityProviderClientFactory ?? throw new ArgumentNullException(nameof(identityProviderClientFactory))).CreateClient();
@@ -103,7 +101,6 @@ namespace Yoma.Core.Domain.Entity.Services
       _userRequestCreateProfileValidator = userRequestCreateProfileValidator ?? throw new ArgumentNullException(nameof(userRequestCreateProfileValidator));
       _userRequestUpdateProfileValidator = userRequestUpdateProfileValidator ?? throw new ArgumentNullException(nameof(userRequestUpdateProfileValidator));
       _userPreferencesRequestValidator = userPreferencesRequestValidator ?? throw new ArgumentNullException(nameof(userPreferencesRequestValidator));
-      _locationValidator = locationValidator ?? throw new ArgumentNullException(nameof(locationValidator));
       _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
       _userPreferencesRepository = userPreferencesRepository ?? throw new ArgumentNullException(nameof(userPreferencesRepository));
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
@@ -116,36 +113,6 @@ namespace Yoma.Core.Domain.Entity.Services
       var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
       var user = _userService.GetByUsername(username, false, true);
       return ToProfile(user).Result;
-    }
-
-    public async Task<UserProfile> UpdateLocation(UserRequestUpdateLocation request)
-    {
-      ArgumentNullException.ThrowIfNull(request);
-
-      await _locationValidator.ValidateAsync(request, options =>
-      {
-        options.IncludeRuleSets("default", "Country");
-        options.ThrowOnFailures();
-      });
-
-      var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-      var user = _userService.GetByUsername(username, false, true);
-
-      // Preserve the other profile fields and reuse the existing country / identity-provider update flow.
-      return await Update(new UserRequestUpdateProfile
-      {
-        Email = user.Email,
-        FirstName = user.FirstName ?? string.Empty,
-        Surname = user.Surname ?? string.Empty,
-        EducationId = user.EducationId,
-        GenderId = user.GenderId,
-        DateOfBirth = user.DateOfBirth,
-        CountryId = request.CountryId,
-        Region = request.Region,
-        City = request.City,
-        Coordinates = request.Coordinates,
-        LocationSource = request.LocationSource
-      });
     }
 
     public UserPreferences GetPreferences()
@@ -477,7 +444,7 @@ namespace Yoma.Core.Domain.Entity.Services
         Enabled = _payoutService.Enabled,
         Status = payout?.Status,
         Amount = payout?.Amount,
-        Currency = payout == null ? null : Enum.Parse<Currency>(payout.Currency, true),
+        Currency = payout == null ? null : Enum.Parse<CurrencyOption>(payout.Currency, true),
         DateCreated = payout?.DateCreated
       };
       result.Payout.CanResume = result.Payout.Active && !string.IsNullOrWhiteSpace(payout?.TransactionId);

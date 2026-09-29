@@ -128,6 +128,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       item.Id = entity.Id;
       return item;
     }
+
     public async Task<ProgramPathwayStep> Update(ProgramPathwayStep item)
     {
       var entity = _context.ReferralProgramPathwayStep.Where(o => o.Id == item.Id).SingleOrDefault()
@@ -152,6 +153,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
     {
       var entity = _context.ReferralProgramPathwayStep.Where(o => o.Id == item.Id).SingleOrDefault()
         ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(ProgramPathwayStep)} with id '{item.Id}' does not exist");
+
       _context.ReferralProgramPathwayStep.Remove(entity);
       await _context.SaveChangesAsync();
     }

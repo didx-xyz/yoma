@@ -6,6 +6,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
   {
     internal static void Seed(MigrationBuilder migrationBuilder)
     {
+      #region Opportunity
       // Retain the existing ID referenced by opportunities.
       migrationBuilder.UpdateData(
         schema: "Opportunity",
@@ -14,6 +15,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
         keyValue: "F12A9D90-A8F6-4914-8CA5-6ACF209F7312",
         columns: ["Name", "DisplayName"],
         values: ["ImpactAction", "Impact Action"]);
+      #endregion Opportunity
     }
   }
 }

@@ -58,6 +58,31 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         Summary = entity.Summary,
         Instructions = entity.Instructions,
         URL = entity.URL,
+        Provider = entity.Provider,
+        Incentivized = entity.Incentivized,
+        RewardType = entity.RewardType,
+        PartnerIncentiveAmount = entity.PartnerIncentiveAmount,
+        PartnerIncentiveCurrency = entity.PartnerIncentiveCurrency,
+        AccessibilitySupport = entity.AccessibilitySupport,
+        AccommodationOtherDescription = entity.AccommodationOtherDescription,
+        AgeFrom = entity.AgeFrom,
+        AgeTo = entity.AgeTo,
+        Accommodations = includeChildItems ? entity.Accommodations.Select(o => new Domain.Lookups.Models.Accessibility
+        {
+          Id = o.AccommodationId,
+          Name = o.Accommodation.Name
+        }).OrderBy(o => o.Name).ToList() : null,
+        TargetedGroups = includeChildItems ? entity.TargetedGroups.Select(o => new Domain.Lookups.Models.TargetedGroup
+        {
+          Id = o.TargetedGroupId,
+          Name = o.TargetedGroup.Name
+        }).OrderBy(o => o.Name).ToList() : null,
+        SustainableDevelopmentGoals = includeChildItems ? entity.SustainableDevelopmentGoals.Select(o => new Domain.Lookups.Models.SustainableDevelopmentGoal
+        {
+          Id = o.SustainableDevelopmentGoalId,
+          Number = o.SustainableDevelopmentGoal.Number,
+          Name = o.SustainableDevelopmentGoal.Name
+        }).OrderBy(o => o.Name).ToList() : null,
         ZltoReward = entity.ZltoReward,
         ZltoRewardPool = entity.ZltoRewardPool,
         ZltoRewardCumulative = entity.ZltoRewardCumulative,
@@ -166,6 +191,16 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
       return this.WhereContains(query, value);
     }
 
+    public Expression<Func<Domain.Opportunity.Models.Opportunity, bool>> Contains(Expression<Func<Domain.Opportunity.Models.Opportunity, string?>> property, string value)
+    {
+      return Core.Helpers.PropertyContainsHelper.Contains(property, value);
+    }
+
+    public IQueryable<Domain.Opportunity.Models.Opportunity> Contains(IQueryable<Domain.Opportunity.Models.Opportunity> query, Expression<Func<Domain.Opportunity.Models.Opportunity, string?>> property, string value)
+    {
+      return query.Where(Contains(property, value));
+    }
+
     public IQueryable<Domain.Opportunity.Models.Opportunity> WhereCustomFields(IQueryable<Domain.Opportunity.Models.Opportunity> query, List<CustomFieldFilter>? filters)
     {
       if (filters == null || filters.Count == 0) return query;
@@ -194,6 +229,15 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         Summary = item.Summary,
         Instructions = item.Instructions,
         URL = item.URL,
+        Provider = item.Provider,
+        Incentivized = item.Incentivized,
+        RewardType = item.RewardType,
+        PartnerIncentiveAmount = item.PartnerIncentiveAmount,
+        PartnerIncentiveCurrency = item.PartnerIncentiveCurrency,
+        AccessibilitySupport = item.AccessibilitySupport,
+        AccommodationOtherDescription = item.AccommodationOtherDescription,
+        AgeFrom = item.AgeFrom,
+        AgeTo = item.AgeTo,
         ZltoReward = item.ZltoReward,
         ZltoRewardPool = item.ZltoRewardPool,
         VerificationEnabled = item.VerificationEnabled,
@@ -245,6 +289,15 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
           Summary = item.Summary,
           Instructions = item.Instructions,
           URL = item.URL,
+          Provider = item.Provider,
+          Incentivized = item.Incentivized,
+          RewardType = item.RewardType,
+          PartnerIncentiveAmount = item.PartnerIncentiveAmount,
+          PartnerIncentiveCurrency = item.PartnerIncentiveCurrency,
+          AccessibilitySupport = item.AccessibilitySupport,
+          AccommodationOtherDescription = item.AccommodationOtherDescription,
+          AgeFrom = item.AgeFrom,
+          AgeTo = item.AgeTo,
           ZltoReward = item.ZltoReward,
           ZltoRewardPool = item.ZltoRewardPool,
           ZltoRewardCumulative = item.ZltoRewardCumulative,
@@ -300,6 +353,15 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
       entity.Summary = item.Summary;
       entity.Instructions = item.Instructions;
       entity.URL = item.URL;
+      entity.Provider = item.Provider;
+      entity.Incentivized = item.Incentivized;
+      entity.RewardType = item.RewardType;
+      entity.PartnerIncentiveAmount = item.PartnerIncentiveAmount;
+      entity.PartnerIncentiveCurrency = item.PartnerIncentiveCurrency;
+      entity.AccessibilitySupport = item.AccessibilitySupport;
+      entity.AccommodationOtherDescription = item.AccommodationOtherDescription;
+      entity.AgeFrom = item.AgeFrom;
+      entity.AgeTo = item.AgeTo;
       entity.ZltoReward = item.ZltoReward;
       entity.ZltoRewardPool = item.ZltoRewardPool;
       entity.ZltoRewardCumulative = item.ZltoRewardCumulative;
@@ -352,6 +414,15 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         entity.Summary = item.Summary;
         entity.Instructions = item.Instructions;
         entity.URL = item.URL;
+        entity.Provider = item.Provider;
+        entity.Incentivized = item.Incentivized;
+        entity.RewardType = item.RewardType;
+        entity.PartnerIncentiveAmount = item.PartnerIncentiveAmount;
+        entity.PartnerIncentiveCurrency = item.PartnerIncentiveCurrency;
+        entity.AccessibilitySupport = item.AccessibilitySupport;
+        entity.AccommodationOtherDescription = item.AccommodationOtherDescription;
+        entity.AgeFrom = item.AgeFrom;
+        entity.AgeTo = item.AgeTo;
         entity.ZltoReward = item.ZltoReward;
         entity.ZltoRewardPool = item.ZltoRewardPool;
         entity.ZltoRewardCumulative = item.ZltoRewardCumulative;

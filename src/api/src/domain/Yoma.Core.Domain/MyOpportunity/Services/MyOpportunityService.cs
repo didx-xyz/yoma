@@ -1235,6 +1235,14 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         case VerificationStatus.Rejected:
           result.SkipReason = $"Verification already {myOpportunityExisting.VerificationStatus.Value.ToDescription().ToLower()} for user '{user.Username}' and opportunity '{opportunity.Title}'";
           return result;
+
+        case null:
+        case VerificationStatus.None:
+        case VerificationStatus.Pending:
+          break;
+
+        default:
+          throw new InvalidOperationException($"Verification status of '{myOpportunityExisting.VerificationStatus}' is not supported");
       }
 
       try
@@ -2008,6 +2016,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         request.CustomFields.NormalizeForPatch();
 
       var opportunity = _opportunityService.GetById(opportunityId, true, true, false);
+
+      // Apply the soft age gate when submitting, using the current self-declared profile age.
+      // Browsing remains unrestricted and an accepted submission is not rechecked at finalization.
+      if (!options.PartnerSyncedVerification)
+        opportunity.AssertAgeEligibility(user.DateOfBirth);
 
       PerformActionSendForVerificationApplyDefaults(request, opportunity, options);
 

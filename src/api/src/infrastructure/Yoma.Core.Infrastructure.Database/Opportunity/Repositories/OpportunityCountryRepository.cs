@@ -111,7 +111,11 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
 
     public async Task Delete(OpportunityCountry item)
     {
-      var entity = _context.OpportunityCountries.Where(o => o.Id == item.Id).SingleOrDefault() ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(OpportunityCountry)} with id '{item.Id}' does not exist");
+      var entity = _context.OpportunityCountries
+        .Where(o => o.Id == item.Id)
+        .SingleOrDefault()
+        ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(OpportunityCountry)} with id '{item.Id}' does not exist");
+
       _context.OpportunityCountries.Remove(entity);
       await _context.SaveChangesAsync();
     }

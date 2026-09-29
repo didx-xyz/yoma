@@ -69,6 +69,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly ICustomFieldValueService _customFieldValueService;
     private readonly ISSISchemaService _ssiSchemaService;
 
+    private readonly IRepository<OpportunityAccommodation> _opportunityAccommodationRepository;
+    private readonly IRepository<OpportunityTargetedGroup> _opportunityTargetedGroupRepository;
+    private readonly IRepository<OpportunitySustainableDevelopmentGoal> _opportunitySustainableDevelopmentGoalRepository;
+    private readonly IAccessibilityService _accessibilityService;
+    private readonly ITargetedGroupService _targetedGroupService;
+    private readonly ISustainableDevelopmentGoalService _sustainableDevelopmentGoalService;
+
     private readonly OpportunityRequestValidatorCreate _opportunityRequestValidatorCreate;
     private readonly OpportunityRequestValidatorUpdate _opportunityRequestValidatorUpdate;
     private readonly OpportunityRequestCountryValidator _opportunityRequestCountryValidator;
@@ -86,6 +93,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     private readonly IExecutionStrategyService _executionStrategyService;
 
+    public const int Provider_MaxLength = 255;
+    public const int AccommodationOtherDescription_MaxLength = 500;
     public const int Title_MaxLength = 150;
     public const int Summary_MaxLength = 150;
     public const int ExternalId_MaxLength = 100;
@@ -124,6 +133,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
         ICustomFieldDefinitionService customFieldDefinitionService,
         ICustomFieldValueService customFieldValueService,
         ISSISchemaService ssiSchemaService,
+        IRepository<OpportunityAccommodation> opportunityAccommodationRepository,
+        IRepository<OpportunityTargetedGroup> opportunityTargetedGroupRepository,
+        IRepository<OpportunitySustainableDevelopmentGoal> opportunitySustainableDevelopmentGoalRepository,
+        IAccessibilityService accessibilityService,
+        ITargetedGroupService targetedGroupService,
+        ISustainableDevelopmentGoalService sustainableDevelopmentGoalService,
         OpportunityRequestValidatorCreate opportunityRequestValidatorCreate,
         OpportunityRequestValidatorUpdate opportunityRequestValidatorUpdate,
         OpportunityRequestCountryValidator opportunityRequestCountryValidator,
@@ -165,6 +180,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _customFieldDefinitionService = customFieldDefinitionService ?? throw new ArgumentNullException(nameof(customFieldDefinitionService));
       _customFieldValueService = customFieldValueService ?? throw new ArgumentNullException(nameof(customFieldValueService));
       _ssiSchemaService = ssiSchemaService ?? throw new ArgumentNullException(nameof(ssiSchemaService));
+
+      _opportunityAccommodationRepository = opportunityAccommodationRepository ?? throw new ArgumentNullException(nameof(opportunityAccommodationRepository));
+      _opportunityTargetedGroupRepository = opportunityTargetedGroupRepository ?? throw new ArgumentNullException(nameof(opportunityTargetedGroupRepository));
+      _opportunitySustainableDevelopmentGoalRepository = opportunitySustainableDevelopmentGoalRepository ?? throw new ArgumentNullException(nameof(opportunitySustainableDevelopmentGoalRepository));
+      _accessibilityService = accessibilityService ?? throw new ArgumentNullException(nameof(accessibilityService));
+      _targetedGroupService = targetedGroupService ?? throw new ArgumentNullException(nameof(targetedGroupService));
+      _sustainableDevelopmentGoalService = sustainableDevelopmentGoalService ?? throw new ArgumentNullException(nameof(sustainableDevelopmentGoalService));
 
       _opportunityRequestValidatorCreate = opportunityRequestValidatorCreate ?? throw new ArgumentNullException(nameof(opportunityRequestValidatorCreate));
       _opportunityRequestValidatorUpdate = opportunityRequestValidatorUpdate ?? throw new ArgumentNullException(nameof(opportunityRequestValidatorUpdate));
@@ -555,6 +577,183 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var results = languages
         .OrderByDescending(l => languageSiteId != null && l.Id == languageSiteId)
         .ThenByDescending(l => languageOpportunities.FirstOrDefault(lo => lo.LanguageId == l.Id)?.OpportunityCount ?? 0)
+        .ThenBy(l => l.Name)
+        .ToList();
+
+      return results;
+    }
+
+    public List<Domain.Lookups.Models.Accessibility> ListOpportunitySearchCriteriaAccommodationsAdmin(List<Guid>? organizations, bool ensureOrganizationAuthorization)
+    {
+      organizations = SearchCriteriaAdminValidateRequest(organizations, ensureOrganizationAuthorization);
+
+      var query = _opportunityAccommodationRepository.Query();
+
+      if (organizations != null && organizations.Count != 0)
+        query = query.Where(o => organizations.Contains(o.OrganizationId));
+
+      var selectionIds = query.Select(o => o.AccommodationId).Distinct().ToList();
+
+      return [.. _accessibilityService.List().Where(o => selectionIds.Contains(o.Id)).OrderBy(o => o.Name)];
+    }
+
+    public List<Domain.Lookups.Models.Accessibility> ListOpportunitySearchCriteriaAccommodations(List<PublishedState>? publishedStates)
+    {
+      publishedStates = publishedStates == null || publishedStates.Count == 0 ?
+             [PublishedState.NotStarted, PublishedState.Active] : publishedStates;
+
+      var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
+      var query = _opportunityAccommodationRepository.Query().Where(o => o.OrganizationStatusId == organizationStatusActiveId);
+
+      //exclude hidden
+      query = query.Where(o => !o.OpporunityHidden.HasValue || o.OpporunityHidden == false);
+
+      var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
+      var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
+
+      var predicate = PredicateBuilder.False<OpportunityAccommodation>();
+      foreach (var state in publishedStates)
+      {
+        predicate = state switch
+        {
+          PublishedState.NotStarted => predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart > DateTimeOffset.UtcNow),
+          PublishedState.Active => predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart <= DateTimeOffset.UtcNow),
+          PublishedState.Expired => predicate.Or(o => o.OpportunityStatusId == statusExpiredId),
+          _ => throw new InvalidOperationException($"Published state of '{state}' is not supported"),
+        };
+      }
+
+      query = query.Where(predicate);
+
+      var selectionOpportunities = query
+        .GroupBy(o => o.AccommodationId)
+        .Select(g => new { AccommodationId = g.Key, OpportunityCount = g.Count() })
+        .ToList();
+
+      var selections = _accessibilityService.List()
+        .Where(o => selectionOpportunities.Select(lo => lo.AccommodationId).Contains(o.Id))
+        .ToList();
+
+      var results = selections
+        .OrderByDescending(l => selectionOpportunities.FirstOrDefault(lo => lo.AccommodationId == l.Id)?.OpportunityCount ?? 0)
+        .ThenBy(l => l.Name)
+        .ToList();
+
+      return results;
+    }
+
+    public List<Domain.Lookups.Models.TargetedGroup> ListOpportunitySearchCriteriaTargetedGroupsAdmin(List<Guid>? organizations, bool ensureOrganizationAuthorization)
+    {
+      organizations = SearchCriteriaAdminValidateRequest(organizations, ensureOrganizationAuthorization);
+
+      var query = _opportunityTargetedGroupRepository.Query();
+
+      if (organizations != null && organizations.Count != 0)
+        query = query.Where(o => organizations.Contains(o.OrganizationId));
+
+      var selectionIds = query.Select(o => o.TargetedGroupId).Distinct().ToList();
+
+      return [.. _targetedGroupService.List().Where(o => selectionIds.Contains(o.Id)).OrderBy(o => o.Name)];
+    }
+
+    public List<Domain.Lookups.Models.TargetedGroup> ListOpportunitySearchCriteriaTargetedGroups(List<PublishedState>? publishedStates)
+    {
+      publishedStates = publishedStates == null || publishedStates.Count == 0 ?
+             [PublishedState.NotStarted, PublishedState.Active] : publishedStates;
+
+      var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
+      var query = _opportunityTargetedGroupRepository.Query().Where(o => o.OrganizationStatusId == organizationStatusActiveId);
+
+      //exclude hidden
+      query = query.Where(o => !o.OpporunityHidden.HasValue || o.OpporunityHidden == false);
+
+      var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
+      var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
+
+      var predicate = PredicateBuilder.False<OpportunityTargetedGroup>();
+      foreach (var state in publishedStates)
+      {
+        predicate = state switch
+        {
+          PublishedState.NotStarted => predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart > DateTimeOffset.UtcNow),
+          PublishedState.Active => predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart <= DateTimeOffset.UtcNow),
+          PublishedState.Expired => predicate.Or(o => o.OpportunityStatusId == statusExpiredId),
+          _ => throw new InvalidOperationException($"Published state of '{state}' is not supported"),
+        };
+      }
+
+      query = query.Where(predicate);
+
+      var selectionOpportunities = query
+        .GroupBy(o => o.TargetedGroupId)
+        .Select(g => new { TargetedGroupId = g.Key, OpportunityCount = g.Count() })
+        .ToList();
+
+      var selections = _targetedGroupService.List()
+        .Where(o => selectionOpportunities.Select(lo => lo.TargetedGroupId).Contains(o.Id))
+        .ToList();
+
+      var results = selections
+        .OrderByDescending(l => selectionOpportunities.FirstOrDefault(lo => lo.TargetedGroupId == l.Id)?.OpportunityCount ?? 0)
+        .ThenBy(l => l.Name)
+        .ToList();
+
+      return results;
+    }
+
+    public List<Domain.Lookups.Models.SustainableDevelopmentGoal> ListOpportunitySearchCriteriaSustainableDevelopmentGoalsAdmin(List<Guid>? organizations, bool ensureOrganizationAuthorization)
+    {
+      organizations = SearchCriteriaAdminValidateRequest(organizations, ensureOrganizationAuthorization);
+
+      var query = _opportunitySustainableDevelopmentGoalRepository.Query();
+
+      if (organizations != null && organizations.Count != 0)
+        query = query.Where(o => organizations.Contains(o.OrganizationId));
+
+      var selectionIds = query.Select(o => o.SustainableDevelopmentGoalId).Distinct().ToList();
+
+      return [.. _sustainableDevelopmentGoalService.List().Where(o => selectionIds.Contains(o.Id)).OrderBy(o => o.Name)];
+    }
+
+    public List<Domain.Lookups.Models.SustainableDevelopmentGoal> ListOpportunitySearchCriteriaSustainableDevelopmentGoals(List<PublishedState>? publishedStates)
+    {
+      publishedStates = publishedStates == null || publishedStates.Count == 0 ?
+             [PublishedState.NotStarted, PublishedState.Active] : publishedStates;
+
+      var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
+      var query = _opportunitySustainableDevelopmentGoalRepository.Query().Where(o => o.OrganizationStatusId == organizationStatusActiveId);
+
+      //exclude hidden
+      query = query.Where(o => !o.OpporunityHidden.HasValue || o.OpporunityHidden == false);
+
+      var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
+      var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
+
+      var predicate = PredicateBuilder.False<OpportunitySustainableDevelopmentGoal>();
+      foreach (var state in publishedStates)
+      {
+        predicate = state switch
+        {
+          PublishedState.NotStarted => predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart > DateTimeOffset.UtcNow),
+          PublishedState.Active => predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart <= DateTimeOffset.UtcNow),
+          PublishedState.Expired => predicate.Or(o => o.OpportunityStatusId == statusExpiredId),
+          _ => throw new InvalidOperationException($"Published state of '{state}' is not supported"),
+        };
+      }
+
+      query = query.Where(predicate);
+
+      var selectionOpportunities = query
+        .GroupBy(o => o.SustainableDevelopmentGoalId)
+        .Select(g => new { SustainableDevelopmentGoalId = g.Key, OpportunityCount = g.Count() })
+        .ToList();
+
+      var selections = _sustainableDevelopmentGoalService.List()
+        .Where(o => selectionOpportunities.Select(lo => lo.SustainableDevelopmentGoalId).Contains(o.Id))
+        .ToList();
+
+      var results = selections
+        .OrderByDescending(l => selectionOpportunities.FirstOrDefault(lo => lo.SustainableDevelopmentGoalId == l.Id)?.OpportunityCount ?? 0)
         .ThenBy(l => l.Name)
         .ToList();
 
@@ -955,7 +1154,52 @@ namespace Yoma.Core.Domain.Opportunity.Services
         }
       }
 
-      //zltoReward
+      // provider
+      if (!string.IsNullOrEmpty(filter.Provider))
+        query = query.Where(_opportunityRepository.Contains(o => o.Provider, filter.Provider).Or(o => o.Provider == null));
+
+      // incentives
+      if (filter.Incentivized.HasValue)
+        query = query.Where(o => !o.Incentivized.HasValue || o.Incentivized == filter.Incentivized);
+      if (filter.RewardTypes?.Count > 0)
+        query = query.Where(o => filter.RewardTypes.Contains(o.RewardType));
+
+      // accessibility support
+      if (filter.AccessibilitySupport.HasValue)
+        query = query.Where(o => !o.AccessibilitySupport.HasValue || o.AccessibilitySupport == filter.AccessibilitySupport);
+
+      // age bounds
+      if (filter.Age.HasValue)
+        query = query.Where(o => (!o.AgeFrom.HasValue || o.AgeFrom <= filter.Age) && (!o.AgeTo.HasValue || o.AgeTo >= filter.Age));
+
+      // Accessibility intentionally requires ALL selected accommodations and excludes unknowns.
+      if (!string.IsNullOrEmpty(filter.AccommodationOtherDescription))
+        query = query.Where(_opportunityRepository.Contains(o => o.AccommodationOtherDescription, filter.AccommodationOtherDescription));
+
+      if (filter.Accommodations?.Count > 0)
+        foreach (var id in filter.Accommodations.Distinct())
+        {
+          var matching = _opportunityAccommodationRepository.Query().Where(o => o.AccommodationId == id).Select(o => o.OpportunityId);
+          query = query.Where(o => matching.Contains(o.Id));
+        }
+
+      // Targeted groups use ANY matching selection and include unspecified rows.
+      if (filter.TargetedGroups?.Count > 0)
+      {
+        var all = _opportunityTargetedGroupRepository.Query().Select(o => o.OpportunityId);
+        var matching = _opportunityTargetedGroupRepository.Query().Where(o => filter.TargetedGroups.Contains(o.TargetedGroupId)).Select(o => o.OpportunityId);
+        query = query.Where(o => !all.Contains(o.Id) || matching.Contains(o.Id));
+      }
+
+      // Sustainable development goals use ANY matching selection and include unspecified rows.
+      if (filter.SustainableDevelopmentGoals?.Count > 0)
+      {
+        var all = _opportunitySustainableDevelopmentGoalRepository.Query().Select(o => o.OpportunityId);
+        var matching = _opportunitySustainableDevelopmentGoalRepository.Query().Where(o => filter.SustainableDevelopmentGoals.Contains(o.SustainableDevelopmentGoalId)).Select(o => o.OpportunityId);
+        query = query.Where(o => !all.Contains(o.Id) || matching.Contains(o.Id));
+      }
+
+      // zlto reward
       if (filter.ZltoReward != null)
       {
         //ranges
@@ -1109,6 +1353,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
           }
 
           dto = csv.GetRecord<OpportunityInfoCsvImport>();
+          dto.FieldsPresent = new HashSet<string>(csv.HeaderRecord ?? [], StringComparer.OrdinalIgnoreCase);
           dto.CustomFieldValues = CSVImportHelper.ReadCustomFieldValues(csv, customFieldColumns);
           dto.Validate(errors, rowNumber);
 
@@ -1189,7 +1434,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       request.URL = request.URL?.EnsureHttpsScheme();
 
-      await _opportunityRequestValidatorCreate.ValidateAndThrowAsync(request);
+      await _opportunityRequestValidatorCreate.ValidateAsync(request, validation =>
+      {
+        validation.IncludeRuleSets("default");
+        if (options.EnsureOrganizationAuthorization) validation.IncludeRuleSets("Manual");
+        validation.ThrowOnFailures();
+      });
       await AssertSSISchemaApplicable(request);
 
       request.DateStart = request.DateStart.RemoveTime();
@@ -1249,6 +1499,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
         Summary = request.Summary,
         Instructions = request.Instructions,
         URL = request.URL,
+        Provider = request.Provider,
+        Incentivized = request.Incentivized,
+        RewardType = request.RewardType,
+        PartnerIncentiveAmount = request.PartnerIncentiveAmount,
+        PartnerIncentiveCurrency = request.PartnerIncentiveCurrency,
+        AccessibilitySupport = request.AccessibilitySupport,
+        AccommodationOtherDescription = request.AccommodationOtherDescription,
+        AgeFrom = request.AgeFrom,
+        AgeTo = request.AgeTo,
         ZltoReward = request.ZltoReward,
         ZltoRewardPool = request.ZltoRewardPool,
         VerificationEnabled = request.VerificationEnabled,
@@ -1301,6 +1560,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
         using var scope = TransactionScopeHelper.CreateReadCommitted();
         result = await _opportunityRepository.Create(result);
 
+        // accommodations (optional)
+        result = await AssignAccommodations(result, request.Accommodations);
+
+        // targeted groups (optional)
+        result = await AssignTargetedGroups(result, request.TargetedGroups);
+
+        // sustainable development goals (optional)
+        result = await AssignSustainableDevelopmentGoals(result, request.SustainableDevelopmentGoals);
+
         // categories
         result = await AssignCategories(result, request.Categories);
 
@@ -1352,7 +1620,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       request.URL = request.URL?.EnsureHttpsScheme();
 
-      await _opportunityRequestValidatorUpdate.ValidateAndThrowAsync(request);
+      await _opportunityRequestValidatorUpdate.ValidateAsync(request, validation =>
+      {
+        validation.IncludeRuleSets("default");
+        if (options.EnsureOrganizationAuthorization) validation.IncludeRuleSets("Manual");
+        validation.ThrowOnFailures();
+      });
 
       request.DateStart = request.DateStart.RemoveTime();
       if (request.DateEnd.HasValue) request.DateEnd = request.DateEnd.Value.ToEndOfDay();
@@ -1413,6 +1686,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
       result.Summary = request.Summary;
       result.Instructions = request.Instructions;
       result.URL = request.URL;
+      result.Provider = request.Provider;
+      result.Incentivized = request.Incentivized;
+      result.RewardType = request.RewardType;
+      result.PartnerIncentiveAmount = request.PartnerIncentiveAmount;
+      result.PartnerIncentiveCurrency = request.PartnerIncentiveCurrency;
+      result.AccessibilitySupport = request.AccessibilitySupport;
+      result.AccommodationOtherDescription = request.AccommodationOtherDescription;
+      result.AgeFrom = request.AgeFrom;
+      result.AgeTo = request.AgeTo;
       result.ZltoReward = request.ZltoReward;
       result.ZltoRewardPool = request.ZltoRewardPool;
       result.VerificationEnabled = request.VerificationEnabled;
@@ -1474,6 +1756,18 @@ namespace Yoma.Core.Domain.Opportunity.Services
           actionedByPartnerSyncPull: options.SyncTypeActionedBy == SyncType.Pull);
 
         result = await _opportunityRepository.Update(result);
+
+        // accommodations (optional)
+        result = await RemoveAccommodations(result, result.Accommodations?.Where(o => request.Accommodations?.Contains(o.Id) != true).Select(o => o.Id).ToList());
+        result = await AssignAccommodations(result, request.Accommodations);
+
+        // targeted groups (optional)
+        result = await RemoveTargetedGroups(result, result.TargetedGroups?.Where(o => request.TargetedGroups?.Contains(o.Id) != true).Select(o => o.Id).ToList());
+        result = await AssignTargetedGroups(result, request.TargetedGroups);
+
+        // sustainable development goals (optional)
+        result = await RemoveSustainableDevelopmentGoals(result, result.SustainableDevelopmentGoals?.Where(o => request.SustainableDevelopmentGoals?.Contains(o.Id) != true).Select(o => o.Id).ToList());
+        result = await AssignSustainableDevelopmentGoals(result, request.SustainableDevelopmentGoals);
 
         // categories
         result = await RemoveCategories(result, result.Categories?.Where(o => !request.Categories.Contains(o.Id)).Select(o => o.Id).ToList());
@@ -2147,14 +2441,59 @@ namespace Yoma.Core.Domain.Opportunity.Services
       request.DateStart = item.DateStart.ToDateTimeOffset();
       request.DateEnd = item.DateEnd?.ToDateTimeOffset();
       request.ParticipantLimit = item.ParticipantLimit;
+      request.Provider = existingByExternalId == null || item.FieldsPresent.Contains(nameof(item.Provider))
+        ? item.Provider
+        : existingByExternalId.Provider;
+      request.Incentivized = existingByExternalId == null || item.FieldsPresent.Contains(nameof(item.Incentivized))
+        ? item.Incentivized
+        : existingByExternalId.Incentivized;
+      // A supplied column is authoritative, including an empty cell. Older CSVs infer ZLTO
+      // from the imported reward, while preserving an existing partner incentive selection.
+      if (item.FieldsPresent.Contains(nameof(item.RewardType)))
+        request.RewardType = item.RewardType ?? RewardType.None;
+      else if (existingByExternalId?.RewardType == RewardType.PartnerIncentive)
+        request.RewardType = RewardType.PartnerIncentive;
+      else
+        request.RewardType = item.ZltoReward.HasValue ? RewardType.ZLTO : RewardType.None;
+      request.PartnerIncentiveAmount = existingByExternalId == null || item.FieldsPresent.Contains(nameof(item.PartnerIncentiveAmount))
+        ? item.PartnerIncentiveAmount
+        : existingByExternalId.PartnerIncentiveAmount;
+      request.PartnerIncentiveCurrency = existingByExternalId == null || item.FieldsPresent.Contains(nameof(item.PartnerIncentiveCurrency))
+        ? item.PartnerIncentiveCurrency
+        : existingByExternalId.PartnerIncentiveCurrency;
+      request.AccessibilitySupport = existingByExternalId == null || item.FieldsPresent.Contains(nameof(item.AccessibilitySupport))
+        ? item.AccessibilitySupport
+        : existingByExternalId.AccessibilitySupport;
+      request.AccommodationOtherDescription = existingByExternalId == null || item.FieldsPresent.Contains(nameof(item.AccommodationOtherDescription))
+        ? item.AccommodationOtherDescription
+        : existingByExternalId.AccommodationOtherDescription;
+      request.AgeFrom = existingByExternalId == null || item.FieldsPresent.Contains(nameof(item.AgeFrom))
+        ? item.AgeFrom
+        : existingByExternalId.AgeFrom;
+      request.AgeTo = existingByExternalId == null || item.FieldsPresent.Contains(nameof(item.AgeTo))
+        ? item.AgeTo
+        : existingByExternalId.AgeTo;
       request.ZltoReward = item.ZltoReward;
       request.ZltoRewardPool = item.ZltoRewardPool;
+      request.Accommodations = existingByExternalId != null && !item.FieldsPresent.Contains(nameof(item.Accommodations))
+        ? [.. _opportunityAccommodationRepository.Query().Where(o => o.OpportunityId == existingByExternalId.Id).Select(o => o.AccommodationId)]
+        : item.Accommodations?.Select(value => _accessibilityService.GetByName(value).Id).ToList();
+      request.TargetedGroups = existingByExternalId != null && !item.FieldsPresent.Contains(nameof(item.TargetedGroups))
+        ? [.. _opportunityTargetedGroupRepository.Query().Where(o => o.OpportunityId == existingByExternalId.Id).Select(o => o.TargetedGroupId)]
+        : item.TargetedGroups?.Select(value => _targetedGroupService.GetByName(value).Id).ToList();
+      request.SustainableDevelopmentGoals = existingByExternalId != null && !item.FieldsPresent.Contains(nameof(item.SustainableDevelopmentGoals))
+        ? [.. _opportunitySustainableDevelopmentGoalRepository.Query().Where(o => o.OpportunityId == existingByExternalId.Id).Select(o => o.SustainableDevelopmentGoalId)]
+        : item.SustainableDevelopmentGoals?.Select(value => _sustainableDevelopmentGoalService.List().SingleOrDefault(o => o.Number.ToString() == value || string.Equals(o.Name, value, StringComparison.OrdinalIgnoreCase))?.Id ?? throw new ValidationException($"Unknown Sustainable Development Goal '{value}'")).ToList();
       request.Skills = skills?.Select(o => o.Id).ToList();
       request.Keywords = keywords;
       request.Hidden = item.Hidden;
       request.ExternalId = item.ExternalId;
       //Instructions
       //ShareWithPartners
+
+      // Older CSVs carry ZLTO reward but no incentive flag. That explicit reward is sufficient evidence.
+      if (!item.FieldsPresent.Contains(nameof(item.Incentivized)) && request.RewardType != RewardType.None)
+        request.Incentivized = true;
 
       request.CustomFields = customFields;
 
@@ -2625,7 +2964,17 @@ namespace Yoma.Core.Domain.Opportunity.Services
           await _opportunityCountryRepository.Create(item);
 
           opportunity.Countries ??= [];
-          opportunity.Countries.Add(new OpportunityCountryInfo { Id = country.Id, Name = country.Name, CodeAlpha2 = country.CodeAlpha2, CodeAlpha3 = country.CodeAlpha3, CodeNumeric = country.CodeNumeric, Region = item.Region, City = item.City, Coordinates = item.Coordinates });
+          opportunity.Countries.Add(new OpportunityCountryInfo
+          {
+            Id = country.Id,
+            Name = country.Name,
+            CodeAlpha2 = country.CodeAlpha2,
+            CodeAlpha3 = country.CodeAlpha3,
+            CodeNumeric = country.CodeNumeric,
+            Region = item.Region,
+            City = item.City,
+            Coordinates = item.Coordinates
+          });
         }
 
         scope.Complete();
@@ -2653,6 +3002,183 @@ namespace Yoma.Core.Domain.Opportunity.Services
           await _opportunityCountryRepository.Delete(item);
 
           opportunity.Countries?.Remove(opportunity.Countries.Single(o => o.Id == country.Id));
+        }
+
+        scope.Complete();
+      });
+
+      return opportunity;
+    }
+
+    private async Task<Models.Opportunity> AssignAccommodations(Models.Opportunity opportunity, List<Guid>? ids)
+    {
+      if (ids == null || ids.Count == 0) return opportunity;
+
+      ids = [.. ids.Distinct()];
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+
+        foreach (var id in ids)
+        {
+          var value = _accessibilityService.GetById(id);
+          var item = _opportunityAccommodationRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.AccommodationId == id);
+          if (item != null) continue;
+
+          await _opportunityAccommodationRepository.Create(new OpportunityAccommodation
+          {
+            OpportunityId = opportunity.Id,
+            AccommodationId = id
+          });
+
+          opportunity.Accommodations ??= [];
+          opportunity.Accommodations.Add(value);
+        }
+
+        scope.Complete();
+      });
+
+      opportunity.Accommodations = opportunity.Accommodations?.OrderBy(o => o.Name).ToList();
+      return opportunity;
+    }
+
+    private async Task<Models.Opportunity> RemoveAccommodations(Models.Opportunity opportunity, List<Guid>? ids)
+    {
+      if (ids == null || ids.Count == 0) return opportunity;
+
+      ids = [.. ids.Distinct()];
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+
+        foreach (var id in ids)
+        {
+          var item = _opportunityAccommodationRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.AccommodationId == id);
+          if (item == null) continue;
+
+          await _opportunityAccommodationRepository.Delete(item);
+
+          opportunity.Accommodations?.RemoveAll(o => o.Id == id);
+        }
+
+        scope.Complete();
+      });
+
+      return opportunity;
+    }
+
+    private async Task<Models.Opportunity> AssignTargetedGroups(Models.Opportunity opportunity, List<Guid>? ids)
+    {
+      if (ids == null || ids.Count == 0) return opportunity;
+
+      ids = [.. ids.Distinct()];
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+
+        foreach (var id in ids)
+        {
+          var value = _targetedGroupService.GetById(id);
+          var item = _opportunityTargetedGroupRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.TargetedGroupId == id);
+          if (item != null) continue;
+
+          await _opportunityTargetedGroupRepository.Create(new OpportunityTargetedGroup
+          {
+            OpportunityId = opportunity.Id,
+            TargetedGroupId = id
+          });
+
+          opportunity.TargetedGroups ??= [];
+          opportunity.TargetedGroups.Add(value);
+        }
+
+        scope.Complete();
+      });
+
+      opportunity.TargetedGroups = opportunity.TargetedGroups?.OrderBy(o => o.Name).ToList();
+      return opportunity;
+    }
+
+    private async Task<Models.Opportunity> RemoveTargetedGroups(Models.Opportunity opportunity, List<Guid>? ids)
+    {
+      if (ids == null || ids.Count == 0) return opportunity;
+
+      ids = [.. ids.Distinct()];
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+
+        foreach (var id in ids)
+        {
+          var item = _opportunityTargetedGroupRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.TargetedGroupId == id);
+          if (item == null) continue;
+
+          await _opportunityTargetedGroupRepository.Delete(item);
+
+          opportunity.TargetedGroups?.RemoveAll(o => o.Id == id);
+        }
+
+        scope.Complete();
+      });
+
+      return opportunity;
+    }
+
+    private async Task<Models.Opportunity> AssignSustainableDevelopmentGoals(Models.Opportunity opportunity, List<Guid>? ids)
+    {
+      if (ids == null || ids.Count == 0) return opportunity;
+
+      ids = [.. ids.Distinct()];
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+
+        foreach (var id in ids)
+        {
+          var value = _sustainableDevelopmentGoalService.GetById(id);
+          var item = _opportunitySustainableDevelopmentGoalRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.SustainableDevelopmentGoalId == id);
+          if (item != null) continue;
+
+          await _opportunitySustainableDevelopmentGoalRepository.Create(new OpportunitySustainableDevelopmentGoal
+          {
+            OpportunityId = opportunity.Id,
+            SustainableDevelopmentGoalId = id
+          });
+
+          opportunity.SustainableDevelopmentGoals ??= [];
+          opportunity.SustainableDevelopmentGoals.Add(value);
+        }
+
+        scope.Complete();
+      });
+
+      opportunity.SustainableDevelopmentGoals = opportunity.SustainableDevelopmentGoals?.OrderBy(o => o.Number).ToList();
+      return opportunity;
+    }
+
+    private async Task<Models.Opportunity> RemoveSustainableDevelopmentGoals(Models.Opportunity opportunity, List<Guid>? ids)
+    {
+      if (ids == null || ids.Count == 0) return opportunity;
+
+      ids = [.. ids.Distinct()];
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+
+        foreach (var id in ids)
+        {
+          var item = _opportunitySustainableDevelopmentGoalRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.SustainableDevelopmentGoalId == id);
+          if (item == null) continue;
+
+          await _opportunitySustainableDevelopmentGoalRepository.Delete(item);
+
+          opportunity.SustainableDevelopmentGoals?.RemoveAll(o => o.Id == id);
         }
 
         scope.Complete();

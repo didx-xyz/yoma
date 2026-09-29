@@ -9,8 +9,6 @@ namespace Yoma.Core.Domain.Entity.Interfaces
   {
     UserProfile Get();
 
-    Task<UserProfile> UpdateLocation(UserRequestUpdateLocation request);
-
     UserPreferences GetPreferences();
 
     Task<UserPreferences> UpdatePreferences(UserPreferencesRequest request);

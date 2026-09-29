@@ -89,6 +89,8 @@ namespace Yoma.Core.Infrastructure.Database.Context
 
     public DbSet<Country> Country { get; set; }
 
+    public DbSet<Currency> Currency { get; set; }
+
     public DbSet<Education> Education { get; set; }
 
     public DbSet<EngagementType> EngagementType { get; set; }
@@ -98,6 +100,10 @@ namespace Yoma.Core.Infrastructure.Database.Context
     public DbSet<Language> Language { get; set; }
 
     public DbSet<Skill> Skill { get; set; }
+
+    public DbSet<SustainableDevelopmentGoal> SustainableDevelopmentGoal { get; set; }
+
+    public DbSet<TargetedGroup> TargetedGroup { get; set; }
 
     public DbSet<TimeInterval> TimeInterval { get; set; }
     #endregion
@@ -145,6 +151,12 @@ namespace Yoma.Core.Infrastructure.Database.Context
     public DbSet<Opportunity.Entities.Opportunity> Opportunity { get; set; }
 
     public DbSet<OpportunityCategory> OpportunityCategories { get; set; }
+
+    public DbSet<OpportunityAccommodation> OpportunityAccommodations { get; set; }
+
+    public DbSet<OpportunityTargetedGroup> OpportunityTargetedGroups { get; set; }
+
+    public DbSet<OpportunitySustainableDevelopmentGoal> OpportunitySustainableDevelopmentGoals { get; set; }
 
     public DbSet<OpportunityCountry> OpportunityCountries { get; set; }
 
@@ -243,115 +255,13 @@ namespace Yoma.Core.Infrastructure.Database.Context
     #region Protected Members
     protected override void OnModelCreating(ModelBuilder builder)
     {
-      // Match raw substring-search columns while preserving existing B-tree indexes.
+      #region Extensions
+      // Enable substring and spatial search support.
       builder.HasPostgresExtension("pg_trgm");
       builder.HasPostgresExtension("postgis");
-      builder.Entity<OpportunityCountry>().HasIndex(o => o.Coordinates).HasMethod("gist");
-      builder.Entity<OpportunityCountry>().HasIndex(o => o.Region).HasMethod("gin").HasOperators("gin_trgm_ops");
-      builder.Entity<OpportunityCountry>().HasIndex(o => o.City).HasMethod("gin").HasOperators("gin_trgm_ops");
+      #endregion Extensions
 
-      builder.Entity<Opportunity.Entities.Opportunity>()
-          .HasIndex(o => o.Title, "IX_Opportunity_Title_Trgm")
-          .HasMethod("gin")
-          .HasOperators("gin_trgm_ops")
-          .IsCreatedConcurrently();
-
-      builder.Entity<Opportunity.Entities.Opportunity>()
-          .HasIndex(o => o.Summary, "IX_Opportunity_Summary_Trgm")
-          .HasMethod("gin")
-          .HasOperators("gin_trgm_ops")
-          .IsCreatedConcurrently();
-
-      builder.Entity<Opportunity.Entities.Opportunity>()
-          .HasIndex(o => o.Keywords, "IX_Opportunity_Keywords_Trgm")
-          .HasMethod("gin")
-          .HasOperators("gin_trgm_ops")
-          .IsCreatedConcurrently();
-
-      builder.Entity<User>()
-          .HasIndex(o => o.Email, "IX_User_Email_Trgm")
-          .HasMethod("gin")
-          .HasOperators("gin_trgm_ops")
-          .IsCreatedConcurrently();
-
-      builder.Entity<User>()
-          .HasIndex(o => o.FirstName, "IX_User_FirstName_Trgm")
-          .HasMethod("gin")
-          .HasOperators("gin_trgm_ops")
-          .IsCreatedConcurrently();
-
-      builder.Entity<User>()
-          .HasIndex(o => o.Surname, "IX_User_Surname_Trgm")
-          .HasMethod("gin")
-          .HasOperators("gin_trgm_ops")
-          .IsCreatedConcurrently();
-
-      builder.Entity<User>()
-          .HasIndex(o => o.DisplayName, "IX_User_DisplayName_Trgm")
-          .HasMethod("gin")
-          .HasOperators("gin_trgm_ops")
-          .IsCreatedConcurrently();
-
-      builder.Entity<User>()
-          .HasIndex(o => o.PhoneNumber, "IX_User_PhoneNumber_Trgm")
-          .HasMethod("gin")
-          .HasOperators("gin_trgm_ops")
-          .IsCreatedConcurrently();
-
-      builder.Entity<Organization>()
-          .HasIndex(o => o.Name, "IX_Organization_Name_Trgm")
-          .HasMethod("gin")
-          .HasOperators("gin_trgm_ops")
-          .IsCreatedConcurrently();
-
-      builder.Entity<Program>()
-          .HasIndex(o => o.Name, "IX_Program_Name_Trgm")
-          .HasMethod("gin")
-          .HasOperators("gin_trgm_ops")
-          .IsCreatedConcurrently();
-
-      builder.Entity<Program>()
-          .HasIndex(o => o.Summary, "IX_Program_Summary_Trgm")
-          .HasMethod("gin")
-          .HasOperators("gin_trgm_ops")
-          .IsCreatedConcurrently();
-
-      builder.Entity<Referral.Entities.Link>()
-          .HasIndex(o => o.Name, "IX_Referral_Link_Name_Trgm")
-          .HasMethod("gin")
-          .HasOperators("gin_trgm_ops")
-          .IsCreatedConcurrently();
-
-      builder.Entity<Referral.Entities.Link>()
-          .HasIndex(o => o.Description, "IX_Referral_Link_Description_Trgm")
-          .HasMethod("gin")
-          .HasOperators("gin_trgm_ops")
-          .IsCreatedConcurrently();
-
-      builder.Entity<ActionLink.Entities.Link>()
-          .HasIndex(o => o.Name, "IX_ActionLink_Link_Name_Trgm")
-          .HasMethod("gin")
-          .HasOperators("gin_trgm_ops")
-          .IsCreatedConcurrently();
-
-      builder.Entity<ActionLink.Entities.Link>()
-          .HasIndex(o => o.Description, "IX_ActionLink_Link_Description_Trgm")
-          .HasMethod("gin")
-          .HasOperators("gin_trgm_ops")
-          .IsCreatedConcurrently();
-
-      builder.Entity<Marketplace.Entities.StoreAccessControlRule>()
-          .HasIndex(o => o.Name, "IX_StoreAccessControlRule_Name_Trgm")
-          .HasMethod("gin")
-          .HasOperators("gin_trgm_ops")
-          .IsCreatedConcurrently();
-
-      builder.Entity<Skill>()
-          .HasIndex(o => o.Name, "IX_Skill_Name_Trgm")
-          .HasMethod("gin")
-          .HasOperators("gin_trgm_ops")
-          .IsCreatedConcurrently();
-
+      #region Shared Configuration
       builder.Entity<Domain.Core.Models.UnnestedValue>(eb =>
       {
         eb.HasKey(x => x.Id); // keep the key for joins and EF tracking
@@ -373,9 +283,24 @@ namespace Yoma.Core.Infrastructure.Database.Context
         }
       }
 
+      #endregion Shared Configuration
+
       #region ActionLink
       builder.Entity<ActionLink.Entities.Link>()
-          .HasKey(x => x.Id).HasName("PK_ActionLink_Link");
+          .HasIndex(o => o.Name, "IX_ActionLink_Link_Name_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
+      builder.Entity<ActionLink.Entities.Link>()
+          .HasIndex(o => o.Description, "IX_ActionLink_Link_Description_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
+      builder.Entity<ActionLink.Entities.Link>()
+          .HasKey(x => x.Id)
+          .HasName("PK_ActionLink_Link");
 
       builder.Entity<ActionLink.Entities.Link>()
           .HasOne(o => o.CreatedByUser)
@@ -460,6 +385,42 @@ namespace Yoma.Core.Infrastructure.Database.Context
       #endregion Core
 
       #region Entity
+      builder.Entity<User>()
+          .HasIndex(o => o.Email, "IX_User_Email_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
+      builder.Entity<User>()
+          .HasIndex(o => o.FirstName, "IX_User_FirstName_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
+      builder.Entity<User>()
+          .HasIndex(o => o.Surname, "IX_User_Surname_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
+      builder.Entity<User>()
+          .HasIndex(o => o.DisplayName, "IX_User_DisplayName_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
+      builder.Entity<User>()
+          .HasIndex(o => o.PhoneNumber, "IX_User_PhoneNumber_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
+      builder.Entity<Organization>()
+          .HasIndex(o => o.Name, "IX_Organization_Name_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
       builder.Entity<UserSkill>()
           .Property(o => o.Type)
           .HasDefaultValue(Domain.Entity.UserSkillType.Verified.ToString());
@@ -484,9 +445,35 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .IsCreatedConcurrently();
       #endregion
 
+      #region Lookups
+      builder.Entity<Currency>()
+          .HasAlternateKey(o => o.Code);
+
+      builder.Entity<Currency>()
+          .Property(o => o.Code)
+          .HasColumnType("varchar(3)");
+
+      builder.Entity<SustainableDevelopmentGoal>()
+          .HasIndex(o => o.Number)
+          .IsUnique();
+
+      builder.Entity<Skill>()
+          .HasIndex(o => o.Name, "IX_Skill_Name_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+      #endregion Lookups
+
       #region Marketplace
+      builder.Entity<Marketplace.Entities.StoreAccessControlRule>()
+          .HasIndex(o => o.Name, "IX_StoreAccessControlRule_Name_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
       builder.Entity<TransactionStatus>()
-          .HasKey(o => o.Id).HasName("PK_Marketplace_TransactionStatus");
+          .HasKey(o => o.Id)
+          .HasName("PK_Marketplace_TransactionStatus");
       #endregion Marketplace
 
       #region MyOpportunity
@@ -497,6 +484,65 @@ namespace Yoma.Core.Infrastructure.Database.Context
       #endregion MyOpportunity
 
       #region Opportunity
+      builder.Entity<Opportunity.Entities.Opportunity>()
+          .Property(o => o.RewardType)
+          .HasConversion<string>()
+          .HasColumnType("varchar(30)");
+
+      builder.Entity<Opportunity.Entities.Opportunity>()
+          .Property(o => o.AccessibilitySupport)
+          .HasConversion<string>()
+          .HasColumnType("varchar(30)");
+
+      builder.Entity<Opportunity.Entities.Opportunity>()
+          .HasOne<Currency>()
+          .WithMany()
+          .HasForeignKey(o => o.PartnerIncentiveCurrency)
+          .HasPrincipalKey(o => o.Code)
+          .OnDelete(DeleteBehavior.NoAction);
+
+      builder.Entity<Opportunity.Entities.Opportunity>()
+          .HasIndex(o => o.AccommodationOtherDescription)
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops");
+
+      builder.Entity<Opportunity.Entities.Opportunity>()
+          .HasIndex(o => o.Provider)
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops");
+
+      builder.Entity<OpportunityCountry>()
+          .HasIndex(o => o.Coordinates)
+          .HasMethod("gist");
+
+      builder.Entity<OpportunityCountry>()
+          .HasIndex(o => o.Region)
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops");
+
+      builder.Entity<OpportunityCountry>()
+          .HasIndex(o => o.City)
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops");
+
+      builder.Entity<Opportunity.Entities.Opportunity>()
+          .HasIndex(o => o.Title, "IX_Opportunity_Title_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
+      builder.Entity<Opportunity.Entities.Opportunity>()
+          .HasIndex(o => o.Summary, "IX_Opportunity_Summary_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
+      builder.Entity<Opportunity.Entities.Opportunity>()
+          .HasIndex(o => o.Keywords, "IX_Opportunity_Keywords_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
       builder.Entity<Opportunity.Entities.Opportunity>()
           .HasIndex(o => new { o.Description })
           .HasMethod("GIN")
@@ -556,7 +602,67 @@ namespace Yoma.Core.Infrastructure.Database.Context
       });
       #endregion PartnerSync
 
+      #region Payout
+      builder.Entity<Payout.Entities.PayoutTransaction>(entity =>
+      {
+        entity.HasKey(e => e.Id)
+            .HasName("PK_Payout_Transaction");
+
+        // Retain persisted ISO codes while enforcing the shared currency lookup.
+        entity.HasOne<Currency>()
+            .WithMany()
+            .HasForeignKey(e => e.Currency)
+            .HasPrincipalKey(e => e.Code)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        entity.HasIndex(e => e.Currency)
+            .HasDatabaseName("IX_Payout_Transaction_Currency");
+
+        entity.HasIndex(e => e.StatusId)
+            .HasDatabaseName("IX_Payout_Transaction_StatusId");
+
+        entity.HasIndex(e => new { e.Provider, e.TransactionId })
+            .HasDatabaseName("IX_Payout_Transaction_Provider_TransactionId");
+
+        entity.HasIndex(e => new { e.UserId, e.StatusId, e.DateCreated, e.DateModified })
+            .HasDatabaseName("IX_Payout_Transaction_UserId_StatusId_DateCreated_DateModified");
+      });
+
+      builder.Entity<PayoutTransactionStatus>(entity =>
+      {
+        entity.HasKey(e => e.Id)
+            .HasName("PK_Payout_TransactionStatus");
+
+        entity.HasIndex(e => e.Name)
+            .HasDatabaseName("IX_Payout_TransactionStatus_Name");
+      });
+      #endregion Payout
+
       #region Referral
+      builder.Entity<Program>()
+          .HasIndex(o => o.Name, "IX_Program_Name_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
+      builder.Entity<Program>()
+          .HasIndex(o => o.Summary, "IX_Program_Summary_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
+      builder.Entity<Referral.Entities.Link>()
+          .HasIndex(o => o.Name, "IX_Referral_Link_Name_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
+      builder.Entity<Referral.Entities.Link>()
+          .HasIndex(o => o.Description, "IX_Referral_Link_Description_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
       builder.Entity<Block>()
           .HasOne(b => b.User)
           .WithMany(u => u.Blocks)
@@ -575,12 +681,14 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .HasForeignKey(b => b.ModifiedByUserId)
           .OnDelete(DeleteBehavior.NoAction);
 
-      builder.Entity<Block>().HasIndex(o => o.UserId)
+      builder.Entity<Block>()
+          .HasIndex(o => o.UserId)
           .IsUnique()
           .HasFilter($"\"{nameof(Block.Active)}\" = true");
 
       builder.Entity<Referral.Entities.Link>()
-          .HasKey(x => x.Id).HasName("PK_Referral_Link");
+          .HasKey(x => x.Id)
+          .HasName("PK_Referral_Link");
 
       builder.Entity<Program>()
           .HasIndex(o => new { o.Description })
@@ -608,25 +716,7 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .HasIndex(e => new { e.StepId, e.EntityType, e.OpportunityId })
           .IsUnique()
           .HasFilter(null);
-      #endregion
-      #region Payout
-      builder.Entity<Payout.Entities.PayoutTransaction>(entity =>
-      {
-        entity.HasKey(e => e.Id).HasName("PK_Payout_Transaction");
-        entity.HasIndex(e => e.StatusId).HasDatabaseName("IX_Payout_Transaction_StatusId");
-        entity.HasIndex(e => new { e.Provider, e.TransactionId })
-            .HasDatabaseName("IX_Payout_Transaction_Provider_TransactionId");
-        entity.HasIndex(e => new { e.UserId, e.StatusId, e.DateCreated, e.DateModified })
-            .HasDatabaseName("IX_Payout_Transaction_UserId_StatusId_DateCreated_DateModified");
-      });
-
-      builder.Entity<PayoutTransactionStatus>(entity =>
-      {
-        entity.HasKey(e => e.Id).HasName("PK_Payout_TransactionStatus");
-        entity.HasIndex(e => e.Name)
-            .HasDatabaseName("IX_Payout_TransactionStatus_Name");
-      });
-      #endregion Payout
+      #endregion Referral
 
       #region Reward
       // Unique constraint for ZLTO reward issuance.
@@ -645,7 +735,8 @@ namespace Yoma.Core.Infrastructure.Database.Context
       });
 
       builder.Entity<RewardTransactionStatus>()
-          .HasKey(e => e.Id).HasName("PK_Reward_TransactionStatus");
+          .HasKey(e => e.Id)
+          .HasName("PK_Reward_TransactionStatus");
 
       builder.Entity<Reward.Entities.WalletCreation>(entity =>
       {
@@ -666,20 +757,7 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .IsUnique()
           .AreNullsDistinct(false)
           .HasFilter(null);
-      #endregion Reward
-
-      #region SSI
-      builder.Entity<SSITenantCreation>()
-          .HasIndex(e => new { e.EntityType, e.UserId, e.OrganizationId })
-          .IsUnique()
-          .HasFilter(null);
-
-      builder.Entity<SSICredentialIssuance>()
-          .HasIndex(e => new { e.SchemaTypeId, e.UserId, e.OrganizationId, e.MyOpportunityId })
-          .IsUnique()
-          .AreNullsDistinct(false)
-          .HasFilter(null);
-      #endregion
+      #endregion SSI
 
       #region Treasury
       builder.Entity<Treasury.Entities.Treasury>()
@@ -695,6 +773,7 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .OnDelete(DeleteBehavior.NoAction);
       #endregion Treasury
 
+      #region Delete Behaviour
       // Entity deletion is orchestrated explicitly by domain services.
       // Prevent required relationships from inheriting EF's cascade-delete convention.
       foreach (var foreignKey in builder.Model
@@ -704,6 +783,7 @@ namespace Yoma.Core.Infrastructure.Database.Context
       {
         foreignKey.DeleteBehavior = DeleteBehavior.NoAction;
       }
+      #endregion Delete Behaviour
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

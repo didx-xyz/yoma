@@ -56,6 +56,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
     {
       var entity = _context.UserPreferenceAccessibilityRequirements.Where(o => o.Id == item.Id).SingleOrDefault()
         ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(UserPreferenceAccessibilityRequirement)} with id '{item.Id}' does not exist");
+
       _context.UserPreferenceAccessibilityRequirements.Remove(entity);
       await _context.SaveChangesAsync();
     }

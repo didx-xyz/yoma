@@ -105,23 +105,26 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddScoped<IRepositoryBatchedValueContainsWithNavigation<Organization>, OrganizationRepository>();
       services.AddScoped<IRepository<OrganizationUser>, OrganizationUserRepository>();
       services.AddScoped<IRepositoryValueContainsWithNavigation<User>, UserRepository>();
-      services.AddScoped<IRepository<UserPreferences>, UserPreferencesRepository>();
       services.AddScoped<IRepository<UserLoginHistory>, UserLoginHistoryRepository>();
-      services.AddScoped<IRepository<UserSkill>, UserSkillRepository>();
+      services.AddScoped<IRepository<UserPreferences>, UserPreferencesRepository>();
+      services.AddScoped<IRepository<UserPreferenceAccessibilityRequirement>, UserPreferenceAccessibilityRequirementRepository>();
       services.AddScoped<IRepository<UserPreferenceCategory>, UserPreferenceCategoryRepository>();
       services.AddScoped<IRepository<UserPreferenceLanguage>, UserPreferenceLanguageRepository>();
+      services.AddScoped<IRepository<UserSkill>, UserSkillRepository>();
       services.AddScoped<IRepository<UserSkillOrganization>, UserSkillOrganizationRepository>();
       #endregion Entity
 
       #region Lookups
       services.AddScoped<IRepository<Accessibility>, AccessibilityRepository>();
-      services.AddScoped<IRepository<UserPreferenceAccessibilityRequirement>, UserPreferenceAccessibilityRequirementRepository>();
       services.AddScoped<IRepository<Country>, CountryRepository>();
+      services.AddScoped<IRepository<Currency>, CurrencyRepository>();
       services.AddScoped<IRepository<Education>, EducationRepository>();
       services.AddScoped<IRepository<EngagementType>, EngagementTypeRepository>();
       services.AddScoped<IRepository<Gender>, GenderRepository>();
       services.AddScoped<IRepository<Language>, LanguageRepository>();
       services.AddScoped<IRepositoryBatchedValueContains<Skill>, SkillRepository>();
+      services.AddScoped<IRepository<SustainableDevelopmentGoal>, SustainableDevelopmentGoalRepository>();
+      services.AddScoped<IRepository<TargetedGroup>, TargetedGroupRepository>();
       services.AddScoped<IRepository<TimeInterval>, TimeIntervalRepository>();
       #endregion Lookups
 
@@ -156,11 +159,14 @@ namespace Yoma.Core.Infrastructure.Database
       #endregion Lookups
 
       services.AddScoped<IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Domain.Opportunity.Models.Opportunity>, OpportunityRepository>();
+      services.AddScoped<IRepository<OpportunityAccommodation>, OpportunityAccommodationRepository>();
       services.AddScoped<IRepository<OpportunityCategory>, OpportunityCategoryRepository>();
       services.AddScoped<IRepository<OpportunityCountry>, OpportunityCountryRepository>();
       services.AddScoped<IRepositoryPropertyContainsWithSpatial<OpportunityCountry>, OpportunityCountryRepository>();
       services.AddScoped<IRepository<OpportunityLanguage>, OpportunityLanguageRepository>();
       services.AddScoped<IRepository<OpportunitySkill>, OpportunitySkillRepository>();
+      services.AddScoped<IRepository<OpportunitySustainableDevelopmentGoal>, OpportunitySustainableDevelopmentGoalRepository>();
+      services.AddScoped<IRepository<OpportunityTargetedGroup>, OpportunityTargetedGroupRepository>();
       services.AddScoped<IRepository<OpportunityVerificationType>, OpportunityVerificationTypeRepository>();
       #endregion Opportunity
 

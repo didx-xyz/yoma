@@ -162,6 +162,54 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
+    [SwaggerOperation(Summary = "Return a list of accommodations associated with published opportunities (Anonymous)",
+        Description = "By default, results include opportunities that are published (both the opportunity and its organization are Active), regardless of whether they have started (thus published states NotStarted and Active). This default behavior can be overridden")]
+    [HttpGet("search/filter/accommodation")]
+    [ProducesResponseType(typeof(List<Domain.Lookups.Models.Accessibility>), (int)HttpStatusCode.OK)]
+    [AllowAnonymous]
+    public IActionResult ListOpportunitySearchCriteriaAccommodations([FromQuery] List<PublishedState>? publishedStates)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaAccommodations));
+
+      var result = _opportunityService.ListOpportunitySearchCriteriaAccommodations(publishedStates);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaAccommodations));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Return a list of targeted groups associated with published opportunities (Anonymous)",
+        Description = "By default, results include opportunities that are published (both the opportunity and its organization are Active), regardless of whether they have started (thus published states NotStarted and Active). This default behavior can be overridden")]
+    [HttpGet("search/filter/targeted/group")]
+    [ProducesResponseType(typeof(List<Domain.Lookups.Models.TargetedGroup>), (int)HttpStatusCode.OK)]
+    [AllowAnonymous]
+    public IActionResult ListOpportunitySearchCriteriaTargetedGroups([FromQuery] List<PublishedState>? publishedStates)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaTargetedGroups));
+
+      var result = _opportunityService.ListOpportunitySearchCriteriaTargetedGroups(publishedStates);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaTargetedGroups));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Return a list of sustainable development goals associated with published opportunities (Anonymous)",
+        Description = "By default, results include opportunities that are published (both the opportunity and its organization are Active), regardless of whether they have started (thus published states NotStarted and Active). This default behavior can be overridden")]
+    [HttpGet("search/filter/sustainable/development/goal")]
+    [ProducesResponseType(typeof(List<Domain.Lookups.Models.SustainableDevelopmentGoal>), (int)HttpStatusCode.OK)]
+    [AllowAnonymous]
+    public IActionResult ListOpportunitySearchCriteriaSustainableDevelopmentGoals([FromQuery] List<PublishedState>? publishedStates)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaSustainableDevelopmentGoals));
+
+      var result = _opportunityService.ListOpportunitySearchCriteriaSustainableDevelopmentGoals(publishedStates);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaSustainableDevelopmentGoals));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
     [SwaggerOperation(Summary = "Return a list of active organizations associated with published opportunities (Anonymous)",
         Description = "By default, results include opportunities that are published (both the opportunity and its organization are Active), regardless of whether they have started (thus published states NotStarted and Active). This default behavior can be overridden")]
     [HttpGet("search/filter/organization")]
@@ -304,6 +352,54 @@ namespace Yoma.Core.Api.Controllers
       var result = _opportunityService.ListOpportunitySearchCriteriaLanguagesAdmin(organizations, true);
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaLanguagesAdmin));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Return a list of accommodations associated with opportunities",
+      Description = "Organizations: optional for Admin role. Required for Organization Admin role")]
+    [HttpGet("search/filter/accommodation/admin")]
+    [ProducesResponseType(typeof(List<Domain.Lookups.Models.Accessibility>), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    public IActionResult ListOpportunitySearchCriteriaAccommodationsAdmin([FromQuery] List<Guid>? organizations)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaAccommodationsAdmin));
+
+      var result = _opportunityService.ListOpportunitySearchCriteriaAccommodationsAdmin(organizations, true);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaAccommodationsAdmin));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Return a list of targeted groups associated with opportunities",
+      Description = "Organizations: optional for Admin role. Required for Organization Admin role")]
+    [HttpGet("search/filter/targeted/group/admin")]
+    [ProducesResponseType(typeof(List<Domain.Lookups.Models.TargetedGroup>), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    public IActionResult ListOpportunitySearchCriteriaTargetedGroupsAdmin([FromQuery] List<Guid>? organizations)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaTargetedGroupsAdmin));
+
+      var result = _opportunityService.ListOpportunitySearchCriteriaTargetedGroupsAdmin(organizations, true);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaTargetedGroupsAdmin));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Return a list of sustainable development goals associated with opportunities",
+      Description = "Organizations: optional for Admin role. Required for Organization Admin role")]
+    [HttpGet("search/filter/sustainable/development/goal/admin")]
+    [ProducesResponseType(typeof(List<Domain.Lookups.Models.SustainableDevelopmentGoal>), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    public IActionResult ListOpportunitySearchCriteriaSustainableDevelopmentGoalsAdmin([FromQuery] List<Guid>? organizations)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaSustainableDevelopmentGoalsAdmin));
+
+      var result = _opportunityService.ListOpportunitySearchCriteriaSustainableDevelopmentGoalsAdmin(organizations, true);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaSustainableDevelopmentGoalsAdmin));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }

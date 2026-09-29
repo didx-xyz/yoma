@@ -151,7 +151,7 @@ namespace Yoma.Core.Test.Core
       countries.Setup(o => o.GetByIdOrNull(CountryId)).Returns(new Country { Id = CountryId, CodeAlpha2 = "ZA" });
       var worldwide = Guid.NewGuid();
       countries.Setup(o => o.GetByIdOrNull(worldwide)).Returns(new Country { Id = worldwide, CodeAlpha2 = "WW" });
-      var validator = new OpportunityRequestCountryValidator(countries.Object);
+      var validator = new OpportunityRequestCountryValidator(countries.Object, new Domain.Core.Validators.CoordinatesValidator());
       Assert.True(validator.Validate(new OpportunityRequestCountry { CountryId = CountryId }).IsValid);
       Assert.True(validator.Validate(new OpportunityRequestCountry { CountryId = CountryId, Region = "Western Cape" }).IsValid);
       Assert.False(validator.Validate(new OpportunityRequestCountry { CountryId = worldwide, City = "Cape Town" }).IsValid);
@@ -162,7 +162,8 @@ namespace Yoma.Core.Test.Core
     [Fact]
     public void SearchValidatorAllowsIndependentCountriesAndRequiresPairedRadiusCoordinatesPerEntry()
     {
-      var validator = new OpportunitySearchFilterValidator();
+      var validator = new OpportunitySearchFilterValidator(
+        new Domain.Core.Validators.CoordinatesValidator(), Mock.Of<IAccessibilityService>());
       var country = new OpportunitySearchFilterCountry { CountryId = CountryId, City = "Cape Town" };
       var filter = new OpportunitySearchFilterAdmin { PageNumber = 1, PageSize = 10, Countries = [country] };
       Assert.True(validator.Validate(filter).IsValid);
@@ -220,7 +221,10 @@ namespace Yoma.Core.Test.Core
       };
       filter.NormalizeForHashing();
       Assert.Equal(2, filter.Countries!.Count);
-      Assert.False(new OpportunitySearchFilterValidator().Validate(filter).IsValid);
+      var validator = new OpportunitySearchFilterValidator(
+        new Domain.Core.Validators.CoordinatesValidator(), Mock.Of<IAccessibilityService>());
+
+      Assert.False(validator.Validate(filter).IsValid);
 
       var request = new OpportunityRequestCreate
       {

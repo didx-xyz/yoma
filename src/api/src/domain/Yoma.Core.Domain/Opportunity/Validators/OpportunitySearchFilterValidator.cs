@@ -2,6 +2,7 @@ using FluentValidation;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Core.Validators;
+using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity.Models;
 
 namespace Yoma.Core.Domain.Opportunity.Validators
@@ -9,34 +10,114 @@ namespace Yoma.Core.Domain.Opportunity.Validators
   public class OpportunitySearchFilterValidator : PaginationFilterValidator<OpportunitySearchFilterAdmin>
   {
     #region Constructor
-    public OpportunitySearchFilterValidator()
+    public OpportunitySearchFilterValidator(CoordinatesValidator coordinatesValidator,
+        IAccessibilityService accessibilityService)
     {
-      RuleFor(x => x.PaginationEnabled).Equal(true).When(x => !x.TotalCountOnly && !x.UnrestrictedQuery).WithMessage("Pagination required");
-      RuleFor(x => x.Types).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
-      RuleFor(x => x.Categories).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
-      RuleFor(x => x.Languages).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
-      RuleFor(x => x.Countries).Must(x => x == null ||
+      ArgumentNullException.ThrowIfNull(coordinatesValidator);
+      ArgumentNullException.ThrowIfNull(accessibilityService);
+
+      RuleFor(x => x.PaginationEnabled)
+          .Equal(true)
+          .When(x => !x.TotalCountOnly && !x.UnrestrictedQuery)
+          .WithMessage("Pagination required");
+
+      RuleFor(x => x.Provider)
+          .MaximumLength(Services.OpportunityService.Provider_MaxLength);
+
+      RuleFor(x => x.AccommodationOtherDescription)
+          .MaximumLength(Services.OpportunityService.AccommodationOtherDescription_MaxLength)
+          .Must((filter, description) => string.IsNullOrEmpty(description) ||
+            filter.Accommodations?.Any(id => id != Guid.Empty &&
+              accessibilityService.GetByIdOrNull(id)?.Name == AccessibilityOption.Other.ToString()) == true)
+          .WithMessage("Select the Other accommodation when filtering by its description.");
+
+      RuleFor(x => x.Age)
+          .GreaterThanOrEqualTo((short)0);
+
+      RuleForEach(x => x.RewardTypes)
+          .IsInEnum();
+
+      RuleFor(x => x.AccessibilitySupport)
+          .IsInEnum()
+          .When(x => x.AccessibilitySupport.HasValue);
+
+      RuleForEach(x => x.Accommodations)
+          .NotEmpty();
+
+      RuleForEach(x => x.TargetedGroups)
+          .NotEmpty();
+
+      RuleForEach(x => x.SustainableDevelopmentGoals)
+          .NotEmpty();
+
+      RuleFor(x => x.Types)
+          .Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty))
+          .WithMessage("{PropertyName} contains empty value(s).");
+
+      RuleFor(x => x.Categories)
+          .Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty))
+          .WithMessage("{PropertyName} contains empty value(s).");
+
+      RuleFor(x => x.Languages)
+          .Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty))
+          .WithMessage("{PropertyName} contains empty value(s).");
+
+      RuleFor(x => x.Countries)
+          .Must(x => x == null ||
         x.All(o => o != null) && x.Select(o => o.CountryId).Distinct().Count() == x.Count)
-        .WithMessage("Countries must contain one non-empty entry per country.");
-      RuleForEach(x => x.Countries).ChildRules(country =>
+          .WithMessage("Countries must contain one non-empty entry per country.");
+
+      RuleForEach(x => x.Countries)
+          .ChildRules(country =>
       {
-        country.RuleFor(x => x.CountryId).NotEmpty();
-        country.RuleFor(x => x.Region).MaximumLength(Constants.Region_MaxLength);
-        country.RuleFor(x => x.City).MaximumLength(Constants.City_MaxLength);
-        country.RuleFor(x => x).Must(x => x.Region == null && x.City == null)
-          .When(x => x.RadiusKm.HasValue || x.Coordinates != null)
-          .WithMessage("Specify either region/city or coordinates and radius, not both.");
-        country.RuleFor(x => x).Must(x => (x.Coordinates != null) == x.RadiusKm.HasValue)
-          .WithMessage("Coordinates and radius must be supplied together.");
-        country.RuleFor(x => x.RadiusKm).Must(x => x.HasValue && double.IsFinite(x.Value * 1000) && x.Value > 0)
-          .When(x => x.RadiusKm.HasValue).WithMessage("Radius must be a finite positive number of kilometres.");
-        country.RuleFor(x => x.Coordinates!).SetValidator(new CoordinatesValidator()).When(x => x.Coordinates != null);
+        country.RuleFor(x => x.CountryId)
+            .NotEmpty();
+
+        country.RuleFor(x => x.Region)
+            .MaximumLength(Constants.Region_MaxLength);
+
+        country.RuleFor(x => x.City)
+            .MaximumLength(Constants.City_MaxLength);
+
+        country.RuleFor(x => x)
+            .Must(x => x.Region == null && x.City == null)
+            .When(x => x.RadiusKm.HasValue || x.Coordinates != null)
+            .WithMessage("Specify either region/city or coordinates and radius, not both.");
+
+        country.RuleFor(x => x)
+            .Must(x => (x.Coordinates != null) == x.RadiusKm.HasValue)
+            .WithMessage("Coordinates and radius must be supplied together.");
+
+        country.RuleFor(x => x.RadiusKm)
+            .Must(x => x.HasValue && double.IsFinite(x.Value * 1000) && x.Value > 0)
+            .When(x => x.RadiusKm.HasValue)
+            .WithMessage("Radius must be a finite positive number of kilometres.");
+
+        country.RuleFor(x => x.Coordinates!)
+            .SetValidator(coordinatesValidator)
+            .When(x => x.Coordinates != null);
       });
-      RuleFor(x => x.Organizations).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
-      RuleFor(x => x.EngagementTypes).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
-      RuleFor(x => x.ValueContains).Length(3, 50).When(x => !string.IsNullOrEmpty(x.ValueContains));
-      RuleFor(x => x.EndDate).GreaterThanOrEqualTo(x => x.StartDate).When(x => x.EndDate.HasValue && x.StartDate.HasValue).WithMessage("{PropertyName} is earlier than the Start Date.");
-      RuleFor(x => x.Opportunities).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
+
+      RuleFor(x => x.Organizations)
+          .Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty))
+          .WithMessage("{PropertyName} contains empty value(s).");
+
+      RuleFor(x => x.EngagementTypes)
+          .Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty))
+          .WithMessage("{PropertyName} contains empty value(s).");
+
+      RuleFor(x => x.ValueContains)
+          .Length(3, 50)
+          .When(x => !string.IsNullOrEmpty(x.ValueContains));
+
+      RuleFor(x => x.EndDate)
+          .GreaterThanOrEqualTo(x => x.StartDate)
+          .When(x => x.EndDate.HasValue && x.StartDate.HasValue)
+          .WithMessage("{PropertyName} is earlier than the Start Date.");
+
+      RuleFor(x => x.Opportunities)
+          .Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty))
+          .WithMessage("{PropertyName} contains empty value(s).");
 
       // CommitmentInterval
       // Options and Interval are optional but mutually exclusive
@@ -61,26 +142,28 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .WithMessage("{PropertyName}: Both Ranges and HasReward cannot be specified at the same time.");
 
       RuleFor(x => x.ZltoReward)
-           .Must(zr => zr?.RangesParsed == null ||
+          .Must(zr => zr?.RangesParsed == null ||
                        zr.RangesParsed.Count == 0 ||
                        zr.RangesParsed.All(item => item.From >= 0 && item.To > item.From))
-           .WithMessage("{PropertyName} is empty, contains invalid reward ranges (the 'To' value must be greater than the 'From' value and the 'From' value must be greater or equal to 0.");
+          .WithMessage("{PropertyName} is empty, contains invalid reward ranges (the 'To' value must be greater than the 'From' value and the 'From' value must be greater or equal to 0.");
 
       RuleFor(x => x.OrderInstructions)
-          .NotNull().WithMessage("{PropertyName} is required")
-          .Must(x => x != null && x.Count > 0).WithMessage("{PropertyName} must contain at least one item.");
+          .NotNull()
+          .WithMessage("{PropertyName} is required")
+          .Must(x => x != null && x.Count > 0)
+          .WithMessage("{PropertyName} must contain at least one item.");
 
       RuleFor(x => x.CustomFields)
-        .Must(HaveUniqueCustomFieldKeys)
-        .WithMessage("{PropertyName} contains duplicate field keys.");
+          .Must(HaveUniqueCustomFieldKeys)
+          .WithMessage("{PropertyName} contains duplicate field keys.");
 
       RuleFor(x => x.CustomFields)
-        .Must(x => x == null || x.Count == 0)
-        .When(x => x.ApplyUserPresets)
-        .WithMessage($"{nameof(OpportunitySearchFilter.ApplyUserPresets)} and {{PropertyName}} cannot be specified together.");
+          .Must(x => x == null || x.Count == 0)
+          .When(x => x.ApplyUserPresets)
+          .WithMessage($"{nameof(OpportunitySearchFilter.ApplyUserPresets)} and {{PropertyName}} cannot be specified together.");
 
       RuleForEach(x => x.CustomFields)
-        .SetValidator(new CustomFieldFilterValidator());
+          .SetValidator(new CustomFieldFilterValidator());
     }
     #endregion
 

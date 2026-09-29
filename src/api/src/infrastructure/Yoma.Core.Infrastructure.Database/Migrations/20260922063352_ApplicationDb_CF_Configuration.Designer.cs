@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Yoma.Core.Infrastructure.Database.Context;
 
@@ -832,6 +833,12 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             .ValueGeneratedOnAdd()
             .HasColumnType("uuid");
 
+          b.Property<string>("City")
+            .HasColumnType("varchar(255)");
+
+          b.Property<Point>("Coordinates")
+            .HasColumnType("geography (point, 4326)");
+
           b.Property<Guid?>("CountryId")
             .HasColumnType("uuid");
 
@@ -871,15 +878,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.Property<Guid?>("GenderId")
             .HasColumnType("uuid");
 
-          b.Property<string>("City")
-            .HasColumnType("varchar(255)");
-
-          b.Property<NetTopologySuite.Geometries.Point>("Coordinates")
-            .HasColumnType("geography (point, 4326)");
-
-          b.Property<string>("Region")
-            .HasColumnType("varchar(255)");
-
           b.Property<string>("LocationSource")
             .HasColumnType("varchar(25)");
 
@@ -891,6 +889,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
           b.Property<Guid?>("PhotoId")
             .HasColumnType("uuid");
+
+          b.Property<string>("Region")
+            .HasColumnType("varchar(255)");
 
           b.Property<string>("Settings")
             .HasColumnType("text");
@@ -960,31 +961,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.ToTable("User", "Entity");
         });
 
-      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.UserPreferenceAccessibilityRequirement", b =>
-        {
-          b.Property<Guid>("Id")
-            .ValueGeneratedOnAdd()
-            .HasColumnType("uuid");
-
-          b.Property<Guid>("AccessibilityId")
-            .HasColumnType("uuid");
-
-          b.Property<DateTimeOffset>("DateCreated")
-            .HasColumnType("timestamp with time zone");
-
-          b.Property<Guid>("UserId")
-            .HasColumnType("uuid");
-
-          b.HasKey("Id");
-
-          b.HasIndex("AccessibilityId");
-
-          b.HasIndex("UserId", "AccessibilityId")
-            .IsUnique();
-
-          b.ToTable("UserPreferenceAccessibilityRequirements", "Entity");
-        });
-
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.UserLoginHistory", b =>
         {
           b.Property<Guid>("Id")
@@ -1018,6 +994,31 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.HasIndex("UserId", "ClientId", "IdentityProvider", "DateCreated");
 
           b.ToTable("UserLoginHistory", "Entity");
+        });
+
+      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.UserPreferenceAccessibilityRequirement", b =>
+        {
+          b.Property<Guid>("Id")
+            .ValueGeneratedOnAdd()
+            .HasColumnType("uuid");
+
+          b.Property<Guid>("AccessibilityId")
+            .HasColumnType("uuid");
+
+          b.Property<DateTimeOffset>("DateCreated")
+            .HasColumnType("timestamp with time zone");
+
+          b.Property<Guid>("UserId")
+            .HasColumnType("uuid");
+
+          b.HasKey("Id");
+
+          b.HasIndex("AccessibilityId");
+
+          b.HasIndex("UserId", "AccessibilityId")
+            .IsUnique();
+
+          b.ToTable("UserPreferenceAccessibilityRequirements", "Entity");
         });
 
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.UserPreferenceCategory", b =>
@@ -1232,6 +1233,30 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.ToTable("Country", "Lookup");
         });
 
+      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Lookups.Entities.Currency", b =>
+        {
+          b.Property<Guid>("Id")
+            .ValueGeneratedOnAdd()
+            .HasColumnType("uuid");
+
+          b.Property<string>("Code")
+            .IsRequired()
+            .HasColumnType("varchar(3)");
+
+          b.Property<DateTimeOffset>("DateCreated")
+            .HasColumnType("timestamp with time zone");
+
+          b.Property<string>("Name")
+            .IsRequired()
+            .HasColumnType("varchar(125)");
+
+          b.HasKey("Id");
+
+          b.HasIndex("Name");
+
+          b.ToTable("Currency", "Lookup");
+        });
+
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Lookups.Entities.Education", b =>
         {
           b.Property<Guid>("Id")
@@ -1365,6 +1390,54 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "Name" }, "IX_Skill_Name_Trgm"), new[] { "gin_trgm_ops" });
 
           b.ToTable("Skill", "Lookup");
+        });
+
+      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Lookups.Entities.SustainableDevelopmentGoal", b =>
+        {
+          b.Property<Guid>("Id")
+            .ValueGeneratedOnAdd()
+            .HasColumnType("uuid");
+
+          b.Property<DateTimeOffset>("DateCreated")
+            .HasColumnType("timestamp with time zone");
+
+          b.Property<string>("Name")
+            .IsRequired()
+            .HasColumnType("varchar(125)");
+
+          b.Property<short>("Number")
+            .HasColumnType("smallint");
+
+          b.HasKey("Id");
+
+          b.HasIndex("Name")
+            .IsUnique();
+
+          b.HasIndex("Number")
+            .IsUnique();
+
+          b.ToTable("SustainableDevelopmentGoal", "Lookup");
+        });
+
+      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Lookups.Entities.TargetedGroup", b =>
+        {
+          b.Property<Guid>("Id")
+            .ValueGeneratedOnAdd()
+            .HasColumnType("uuid");
+
+          b.Property<DateTimeOffset>("DateCreated")
+            .HasColumnType("timestamp with time zone");
+
+          b.Property<string>("Name")
+            .IsRequired()
+            .HasColumnType("varchar(125)");
+
+          b.HasKey("Id");
+
+          b.HasIndex("Name")
+            .IsUnique();
+
+          b.ToTable("TargetedGroup", "Lookup");
         });
 
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Lookups.Entities.TimeInterval", b =>
@@ -1845,6 +1918,18 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             .ValueGeneratedOnAdd()
             .HasColumnType("uuid");
 
+          b.Property<string>("AccessibilitySupport")
+            .HasColumnType("varchar(30)");
+
+          b.Property<string>("AccommodationOtherDescription")
+            .HasColumnType("varchar(500)");
+
+          b.Property<short?>("AgeFrom")
+            .HasColumnType("smallint");
+
+          b.Property<short?>("AgeTo")
+            .HasColumnType("smallint");
+
           b.Property<short?>("CommitmentIntervalCount")
             .HasColumnType("smallint");
 
@@ -1888,6 +1973,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.Property<bool?>("Hidden")
             .HasColumnType("boolean");
 
+          b.Property<bool?>("Incentivized")
+            .HasColumnType("boolean");
+
           b.Property<string>("Instructions")
             .HasColumnType("text");
 
@@ -1905,6 +1993,19 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
           b.Property<int?>("ParticipantLimit")
             .HasColumnType("integer");
+
+          b.Property<decimal?>("PartnerIncentiveAmount")
+            .HasColumnType("decimal(18,4)");
+
+          b.Property<string>("PartnerIncentiveCurrency")
+            .HasColumnType("varchar(3)");
+
+          b.Property<string>("Provider")
+            .HasColumnType("varchar(255)");
+
+          b.Property<string>("RewardType")
+            .IsRequired()
+            .HasColumnType("varchar(30)");
 
           b.Property<string>("SSISchemaName")
             .HasColumnType("varchar(255)");
@@ -1960,6 +2061,18 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
           b.HasIndex("ModifiedByUserId");
 
+          b.HasIndex("PartnerIncentiveCurrency");
+
+          b.HasIndex("AccommodationOtherDescription");
+
+          NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("AccommodationOtherDescription"), "gin");
+          NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("AccommodationOtherDescription"), new[] { "gin_trgm_ops" });
+
+          b.HasIndex("Provider");
+
+          NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Provider"), "gin");
+          NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Provider"), new[] { "gin_trgm_ops" });
+
           b.HasIndex("StatusId");
 
           b.HasIndex("Title")
@@ -1991,6 +2104,31 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.ToTable("Opportunity", "Opportunity");
         });
 
+      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.OpportunityAccommodation", b =>
+        {
+          b.Property<Guid>("Id")
+            .ValueGeneratedOnAdd()
+            .HasColumnType("uuid");
+
+          b.Property<Guid>("AccommodationId")
+            .HasColumnType("uuid");
+
+          b.Property<DateTimeOffset>("DateCreated")
+            .HasColumnType("timestamp with time zone");
+
+          b.Property<Guid>("OpportunityId")
+            .HasColumnType("uuid");
+
+          b.HasKey("Id");
+
+          b.HasIndex("AccommodationId");
+
+          b.HasIndex("OpportunityId", "AccommodationId")
+            .IsUnique();
+
+          b.ToTable("OpportunityAccommodations", "Opportunity");
+        });
+
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.OpportunityCategory", b =>
         {
           b.Property<Guid>("Id")
@@ -2018,14 +2156,15 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.OpportunityCountry", b =>
         {
-          b.Property<string>("Region").HasColumnType("varchar(255)");
-          b.Property<string>("City").HasColumnType("varchar(255)");
-          b.Property<NetTopologySuite.Geometries.Point>("Coordinates").HasColumnType("geography (point, 4326)");
-          b.Property<DateTimeOffset>("DateModified").HasColumnType("timestamp with time zone");
-
           b.Property<Guid>("Id")
             .ValueGeneratedOnAdd()
             .HasColumnType("uuid");
+
+          b.Property<string>("City")
+            .HasColumnType("varchar(255)");
+
+          b.Property<Point>("Coordinates")
+            .HasColumnType("geography (point, 4326)");
 
           b.Property<Guid>("CountryId")
             .HasColumnType("uuid");
@@ -2033,20 +2172,37 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.Property<DateTimeOffset>("DateCreated")
             .HasColumnType("timestamp with time zone");
 
+          b.Property<DateTimeOffset>("DateModified")
+            .HasColumnType("timestamp with time zone");
+
           b.Property<Guid>("OpportunityId")
             .HasColumnType("uuid");
 
+          b.Property<string>("Region")
+            .HasColumnType("varchar(255)");
+
           b.HasKey("Id");
 
+          b.HasIndex("City");
+
+          NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("City"), "gin");
+          NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("City"), new[] { "gin_trgm_ops" });
+
+          b.HasIndex("Coordinates");
+
+          NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Coordinates"), "gist");
+
           b.HasIndex("CountryId");
+
+          b.HasIndex("Region");
+
+          NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Region"), "gin");
+          NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Region"), new[] { "gin_trgm_ops" });
 
           b.HasIndex("OpportunityId", "CountryId")
             .IsUnique();
 
           b.ToTable("OpportunityCountries", "Opportunity");
-          b.HasIndex("Coordinates").HasAnnotation("Npgsql:IndexMethod", "gist");
-          b.HasIndex("Region").HasAnnotation("Npgsql:IndexMethod", "gin").HasAnnotation("Npgsql:IndexOperators", new[] { "gin_trgm_ops" });
-          b.HasIndex("City").HasAnnotation("Npgsql:IndexMethod", "gin").HasAnnotation("Npgsql:IndexOperators", new[] { "gin_trgm_ops" });
         });
 
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.OpportunityLanguage", b =>
@@ -2097,6 +2253,56 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             .IsUnique();
 
           b.ToTable("OpportunitySkills", "Opportunity");
+        });
+
+      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.OpportunitySustainableDevelopmentGoal", b =>
+        {
+          b.Property<Guid>("Id")
+            .ValueGeneratedOnAdd()
+            .HasColumnType("uuid");
+
+          b.Property<DateTimeOffset>("DateCreated")
+            .HasColumnType("timestamp with time zone");
+
+          b.Property<Guid>("OpportunityId")
+            .HasColumnType("uuid");
+
+          b.Property<Guid>("SustainableDevelopmentGoalId")
+            .HasColumnType("uuid");
+
+          b.HasKey("Id");
+
+          b.HasIndex("SustainableDevelopmentGoalId");
+
+          b.HasIndex("OpportunityId", "SustainableDevelopmentGoalId")
+            .IsUnique();
+
+          b.ToTable("OpportunitySustainableDevelopmentGoals", "Opportunity");
+        });
+
+      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.OpportunityTargetedGroup", b =>
+        {
+          b.Property<Guid>("Id")
+            .ValueGeneratedOnAdd()
+            .HasColumnType("uuid");
+
+          b.Property<DateTimeOffset>("DateCreated")
+            .HasColumnType("timestamp with time zone");
+
+          b.Property<Guid>("OpportunityId")
+            .HasColumnType("uuid");
+
+          b.Property<Guid>("TargetedGroupId")
+            .HasColumnType("uuid");
+
+          b.HasKey("Id");
+
+          b.HasIndex("TargetedGroupId");
+
+          b.HasIndex("OpportunityId", "TargetedGroupId")
+            .IsUnique();
+
+          b.ToTable("OpportunityTargetedGroups", "Opportunity");
         });
 
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.OpportunityVerificationType", b =>
@@ -2390,7 +2596,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
           b.Property<string>("Currency")
             .IsRequired()
-            .HasColumnType("varchar(10)");
+            .HasColumnType("varchar(3)");
 
           b.Property<DateTimeOffset>("DateCreated")
             .HasColumnType("timestamp with time zone");
@@ -2432,6 +2638,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
           b.HasKey("Id")
             .HasName("PK_Payout_Transaction");
+
+          b.HasIndex("Currency")
+            .HasDatabaseName("IX_Payout_Transaction_Currency");
 
           b.HasIndex("StatusId")
             .HasDatabaseName("IX_Payout_Transaction_StatusId");
@@ -3741,6 +3950,17 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.Navigation("Photo");
         });
 
+      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.UserLoginHistory", b =>
+        {
+          b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
+            .WithMany()
+            .HasForeignKey("UserId")
+            .OnDelete(DeleteBehavior.NoAction)
+            .IsRequired();
+
+          b.Navigation("User");
+        });
+
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.UserPreferenceAccessibilityRequirement", b =>
         {
           b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Accessibility", "Accessibility")
@@ -3758,17 +3978,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.Navigation("Accessibility");
 
           b.Navigation("Preferences");
-        });
-
-      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.UserLoginHistory", b =>
-        {
-          b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
-            .WithMany()
-            .HasForeignKey("UserId")
-            .OnDelete(DeleteBehavior.NoAction)
-            .IsRequired();
-
-          b.Navigation("User");
         });
 
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.UserPreferenceCategory", b =>
@@ -4043,6 +4252,12 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             .OnDelete(DeleteBehavior.NoAction)
             .IsRequired();
 
+          b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Currency", null)
+            .WithMany()
+            .HasForeignKey("PartnerIncentiveCurrency")
+            .HasPrincipalKey("Code")
+            .OnDelete(DeleteBehavior.NoAction);
+
           b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityStatus", "Status")
             .WithMany()
             .HasForeignKey("StatusId")
@@ -4070,6 +4285,25 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.Navigation("Status");
 
           b.Navigation("Type");
+        });
+
+      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.OpportunityAccommodation", b =>
+        {
+          b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Accessibility", "Accommodation")
+            .WithMany()
+            .HasForeignKey("AccommodationId")
+            .OnDelete(DeleteBehavior.NoAction)
+            .IsRequired();
+
+          b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", "Opportunity")
+            .WithMany("Accommodations")
+            .HasForeignKey("OpportunityId")
+            .OnDelete(DeleteBehavior.NoAction)
+            .IsRequired();
+
+          b.Navigation("Accommodation");
+
+          b.Navigation("Opportunity");
         });
 
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.OpportunityCategory", b =>
@@ -4146,6 +4380,44 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.Navigation("Opportunity");
 
           b.Navigation("Skill");
+        });
+
+      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.OpportunitySustainableDevelopmentGoal", b =>
+        {
+          b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", "Opportunity")
+            .WithMany("SustainableDevelopmentGoals")
+            .HasForeignKey("OpportunityId")
+            .OnDelete(DeleteBehavior.NoAction)
+            .IsRequired();
+
+          b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.SustainableDevelopmentGoal", "SustainableDevelopmentGoal")
+            .WithMany()
+            .HasForeignKey("SustainableDevelopmentGoalId")
+            .OnDelete(DeleteBehavior.NoAction)
+            .IsRequired();
+
+          b.Navigation("Opportunity");
+
+          b.Navigation("SustainableDevelopmentGoal");
+        });
+
+      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.OpportunityTargetedGroup", b =>
+        {
+          b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", "Opportunity")
+            .WithMany("TargetedGroups")
+            .HasForeignKey("OpportunityId")
+            .OnDelete(DeleteBehavior.NoAction)
+            .IsRequired();
+
+          b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.TargetedGroup", "TargetedGroup")
+            .WithMany()
+            .HasForeignKey("TargetedGroupId")
+            .OnDelete(DeleteBehavior.NoAction)
+            .IsRequired();
+
+          b.Navigation("Opportunity");
+
+          b.Navigation("TargetedGroup");
         });
 
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.OpportunityVerificationType", b =>
@@ -4233,6 +4505,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Payout.Entities.PayoutTransaction", b =>
         {
+          b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Currency", null)
+            .WithMany()
+            .HasForeignKey("Currency")
+            .HasPrincipalKey("Code")
+            .OnDelete(DeleteBehavior.NoAction)
+            .IsRequired();
+
           b.HasOne("Yoma.Core.Infrastructure.Database.Payout.Entities.Lookups.PayoutTransactionStatus", "Status")
             .WithMany()
             .HasForeignKey("StatusId")
@@ -4654,6 +4933,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", b =>
         {
+          b.Navigation("Accommodations");
+
           b.Navigation("Categories");
 
           b.Navigation("Countries");
@@ -4663,6 +4944,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.Navigation("Languages");
 
           b.Navigation("Skills");
+
+          b.Navigation("SustainableDevelopmentGoals");
+
+          b.Navigation("TargetedGroups");
 
           b.Navigation("VerificationTypes");
         });

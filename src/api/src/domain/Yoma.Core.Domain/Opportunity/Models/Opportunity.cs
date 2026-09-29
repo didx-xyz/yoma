@@ -50,6 +50,59 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public string? URL { get; set; }
 
+    /// <summary>
+    /// Informational provider; does not change the owning organisation or its permissions.
+    /// </summary>
+    // TODO: Consider a separate ProviderURL when time permits; keep it distinct from the opportunity URL.
+    public string? Provider { get; set; }
+
+    /// <summary>
+    /// Whether any incentive is offered. Null means not specified, not unpaid.
+    /// </summary>
+    public bool? Incentivized { get; set; }
+
+    /// <summary>
+    /// Distinguishes Yoma ZLTO rewards from informational partner incentives.
+    /// </summary>
+    public RewardType RewardType { get; set; }
+
+    /// <summary>
+    /// Informational partner-funded amount; Yoma does not process this payment.
+    /// </summary>
+    public decimal? PartnerIncentiveAmount { get; set; }
+
+    /// <summary>
+    /// ISO 4217 currency code for the partner incentive. Not a ZLTO currency.
+    /// </summary>
+    public string? PartnerIncentiveCurrency { get; set; }
+
+    /// <summary>
+    /// Declared accessibility support; available accommodations describe the supported needs.
+    /// </summary>
+    public AccessibilitySupport? AccessibilitySupport { get; set; }
+
+    /// <summary>
+    /// Description required only when the Other accommodation is selected.
+    /// </summary>
+    public string? AccommodationOtherDescription { get; set; }
+
+    /// <summary>
+    /// Inclusive minimum age checked only on submission for verification using self-declared birth date.
+    /// Browsing and finalization are not age-gated. Partner-reported verifications remain authoritative.
+    /// </summary>
+    public short? AgeFrom { get; set; }
+
+    /// <summary>
+    /// Inclusive maximum age; a missing birth date does not block participation.
+    /// </summary>
+    public short? AgeTo { get; set; }
+
+    public List<Accessibility>? Accommodations { get; set; }
+
+    public List<TargetedGroup>? TargetedGroups { get; set; }
+
+    public List<SustainableDevelopmentGoal>? SustainableDevelopmentGoals { get; set; }
+
     public decimal? ZltoReward { get; set; }
 
     public decimal? ZltoRewardPool { get; set; }

@@ -559,7 +559,7 @@ namespace Yoma.Core.Test.Entity
         categoryLookup.Object, accommodationLookup.Object, languageLookup.Object,
         Mock.Of<Domain.SSI.Interfaces.ISSITenantService>(), Mock.Of<Domain.SSI.Interfaces.ISSICredentialService>(),
         Mock.Of<ISettingsDefinitionService>(), Mock.Of<IDelayedExecutionService>(),
-        new UserRequestValidator(Mock.Of<ICountryService>(), Mock.Of<IEducationService>(), Mock.Of<IGenderService>()),
+        new UserRequestValidator(Mock.Of<ICountryService>(), Mock.Of<IEducationService>(), Mock.Of<IGenderService>(), new Domain.Core.Validators.CoordinatesValidator()),
         new UserSearchFilterValidator(), new SettingsRequestValidator(),
         Mock.Of<IRepositoryValueContainsWithNavigation<User>>(), skills.Object, organizations.Object,
         preferredCategories.Object, accessibilityRequirements.Object, preferredLanguages.Object,

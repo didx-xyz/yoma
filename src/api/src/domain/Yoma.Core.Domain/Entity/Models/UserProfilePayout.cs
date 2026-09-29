@@ -1,3 +1,4 @@
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Payout;
 using Yoma.Core.Domain.Payout.Models;
 
@@ -54,7 +55,7 @@ namespace Yoma.Core.Domain.Entity.Models
     /// Currency of the active payout Amount (currently USD). Null when no payout is in flight.
     /// Independent of the current profile country's CountryAvailability.Currency.
     /// </summary>
-    public Currency? Currency { get; set; }
+    public CurrencyOption? Currency { get; set; }
 
     /// <summary>
     /// Initiation time of the active payout. Null when no payout is in flight.

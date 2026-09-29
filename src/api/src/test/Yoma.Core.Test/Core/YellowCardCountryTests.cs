@@ -37,7 +37,7 @@ namespace Yoma.Core.Test.Core
       var result = await CreateClient().ListCountriesSupported();
       var country = Assert.Single(result.Countries!);
       Assert.Equal(expected == null ? null : decimal.Parse(expected, System.Globalization.CultureInfo.InvariantCulture), country.MinimumAmount);
-      Assert.Equal(Currency.USD, country.Currency);
+      Assert.Equal(Domain.Core.CurrencyOption.USD, country.Currency);
       Assert.Equal("ZAF", country.CodeAlpha3);
       Assert.Equal("710", country.CodeNumeric);
       http.ShouldHaveCalled("https://ixo.test/countries?ramp=offramp&limits=true").WithVerb(HttpMethod.Get).Times(1);

@@ -18,7 +18,7 @@ Give youth one editable set of User-owned preferences: self-attested EMSI skills
 
 - No new preference fields in Keycloak or YoID credentials.
 - No arbitrary JSON, Keycloak profile field, or automatic opportunity matching in this feature.
-- Opportunity location storage and region/city/radius search are owned by YOM-1254; see its 2026-09-28-b handover.
+- Opportunity location storage and region/city/radius search are owned by YOM-1254; see its consolidated 2026-09-28-a handover, Country and location section.
 
 ## Plan
 
@@ -39,7 +39,7 @@ Give youth one editable set of User-owned preferences: self-attested EMSI skills
 
 ## Tasks
 
-- [x] Add Yoma-only user location to profile create/update/read, plus a dedicated location PATCH returning the updated profile; use flat fields and shared request validation.
+- [x] Add Yoma-only user location to profile create/update/read, without a separate location endpoint; use flat fields and shared user request validation.
 - [x] Extend the existing profile country with region, city, source and a city-centre coordinate pair in one PostGIS geography(point,4326) column on User.
 
 - [x] Add type and modification date to the UserSkill model, database mapping and consolidated CF migration.
@@ -64,9 +64,9 @@ Give youth one editable set of User-owned preferences: self-attested EMSI skills
 
 - 2026-09-28: Keep location capture provider-neutral. `LocationSource` uses `Lookup`, `Device`, `Manual`, following the API's enum-name convention. Persist LocationSource for the UI's manual-entry hint after reload. Do not persist or expose a provider place ID; Jason's code only needs that identifier while resolving a new selection. His current `places` maps to `Lookup`, `device` to `Device`, and `manual` to `Manual`.
 
-- 2026-09-28: Location belongs to the User profile with country, not UserPreferences. Profile create/update uses flat fields; `PATCH /user/location` uses `UserRequestUpdateLocation`. Profile validators reuse its validator without a shared Location model or interface. The dedicated PATCH updates only the location selection and returns the full profile for cache refresh; it delegates to the existing profile update, including Keycloak country synchronization. The full profile flow continues its existing identity synchronization, excluding location from the identity-provider payload.
+- 2026-09-29: Location is a core User extension, not preferences. Shared UserRequestBase carries Region, City, Coordinates and LocationSource for user/profile upserts. Profile create/update validates these fields directly through UserRequestValidatorBase; no standalone location endpoint, request or validator remains. User and UserProfile responses expose the flat fields. Location stays Yoma-only; country identity synchronization is unchanged.
 - 2026-09-28: Use the globally applicable name `Region`. Coordinates are a nullable `double[]` in Geometry's order `[longitude, latitude]`, with exactly two finite in-range values and no elevation. No separate coordinate model. User stores coordinates in one nullable PostGIS geography(point,4326) column; the API still uses the array. No shared Location model/interface remains. Coordinate validation is now shared with Opportunity location under YOM-1254.
-- 2026-09-28: The existing profile country is authoritative and is extended by location; no second country ID is stored or returned. Full profile create/update can save the selected country and location together. Omitted/null flat location fields clear the saved values. The dedicated location PATCH requires a valid non-Worldwide `countryId`, even when no optional place details are supplied. Jason must clear/reselect the place when changing country. Country-only internal updates clear old location when they actually update country. Radius is a per-search choice, not persisted user data.
+- 2026-09-28: The existing profile country is authoritative and is extended by location; no second country ID is stored or returned. Full profile create/update can save the selected country and location together. Omitted/null flat location fields clear the saved values. Profile update requires a valid non-Worldwide `countryId`, even when no optional place details are supplied. Jason must clear/reselect the place when changing country. Internal user upserts assign country and location directly under the existing new/unlinked-user guard; omitted/null details clear them. ToUserRequest carries all location fields when constructing a full update from an existing user. Radius is a per-search choice, not persisted user data.
 
 - 2026-09-28: Canonical name is **User Preferences**. “Personalization” names Jason's UI experience; the Linear ticket retains its existing “User Presets” title.
 - 2026-09-28: Superseding the initial User-column approach, use a one-to-one `Entity.UserPreferences` row for scalar choices and preference-owned relational links for multi-select choices. This preserves referential integrity and querying without cluttering the User table or bloating routine User reads. The row is created on first PATCH; existing users need no backfill. `UserSkills` remains separate because verified skills and awarding organisations predate preferences.

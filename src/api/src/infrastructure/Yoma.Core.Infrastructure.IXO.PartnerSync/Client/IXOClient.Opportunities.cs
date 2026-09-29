@@ -51,6 +51,7 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
         Description = description,
         TypeId = opportunityType.Id,
 
+        Provider = item.Provider.HtmlDecode()?.RemoveHtmlTags()?.NormalizeNullableValue(),
         Summary = summary,
         URL = GetRequiredValue(item.URL, "url", item.ExternalId),
         OrganizationId = GetOrganizationId(),
@@ -149,8 +150,6 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
 
       if (type == Domain.Opportunity.Type.Job)
         AddDescriptionDetail(metadata, "Work type", item.WorkType);
-
-      AddDescriptionDetail(metadata, "Provider", item.Provider);
 
       if (metadata.Count > 0)
         description = $"{description}{StringExtensions.MarkdownParagraphBreak}{string.Join("\n", metadata)}";

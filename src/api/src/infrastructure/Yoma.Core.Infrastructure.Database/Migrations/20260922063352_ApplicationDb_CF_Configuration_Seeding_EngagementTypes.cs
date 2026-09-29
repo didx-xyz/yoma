@@ -6,6 +6,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
   {
     internal static void Seed(MigrationBuilder migrationBuilder)
     {
+      #region Lookups
       // Rename the two existing rows in place so all Opportunity associations retain their IDs.
       migrationBuilder.UpdateData(
         schema: "Lookup",
@@ -30,6 +31,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
         keyValue: "6C0405A9-87B6-4834-9068-A928CEECF85B",
         column: "DisplayName",
         value: "Hybrid");
+      #endregion Lookups
     }
   }
 }

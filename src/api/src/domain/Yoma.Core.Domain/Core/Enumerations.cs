@@ -74,6 +74,27 @@ namespace Yoma.Core.Domain.Core
     Other
   }
 
+  public enum AccessibilityOption
+  {
+    Other
+  }
+
+  public enum TargetedGroupOption
+  {
+    [Description("Open to all")]
+    OpenToAll
+  }
+
+  /// <summary>
+  /// Currency codes referenced explicitly by application logic. The shared currency lookup
+  /// supplies the full selection; this enum does not restrict its available currencies.
+  /// Payout and Treasury currently use USD only, independently of opportunity incentive currency.
+  /// </summary>
+  public enum CurrencyOption
+  {
+    USD
+  }
+
   public enum SpatialType
   {
     None,

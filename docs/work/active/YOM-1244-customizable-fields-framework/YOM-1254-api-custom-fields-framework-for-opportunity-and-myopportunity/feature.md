@@ -32,6 +32,8 @@ the BA field map is approved.
 
 ## Tasks
 
+- [x] Implement opportunity Provider, Incentivized/reward metadata, accessibility, age bounds, targeted groups and SDGs through API persistence, SQL search, CSV and applicable partner mappings; verify on disposable PostgreSQL and complete authenticated Docker/API smoke testing. See the consolidated handover for exact coverage and remaining UI integration.
+
 - [x] Extend country mappings with optional location details, align user coordinate storage, implement country-scoped text/radius search and complete local API smoke tests; hand over the breaking payloads to Jason and PostGIS prerequisites to Robbie.
 
 - [x] Add definition, option and value entities, mappings, indexes and migrations.
@@ -51,7 +53,9 @@ the BA field map is approved.
 
 ## Decisions
 
-- 2026-09-28: Country/location implementation reviewed and smoke-tested. Retain Countries, one location per country mapping; extend write/search country entries, use database-side text/radius filtering and PostGIS geography for both user and opportunity coordinates. CSV remains country-only and preserves retained details. See [final location handover](handoffs/2026-09-28-b.md) for Jason's contract, verification and deployment prerequisites.
+- 2026-09-28: Common lookup ownership for Currency, TargetedGroup and SustainableDevelopmentGoal; opportunity-specific enums and associations remain in Opportunity. Extend existing request validators and use private assign/remove methods, not new collection endpoints. The age soft gate applies only on submission for verification, never external-link navigation or finalization of accepted submissions. See [core metadata handover](handoffs/2026-09-28-a.md#core-metadata).
+
+- 2026-09-28: Country/location implementation reviewed and smoke-tested. Retain Countries, one location per country mapping; extend write/search country entries, use database-side text/radius filtering and PostGIS geography for both user and opportunity coordinates. CSV remains country-only and preserves retained details. See [final location handover](handoffs/2026-09-28-a.md#country-and-location) for Jason's contract, verification and deployment prerequisites.
 
 - 2026-09-28: Adrian confirmed **Impact Action** as the final opportunity type, superseding the workbook's Impact Task wording. Follow the existing lookup pattern: rename enum and lookup Name to `ImpactAction`, use `[Description("Impact Action")]` and the same lookup DisplayName, and preserve the existing lookup ID. No Task-specific custom fields or SSI schemas have been seeded, so no context migration or compatibility code is needed. IXO continues to send `Impact Action` and maps to `ImpactAction`. CSV imports use the lookup Name.
 - 2026-09-15: Skip only `SeedCustomFields` in the undeployed consolidated migration for the cash-out-first release. Keep all other seeds and the sample helper intact. Existing Local/Dev databases are not cleaned by this edit; newly migrated Stage/Production databases receive no sample definitions. After this migration ships, introduce approved fields through a new migration, not by re-enabling this call.

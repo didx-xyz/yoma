@@ -31,7 +31,9 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public string? City { get; set; }
 
-    /// <summary>City centre as [longitude, latitude], without elevation.</summary>
+    /// <summary>
+    /// City centre as [longitude, latitude], without elevation.
+    /// </summary>
     public double[]? Coordinates { get; set; }
 
     public Core.LocationSource? LocationSource { get; set; }

@@ -26,7 +26,9 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public string? City { get; set; }
 
-    /// <summary>City centre as [longitude, latitude], without elevation. Stored only in Yoma.</summary>
+    /// <summary>
+    /// City centre as [longitude, latitude], without elevation. Stored only in Yoma.
+    /// </summary>
     public double[]? Coordinates { get; set; }
 
     public Core.LocationSource? LocationSource { get; set; }
