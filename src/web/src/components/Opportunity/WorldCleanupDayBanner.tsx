@@ -37,10 +37,11 @@ const CAMPAIGN_DATE_LABEL = "SUN 20 SEP";
 const CAMPAIGN_DAY_NAME = "Sunday";
 
 /**
- * Auto-retire, end of day Sun 27 Sep SAST — the brief's display window (late enough to catch
- * weekend submissions). Delete this component's usage when the campaign is done for good.
+ * Auto-retire, 23:59 Fri 2 Oct SAST. The brief's original window closed on Sun 27 Sep;
+ * extended to give the campaign another week of submissions. Delete this component's usage
+ * when the campaign is done for good.
  */
-const CAMPAIGN_END = new Date("2026-09-27T23:59:59+02:00");
+const CAMPAIGN_END = new Date("2026-10-02T23:59:59+02:00");
 
 /**
  * Shared geometry for both CTAs. Full width on mobile (stacked blocks), hugging their content
