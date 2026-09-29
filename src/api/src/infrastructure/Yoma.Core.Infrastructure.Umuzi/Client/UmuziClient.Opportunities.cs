@@ -84,11 +84,11 @@ namespace Yoma.Core.Infrastructure.Umuzi.Client
 
       if (type != Domain.Opportunity.Type.Job)
       {
-        var difficulty = ResolveDifficulty(item.Difficulty);
+        var difficulty = ResolveDifficulty(type, item.Difficulty);
         var (Interval, Count) = ResolveCommitment(item.CommitmentInterval, item.CommitmentCount);
         var engagementType = ResolveEngagementType(item.EngagementType);
 
-        result.DifficultyId = difficulty.Id;
+        result.CustomFields = [difficulty];
         result.CommitmentIntervalId = Interval.Id;
         result.CommitmentIntervalCount = Count;
         result.EngagementTypeId = engagementType.Id;

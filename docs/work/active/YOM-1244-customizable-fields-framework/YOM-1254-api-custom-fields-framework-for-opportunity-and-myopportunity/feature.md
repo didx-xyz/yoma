@@ -46,12 +46,16 @@ the BA field map is approved.
 - [x] Add PartnerSync request support.
 - [x] Add `ApplicationDb_Opportunity_ParticipantCount_Reconcile` to repair historical counts alongside the CF CSV transaction fix.
 - [ ] Deploy the participant-count migration with CF during a quiet window with completion/import writers paused; run the count/reward audit afterwards and stop the monthly manual-repair reminder only after production validation.
-- [x] Disable temporary sample seeding for the cash-out release; retain the framework and sample helper.
+- [x] Disable temporary sample seeding for the cash-out release; the obsolete helper is now removed as approved seeding starts.
+- [x] Seed type-specific Difficulty/Job experience definitions and options; migrate legacy non-Job levels, remove the core field and use the existing CF framework for capture, filtering and integrations.
+- [x] Verify Difficulty with a full pre-CF database upgrade, fresh Docker migration/post.sql, five-type API CRUD/filter/validation checks and CSV import/report export. Add metadata-driven local CF option seeding; see the consolidated handover for coverage and limits.
 - [ ] Introduce the approved field map in a new migration when CF is released.
 - [ ] Re-run end-to-end API, CSV and partner mapping validation against the final definitions.
 - [x] Rename the `Task` lookup and enum to `ImpactAction` in place, with `[Description("Impact Action")]` and matching display name; update CSV sample and IXO mapping.
 
 ## Decisions
+
+- 2026-09-29: CF business contracts use constants for mapped keys and enums only for code-selected/interpreted options. The AnyLevel fallback is enum-backed; display names do not drive decisions. Existing enums/constants are reused in seeds and backfill; ordinary seed-only values remain literals. The four non-Job difficulty fields are system-controlled because integrations depend on them; Job experience remains ordinary metadata. Type-specific details groups, Requirements subgroup and ordering in tens establish the initial presentation convention. See the consolidated handover below for the full Difficulty contract and remaining verification.
 
 - 2026-09-28: Common lookup ownership for Currency, TargetedGroup and SustainableDevelopmentGoal; opportunity-specific enums and associations remain in Opportunity. Extend existing request validators and use private assign/remove methods, not new collection endpoints. The age soft gate applies only on submission for verification, never external-link navigation or finalization of accepted submissions. See [core metadata handover](handoffs/2026-09-28-a.md#core-metadata).
 

@@ -152,7 +152,6 @@ namespace Yoma.Core.Infrastructure.Database
       #region Opportunity
       #region Lookups
       services.AddScoped<IRepository<Domain.Opportunity.Models.Lookups.OpportunityCategory>, Opportunity.Repositories.Lookups.OpportunityCategoryRepository>();
-      services.AddScoped<IRepository<Domain.Opportunity.Models.Lookups.OpportunityDifficulty>, Opportunity.Repositories.Lookups.OpportunityDifficultyRepository>();
       services.AddScoped<IRepository<Domain.Opportunity.Models.Lookups.OpportunityStatus>, Opportunity.Repositories.Lookups.OpportunityStatusRepository>();
       services.AddScoped<IRepository<Domain.Opportunity.Models.Lookups.OpportunityType>, Opportunity.Repositories.Lookups.OpportunityTypeRepository>();
       services.AddScoped<IRepository<Domain.Opportunity.Models.Lookups.OpportunityVerificationType>, Opportunity.Repositories.Lookups.OpportunityVerificationTypeRepository>();

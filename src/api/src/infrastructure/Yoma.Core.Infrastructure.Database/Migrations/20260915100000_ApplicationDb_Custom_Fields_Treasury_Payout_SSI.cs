@@ -1377,8 +1377,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           principalTable: "WalletCreationStatus",
           principalColumn: "Id");
 
-      // TODO(YOM-1244): Seed approved CF definitions in a future migration; keep temporary samples disabled for the cash-out release.
-      // ApplicationDb_Custom_Fields_Treasury_Payout_SSI_Seeding.SeedCustomFields(migrationBuilder);
       ApplicationDb_Custom_Fields_Treasury_Payout_SSI_Seeding.SeedTreasury(migrationBuilder);
       ApplicationDb_Custom_Fields_Treasury_Payout_SSI_Seeding.SeedPayout(migrationBuilder);
       ApplicationDb_Custom_Fields_Treasury_Payout_SSI_Seeding.SeedRemoveRewardYoma(migrationBuilder);

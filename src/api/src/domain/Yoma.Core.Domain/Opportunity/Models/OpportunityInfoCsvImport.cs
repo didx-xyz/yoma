@@ -48,8 +48,6 @@ namespace Yoma.Core.Domain.Opportunity.Models
     [Name("Location")]
     public List<string>? Countries { get; set; }
 
-    public string? Difficulty { get; set; }
-
     [Name("EffortCount")]
     public short? CommitmentIntervalCount { get; set; }
 
@@ -149,11 +147,6 @@ namespace Yoma.Core.Domain.Opportunity.Models
       // Engagement
       // Optional for all opportunity types.
       // Validation of the supplied value has been moved to the domain validators during Create/Update.
-
-      // Difficulty
-      // Optional for Opportunity Type: Job.
-      // For other opportunity types this field is required.
-      // Validation has been moved to the domain validators during Create/Update to keep CSV import aligned with API validation rules.
 
       // EffortCount (CommitmentIntervalCount)
       // Optional for Opportunity Type: Job.

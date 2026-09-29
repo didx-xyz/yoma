@@ -1,3 +1,4 @@
+using Yoma.Core.Domain.Opportunity;
 using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -60,17 +61,55 @@ namespace Yoma.Core.Infrastructure.Umuzi.Client
       ["Offline"] = EngagementTypeOption.OnSite
     };
 
+    // Partner vocabulary belongs here; definitions and option validity come from the CF framework.
+    // Missing difficulty retains this partner's existing Any Level fallback. Jobs are not mapped.
+    private static readonly Dictionary<Domain.Opportunity.Type, (string Key, Dictionary<string, string> Options)> DifficultyMappings = new()
+    {
+      [Domain.Opportunity.Type.Learning] = (CustomFieldConstants.Difficulty.Keys.Learning, new(StringComparer.OrdinalIgnoreCase)
+      {
+        [Difficulty.AnyLevel.ToString()] = Difficulty.AnyLevel.ToString(),
+        ["Any Level"] = Difficulty.AnyLevel.ToString(),
+        ["Beginner"] = CustomFieldConstants.Difficulty.Options.Beginner,
+        ["Intermediate"] = CustomFieldConstants.Difficulty.Options.Intermediate,
+        ["Advanced"] = CustomFieldConstants.Difficulty.Options.Advanced
+      }),
+      [Domain.Opportunity.Type.Other] = (CustomFieldConstants.Difficulty.Keys.Other, new(StringComparer.OrdinalIgnoreCase)
+      {
+        [Difficulty.AnyLevel.ToString()] = Difficulty.AnyLevel.ToString(),
+        ["Any Level"] = Difficulty.AnyLevel.ToString(),
+        ["Beginner"] = CustomFieldConstants.Difficulty.Options.Beginner,
+        ["Intermediate"] = CustomFieldConstants.Difficulty.Options.Intermediate,
+        ["Advanced"] = CustomFieldConstants.Difficulty.Options.Advanced
+      }),
+      [Domain.Opportunity.Type.ImpactAction] = (CustomFieldConstants.Difficulty.Keys.ImpactAction, new(StringComparer.OrdinalIgnoreCase)
+      {
+        [Difficulty.AnyLevel.ToString()] = CustomFieldConstants.Difficulty.Options.EntryLevel,
+        ["Any Level"] = CustomFieldConstants.Difficulty.Options.EntryLevel,
+        ["Beginner"] = CustomFieldConstants.Difficulty.Options.EntryLevel,
+        ["Intermediate"] = CustomFieldConstants.Difficulty.Options.ExperienceNeeded,
+        ["Advanced"] = CustomFieldConstants.Difficulty.Options.SkillsRequired
+      }),
+      [Domain.Opportunity.Type.Event] = (CustomFieldConstants.Difficulty.Keys.Event, new(StringComparer.OrdinalIgnoreCase)
+      {
+        [Difficulty.AnyLevel.ToString()] = CustomFieldConstants.Difficulty.Options.OpenToAll,
+        ["Any Level"] = CustomFieldConstants.Difficulty.Options.OpenToAll,
+        ["Beginner"] = CustomFieldConstants.Difficulty.Options.OpenToAll,
+        ["Intermediate"] = CustomFieldConstants.Difficulty.Options.FamiliarityNeeded,
+        ["Advanced"] = CustomFieldConstants.Difficulty.Options.ExperiencedIndividuals
+      })
+    };
+
     private readonly ILogger<UmuziClient> _logger;
     private readonly IEnvironmentProvider _environmentProvider;
     private readonly AppSettings _appSettings;
     private readonly UmuziOptions _options;
     private readonly IRepositoryBatched<Opportunity> _opportunityRepository;
     private readonly IOpportunityTypeService _opportunityTypeService;
+    private readonly ICustomFieldDefinitionService _customFieldDefinitionService;
     private readonly IOpportunityCategoryService _opportunityCategoryService;
     private readonly ICountryService _countryService;
     private readonly ILanguageService _languageService;
     private readonly ISkillService _skillService;
-    private readonly IOpportunityDifficultyService _opportunityDifficultyService;
     private readonly ITimeIntervalService _timeIntervalService;
     private readonly IEngagementTypeService _engagementTypeService;
     private readonly IUmuziAuthService _umuziAuthService;
@@ -86,11 +125,11 @@ namespace Yoma.Core.Infrastructure.Umuzi.Client
       IOptions<UmuziOptions> options,
       IRepositoryBatched<Opportunity> opportunityRepository,
       IOpportunityTypeService opportunityTypeService,
+      ICustomFieldDefinitionService customFieldDefinitionService,
       IOpportunityCategoryService opportunityCategoryService,
       ICountryService countryService,
       ILanguageService languageService,
       ISkillService skillService,
-      IOpportunityDifficultyService opportunityDifficultyService,
       ITimeIntervalService timeIntervalService,
       IEngagementTypeService engagementTypeService,
       IUmuziAuthService umuziAuthService,
@@ -103,11 +142,11 @@ namespace Yoma.Core.Infrastructure.Umuzi.Client
       _options = options.Value ?? throw new ArgumentNullException(nameof(options));
       _opportunityRepository = opportunityRepository ?? throw new ArgumentNullException(nameof(opportunityRepository));
       _opportunityTypeService = opportunityTypeService ?? throw new ArgumentNullException(nameof(opportunityTypeService));
+      _customFieldDefinitionService = customFieldDefinitionService ?? throw new ArgumentNullException(nameof(customFieldDefinitionService));
       _opportunityCategoryService = opportunityCategoryService ?? throw new ArgumentNullException(nameof(opportunityCategoryService));
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
       _skillService = skillService ?? throw new ArgumentNullException(nameof(skillService));
-      _opportunityDifficultyService = opportunityDifficultyService ?? throw new ArgumentNullException(nameof(opportunityDifficultyService));
       _timeIntervalService = timeIntervalService ?? throw new ArgumentNullException(nameof(timeIntervalService));
       _engagementTypeService = engagementTypeService ?? throw new ArgumentNullException(nameof(engagementTypeService));
       _umuziAuthService = umuziAuthService ?? throw new ArgumentNullException(nameof(umuziAuthService));

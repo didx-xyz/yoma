@@ -273,7 +273,7 @@ namespace Yoma.Core.Test.Core
 
       var countries = new Mock<ICountryService>();
       return new OpportunityRequestValidatorCreate(types.Object, Mock.Of<IOrganizationService>(),
-        Mock.Of<IOpportunityDifficultyService>(), Mock.Of<IEngagementTypeService>(), Mock.Of<ITimeIntervalService>(),
+        Mock.Of<IEngagementTypeService>(), Mock.Of<ITimeIntervalService>(),
         Mock.Of<IOpportunityCategoryService>(), countries.Object, Mock.Of<ILanguageService>(), Mock.Of<ISkillService>(),
         Mock.Of<IOpportunityVerificationTypeService>(), new OpportunityRequestCountryValidator(countries.Object, new Domain.Core.Validators.CoordinatesValidator()),
         currencies.Object, accommodations.Object, groups.Object, goals.Object);

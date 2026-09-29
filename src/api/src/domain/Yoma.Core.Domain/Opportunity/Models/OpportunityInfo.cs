@@ -119,8 +119,6 @@ namespace Yoma.Core.Domain.Opportunity.Models
     [Name("Verification Method")]
     public VerificationMethod? VerificationMethod { get; set; }
 
-    public string? Difficulty { get; set; }
-
     [Ignore]
     public Core.TimeIntervalOption? CommitmentInterval { get; set; }
 

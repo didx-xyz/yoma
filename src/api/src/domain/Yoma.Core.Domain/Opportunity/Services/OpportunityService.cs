@@ -53,7 +53,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly IOpportunityTypeService _opportunityTypeService;
     private readonly ILanguageService _languageService;
     private readonly ISkillService _skillService;
-    private readonly IOpportunityDifficultyService _opportunityDifficultyService;
     private readonly IEngagementTypeService _engagementTypeService;
     private readonly IOpportunityVerificationTypeService _opportunityVerificationTypeService;
     private readonly ITimeIntervalService _timeIntervalService;
@@ -118,7 +117,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
         IOpportunityTypeService opportunityTypeService,
         ILanguageService languageService,
         ISkillService skillService,
-        IOpportunityDifficultyService opportunityDifficultyService,
         IEngagementTypeService engagementTypeService,
         IOpportunityVerificationTypeService opportunityVerificationTypeService,
         ITimeIntervalService timeIntervalService,
@@ -165,7 +163,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _opportunityTypeService = opportunityTypeService ?? throw new ArgumentNullException(nameof(opportunityTypeService));
       _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
       _skillService = skillService ?? throw new ArgumentNullException(nameof(skillService));
-      _opportunityDifficultyService = opportunityDifficultyService ?? throw new ArgumentNullException(nameof(opportunityDifficultyService));
       _engagementTypeService = engagementTypeService ?? throw new ArgumentNullException(nameof(engagementTypeService));
       _opportunityVerificationTypeService = opportunityVerificationTypeService ?? throw new ArgumentNullException(nameof(opportunityVerificationTypeService));
       _timeIntervalService = timeIntervalService ?? throw new ArgumentNullException(nameof(timeIntervalService));
@@ -1513,10 +1510,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
         VerificationEnabled = request.VerificationEnabled,
         VerificationMethodValue = request.VerificationMethod?.ToString(),
         VerificationMethod = request.VerificationMethod,
-        DifficultyId = request.DifficultyId,
-        Difficulty = request.DifficultyId.HasValue
-          ? _opportunityDifficultyService.GetById(request.DifficultyId.Value).Name
-          : null,
         CommitmentIntervalId = request.CommitmentIntervalId,
         CommitmentInterval = request.CommitmentIntervalId.HasValue
           ? Enum.Parse<TimeIntervalOption>(
@@ -1699,10 +1692,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
       result.ZltoRewardPool = request.ZltoRewardPool;
       result.VerificationEnabled = request.VerificationEnabled;
       result.VerificationMethod = request.VerificationMethod;
-      result.DifficultyId = request.DifficultyId;
-      result.Difficulty = request.DifficultyId.HasValue
-        ? _opportunityDifficultyService.GetById(request.DifficultyId.Value).Name
-        : null;
       result.CommitmentIntervalId = request.CommitmentIntervalId;
       result.CommitmentInterval = request.CommitmentIntervalId.HasValue
         ? Enum.Parse<TimeIntervalOption>(
@@ -2371,7 +2360,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
        .Select(code => _countryService.GetByCodeAlpha2(code))
        .ToList() ?? [];
 
-      var difficulty = string.IsNullOrWhiteSpace(item.Difficulty) ? null : _opportunityDifficultyService.GetByName(item.Difficulty);
 
       var commitmentInterval = string.IsNullOrWhiteSpace(item.CommitmentInterval) ? null : _timeIntervalService.GetByName(item.CommitmentInterval);
 
@@ -2435,7 +2423,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
         var location = countryLocations.SingleOrDefault(c => c.CountryId == o.Id);
         return new OpportunityRequestCountry { CountryId = o.Id, Region = location?.Region, City = location?.City, Coordinates = location?.Coordinates };
       })];
-      request.DifficultyId = difficulty?.Id;
       request.CommitmentIntervalCount = item.CommitmentIntervalCount;
       request.CommitmentIntervalId = commitmentInterval?.Id;
       request.DateStart = item.DateStart.ToDateTimeOffset();

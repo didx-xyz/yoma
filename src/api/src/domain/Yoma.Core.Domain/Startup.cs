@@ -170,7 +170,6 @@ namespace Yoma.Core.Domain
       #region Opportunity
       #region Lookups
       services.AddScoped<IOpportunityCategoryService, OpportunityCategoryService>();
-      services.AddScoped<IOpportunityDifficultyService, OpportunityDifficultyService>();
       services.AddScoped<IOpportunityStatusService, OpportunityStatusService>();
       services.AddScoped<IOpportunityTypeService, OpportunityTypeService>();
       services.AddScoped<IOpportunityVerificationTypeService, OpportunityVerificationTypeService>();

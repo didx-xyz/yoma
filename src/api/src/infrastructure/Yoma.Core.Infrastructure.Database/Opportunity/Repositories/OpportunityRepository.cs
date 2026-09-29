@@ -89,8 +89,6 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         VerificationEnabled = entity.VerificationEnabled,
         VerificationMethodValue = entity.VerificationMethod,
         VerificationMethod = string.IsNullOrEmpty(entity.VerificationMethod) ? null : Enum.Parse<VerificationMethod>(entity.VerificationMethod, true),
-        DifficultyId = entity.DifficultyId,
-        Difficulty = entity.Difficulty == null ? null : entity.Difficulty.Name,
         CommitmentIntervalId = entity.CommitmentIntervalId,
         CommitmentInterval = entity.CommitmentInterval == null ? null : Enum.Parse<TimeIntervalOption>(entity.CommitmentInterval.Name, true),
         CommitmentIntervalCount = entity.CommitmentIntervalCount,
@@ -242,7 +240,6 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         ZltoRewardPool = item.ZltoRewardPool,
         VerificationEnabled = item.VerificationEnabled,
         VerificationMethod = item.VerificationMethod?.ToString(),
-        DifficultyId = item.DifficultyId,
         CommitmentIntervalId = item.CommitmentIntervalId,
         CommitmentIntervalCount = item.CommitmentIntervalCount,
         ParticipantLimit = item.ParticipantLimit,
@@ -303,7 +300,6 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
           ZltoRewardCumulative = item.ZltoRewardCumulative,
           VerificationEnabled = item.VerificationEnabled,
           VerificationMethod = item.VerificationMethod?.ToString(),
-          DifficultyId = item.DifficultyId,
           CommitmentIntervalId = item.CommitmentIntervalId,
           CommitmentIntervalCount = item.CommitmentIntervalCount,
           ParticipantLimit = item.ParticipantLimit,
@@ -367,7 +363,6 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
       entity.ZltoRewardCumulative = item.ZltoRewardCumulative;
       entity.VerificationEnabled = item.VerificationEnabled;
       entity.VerificationMethod = item.VerificationMethod?.ToString();
-      entity.DifficultyId = item.DifficultyId;
       entity.CommitmentIntervalId = item.CommitmentIntervalId;
       entity.CommitmentIntervalCount = item.CommitmentIntervalCount;
       entity.ParticipantLimit = item.ParticipantLimit;
@@ -428,7 +423,6 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         entity.ZltoRewardCumulative = item.ZltoRewardCumulative;
         entity.VerificationEnabled = item.VerificationEnabled;
         entity.VerificationMethod = item.VerificationMethod?.ToString();
-        entity.DifficultyId = item.DifficultyId;
         entity.CommitmentIntervalId = item.CommitmentIntervalId;
         entity.CommitmentIntervalCount = item.CommitmentIntervalCount;
         entity.ParticipantLimit = item.ParticipantLimit;

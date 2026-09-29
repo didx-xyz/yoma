@@ -1811,27 +1811,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.ToTable("OpportunityCategory", "Opportunity");
         });
 
-      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityDifficulty", b =>
-        {
-          b.Property<Guid>("Id")
-            .ValueGeneratedOnAdd()
-            .HasColumnType("uuid");
-
-          b.Property<DateTimeOffset>("DateCreated")
-            .HasColumnType("timestamp with time zone");
-
-          b.Property<string>("Name")
-            .IsRequired()
-            .HasColumnType("varchar(20)");
-
-          b.HasKey("Id");
-
-          b.HasIndex("Name")
-            .IsUnique();
-
-          b.ToTable("OpportunityDifficulty", "Opportunity");
-        });
-
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityStatus", b =>
         {
           b.Property<Guid>("Id")
@@ -1955,9 +1934,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             .IsRequired()
             .HasColumnType("text");
 
-          b.Property<Guid?>("DifficultyId")
-            .HasColumnType("uuid");
-
           b.Property<Guid?>("EngagementTypeId")
             .HasColumnType("uuid");
 
@@ -2043,6 +2019,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
           b.HasKey("Id");
 
+          b.HasIndex("AccommodationOtherDescription");
+
+          NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("AccommodationOtherDescription"), "gin");
+          NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("AccommodationOtherDescription"), new[] { "gin_trgm_ops" });
+
           b.HasIndex("CommitmentIntervalId");
 
           b.HasIndex("CreatedByUserId");
@@ -2052,18 +2033,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
           NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Description"), "GIN");
 
-          b.HasIndex("DifficultyId");
-
           b.HasIndex("EngagementTypeId");
 
           b.HasIndex("ModifiedByUserId");
 
           b.HasIndex("PartnerIncentiveCurrency");
-
-          b.HasIndex("AccommodationOtherDescription");
-
-          NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("AccommodationOtherDescription"), "gin");
-          NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("AccommodationOtherDescription"), new[] { "gin_trgm_ops" });
 
           b.HasIndex("Provider");
 
@@ -2078,7 +2052,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.HasIndex("OrganizationId", "ExternalId")
             .IsUnique();
 
-          b.HasIndex("TypeId", "OrganizationId", "ZltoReward", "DifficultyId", "CommitmentIntervalId", "CommitmentIntervalCount", "StatusId", "Keywords", "DateStart", "DateEnd", "CredentialIssuanceEnabled", "Featured", "EngagementTypeId", "ShareWithPartners", "Hidden", "DateCreated", "CreatedByUserId", "DateModified", "ModifiedByUserId");
+          b.HasIndex("TypeId", "OrganizationId", "ZltoReward", "CommitmentIntervalId", "CommitmentIntervalCount", "StatusId", "Keywords", "DateStart", "DateEnd", "CredentialIssuanceEnabled", "Featured", "EngagementTypeId", "ShareWithPartners", "Hidden", "DateCreated", "CreatedByUserId", "DateModified", "ModifiedByUserId");
 
           b.HasIndex(new[] { "Keywords" }, "IX_Opportunity_Keywords_Trgm")
             .HasAnnotation("Npgsql:CreatedConcurrently", true);
@@ -4229,10 +4203,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             .OnDelete(DeleteBehavior.NoAction)
             .IsRequired();
 
-          b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityDifficulty", "Difficulty")
-            .WithMany()
-            .HasForeignKey("DifficultyId");
-
           b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.EngagementType", "EngagementType")
             .WithMany()
             .HasForeignKey("EngagementTypeId");
@@ -4270,8 +4240,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.Navigation("CommitmentInterval");
 
           b.Navigation("CreatedByUser");
-
-          b.Navigation("Difficulty");
 
           b.Navigation("EngagementType");
 

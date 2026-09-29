@@ -558,16 +558,7 @@ namespace Yoma.Core.Domain.Core.Services
           $"Custom field '{definition.Title}' contains an invalid lookup value: {value}");
       }
 
-      var option = definition.Options?
-        .SingleOrDefault(o =>
-          o.IsActive &&
-          (string.Equals(o.Name, value, StringComparison.OrdinalIgnoreCase) ||
-           string.Equals(o.Key, value, StringComparison.OrdinalIgnoreCase)));
-
-      return option == null
-        ? throw new ValidationException(
-          $"Custom field '{definition.Title}' contains an invalid option value: {value}")
-        : option.Key;
+      return definition.ResolveOptionKey(value, true);
     }
 
     private string NormalizeOptionValue(CustomFieldDefinition definition, string value)
@@ -588,15 +579,7 @@ namespace Yoma.Core.Domain.Core.Services
           $"Custom field '{definition.Title}' contains an invalid lookup value: {value}");
       }
 
-      var option = definition.Options?
-        .SingleOrDefault(o =>
-          o.IsActive &&
-          string.Equals(o.Key, value, StringComparison.OrdinalIgnoreCase));
-
-      return option == null
-        ? throw new ValidationException(
-          $"Custom field '{definition.Title}' contains an invalid option value: {value}")
-        : option.Key;
+      return definition.ResolveOptionKey(value);
     }
 
     private static List<CustomFieldValueItem>? ToCustomFieldValueItems(List<CustomFieldDefinition> definitions, List<CustomFieldValue> values)

@@ -99,10 +99,20 @@ framework/schema work; Jason owns Web implementation and regression checks.
 
 ## The One Rule
 
-**Nothing may be keyed to a specific custom field.** No hardcoded definition key, title,
-option value, group or opportunity type, anywhere. Phase-1 definitions are temporary scripted
-metadata that the BA will replace wholesale; anything referencing a `[Sample] …` field breaks
-on that swap. Every surface renders from the definitions the API returns.
+**The framework and UI remain metadata-driven.** Every surface renders the definitions,
+options, groups and ordering returned by the API; do not hardcode a field-specific control.
+
+Domain rules and partner mappings may depend on explicitly protected CF contracts.
+Use shared constants for the stable keys they reference, and an enum only for values
+code actually selects or interprets. Resolve options through the common CF extensions;
+never compare display labels in business logic. Set `IsSystem` when such a dependency
+exists, not merely because a definition was seeded. Ordinary CFs remain configurable.
+Tests must verify these contracts against the seeded metadata.
+
+Seeds reuse existing enums and constants (including Opportunity Type and CF data/entity
+types); ordinary seed-only labels/values remain literals. Persisted enum/key
+renames require an explicit migration. The obsolete sample helper has been removed;
+approved definitions are now being added to the consolidated CF configuration migration.
 
 ## Release kill-switch — read before touching any web surface
 

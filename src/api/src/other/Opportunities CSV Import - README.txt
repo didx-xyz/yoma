@@ -22,14 +22,14 @@ For **Type = Job**, the following fields are optional:
 
 - Engagement
 - Skills
-- Difficulty
 - EffortCount
 - EffortInterval
 
 These fields may be left blank in the CSV.
 
 For **all other opportunity types**, Engagement and Skills remain optional.
-Difficulty and effort fields must still comply with the reference data lists.
+Effort fields must still comply with the reference data lists.
+Difficulty is now a type-specific custom field; see the custom-field section below.
 
 ------------------------------------------------------------------------
 
@@ -38,7 +38,6 @@ Difficulty and effort fields must still comply with the reference data lists.
 Reference JSON files:
 
 - opportunities_categories.json
-- opportunities_difficulty.json
 - opportunities_effortInterval.json
 - opportunities_engagement.json
 - opportunities_languages.json (ISO alpha-2 codes)
@@ -89,7 +88,6 @@ For all opportunity types **except Job**:
 
 - Engagement — optional; must match opportunities_engagement.json if specified
 - Skills — optional; must match opportunities_skills.json if specified
-- Difficulty — required; must match opportunities_difficulty.json (name)
 - EffortCount — required; integer > 0
 - EffortInterval — required; must match opportunities_effortInterval.json (name)
 
@@ -97,7 +95,6 @@ For **Type = Job**:
 
 - Engagement — optional
 - Skills — optional
-- Difficulty — optional
 - EffortCount — optional
 - EffortInterval — optional
 
@@ -191,14 +188,12 @@ Type-specific validation:
 For **all types except Job**:
 
 - Skills: optional (must exist if specified)
-- Difficulty: required
 - EffortCount: > 0
 - EffortInterval: must match opportunities_effortInterval.json
 
 For **Type = Job**:
 
 - Skills: optional
-- Difficulty: optional
 - EffortCount: optional
 - EffortInterval: optional
 
@@ -220,7 +215,6 @@ If Keywords are not provided, auto-generate from:
 - Categories
 - Skills
 - Type
-- Difficulty
 - EffortCount + EffortInterval
 - Languages
 - Location
@@ -262,7 +256,6 @@ Examples:
 Always use names from reference JSON files.
 
 - Type → opportunities_types.json
-- Difficulty → opportunities_difficulty.json
 - EffortInterval → opportunities_effortInterval.json
 - Engagement → opportunities_engagement.json
 - Categories → opportunities_categories.json
@@ -385,3 +378,31 @@ country-code selection; retained countries preserve their stored details.
 
 Only the API samples are updated here. Jason must copy the approved samples
 to the web application as part of the UI work.
+
+------------------------------------------------------------------------
+
+Difficulty / experience level custom fields
+
+The core Difficulty column and /opportunity/difficulty lookup are removed.
+Do not send Difficulty or DifficultyId. Retrieve current definitions/options from
+GET /api/v3/opportunity/custom/field/definition?types=<Type>.
+
+Use CF:<definitionKey> headers and the applicable option key:
+- Learning: CF:learningDifficulty — Beginner, Intermediate, Advanced, AnyLevel.
+- Other: CF:otherDifficulty — Beginner, Intermediate, Advanced, AnyLevel.
+- ImpactAction: CF:impactActionDifficulty — EntryLevel, ExperienceNeeded, SkillsRequired.
+- Event: CF:eventDifficulty — OpenToAll, FamiliarityNeeded, ExperiencedIndividuals.
+- Job: CF:jobExperienceLevel — None, EntryJunior, Mid, Senior.
+
+Each is a single-select. The existing CF parser also accepts the exact option
+display name, but examples use stable keys. A shared template may include several
+types' CF columns: leave non-applicable cells blank; populated non-applicable
+values are rejected. Do not infer years of Job experience from legacy difficulty.
+
+Manual API create/update requires the applicable field. CSV and partner sync
+retain the framework's PatchAllowMissingRequired behaviour: omitted columns
+preserve existing values, present blanks clear them, and supplied values must
+match the current type's definition. New rows may remain unspecified when absent.
+The report export carries keys and values in the existing flattened Custom Fields
+column; there is no separate core Difficulty export column. Report exports are
+not import templates: imports use the CF:<definitionKey> columns described above.

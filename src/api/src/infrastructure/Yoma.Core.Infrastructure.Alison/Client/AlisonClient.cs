@@ -64,16 +64,16 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       { new Guid("6e6a5f23-6d2e-4f45-8b4d-5d9c9a6b1e71"), ["health", "mental-health", "health-care", "nursing", "caregiving", "nutrition", "pharmacology", "personal-development/health", "personal-development/mental-health", "personal-development/depression", "personal-development/anxiety", "personal-development/diet", "fitness", "health-and-safety", "business/health-and-safety", "engineering/health-and-safety", "management/health-and-safety", "management/nursing"] }
     };
 
-    // Yoma difficulty id -> Alison course levels.
+    // Legacy difficulty -> Alison course levels.
     // Unknown or omitted values default to Any Level.
-    private static readonly Dictionary<Guid, string[]> Difficulty_Map = new()
+    private static readonly Dictionary<string, string[]> Difficulty_Map = new()
     {
       // Beginner
-      { new Guid("e33ae372-c63f-459d-983f-4527355fd0c4"), ["Beginner", "Beginner Level"] },
+      { CustomFieldConstants.Difficulty.Options.Beginner, ["Beginner", "Beginner Level"] },
       // Intermediate
-      { new Guid("e84efa58-f0ff-41f4-a2db-12c33f5e306c"), ["Intermediate", "Intermediate Level"] },
+      { CustomFieldConstants.Difficulty.Options.Intermediate, ["Intermediate", "Intermediate Level"] },
       // Advanced
-      { new Guid("833e1f02-31b9-455e-8f4f-ce6a6c4a9aa7"), ["Advanced", "Advanced Level", "Expert", "Expert Level"] }
+      { CustomFieldConstants.Difficulty.Options.Advanced, ["Advanced", "Advanced Level", "Expert", "Expert Level"] }
     };
 
     // Yoma time interval name -> Alison duration unit values.
@@ -93,12 +93,12 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     private readonly AlisonOptions _options;
     private readonly IRepositoryBatched<AlisonOpportunity> _opportunityRepository;
     private readonly IOpportunityTypeService _opportunityTypeService;
+    private readonly ICustomFieldDefinitionService _customFieldDefinitionService;
     private readonly IOpportunityCategoryService _opportunityCategoryService;
     private readonly ICountryService _countryService;
     private readonly ILanguageService _languageService;
     private readonly ISkillService _skillService;
     private readonly ISustainableDevelopmentGoalService _sustainableDevelopmentGoalService;
-    private readonly IOpportunityDifficultyService _opportunityDifficultyService;
     private readonly ITimeIntervalService _timeIntervalService;
     private readonly IEngagementTypeService _engagementTypeService;
     private readonly IAlisonAuthService _alisonAuthService;
@@ -114,12 +114,12 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       AlisonOptions options,
       IRepositoryBatched<AlisonOpportunity> opportunityRepository,
       IOpportunityTypeService opportunityTypeService,
+      ICustomFieldDefinitionService customFieldDefinitionService,
       IOpportunityCategoryService opportunityCategoryService,
       ICountryService countryService,
       ILanguageService languageService,
       ISkillService skillService,
       ISustainableDevelopmentGoalService sustainableDevelopmentGoalService,
-      IOpportunityDifficultyService opportunityDifficultyService,
       ITimeIntervalService timeIntervalService,
       IEngagementTypeService engagementTypeService,
       IAlisonAuthService alisonAuthService,
@@ -132,12 +132,12 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       _options = options ?? throw new ArgumentNullException(nameof(options));
       _opportunityRepository = opportunityRepository ?? throw new ArgumentNullException(nameof(opportunityRepository));
       _opportunityTypeService = opportunityTypeService ?? throw new ArgumentNullException(nameof(opportunityTypeService));
+      _customFieldDefinitionService = customFieldDefinitionService ?? throw new ArgumentNullException(nameof(customFieldDefinitionService));
       _opportunityCategoryService = opportunityCategoryService ?? throw new ArgumentNullException(nameof(opportunityCategoryService));
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
       _skillService = skillService ?? throw new ArgumentNullException(nameof(skillService));
       _sustainableDevelopmentGoalService = sustainableDevelopmentGoalService ?? throw new ArgumentNullException(nameof(sustainableDevelopmentGoalService));
-      _opportunityDifficultyService = opportunityDifficultyService ?? throw new ArgumentNullException(nameof(opportunityDifficultyService));
       _timeIntervalService = timeIntervalService ?? throw new ArgumentNullException(nameof(timeIntervalService));
       _engagementTypeService = engagementTypeService ?? throw new ArgumentNullException(nameof(engagementTypeService));
       _alisonAuthService = alisonAuthService ?? throw new ArgumentNullException(nameof(alisonAuthService));
@@ -526,8 +526,6 @@ namespace Yoma.Core.Infrastructure.Alison.Client
           // credential schema once the final custom fields and schema flavours are agreed.
           SSISchemaName = SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default"),
 
-          DifficultyId = difficulty.Id,
-
           CommitmentIntervalId = interval.Id,
           CommitmentIntervalCount = count,
 
@@ -546,7 +544,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
           // Populate when available. Partner sync uses PatchAllowMissingRequired:
           // omitted fields are preserved and key-only fields delete existing values.
-          CustomFields = null
+          CustomFields = [difficulty]
         }
       };
     }
@@ -906,31 +904,24 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return null;
     }
 
-    private Domain.Opportunity.Models.Lookups.OpportunityDifficulty GetDifficulty(Course course)
+    private CustomFieldValueRequest GetDifficulty(Course course)
     {
       ArgumentNullException.ThrowIfNull(course);
 
-      var difficultyId = ResolveDifficultyIdOrNull(course.CourseLevel);
-
-      return difficultyId.HasValue
-        ? _opportunityDifficultyService.GetById(difficultyId.Value)
-        : _opportunityDifficultyService.GetByName(Difficulty.AnyLevel.ToDescription());
-    }
-
-    private static Guid? ResolveDifficultyIdOrNull(string? courseLevel)
-    {
-      courseLevel = courseLevel?.NormalizeNullableValue();
-
-      if (string.IsNullOrEmpty(courseLevel))
-        return null;
-
+      var courseLevel = course.CourseLevel?.NormalizeNullableValue();
+      var option = Difficulty.AnyLevel.ToString();
       foreach (var mapping in Difficulty_Map)
       {
         if (mapping.Value.Any(item => string.Equals(item, courseLevel, StringComparison.OrdinalIgnoreCase)))
-          return mapping.Key;
+        {
+          option = mapping.Key;
+          break;
+        }
       }
 
-      return null;
+      var definition = _customFieldDefinitionService.GetByKey(
+        CustomFieldEntityType.Opportunity, CustomFieldConstants.Difficulty.Keys.Learning, true, true);
+      return definition.ToOptionRequest(option);
     }
 
     private (Domain.Lookups.Models.TimeInterval Interval, short Count) GetCommitment(Course course)

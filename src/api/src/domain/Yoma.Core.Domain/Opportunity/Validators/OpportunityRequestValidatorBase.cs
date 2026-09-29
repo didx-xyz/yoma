@@ -15,7 +15,6 @@ namespace Yoma.Core.Domain.Opportunity.Validators
     #region Class Variables
     private readonly IOpportunityTypeService _opportunityTypeService;
     private readonly IOrganizationService _organizationService;
-    private readonly IOpportunityDifficultyService _opportunityDifficultyService;
     private readonly IEngagementTypeService _engagementTypeService;
     private readonly ITimeIntervalService _timeIntervalService;
     private readonly IOpportunityCategoryService _opportunityCategoryService;
@@ -28,7 +27,6 @@ namespace Yoma.Core.Domain.Opportunity.Validators
     #region Constructor
     public OpportunityRequestValidatorBase(IOpportunityTypeService opportunityTypeService,
         IOrganizationService organizationService,
-        IOpportunityDifficultyService opportunityDifficultyService,
         IEngagementTypeService engagementTypeService,
         ITimeIntervalService timeIntervalService,
         IOpportunityCategoryService opportunityCategoryService,
@@ -49,7 +47,6 @@ namespace Yoma.Core.Domain.Opportunity.Validators
       ArgumentNullException.ThrowIfNull(sustainableDevelopmentGoalService);
       _opportunityTypeService = opportunityTypeService ?? throw new ArgumentNullException(nameof(opportunityTypeService));
       _organizationService = organizationService ?? throw new ArgumentNullException(nameof(organizationService));
-      _opportunityDifficultyService = opportunityDifficultyService ?? throw new ArgumentNullException(nameof(opportunityDifficultyService));
       _engagementTypeService = engagementTypeService ?? throw new ArgumentNullException(nameof(engagementTypeService));
       _timeIntervalService = timeIntervalService ?? throw new ArgumentNullException(nameof(timeIntervalService));
       _opportunityCategoryService = opportunityCategoryService ?? throw new ArgumentNullException(nameof(opportunityCategoryService));
@@ -207,19 +204,6 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .NotNull()
           .When(x => x.VerificationEnabled)
           .WithMessage("A verification method is required when verification is enabled.");
-
-      // Difficulty is required except for Job opportunities If specified it must exist
-      RuleFor(x => x.DifficultyId)
-          .Cascade(CascadeMode.Stop)
-          .Must((model, difficultyId) =>
-          {
-            if (!TypeExists(model.TypeId)) return true;
-
-            return TypeIsJob(model.TypeId) || difficultyId.HasValue;
-          })
-          .WithMessage("Difficulty is required.")
-          .Must(difficultyId => DifficultyExists(difficultyId))
-          .WithMessage("Specified difficulty is invalid or does not exist.");
 
       // Commitment interval is required except for Job opportunities If specified it must exist
       RuleFor(x => x.CommitmentIntervalId)
@@ -390,13 +374,6 @@ namespace Yoma.Core.Domain.Opportunity.Validators
 
       var type = _opportunityTypeService.GetByIdOrNull(typeId);
       return type != null && type.Name.Equals(Type.Job.ToString(), StringComparison.OrdinalIgnoreCase);
-    }
-
-    private bool DifficultyExists(Guid? id)
-    {
-      if (!id.HasValue) return true;
-      if (id.Value == Guid.Empty) return false;
-      return _opportunityDifficultyService.GetByIdOrNull(id.Value) != null;
     }
 
     private bool TimeIntervalExists(Guid? id)

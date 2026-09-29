@@ -70,6 +70,16 @@ namespace Yoma.Core.Domain.Opportunity
     Other
   }
 
+  /// <summary>
+  /// Only options selected by application logic belong here; remaining CF options are metadata.
+  /// Member names are stable option keys, while descriptions are display labels.
+  /// </summary>
+  public enum Difficulty
+  {
+    [Description("Any level")]
+    AnyLevel
+  }
+
   public enum UpdateAction
   {
     Complete,
@@ -78,11 +88,5 @@ namespace Yoma.Core.Domain.Opportunity
     Featured,
     Status,
     Other
-  }
-
-  public enum Difficulty
-  {
-    [Description("Any Level")]
-    AnyLevel
   }
 }

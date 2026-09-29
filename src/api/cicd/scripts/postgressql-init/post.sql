@@ -293,7 +293,7 @@ BEGIN
 	    INSERT INTO "Opportunity"."Opportunity"(
 	        "Id", "Title", "Description", "TypeId", "OrganizationId", "Summary", "Instructions", "URL", "ZltoReward", "ZltoRewardPool",
 	        "ZltoRewardCumulative", "RewardType", "Incentivized", "VerificationEnabled", "VerificationMethod",
-	        "DifficultyId", "CommitmentIntervalId", "CommitmentIntervalCount", "ParticipantLimit", "ParticipantCount", "StatusId",
+	        "CommitmentIntervalId", "CommitmentIntervalCount", "ParticipantLimit", "ParticipantCount", "StatusId",
 	        "Keywords", "DateStart", "DateEnd", "CredentialIssuanceEnabled", "SSISchemaName", "Featured", "EngagementTypeId", "DateCreated", "CreatedByUserId",
 	        "DateModified", "ModifiedByUserId"
 	    )
@@ -313,7 +313,6 @@ BEGIN
             CASE WHEN V_OpportunityIsJob THEN NULL ELSE true END as "Incentivized",
 	        V_VerificationEnabled as "VerificationEnabled",
 	        CASE WHEN V_VerificationEnabled = true THEN 'Manual' ELSE NULL END as "VerificationMethod",
-	        (SELECT "Id" FROM "Opportunity"."OpportunityDifficulty" ORDER BY RANDOM() LIMIT 1) as "DifficultyId",
 	        V_CommitmentIntervalId as "CommitmentIntervalId",
 	        V_CommitmentIntervalCount as "CommitmentIntervalCount",
             CASE WHEN V_VerificationEnabled = true THEN 100 + ABS(FLOOR(RANDOM() * 901)) ELSE NULL END as "ParticipantLimit",
@@ -342,6 +341,65 @@ BEGIN
 	    V_DateCreated := V_DateCreated + INTERVAL '1 second';
 	    V_DateStartRunning := V_DateStartRunning + INTERVAL '8.64 second';
 	END LOOP;
+END $$ LANGUAGE plpgsql;
+
+-- Custom fields (local/dev): derive required selections from active metadata, not field keys.
+-- One active option is sufficient for both single- and multi-select fields. Optional fields
+-- remain empty; existing selections are preserved when this block is run again.
+-- Extend the data-type handling as new CF configurations are introduced. Do not guess values
+-- for lookup-backed, scalar or regex-constrained fields; report them explicitly for follow-up.
+DO $$
+DECLARE
+    V_Definition RECORD;
+    V_OptionKeys TEXT[];
+    V_OptionDelimiter TEXT;
+BEGIN
+    FOR V_Definition IN
+        SELECT "Id", "Key", "EntityContext", "DataType", "LookupType", "ValidationRegex", "SupportsMultiple"
+        FROM "Core"."CustomFieldDefinition"
+        WHERE "EntityType" = 'Opportunity'
+          AND "IsActive" = TRUE
+          AND "IsRequired" = TRUE
+        ORDER BY "Group", "SubGroup", "SortOrder", "Key"
+    LOOP
+        IF V_Definition."DataType" <> 'Option'
+            OR V_Definition."LookupType" IS NOT NULL
+            OR V_Definition."ValidationRegex" IS NOT NULL THEN
+            RAISE NOTICE 'CF seed skipped %: no generator for data type %, lookup % or validation regex %.',
+                V_Definition."Key", V_Definition."DataType", V_Definition."LookupType", V_Definition."ValidationRegex";
+            CONTINUE;
+        END IF;
+
+        SELECT ARRAY_AGG("Key" ORDER BY "SortOrder", "Key")
+        INTO V_OptionKeys
+        FROM "Core"."CustomFieldOption"
+        WHERE "CustomFieldDefinitionId" = V_Definition."Id"
+          AND "IsActive" = TRUE;
+
+        IF COALESCE(CARDINALITY(V_OptionKeys), 0) = 0 THEN
+            RAISE NOTICE 'CF seed skipped %: no active options configured.', V_Definition."Key";
+            CONTINUE;
+        END IF;
+
+        -- Multi-select storage uses boundary delimiters for exact option matching in SQL.
+        V_OptionDelimiter := CASE WHEN V_Definition."SupportsMultiple" = TRUE THEN '|' ELSE '' END;
+
+        INSERT INTO "Core"."CustomFieldValue"(
+            "Id", "CustomFieldDefinitionId", "OpportunityId", "Value", "DateCreated", "DateModified"
+        )
+        SELECT gen_random_uuid(), V_Definition."Id", O."Id",
+               V_OptionDelimiter || V_OptionKeys[1 + FLOOR(RANDOM() * CARDINALITY(V_OptionKeys))::INT] || V_OptionDelimiter,
+               CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+        FROM "Opportunity"."Opportunity" O
+        JOIN "Opportunity"."OpportunityType" T ON T."Id" = O."TypeId"
+        WHERE (V_Definition."EntityContext" IS NULL OR V_Definition."EntityContext" = T."Name")
+          AND NOT EXISTS (
+              SELECT 1
+              FROM "Core"."CustomFieldValue" V
+              WHERE V."CustomFieldDefinitionId" = V_Definition."Id"
+                AND V."OpportunityId" = O."Id"
+          );
+    END LOOP;
 END $$ LANGUAGE plpgsql;
 
 -- SSI schema definitions

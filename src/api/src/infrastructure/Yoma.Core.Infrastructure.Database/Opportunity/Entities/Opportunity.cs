@@ -11,7 +11,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
   [Table("Opportunity", Schema = "Opportunity")]
   [Index(nameof(Title), IsUnique = true)]
   [Index(nameof(OrganizationId), nameof(ExternalId), IsUnique = true)]
-  [Index(nameof(TypeId), nameof(OrganizationId), nameof(ZltoReward), nameof(DifficultyId), nameof(CommitmentIntervalId), nameof(CommitmentIntervalCount), nameof(StatusId), nameof(Keywords),
+  [Index(nameof(TypeId), nameof(OrganizationId), nameof(ZltoReward), nameof(CommitmentIntervalId), nameof(CommitmentIntervalCount), nameof(StatusId), nameof(Keywords),
     nameof(DateStart), nameof(DateEnd), nameof(CredentialIssuanceEnabled), nameof(Featured), nameof(EngagementTypeId), nameof(ShareWithPartners), nameof(Hidden),
     nameof(DateCreated), nameof(CreatedByUserId), nameof(DateModified), nameof(ModifiedByUserId))]
   public class Opportunity : Shared.Entities.BaseEntity<Guid>
@@ -83,10 +83,6 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
 
     [Column(TypeName = "varchar(20)")]
     public string? VerificationMethod { get; set; }
-
-    [ForeignKey("DifficultyId")]
-    public Guid? DifficultyId { get; set; }
-    public OpportunityDifficulty? Difficulty { get; set; } = null!;
 
     [ForeignKey("CommitmentIntervalId")]
     public Guid? CommitmentIntervalId { get; set; }

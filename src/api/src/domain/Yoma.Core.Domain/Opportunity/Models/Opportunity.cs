@@ -118,9 +118,12 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public VerificationMethod? VerificationMethod { get; set; }
 
-    public Guid? DifficultyId { get; set; }
-
-    public string? Difficulty { get; set; }
+    /// <summary>
+    /// Compatibility value for existing credential schemas; not part of the API contract.
+    /// TODO [CF / SSI]: Remove when the final schema rework maps difficulty to custom fields.
+    /// </summary>
+    [JsonIgnore]
+    public string? Difficulty { get; internal set; }
 
     public Guid? CommitmentIntervalId { get; set; }
 

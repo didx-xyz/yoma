@@ -7,6 +7,14 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
   /// <inheritdoc />
   public partial class ApplicationDb_CF_Configuration : Migration
   {
+    private static readonly string[] OpportunitySearchIndexColumns =
+    [
+      "TypeId", "OrganizationId", "ZltoReward", "CommitmentIntervalId", "CommitmentIntervalCount",
+      "StatusId", "Keywords", "DateStart", "DateEnd", "CredentialIssuanceEnabled", "Featured",
+      "EngagementTypeId", "ShareWithPartners", "Hidden", "DateCreated", "CreatedByUserId",
+      "DateModified", "ModifiedByUserId"
+    ];
+
     private static readonly string[] TrigramIndexOperators = ["gin_trgm_ops"];
     private static readonly string[] AccommodationIndexColumns = ["OpportunityId", "AccommodationId"];
     private static readonly string[] TargetedGroupIndexColumns = ["OpportunityId", "TargetedGroupId"];
@@ -710,6 +718,40 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
         UPDATE "Opportunity"."Opportunity"
         SET "RewardType" = CASE WHEN "ZltoReward" IS NOT NULL THEN 'ZLTO' ELSE 'None' END;
         """);
+
+      #region Difficulty
+      ApplicationDb_CF_Configuration_Seeding_Difficulty.Seed(migrationBuilder);
+
+      migrationBuilder.DropForeignKey(
+          name: "FK_Opportunity_OpportunityDifficulty_DifficultyId",
+          schema: "Opportunity",
+          table: "Opportunity");
+
+      migrationBuilder.DropTable(
+          name: "OpportunityDifficulty",
+          schema: "Opportunity");
+
+      migrationBuilder.DropIndex(
+          name: "IX_Opportunity_DifficultyId",
+          schema: "Opportunity",
+          table: "Opportunity");
+
+      migrationBuilder.DropIndex(
+          name: "IX_Opportunity_TypeId_OrganizationId_ZltoReward_DifficultyId_C~",
+          schema: "Opportunity",
+          table: "Opportunity");
+
+      migrationBuilder.DropColumn(
+          name: "DifficultyId",
+          schema: "Opportunity",
+          table: "Opportunity");
+
+      migrationBuilder.CreateIndex(
+          name: "IX_Opportunity_TypeId_OrganizationId_ZltoReward_CommitmentInte~",
+          schema: "Opportunity",
+          table: "Opportunity",
+          columns: OpportunitySearchIndexColumns);
+      #endregion
     }
 
     /// <inheritdoc />

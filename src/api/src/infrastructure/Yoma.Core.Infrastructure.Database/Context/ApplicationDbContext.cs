@@ -139,7 +139,6 @@ namespace Yoma.Core.Infrastructure.Database.Context
     #region Lookups
     public DbSet<Opportunity.Entities.Lookups.OpportunityCategory> OpportunityCategory { get; set; }
 
-    public DbSet<Opportunity.Entities.Lookups.OpportunityDifficulty> OpportunityDifficulty { get; set; }
 
     public DbSet<Opportunity.Entities.Lookups.OpportunityStatus> OpportunityStatus { get; set; }
 

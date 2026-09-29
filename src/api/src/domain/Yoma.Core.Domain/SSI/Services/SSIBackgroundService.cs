@@ -375,6 +375,8 @@ namespace Yoma.Core.Domain.SSI.Services
                     var myOpportunity = myOpportunityService.GetById(item.MyOpportunityId.Value, true, true, false);
                     var opportunity = opportunityService.GetById(myOpportunity.OpportunityId, true, true, false);
 
+                    opportunity.Difficulty = ResolveLegacyDifficulty(opportunity, customFieldDefinitionService, customFieldValueService);
+
                     tenantIssuer = GetTenantId(tenantService, item, EntityType.Organization, myOpportunity.OrganizationId);
                     if (!tenantIssuer.proceed)
                     {
@@ -620,8 +622,34 @@ namespace Yoma.Core.Domain.SSI.Services
     }
 
     /// <summary>
-    /// Maps dynamic custom fields by their stable definition keys. These values intentionally bypass CLR reflection:
-    /// static schema properties and dynamic custom-field values are separate concerns.
+    /// TODO [CF / SSI]: Remove this method, its call and Opportunity.Difficulty when the final
+    /// schema rework replaces the legacy reflected property with CF mappings.
+    /// Resolve labels through the existing CF framework; never duplicate seeded options.
+    /// Job experience is not legacy difficulty and must not be substituted.
+    /// </summary>
+    private static string? ResolveLegacyDifficulty(Opportunity.Models.Opportunity opportunity,
+      ICustomFieldDefinitionService definitionService, ICustomFieldValueService valueService)
+    {
+      var key = opportunity.Type switch
+      {
+        Opportunity.Type.Learning => Opportunity.CustomFieldConstants.Difficulty.Keys.Learning,
+        Opportunity.Type.Other => Opportunity.CustomFieldConstants.Difficulty.Keys.Other,
+        Opportunity.Type.ImpactAction => Opportunity.CustomFieldConstants.Difficulty.Keys.ImpactAction,
+        Opportunity.Type.Event => Opportunity.CustomFieldConstants.Difficulty.Keys.Event,
+        Opportunity.Type.Job => null,
+        _ => throw new NotSupportedException($"Opportunity type '{opportunity.Type}' is not supported")
+      };
+      if (key == null) return null;
+
+      var value = opportunity.CustomFields?.SingleOrDefault(o => o.Key == key);
+      if (value == null) return null;
+
+      var definition = definitionService.GetByKey(CustomFieldEntityType.Opportunity, key, true, false);
+      return valueService.ResolveDisplayValues(definition, value).SingleOrDefault();
+    }
+
+    /// <summary>
+    /// Maps dynamic custom fields by stable definition keys without CLR reflection.
     /// </summary>
     private static void MapCustomFieldValues<T>(CredentialIssuanceRequest request, SSISchemaEntity schemaEntity, T entity,
       ICustomFieldDefinitionService customFieldDefinitionService, ICustomFieldValueService customFieldValueService)

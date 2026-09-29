@@ -25,7 +25,6 @@ namespace Yoma.Core.Api.Controllers
     private readonly IOpportunityService _opportunityService;
     private readonly IOpportunityInfoService _opportunityInfoService;
     private readonly IOpportunityCategoryService _opportunityCategoryService;
-    private readonly IOpportunityDifficultyService _opportunityDifficultyService;
     private readonly IOpportunityTypeService _opportunityTypeService;
     private readonly IOpportunityVerificationTypeService _opportunityVerificationTypeService;
     #endregion
@@ -36,7 +35,6 @@ namespace Yoma.Core.Api.Controllers
         IOpportunityService opportunityService,
         IOpportunityInfoService opportunityInfoService,
         IOpportunityCategoryService opportunityCategoryService,
-        IOpportunityDifficultyService opportunityDifficultyService,
         IOpportunityTypeService opportunityTypeService,
         IOpportunityVerificationTypeService opportunityVerificationTypeService)
     {
@@ -44,7 +42,6 @@ namespace Yoma.Core.Api.Controllers
       _opportunityService = opportunityService ?? throw new ArgumentNullException(nameof(opportunityService));
       _opportunityInfoService = opportunityInfoService ?? throw new ArgumentNullException(nameof(opportunityInfoService));
       _opportunityCategoryService = opportunityCategoryService ?? throw new ArgumentNullException(nameof(opportunityCategoryService));
-      _opportunityDifficultyService = opportunityDifficultyService ?? throw new ArgumentNullException(nameof(opportunityDifficultyService));
       _opportunityTypeService = opportunityTypeService ?? throw new ArgumentNullException(nameof(opportunityTypeService));
       _opportunityVerificationTypeService = opportunityVerificationTypeService ?? throw new ArgumentNullException(nameof(opportunityVerificationTypeService));
     }
@@ -431,21 +428,6 @@ namespace Yoma.Core.Api.Controllers
       var result = _opportunityService.SearchCriteriaOpportunities(filter, true);
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchCriteriaOpportunities));
-
-      return StatusCode((int)HttpStatusCode.OK, result);
-    }
-
-    [SwaggerOperation(Summary = "Return a list of opportunity difficulties")]
-    [HttpGet("difficulty")]
-    [ProducesResponseType(typeof(List<OpportunityDifficulty>), (int)HttpStatusCode.OK)]
-    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public IActionResult ListOpportunityDifficulties()
-    {
-      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunityDifficulties));
-
-      var result = _opportunityDifficultyService.List();
-
-      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunityDifficulties));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }

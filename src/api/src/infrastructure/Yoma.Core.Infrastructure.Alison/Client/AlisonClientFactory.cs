@@ -23,12 +23,12 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     private readonly AlisonOptions _options;
     private readonly IRepositoryBatched<Opportunity> _opportunityRepository;
     private readonly IOpportunityTypeService _opportunityTypeService;
+    private readonly ICustomFieldDefinitionService _customFieldDefinitionService;
     private readonly IOpportunityCategoryService _opportunityCategoryService;
     private readonly ICountryService _countryService;
     private readonly ILanguageService _languageService;
     private readonly ISkillService _skillService;
     private readonly ISustainableDevelopmentGoalService _sustainableDevelopmentGoalService;
-    private readonly IOpportunityDifficultyService _opportunityDifficultyService;
     private readonly ITimeIntervalService _timeIntervalService;
     private readonly IEngagementTypeService _engagementTypeService;
     private readonly IAlisonAuthService _alisonAuthService;
@@ -44,12 +44,12 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       IOptions<AlisonOptions> options,
       IRepositoryBatched<Opportunity> opportunityRepository,
       IOpportunityTypeService opportunityTypeService,
+      ICustomFieldDefinitionService customFieldDefinitionService,
       IOpportunityCategoryService opportunityCategoryService,
       ICountryService countryService,
       ILanguageService languageService,
       ISkillService skillService,
       ISustainableDevelopmentGoalService sustainableDevelopmentGoalService,
-      IOpportunityDifficultyService opportunityDifficultyService,
       ITimeIntervalService timeIntervalService,
       IEngagementTypeService engagementTypeService,
       IAlisonAuthService alisonAuthService,
@@ -62,12 +62,12 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
       _opportunityRepository = opportunityRepository ?? throw new ArgumentNullException(nameof(opportunityRepository));
       _opportunityTypeService = opportunityTypeService ?? throw new ArgumentNullException(nameof(opportunityTypeService));
+      _customFieldDefinitionService = customFieldDefinitionService ?? throw new ArgumentNullException(nameof(customFieldDefinitionService));
       _opportunityCategoryService = opportunityCategoryService ?? throw new ArgumentNullException(nameof(opportunityCategoryService));
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
       _skillService = skillService ?? throw new ArgumentNullException(nameof(skillService));
       _sustainableDevelopmentGoalService = sustainableDevelopmentGoalService ?? throw new ArgumentNullException(nameof(sustainableDevelopmentGoalService));
-      _opportunityDifficultyService = opportunityDifficultyService ?? throw new ArgumentNullException(nameof(opportunityDifficultyService));
       _timeIntervalService = timeIntervalService ?? throw new ArgumentNullException(nameof(timeIntervalService));
       _engagementTypeService = engagementTypeService ?? throw new ArgumentNullException(nameof(engagementTypeService));
       _alisonAuthService = alisonAuthService ?? throw new ArgumentNullException(nameof(alisonAuthService));
@@ -103,12 +103,12 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         _options,
         _opportunityRepository,
         _opportunityTypeService,
+        _customFieldDefinitionService,
         _opportunityCategoryService,
         _countryService,
         _languageService,
         _skillService,
         _sustainableDevelopmentGoalService,
-        _opportunityDifficultyService,
         _timeIntervalService,
         _engagementTypeService,
         _alisonAuthService,

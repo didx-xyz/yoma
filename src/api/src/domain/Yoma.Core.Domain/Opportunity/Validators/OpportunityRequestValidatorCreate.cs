@@ -9,7 +9,6 @@ namespace Yoma.Core.Domain.Opportunity.Validators
     #region Constructor
     public OpportunityRequestValidatorCreate(IOpportunityTypeService opportunityTypeService,
         IOrganizationService organizationService,
-        IOpportunityDifficultyService opportunityDifficultyService,
         IEngagementTypeService engagementTypeService,
         ITimeIntervalService timeIntervalService,
         IOpportunityCategoryService opportunityCategoryService,
@@ -24,7 +23,6 @@ namespace Yoma.Core.Domain.Opportunity.Validators
         ISustainableDevelopmentGoalService sustainableDevelopmentGoalService)
         : base(opportunityTypeService,
         organizationService,
-        opportunityDifficultyService,
         engagementTypeService,
         timeIntervalService,
         opportunityCategoryService,
