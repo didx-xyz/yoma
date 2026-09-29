@@ -352,6 +352,8 @@ namespace Yoma.Core.Domain.SSI.Services
           value.ToString(CultureInfo.InvariantCulture),
         CustomFieldDataType.Decimal when decimal.TryParse(result, NumberStyles.Number, CultureInfo.InvariantCulture, out var value) =>
           value.ToString(CultureInfo.InvariantCulture),
+        CustomFieldDataType.Date when DateOnly.TryParseExact(result, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var value) =>
+          value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
         CustomFieldDataType.DateTime when DateTimeHelper.TryParse(result) is DateTimeOffset value =>
           value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
         _ => result

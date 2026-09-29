@@ -14,10 +14,10 @@ It is written for our custom GPT to follow deterministically (no guessing; refer
 - C# CSV DTO model: `MyOpportunityInfoCsvImport.cs`
 
 - Sample CSV: `MyOpportunityInfoCsvImport_Sample.csv`  
-  ➜ The **header row and order must exactly match** the sample.
+  ➜ The core header row and order must match the sample. Optional custom-field columns follow the core columns.
 
-**Headers (in this exact order):**  
-Email,PhoneNumber,FirstName,Surname,Gender,Country,DateCompleted,OpportunityExternalId
+**Sample headers (core columns first, then optional custom fields):**
+Email,PhoneNumber,FirstName,Surname,Gender,Country,DateCompleted,OpportunityExternalId,jobEmploymentStartDate,impactActionImpactAchieved,eventRole
 
 ------------------------------------------------------------------------------
 
@@ -25,7 +25,7 @@ Email,PhoneNumber,FirstName,Surname,Gender,Country,DateCompleted,OpportunityExte
 
 - File type: CSV
 - CSV delimiter: **comma (`,` only)**
-- Headers: **case-sensitive** and must match the sample file order exactly
+- Core headers are **case-sensitive** and must match the sample file order. The three custom-field columns are optional; use them only for the matching Opportunity type and leave other types blank.
 - Whitespace: trim all cells; an empty cell after trim is treated as **missing**
 - Dates: **two accepted formats** (zero-padded):
   - `YYYY-MM-DD`  (e.g., 2025-09-01)
@@ -68,6 +68,14 @@ At least **one** of **Email** or **PhoneNumber** must be provided (the “Userna
   - **Required**
   - Length: **1–50** characters
   - Must match an existing Opportunity’s ExternalId
+
+- **jobEmploymentStartDate** (Job completions only)
+  - Optional actual placement start date, strictly `YYYY-MM-DD`; not the application deadline
+- **impactActionImpactAchieved** (Impact Action completions only)
+  - Optional outcome description, up to 1000 characters
+- **eventRole** (Event completions only)
+  - Optional role: `Participant`, `Speaker`, `Panelist`, `FacilitatorTrainer`, `CoOrganiser`, or `Volunteer`
+  - If omitted or blank, the role remains unspecified
 
 ------------------------------------------------------------------------------
 
@@ -132,7 +140,7 @@ Human-readable messages remain short; the field name and offending value are sup
 ## 7) Examples
 
 **Headers:**  
-Email,PhoneNumber,FirstName,Surname,Gender,Country,DateCompleted,OpportunityExternalId
+Email,PhoneNumber,FirstName,Surname,Gender,Country,DateCompleted,OpportunityExternalId,jobEmploymentStartDate,impactActionImpactAchieved,eventRole
 
 **Valid (email given, date in `YYYY-MM-DD`):**
 ```csv
@@ -182,7 +190,7 @@ if (!DateOnly.TryParseExact(input, formats, CultureInfo.InvariantCulture, DateTi
 - Validation is background-only: highlight issues in the response; never provide or offer validation report downloads.
 - Always return download links only for the generated clean CSV files.
 - Never output non-downloadable local file paths.
-- Enforce header order exactly as in the sample file.
+- Enforce the core header order shown in the sample; include applicable optional custom-field columns after it.
 - Trim whitespace; reject empty tokens.
 - Detect and exclude phantom rows:
   - Rows that are completely blank must be ignored (not validated, silently dropped).

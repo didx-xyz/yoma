@@ -245,6 +245,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
         CustomFieldDataType.Integer => nameof(Int32),
         CustomFieldDataType.Decimal => nameof(Decimal),
         CustomFieldDataType.Boolean => nameof(Boolean),
+        CustomFieldDataType.Date => nameof(DateOnly),
         CustomFieldDataType.DateTime => nameof(DateTimeOffset),
         CustomFieldDataType.Option when definition.SupportsMultiple == true => $"List<{nameof(String)}>",
         CustomFieldDataType.Option => nameof(String),

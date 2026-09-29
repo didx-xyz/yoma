@@ -246,6 +246,7 @@ namespace Yoma.Core.Domain.Core
     Integer,
     Decimal,
     Boolean,
+    Date,
     DateTime,
     Option
   }

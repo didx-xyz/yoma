@@ -32,9 +32,11 @@ the BA field map is approved.
 
 ## Tasks
 
+- [x] Seed optional MyOpportunity completion fields for Job employment start date, Impact Action impact achieved and Event role; add date-only CF handling, CSV sample and focused tests. Credential schema mapping remains the final CF phase.
+- [ ] Confirm whether actual Job placement terms are returned by partners before adding completion-level Employment Type and Work Schedule. Employment duration remains follow-up reporting, not a completion-time field.
 - [x] Implement Impact Action Tools required / Other description and Verified activity type, with seeded options, conditional validation, API CSV sample and focused tests.
 - [x] Review Impact Action changes and execute fresh migration/post.sql, authenticated API/CSV smoke tests, SQL filters and Job regression checks. Correct IXO/JobJack execution-strategy registration discovered by CSV probe/commit testing; see consolidated handover.
-- [ ] Update the Impact Action sheet's final implementation column after this implementation is accepted.
+- [x] Update the Impact Action & Event sheet's final implementation column with the final API behaviour and deferred completion/credential items.
 
 - [x] Implement opportunity Provider, Incentivized/reward metadata, accessibility, age bounds, targeted groups and SDGs through API persistence, SQL search, CSV and applicable partner mappings; verify on disposable PostgreSQL and complete authenticated Docker/API smoke testing. See the consolidated handover for exact coverage and remaining UI integration.
 
@@ -61,6 +63,7 @@ the BA field map is approved.
 
 ## Decisions
 
+- 2026-09-29: The three MyOpportunity completion fields are optional. Job Employment Start Date is date-only (`yyyy-MM-dd`), Impact Achieved accepts text up to 1000 characters, and Event Role is a controlled single-select with no default. Adrian confirmed that instant links intentionally skip custom-field processing; no Event-specific verification logic is added. Existing completed records are not backfilled; credential mapping follows in the final CF phase. The sheet's Job placement-status and Event/Impact duplicate completion booleans are not added.
 - 2026-09-29: Impact Action adds optional Tools required, conditional Other tool description (500 characters) and optional Verified activity type. Adrian approved expanding the tool list and confirmed Impact Achieved belongs to MyOpportunity. Only Other drives code logic and needs an enum. Event receives no additional Opportunity fields here; confirmation was requested from Mpho. Existing difficulty, core rewards, verification and provider are reused. See the consolidated handover.
 
 - 2026-09-29: Job Industry uses UN ISIC Revision 5 Sections; Job category uses ISCO-08 two-digit Sub-major Groups. No separate core fields duplicate these classifications. Salary and employment consistency rules validate the complete post-upsert CF state inside the existing transaction. Manual capture enforces required fields, deadline and required skills; imports/sync permit incomplete data without permitting contradictions. Jason's prototype is a reference, not a binding API contract; Education/Currency controls and conditional UI behaviour need his integration. See the Job section in the consolidated handover.

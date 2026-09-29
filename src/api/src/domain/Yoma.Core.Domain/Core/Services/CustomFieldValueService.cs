@@ -411,12 +411,19 @@ namespace Yoma.Core.Domain.Core.Services
         _ => null
       };
 
-      value.ValueDateTime = definition.DataType == CustomFieldDataType.DateTime
-        ? DateTimeOffset.Parse(
+      value.ValueDateTime = definition.DataType switch
+      {
+        CustomFieldDataType.Date => new DateTimeOffset(
+          DateOnly.ParseExact(value.Value, "yyyy-MM-dd", CultureInfo.InvariantCulture).ToDateTime(TimeOnly.MinValue),
+          TimeSpan.Zero),
+
+        CustomFieldDataType.DateTime => DateTimeOffset.Parse(
           value.Value,
           CultureInfo.InvariantCulture,
-          DateTimeStyles.RoundtripKind)
-        : null;
+          DateTimeStyles.RoundtripKind),
+
+        _ => null
+      };
     }
 
     private string? Normalize(CustomFieldDefinition definition, CustomFieldValueRequest request)
@@ -439,6 +446,7 @@ namespace Yoma.Core.Domain.Core.Services
         CustomFieldDataType.Integer => NormalizeInteger(definition, request),
         CustomFieldDataType.Decimal => NormalizeDecimal(definition, request),
         CustomFieldDataType.Boolean => NormalizeBoolean(definition, request),
+        CustomFieldDataType.Date => NormalizeDate(definition, request),
         CustomFieldDataType.DateTime => NormalizeDateTime(definition, request),
         CustomFieldDataType.Option => NormalizeOption(definition, request),
         _ => throw new ArgumentOutOfRangeException(nameof(definition), $"Custom field data type '{definition.DataType}' is not supported")
@@ -489,6 +497,17 @@ namespace Yoma.Core.Domain.Core.Services
         throw new ValidationException($"Custom field '{definition.Title}' must be true or false");
 
       return value.ToString().ToLowerInvariant();
+    }
+
+    private static string NormalizeDate(CustomFieldDefinition definition, CustomFieldValueRequest request)
+    {
+      if (request.Values != null)
+        throw new ValidationException($"Custom field '{definition.Title}' must specify value; values is only supported for option fields");
+
+      if (!DateOnly.TryParseExact(request.Value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var value))
+        throw new ValidationException($"Custom field '{definition.Title}' must be a valid date in yyyy-MM-dd format");
+
+      return value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
     }
 
     private static string NormalizeDateTime(CustomFieldDefinition definition, CustomFieldValueRequest request)
@@ -623,6 +642,7 @@ namespace Yoma.Core.Domain.Core.Services
 
         CustomFieldDataType.Integer or
         CustomFieldDataType.Decimal or
+        CustomFieldDataType.Date or
         CustomFieldDataType.DateTime =>
           filter.Operator is
             CustomFieldFilterOperator.Equals or
@@ -712,6 +732,10 @@ namespace Yoma.Core.Domain.Core.Services
           decimal.Parse(filter.Value!, NumberStyles.Number, CultureInfo.InvariantCulture) <=
           decimal.Parse(filter.ValueTo!, NumberStyles.Number, CultureInfo.InvariantCulture),
 
+        CustomFieldDataType.Date =>
+          DateOnly.ParseExact(filter.Value!, "yyyy-MM-dd", CultureInfo.InvariantCulture) <=
+          DateOnly.ParseExact(filter.ValueTo!, "yyyy-MM-dd", CultureInfo.InvariantCulture),
+
         CustomFieldDataType.DateTime =>
           DateTimeOffset.Parse(filter.Value!, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind) <=
           DateTimeOffset.Parse(filter.ValueTo!, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind),
@@ -745,6 +769,9 @@ namespace Yoma.Core.Domain.Core.Services
 
         CustomFieldDataType.Boolean =>
           NormalizeBoolean(definition, request),
+
+        CustomFieldDataType.Date =>
+          NormalizeDate(definition, request),
 
         CustomFieldDataType.DateTime =>
           NormalizeDateTime(definition, request),

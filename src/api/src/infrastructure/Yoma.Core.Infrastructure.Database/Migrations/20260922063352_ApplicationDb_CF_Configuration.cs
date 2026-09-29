@@ -761,6 +761,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
       #region Impact Action
       ApplicationDb_CF_Configuration_Seeding_ImpactAction.Seed(migrationBuilder);
       #endregion
+
+      #region MyOpportunity
+      ApplicationDb_CF_Configuration_Seeding_MyOpportunity.Seed(migrationBuilder);
+      #endregion
       #endregion
     }
 

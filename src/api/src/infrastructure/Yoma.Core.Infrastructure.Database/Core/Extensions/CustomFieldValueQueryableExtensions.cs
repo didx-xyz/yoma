@@ -118,7 +118,7 @@ namespace Yoma.Core.Infrastructure.Database.Core.Extensions
         CustomFieldDataType.Integer or CustomFieldDataType.Decimal =>
           ApplyNumericComparison(query, filter.Operator, ParseNumeric(filter.Value)),
 
-        CustomFieldDataType.DateTime =>
+        CustomFieldDataType.Date or CustomFieldDataType.DateTime =>
           ApplyDateTimeComparison(query, filter.Operator, ParseDateTime(filter.Value)),
 
         _ => throw new InvalidOperationException(
@@ -138,7 +138,7 @@ namespace Yoma.Core.Infrastructure.Database.Core.Extensions
         CustomFieldDataType.Integer or CustomFieldDataType.Decimal =>
           ApplyNumericRange(query, ParseNumeric(filter.Value), ParseNumeric(filter.ValueTo)),
 
-        CustomFieldDataType.DateTime =>
+        CustomFieldDataType.Date or CustomFieldDataType.DateTime =>
           ApplyDateTimeRange(query, ParseDateTime(filter.Value), ParseDateTime(filter.ValueTo)),
 
         _ => throw new InvalidOperationException(
@@ -208,7 +208,7 @@ namespace Yoma.Core.Infrastructure.Database.Core.Extensions
         return query.Where(o => o.ValueNumeric == numeric);
       }
 
-      if (dataType == CustomFieldDataType.DateTime)
+      if (dataType is CustomFieldDataType.Date or CustomFieldDataType.DateTime)
       {
         var dateTime = ParseDateTime(value);
         return query.Where(o => o.ValueDateTime == dateTime);
@@ -247,6 +247,10 @@ namespace Yoma.Core.Infrastructure.Database.Core.Extensions
 
     private static DateTimeOffset ParseDateTime(string value)
     {
+      // Date-only CF values are stored as UTC midnight for indexed comparisons.
+      if (DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+        return new DateTimeOffset(date.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
+
       return DateTimeOffset.Parse(
         value,
         CultureInfo.InvariantCulture,
