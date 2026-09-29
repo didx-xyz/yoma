@@ -71,7 +71,7 @@ User location extends the existing profile country. User/profile upsert requests
 - [x] Expand the controlled Education lookup to eleven values, retaining all five existing IDs and mapping the old tertiary row to "Tertiary (Qualification not specified)"; new qualifications use "Tertiary - …".
 - [x] Align both Keycloak realm-export Education option lists with the lookup.
 - [ ] Robbie: prepare and execute the Stage and Production Keycloak DB changes in the [SRE deployment handover](handoffs/2026-09-28-sre.md) when the CF release reaches each environment. The Yoma database migration does not rewrite Keycloak user values, and existing realms do not automatically reimport changed exports.
-- [ ] Reuse the Education lookup for Job Minimum Qualification when the approved Job custom-field definitions are seeded. No automatic eligibility gate in phase one.
+- [x] Reuse the Education lookup for Job Minimum Qualification. Generic CF lookup types now include Education and Currency; API values/filter selections use lookup IDs, while CSV resolves Education names and Currency codes. No qualification eligibility gate is added. See the [Job integration handover](YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/handoffs/2026-09-28-a.md#job-specific-custom-fields) for Jason's capture/filter work.
 
 ### Why each child exists
 

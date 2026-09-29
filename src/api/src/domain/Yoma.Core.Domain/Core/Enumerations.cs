@@ -279,7 +279,17 @@ namespace Yoma.Core.Domain.Core
     /// <summary>
     /// Skill lookup values are available from the public relative route <c>api/v3/lookup/skill</c>.
     /// </summary>
-    Skill
+    Skill,
+
+    /// <summary>
+    /// Education lookup values are available from the public relative route <c>api/v3/lookup/education</c>.
+    /// </summary>
+    Education,
+
+    /// <summary>
+    /// Currency lookup values are available from the public relative route <c>api/v3/lookup/currency</c>.
+    /// </summary>
+    Currency
   }
 
   public enum CustomFieldUpsertMode

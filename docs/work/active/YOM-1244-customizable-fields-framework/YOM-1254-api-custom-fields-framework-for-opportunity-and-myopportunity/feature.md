@@ -51,9 +51,13 @@ the BA field map is approved.
 - [x] Verify Difficulty with a full pre-CF database upgrade, fresh Docker migration/post.sql, five-type API CRUD/filter/validation checks and CSV import/report export. Add metadata-driven local CF option seeding; see the consolidated handover for coverage and limits.
 - [ ] Introduce the approved field map in a new migration when CF is released.
 - [ ] Re-run end-to-end API, CSV and partner mapping validation against the final definitions.
+- [x] Seed Job-specific definitions and official industry/occupation options, extend generic lookup-backed CFs with Education/Currency, enforce conditional consistency and map supported partner values. Update the API CSV sample and consolidated handover.
+- [x] Review Job implementation with Adrian; complete fresh migration/post.sql, authenticated Job API CRUD/validation/rollback/filter checks and CSV import/report smoke tests. Update the Jobs sheet's final implementation column; see consolidated handover for evidence and UI/partner limits.
 - [x] Rename the `Task` lookup and enum to `ImpactAction` in place, with `[Description("Impact Action")]` and matching display name; update CSV sample and IXO mapping.
 
 ## Decisions
+
+- 2026-09-29: Job Industry uses UN ISIC Revision 5 Sections; Job category uses ISCO-08 two-digit Sub-major Groups. No separate core fields duplicate these classifications. Salary and employment consistency rules validate the complete post-upsert CF state inside the existing transaction. Manual capture enforces required fields, deadline and required skills; imports/sync permit incomplete data without permitting contradictions. Jason's prototype is a reference, not a binding API contract; Education/Currency controls and conditional UI behaviour need his integration. See the Job section in the consolidated handover.
 
 - 2026-09-29: CF business contracts use constants for mapped keys and enums only for code-selected/interpreted options. The AnyLevel fallback is enum-backed; display names do not drive decisions. Existing enums/constants are reused in seeds and backfill; ordinary seed-only values remain literals. The four non-Job difficulty fields are system-controlled because integrations depend on them; Job experience remains ordinary metadata. Type-specific details groups, Requirements subgroup and ordering in tens establish the initial presentation convention. See the consolidated handover below for the full Difficulty contract and remaining verification.
 

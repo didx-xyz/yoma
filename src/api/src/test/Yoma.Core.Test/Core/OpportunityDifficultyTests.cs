@@ -180,14 +180,17 @@ namespace Yoma.Core.Test.Core
     private static CustomFieldValueService CreateValueService(ICustomFieldDefinitionService definitions)
     {
       return new CustomFieldValueService(definitions, Mock.Of<ICountryService>(), Mock.Of<ILanguageService>(),
-        Mock.Of<ISkillService>(), Mock.Of<IRepository<CustomFieldValue>>(), Mock.Of<IExecutionStrategyService>());
+        Mock.Of<ISkillService>(), Mock.Of<IEducationService>(), Mock.Of<ICurrencyService>(),
+        Mock.Of<IRepository<CustomFieldValue>>(), Mock.Of<IExecutionStrategyService>());
     }
 
     private static List<CustomFieldDefinition> Definitions()
     {
       var seeds = new ApplicationDb_CF_Configuration().UpOperations.OfType<InsertDataOperation>().ToList();
-      var definitions = Assert.Single(seeds, o => o.Table == "CustomFieldDefinition");
-      var options = Assert.Single(seeds, o => o.Table == "CustomFieldOption");
+      var definitions = Assert.Single(seeds, o => o.Table == "CustomFieldDefinition" &&
+        o.Values[0, 0] is Guid id && id == new Guid("d1ff1c01-9b29-4cf0-a100-000000000001"));
+      var options = Assert.Single(seeds, o => o.Table == "CustomFieldOption" &&
+        o.Values[0, 0] is Guid id && id == new Guid("d1ff1c01-9b29-4cf0-a100-000000000101"));
       var result = new List<CustomFieldDefinition>();
 
       for (var row = 0; row < definitions.Values.GetLength(0); row++)

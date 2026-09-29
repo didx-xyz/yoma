@@ -260,6 +260,14 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .NotEmpty();
 
       // End date can be in the past
+      RuleSet("Manual", () =>
+      {
+        RuleFor(x => x.DateEnd)
+            .NotNull()
+            .When(x => TypeIsJob(x.TypeId))
+            .WithMessage("An application deadline is required for Jobs.");
+      });
+
       RuleFor(model => model.DateEnd)
           .GreaterThanOrEqualTo(model => model.DateStart)
           .When(model => model.DateEnd.HasValue)
@@ -306,7 +314,16 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .Must(languages => languages != null && languages.Count != 0 && languages.All(id => id != Guid.Empty && LanguageExists(id)))
           .WithMessage("Languages are required and must exist.");
 
-      // Skills are optional. If specified, all skills must exist.
+      // Manual Jobs require skills; other capture paths may leave them unspecified.
+      // Every supplied skill must exist regardless of capture path.
+      RuleSet("Manual", () =>
+      {
+        RuleFor(x => x.Skills)
+            .NotEmpty()
+            .When(x => TypeIsJob(x.TypeId))
+            .WithMessage("At least one required skill is required for Jobs.");
+      });
+
       RuleFor(x => x.Skills)
           .Must(skills => skills == null || skills.All(id => id != Guid.Empty && SkillExists(id)))
           .WithMessage("Skills are optional, but must exist if specified.");

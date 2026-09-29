@@ -18,6 +18,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
     private readonly IOpportunityCategoryService _opportunityCategoryService;
     private readonly ICountryService _countryService;
     private readonly ILanguageService _languageService;
+    private readonly ICustomFieldDefinitionService _customFieldDefinitionService;
     private readonly IRepositoryBatched<Opportunity> _opportunityRepository;
 
     private readonly SyncFilterPullEntityValidator _syncFilterPullEntityValidator;
@@ -31,6 +32,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
       IOpportunityCategoryService opportunityCategoryService,
       ICountryService countryService,
       ILanguageService languageService,
+      ICustomFieldDefinitionService customFieldDefinitionService,
       IRepositoryBatched<Opportunity> opportunityRepository,
       SyncFilterPullEntityValidator syncFilterPullEntityValidator)
     {
@@ -40,6 +42,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
       _opportunityCategoryService = opportunityCategoryService ?? throw new ArgumentNullException(nameof(opportunityCategoryService));
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
+      _customFieldDefinitionService = customFieldDefinitionService ?? throw new ArgumentNullException(nameof(customFieldDefinitionService));
       _opportunityRepository = opportunityRepository ?? throw new ArgumentNullException(nameof(opportunityRepository));
       _syncFilterPullEntityValidator = syncFilterPullEntityValidator ?? throw new ArgumentNullException(nameof(syncFilterPullEntityValidator));
     }
@@ -55,6 +58,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
         _opportunityCategoryService,
         _countryService,
         _languageService,
+        _customFieldDefinitionService,
         _opportunityRepository,
         _syncFilterPullEntityValidator);
     }

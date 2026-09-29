@@ -406,3 +406,44 @@ match the current type's definition. New rows may remain unspecified when absent
 The report export carries keys and values in the existing flattened Custom Fields
 column; there is no separate core Difficulty export column. Report exports are
 not import templates: imports use the CF:<definitionKey> columns described above.
+The flattened report retains inline option keys and lookup IDs, including Education,
+Currency and Skill references. CSV imports resolve the human-facing names/codes
+listed below; do not use the report as an import template.
+
+------------------------------------------------------------------------
+
+Job-specific custom fields
+
+The Job sample includes the approved CF columns. All are handled by the existing
+CF importer; omitted columns preserve values and present blank cells clear them.
+Reference current definitions rather than inventing option values:
+- CF:jobSalaryDisclosed: true / false.
+- CF:jobSalaryMinimum and CF:jobSalaryMaximum: positive decimal amounts; maximum
+  must not be below minimum. Either bound may be supplied independently.
+- CF:jobSalaryCurrency: ISO currency code from /api/v3/lookup/currency.
+- CF:jobPayInterval: PerYear / PerMonth / PerHour / PerEngagement.
+- CF:jobEmploymentType: Permanent / FixedTerm / Internship / Apprenticeship /
+  FreelanceConsultancy / TemporarySeasonal; separate multiple selections with |.
+- CF:jobWorkSchedule: FullTime / PartTime.
+- CF:jobEmploymentDuration: positive whole number.
+- CF:jobEmploymentDurationUnit: Months / Years.
+- CF:jobMinimumQualification: exact Education name from /api/v3/lookup/education.
+- CF:jobPreferredSkills: exact skill names separated with |, resolved through
+  the existing Skill lookup. These supplement core required Skills, not replace them.
+- CF:jobIndustry: UN ISIC Revision 5 Section code (A-V).
+- CF:jobCategory: ISCO-08 two-digit Sub-major Group code; retain leading zeroes.
+
+Industry describes the employer's economic sector; Job category describes the
+occupation. Neither replaces the core Opportunity Categories selection.
+
+SalaryDisclosed=false excludes amounts, currency and pay interval. Salary details
+cannot accompany Incentivized=No. Permanent and FixedTerm cannot be combined;
+Permanent excludes employment duration and its unit. These consistency checks
+also apply against stored values during partial imports: clear old dependent
+values in the same row when changing their controlling value.
+
+Manual API saves require the mandatory Job definitions plus core DateEnd and
+Skills. Disclosed salary requires at least one amount, currency and interval;
+non-permanent employment requires duration and unit. CSV/partner imports may
+remain incomplete but supplied values must still be valid and consistent.
+Existing Jobs are not backfilled with guessed qualifications, salary or industry.

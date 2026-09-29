@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
@@ -23,9 +24,18 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
     private readonly IOpportunityCategoryService _opportunityCategoryService;
     private readonly ICountryService _countryService;
     private readonly ILanguageService _languageService;
+    private readonly ICustomFieldDefinitionService _customFieldDefinitionService;
     private readonly IRepositoryBatched<Opportunity> _opportunityRepository;
 
     private readonly SyncFilterPullEntityValidator _syncFilterPullEntityValidator;
+
+    private static readonly Dictionary<string, string> WorkScheduleMappings = new(StringComparer.OrdinalIgnoreCase)
+    {
+      { "Full Time", CustomFieldConstants.Job.Employment.ScheduleOptions.FullTime },
+      { "Full-time", CustomFieldConstants.Job.Employment.ScheduleOptions.FullTime },
+      { "Part Time", CustomFieldConstants.Job.Employment.ScheduleOptions.PartTime },
+      { "Part-time", CustomFieldConstants.Job.Employment.ScheduleOptions.PartTime }
+    };
 
     // Yoma category id -> Jobberman job functions.
     // Keep in code for now because the mapping is small, partner-specific, and version-controlled.
@@ -67,6 +77,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
       IOpportunityCategoryService opportunityCategoryService,
       ICountryService countryService,
       ILanguageService languageService,
+      ICustomFieldDefinitionService customFieldDefinitionService,
       IRepositoryBatched<Opportunity> opportunityRepository,
       SyncFilterPullEntityValidator syncFilterPullEntityValidator)
     {
@@ -76,6 +87,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
       _opportunityCategoryService = opportunityCategoryService ?? throw new ArgumentNullException(nameof(opportunityCategoryService));
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
+      _customFieldDefinitionService = customFieldDefinitionService ?? throw new ArgumentNullException(nameof(customFieldDefinitionService));
       _opportunityRepository = opportunityRepository ?? throw new ArgumentNullException(nameof(opportunityRepository));
       _syncFilterPullEntityValidator = syncFilterPullEntityValidator ?? throw new ArgumentNullException(nameof(syncFilterPullEntityValidator));
     }
@@ -158,7 +170,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
 
         // Populate when available. Partner sync uses PatchAllowMissingRequired:
         // omitted fields are preserved and key-only fields delete existing values.
-        CustomFields = null
+        CustomFields = MapCustomFields(item)
 
         // ExternalId: Opportunity.ExternalId is used by CSV imports; pull synchronization must set the external identifier on the SyncItem.
       };
@@ -169,6 +181,17 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
         Deleted = item.Deleted == true,
         Item = opportunity
       };
+    }
+
+    private List<CustomFieldValueRequest>? MapCustomFields(Opportunity item)
+    {
+      if (!WorkScheduleMappings.TryGetValue(item.WorkType?.Trim() ?? string.Empty, out var schedule))
+        return null;
+
+      // The feed's broad job-function labels do not uniquely identify ISCO occupations or
+      // employer industries. Only map explicit schedule information, never infer from prose.
+      return [_customFieldDefinitionService.GetByKey(Domain.Core.CustomFieldEntityType.Opportunity,
+        CustomFieldConstants.Job.Employment.Schedule, true, true).ToOptionRequest(schedule)];
     }
 
     private Domain.Lookups.Models.Language ResolveLanguage(string? nameSource)
@@ -228,7 +251,8 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
       if (string.IsNullOrWhiteSpace(description)) description = fallback;
 
       var metadata = new List<string>();
-      AddDescriptionDetail(metadata, "Contract type", item.WorkType?.TitleCase(onlyWhenAllCaps: true));
+      if (!WorkScheduleMappings.ContainsKey(item.WorkType?.Trim() ?? string.Empty))
+        AddDescriptionDetail(metadata, "Contract type", item.WorkType?.TitleCase(onlyWhenAllCaps: true));
 
       if (metadata.Count > 0)
         description = $"{description}{StringExtensions.MarkdownParagraphBreak}{string.Join("\n", metadata)}";

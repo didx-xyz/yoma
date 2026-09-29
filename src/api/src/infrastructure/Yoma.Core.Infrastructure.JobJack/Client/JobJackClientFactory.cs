@@ -18,6 +18,7 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
     private readonly IOpportunityCategoryService _opportunityCategoryService;
     private readonly ICountryService _countryService;
     private readonly ILanguageService _languageService;
+    private readonly ICustomFieldDefinitionService _customFieldDefinitionService;
     private readonly IRepositoryBatched<Opportunity> _opportunityRepository;
     private readonly SyncFilterPullEntityValidator _validator;
     #endregion
@@ -26,6 +27,7 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
     public JobJackClientFactory(ILogger<JobJackClient> logger, IOptions<JobJackOptions> options,
       IOpportunityTypeService opportunityTypeService, IOpportunityCategoryService opportunityCategoryService,
       ICountryService countryService, ILanguageService languageService,
+      ICustomFieldDefinitionService customFieldDefinitionService,
       IRepositoryBatched<Opportunity> opportunityRepository, SyncFilterPullEntityValidator validator)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -34,6 +36,7 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
       _opportunityCategoryService = opportunityCategoryService ?? throw new ArgumentNullException(nameof(opportunityCategoryService));
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
+      _customFieldDefinitionService = customFieldDefinitionService ?? throw new ArgumentNullException(nameof(customFieldDefinitionService));
       _opportunityRepository = opportunityRepository ?? throw new ArgumentNullException(nameof(opportunityRepository));
       _validator = validator ?? throw new ArgumentNullException(nameof(validator));
     }
@@ -42,7 +45,7 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
     #region Public Members
     public ISyncProviderClientPullEntity<Domain.Opportunity.Models.OpportunityRequestCreate> CreateClient() =>
       new JobJackClient(_logger, _options, _opportunityTypeService, _opportunityCategoryService,
-        _countryService, _languageService, _opportunityRepository, _validator);
+        _countryService, _languageService, _customFieldDefinitionService, _opportunityRepository, _validator);
     #endregion
   }
 }

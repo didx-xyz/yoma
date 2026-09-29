@@ -89,4 +89,14 @@ namespace Yoma.Core.Domain.Opportunity
     Status,
     Other
   }
+
+  /// <summary>
+  /// Stable CF option keys interpreted by employment validation and partner mappings.
+  /// </summary>
+  public enum EmploymentType
+  {
+    Permanent,
+    FixedTerm
+  }
+
 }

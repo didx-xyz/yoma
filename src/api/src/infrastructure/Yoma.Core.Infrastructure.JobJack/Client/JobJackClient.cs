@@ -1,9 +1,11 @@
 using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
@@ -24,8 +26,35 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
     private readonly IOpportunityCategoryService _opportunityCategoryService;
     private readonly ICountryService _countryService;
     private readonly ILanguageService _languageService;
+    private readonly ICustomFieldDefinitionService _customFieldDefinitionService;
     private readonly IRepositoryBatched<Opportunity> _opportunityRepository;
     private readonly SyncFilterPullEntityValidator _validator;
+
+    // Partner vocabulary is translated here, not accepted as aliases by ordinary CF/CSV capture.
+    private static readonly Dictionary<string, string> WorkScheduleMappings = new(StringComparer.OrdinalIgnoreCase)
+    {
+      { "Full time contract", CustomFieldConstants.Job.Employment.ScheduleOptions.FullTime },
+      { "Part time contract", CustomFieldConstants.Job.Employment.ScheduleOptions.PartTime }
+    };
+
+    private static readonly Dictionary<string, string> PayIntervalMappings = new(StringComparer.OrdinalIgnoreCase)
+    {
+      { "per year", CustomFieldConstants.Job.Salary.PayIntervalOptions.PerYear },
+      { "per month", CustomFieldConstants.Job.Salary.PayIntervalOptions.PerMonth },
+      { "per hour", CustomFieldConstants.Job.Salary.PayIntervalOptions.PerHour },
+      { "per gig", CustomFieldConstants.Job.Salary.PayIntervalOptions.PerEngagement },
+      { "per task", CustomFieldConstants.Job.Salary.PayIntervalOptions.PerEngagement }
+    };
+
+    private static readonly Dictionary<string, string> IndustryMappings = new(StringComparer.OrdinalIgnoreCase)
+    {
+      { "Large industry manufacturing", CustomFieldConstants.Job.IndustryOptions.Manufacturing },
+      { "Retail", CustomFieldConstants.Job.IndustryOptions.Retail },
+      { "Fast food", CustomFieldConstants.Job.IndustryOptions.Hospitality },
+      { "Restaurant", CustomFieldConstants.Job.IndustryOptions.Hospitality },
+      { "Transport & Logistics", CustomFieldConstants.Job.IndustryOptions.Transport },
+      { "Business Process Outsourcing", CustomFieldConstants.Job.IndustryOptions.BusinessSupport }
+    };
 
     // Yoma category id -> JobJack industry sectors.
     // Unknown or omitted values intentionally fall back to Other.
@@ -54,6 +83,7 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
       IOpportunityCategoryService opportunityCategoryService,
       ICountryService countryService,
       ILanguageService languageService,
+      ICustomFieldDefinitionService customFieldDefinitionService,
       IRepositoryBatched<Opportunity> opportunityRepository,
       SyncFilterPullEntityValidator validator)
     {
@@ -63,6 +93,7 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
       _opportunityCategoryService = opportunityCategoryService ?? throw new ArgumentNullException(nameof(opportunityCategoryService));
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
+      _customFieldDefinitionService = customFieldDefinitionService ?? throw new ArgumentNullException(nameof(customFieldDefinitionService));
       _opportunityRepository = opportunityRepository ?? throw new ArgumentNullException(nameof(opportunityRepository));
       _validator = validator ?? throw new ArgumentNullException(nameof(validator));
     }
@@ -138,7 +169,8 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
             Region = item.Province?.NormalizeNullableValue(),
             City = item.City?.NormalizeNullableValue()
           }],
-        Languages = [_languageService.GetByName(Domain.Core.Language.English.ToString()).Id]
+        Languages = [_languageService.GetByName(Domain.Core.Language.English.ToString()).Id],
+        CustomFields = MapCustomFields(item)
       };
 
       return new SyncItemEntity<Domain.Opportunity.Models.OpportunityRequestCreate>
@@ -147,6 +179,52 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
         Deleted = item.Deleted == true,
         Item = opportunity
       };
+    }
+
+    private List<CustomFieldValueRequest> MapCustomFields(Opportunity item)
+    {
+      var result = new List<CustomFieldValueRequest>();
+
+      // Zero amounts in the feed mean no published amount, not a free/unpaid role.
+      // Currency is not supplied: do not infer it from country or fabricate missing salary details.
+      if (item.SalaryLow > 0 || item.SalaryHigh > 0)
+      {
+        result.Add(new CustomFieldValueRequest
+        {
+          Key = CustomFieldConstants.Job.Salary.Disclosed,
+          Value = bool.TrueString
+        });
+
+        if (item.SalaryLow > 0)
+          result.Add(new CustomFieldValueRequest
+          {
+            Key = CustomFieldConstants.Job.Salary.Minimum,
+            Value = item.SalaryLow.Value.ToString(CultureInfo.InvariantCulture)
+          });
+
+        if (item.SalaryHigh > 0)
+          result.Add(new CustomFieldValueRequest
+          {
+            Key = CustomFieldConstants.Job.Salary.Maximum,
+            Value = item.SalaryHigh.Value.ToString(CultureInfo.InvariantCulture)
+          });
+
+        if (PayIntervalMappings.TryGetValue(item.SalaryFrequency?.Trim() ?? string.Empty, out var interval))
+          result.Add(_customFieldDefinitionService.GetByKey(Domain.Core.CustomFieldEntityType.Opportunity,
+            CustomFieldConstants.Job.Salary.PayInterval, true, true).ToOptionRequest(interval));
+      }
+
+      if (WorkScheduleMappings.TryGetValue(item.ContractType?.Trim() ?? string.Empty, out var schedule))
+        result.Add(_customFieldDefinitionService.GetByKey(Domain.Core.CustomFieldEntityType.Opportunity,
+          CustomFieldConstants.Job.Employment.Schedule, true, true).ToOptionRequest(schedule));
+
+      if (IndustryMappings.TryGetValue(item.Category?.Trim() ?? string.Empty, out var industry))
+        result.Add(_customFieldDefinitionService.GetByKey(Domain.Core.CustomFieldEntityType.Opportunity,
+          CustomFieldConstants.Job.Industry, true, true).ToOptionRequest(industry));
+
+      // Piece work and free-form duration/requirements do not establish a precise employment
+      // type, qualification or ISCO occupation. Preserve those details rather than guessing.
+      return result;
     }
 
     private Domain.Opportunity.Models.Lookups.OpportunityCategory ResolveCategory(string? source)
@@ -175,9 +253,25 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
 
       // Free-form location may contain detail beyond the structured city/province; retain it without parsing.
       AddDetail(metadata, "Location", item.Location);
-      AddDetail(metadata, "Contract type", item.ContractType?.TitleCase());
+      if (!WorkScheduleMappings.ContainsKey(item.ContractType?.Trim() ?? string.Empty))
+        AddDetail(metadata, "Contract type", item.ContractType?.TitleCase());
+
+      AddDetail(metadata, "Employment duration", item.Duration);
       AddDetail(metadata, "Positions available", item.OpportunitiesAvailable?.ToString());
-      AddDetail(metadata, "Salary", BuildSalary(item));
+
+      // Numeric salary is now structured. Keep only details our CFs do not represent;
+      // an unrecognised pay frequency (e.g. weekly) must not be relabelled or lost.
+      if (item.SalaryLow > 0 || item.SalaryHigh > 0)
+      {
+        if (!PayIntervalMappings.ContainsKey(item.SalaryFrequency?.Trim() ?? string.Empty))
+          AddDetail(metadata, "Pay frequency", item.SalaryFrequency);
+
+        AddDetail(metadata, "Salary type", item.SalaryType);
+        AddDetail(metadata, "Additional salary information", item.SalaryAdditional);
+      }
+      else
+        AddDetail(metadata, "Salary", BuildSalary(item));
+
       AddDetail(metadata, "Employment start date", item.EmploymentStartDate?.ToString("dd MMM yyyy"));
 
       if (metadata.Count > 0)

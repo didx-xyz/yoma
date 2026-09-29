@@ -1,4 +1,5 @@
 using FluentValidation;
+using System.Globalization;
 using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Domain.Core.Extensions
@@ -6,6 +7,41 @@ namespace Yoma.Core.Domain.Core.Extensions
   public static class CustomFieldExtensions
   {
     #region Public Members
+    /// <summary>
+    /// Reads a normalized scalar from the complete custom-field state returned by the value service.
+    /// Domain rules use stable keys; they must not resolve or compare editable display labels.
+    /// </summary>
+    public static string? Scalar(this IEnumerable<CustomFieldValueItem>? values, string key)
+    {
+      return values?.SingleOrDefault(o => string.Equals(o.Key, key, StringComparison.OrdinalIgnoreCase))?.Value;
+    }
+
+    /// <summary>
+    /// Reads normalized option keys or lookup IDs, including preserved values after a partial update.
+    /// </summary>
+    public static IReadOnlyList<string> Selections(this IEnumerable<CustomFieldValueItem>? values, string key)
+    {
+      return values?.SingleOrDefault(o => string.Equals(o.Key, key, StringComparison.OrdinalIgnoreCase))?.Values ?? [];
+    }
+
+    /// <summary>
+    /// Reads an already validated numeric scalar using the framework's invariant representation.
+    /// </summary>
+    public static decimal? Number(this IEnumerable<CustomFieldValueItem>? values, string key)
+    {
+      var value = values.Scalar(key);
+      return value == null ? null : decimal.Parse(value, CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>
+    /// Reads an already validated boolean scalar; an unspecified field remains null.
+    /// </summary>
+    public static bool? Boolean(this IEnumerable<CustomFieldValueItem>? values, string key)
+    {
+      var value = values.Scalar(key);
+      return value == null ? null : bool.Parse(value);
+    }
+
     /// <summary>
     /// Resolves an inline selection from the definition's current active options.
     /// API values use keys; imports and partner mappings may explicitly allow display names.

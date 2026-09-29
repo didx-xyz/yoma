@@ -17,6 +17,8 @@ namespace Yoma.Core.Domain.Core.Services
     private readonly ICountryService _countryService;
     private readonly ILanguageService _languageService;
     private readonly ISkillService _skillService;
+    private readonly IEducationService _educationService;
+    private readonly ICurrencyService _currencyService;
     private readonly IRepository<CustomFieldValue> _customFieldValueRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
     #endregion
@@ -26,6 +28,8 @@ namespace Yoma.Core.Domain.Core.Services
       ICountryService countryService,
       ILanguageService languageService,
       ISkillService skillService,
+      IEducationService educationService,
+      ICurrencyService currencyService,
       IRepository<CustomFieldValue> customFieldValueRepository,
       IExecutionStrategyService executionStrategyService)
     {
@@ -33,6 +37,8 @@ namespace Yoma.Core.Domain.Core.Services
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
       _skillService = skillService ?? throw new ArgumentNullException(nameof(skillService));
+      _educationService = educationService ?? throw new ArgumentNullException(nameof(educationService));
+      _currencyService = currencyService ?? throw new ArgumentNullException(nameof(currencyService));
       _customFieldValueRepository = customFieldValueRepository ?? throw new ArgumentNullException(nameof(customFieldValueRepository));
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
     }
@@ -543,12 +549,14 @@ namespace Yoma.Core.Domain.Core.Services
       if (definition.LookupType.HasValue)
       {
         // Match the established CSV lookup conventions: country and language use
-        // alpha-2 codes, while skills use their full display names.
+        // alpha-2 codes, currency uses its ISO code, and skills/education use full names.
         var id = definition.LookupType.Value switch
         {
           CustomFieldLookupType.Country => _countryService.GetByCodeAlpha2OrNull(value)?.Id,
           CustomFieldLookupType.Language => _languageService.GetByCodeAlpha2OrNull(value)?.Id,
           CustomFieldLookupType.Skill => _skillService.GetByNameOrNull(value)?.Id,
+          CustomFieldLookupType.Education => _educationService.GetByNameOrNull(value)?.Id,
+          CustomFieldLookupType.Currency => _currencyService.GetByCodeOrNull(value)?.Id,
           _ => throw new ArgumentOutOfRangeException(
             nameof(definition),
             $"Custom field lookup type '{definition.LookupType}' is not supported")
@@ -769,6 +777,12 @@ namespace Yoma.Core.Domain.Core.Services
         CustomFieldLookupType.Skill =>
           _skillService.GetByIdOrNull(id)?.Id.ToString(),
 
+        CustomFieldLookupType.Education =>
+          _educationService.GetByIdOrNull(id)?.Id.ToString(),
+
+        CustomFieldLookupType.Currency =>
+          _currencyService.GetByIdOrNull(id)?.Id.ToString(),
+
         _ => throw new ArgumentOutOfRangeException(
           nameof(lookupType),
           $"Custom field lookup type '{lookupType}' is not supported")
@@ -790,6 +804,12 @@ namespace Yoma.Core.Domain.Core.Services
 
         CustomFieldLookupType.Skill =>
           _skillService.GetByIdOrNull(id)?.Name,
+
+        CustomFieldLookupType.Education =>
+          _educationService.GetByIdOrNull(id)?.Name,
+
+        CustomFieldLookupType.Currency =>
+          _currencyService.GetByIdOrNull(id)?.Code,
 
         _ => throw new ArgumentOutOfRangeException(
           nameof(lookupType),

@@ -721,6 +721,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       #region Difficulty
       ApplicationDb_CF_Configuration_Seeding_Difficulty.Seed(migrationBuilder);
+      ApplicationDb_CF_Configuration_Seeding_Jobs.Seed(migrationBuilder);
 
       migrationBuilder.DropForeignKey(
           name: "FK_Opportunity_OpportunityDifficulty_DifficultyId",
