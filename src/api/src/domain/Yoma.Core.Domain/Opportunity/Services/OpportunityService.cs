@@ -1591,7 +1591,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         // Validate the complete normalized state inside the transaction, including values
         // preserved by CSV/sync patches. A failed relationship check rolls back the entire save.
         if (options.CustomFieldUpsertMode.Process())
-          AssertJobCustomFields(result, options.CustomFieldUpsertMode.EnforceRequired());
+          AssertCrossFieldRules(result, options.CustomFieldUpsertMode.EnforceRequired());
 
         scope.Complete();
       });
@@ -1796,7 +1796,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         // Partial imports must not validate only the changed subset and miss conflicting stored values.
         if (options.CustomFieldUpsertMode.Process())
-          AssertJobCustomFields(result, options.CustomFieldUpsertMode.EnforceRequired());
+          AssertCrossFieldRules(result, options.CustomFieldUpsertMode.EnforceRequired());
 
         scope.Complete();
       });
@@ -2515,56 +2515,88 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return (result, isNew ? EventType.Create : EventType.Update);
     }
 
-    private static void AssertJobCustomFields(Models.Opportunity opportunity, bool enforceRequired)
+    // TODO(YOM-1244): Replace type-specific cross-field rules with declarative CF configuration in a future phase.
+    private static void AssertCrossFieldRules(Models.Opportunity opportunity, bool enforceRequired)
     {
-      if (opportunity.Type != Type.Job) return;
+      switch (opportunity.Type)
+      {
+        case Type.ImpactAction:
+          {
+            // Validate the merged state for every capture path: a patch cannot remove Other
+            // while retaining its description, or select Other without describing the tool.
+            var tools = opportunity.CustomFields.Selections(CustomFieldConstants.ImpactAction.Tools.Required);
+            var description = opportunity.CustomFields.Scalar(CustomFieldConstants.ImpactAction.Tools.OtherDescription);
+            var other = tools.Contains(ImpactActionTool.Other.ToString());
 
-      var fields = opportunity.CustomFields;
+            if (other && string.IsNullOrWhiteSpace(description))
+              throw new ValidationException("Other tool description is required when Other is selected.");
 
-      // Salary is compensation, not a partner incentive. Incomplete external records are
-      // allowed, but supplied amounts/disclosure must never contradict each other.
-      var disclosed = fields.Boolean(CustomFieldConstants.Job.Salary.Disclosed);
-      var minimum = fields.Number(CustomFieldConstants.Job.Salary.Minimum);
-      var maximum = fields.Number(CustomFieldConstants.Job.Salary.Maximum);
-      var currency = fields.Selections(CustomFieldConstants.Job.Salary.Currency);
-      var interval = fields.Selections(CustomFieldConstants.Job.Salary.PayInterval);
-      var hasSalary = minimum.HasValue || maximum.HasValue;
-      var hasSalaryDetails = hasSalary || currency.Count > 0 || interval.Count > 0;
+            if (!other && !string.IsNullOrWhiteSpace(description))
+              throw new ValidationException("Other tool description is only supported when Other is selected.");
 
-      if (minimum <= 0 || maximum <= 0)
-        throw new ValidationException("Salary amounts must be greater than zero.");
+            break;
+          }
 
-      if (minimum.HasValue && maximum.HasValue && maximum < minimum)
-        throw new ValidationException("Maximum salary cannot be less than minimum salary.");
+        case Type.Job:
+          {
+            var fields = opportunity.CustomFields;
 
-      if (disclosed == false && hasSalaryDetails)
-        throw new ValidationException("An undisclosed salary cannot include salary amounts, currency or pay interval.");
+            // Salary is compensation, not a partner incentive. Incomplete external records are
+            // allowed, but supplied amounts/disclosure must never contradict each other.
+            var disclosed = fields.Boolean(CustomFieldConstants.Job.Salary.Disclosed);
+            var minimum = fields.Number(CustomFieldConstants.Job.Salary.Minimum);
+            var maximum = fields.Number(CustomFieldConstants.Job.Salary.Maximum);
+            var currency = fields.Selections(CustomFieldConstants.Job.Salary.Currency);
+            var interval = fields.Selections(CustomFieldConstants.Job.Salary.PayInterval);
+            var hasSalary = minimum.HasValue || maximum.HasValue;
+            var hasSalaryDetails = hasSalary || currency.Count > 0 || interval.Count > 0;
 
-      if (opportunity.Incentivized == false && (disclosed == true || hasSalaryDetails))
-        throw new ValidationException("A Job with salary details cannot be marked as not incentivized.");
+            if (minimum <= 0 || maximum <= 0)
+              throw new ValidationException("Salary amounts must be greater than zero.");
 
-      if (enforceRequired && disclosed == true && (!hasSalary || currency.Count == 0 || interval.Count == 0))
-        throw new ValidationException("A disclosed salary requires at least one salary amount, currency and pay interval.");
+            if (minimum.HasValue && maximum.HasValue && maximum < minimum)
+              throw new ValidationException("Maximum salary cannot be less than minimum salary.");
 
-      // Employment classification does not establish a schedule or duration by implication.
-      // In particular, full-time does not mean permanent and internships may be fixed-term.
-      var types = fields.Selections(CustomFieldConstants.Job.Employment.Type);
-      var permanent = types.Contains(EmploymentType.Permanent.ToString());
-      var fixedTerm = types.Contains(EmploymentType.FixedTerm.ToString());
-      var duration = fields.Number(CustomFieldConstants.Job.Employment.Duration);
-      var unit = fields.Selections(CustomFieldConstants.Job.Employment.DurationUnit);
+            if (disclosed == false && hasSalaryDetails)
+              throw new ValidationException("An undisclosed salary cannot include salary amounts, currency or pay interval.");
 
-      if (permanent && fixedTerm)
-        throw new ValidationException("Permanent and Fixed-term employment cannot be combined.");
+            if (opportunity.Incentivized == false && (disclosed == true || hasSalaryDetails))
+              throw new ValidationException("A Job with salary details cannot be marked as not incentivized.");
 
-      if (duration <= 0)
-        throw new ValidationException("Employment duration must be greater than zero.");
+            if (enforceRequired && disclosed == true && (!hasSalary || currency.Count == 0 || interval.Count == 0))
+              throw new ValidationException("A disclosed salary requires at least one salary amount, currency and pay interval.");
 
-      if (permanent && (duration.HasValue || unit.Count > 0))
-        throw new ValidationException("Permanent employment cannot specify an employment duration or unit.");
+            // Employment classification does not establish a schedule or duration by implication.
+            // In particular, full-time does not mean permanent and internships may be fixed-term.
+            var types = fields.Selections(CustomFieldConstants.Job.Employment.Type);
+            var permanent = types.Contains(EmploymentType.Permanent.ToString());
+            var fixedTerm = types.Contains(EmploymentType.FixedTerm.ToString());
+            var duration = fields.Number(CustomFieldConstants.Job.Employment.Duration);
+            var unit = fields.Selections(CustomFieldConstants.Job.Employment.DurationUnit);
 
-      if (enforceRequired && types.Count > 0 && !permanent && (!duration.HasValue || unit.Count == 0))
-        throw new ValidationException("Non-permanent employment requires a duration and unit.");
+            if (permanent && fixedTerm)
+              throw new ValidationException("Permanent and Fixed-term employment cannot be combined.");
+
+            if (duration <= 0)
+              throw new ValidationException("Employment duration must be greater than zero.");
+
+            if (permanent && (duration.HasValue || unit.Count > 0))
+              throw new ValidationException("Permanent employment cannot specify an employment duration or unit.");
+
+            if (enforceRequired && types.Count > 0 && !permanent && (!duration.HasValue || unit.Count == 0))
+              throw new ValidationException("Non-permanent employment requires a duration and unit.");
+
+            break;
+          }
+
+        case Type.Other:
+        case Type.Learning:
+        case Type.Event:
+          break;
+
+        default:
+          throw new NotSupportedException($"Opportunity type '{opportunity.Type}' is not supported.");
+      }
     }
 
     private async Task AssertSSISchemaApplicable(OpportunityRequestBase request)

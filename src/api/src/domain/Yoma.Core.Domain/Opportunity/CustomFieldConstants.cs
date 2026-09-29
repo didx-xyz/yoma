@@ -7,6 +7,17 @@ namespace Yoma.Core.Domain.Opportunity
   /// </summary>
   public static class CustomFieldConstants
   {
+    #region Impact Action
+    public static class ImpactAction
+    {
+      public static class Tools
+      {
+        public const string Required = "impactActionToolsRequired";
+        public const string OtherDescription = "impactActionToolsOtherDescription";
+      }
+    }
+    #endregion
+
     #region Job
     public static class Job
     {

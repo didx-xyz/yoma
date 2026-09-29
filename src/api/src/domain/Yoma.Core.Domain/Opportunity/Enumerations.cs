@@ -99,4 +99,13 @@ namespace Yoma.Core.Domain.Opportunity
     FixedTerm
   }
 
+  /// <summary>
+  /// Only the tools option that controls conditional text belongs in code.
+  /// Remaining tools are configurable CF options, not logical enum members.
+  /// </summary>
+  public enum ImpactActionTool
+  {
+    Other
+  }
+
 }

@@ -32,6 +32,10 @@ the BA field map is approved.
 
 ## Tasks
 
+- [x] Implement Impact Action Tools required / Other description and Verified activity type, with seeded options, conditional validation, API CSV sample and focused tests.
+- [x] Review Impact Action changes and execute fresh migration/post.sql, authenticated API/CSV smoke tests, SQL filters and Job regression checks. Correct IXO/JobJack execution-strategy registration discovered by CSV probe/commit testing; see consolidated handover.
+- [ ] Update the Impact Action sheet's final implementation column after this implementation is accepted.
+
 - [x] Implement opportunity Provider, Incentivized/reward metadata, accessibility, age bounds, targeted groups and SDGs through API persistence, SQL search, CSV and applicable partner mappings; verify on disposable PostgreSQL and complete authenticated Docker/API smoke testing. See the consolidated handover for exact coverage and remaining UI integration.
 
 - [x] Extend country mappings with optional location details, align user coordinate storage, implement country-scoped text/radius search and complete local API smoke tests; hand over the breaking payloads to Jason and PostGIS prerequisites to Robbie.
@@ -56,6 +60,8 @@ the BA field map is approved.
 - [x] Rename the `Task` lookup and enum to `ImpactAction` in place, with `[Description("Impact Action")]` and matching display name; update CSV sample and IXO mapping.
 
 ## Decisions
+
+- 2026-09-29: Impact Action adds optional Tools required, conditional Other tool description (500 characters) and optional Verified activity type. Adrian approved expanding the tool list and confirmed Impact Achieved belongs to MyOpportunity. Only Other drives code logic and needs an enum. Event receives no additional Opportunity fields here; confirmation was requested from Mpho. Existing difficulty, core rewards, verification and provider are reused. See the consolidated handover.
 
 - 2026-09-29: Job Industry uses UN ISIC Revision 5 Sections; Job category uses ISCO-08 two-digit Sub-major Groups. No separate core fields duplicate these classifications. Salary and employment consistency rules validate the complete post-upsert CF state inside the existing transaction. Manual capture enforces required fields, deadline and required skills; imports/sync permit incomplete data without permitting contradictions. Jason's prototype is a reference, not a binding API contract; Education/Currency controls and conditional UI behaviour need his integration. See the Job section in the consolidated handover.
 

@@ -447,3 +447,28 @@ Skills. Disclosed salary requires at least one amount, currency and interval;
 non-permanent employment requires duration and unit. CSV/partner imports may
 remain incomplete but supplied values must still be valid and consistent.
 Existing Jobs are not backfilled with guessed qualifications, salary or industry.
+
+------------------------------------------------------------------------
+
+Impact Action custom fields
+
+These are optional ImpactAction fields, not Event fields:
+- CF:impactActionToolsRequired: Computer / Smartphone / Tablet / GpsDevice /
+  Camera / PowerBank / ProtectiveEquipment / HandTools / GardeningTools /
+  CleaningEquipment / MeasuringEquipment / Stationery / Other.
+  Separate multiple selections with |. The sample uses Smartphone|Other.
+- CF:impactActionToolsOtherDescription: free text, maximum 500 characters.
+  Required when Other is selected; not permitted without Other.
+- CF:impactActionVerifiedActivityType: one of VerifiedFacilitationSession /
+  WaterQualityMonitoringSession / VerifiedInclusiveStorytelling.
+
+The normal parser accepts exact option keys or display names. Use keys in templates.
+Omitted columns preserve stored values and present blanks clear them. Changes to
+Other and its description must remain consistent with values retained by the patch.
+To clear both, supply both columns with empty cells. Other description is searchable
+through the normal string CF Contains filter; tools support AnyOf/AllOf filters.
+
+Existing actions remain unspecified; no backfill is required. These fields do not
+change verification, rewards or credential issuance. Impact Achieved belongs to
+completion data (MyOpportunity), not this opportunity import. Credential mapping
+for Verified Activity Type will be configured in the final schema work.

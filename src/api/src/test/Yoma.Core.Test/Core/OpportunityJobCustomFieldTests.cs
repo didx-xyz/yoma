@@ -171,7 +171,7 @@ namespace Yoma.Core.Test.Core
     #region Private Members
     private static void Validate(List<CustomFieldValueItem> fields, bool required, bool? incentivized = true)
     {
-      var method = typeof(OpportunityService).GetMethod("AssertJobCustomFields", BindingFlags.NonPublic | BindingFlags.Static)!;
+      var method = typeof(OpportunityService).GetMethod("AssertCrossFieldRules", BindingFlags.NonPublic | BindingFlags.Static)!;
       try
       {
         method.Invoke(null, [new Domain.Opportunity.Models.Opportunity

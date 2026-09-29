@@ -719,9 +719,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
         SET "RewardType" = CASE WHEN "ZltoReward" IS NOT NULL THEN 'ZLTO' ELSE 'None' END;
         """);
 
+      #region Custom Fields
       #region Difficulty
       ApplicationDb_CF_Configuration_Seeding_Difficulty.Seed(migrationBuilder);
-      ApplicationDb_CF_Configuration_Seeding_Jobs.Seed(migrationBuilder);
 
       migrationBuilder.DropForeignKey(
           name: "FK_Opportunity_OpportunityDifficulty_DifficultyId",
@@ -752,6 +752,15 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           schema: "Opportunity",
           table: "Opportunity",
           columns: OpportunitySearchIndexColumns);
+      #endregion
+
+      #region Job
+      ApplicationDb_CF_Configuration_Seeding_Jobs.Seed(migrationBuilder);
+      #endregion
+
+      #region Impact Action
+      ApplicationDb_CF_Configuration_Seeding_ImpactAction.Seed(migrationBuilder);
+      #endregion
       #endregion
     }
 

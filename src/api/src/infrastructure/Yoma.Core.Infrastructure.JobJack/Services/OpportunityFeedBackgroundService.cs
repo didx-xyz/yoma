@@ -26,7 +26,7 @@ namespace Yoma.Core.Infrastructure.JobJack.Services
     private readonly IRepositoryBatched<Opportunity> _opportunityRepository;
     private readonly IRepository<FeedSyncTracking> _feedSyncTrackingRepository;
     private readonly IDistributedLockService _distributedLockService;
-    private readonly IExecutionStrategyService _executionStrategyService;
+    private readonly ExecutionStrategyService _executionStrategyService;
     #endregion
 
     #region Constructor
@@ -40,7 +40,7 @@ namespace Yoma.Core.Infrastructure.JobJack.Services
       IRepositoryBatched<Opportunity> opportunityRepository,
       IRepository<FeedSyncTracking> feedSyncTrackingRepository,
       IDistributedLockService distributedLockService,
-      IExecutionStrategyService executionStrategyService)
+      ExecutionStrategyService executionStrategyService)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _environmentProvider = environmentProvider ?? throw new ArgumentNullException(nameof(environmentProvider));
