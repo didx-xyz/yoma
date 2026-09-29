@@ -9,6 +9,7 @@ import {
   applyInheritedFragments,
   mapPreferencesToFilters,
 } from "../../lib/preferenceMapping";
+import { ageInYears } from "../../lib/dates";
 import { homeCountryId } from "../../lib/location";
 import { EMPTY_DISCOVERY_FILTERS } from "../../lib/types";
 import { PREFERENCE_STEPS } from "../../registry/preferenceSteps";
@@ -16,13 +17,17 @@ import { useDiscovery } from "../../state/DiscoveryContext";
 import { useDialogDismiss } from "../../state/useDialogDismiss";
 import { useResultCount } from "../../state/useResultCount";
 import { Message } from "../shared/Message";
+import { otherAccessibilityId } from "./blocks/AccessibilityBlock";
 import { LiveCountPanel } from "./LiveCountPanel";
 import { StepBlock } from "./StepBlock";
+import { useAccessibilityOptions } from "./usePreferenceOptions";
 
 /**
  * The personalization wizard (YOM-1261) — six registry-driven steps beside the live-count panel.
- * Every step is optional and skippable; answers save to the preset (via the façade) only on
- * finish, and nothing here writes to the profile or the YoID.
+ * Every step is optional and skippable; answers save only on finish. Signed in they go to
+ * `/user/preferences` — except the place, which is a profile field, so a changed region / city is
+ * the one thing the wizard writes to the profile (country is never written here). A failed save
+ * keeps the dialog open with the draft intact and says what failed.
  */
 /**
  * NB: mount this only while open (`{open && <PersonalizeDialog …>}`). The draft is seeded from
@@ -61,11 +66,17 @@ export const PersonalizeDialog: React.FC<{
     contentRef.current?.scrollTo({ top: 0 });
   }, [step]);
 
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const accessibilityOptions = useAccessibilityOptions();
+
   const previewFilters = applyInheritedFragments(
     EMPTY_DISCOVERY_FILTERS,
     mapPreferencesToFilters(draft, {
       // The DRAFT's country for an anonymous youth — the live count follows the picker.
       countryId: homeCountryId(scope, profile?.countryId ?? null, draft),
+      age:
+        scope === "user" ? ageInYears(profile?.dateOfBirth, new Date()) : null,
       categories: lookups.categories,
     }),
     false,
@@ -85,7 +96,36 @@ export const PersonalizeDialog: React.FC<{
   const last = step === PREFERENCE_STEPS.length - 1;
 
   const finish = async (): Promise<void> => {
-    await savePreferences(draft);
+    // The API requires a description with Other — say so here rather than failing the save.
+    const otherId = otherAccessibilityId(
+      accessibilityOptions.map((a) => ({ id: a.id, label: a.name })),
+    );
+    if (
+      otherId &&
+      draft.accessibility.requirements.includes(otherId) &&
+      !draft.accessibility.otherDescription?.trim()
+    ) {
+      setSaveError(
+        "Tell us what you need under Other, or deselect it, before finishing.",
+      );
+      return;
+    }
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await savePreferences(draft);
+    } catch (error) {
+      // Nothing is lost: the draft stays on screen. A failed place (a profile field) is reported
+      // after the preferences themselves saved — the message says which.
+      setSaveError(
+        error instanceof Error && error.message
+          ? error.message
+          : "We couldn't save your preferences. Please try again.",
+      );
+      setSaving(false);
+      return;
+    }
+    setSaving(false);
     // The preset just saved IS the new default — per-preference skips and the master-off switch
     // referred to the old one, and keeping them would strike out what was just chosen.
     dispatch({ kind: "resetPreferenceOverrides" });
@@ -155,6 +195,11 @@ export const PersonalizeDialog: React.FC<{
               {current.infoNote && <Message>{current.infoNote}</Message>}
             </div>
           </div>
+          {saveError && (
+            <div className="shrink-0 pt-3">
+              <Message kind="error">{saveError}</Message>
+            </div>
+          )}
           {/* One scrollable action row — button text never wraps at 390px. containerClassName=""
               drops the wrapper's default h-full, which would stretch this row to fill the
               fixed-height wizard column. */}
@@ -180,9 +225,10 @@ export const PersonalizeDialog: React.FC<{
             <button
               type="button"
               onClick={advance}
-              className="btn bg-green hover:bg-green-dark min-h-11 shrink-0 rounded-full border-none px-6 whitespace-nowrap text-white"
+              disabled={saving}
+              className="btn bg-green hover:bg-green-dark min-h-11 shrink-0 rounded-full border-none px-6 whitespace-nowrap text-white disabled:opacity-60"
             >
-              {last ? "Finish" : "Continue"}{" "}
+              {last ? (saving ? "Saving…" : "Finish") : "Continue"}{" "}
               <IoArrowForward className="h-4 w-4" />
             </button>
           </ScrollableContainer>

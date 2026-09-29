@@ -3,6 +3,7 @@ import type { LocationSource } from "~/api/models/location";
 import { LocationInput } from "~/components/Location/LocationInput";
 import { COUNTRY_CODE_WW } from "~/lib/constants";
 import {
+  DISTANCE_NOTE,
   LOCATION_NOT_APPLIED,
   LOCATION_SEARCH_LIVE,
   locationFragmentState,
@@ -168,6 +169,9 @@ export const WhereControl: React.FC = () => {
           <p className="text-gray-dark text-xs">
             Distance needs a city picked from the list.
           </p>
+        )}
+        {LOCATION_SEARCH_LIVE && effectiveFilters.radiusKm !== null && (
+          <Message>{DISTANCE_NOTE}</Message>
         )}
       </div>
       {notApplied}

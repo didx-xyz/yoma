@@ -9,7 +9,7 @@ import {
 import type { PreferenceKey } from "../lib/types";
 
 /**
- * The personalization wizard (YOM-1261), as data. Six steps cover the eight editable
+ * The personalization wizard (YOM-1261), as data. Six steps cover the nine editable
  * preferences; `<StepBlock kind=…>` is the single kind→control switch. Adding a preference is a
  * data change here — no new JSX. Entries with `comingSoon` render a badge and are NOT selectable;
  * that is the reusable pattern for anything the BA has not settled (visible and inert beats
@@ -22,18 +22,20 @@ export type StepBlockKind =
   | "chips"
   | "rows"
   | "pills"
-  | "toggle"
   | "lookupSearch"
   | "readonly"
   /** Country (anonymous) or the profile country (signed-in), then region / city. */
-  | "location";
+  | "location"
+  /** Accessibility requirements, plus the description the API requires with "Other". */
+  | "accessibility";
 
 export type PreferenceOptionsSource =
   | "categories"
   | "skills"
   | "commitmentIntervals"
   | "engagementTypes"
-  | "languages";
+  | "languages"
+  | "accessibility";
 
 export interface StepBlockEntry {
   id: string;
@@ -66,11 +68,10 @@ export interface PreferenceStepDef {
   blocks: StepBlockDef[];
 }
 
-const PROPOSED = "Proposed — awaiting BA sign-off (YOM-1264).";
-
 export const PREFERENCE_STEPS: PreferenceStepDef[] = [
   // Goal mapping per the BA sheet (2026-09-22): Get a job → Job · Learn new skills → Learning ·
-  // Volunteer → Impact Task · Start a business → Category "Business, Finance & Marketing".
+  // Volunteer → Impact Action · Start a business → Category "Business, Finance & Marketing".
+  // The ids are web keys; the saved goal is the `/user/goal` lookup entry of the same name.
   // "Attend events" is a design proposal still awaiting BA confirmation (it closes the gap where
   // Events were reachable from no goal) — kept selectable, recorded in the feature doc.
   {
@@ -144,24 +145,37 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
         kind: "pills",
         prefKey: "maxCommitment",
         heading: "How long", // matches the filter section's name
-        // Time commitment is still AWAITING SIGN-OFF (BA sheet: "in contention"). Matches the
-        // section's null rule: the API's interval filter EXCLUDES unset commitments for now.
-        note: "Awaiting BA sign-off (YOM-1264). Opportunities that don't state a time commitment are excluded by this for now.",
+        // Matches the section's null rule: the API's interval filter EXCLUDES unset commitments
+        // for now (the BA rule is to include them — an open API ask).
+        note: "Opportunities that don't state a time commitment are left out by this for now.",
         optionsSource: "commitmentIntervals",
         entries: null,
       },
-      // Multi-select since 2026-09-22 (BA: allow multi-select of engagement type).
+      // Single-select again since 2026-09-29: the API stores one engagement preference. The
+      // Engagement FILTER stays multi-select.
       {
         kind: "pills",
         prefKey: "engagement",
         heading: "How you take part",
-        note: "Pick any that suit you.",
+        note: "Pick the one that suits you best.",
         optionsSource: "engagementTypes",
         entries: null,
       },
+      // The API's `incentivized` preference (2026-09-28) — the BA's Paid Work Preference, back as
+      // a stored preference. Any incentive counts: pay, ZLTO or another reward.
+      {
+        kind: "pills",
+        prefKey: "incentivized",
+        heading: "Pay or rewards",
+        note: "Leave both off if it doesn't matter. Opportunities that haven't said stay in your feed.",
+        optionsSource: null,
+        entries: [
+          { id: "yes", label: "Paid or rewarded" },
+          { id: "no", label: "Unpaid" },
+        ],
+      },
     ],
   },
-  // Pay was removed as a stored preference (2026-08-31 revision §4) — it stays a session filter.
   {
     id: "language",
     title: "Where are you, and what languages work for you?",
@@ -184,7 +198,7 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
         kind: "chips",
         prefKey: "languages",
         heading: "Language",
-        note: PROPOSED,
+        note: null,
         optionsSource: "languages",
         entries: null,
       },
@@ -196,14 +210,16 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
     subheading: "Opt-in, private to Yoma, and never shared with anyone.",
     infoNote: null,
     blocks: [
+      // The API's accessibility requirements (2026-09-28): the shared accessibility list, plus a
+      // description when Other is picked. SAVED, NOT APPLIED — the search's accommodations filter
+      // leaves out every opportunity that hasn't described its accommodations, and the BA rule
+      // (2026-09-22) is that those stay in. The note says both halves of that.
       {
-        kind: "toggle",
+        kind: "accessibility",
         prefKey: "accessibility",
         heading: "Accessibility",
-        // BA rule (2026-09-22): opportunities that have not described their accommodations stay
-        // in the results — the toggle must never exclude Not specified.
-        note: "Opportunities that haven't described their accommodations stay in your results for now. It is never shared outside Yoma — not with partners, not in credentials, not in analytics.",
-        optionsSource: null,
+        note: "This doesn't hide anything from your feed — to see only opportunities that list what you need, use the Accessibility filter. It is never shared outside Yoma — not with partners, not in credentials, not in analytics.",
+        optionsSource: "accessibility",
         entries: null,
       },
       {
@@ -216,7 +232,8 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
           {
             id: "dateOfBirth",
             label: "Date of birth",
-            caption: "Maps to: age range (applied silently)",
+            caption:
+              "Maps to: your age — shows opportunities open to it; you can switch it off per search",
           },
           {
             id: "gender",

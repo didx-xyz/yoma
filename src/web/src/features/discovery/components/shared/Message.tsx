@@ -8,7 +8,7 @@ import {
 
 /**
  * Small inline message — one look for informational, warning and error notes across the
- * discovery surface (wizard info notes, pending-API notes, the mock banner, the list-view
+ * discovery surface (wizard info notes, pending-API notes, save errors, the list-view
  * explainer). Icon + tinted panel; content stays plain text.
  */
 const KINDS: Record<

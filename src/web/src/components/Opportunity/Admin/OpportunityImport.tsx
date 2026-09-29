@@ -200,19 +200,30 @@ export const OpportunityImport: React.FC<InputProps> = ({
                   </p>
                   <ul className="ml-5 list-disc">
                     <li>Title</li>
-                    <li>Type (Learning, Event, Other, Micro-task, Job)</li>
                     <li>
-                      Categories (use | to separate multiple)
+                      Type (Learning, Event, Other, ImpactAction, Job — use
+                      ImpactAction for Impact Action)
+                    </li>
+                    <li>
+                      Categories (use | to separate multiple; names containing
+                      commas must be wrapped in double quotes, e.g.
+                      &quot;Technology, AI &amp; Data|Other&quot;)
                       <ul className="mt-2 ml-8 list-disc text-gray-600">
-                        <li>Agriculture</li>
-                        <li>Career and Personal Development</li>
-                        <li>Business and Entrepreneurship</li>
-                        <li>Environment and Climate</li>
-                        <li>Technology and Digitization</li>
-                        <li>Tourism and Hospitality</li>
-                        <li>AI, Data and Analytics</li>
-                        <li>Creative Industry and Arts</li>
-                        <li>Health and Care</li>
+                        <li>Agriculture, Food, Environment and Climate</li>
+                        <li>Beauty &amp; Personal Care</li>
+                        <li>Business, Finance &amp; Marketing</li>
+                        <li>Creative, Media &amp; Design</li>
+                        <li>Education &amp; Teaching</li>
+                        <li>Engineering, Science &amp; Mathematics</li>
+                        <li>Health, Safety &amp; Wellbeing</li>
+                        <li>History, Society &amp; Human Rights</li>
+                        <li>Hospitality &amp; Tourism</li>
+                        <li>Languages &amp; Communication</li>
+                        <li>Law, Governance &amp; Compliance</li>
+                        <li>Office, Admin &amp; Professional Skills</li>
+                        <li>Personal Development &amp; Career Readiness</li>
+                        <li>Retail &amp; Food Services</li>
+                        <li>Technology, AI &amp; Data</li>
                         <li>Other</li>
                       </ul>
                     </li>
@@ -235,12 +246,9 @@ export const OpportunityImport: React.FC<InputProps> = ({
                 <div>
                   <p className="font-semibold">
                     Required for standard opportunities only (Learning, Event,
-                    Other, Micro-task)
+                    Other, ImpactAction)
                   </p>
                   <ul className="ml-5 list-disc">
-                    <li>
-                      Difficulty (Beginner, Intermediate, Advanced, Any Level)
-                    </li>
                     <li>EffortCount (numeric value, greater than 0)</li>
                     <li>EffortInterval (Hour, Day, Week, Month, Minute)</li>
                   </ul>
@@ -251,7 +259,6 @@ export const OpportunityImport: React.FC<InputProps> = ({
                     For Job opportunities the following are optional:
                   </p>
                   <ul className="ml-5 list-disc">
-                    <li>Difficulty</li>
                     <li>EffortCount</li>
                     <li>EffortInterval</li>
                   </ul>
@@ -267,12 +274,14 @@ export const OpportunityImport: React.FC<InputProps> = ({
                     These properties can be included if applicable:
                   </p>
                   <ul className="ml-5 list-disc">
-                    <li>Engagement (Online, Offline, Hybrid)</li>
+                    <li>Engagement (Remote, OnSite, Hybrid)</li>
                     <li>Link</li>
                     <li>DateEnd</li>
                     <li>ParticipantLimit</li>
-                    <li>ZltoReward</li>
-                    <li>ZltoRewardPool</li>
+                    <li>ZltoReward (not available for Job opportunities)</li>
+                    <li>
+                      ZltoRewardPool (not available for Job opportunities)
+                    </li>
                     <li>
                       Skills (
                       <Link
@@ -283,6 +292,107 @@ export const OpportunityImport: React.FC<InputProps> = ({
                         click here
                       </Link>{" "}
                       to search for skills)
+                    </li>
+                  </ul>
+                </div>
+
+                <div>
+                  <p className="font-semibold">Optional Columns</p>
+                  <p className="mb-3">
+                    These columns may be left out of the file entirely. When
+                    updating an existing opportunity, a missing column keeps its
+                    stored value and a blank cell clears it:
+                  </p>
+                  <ul className="ml-5 list-disc">
+                    <li>
+                      Provider (informational name, up to 255 characters; does
+                      not change the owning organisation)
+                    </li>
+                    <li>Incentivized (Yes, No)</li>
+                    <li>RewardType (None, ZLTO, PartnerIncentive)</li>
+                    <li>
+                      PartnerIncentiveAmount and PartnerIncentiveCurrency (ISO
+                      4217 code, e.g. ZAR) — only for PartnerIncentive, and
+                      provided together
+                    </li>
+                    <li>AccessibilitySupport (Yes, No, AvailableOnRequest)</li>
+                    <li>
+                      Accommodations (use | to separate multiple; required when
+                      AccessibilitySupport is Yes)
+                    </li>
+                    <li>
+                      AccommodationOtherDescription (required when Other is
+                      selected, up to 500 characters)
+                    </li>
+                    <li>AgeFrom and AgeTo (whole years, inclusive)</li>
+                    <li>
+                      TargetedGroups (use | to separate multiple; Open to all
+                      must be selected alone)
+                    </li>
+                    <li>
+                      SustainableDevelopmentGoals (goal numbers 1–17, use | to
+                      separate multiple)
+                    </li>
+                  </ul>
+                </div>
+
+                <div>
+                  <p className="font-semibold">
+                    Difficulty / Experience Level (custom field columns)
+                  </p>
+                  <p className="mb-3">
+                    Difficulty is no longer a column. Use the custom field
+                    column for the opportunity&apos;s type, and leave the other
+                    types&apos; columns blank:
+                  </p>
+                  <ul className="ml-5 list-disc">
+                    <li>
+                      Learning: CF:learningDifficulty (Beginner, Intermediate,
+                      Advanced, AnyLevel)
+                    </li>
+                    <li>
+                      Other: CF:otherDifficulty (Beginner, Intermediate,
+                      Advanced, AnyLevel)
+                    </li>
+                    <li>
+                      ImpactAction: CF:impactActionDifficulty (EntryLevel,
+                      ExperienceNeeded, SkillsRequired)
+                    </li>
+                    <li>
+                      Event: CF:eventDifficulty (OpenToAll, FamiliarityNeeded,
+                      ExperiencedIndividuals)
+                    </li>
+                    <li>
+                      Job: CF:jobExperienceLevel (None, EntryJunior, Mid,
+                      Senior)
+                    </li>
+                  </ul>
+                  <p className="mt-3">
+                    The jobs sample also includes the other Job custom field
+                    columns (salary, employment type, work schedule,
+                    qualification, industry and category).
+                  </p>
+                  <p className="mt-3">
+                    Impact Action rows may also use these optional columns:
+                  </p>
+                  <ul className="ml-5 list-disc">
+                    <li>
+                      CF:impactActionToolsRequired (Computer, Smartphone,
+                      Tablet, GpsDevice, Camera, PowerBank, ProtectiveEquipment,
+                      HandTools, GardeningTools, CleaningEquipment,
+                      MeasuringEquipment, Stationery, Other; separate several
+                      with |)
+                    </li>
+                    <li>
+                      CF:impactActionToolsOtherDescription (up to 500
+                      characters; required with Other and not allowed without it
+                      — to clear both, leave both cells empty)
+                    </li>
+                    <li>
+                      CF:impactActionVerifiedActivityType
+                      (VerifiedFacilitationSession,
+                      WaterQualityMonitoringSession,
+                      VerifiedInclusiveStorytelling)
                     </li>
                   </ul>
                 </div>

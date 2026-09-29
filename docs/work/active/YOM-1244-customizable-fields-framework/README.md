@@ -44,8 +44,8 @@ The User preference formerly proposed as `PaidWorkPreference` is now nullable `U
 | [`YOM-1257-api-extend-the-user-model-with-user-presets/`](./YOM-1257-api-extend-the-user-model-with-user-presets/feature.md)                         | [YOM-1257](https://linear.app/didx/issue/YOM-1257) | api  | in-progress                                                                           |
 | [`YOM-1255-ui-dynamic-custom-fields-for-opportunities-and-completions/`](./YOM-1255-ui-dynamic-custom-fields-for-opportunities-and-completions/feature.md)       | [YOM-1255](https://linear.app/didx/issue/YOM-1255) | web  | in-progress                                                                           |
 | [`YOM-1260-ui-custom-field-filtering-for-opportunities-and-completions/`](./YOM-1260-ui-custom-field-filtering-for-opportunities-and-completions/feature.md)     | [YOM-1260](https://linear.app/didx/issue/YOM-1260) | web  | in-progress                                                                           |
-| [`YOM-1261-ui-manage-user-presets/`](./YOM-1261-ui-manage-user-presets/feature.md)                                                                               | [YOM-1261](https://linear.app/didx/issue/YOM-1261) | web  | in-progress — mocked; real persistence blocked                                        |
-| [`YOM-1262-ui-apply-user-presets-to-opportunity-discovery/`](./YOM-1262-ui-apply-user-presets-to-opportunity-discovery/feature.md)                               | [YOM-1262](https://linear.app/didx/issue/YOM-1262) | web  | in-progress — mocked; blocked on the presets API for live data                        |
+| [`YOM-1261-ui-manage-user-presets/`](./YOM-1261-ui-manage-user-presets/feature.md)                                                                               | [YOM-1261](https://linear.app/didx/issue/YOM-1261) | web  | in-progress — live on the preferences API (2026-09-29)                                |
+| [`YOM-1262-ui-apply-user-presets-to-opportunity-discovery/`](./YOM-1262-ui-apply-user-presets-to-opportunity-discovery/feature.md)                               | [YOM-1262](https://linear.app/didx/issue/YOM-1262) | web  | in-progress — live preferences, location and core facets (2026-09-29)                |
 | [`YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/`](./YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/feature.md)           | [YOM-1277](https://linear.app/didx/issue/YOM-1277) | both | in-progress                                                                           |
 | [`YOM-1278-api-admin-credential-schema-management-by-type/`](./YOM-1278-api-admin-credential-schema-management-by-type/feature.md)                               | [YOM-1278](https://linear.app/didx/issue/YOM-1278) | api  | in-progress                                                                           |
 | [`YOM-1279-api-opportunity-management-credential-schema-selection/`](./YOM-1279-api-opportunity-management-credential-schema-selection/feature.md)               | [YOM-1279](https://linear.app/didx/issue/YOM-1279) | api  | review                                                                                |
@@ -116,7 +116,14 @@ approved definitions are now being added to the consolidated CF configuration mi
 
 ## Release kill-switch — read before touching any web surface
 
-**`CUSTOM_FIELDS_ENABLED` in `src/web/src/lib/constants.ts` is currently `false`** (2026-09-16).
+> **Updated 2026-09-29: the flag is `true` for the whole branch** (Jason). Cash-out has shipped
+> from `master`, and the API now makes the framework mandatory: every opportunity type has a
+> REQUIRED Difficulty custom field (Jobs many more), so with the flag `false` the editor sends no
+> custom fields and every manual create / update is rejected. Setting it back to `false` breaks
+> opportunity saving. `/opportunities/discover` and "My preferences" are reachable again; the two
+> points below about the September release are history. The preference mock it gated is gone.
+
+**`CUSTOM_FIELDS_ENABLED` in `src/web/src/lib/constants.ts` was `false`** (2026-09-16 → 09-29).
 The branch ships a release _without_ this framework, so cash-out can go out while the framework
 waits on YOM-1264, YOM-1257/1258, and a live pass over credential schema create/update. Flip it to
 `true` to restore everything — nothing else needs changing, though it is a build-time constant, so
@@ -171,7 +178,7 @@ descriptions on YOM-1244 are stale and should not be trusted over this table.**
 | Definition discovery | `GET /opportunity/custom/field/definition?types={Type}` (anonymous, repeatable `types`), `GET /opportunity/{id}/custom/field/definition` (admin / org admin), `GET /myopportunity/{opportunityId}/custom/field/definition` (user)                                                  |
 | `types` binding      | the **`Type` enum name** (`Other` / `Learning` / `Event` / `Job` / `Task`), **not** the type GUID. Passing a GUID silently returns only the generic definitions                                                                                                                    |
 | Definition shape     | `key`, `title`, `description`, `group`, `subGroup`, `dataType`, `lookupType`, `validationRegex`, `isRequired`, `supportsMultiple`, `sortOrder`, `options[]`. `lookupType` **exists** (`Country` / `Language` / `Skill`; `null` → inline `options`); `defaultValue` was **removed** |
-| Data types           | `String`, `Integer`, `Decimal`, `Boolean`, `DateTime`, `Option`                                                                                                                                                                                                                    |
+| Data types           | `String`, `Integer`, `Decimal`, `Boolean`, `Date` (`yyyy-MM-dd`, no UTC — 2026-09-29), `DateTime`, `Option`                                                                                                                                                                                                           |
 | Ordering             | Group → SubGroup → SortOrder → Title; options by SortOrder → Name                                                                                                                                                                                                                  |
 | Values (write)       | non-option → `value`; **every** Option field → `values`. Inline options submit the option **`key`**; lookup-backed options submit the lookup **GUID**                                                                                                                              |
 | Values (read)        | `Opportunity` / `OpportunityInfo` / `MyOpportunity` hydrate `customFields`. Definitions are **not** repeated per entity — join on `key`                                                                                                                                            |
@@ -246,6 +253,9 @@ Both child features build on the same components — extend these rather than ad
 | Editing        | `components/Opportunity/CustomFields.tsx` (+ `getCustomFieldError(s)`, `getCustomFieldNumberError`)                                                    |
 | Read-only      | `components/Opportunity/CustomFieldsView.tsx`                                                                                                          |
 | Filtering      | `components/Opportunity/CustomFieldFilters.tsx`                                                                                                        |
+| CF rules       | `lib/customFields/customFieldRules.ts` — mirrors the API's `AssertCrossFieldRules` (Job salary / employment, Impact Action tools) on its SYSTEM keys only; inert without them |
+| Places         | `components/Location/LocationInput.tsx` (youth + admin), `components/Opportunity/Admin/OpportunityCountryPlaces.tsx`; wire forms in `api/models/location.ts` |
+| Search payload | `toSearchFilterPayload` (`api/services/opportunities.ts`) — callers pass country ids; the three search requests send `[{ countryId }]`                  |
 
 Credential surfaces additionally share, extracted by YOM-1282:
 
@@ -483,6 +493,38 @@ The web side is built to an ASSUMED contract; please confirm or correct:
 16. **Opportunity coordinates** — distance needs them on opportunities, or at least a centroid per
     opportunity city. Without them "Jobs near me" can only ever be a city match.
 
+> **Status 2026-09-29:** 7 and 8 are resolved by the API (web renders `displayName`; the engagement
+> map is deleted). 10 became `incentivized` (explicit, nullable) — wired; "sorted last" still waits
+> on ask 1. 14–16 are resolved by Adrian's final contract (place on the profile, nested
+> per-country search, coordinates on opportunity countries) — wired and verified locally; the
+> admin editor now captures a place per country. 3 (count-only) and 4 (preset flag) were closed by
+> Adrian later the same day (`098e8ece`) — the live count uses `totalCountOnly`. 1, 2, 5, 6, 9, 12
+> and 13 still stand.
+
+**Added 2026-09-29** (API integration session — details in
+[`handoffs/2026-09-29-a.md`](./handoffs/2026-09-29-a.md)):
+
+17. **Engagement preference cardinality.** The BA asked for a multi-select engagement preference
+    (2026-09-22); `UserPreferences.EngagementTypeId` stores one. Web is single-select again to
+    match. Either make it a list or confirm single with the BA.
+18. **Accommodations filter vs the BA null rule.** `accommodations` needs ALL picked and EXCLUDES
+    opportunities that list none; the BA rule is "stays in results for now". So the youth's saved
+    accessibility requirements are NOT inherited into discovery (it would hide nearly the whole
+    feed). An include-unspecified option would let web apply them.
+19. **Goal → filter mapping (YOM-1258).** `/user/goal` carries no mapping, so web maps goals to a
+    Type or Category by NAME ("Get a job" → Job, "Start a business" → category "Business, Finance
+    & Marketing"). A type / category reference on the goal lookup would make it exact.
+20. **"Or unspecified" filters that cannot narrow on today's data.** `provider`, `targetedGroups`,
+    `sustainableDevelopmentGoals` and `accessibilitySupport` all keep unspecified opportunities,
+    and almost none are specified, so the Provider and SDG sections (and the parked
+    "With accommodations" / "Climate action + SDG 13" badges) barely change results. Confirm this
+    is intended; an "only specified" switch would make them useful before the data fills in.
+21. **Local seed coverage.** `post.sql` leaves Boolean and lookup-backed required Job fields
+    (`jobSalaryDisclosed`, `jobMinimumQualification`) empty — by design — so every seeded Job
+    needs them filled before an admin save succeeds; and no seeded opportunity carries a place,
+    coordinates, provider, SDGs, accommodations or age bounds, so distance and the new facets
+    cannot be exercised on local data. A few seeded examples would make the preview testable.
+
 **Adrian, one API-side conflict resolution on this branch (2026-09-05)** — flagged because it is
 your area and web did not author either side. Merging `master` into
 `feature/custom-fields-framework` (PR #1924) collided on `Opportunity.Type`: master had added
@@ -511,6 +553,10 @@ API pod image matches the DB schema — and expect it to re-break whenever anoth
 DEV, until this epic merges. Owner: Adrian / infra.
 
 ## Changelog
+
+- 2026-09-29 (later): Web absorbed Adrian's `4c4b0ebd` (Impact Action tools / activity fields) and `35da1e0b` (optional completion fields, new `Date` data type) — `Date` in the editor, view and filters; the Impact Action Other ↔ description rule in the renamed `customFieldRules.ts`; CSV samples and both import help texts updated. Local DB must be recreated again (the CF migration was edited).
+
+- 2026-09-29: Web integrated Adrian's five API commits (`263cc82e` … `adb9a305`) — `CUSTOM_FIELDS_ENABLED` on; preferences, the user place and location search live with the mock removed; admin editor on the new core fields, per-country places, Difficulty-as-CF and the Job rules; legacy / admin search, YoID skills, profile form and labels fixed for the breaking changes; asks 17–21 filed.
 
 - 2026-09-28: User Location built on YOM-1262 / YOM-1261 against a mock — country stays the profile field; region / city / centroid via the shared `LocationInput` (Google Places + Geocoder); asks 14–16 filed for Adrian.
 - 2026-09-22: YOM-1262 aligned to the BA sign-off and client review — Engagement replaces Pay on the search bar, badges render only when filterable, recents capped at 3, Start a business mapped; asks 7–13 above filed for Adrian.

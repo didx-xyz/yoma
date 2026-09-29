@@ -1,12 +1,16 @@
 import ApiClient from "~/lib/axiosClient";
 import type {
+  Accessibility,
   Country,
+  Currency,
   Education,
   EngagementType,
   Gender,
   Language,
   SkillSearchFilter,
   SkillSearchResults,
+  SustainableDevelopmentGoal,
+  TargetedGroup,
   TimeInterval,
 } from "../models/lookups";
 import type { GetServerSidePropsContext, GetStaticPropsContext } from "next";
@@ -87,5 +91,42 @@ export const getEngagementTypes = async (
 ): Promise<EngagementType[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.get<EngagementType[]>("/lookup/engagement");
+  return data;
+};
+
+export const getCurrencies = async (
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<Currency[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.get<Currency[]>("/lookup/currency");
+  return data;
+};
+
+export const getTargetedGroups = async (
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<TargetedGroup[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.get<TargetedGroup[]>(
+    "/lookup/targeted/group",
+  );
+  return data;
+};
+
+export const getSustainableDevelopmentGoals = async (
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<SustainableDevelopmentGoal[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.get<SustainableDevelopmentGoal[]>(
+    "/lookup/sustainable/development/goal",
+  );
+  return data;
+};
+
+/** Opportunity accommodations and youth accessibility requirements share this list. */
+export const getAccessibilityOptions = async (
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<Accessibility[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.get<Accessibility[]>("/lookup/accessibility");
   return data;
 };

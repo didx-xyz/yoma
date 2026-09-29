@@ -1,17 +1,20 @@
 import React, { useState } from "react";
-import { IoSearchOutline } from "react-icons/io5";
+import { IoCheckmarkCircleOutline, IoSearchOutline } from "react-icons/io5";
 import type {
   UserPreferences,
   UserPreferenceSkill,
 } from "~/api/models/userPreferences";
-import { useSkillSearch } from "../usePreferenceOptions";
+import { useSkillSearch, useVerifiedSkillIds } from "../usePreferenceOptions";
 import { Pill } from "./Pill";
 
 /**
- * The skills lookup-search block. Selections are stored as `{id, name}` pairs (the EMSI lookup is
- * search-by-name only, so a bare id could never be resolved back to a label when re-editing) —
- * a chip therefore keeps its name after the search text, the result set, or the session has
- * moved on.
+ * The skills lookup-search block — the youth's SELF-ATTESTED skills. Selections are stored as
+ * `{id, name}` pairs (the EMSI lookup is search-by-name only, so a bare id could never be
+ * resolved back to a label when re-editing) — a chip therefore keeps its name after the search
+ * text, the result set, or the session has moved on.
+ *
+ * A skill the youth has already verified through a completion is shown as "Already verified" and
+ * cannot be picked (the API refuses it as a self-attested skill) — hidden, it would look missing.
  */
 export const SkillSearch: React.FC<{
   draft: UserPreferences;
@@ -19,6 +22,7 @@ export const SkillSearch: React.FC<{
 }> = ({ draft, onPatch }) => {
   const [text, setText] = useState("");
   const results = useSkillSearch(text);
+  const verified = useVerifiedSkillIds();
   const selected = draft.selfReportedSkills;
 
   const toggle = (skill: UserPreferenceSkill): void => {
@@ -37,7 +41,7 @@ export const SkillSearch: React.FC<{
           type="text"
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Search skills…"
+          placeholder="Search skills (3+ letters)…"
           className="grow"
         />
       </label>
@@ -52,14 +56,24 @@ export const SkillSearch: React.FC<{
         ))}
         {results
           .filter((r) => !selected.some((s) => s.id === r.id))
-          .map((r) => (
-            <Pill
-              key={r.id}
-              label={r.label}
-              active={false}
-              onToggle={() => toggle({ id: r.id, name: r.label })}
-            />
-          ))}
+          .map((r) =>
+            verified.has(r.id) ? (
+              <span
+                key={r.id}
+                className="border-gray text-gray-dark inline-flex min-h-11 items-center gap-1 rounded-full border bg-white px-3 text-xs opacity-70 md:min-h-9"
+              >
+                <IoCheckmarkCircleOutline className="text-green h-4 w-4" />
+                {r.label} · Already verified
+              </span>
+            ) : (
+              <Pill
+                key={r.id}
+                label={r.label}
+                active={false}
+                onToggle={() => toggle({ id: r.id, name: r.label })}
+              />
+            ),
+          )}
       </div>
     </div>
   );

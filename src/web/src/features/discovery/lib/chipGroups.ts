@@ -15,6 +15,7 @@ export const PREF_GROUPS: Partial<Record<PreferenceKey, string>> = {
   skills: "Skills",
   maxCommitment: "Time",
   engagement: "Engagement",
+  incentivized: "Pay",
   languages: "Language",
   accessibility: "Accessibility",
 };
@@ -28,10 +29,14 @@ export const FACET_GROUPS: Partial<Record<keyof DiscoveryFilters, string>> = {
   radiusKm: "Distance",
   engagementTypes: "Engagement",
   commitment: "Time",
+  incentivized: "Pay",
   hasReward: "Rewards",
   zltoRanges: "Rewards",
   languages: "Language",
-  providers: "Provider",
+  accommodations: "Accessibility",
+  sdgs: "SDGs",
+  provider: "Provider",
+  age: "Age",
 };
 
 export const MANUAL_LIST_FACETS = [
@@ -41,5 +46,10 @@ export const MANUAL_LIST_FACETS = [
   "engagementTypes",
   "zltoRanges",
   "languages",
-  "providers",
+  "accommodations",
+  "sdgs",
 ] as const;
+
+/** "Paid or rewarded" / "Unpaid" — the Pay chip, the Paid half of its section and the wizard. */
+export const incentivizedLabel = (incentivized: boolean): string =>
+  incentivized ? "Paid or rewarded" : "Unpaid";

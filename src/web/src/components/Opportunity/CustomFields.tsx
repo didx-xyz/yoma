@@ -9,10 +9,12 @@ import {
 } from "~/api/models/opportunity";
 import type { SelectOption, Skill } from "~/api/models/lookups";
 import { getSkills } from "~/api/services/lookups";
-import FormCheckbox from "~/components/Common/FormCheckbox";
 import FormField from "~/components/Common/FormField";
 import FormInput from "~/components/Common/FormInput";
+import FormRadio from "~/components/Common/FormRadio";
 import {
+  useCurrenciesQuery,
+  useEducationsQuery,
   useOpportunityCountriesQuery,
   useOpportunityLanguagesQuery,
 } from "~/hooks/useOpportunityMutations";
@@ -28,13 +30,21 @@ import { dateInputToUTC, debounce, utcToDateInput } from "~/lib/utils";
 //
 // Definition-driven custom fields. Fields are rendered purely from `definitions`
 // (no hardcoded keys, titles, options or opportunity types). One control per
-// DataType: String / Integer / Decimal / Boolean / DateTime / Option.
+// DataType: String / Integer / Decimal / Boolean / Date / DateTime / Option.
+// Boolean is an explicit Yes / No choice (radios when required, a select with an
+// empty state otherwise), so "No" is an answer rather than an untouched checkbox.
 //
 // Option fields:
 //   - lookupType null            → inline `options` (submit option keys)
-//   - lookupType Country/Language → load from lookup endpoint (submit lookup GUIDs)
+//   - lookupType Country / Language / Education / Currency
+//                                 → load from lookup endpoint (submit lookup GUIDs)
 //   - lookupType Skill            → async search (submit lookup GUIDs)
 //   - supportsMultiple            → single- vs multi-select
+//
+// Optional `rules` (off by default) lets a host apply cross-field rules the
+// definition contract cannot express — e.g. ~/lib/customFields/customFieldRules,
+// which mirrors the API's protected Job and Impact Action contracts. Rules may clear dependent
+// values, disable fields and add per-field errors.
 //
 // Values use the API contract (CustomFieldValueRequest): non-option fields use
 // `value`; every Option field uses `values`. The parent owns submission and must
@@ -56,7 +66,23 @@ export interface CustomFieldsProps {
   menuPortalTarget?: HTMLElement | null;
   /** Hide group and subgroup section headers. Defaults to false. */
   hideGrouping?: boolean;
+  /**
+   * Optional cross-field rules, applied on every change (their `values` replace the edited
+   * collection, so dependents can be cleared) and on render (`disabledKeys`, `errors`).
+   * Must be referentially stable (memoize it). Omitted → purely definition-driven.
+   */
+  rules?: CustomFieldRules;
 }
+
+export interface CustomFieldRulesResult {
+  values: CustomFieldValueRequest[];
+  disabledKeys?: Set<string>;
+  errors?: { key: string; message: string }[];
+}
+
+export type CustomFieldRules = (
+  values: CustomFieldValueRequest[],
+) => CustomFieldRulesResult;
 
 interface CustomFieldGroup {
   group: string;
@@ -159,6 +185,25 @@ function exceedsDecimalMax(value: string): boolean {
   return !!frac && /[1-9]/.test(frac);
 }
 
+// Date fields mirror the API's strict `DateOnly.ParseExact(value, "yyyy-MM-dd")`: the
+// shape AND a real calendar day (2026-02-30 is rejected). No time zone is involved.
+const DATE_ONLY_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
+export function isValidDateOnly(value: string): boolean {
+  if (!DATE_ONLY_REGEX.test(value)) return false;
+  const [year, month, day] = value.split("-").map(Number) as [
+    number,
+    number,
+    number,
+  ];
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
+}
+
 // Pure per-field validator, shared by this component's inline errors and the
 // caller's zod schema (so both agree without duplicating rules).
 export function getCustomFieldError(
@@ -174,6 +219,8 @@ export function getCustomFieldError(
   if (!empty && entry?.value) {
     const numErr = getCustomFieldNumberError(dataType, entry.value);
     if (numErr) return numErr;
+    if (dataType === CustomFieldDataType.Date && !isValidDateOnly(entry.value))
+      return "Please enter a valid date.";
   }
 
   if (
@@ -213,6 +260,12 @@ export function getCustomFieldErrors(
   return errors;
 }
 
+// Boolean values are stored as the invariant strings the API parses
+const BOOLEAN_OPTIONS = [
+  { value: "true", label: "Yes" },
+  { value: "false", label: "No" },
+];
+
 // shared react-select styling to match the rest of the opportunity form
 const SELECT_STYLES = {
   menuPortal: (base: any) => ({ ...base, zIndex: 9999 }),
@@ -227,6 +280,7 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
   showErrors,
   menuPortalTarget,
   hideGrouping = false,
+  rules,
 }) => {
   const groups = useMemo(
     () => groupDefinitions(definitions ?? []),
@@ -234,17 +288,18 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
   );
 
   // which lookups are actually referenced by the current definitions
-  const { needsCountry, needsLanguage } = useMemo(() => {
-    const list = definitions ?? [];
-    return {
-      needsCountry: list.some(
-        (d) => lookupTypeOf(d) === CustomFieldLookupType.Country,
-      ),
-      needsLanguage: list.some(
-        (d) => lookupTypeOf(d) === CustomFieldLookupType.Language,
-      ),
-    };
-  }, [definitions]);
+  const { needsCountry, needsLanguage, needsEducation, needsCurrency } =
+    useMemo(() => {
+      const list = definitions ?? [];
+      const needs = (lookupType: CustomFieldLookupType) =>
+        list.some((d) => lookupTypeOf(d) === lookupType);
+      return {
+        needsCountry: needs(CustomFieldLookupType.Country),
+        needsLanguage: needs(CustomFieldLookupType.Language),
+        needsEducation: needs(CustomFieldLookupType.Education),
+        needsCurrency: needs(CustomFieldLookupType.Currency),
+      };
+    }, [definitions]);
 
   //#region Value state
   // `valueMap` is the local source of truth while editing. It updates immediately
@@ -290,9 +345,24 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
     lastPropagatedRef.current = signature;
   }, [values]);
 
-  const applyChange = (next: ValueMap) => {
+  const applyChange = (edited: ValueMap) => {
+    let next = edited;
+    let collection = Object.values(next).filter((e) => !isEmptyEntry(e));
+
+    // host rules may clear dependent values (e.g. an undisclosed salary drops its amounts)
+    if (rules) {
+      const cleaned = rules(collection).values;
+      if (cleaned !== collection) {
+        const kept = new Set(cleaned.map((e) => e.key));
+        next = { ...next };
+        collection.forEach((e) => {
+          if (!kept.has(e.key)) delete next[e.key];
+        });
+        collection = cleaned;
+      }
+    }
+
     setValueMap(next); // immediate local update
-    const collection = Object.values(next).filter((e) => !isEmptyEntry(e));
     latestCollectionRef.current = collection;
     lastPropagatedRef.current = JSON.stringify(collection);
     propagate(collection); // debounced parent update
@@ -341,6 +411,27 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
     [languagesData],
   );
 
+  const { data: educationsData } = useEducationsQuery({
+    enabled: needsEducation,
+  });
+  const educationOptions = useMemo<SelectOption[]>(
+    () => educationsData?.map((e) => ({ value: e.id, label: e.name })) ?? [],
+    [educationsData],
+  );
+
+  // Currency submits the lookup id (never the ISO code) — unlike the core partner incentive
+  const { data: currenciesData } = useCurrenciesQuery({
+    enabled: needsCurrency,
+  });
+  const currencyOptions = useMemo<SelectOption[]>(
+    () =>
+      currenciesData?.map((c) => ({
+        value: c.id,
+        label: `${c.code} — ${c.name}`,
+      })) ?? [],
+    [currenciesData],
+  );
+
   // skills are searched asynchronously; cache resolved records for label display
   const [skillCache, setSkillCache] = useState<Skill[]>([]);
   const loadSkills = useMemo(
@@ -377,13 +468,35 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
   }, []);
   const portalTarget = menuPortalTarget ?? defaultPortalTarget;
 
+  // host rules, evaluated against the live (un-debounced) values
+  const ruleResult = useMemo(
+    () =>
+      rules?.(Object.values(valueMap).filter((e) => !isEmptyEntry(e))) ?? null,
+    [rules, valueMap],
+  );
+  const ruleErrors = useMemo(() => {
+    const map = new Map<string, string>();
+    ruleResult?.errors?.forEach(({ key, message }) => {
+      if (!map.has(key.toLowerCase())) map.set(key.toLowerCase(), message);
+    });
+    return map;
+  }, [ruleResult]);
+
+  const isDisabled = (definition: CustomFieldDefinition) =>
+    !!ruleResult?.disabledKeys?.has(definition.key);
+
+  // a disabled field does not apply to the current selection, so it has no error of its own
   const fieldError = (definition: CustomFieldDefinition): string | undefined =>
-    getCustomFieldError(definition, valueMap[definition.key]);
+    isDisabled(definition)
+      ? undefined
+      : (getCustomFieldError(definition, valueMap[definition.key]) ??
+        ruleErrors.get(definition.key.toLowerCase()));
 
   const renderControl = (definition: CustomFieldDefinition) => {
     const entry = valueMap[definition.key];
     const dataType = dataTypeOf(definition);
     const key = definition.key;
+    const disabled = isDisabled(definition);
 
     switch (dataType) {
       case CustomFieldDataType.Integer:
@@ -398,24 +511,64 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
               value: entry?.value ?? "",
               onChange: (e) => setScalar(definition, e.target.value),
               onBlur: () => handleBlur(key),
+              disabled,
               "data-custom-field-key": key,
             }}
           />
         );
 
-      case CustomFieldDataType.Boolean:
+      case CustomFieldDataType.Boolean: {
+        // an explicit answer: "No" is a choice, not an untouched box
+        const current = entry?.value?.trim().toLowerCase() ?? "";
+
+        if (definition.isRequired)
+          return (
+            <div
+              className="flex flex-row flex-wrap gap-6"
+              role="radiogroup"
+              aria-label={definition.title}
+              data-custom-field-key={key}
+            >
+              {BOOLEAN_OPTIONS.map((option) => (
+                <div key={option.value}>
+                  <FormRadio
+                    id={`customfield_${key}_${option.value}`}
+                    label={option.label}
+                    inputProps={{
+                      name: `customfield_${key}`,
+                      value: option.value,
+                      checked: current === option.value,
+                      onChange: () => setScalar(definition, option.value),
+                      onBlur: () => handleBlur(key),
+                      disabled,
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          );
+
         return (
-          <FormCheckbox
-            id={`customfield_${key}`}
-            label={definition.description ?? definition.title}
-            inputProps={{
-              checked: entry?.value === "true",
-              onChange: (e) =>
-                setScalar(definition, e.target.checked ? "true" : "false"),
-              onBlur: () => handleBlur(key),
-            }}
-          />
+          <select
+            className="select select-bordered border-gray w-full rounded-md focus:outline-none md:w-1/2"
+            value={
+              BOOLEAN_OPTIONS.some((o) => o.value === current) ? current : ""
+            }
+            onChange={(e) => setScalar(definition, e.target.value)}
+            onBlur={() => handleBlur(key)}
+            disabled={disabled}
+            aria-label={definition.title}
+            data-custom-field-key={key}
+          >
+            <option value="">Select…</option>
+            {BOOLEAN_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         );
+      }
 
       case CustomFieldDataType.DateTime:
         return (
@@ -428,6 +581,24 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
               onChange: (e) =>
                 setScalar(definition, dateInputToUTC(e.target.value)),
               onBlur: () => handleBlur(key),
+              disabled,
+              "data-custom-field-key": key,
+            }}
+          />
+        );
+
+      case CustomFieldDataType.Date:
+        return (
+          <FormInput
+            className="md:w-1/2"
+            inputProps={{
+              type: "date",
+              // Date-only: the input's YYYY-MM-DD IS the wire value — no UTC conversion,
+              // which would shift the day for anyone east or west of UTC.
+              value: entry?.value ?? "",
+              onChange: (e) => setScalar(definition, e.target.value),
+              onBlur: () => handleBlur(key),
+              disabled,
               "data-custom-field-key": key,
             }}
           />
@@ -447,6 +618,7 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
               value: entry?.value ?? "",
               onChange: (e) => setScalar(definition, e.target.value),
               onBlur: () => handleBlur(key),
+              disabled,
               "data-custom-field-key": key,
             }}
           />
@@ -460,6 +632,7 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
     const isMulti = definition.supportsMultiple === true;
     const lookupType = lookupTypeOf(definition);
     const selected = entry?.values ?? [];
+    const disabled = isDisabled(definition);
 
     const onSelectChange = (selectedValues: string[]) =>
       setOptionValues(definition, selectedValues);
@@ -474,6 +647,7 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
               "input input-xs text-[1rem] h-fit w-full !border-gray md:w-1/2",
           }}
           isMulti={isMulti}
+          isDisabled={disabled}
           defaultOptions={true}
           cacheOptions
           loadOptions={loadSkills}
@@ -504,6 +678,10 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
     if (lookupType === CustomFieldLookupType.Country) options = countryOptions;
     else if (lookupType === CustomFieldLookupType.Language)
       options = languageOptions;
+    else if (lookupType === CustomFieldLookupType.Education)
+      options = educationOptions;
+    else if (lookupType === CustomFieldLookupType.Currency)
+      options = currencyOptions;
     else
       options = [...(definition.options ?? [])]
         .filter((o) => o.isActive)
@@ -521,6 +699,7 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
         }}
         isMulti={isMulti}
         isClearable={true}
+        isDisabled={disabled}
         options={options}
         onBlur={() => handleBlur(key)}
         onChange={(val: any) =>
@@ -577,18 +756,12 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
               group.subGroups.flatMap((subGroup) =>
                 subGroup.definitions.map((definition) => {
                   const error = fieldError(definition);
-                  const isBoolean =
-                    dataTypeOf(definition) === CustomFieldDataType.Boolean;
 
                   return (
                     <FormField
                       key={definition.key}
-                      label={isBoolean ? undefined : definition.title}
-                      subLabel={
-                        isBoolean
-                          ? undefined
-                          : (definition.description ?? undefined)
-                      }
+                      label={definition.title}
+                      subLabel={definition.description ?? undefined}
                       showWarningIcon={!!error}
                       showError={!!(touched[definition.key] || showErrors)}
                       error={error}
@@ -630,21 +803,15 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
                   >
                     {subGroup.definitions.map((definition) => {
                       const error = fieldError(definition);
-                      const isBoolean =
-                        dataTypeOf(definition) === CustomFieldDataType.Boolean;
                       const badge = subGroup.subGroup;
 
                       return (
                         <FormField
                           key={definition.key}
-                          label={isBoolean ? undefined : definition.title}
-                          subLabel={
-                            isBoolean
-                              ? undefined
-                              : (definition.description ?? undefined)
-                          }
+                          label={definition.title}
+                          subLabel={definition.description ?? undefined}
                           badge={
-                            badge && !isBoolean ? (
+                            badge ? (
                               <div className="badge bg-green-light text-green-dark">
                                 {badge}
                               </div>

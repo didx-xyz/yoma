@@ -1,3 +1,5 @@
+import type { OpportunityInfo } from "~/api/models/opportunity";
+import { RewardType } from "~/api/models/opportunity";
 import { formatNumber as amount } from "./format";
 
 /**
@@ -8,24 +10,49 @@ import { formatNumber as amount } from "./format";
  *   salary range  >  partner incentive (labelled partner-paid — Yoma processes nothing)
  *                 >  "Paid — amount not disclosed"  >  nothing.
  *
- * Today the core API exposes only `zltoReward`: salary, partner incentive and the is-paid flag
- * live in pending BA-defined opportunity fields (YOM-1264), and nothing may be keyed to a custom
- * field to fake them. The full rule is typed now so the cards never grow a second precedence.
+ * Fed from the core fields since 2026-09-29 (`moneyFactsOf`): reward type, partner incentive
+ * and `incentivized`. Salary is still unfed — it lives in the Job custom fields (lookup-backed
+ * currency, option-keyed pay interval), which a card cannot label without the definitions and
+ * the currency lookup.
  */
 
 export interface MoneyFacts {
   zltoReward: number | null;
-  /** Pending YOM-1264 — a range with ISO currency + pay interval, e.g. R8 000–12 000 / mo. */
+  /** A range with ISO currency + pay interval, e.g. R8 000–12 000 / mo. Not fed yet — see above. */
   salary: {
     from: number | null;
     to: number | null;
     currency: string;
     interval: string;
   } | null;
-  /** Pending YOM-1264 — informational only; Yoma processes nothing. */
+  /** Informational only; Yoma processes nothing. */
   partnerIncentive: { amount: number; currency: string } | null;
-  /** Pending YOM-1264. */
+  /**
+   * Pays, with no amount to show. `incentivized` on a result whose reward type is None — for a
+   * Job that is its salary; a non-Job that incentivizes always names ZLTO or a partner incentive.
+   */
   isPaid: boolean | null;
+}
+
+/** An opportunity's money facts, from its core fields. */
+export function moneyFactsOf(opportunity: OpportunityInfo): MoneyFacts {
+  const partner =
+    opportunity.rewardType === RewardType.PartnerIncentive &&
+    opportunity.partnerIncentiveAmount !== null &&
+    opportunity.partnerIncentiveCurrency
+      ? {
+          amount: opportunity.partnerIncentiveAmount,
+          currency: opportunity.partnerIncentiveCurrency,
+        }
+      : null;
+  return {
+    zltoReward: opportunity.zltoReward,
+    salary: null,
+    partnerIncentive: partner,
+    isPaid:
+      opportunity.incentivized === true &&
+      opportunity.rewardType === RewardType.None,
+  };
 }
 
 export interface MoneyBadgeModel {

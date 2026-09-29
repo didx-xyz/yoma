@@ -1,18 +1,22 @@
 import type { UserGoal, UserPreferences } from "~/api/models/userPreferences";
-import { EMPTY_USER_LOCATION } from "~/api/models/userPreferences";
+import {
+  EMPTY_USER_ACCESSIBILITY,
+  EMPTY_USER_LOCATION,
+} from "~/api/models/userPreferences";
 import { activeUserLocation, locationFragmentState } from "./location";
 import type { DiscoveryFilters, PreferenceKey } from "./types";
 
 /**
  * Preference → filter mapping, per the BA sheet (build brief §6, User sheet 2026-09-22). Pure;
  * the ONLY place this table exists. Implement exactly the sheet — do not invent extra mappings.
+ * Composed client-side: the API stores preferences but does not apply them (YOM-1258).
  *
- * Rows the current search API cannot express are deliberately absent rather than approximated:
- * - skills   → "Job required skills only": no core facet; pending YOM-1264 fields.
- * - age      → computed age within range: no core facet on `/opportunity/search`.
- * - accessibility → accommodation fields are pending YOM-1264 (and are custom fields, which
- *              nothing may be keyed to). When they land the rule INCLUDES opportunities that
- *              have not described their accommodations (BA, 2026-09-22) — never an exclusion.
+ * Rows deliberately absent rather than approximated:
+ * - skills   → "Job required skills only": the search has no skills facet.
+ * - accessibility → SAVED but not applied (2026-09-29). The search's accommodations filter
+ *              leaves out every opportunity that has not described its accommodations, and the
+ *              BA rule is that those stay in (2026-09-22) — so inheriting it would hide nearly
+ *              the whole feed. The youth can still filter on it by hand, with that stated.
  * - gender   → ranking only, never a gate; no visible filter.
  * - education → no phase-one filter; deferred to the AI project.
  */
@@ -28,6 +32,13 @@ export interface PreferenceProfileContext {
    * (`homeCountryId` in `./location`). Region and city apply only under this country.
    */
   countryId: string | null;
+  /**
+   * Whole years from the profile's date of birth; `null` when signed out or unknown. Applied as
+   * the `age` filter, which keeps opportunities with no age bounds (2026-09-29, agreed with
+   * Jason: the API refuses an out-of-range submission, so showing those only leads to a dead
+   * end). Visible and skippable like any inherited value.
+   */
+  age: number | null;
   categories: { id: string; name: string }[];
 }
 
@@ -35,7 +46,7 @@ const GOAL_TO_TYPE: Partial<Record<UserGoal, string>> = {
   job: "Job",
   learn: "Learning",
   event: "Event", // design proposal, awaiting BA confirmation — see the feature doc
-  impact: "Task", // the enum name is Task; the label is "Impact task"
+  impact: "ImpactAction", // renamed from Task 2026-09-28; displayed "Impact Action"
 };
 
 /**
@@ -87,6 +98,8 @@ export function mapPreferencesToFilters(
 
   if (profile.countryId) fragments.country = { countries: [profile.countryId] };
 
+  if (profile.age !== null) fragments.age = { age: profile.age };
+
   // Region / city / centroid, only while they still belong to the youth's country. The
   // fragment never carries a radius: distance is applied deliberately (the Distance control or
   // "Jobs near me"), never inherited — a standing radius would quietly hide most of the feed.
@@ -101,8 +114,11 @@ export function mapPreferencesToFilters(
   if (preferences.maxCommitment)
     fragments.maxCommitment = { commitment: preferences.maxCommitment };
 
-  if (preferences.engagement.length > 0)
-    fragments.engagement = { engagementTypes: preferences.engagement };
+  if (preferences.engagement)
+    fragments.engagement = { engagementTypes: [preferences.engagement] };
+
+  if (preferences.incentivized !== null)
+    fragments.incentivized = { incentivized: preferences.incentivized };
 
   if (preferences.languages.length > 0)
     fragments.languages = { languages: preferences.languages };
@@ -156,6 +172,9 @@ function mergeFragment(
   const next = { ...merged };
   if (fragment.commitment && !next.commitment)
     next.commitment = fragment.commitment;
+  if (fragment.incentivized != null && next.incentivized === null)
+    next.incentivized = fragment.incentivized;
+  if (fragment.age != null && next.age === null) next.age = fragment.age;
   for (const facet of [
     "types",
     "categories",
@@ -205,6 +224,7 @@ export const SAVABLE_SKIP_KEYS: readonly PreferenceKey[] = [
   "skills",
   "maxCommitment",
   "engagement",
+  "incentivized",
   "languages",
   "accessibility",
 ];
@@ -234,13 +254,16 @@ export function applySkipsToPreferences(
         next.maxCommitment = null;
         break;
       case "engagement":
-        next.engagement = [];
+        next.engagement = null;
+        break;
+      case "incentivized":
+        next.incentivized = null;
         break;
       case "languages":
         next.languages = [];
         break;
       case "accessibility":
-        next.accessibility = { enabled: false, needs: [] };
+        next.accessibility = EMPTY_USER_ACCESSIBILITY;
         break;
       case "location":
         // The place goes; the country it was picked in stays (anonymous: it IS their country).

@@ -1,4 +1,9 @@
-import { FACET_GROUPS, MANUAL_LIST_FACETS, PREF_GROUPS } from "./chipGroups";
+import {
+  FACET_GROUPS,
+  incentivizedLabel,
+  MANUAL_LIST_FACETS,
+  PREF_GROUPS,
+} from "./chipGroups";
 import type { LocationFragmentState } from "./location";
 import {
   distanceLabel,
@@ -63,6 +68,9 @@ function fragmentValue(
   resolve: ChipLabelResolver,
 ): string {
   if (fragment.commitment) return commitmentLabel(fragment.commitment, resolve);
+  if (typeof fragment.incentivized === "boolean")
+    return incentivizedLabel(fragment.incentivized);
+  if (typeof fragment.age === "number") return `${fragment.age} years`;
   const [facet, values] =
     Object.entries(fragment).find(([, v]) => Array.isArray(v)) ?? [];
   if (facet && Array.isArray(values) && typeof values[0] === "string") {
@@ -240,6 +248,14 @@ function manualChips(
         commitmentLabel(manual.commitment, resolve),
       ),
     );
+  if (manual.incentivized !== null && !active.some((f) => "incentivized" in f))
+    chips.push(
+      manualChip(
+        "incentivized",
+        String(manual.incentivized),
+        incentivizedLabel(manual.incentivized),
+      ),
+    );
   if (manual.hasReward !== null)
     chips.push(
       manualChip(
@@ -248,5 +264,7 @@ function manualChips(
         manual.hasReward ? "With ZLTO" : "Without ZLTO",
       ),
     );
+  if (manual.provider)
+    chips.push(manualChip("provider", manual.provider, manual.provider));
   return chips;
 }

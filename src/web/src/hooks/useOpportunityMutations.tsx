@@ -9,11 +9,16 @@ import { toast } from "react-toastify";
 import { SchemaType, type SSISchema } from "~/api/models/credential";
 import { CUSTOM_FIELDS_ENABLED } from "~/lib/constants";
 import type {
+  Accessibility,
   Country,
+  Currency,
+  Education,
   EngagementType,
   Language,
   SkillSearchFilter,
   SkillSearchResults,
+  SustainableDevelopmentGoal,
+  TargetedGroup,
   TimeInterval,
 } from "~/api/models/lookups";
 import {
@@ -27,7 +32,6 @@ import {
   type CustomFieldDefinition,
   type Opportunity,
   type OpportunityCategory,
-  type OpportunityDifficulty,
   type OpportunityInfo,
   type OpportunitySearchFilterAdmin,
   type OpportunitySearchResults,
@@ -37,17 +41,21 @@ import {
 } from "~/api/models/opportunity";
 import type { Organization, OrganizationInfo } from "~/api/models/organisation";
 import {
+  getAccessibilityOptions,
   getCountries,
+  getCurrencies,
+  getEducations,
   getEngagementTypes,
   getLanguages,
   getSkills,
+  getSustainableDevelopmentGoals,
+  getTargetedGroups,
   getTimeIntervals,
 } from "~/api/services/lookups";
 import {
   getCategories,
   getCategoriesAdmin,
   getCountriesAdmin,
-  getDifficulties,
   getLanguagesAdmin,
   getOpportunitiesAdmin,
   getOpportunityById,
@@ -151,9 +159,14 @@ export const OPPORTUNITY_QUERY_KEYS = {
   languages: () => ["languages"] as const,
   opportunityTypes: () => ["opportunityTypes"] as const,
   verificationTypes: () => ["verificationTypes"] as const,
-  difficulties: () => ["difficulties"] as const,
   timeIntervals: () => ["timeIntervals"] as const,
   engagementTypes: () => ["engagementTypes"] as const,
+  /** Shared with the profile pages' `["educations"]` cache. */
+  educations: () => ["educations"] as const,
+  currencies: () => ["currencies"] as const,
+  accessibility: () => ["accessibility"] as const,
+  targetedGroups: () => ["targetedGroups"] as const,
+  sustainableDevelopmentGoals: () => ["sustainableDevelopmentGoals"] as const,
   /** Scoped by opportunity type context — the applicable set differs per type */
   schemas: (typeContext?: string | null) =>
     ["schemas", typeContext ?? null] as const,
@@ -246,7 +259,7 @@ export function useOpportunityTypesQuery(options?: { enabled?: boolean }) {
 /**
  * Definition-driven custom field definitions (create/edit page).
  * Keyed on the selected opportunity type name(s), so the query re-runs whenever the
- * watched opportunity type changes. `types` are enum names: Other | Learning | Event | Job | Task.
+ * watched opportunity type changes. `types` are enum names: Other | Learning | Event | Job | ImpactAction.
  *
  * Disabled outright when `CUSTOM_FIELDS_ENABLED` is off. This is the chokepoint for the whole
  * read side of the framework: every editor, read-only section and filter panel keys off the
@@ -294,13 +307,50 @@ export function useOpportunityVerificationTypesQuery(options?: {
   });
 }
 
-/** Difficulties lookup (create/edit page). */
-export function useOpportunityDifficultiesQuery(options?: {
+/** Education lookup — Job Minimum Qualification and any other Education-backed custom field. */
+export function useEducationsQuery(options?: { enabled?: boolean }) {
+  return useQuery<Education[]>({
+    queryKey: OPPORTUNITY_QUERY_KEYS.educations(),
+    queryFn: () => getEducations(),
+    enabled: options?.enabled ?? true,
+  });
+}
+
+/** Currency lookup (ISO 4217) — partner incentive currency and Currency-backed custom fields. */
+export function useCurrenciesQuery(options?: { enabled?: boolean }) {
+  return useQuery<Currency[]>({
+    queryKey: OPPORTUNITY_QUERY_KEYS.currencies(),
+    queryFn: () => getCurrencies(),
+    enabled: options?.enabled ?? true,
+    staleTime: Infinity,
+  });
+}
+
+/** Accessibility lookup — opportunity accommodations (create/edit page). */
+export function useAccessibilityQuery(options?: { enabled?: boolean }) {
+  return useQuery<Accessibility[]>({
+    queryKey: OPPORTUNITY_QUERY_KEYS.accessibility(),
+    queryFn: () => getAccessibilityOptions(),
+    enabled: options?.enabled ?? true,
+  });
+}
+
+/** Targeted groups lookup (create/edit page). */
+export function useTargetedGroupsQuery(options?: { enabled?: boolean }) {
+  return useQuery<TargetedGroup[]>({
+    queryKey: OPPORTUNITY_QUERY_KEYS.targetedGroups(),
+    queryFn: () => getTargetedGroups(),
+    enabled: options?.enabled ?? true,
+  });
+}
+
+/** Sustainable Development Goals lookup (create/edit page). */
+export function useSustainableDevelopmentGoalsQuery(options?: {
   enabled?: boolean;
 }) {
-  return useQuery<OpportunityDifficulty[]>({
-    queryKey: OPPORTUNITY_QUERY_KEYS.difficulties(),
-    queryFn: () => getDifficulties(),
+  return useQuery<SustainableDevelopmentGoal[]>({
+    queryKey: OPPORTUNITY_QUERY_KEYS.sustainableDevelopmentGoals(),
+    queryFn: () => getSustainableDevelopmentGoals(),
     enabled: options?.enabled ?? true,
   });
 }

@@ -79,8 +79,9 @@ export enum TimeIntervalOption {
   Month,
 }
 
+/** Engagement type lookup `name`s — the IDs of the former Online / Offline rows are kept. */
 export enum EngagementTypeOption {
-  Online,
-  Offline,
-  Hybrid,
+  Remote = "Remote",
+  OnSite = "OnSite",
+  Hybrid = "Hybrid",
 }

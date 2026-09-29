@@ -11,7 +11,8 @@
  * Retry. Collapsing the two would either cry wolf on every stale environment or bury real
  * outages behind a polite note.
  */
-export type FacetStatus = "ok" | "unavailable" | "failed";
+/** `loading` = not answered yet — distinct from `ok` with an empty list, which is a fact to state. */
+export type FacetStatus = "ok" | "loading" | "unavailable" | "failed";
 
 /** Duck-typed: the app's axios client rejects with the original `AxiosError`. */
 export const isNotFoundError = (error: unknown): boolean =>

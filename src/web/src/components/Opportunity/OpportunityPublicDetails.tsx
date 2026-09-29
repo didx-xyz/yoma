@@ -21,8 +21,8 @@ import {
   IoLanguageOutline,
   IoLocationOutline,
   IoPricetagsOutline,
+  IoStorefrontOutline,
   IoTimeOutline,
-  IoTrendingUpOutline,
 } from "react-icons/io5";
 import { toast } from "react-toastify";
 import { SettingType } from "~/api/models/common";
@@ -1231,15 +1231,16 @@ const OpportunityPublicDetails: React.FC<{
                     </div>
                   </DetailSection>
                 )}
-                {!!opportunityInfo.difficulty && (
+                {/* informational provider text — not the owning organisation */}
+                {!!opportunityInfo.provider?.trim() && (
                   <DetailSection
-                    title="Course difficulty"
+                    title="Provider"
                     icon={
-                      <IoTrendingUpOutline className="text-green h-5 w-5" />
+                      <IoStorefrontOutline className="text-green h-5 w-5" />
                     }
                   >
                     <div className="badge bg-green my-2 h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white">
-                      {opportunityInfo.difficulty}
+                      {opportunityInfo.provider}
                     </div>
                   </DetailSection>
                 )}
@@ -1250,14 +1251,23 @@ const OpportunityPublicDetails: React.FC<{
                     className="pt-4 first:pt-0"
                   >
                     <div className="my-2 flex flex-wrap gap-1">
-                      {opportunityInfo.countries?.map((country) => (
-                        <div
-                          key={country.id}
-                          className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
-                        >
-                          {country.name}
-                        </div>
-                      ))}
+                      {opportunityInfo.countries?.map((country) => {
+                        // optional place within the country: "City, Region"
+                        const place = [country.city, country.region]
+                          .filter(Boolean)
+                          .join(", ");
+
+                        return (
+                          <div
+                            key={country.id}
+                            className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
+                          >
+                            {place
+                              ? `${country.name} — ${place}`
+                              : country.name}
+                          </div>
+                        );
+                      })}
                     </div>
                   </DetailSection>
                 )}

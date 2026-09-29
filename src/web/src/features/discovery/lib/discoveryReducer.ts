@@ -99,6 +99,17 @@ const scalarDefault = (facet: keyof DiscoveryFilters): unknown =>
     ? []
     : EMPTY_DISCOVERY_FILTERS[facet];
 
+/**
+ * Scalar facets a preference fragment can carry, whose manual duplicate `skipPreference` strips
+ * like it strips an array value. The inherited place (region / city / point) is deliberately not
+ * here: a manual place REPLACES the inherited one, so it is never a duplicate of it.
+ */
+const SKIPPABLE_SCALARS: (keyof DiscoveryFilters)[] = [
+  "commitment",
+  "incentivized",
+  "age",
+];
+
 const removeFromFacet = (
   filters: DiscoveryFilters,
   facet: keyof DiscoveryFilters,
@@ -258,11 +269,11 @@ function reduceAction(
             ),
           };
         else if (
-          key === "commitment" &&
-          filters.commitment &&
-          JSON.stringify(filters.commitment) === JSON.stringify(value)
+          SKIPPABLE_SCALARS.includes(key) &&
+          current !== null &&
+          JSON.stringify(current) === JSON.stringify(value)
         )
-          filters = { ...filters, commitment: null };
+          filters = { ...filters, [key]: scalarDefault(key) };
       }
       return {
         ...state,

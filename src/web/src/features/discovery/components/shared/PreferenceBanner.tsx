@@ -40,6 +40,7 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
     setPreferenceUndo: setUndoTo,
   } = useDiscovery();
   const [saving, setSaving] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
   const [dismissedSignature, setDismissedSignature] = useState<string | null>(
     () =>
       typeof window !== "undefined"
@@ -98,6 +99,7 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
 
   const saveOverrides = (): void => {
     setSaving(true);
+    setSaveFailed(false);
     const previous = {
       preferences,
       skipped: state.preferencesSkipped,
@@ -116,17 +118,20 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
           ),
         });
       })
+      .catch(() => setSaveFailed(true))
       .finally(() => setSaving(false));
   };
 
   const undoSave = (): void => {
     if (!undoTo) return;
     setSaving(true);
+    setSaveFailed(false);
     void savePreferences(undoTo.preferences)
       .then(() => {
         dispatch({ kind: "setSkippedPreferences", keys: undoTo.skipped });
         setUndoTo(null);
       })
+      .catch(() => setSaveFailed(true))
       .finally(() => setSaving(false));
   };
 
@@ -205,6 +210,11 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
             </button>
           </span>
         </div>
+      )}
+      {saveFailed && (
+        <p className="border-purple-tint text-pink border-t pt-2 text-xs font-semibold">
+          Couldn&apos;t save that change. Please try again.
+        </p>
       )}
       {undoTo && (
         <p className="border-purple-tint flex items-center gap-2 border-t pt-2 text-xs">

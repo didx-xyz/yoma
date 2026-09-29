@@ -3,9 +3,11 @@ import Link from "next/link";
 import React from "react";
 import type { OpportunityInfo } from "~/api/models/opportunity";
 import { cardStatus } from "../../lib/cardStatus";
-import { engagementLabel } from "../../lib/engagementLabels";
+import { moneyFactsOf } from "../../lib/money";
+import { useDiscovery } from "../../state/DiscoveryContext";
+import { engagementDisplayName } from "../../state/useDiscoveryLookups";
 import { MoneyBadge } from "./MoneyBadge";
-import { typeBadgeClass } from "./typeBadge";
+import { typeBadgeClass, typeLabel } from "./typeBadge";
 
 /**
  * The grid card. Box discipline: FIXED height per breakpoint — content never grows the box, a
@@ -14,7 +16,7 @@ import { typeBadgeClass } from "./typeBadge";
  * per-type layout must share this box.
  *
  * Field set (2026-08-31 revision §7): type badge + reward · title · location + engagement (one
- * meta line, engagement through the one display map) · up to two skill chips + a "+N" counter ·
+ * meta line, engagement by its lookup displayName) · up to two skill chips + a "+N" counter ·
  * due date and participant places, both from `lib/cardStatus.ts` — the one rule that keeps
  * "Closed" and "N of N places left" from appearing together.
  */
@@ -22,12 +24,19 @@ export const OpportunityCard: React.FC<{
   opportunity: OpportunityInfo;
   now: Date;
 }> = ({ opportunity, now }) => {
+  const { lookups } = useDiscovery();
   const { closing, places } = cardStatus(opportunity, now);
   const skills = opportunity.skills ?? [];
-  const location = opportunity.countries?.[0]?.name ?? null;
+  // The most specific place the first country names — its city, else the country.
+  const firstCountry = opportunity.countries?.[0];
+  const location = firstCountry?.city ?? firstCountry?.name ?? null;
   const engagement =
     typeof opportunity.engagementType === "string"
-      ? engagementLabel(opportunity.engagementType)
+      ? engagementDisplayName(
+          lookups.engagementTypes,
+          opportunity.engagementType,
+          "name",
+        )
       : null;
   const meta = [location, engagement].filter(Boolean).join(" · ");
 
@@ -52,17 +61,9 @@ export const OpportunityCard: React.FC<{
           <span
             className={`rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wide uppercase ${typeBadgeClass(opportunity.type)}`}
           >
-            {opportunity.type}
+            {typeLabel(lookups.types, opportunity.type)}
           </span>
-          <MoneyBadge
-            compact
-            facts={{
-              zltoReward: opportunity.zltoReward,
-              salary: null, // pending YOM-1264 — see lib/money.ts
-              partnerIncentive: null,
-              isPaid: null,
-            }}
-          />
+          <MoneyBadge compact facts={moneyFactsOf(opportunity)} />
         </div>
         <h3 className="line-clamp-2 text-sm leading-snug font-semibold tracking-normal md:text-base">
           {opportunity.title}

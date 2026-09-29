@@ -11,6 +11,8 @@ import {
 } from "~/api/models/opportunity";
 import { getSkills } from "~/api/services/lookups";
 import {
+  useCurrenciesQuery,
+  useEducationsQuery,
   useOpportunityCountriesQuery,
   useOpportunityLanguagesQuery,
   useSkillsQuery,
@@ -35,7 +37,7 @@ import { getCustomFieldNumberError } from "./CustomFields";
 //   Between                       → `value` (inclusive from) + `valueTo` (inclusive to)
 //   Exists                        → no value at all
 // Option fields submit inline option KEYS (not option ids); lookup-backed Option
-// fields (Country / Language / Skill) submit lookup GUIDs.
+// fields (Country / Language / Skill / Education / Currency) submit lookup GUIDs.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Custom-field filtering (public + admin) switches off with the rest of the framework rather
@@ -75,6 +77,16 @@ export const CUSTOM_FIELD_FILTER_OPERATORS_BY_DATA_TYPE: Record<
     OP.Exists,
   ],
   [CustomFieldDataType.DateTime]: [
+    OP.Equals,
+    OP.GreaterThanOrEqual,
+    OP.LessThanOrEqual,
+    OP.GreaterThan,
+    OP.LessThan,
+    OP.Between,
+    OP.Exists,
+  ],
+  // Date-only (API 2026-09-29) filters like DateTime; AnyOf left out for the same reason.
+  [CustomFieldDataType.Date]: [
     OP.Equals,
     OP.GreaterThanOrEqual,
     OP.LessThanOrEqual,
@@ -251,6 +263,12 @@ export function useCustomFieldFilterLabeler(
   const needsSkill = defs.some(
     (d) => lookupTypeOf(d) === CustomFieldLookupType.Skill,
   );
+  const needsEducation = defs.some(
+    (d) => lookupTypeOf(d) === CustomFieldLookupType.Education,
+  );
+  const needsCurrency = defs.some(
+    (d) => lookupTypeOf(d) === CustomFieldLookupType.Currency,
+  );
 
   const { data: countriesData } = useOpportunityCountriesQuery({
     enabled: needsCountry,
@@ -261,6 +279,24 @@ export function useCustomFieldFilterLabeler(
   const { data: skillsData } = useSkillsQuery(
     { nameContains: null, pageNumber: 1, pageSize: 500 },
     { enabled: needsSkill },
+  );
+  const { data: educationsData } = useEducationsQuery({
+    enabled: needsEducation,
+  });
+  const { data: currenciesData } = useCurrenciesQuery({
+    enabled: needsCurrency,
+  });
+
+  const educationMap = useMemo(
+    () => new Map((educationsData ?? []).map((e) => [e.id, e.name])),
+    [educationsData],
+  );
+  const currencyMap = useMemo(
+    () =>
+      new Map(
+        (currenciesData ?? []).map((c) => [c.id, `${c.code} — ${c.name}`]),
+      ),
+    [currenciesData],
   );
 
   const countryMap = useMemo(
@@ -288,6 +324,10 @@ export function useCustomFieldFilterLabeler(
           return languageMap.get(value) ?? value;
         case CustomFieldLookupType.Skill:
           return skillMap.get(value) ?? value;
+        case CustomFieldLookupType.Education:
+          return educationMap.get(value) ?? value;
+        case CustomFieldLookupType.Currency:
+          return currencyMap.get(value) ?? value;
         default:
           break;
       }
@@ -331,7 +371,7 @@ export function useCustomFieldFilterLabeler(
 
       return resolve(definition, filter.value ?? "");
     };
-  }, [defs, countryMap, languageMap, skillMap]);
+  }, [defs, countryMap, languageMap, skillMap, educationMap, currencyMap]);
 }
 
 // shared react-select styling, matching the rest of the opportunity forms
@@ -431,6 +471,12 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
   const needsLanguage = ordered.some(
     (d) => lookupTypeOf(d) === CustomFieldLookupType.Language,
   );
+  const needsEducation = ordered.some(
+    (d) => lookupTypeOf(d) === CustomFieldLookupType.Education,
+  );
+  const needsCurrency = ordered.some(
+    (d) => lookupTypeOf(d) === CustomFieldLookupType.Currency,
+  );
 
   const { data: countriesData } = useOpportunityCountriesQuery({
     enabled: needsCountry,
@@ -446,6 +492,27 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
   const languageOptions = useMemo<SelectOption[]>(
     () => languagesData?.map((l) => ({ value: l.id, label: l.name })) ?? [],
     [languagesData],
+  );
+
+  const { data: educationsData } = useEducationsQuery({
+    enabled: needsEducation,
+  });
+  const educationOptions = useMemo<SelectOption[]>(
+    () => educationsData?.map((e) => ({ value: e.id, label: e.name })) ?? [],
+    [educationsData],
+  );
+
+  // Currency custom fields filter on the lookup id, never the ISO code
+  const { data: currenciesData } = useCurrenciesQuery({
+    enabled: needsCurrency,
+  });
+  const currencyOptions = useMemo<SelectOption[]>(
+    () =>
+      currenciesData?.map((c) => ({
+        value: c.id,
+        label: `${c.code} — ${c.name}`,
+      })) ?? [],
+    [currenciesData],
   );
 
   // skills are searched asynchronously; cache resolved records for label display
@@ -546,11 +613,16 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
       );
     }
 
-    // inline options submit option keys; Country / Language submit lookup GUIDs
+    // inline options submit option keys; Country / Language / Education / Currency
+    // submit lookup GUIDs
     let options: SelectOption[] = [];
     if (lookupType === CustomFieldLookupType.Country) options = countryOptions;
     else if (lookupType === CustomFieldLookupType.Language)
       options = languageOptions;
+    else if (lookupType === CustomFieldLookupType.Education)
+      options = educationOptions;
+    else if (lookupType === CustomFieldLookupType.Currency)
+      options = currencyOptions;
     else
       options = [...(definition.options ?? [])]
         .filter((o) => o.isActive)
@@ -644,16 +716,18 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
         />
       );
 
-    const isDate = dataType === CustomFieldDataType.DateTime;
+    const isDateTime = dataType === CustomFieldDataType.DateTime;
+    const isDate = isDateTime || dataType === CustomFieldDataType.Date;
     const isNumber =
       dataType === CustomFieldDataType.Integer ||
       dataType === CustomFieldDataType.Decimal;
 
-    // DateTime is submitted as UTC ISO-8601 (the date input works in YYYY-MM-DD).
+    // DateTime is submitted as UTC ISO-8601 (the date input works in YYYY-MM-DD). A
+    // date-only field submits the input's YYYY-MM-DD as it is.
     const toStored = (raw: string) =>
-      isDate ? (raw ? dateInputToUTC(raw) : null) : raw || null;
+      isDateTime ? (raw ? dateInputToUTC(raw) : null) : raw || null;
     const fromStored = (stored: string | null | undefined) =>
-      isDate ? utcToDateInput(stored ?? undefined) : (stored ?? "");
+      isDateTime ? utcToDateInput(stored ?? undefined) : (stored ?? "");
 
     const inputProps = {
       type: isDate ? "date" : isNumber ? "number" : "text",

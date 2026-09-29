@@ -6,19 +6,23 @@ import {
 } from "./location";
 
 /**
- * User discovery preferences — a User-domain preset, NOT a custom field (epic rule: presets must
- * not be built through the custom-field models or components).
+ * User discovery preferences as the web app edits them — a User-domain preset, NOT a custom field
+ * (epic rule: presets must not be built through the custom-field models or components).
  *
- * The real model lands with YOM-1257 (preset storage) / YOM-1258 (preset→filter mapping). Until
- * then this shape exists only behind the mock façade (`~/api/services/userPreferences`) and is
- * never written to the real `User` model or any identity field.
+ * Stored by `GET` / `PATCH /user/preferences` for a signed-in youth (YOM-1257, 2026-09-28) and in
+ * `sessionStorage` for an anonymous one. This is the WIZARD's shape; `userPreferencesLive.ts` is
+ * the one adapter to the API's (`UserPreferencesResponse` / `UserPreferencesRequest`). Location is
+ * the exception to "preferences": the API keeps region / city / centroid on the PROFILE, so the
+ * adapter reads and writes it through `/user`.
  */
 
 /**
  * Single-select by design. A youth picking three goals gives no signal — breadth belongs at
- * `targetCategories`, which is multi-select. Do not widen this to an array; if product asks for
- * multiple goals the answer is a ranked primary plus secondaries (a mapping decision, not a type
- * change).
+ * `targetCategories`, which is multi-select.
+ *
+ * These are web keys, not API ids: the goal lookup (`GET /user/goal`) is authenticated, and an
+ * anonymous youth answers the wizard too. The live adapter resolves them to the lookup by name
+ * (`GOAL_NAMES` in `userPreferencesLive.ts`).
  */
 export type UserGoal = "job" | "learn" | "event" | "impact" | "biz";
 
@@ -29,19 +33,24 @@ export interface UserPreferenceCommitment {
 }
 
 /**
- * Skills are stored as `{id, name}` pairs, not bare ids: the EMSI lookup is search-by-name only,
- * so a bare id cannot be resolved back to a label when the wizard re-edits a stored preset. The
- * name is display data — anything consuming skills as a filter must use `id`.
+ * Skills are held as `{id, name}` pairs, not bare ids: the EMSI lookup is search-by-name only, so
+ * a bare id cannot be resolved back to a label when the wizard re-edits a stored preset. The name
+ * is display data — anything consuming skills as a filter must use `id`. Self-attested and
+ * unverified: an already verified skill is never one of these (the API rejects it).
  */
 export interface UserPreferenceSkill {
   id: string;
   name: string;
 }
 
+/**
+ * Sensitive. Accessibility lookup ids (`GET /lookup/accessibility`, the same list opportunities
+ * describe their accommodations with) plus the free-text description the API requires exactly
+ * when Other is among them.
+ */
 export interface UserPreferenceAccessibility {
-  /** Opt-in, off by default, never auto-applied from the profile. */
-  enabled: boolean;
-  needs: string[];
+  requirements: string[];
+  otherDescription: string | null;
 }
 
 export interface UserPreferences {
@@ -49,25 +58,28 @@ export interface UserPreferences {
   goal: UserGoal | null;
   /** Opportunity Category ids (Opportunity Categories taxonomy). */
   targetCategories: string[];
-  /** EMSI Skill lookup pairs, self-reported. Verified skills are read from the profile. */
+  /** EMSI Skill lookup pairs, self-attested. Verified skills are read from the youth's skills. */
   selfReportedSkills: UserPreferenceSkill[];
-  /** Normalised "at most this much time"; opportunities with no commitment set are INCLUDED. */
+  /** "At most this much time" per opportunity. */
   maxCommitment: UserPreferenceCommitment | null;
   /**
-   * EngagementType lookup ids — MULTI-select since 2026-09-22 (BA: "allow multi select of
-   * engagement type"). Was a single nullable id; `normalizeUserPreferences` lifts a stored
-   * string into a one-element list.
+   * One EngagementType lookup id. SINGLE-select again since 2026-09-29: the API stores one
+   * (`engagementTypeId`), which reverses the 2026-09-22 multi-select. The search FILTER still
+   * takes several. `normalizeUserPreferences` keeps the first of a stored list.
    */
-  engagement: string[];
-  // paidWork was removed as a STORED preference (2026-08-31 revision brief §4);
-  // pay remains fully available as a session filter (the "Paid & rewards" section).
-  /** Proposed, awaiting BA sign-off (YOM-1264): Language lookup ids. */
+  engagement: string | null;
+  /**
+   * true = prefers an opportunity with any incentive (pay, ZLTO, a voucher…), false = prefers
+   * none, null = no preference. Not Job-specific, and not the reward type.
+   */
+  incentivized: boolean | null;
+  /** Language lookup ids. */
   languages: string[];
   /**
-   * Sensitive. Never included in any outbound payload, partner sync, credential or analytics
-   * event — including the mere fact that the filter is enabled. When on, opportunities that have
-   * not described their accommodations stay IN the results for now (BA rule, 2026-09-22; stated
-   * in words in the UI).
+   * Never included in any outbound payload other than the preferences PATCH — not partner sync,
+   * credentials or analytics. Saved, but NOT applied to the feed automatically: the search's
+   * accommodations filter leaves out every opportunity that has not described its accommodations,
+   * and the BA rule is that those stay in (2026-09-22).
    */
   accessibility: UserPreferenceAccessibility;
   /** Region / city / centroid (and, anonymous only, country) — see `UserLocation`. */
@@ -78,13 +90,10 @@ export interface UserPreferences {
  * Where the youth is — region, city and the city's centroid, set in the wizard.
  *
  * Country is NOT owned here for a signed-in youth: it is the global profile `countryId`, edited
- * only on the profile page. `countryId` records the country the region and city were picked in,
- * so a later profile-country change marks them stale (not applied) instead of pairing a South
- * African city with a Kenyan profile. For an anonymous youth there is no profile, so
+ * only on the profile page, and the place is stored on the profile alongside it (the API has no
+ * second country). `countryId` records the country the place belongs to — the profile's when
+ * signed in, so a place read back is never stale; for an anonymous youth there is no profile, so
  * `countryId` IS their country, held in the session with their other answers.
- *
- * Signed-in, the region / city / coordinates persist through the user-location PATCH (API in
- * development) rather than the preset endpoint — the façade owns that split.
  */
 export interface UserLocation extends LocationPlace {
   countryId: string | null;
@@ -105,40 +114,79 @@ const normalizeUserLocation = (raw: unknown): UserLocation => ({
   ...normalizeLocationPlace(raw),
 });
 
-/** Where anonymous answers live (session) vs a signed-in youth's preset (their profile). */
+/** Where anonymous answers live (session) vs a signed-in youth's preset (the API). */
 export type UserPreferenceScope = "user" | "anonymous";
+
+export const EMPTY_USER_ACCESSIBILITY: UserPreferenceAccessibility = {
+  requirements: [],
+  otherDescription: null,
+};
 
 export const EMPTY_USER_PREFERENCES: UserPreferences = {
   goal: null,
   targetCategories: [],
   selfReportedSkills: [],
   maxCommitment: null,
-  engagement: [],
+  engagement: null,
+  incentivized: null,
   languages: [],
-  accessibility: { enabled: false, needs: [] },
+  accessibility: EMPTY_USER_ACCESSIBILITY,
   location: EMPTY_USER_LOCATION,
 };
 
-/** Pre-2026-09-22 presets stored engagement as one nullable id; anything else unexpected → none. */
-const normalizeEngagement = (raw: unknown): string[] => {
-  if (Array.isArray(raw))
-    return raw.filter((id): id is string => typeof id === "string");
-  return typeof raw === "string" && raw !== "" ? [raw] : [];
+/** A stored list (2026-09-22 → 09-29) keeps its first id; anything else unexpected → none. */
+const normalizeEngagement = (raw: unknown): string | null => {
+  if (Array.isArray(raw)) {
+    const first: unknown = raw[0];
+    return typeof first === "string" && first !== "" ? first : null;
+  }
+  return typeof raw === "string" && raw !== "" ? raw : null;
+};
+
+const strings = (raw: unknown): string[] =>
+  Array.isArray(raw)
+    ? raw.filter((id): id is string => typeof id === "string")
+    : [];
+
+/** The `{ enabled, needs }` toggle shape (before 2026-09-29) carried no requirement — none. */
+const normalizeAccessibility = (raw: unknown): UserPreferenceAccessibility => {
+  if (typeof raw !== "object" || raw === null) return EMPTY_USER_ACCESSIBILITY;
+  const { requirements, otherDescription } = raw as Record<string, unknown>;
+  return {
+    requirements: strings(requirements),
+    otherDescription:
+      typeof otherDescription === "string" && otherDescription.trim() !== ""
+        ? otherDescription
+        : null,
+  };
 };
 
 /**
- * Repairs a stored preset of unknown vintage into the current shape. Client-held stores
- * (sessionStorage, the local mock) outlive shape changes, so both read paths run parsed JSON
- * through here. Legacy bare-id skills (pre-`{id, name}`) are dropped rather than kept as
- * unresolvable GUID chips.
+ * Repairs a client-held preset of unknown vintage into the current shape. `sessionStorage`
+ * outlives shape changes, so the anonymous read path runs parsed JSON through here. Legacy
+ * bare-id skills (pre-`{id, name}`) are dropped rather than kept as unresolvable GUID chips, and
+ * keys the model no longer has are not carried over.
  */
 export const normalizeUserPreferences = (raw: unknown): UserPreferences => {
-  const parsed = (
-    typeof raw === "object" && raw !== null ? raw : {}
-  ) as Partial<UserPreferences>;
+  const parsed = (typeof raw === "object" && raw !== null ? raw : {}) as Record<
+    string,
+    unknown
+  >;
+  const goal = parsed.goal;
+  const commitment = parsed.maxCommitment as
+    | Partial<UserPreferenceCommitment>
+    | null
+    | undefined;
   return {
-    ...EMPTY_USER_PREFERENCES,
-    ...parsed,
+    goal:
+      goal === "job" ||
+      goal === "learn" ||
+      goal === "event" ||
+      goal === "impact" ||
+      goal === "biz"
+        ? goal
+        : null,
+    targetCategories: strings(parsed.targetCategories),
     selfReportedSkills: Array.isArray(parsed.selfReportedSkills)
       ? (parsed.selfReportedSkills as unknown[]).filter(
           (skill): skill is UserPreferenceSkill =>
@@ -148,15 +196,25 @@ export const normalizeUserPreferences = (raw: unknown): UserPreferences => {
             typeof (skill as UserPreferenceSkill).name === "string",
         )
       : [],
-    accessibility: parsed.accessibility ?? EMPTY_USER_PREFERENCES.accessibility,
-    engagement: normalizeEngagement(
-      (parsed as { engagement?: unknown }).engagement,
-    ),
-    location: normalizeUserLocation(
-      (parsed as { location?: unknown }).location,
-    ),
+    maxCommitment:
+      commitment &&
+      typeof commitment.intervalId === "string" &&
+      typeof commitment.count === "number" &&
+      commitment.count > 0
+        ? { intervalId: commitment.intervalId, count: commitment.count }
+        : null,
+    engagement: normalizeEngagement(parsed.engagement),
+    incentivized:
+      typeof parsed.incentivized === "boolean" ? parsed.incentivized : null,
+    languages: strings(parsed.languages),
+    accessibility: normalizeAccessibility(parsed.accessibility),
+    location: normalizeUserLocation(parsed.location),
   };
 };
+
+/** Nothing answered — what a never-saved youth reads back from the API, too. */
+export const isEmptyUserPreferences = (preferences: UserPreferences): boolean =>
+  JSON.stringify(preferences) === JSON.stringify(EMPTY_USER_PREFERENCES);
 
 /**
  * Merges session-held anonymous answers into a stored preset (the sign-in "keep your answers"
@@ -186,6 +244,11 @@ export const mergeUserPreferences = (
     const seen = new Set(a.map(keyOf));
     return [...a, ...b.filter((item) => !seen.has(keyOf(item)))];
   };
+  const requirements = union(
+    stored.accessibility.requirements,
+    anonymous.accessibility.requirements,
+    (id) => id,
+  );
   return {
     goal: anonymous.goal ?? stored.goal,
     targetCategories: union(
@@ -199,15 +262,14 @@ export const mergeUserPreferences = (
       (skill) => skill.id,
     ),
     maxCommitment: anonymous.maxCommitment ?? stored.maxCommitment,
-    engagement: union(stored.engagement, anonymous.engagement, (id) => id),
+    engagement: anonymous.engagement ?? stored.engagement,
+    incentivized: anonymous.incentivized ?? stored.incentivized,
     languages: union(stored.languages, anonymous.languages, (id) => id),
     accessibility: {
-      enabled: stored.accessibility.enabled || anonymous.accessibility.enabled,
-      needs: union(
-        stored.accessibility.needs,
-        anonymous.accessibility.needs,
-        (id) => id,
-      ),
+      requirements,
+      otherDescription:
+        anonymous.accessibility.otherDescription ??
+        stored.accessibility.otherDescription,
     },
     location: anonymousLocationCarriesOver(anonymous, profileCountryId)
       ? anonymous.location

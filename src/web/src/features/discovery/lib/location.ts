@@ -18,16 +18,24 @@ import type { DiscoveryFilters, PreferenceKey } from "./types";
  */
 
 /**
- * ⚠️ TEMPORARY — the search API cannot filter on region, city or distance yet (Location API in
- * development). While this is `false` the request builder sends none of them and every home
- * that shows them says so (`LOCATION_NOT_APPLIED`); the controls, URL, chips, badge and
- * inheritance are live so the surface does not change shape when the API lands. Nothing is
- * filtered client-side: results are paged server-side, and a page-local filter would lie.
+ * Whether region, city and distance reach the search. `true` since 2026-09-29, when the API's
+ * country-scoped location search landed (`searchRequest.ts` maps them). Kept as the one switch
+ * back: with it `false` the request builder sends none of them and every home that shows them
+ * says so (`LOCATION_NOT_APPLIED`). Nothing is ever filtered client-side — results are paged
+ * server-side, and a page-local filter would lie.
  */
-export const LOCATION_SEARCH_LIVE = false;
+export const LOCATION_SEARCH_LIVE = true;
 
 export const LOCATION_NOT_APPLIED =
   "Region, city and distance aren't applied to results yet — location search is still being built.";
+
+/**
+ * Distance keeps only opportunities with a mapped city (coordinates), and today few have one:
+ * imports and partner syncs are country-only, so admins add places by hand. Said wherever a
+ * distance is in play, so a thin result reads as thin data, not a broken filter.
+ */
+export const DISTANCE_NOTE =
+  "Distance only finds opportunities that have a mapped city — many don't have one yet.";
 
 export const RADIUS_OPTIONS_KM = [10, 25, 50, 100] as const;
 export const DEFAULT_RADIUS_KM = 25;

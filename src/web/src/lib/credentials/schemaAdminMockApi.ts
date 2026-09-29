@@ -459,9 +459,9 @@ const CUSTOM_FIELD_SEEDS: CustomFieldSeed[] = [
   // prettier-ignore
   { id: "a1000000-0000-4000-8000-000000000015", entity: "Opportunity", typeContext: "Event", key: "eventRegistrationDeadline", nameDisplay: "[Sample] Registration Deadline", group: "[Sample] Event Details", subGroup: "Registration", dataType: "DateTime", sortOrder: 20 },
   // prettier-ignore
-  { id: "a1000000-0000-4000-8000-000000000016", entity: "Opportunity", typeContext: "Task", key: "taskEstimatedMinutes", nameDisplay: "[Sample] Estimated Minutes", group: "[Sample] Task Details", subGroup: "Effort", dataType: "Integer", sortOrder: 10 },
+  { id: "a1000000-0000-4000-8000-000000000016", entity: "Opportunity", typeContext: "ImpactAction", key: "taskEstimatedMinutes", nameDisplay: "[Sample] Estimated Minutes", group: "[Sample] Task Details", subGroup: "Effort", dataType: "Integer", sortOrder: 10 },
   // prettier-ignore
-  { id: "a1000000-0000-4000-8000-000000000017", entity: "Opportunity", typeContext: "Task", key: "taskParticipationMode", nameDisplay: "[Sample] Participation Mode", group: "[Sample] Task Details", subGroup: "Participation", dataType: "Option", supportsMultiple: false, sortOrder: 20 },
+  { id: "a1000000-0000-4000-8000-000000000017", entity: "Opportunity", typeContext: "ImpactAction", key: "taskParticipationMode", nameDisplay: "[Sample] Participation Mode", group: "[Sample] Task Details", subGroup: "Participation", dataType: "Option", supportsMultiple: false, sortOrder: 20 },
   // prettier-ignore
   { id: "a1000000-0000-4000-8000-000000000018", entity: "Opportunity", typeContext: "Other", key: "otherOpportunityLabel", nameDisplay: "[Sample] Opportunity Label", group: "[Sample] Other Details", subGroup: "Classification", dataType: "String", sortOrder: 10 },
   // prettier-ignore

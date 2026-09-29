@@ -1,9 +1,5 @@
 import React, { useState } from "react";
-import {
-  IoClose,
-  IoCloseCircleOutline,
-  IoSearchOutline,
-} from "react-icons/io5";
+import { IoCloseCircleOutline, IoSearchOutline } from "react-icons/io5";
 import type { FilterSectionDef } from "../../registry/filterSections";
 import { Message } from "../shared/Message";
 import type { SectionModel, SectionOption } from "./useSectionModel";
@@ -16,7 +12,6 @@ import { WhereControl } from "./WhereControl";
  * lookup that grows (ten categories to sixteen) changes nothing here.
  */
 const VISIBLE_BEFORE_SHOW_ALL = 8;
-const TYPEAHEAD_SUGGESTIONS = 8;
 
 const OptionChip: React.FC<{
   option: SectionOption;
@@ -145,114 +140,72 @@ const Searchable: React.FC<{
 };
 
 /**
- * Free text with suggestions — the Provider control (2026-09-22). Nothing is listed until the
- * youth types; then up to eight names matching ANYWHERE in the text appear, and picking one adds
- * it as a removable chip above the input. The full organisation list is never drawn: partners
- * number in the hundreds and a wall of chips is not a type-ahead.
+ * One free-text value — the Provider control (2026-09-29, the Provider field). Committed on
+ * Enter or blur, never per keystroke, so the count does not refetch on every letter; clearing
+ * commits at once. Remounted on the committed value (`key`), so removing its chip empties it.
  */
-const Typeahead: React.FC<{
-  model: SectionModel;
+const TextFilter: React.FC<{
+  value: string | null;
+  onCommit: (value: string | null) => void;
   placeholder: string;
-  large?: boolean;
-}> = ({ model, placeholder, large = false }) => {
-  const [text, setText] = useState("");
-  const needle = text.trim().toLowerCase();
-  const suggestions =
-    needle === ""
-      ? []
-      : model.options
-          .filter(
-            (o) =>
-              !model.selected.includes(o.id) &&
-              o.label.toLowerCase().includes(needle),
-          )
-          .slice(0, TYPEAHEAD_SUGGESTIONS);
-  const chosen = model.selected
-    .map((id) => model.options.find((o) => o.id === id))
-    .filter((o): o is SectionOption => !!o);
-
+  large: boolean;
+}> = ({ value, onCommit, placeholder, large }) => {
+  const [text, setText] = useState(value ?? "");
+  const commit = (next: string): void => {
+    const trimmed = next.trim() === "" ? null : next.trim();
+    if (trimmed !== value) onCommit(trimmed);
+  };
   return (
-    <div className="flex flex-col gap-3">
-      {chosen.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2">
-          {chosen.map((option) => (
-            <span
-              key={option.id}
-              className="bg-green-light text-green inline-flex min-h-9 items-center gap-1 rounded-full px-3 text-xs"
-            >
-              {option.label}
-              <button
-                type="button"
-                onClick={() => model.toggle(option.id)}
-                aria-label={`Remove ${option.label}`}
-                className="-mr-2 flex h-9 w-9 items-center justify-center"
-              >
-                <IoClose className="h-4 w-4" />
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
-      <SearchInput
-        text={text}
-        onChange={setText}
-        placeholder={placeholder}
-        large={large}
+    <label
+      className={`input input-bordered flex w-full items-center gap-2 ${
+        large ? "h-11 rounded-full" : "h-11 md:h-10"
+      }`}
+    >
+      <IoSearchOutline
+        className={`text-gray-dark ${large ? "h-5 w-5" : "h-4 w-4"}`}
       />
-      {needle !== "" &&
-        (suggestions.length > 0 ? (
-          <ul className="border-gray divide-gray flex flex-col divide-y rounded-xl border">
-            {suggestions.map((option) => (
-              <li key={option.id}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    model.toggle(option.id);
-                    setText("");
-                  }}
-                  className="hover:bg-gray-light flex min-h-11 w-full items-center px-3 text-left text-sm"
-                >
-                  {option.label}
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-gray-dark text-xs">No providers match.</p>
-        ))}
-    </div>
+      <input
+        type="text"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={() => commit(text)}
+        onKeyDown={(e) => e.key === "Enter" && commit(text)}
+        placeholder={placeholder}
+        className="min-w-0 grow"
+      />
+      {text !== "" && (
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => {
+            setText("");
+            commit("");
+          }}
+          aria-label="Clear"
+          className="text-gray-dark flex h-8 w-8 shrink-0 items-center justify-center hover:text-black"
+        >
+          <IoCloseCircleOutline className="h-4 w-4" />
+        </button>
+      )}
+    </label>
   );
 };
 
 /**
- * Paid and rewards: the Paid half is drawn inert (no Is Paid field on the API yet) above the ZLTO
- * half, which filters today. When the section model withholds the ZLTO options (Type includes
- * Job) its notice takes their place.
+ * Paid and rewards: Paid or rewarded / Unpaid (`incentivized`) above the ZLTO reward chips —
+ * two facets, one section. When the section model withholds the ZLTO options (Type includes
+ * Job) its notice takes their place; the Paid half stays, since a Job can pay.
  */
-const Rewards: React.FC<{
-  model: SectionModel;
-  pendingNote: string | null;
-}> = ({ model, pendingNote }) => (
+const Rewards: React.FC<{ model: SectionModel }> = ({ model }) => (
   <div className="flex flex-col gap-3">
-    <div className="flex flex-col gap-2">
-      <span className="text-gray-dark text-[11px] font-semibold tracking-wide uppercase">
-        Paid
-      </span>
-      <div className="flex flex-wrap items-center gap-2">
-        {["Paid", "Not paid"].map((label) => (
-          <button
-            key={label}
-            type="button"
-            disabled
-            aria-disabled
-            className="border-gray text-gray-dark flex min-h-11 items-center rounded-full border bg-white px-3 text-xs opacity-50 md:min-h-9"
-          >
-            {label}
-          </button>
-        ))}
+    {model.secondary && (
+      <div className="flex flex-col gap-2">
+        <span className="text-gray-dark text-[11px] font-semibold tracking-wide uppercase">
+          Paid
+        </span>
+        <ChipSet model={model.secondary} />
       </div>
-      {pendingNote && <Message>{pendingNote}</Message>}
-    </div>
+    )}
     <div className="flex flex-col gap-2">
       <span className="text-gray-dark text-[11px] font-semibold tracking-wide uppercase">
         ZLTO reward
@@ -299,7 +252,13 @@ export const FilterControl: React.FC<{
   switch (section.control) {
     case "chips":
     case "range":
-      return <ChipSet model={model} />;
+      // The facet lists carry only values published opportunities use, so a new facet (SDGs,
+      // accommodations) is empty until opportunities are tagged — say so, not a blank panel.
+      return model.options.length === 0 && model.status === "ok" ? (
+        <Message>No opportunities list any of these yet.</Message>
+      ) : (
+        <ChipSet model={model} />
+      );
     case "location":
       return (
         <div className="flex flex-col gap-4">
@@ -319,17 +278,17 @@ export const FilterControl: React.FC<{
           large={largeSearch}
         />
       );
-    case "typeahead":
-      return (
-        <Typeahead
-          model={model}
+    case "text":
+      return model.text ? (
+        <TextFilter
+          key={model.text.value ?? ""}
+          value={model.text.value}
+          onCommit={model.text.commit}
           placeholder={`Type a ${section.label.toLowerCase()} name…`}
           large={largeSearch}
         />
-      );
+      ) : null;
     case "rewards":
-      return <Rewards model={model} pendingNote={section.pendingNote} />;
-    case "gate":
-      return <ChipSet model={model} />;
+      return <Rewards model={model} />;
   }
 };

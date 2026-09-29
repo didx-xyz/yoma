@@ -351,7 +351,7 @@ const Opportunities: NextPageWithLayout<{
   const oppTypeDescriptions = [
     "A learning opportunity is a self-paced online course that you can finish at your convenience.",
     "Explore events to attend",
-    "Contribute to real-world projects with micro-tasks",
+    "Contribute to real-world projects with impact actions",
   ];
 
   //#region QUERIES
@@ -2086,7 +2086,12 @@ const Opportunities: NextPageWithLayout<{
                       } else if (key === "featured") {
                         return "Featured";
                       } else if (key === "engagementTypes") {
-                        return getEngagementConfig(value)?.label ?? value;
+                        return (
+                          lookups_engagementTypes.find((x) => x.name === value)
+                            ?.displayName ||
+                          getEngagementConfig(value)?.label ||
+                          value
+                        );
                       } else if (key === "types") {
                         return getTypeConfig(value).label;
                       } else if (key === "customFields") {
@@ -2308,18 +2313,18 @@ const Opportunities: NextPageWithLayout<{
                     </>
                   )}
 
-                  {/* TASKS */}
+                  {/* IMPACT ACTIONS */}
                   {(opportunities_tasks_render?.totalCount ?? 0) > 0 && (
                     <>
                       <div className="divider !bg-gray" />
                       <CustomCarouselV3
                         id={`opportunities_tasks`}
-                        // badgeText="Micro-task"
+                        // badgeText="Impact Action"
                         // badgeClassName="bg-orange text-white"
-                        title="Tasks"
+                        title="Impact Actions"
                         description="Contribute to real-world projects"
                         viewAllUrl={appendLandingCountryToUrl(
-                          "/opportunities?types=Micro-task",
+                          "/opportunities?types=ImpactAction",
                         )}
                         viewAllText={`See All (${opportunities_tasks_render.totalCount}) →`}
                         data={opportunities_tasks_render.items}

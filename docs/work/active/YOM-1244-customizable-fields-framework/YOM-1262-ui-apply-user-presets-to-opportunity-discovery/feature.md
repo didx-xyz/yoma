@@ -7,7 +7,7 @@
 - **Ticket**: [YOM-1262](https://linear.app/didx/issue/YOM-1262)
 - **Owner**: Jason
 - **Areas**: web
-- **Status**: in-progress — mocked; blocked on the presets API for live data
+- **Status**: in-progress — live on the preferences, location and core-field APIs (2026-09-29); DEV pass outstanding
 - **Started**: 2026-08-27 (design); 2026-08-27 (implementation, behind the mock façade)
 
 > Folder created 2026-08-27 to hold the design. Implementation started the same day **behind the
@@ -31,10 +31,11 @@ Capturing preferences is [YOM-1261](../YOM-1261-ui-manage-user-presets/feature.m
 
 | Blocker | Note |
 | --- | --- |
-| [YOM-1257](https://linear.app/didx/issue/YOM-1257) / [YOM-1258](https://linear.app/didx/issue/YOM-1258) (api) | No preset model, no preset→filter mapping. Preferences are mocked behind one façade |
-| [YOM-1264](https://linear.app/didx/issue/YOM-1264) (BA/design) | The preference set and the final filter mapping are not signed off |
+| ~~[YOM-1257](https://linear.app/didx/issue/YOM-1257) (api)~~ | **Resolved 2026-09-29** — preferences are live (`/user/preferences`); the mock is removed |
+| [YOM-1258](https://linear.app/didx/issue/YOM-1258) (api) | No server-side preset→filter mapping; inheritance keeps composing client-side (`preferenceMapping.ts`). Not blocking |
+| [YOM-1264](https://linear.app/didx/issue/YOM-1264) (BA/design) | The preference set and the final filter mapping are not signed off; Difficulty and the Job fields are seeded, the other types' fields are not |
 | [YOM-1260](https://linear.app/didx/issue/YOM-1260) must land first | Presets resolve to filter criteria, so this builds on that feature's clause shape and operator matrix |
-| Location API (Adrian) — in development | Decided 2026-09-28: country = profile, region / city / centroid = a user-location preference with its own PATCH. **Built against a mock** — the controls, URL, chips, inheritance and `Jobs near me` are live, but the search does not filter on region / city / distance until `LOCATION_SEARCH_LIVE` flips (the surface says "not applied yet") |
+| ~~Location API (Adrian)~~ | **Resolved 2026-09-29** — the place is a profile field (full `PATCH /user`), search takes nested per-country entries; `LOCATION_SEARCH_LIVE` is `true`. Distance only matches opportunities with coordinates, which today only admins add by hand |
 
 ## Out of Scope
 
@@ -209,24 +210,22 @@ commitment set; **accessibility excludes** those that have not described their a
       segment + mobile pill summary, chips (incl. the inapplicable class), `Jobs near me`
       shipped, sign-in merge rule. Browser pass on local, anonymous only — see the 2026-09-28
       handoff.
-- [ ] **When the Location search API lands:** map `region` / `city` / `point` + `radiusKm` in
-      `lib/searchRequest.ts` (the one place), flip `LOCATION_SEARCH_LIVE` in `lib/location.ts`,
-      and confirm the null rule (no region / city → included) on the API side.
-- [ ] **When the user-location PATCH lands:** wire it in `userPreferencesLive.ts` (the preset PUT
-      must NOT carry `location`), read the stored place from the profile response, and drop it
-      from the mock.
-- [ ] Signed-in browser pass on DEV (read-only profile country, stale-place warning, "Change your
-      profile country" on a device mismatch, keep-answers dropping a place from another country).
-- [ ] **Follow-up, out of scope here:** the admin opportunity edit page adopts the same
-      `LocationInput` (`src/components/Location/`), so opportunity region / city strings come from
-      the same source as the youth's. Needs its own ticket; it touches opportunity fields.
-- [ ] Raise the API asks with Adrian: public sort options, commitment null rule, public
-      `TotalCountOnly`, `ApplyUserPresets` exposure (2026-08-27-c handoff) **plus epic README
-      asks 7–13 (2026-09-22)**: Task displayName "Impact task", engagement rename with IDs kept,
-      engagement null exclusion, Is Paid null sort-last, DEV facet counts, Active state ignoring
-      DateEnd, batched facet counts.
-- [ ] **Blocked**: live preset data, pending YOM-1257 / YOM-1258; mock-removal list in the
-      2026-08-27-c handoff.
+- [x] **Location search live** (2026-09-29): `lib/searchRequest.ts` sends one country entry
+      with region / city, or coordinates + radius (never both — the API rejects it), only for
+      exactly one country; `LOCATION_SEARCH_LIVE = true`. The API confirms the null rule (no
+      region / city → included); distance EXCLUDES opportunities without coordinates, stated as
+      `DISTANCE_NOTE` in the Where section and the results.
+- [x] **User location wired** (2026-09-29): read from `GET /user`, written with the full
+      `PATCH /user` from `userPreferencesLive.ts`; the preferences PATCH never carries it.
+      Verified locally signed in (Cape Town round trip, `[lng, lat]`, `Lookup`).
+- [ ] Signed-in browser pass on DEV (read-only profile country, "Change your profile country" on
+      a device mismatch, keep-answers dropping a place from another country, an incomplete
+      profile making the place save fail visibly).
+- [x] ~~Follow-up ticket for the admin form adopting `LocationInput`~~ — done in this session
+      instead (2026-09-29, Jason's call): one place per non-Worldwide country in the editor.
+- [ ] Raise the API asks with Adrian — epic README asks 1, 2, 5, 6, 9, 12, 13 still stand; 3, 4, 7, 8, 14–16
+      are resolved; **new asks 17–21 (2026-09-29)**.
+- [x] Live preset data (2026-09-29): mock, DEV allowance and `PreferencesMockDevTool` removed.
 - [ ] Client decision on the per-type card layouts (canvas page 4) — if taken up, it becomes its own
       ticket with two new opportunity fields.
 - [ ] **Regression check once the BA field set is seeded (YOM-1264):** the per-type sections render
@@ -243,9 +242,12 @@ commitment set; **accessibility excludes** those that have not described their a
       resolves "Business, Finance & Marketing"; drop the pre-migration names from
       `quickSearches.ts` and `preferenceMapping.ts` once no environment serves them; confirm the
       facet counts are no longer grand totals on DEV.
-- [ ] **Regression check once the API renames Engagement Type values:** delete
-      `lib/engagementLabels.ts` (it becomes identity) and confirm cards, chips, the section, the
-      bar segment and wizard step 4 all read Remote / On-site / Hybrid from the lookup.
+- [x] **Engagement Type rename** (2026-09-29): `lib/engagementLabels.ts` deleted; cards, chips,
+      the section, the bar segment and wizard step 4 read the lookup's `displayName` (verified:
+      Hybrid / On-site / Remote). `Task` → `ImpactAction` in `typeOrder` / `typeBadge` /
+      the goal mapping; cards and rows show the type's `displayName` ("Impact Action").
+- [ ] Salary on the card's pay line — Job custom fields (currency is a lookup id, pay interval an
+      option key), so the card needs the definitions + currency lookup to label it. Not built.
 
 ## Decisions
 
@@ -718,6 +720,35 @@ commitment set; **accessibility excludes** those that have not described their a
     one, so the admin opportunity form can adopt it — the follow-up in Tasks. The admin side is
     the weakest link in matching: opportunity region / city are admin free text today.
 
+- 2026-09-29 (API integration — Adrian's five commits `263cc82e` … `adb9a305`; analysed, agreed
+  with Jason and built the same day; handoff
+  [`../handoffs/2026-09-29-a.md`](../handoffs/2026-09-29-a.md)):
+  - **Everything mocked is now live**: preferences, the user place, location search, and the
+    Paid / Accessibility / SDGs / Provider facets. `CUSTOM_FIELDS_ENABLED` is `true` for the whole
+    branch (Jason) — with it `false` the API's required Difficulty field makes every admin save
+    fail — so `/opportunities/discover` is reachable again on this branch.
+  - **Inherited from the youth (visible, skippable chips)**: goal, interests, country, place,
+    time, engagement, **incentive** (new) and **age** (new — whole years from the profile's date
+    of birth; the API keeps opportunities with no age bounds, and refuses an out-of-range
+    SUBMISSION, so showing those would only lead to a dead end). Age is per-search only.
+  - **Accessibility requirements are saved but NOT inherited.** The API's `accommodations`
+    filter needs ALL picked and leaves out every opportunity that has not described its
+    accommodations — inheriting it would hide nearly the whole feed and break the BA's "stays in
+    results for now" (2026-09-22). The Accessibility SECTION is live for a youth who asks for it,
+    and its line says it leaves those out. Filed as ask 18.
+  - **Paid and rewards**: the Paid half is `incentivized` (Paid or rewarded / Unpaid; unspecified
+    opportunities stay in). "Sorted last" is not claimed — there is still no public sort.
+  - **Provider is the new free-text field** ("contains"; null provider stays in), replacing the
+    organisation typeahead, which filtered a different thing. URL `provider=` replaces `org=`.
+  - **SDGs and Accommodations list only values published opportunities use**, so on today's data
+    both are empty; a section with a loaded-but-empty list says "No opportunities list any of
+    these yet" (a new `loading` facet status keeps that from flashing while it loads).
+  - **Quick searches**: `Paid & remote` shipped. `No experience needed` stays parked (its key is
+    not system-controlled), `With accommodations` and `Climate action + SDG 13` stay parked
+    (their filters keep unspecified opportunities, so they would not narrow).
+  - **URL**: `paid=`, `acc=`, `sdg=`, `provider=` added; `org=` retired. Age has no param.
+  - **Wording**: the wizard panel now says only the picked place is added to the profile.
+
 ## BA sign-off summary (2026-09-22)
 
 Copied from the BA Considerations workbook (sheets All Opportunities, Jobs, Impact Action & Event,
@@ -798,10 +829,10 @@ BA sheets. Owner placeholders: Client / BA / API / Web.
 | 5 | Commitment null rule: BA says include; the search excludes. | API | open (README ask #2) |
 | 6 | Time commitment as a stored preference is "in contention" on the BA sheet. Built with "Awaiting BA sign-off". | BA | open |
 | 7 | Gender → ranking only: privacy and business rules to confirm before any implementation. Nothing built. | BA | open |
-| 8 | Is Paid: approve capturing explicitly (not derived). Web assumes explicit. | BA / API | open |
-| 9 | Distance / "Jobs near me": live device coordinates, stored User Location, or both? | API (Adrian) / Web | decided 2026-09-28 — stored user location (city centroid, never the device fix); "Use my location" only fills it. Badge shipped, search mocked |
-| 10 | Task `displayName` → "Impact task": reference-data change and CSV alias. | API | open (README ask #7) |
-| 11 | Engagement value rename with IDs preserved; when it ships, delete `lib/engagementLabels.ts`. | API | open (README ask #8) |
+| 8 | Is Paid: approve capturing explicitly (not derived). Web assumes explicit. | BA / API | decided by the API 2026-09-28 — explicit nullable `incentivized` (any incentive, not only pay); the Paid half of the section and the incentive preference use it |
+| 9 | Distance / "Jobs near me": live device coordinates, stored User Location, or both? | API (Adrian) / Web | decided 2026-09-28 — stored user location (city centroid, never the device fix); "Use my location" only fills it. Badge shipped; search live 2026-09-29 (distance needs opportunity coordinates) |
+| 10 | Task `displayName` → "Impact task": reference-data change and CSV alias. | API | resolved 2026-09-28 — `ImpactAction`, displayed "Impact Action" (README ask #7) |
+| 11 | Engagement value rename with IDs preserved; when it ships, delete `lib/engagementLabels.ts`. | API | resolved 2026-09-28 — Remote / OnSite / Hybrid + `displayName`; the map is deleted (README ask #8) |
 | 12 | Per-badge live counts: not without a batched count endpoint. | API (suggestion) / Web | open (README ask #13) |
 | 13 | Should ZLTO stay hidden (built) or grey with the note when Type includes Job alongside other types? An already-set ZLTO filter remains only in the chips row. | Client / Web | decided hide (Jason, 2026-09-23); revisit if the mixed-type case confuses |
 

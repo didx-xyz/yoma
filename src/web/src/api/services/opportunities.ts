@@ -1,18 +1,25 @@
 import type { GetServerSidePropsContext, GetStaticPropsContext } from "next";
 import ApiClient from "~/lib/axiosClient";
 import ApiServer from "~/lib/axiosServer";
-import type { Country, Language } from "../models/lookups";
+import type {
+  Accessibility,
+  Country,
+  Language,
+  SustainableDevelopmentGoal,
+  TargetedGroup,
+} from "../models/lookups";
 import type {
   CustomFieldDefinition,
   Opportunity,
   OpportunityCategory,
-  OpportunityDifficulty,
   OpportunityInfo,
   OpportunityRequestBase,
   OpportunitySearchCriteriaCommitmentIntervalOption,
   OpportunitySearchCriteriaZltoRewardRange,
   OpportunitySearchFilter,
   OpportunitySearchFilterAdmin,
+  OpportunitySearchFilterBase,
+  OpportunitySearchFilterCountry,
   OpportunitySearchFilterCriteria,
   OpportunitySearchResults,
   OpportunitySearchResultsInfo,
@@ -25,6 +32,29 @@ import type { OrganizationInfo } from "../models/organisation";
 import type { CSVImportResult } from "../models/opportunity";
 import { stripSyncedTitleSuffix } from "~/lib/opportunityUtils";
 
+/**
+ * The search filter's wire form. The API's `countries` is a list of country entries (API
+ * 2026-09-28) while every web caller holds country ids, so the three search requests wrap each
+ * id as `{ countryId }` here — one conversion, not one per page. `countryLocations` (discovery's
+ * region / city / point entries) replaces the list when set and is never sent as its own field.
+ */
+export const toSearchFilterPayload = <T extends OpportunitySearchFilterBase>(
+  filter: T,
+): Omit<T, "countries" | "countryLocations"> & {
+  countries: OpportunitySearchFilterCountry[] | null;
+} => {
+  const { countries, countryLocations, ...rest } = filter;
+  return {
+    ...rest,
+    countries:
+      countryLocations && countryLocations.length > 0
+        ? countryLocations
+        : countries && countries.length > 0
+          ? countries.map((countryId) => ({ countryId }))
+          : null,
+  };
+};
+
 export const getOpportunitiesAdmin = async (
   filter: OpportunitySearchFilterAdmin,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
@@ -33,7 +63,7 @@ export const getOpportunitiesAdmin = async (
 
   const { data } = await instance.post<OpportunitySearchResults>(
     `/opportunity/search/admin`,
-    filter,
+    toSearchFilterPayload(filter),
   );
 
   // strip the partner external id suffix from externally managed opportunities
@@ -120,16 +150,6 @@ export const getOrganisationsAdmin = async (
   return data;
 };
 
-export const getDifficulties = async (
-  context?: GetServerSidePropsContext | GetStaticPropsContext,
-): Promise<OpportunityDifficulty[]> => {
-  const instance = context ? ApiServer(context) : await ApiClient;
-  const { data } = await instance.get<OpportunityDifficulty[]>(
-    "/opportunity/difficulty",
-  );
-  return data;
-};
-
 export const getTypes = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunityType[]> => {
@@ -185,7 +205,7 @@ export const getOpportunityById = async (
 // Definition-driven custom fields (YOM-1244 / YOM-1255).
 // Returns active custom field definitions applicable to the supplied opportunity type(s).
 // When no types are supplied, only definitions applicable to all opportunity types are returned.
-// `types` values are the opportunity type names (enum names): Other | Learning | Event | Job | Task.
+// `types` values are the opportunity type names (enum names): Other | Learning | Event | Job | ImpactAction.
 export const getOpportunityCustomFieldDefinitions = async (
   types?: string[] | null,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
@@ -266,7 +286,7 @@ export const searchOpportunities = async (
 
   const { data } = await instance.post<OpportunitySearchResultsInfo>(
     `/opportunity/search`,
-    filter,
+    toSearchFilterPayload(filter),
   );
 
   // strip the partner external id suffix from externally managed opportunities
@@ -352,6 +372,50 @@ export const getOpportunityOrganizations = async (
   return data;
 };
 
+const publishedStatesQuery = (publishedStates?: PublishedState[]): string => {
+  const params = new URLSearchParams();
+  publishedStates?.forEach((state) =>
+    params.append("publishedStates", state.toString()),
+  );
+  return params.toString();
+};
+
+/** Accommodations used by published opportunities (the full list is `/lookup/accessibility`). */
+export const getOpportunityAccommodations = async (
+  publishedStates?: PublishedState[],
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<Accessibility[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.get<Accessibility[]>(
+    `/opportunity/search/filter/accommodation?${publishedStatesQuery(publishedStates)}`,
+  );
+  return data;
+};
+
+/** Targeted groups used by published opportunities. */
+export const getOpportunityTargetedGroups = async (
+  publishedStates?: PublishedState[],
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<TargetedGroup[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.get<TargetedGroup[]>(
+    `/opportunity/search/filter/targeted/group?${publishedStatesQuery(publishedStates)}`,
+  );
+  return data;
+};
+
+/** SDGs used by published opportunities, ordered by goal number. */
+export const getOpportunitySustainableDevelopmentGoals = async (
+  publishedStates?: PublishedState[],
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<SustainableDevelopmentGoal[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.get<SustainableDevelopmentGoal[]>(
+    `/opportunity/search/filter/sustainable/development/goal?${publishedStatesQuery(publishedStates)}`,
+  );
+  return data;
+};
+
 export const getOpportunityTypes = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunityType[]> => {
@@ -427,7 +491,7 @@ export const getOpportunitiesAdminExportToCSV = async (
 
   const { data } = await instance.post(
     `/opportunity/search/admin/csv`,
-    filter,
+    toSearchFilterPayload(filter),
     {
       responseType: "blob", // set responseType to 'blob' or 'arraybuffer'
     },

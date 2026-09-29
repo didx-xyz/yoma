@@ -13,7 +13,6 @@ import { DiscoveryResults } from "../Results/DiscoveryResults";
 import { SegmentedSearchBar } from "../SearchBar/SegmentedSearchBar";
 import { FloatingFilterButton } from "../shared/FloatingFilterButton";
 import { KeepAnswersPrompt } from "../shared/KeepAnswersPrompt";
-import { PreferencesMockDevTool } from "../shared/PreferencesMockDevTool";
 import { DiscoveryLanding } from "./DiscoveryLanding";
 import { MyOpportunitiesLink } from "./MyOpportunitiesLink";
 import { QuickSearchRow } from "./QuickSearchRow";
@@ -102,9 +101,14 @@ export const DiscoverySurface: React.FC = () => {
     const others = [
       f.categories.length > 0,
       f.commitment !== null,
-      f.hasReward !== null || f.zltoRanges.length > 0,
+      f.incentivized !== null ||
+        f.hasReward !== null ||
+        f.zltoRanges.length > 0,
       f.languages.length > 0,
-      f.providers.length > 0,
+      f.accommodations.length > 0,
+      f.sdgs.length > 0,
+      f.provider !== null,
+      f.age !== null,
       f.customFields.length > 0,
     ].filter(Boolean).length;
     const parts = [...named, ...(others > 0 ? [`+${others}`] : [])];
@@ -210,9 +214,6 @@ export const DiscoverySurface: React.FC = () => {
           <DiscoveryResults onEditPreferences={editPreferences} now={now} />
         )}
       </main>
-
-      {/* Developer affordance, not user content — a corner of its own on the preview builds. */}
-      <PreferencesMockDevTool />
 
       {/* Same filter state, two containers — the breakpoint picks the chrome, never the content. */}
       <div className="hidden md:contents">

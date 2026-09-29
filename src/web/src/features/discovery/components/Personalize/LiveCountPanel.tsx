@@ -62,9 +62,12 @@ export const LiveCountPanel: React.FC<{
         </p>
         {body}
       </div>
+      {/* Signed in, the place IS written to the profile (the API keeps region / city there), so
+          "your profile is untouched" would be false — the line names the one exception. */}
       <p className="text-purple-soft hidden text-sm md:block">
         Every step is optional and nothing is locked. These are saved as search
-        preferences — your profile and YoID are untouched.
+        preferences — your YoID is untouched, and only the place you pick is
+        added to your profile.
       </p>
     </div>
   );

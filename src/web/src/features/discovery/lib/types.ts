@@ -6,23 +6,23 @@ import type { CustomFieldFilter } from "~/api/models/opportunity";
  * one parser, one serialiser (`urlCodec.ts`), no parallel React state mirroring it.
  *
  * Every field binds to a core `OpportunitySearchFilter` param except `customFields`, which
- * carries YOM-1260 clauses verbatim. Facets the search API cannot filter on yet (skills, SDGs,
- * target groups, accessibility) deliberately have NO slot here — their sections render as
- * visible-but-pending in the registry rather than holding state the request would silently drop.
+ * carries YOM-1260 clauses verbatim. Facets the search API cannot filter on yet (skills) have NO
+ * slot here — their sections render as visible-but-pending in the registry rather than holding
+ * state the request would silently drop.
  */
 export interface DiscoveryFilters {
   /** Free-text search — `valueContains`. */
   q: string | null;
-  /** Opportunity Type enum NAMEs (Job | Learning | Event | Task | Other), never GUIDs. Multi-select. */
+  /** Opportunity Type enum NAMEs (Job | Learning | Event | ImpactAction | Other), never GUIDs. Multi-select. */
   types: string[];
   /** Opportunity Category ids. */
   categories: string[];
   /** Country ids. */
   countries: string[];
   /**
-   * Region / province and city — English names, "contains" matching once the Location search
-   * API lands (opportunities that name no region or city stay in the results). Only meaningful
-   * with exactly one effective country; cleared whenever the country changes.
+   * Region / province and city — English names, case-insensitive "contains"; opportunities that
+   * name no region or city stay in the results. Only meaningful with exactly one effective
+   * country; cleared whenever the country changes.
    */
   region: string | null;
   city: string | null;
@@ -31,20 +31,34 @@ export interface DiscoveryFilters {
    * own and never the device fix; `null` for a typed city.
    */
   point: LocationCoordinates | null;
-  /** "Within N km" of the effective point (a picked city, or the inherited location). */
+  /**
+   * "Within N km" of the effective point (a picked city, or the inherited location). Replaces the
+   * region / city match, and EXCLUDES opportunities that carry no coordinates.
+   */
   radiusKm: number | null;
   /** EngagementType ids ("How you take part"). */
   engagementTypes: string[];
-  /** "Up to" commitment — TimeInterval id + count. Opportunities with none set are INCLUDED. */
+  /** "Up to" commitment — TimeInterval id + count. */
   commitment: { intervalId: string; count: number } | null;
+  /** Pays or rewards (true) / doesn't (false) — `incentivized`; unspecified opportunities stay in. */
+  incentivized: boolean | null;
   /** ZLTO reward — `zltoReward.hasReward`. */
   hasReward: boolean | null;
   /** ZLTO reward range ids — `zltoReward.ranges`. */
   zltoRanges: string[];
   /** Language ids. */
   languages: string[];
-  /** Organization ids ("Provider"). */
-  providers: string[];
+  /** Accessibility lookup ids — ALL must be listed; opportunities that list none are left out. */
+  accommodations: string[];
+  /** Sustainable Development Goal ids — any of them, or no goals specified. */
+  sdgs: string[];
+  /** Provider text, "contains" — the new core field, not the owning organisation. */
+  provider: string | null;
+  /**
+   * The youth's age in whole years. Inherited only (from the profile's date of birth, as a
+   * skippable chip) — no control sets it. Opportunities with no age bounds stay in.
+   */
+  age: number | null;
   /** Type-scoped custom-field clauses (YOM-1260 shape). Cleared when a type is deselected. */
   customFields: CustomFieldFilter[];
 }
@@ -59,6 +73,7 @@ export const PREFERENCE_KEYS = [
   "skills",
   "maxCommitment",
   "engagement",
+  "incentivized",
   "languages",
   "accessibility",
 ] as const;
@@ -90,10 +105,14 @@ export const EMPTY_DISCOVERY_FILTERS: DiscoveryFilters = {
   radiusKm: null,
   engagementTypes: [],
   commitment: null,
+  incentivized: null,
   hasReward: null,
   zltoRanges: [],
   languages: [],
-  providers: [],
+  accommodations: [],
+  sdgs: [],
+  provider: null,
+  age: null,
   customFields: [],
 };
 

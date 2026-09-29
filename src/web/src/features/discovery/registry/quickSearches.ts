@@ -10,7 +10,7 @@ import {
   IoTimeOutline,
   IoWifiOutline,
 } from "react-icons/io5";
-import { ENGAGEMENT_NAME_ALIASES } from "../lib/engagementLabels";
+import { EngagementTypeOption } from "~/api/models/common";
 import { DEFAULT_RADIUS_KM } from "../lib/location";
 import type { DiscoveryFilters } from "../lib/types";
 
@@ -27,9 +27,10 @@ import type { DiscoveryFilters } from "../lib/types";
  * on this surface may be keyed to a specific custom field, and the BA set is not seeded yet.
  *
  * Badges resolve against runtime context (profile country, loaded lookups) rather than
- * hardcoding lookup ids. Where a lookup is mid-rename (categories to the 16-value taxonomy,
- * engagement types to Remote / On-site / Hybrid) the resolver accepts the new name first, then
- * the legacy one, so the badge works on whichever the environment serves.
+ * hardcoding lookup ids. Where a lookup is mid-rename (categories to the 16-value taxonomy) the
+ * resolver accepts the new name first, then the legacy one, so the badge works on whichever the
+ * environment serves. Engagement types resolve by their stable `name` (Remote / OnSite / Hybrid
+ * since 2026-09-28), never by the label.
  */
 
 export interface QuickSearchContext {
@@ -110,11 +111,22 @@ export const QUICK_SEARCHES: QuickSearchDef[] = [
     status: "shipped",
     needs: null,
     resolve: (ctx) => {
-      const remote = byName(
-        ctx.engagementTypes,
-        ENGAGEMENT_NAME_ALIASES.Remote ?? [],
-      );
+      const remote = byName(ctx.engagementTypes, [EngagementTypeOption.Remote]);
       return remote ? { engagementTypes: [remote.id] } : null;
+    },
+  },
+  // Shipped 2026-09-29 with the core `incentivized` field (the BA's "Is Paid").
+  {
+    id: "paid-remote",
+    icon: IoFlashOutline,
+    label: "Paid & remote",
+    status: "shipped",
+    needs: null,
+    resolve: (ctx) => {
+      const remote = byName(ctx.engagementTypes, [EngagementTypeOption.Remote]);
+      return remote
+        ? { incentivized: true, engagementTypes: [remote.id] }
+        : null;
     },
   },
   // Renders only when the youth's country is known — the profile's when signed in, or the
@@ -134,21 +146,15 @@ export const QUICK_SEARCHES: QuickSearchDef[] = [
         : null,
   },
 
-  // ── Parked until the fields exist — kept as the record of the designed set, never rendered.
-  {
-    id: "paid-remote",
-    icon: IoFlashOutline,
-    label: "Paid & remote",
-    status: "parked",
-    needs: "Is Paid (core field, YOM-1264)",
-    resolve: () => null,
-  },
+  // ── Parked — kept as the record of the designed set, never rendered. Each field exists now
+  // (2026-09-29), but none of them filters usefully yet:
   {
     id: "no-experience",
     icon: IoSchoolOutline,
     label: "No experience needed",
     status: "parked",
-    needs: "Job fields — Experience Level, Minimum Qualification (YOM-1264)",
+    needs:
+      "Job Experience Level is an ordinary custom field (jobExperienceLevel, not system-controlled) — a badge may not key to it until the API protects it",
     resolve: () => null,
   },
   {
@@ -156,7 +162,8 @@ export const QUICK_SEARCHES: QuickSearchDef[] = [
     icon: IoAccessibilityOutline,
     label: "With accommodations",
     status: "parked",
-    needs: "Accessibility Support (core field, YOM-1264)",
+    needs:
+      "The accessibility-support filter keeps opportunities that have not said, so it cannot narrow to ones that offer support",
     resolve: () => null,
   },
   {
@@ -164,13 +171,14 @@ export const QUICK_SEARCHES: QuickSearchDef[] = [
     icon: IoGlobeOutline,
     label: "Climate action + SDG 13",
     status: "parked",
-    needs: "SDGs (core field, YOM-1264)",
+    needs:
+      "The SDG filter keeps opportunities that name no goal, so adding SDG 13 barely changes Climate action until goals are populated",
     resolve: () => null,
   },
-  // Shipped 2026-09-28 (mocked search): Job + the default radius around the EFFECTIVE point —
-  // the youth's inherited city, or one picked for this search. Absent without a point. The
-  // radius is applied by the badge, never inherited; the search ignores it until the Location
-  // API lands (LOCATION_SEARCH_LIVE), and the chip is drawn dashed to say so.
+  // Shipped 2026-09-28: Job + the default radius around the EFFECTIVE point — the youth's
+  // inherited city, or one picked for this search. Absent without a point. The radius is
+  // applied by the badge, never inherited, and (live since 2026-09-29) leaves out opportunities
+  // with no mapped city — the results say so (`DISTANCE_NOTE`).
   {
     id: "jobs-near-me",
     icon: IoLocationOutline,

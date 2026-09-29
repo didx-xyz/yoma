@@ -1,4 +1,5 @@
 import type { SettingType } from "./common";
+import type { ApiLocationSource } from "./location";
 import type {
   PayoutCountryAvailability,
   PayoutCurrency,
@@ -35,7 +36,21 @@ export interface UserRequestProfile extends UserRequestBase {
   resetPassword: boolean;
 }
 
-export interface UserRequestBase {
+/**
+ * The youth's place within their profile country (API 2026-09-28) — Yoma-only, never synced to
+ * Keycloak. Flat on the profile: there is no location wrapper and no second country.
+ * `coordinates` is the CITY centre as `[longitude, latitude]` and requires a city; a `Manual`
+ * place carries none. On `PATCH /user`, omitted / null fields CLEAR the stored place, so every
+ * profile save must resend the loaded values — and clear them when the country changes.
+ */
+export interface UserLocationFields {
+  region: string | null;
+  city: string | null;
+  coordinates: number[] | null;
+  locationSource: ApiLocationSource | null;
+}
+
+export interface UserRequestBase extends UserLocationFields {
   email: string;
   firstName: string;
   surname: string;
@@ -47,7 +62,7 @@ export interface UserRequestBase {
   dateOfBirth: string | null;
 }
 
-export interface UserProfile {
+export interface UserProfile extends UserLocationFields {
   id: string;
   email: string;
   emailConfirmed: boolean;
@@ -245,8 +260,61 @@ export enum WalletCreationStatus {
   Error = "Error",
 }
 
+/** `Verified` = earned through a completion; `SelfAttested` = claimed in preferences, unverified. */
+export enum UserSkillType {
+  SelfAttested = "SelfAttested",
+  Verified = "Verified",
+}
+
 export interface UserSkillInfo extends Skill {
+  type: UserSkillType | string; // NB: string
   organizations: UserSkillOrganizationInfo[];
+}
+
+/** `GET /user/goal` — the youth's single primary goal. Authenticated only. */
+export interface UserGoalLookup {
+  id: string;
+  name: string;
+}
+
+/**
+ * `GET` / `PATCH /user/preferences` (YOM-1257). Authenticated; identity comes from the session.
+ * The PATCH is a COMPLETE replacement — every field is sent, and a missing / null / empty field
+ * clears it. Location is not here: it lives on the profile (`UserLocationFields`).
+ */
+export interface UserPreferencesResponse {
+  userId: string;
+  goalId: string | null;
+  goal: string | null;
+  commitmentIntervalId: string | null;
+  commitmentInterval: string | null;
+  commitmentIntervalCount: number | null;
+  /** Single-select on the User, though the opportunity search filter takes several. */
+  engagementTypeId: string | null;
+  engagementType: string | null;
+  /** true = prefers any incentive, false = prefers none, null = no preference. */
+  incentivized: boolean | null;
+  categories: { id: string; name: string }[];
+  accessibilityRequirements: { id: string; name: string }[];
+  accessibilityRequirementOtherDescription: string | null;
+  languages: { id: string; name: string; codeAlpha2: string }[];
+  skillsSelfAttested: Skill[];
+}
+
+export interface UserPreferencesRequest {
+  goalId: string | null;
+  /** Interval and count travel together — both set or both null. */
+  commitmentIntervalId: string | null;
+  commitmentIntervalCount: number | null;
+  engagementTypeId: string | null;
+  incentivized: boolean | null;
+  categories: string[];
+  accessibilityRequirements: string[];
+  /** Required (1–500 chars) exactly when Other is among the requirements; otherwise null. */
+  accessibilityRequirementOtherDescription: string | null;
+  languages: string[];
+  /** A skill already verified for this youth is rejected here. */
+  skillsSelfAttested: string[];
 }
 
 export interface Skill {

@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import ScrollableContainer from "~/components/Carousel/ScrollableContainer";
 import { formatNumber } from "../../lib/format";
 import {
+  DISTANCE_NOTE,
   hasLocationFilter,
   LOCATION_NOT_APPLIED,
   LOCATION_SEARCH_LIVE,
@@ -157,6 +158,9 @@ export const DiscoveryResults: React.FC<{
       {!LOCATION_SEARCH_LIVE && hasLocationFilter(effectiveFilters) && (
         <Message kind="warning">{LOCATION_NOT_APPLIED}</Message>
       )}
+      {LOCATION_SEARCH_LIVE &&
+        effectiveFilters.radiusKm !== null &&
+        effectiveFilters.point !== null && <Message>{DISTANCE_NOTE}</Message>}
       {failed && (
         <Message kind="error">
           Couldn&apos;t load these results.{" "}

@@ -17,9 +17,11 @@ const RESET_PATCHES: Record<FilterSectionBinding, Partial<DiscoveryFilters>> = {
   countries: { countries: [] },
   engagementTypes: { engagementTypes: [] },
   commitment: { commitment: null },
-  zlto: { hasReward: null, zltoRanges: [] },
+  zlto: { incentivized: null, hasReward: null, zltoRanges: [] },
   languages: { languages: [] },
-  providers: { providers: [] },
+  accommodations: { accommodations: [] },
+  sdgs: { sdgs: [] },
+  provider: { provider: null },
 };
 
 /**

@@ -41,8 +41,14 @@ import type {
   Skill,
 } from "~/api/models/lookups";
 import {
+  AccessibilitySupport,
+  REWARD_TYPE_LABELS,
+  RewardType,
   Status,
   VerificationMethod,
+  type CustomFieldValueRequest,
+  type Opportunity,
+  type OpportunityCountryInfo,
   type OpportunityInfo,
   type OpportunityRequestBase,
   type OpportunityVerificationType,
@@ -65,9 +71,31 @@ import FormRadio from "~/components/Common/FormRadio";
 import FormRequiredFieldMessage from "~/components/Common/FormRequiredFieldMessage";
 import FormTextArea from "~/components/Common/FormTextArea";
 import MainLayout from "~/components/Layout/Main";
+import { OpportunityAccessibilityFields } from "~/components/Opportunity/Admin/OpportunityAccessibilityFields";
+import {
+  COUNTRY_PLACE_MAX_LENGTH,
+  OpportunityCountryPlaces,
+  isWorldwideCountry,
+  sanitizeRequestCountries,
+  selectRequestCountries,
+  toRequestCountries,
+} from "~/components/Opportunity/Admin/OpportunityCountryPlaces";
+import {
+  accommodationOtherIdOf,
+  allowsAccommodations,
+  finiteOrNull,
+  formatCurrency,
+  formatSustainableDevelopmentGoal,
+  getPartnerIncentiveAmountError,
+  normalizeAccessibilitySupport,
+  normalizeRewardType,
+  openToAllIdOf,
+  withExclusiveOpenToAll,
+} from "~/components/Opportunity/Admin/opportunityCoreFields";
 import {
   CustomFields,
   getCustomFieldErrors,
+  type CustomFieldRules,
 } from "~/components/Opportunity/CustomFields";
 import OpportunityPublicDetails from "~/components/Opportunity/OpportunityPublicDetails";
 import { DefaultCard } from "~/components/Opportunity/OpportunityPublicSmall";
@@ -82,10 +110,11 @@ import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
   OPPORTUNITY_QUERY_KEYS,
+  useAccessibilityQuery,
+  useCurrenciesQuery,
   useOpportunityCategoriesQuery,
   useOpportunityCountriesQuery,
   useOpportunityDetailQuery,
-  useOpportunityDifficultiesQuery,
   useOpportunityEngagementTypesQuery,
   useOpportunityLanguagesQuery,
   useOpportunityCustomFieldDefinitionsQuery,
@@ -95,8 +124,11 @@ import {
   useOpportunityTypesQuery,
   useOpportunityVerificationTypesQuery,
   useOrganisationByIdQuery,
+  useSustainableDevelopmentGoalsQuery,
+  useTargetedGroupsQuery,
 } from "~/hooks/useOpportunityMutations";
 import { analytics } from "~/lib/analytics";
+import { applyCustomFieldRules } from "~/lib/customFields/customFieldRules";
 import {
   ACCEPTED_AUDIO_TYPES_LABEL,
   ACCEPTED_DOC_TYPES_LABEL,
@@ -123,8 +155,9 @@ import {
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions, type User } from "~/server/auth";
 
+// `rewardType` is the one source of truth for ZLTO (it replaced the former `showZltoReward`
+// toggle); `showZltoRewardPool` remains the optional pool limit within a ZLTO reward.
 export interface OpportunityRequestViewModel extends OpportunityRequestBase {
-  showZltoReward: boolean;
   showZltoRewardPool: boolean;
 }
 
@@ -139,6 +172,105 @@ const isJobOpportunityTypeValue = (value?: string | null) => {
       normalizeOpportunityTypeValue(OPPORTUNITY_TYPE_ID_JOB) ||
     normalizedValue === normalizeOpportunityTypeValue(OPPORTUNITY_TYPE_NANE_JOB)
   );
+};
+
+/** Jobs cannot carry ZLTO (API: "Jobs do not support ZLTO rewards."); drops any stale values. */
+const withoutJobZlto = <T extends OpportunityRequestViewModel>(model: T): T =>
+  isJobOpportunityTypeValue(model.typeId) &&
+  (model.rewardType === RewardType.ZLTO ||
+    model.zltoReward != null ||
+    model.zltoRewardPool != null ||
+    model.showZltoRewardPool)
+    ? {
+        ...model,
+        rewardType:
+          model.rewardType === RewardType.ZLTO
+            ? RewardType.None
+            : model.rewardType,
+        zltoReward: null,
+        zltoRewardPool: null,
+        showZltoRewardPool: false,
+      }
+    : model;
+
+/**
+ * Loaded opportunity → editor view model. Used for the initial state AND after the expired
+ * "Inactivate" round trip, so both keep every field: a full update replaces custom fields,
+ * countries (and their places) and the metadata collections, so anything omitted is wiped.
+ */
+const toOpportunityRequestViewModel = (
+  opportunity: Opportunity | null | undefined,
+  organizationId: string,
+): OpportunityRequestViewModel => {
+  const rewardType = normalizeRewardType(
+    opportunity?.rewardType,
+    opportunity?.zltoReward,
+  );
+  const zlto = rewardType === RewardType.ZLTO;
+
+  return withoutJobZlto({
+    id: opportunity?.id ?? null,
+    title: opportunity?.title ?? "",
+    summary: opportunity?.summary ?? "",
+    description: opportunity?.description ?? "",
+    typeId: opportunity?.typeId ?? "",
+    categories: opportunity?.categories?.map((x) => x.id) ?? [],
+    uRL: opportunity?.url ?? "",
+    languages: opportunity?.languages?.map((x) => x.id) ?? [],
+    countries: toRequestCountries(opportunity?.countries),
+    commitmentIntervalCount: opportunity?.commitmentIntervalCount ?? null,
+    commitmentIntervalId: opportunity?.commitmentIntervalId ?? null,
+    dateStart: opportunity?.dateStart ?? null,
+    dateEnd: opportunity?.dateEnd ?? null,
+    participantLimit: opportunity?.participantLimit ?? null,
+    zltoReward: zlto ? (opportunity?.zltoReward ?? null) : null,
+    zltoRewardPool: zlto ? (opportunity?.zltoRewardPool ?? null) : null,
+    skills: opportunity?.skills?.map((x) => x.id) ?? [],
+    keywords: opportunity?.keywords ?? [],
+    verificationEnabled: opportunity?.verificationEnabled ?? null,
+    verificationMethod: opportunity?.verificationMethod
+      ? VerificationMethod[opportunity.verificationMethod]
+      : null,
+    verificationTypes: opportunity?.verificationTypes ?? [],
+    credentialIssuanceEnabled: opportunity?.credentialIssuanceEnabled ?? false,
+    ssiSchemaName: opportunity?.ssiSchemaName ?? null,
+    engagementTypeId: opportunity?.engagementTypeId ?? null,
+    organizationId,
+    instructions: opportunity?.instructions ?? "",
+    postAsActive: opportunity?.published ?? false,
+    shareWithPartners: opportunity?.shareWithPartners ?? false,
+    hidden: opportunity?.hidden ?? false,
+    showZltoRewardPool: zlto && !!opportunity?.zltoRewardPool,
+    externalId: opportunity?.externalId ?? "",
+    provider: opportunity?.provider ?? null,
+    // null on legacy / imported data — manual capture then requires an explicit answer
+    incentivized: opportunity?.incentivized ?? null,
+    rewardType,
+    partnerIncentiveAmount: opportunity?.partnerIncentiveAmount ?? null,
+    partnerIncentiveCurrency: opportunity?.partnerIncentiveCurrency ?? null,
+    accessibilitySupport: normalizeAccessibilitySupport(
+      opportunity?.accessibilitySupport,
+    ),
+    accommodationOtherDescription:
+      opportunity?.accommodationOtherDescription ?? null,
+    ageFrom: opportunity?.ageFrom ?? null,
+    ageTo: opportunity?.ageTo ?? null,
+    accommodations: opportunity?.accommodations?.map((x) => x.id) ?? [],
+    targetedGroups: opportunity?.targetedGroups?.map((x) => x.id) ?? [],
+    sustainableDevelopmentGoals:
+      opportunity?.sustainableDevelopmentGoals?.map((x) => x.id) ?? [],
+    customFields:
+      opportunity?.customFields?.map((f) => ({
+        key: f.key,
+        value: f.value,
+        values: f.values,
+      })) ?? [],
+  });
+};
+
+const SELECT_STYLES = {
+  menuPortal: (base: any) => ({ ...base, zIndex: 9999 }),
+  placeholder: (base: any) => ({ ...base, color: "#A3A6AF" }),
 };
 
 interface IParams extends ParsedUrlQuery {
@@ -304,23 +436,53 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     enabled: !error,
   });
 
-  // Difficulties
   const verificationTypesOptions = useMemo<OpportunityVerificationType[]>(
     () => verificationTypesData ?? [],
     [verificationTypesData],
   );
 
-  // Difficulties
-  const { data: difficultiesData } = useOpportunityDifficultiesQuery({
+  // Accessibility (accommodations), targeted groups, SDGs, currencies — core metadata
+  const { data: accessibilityData } = useAccessibilityQuery({
     enabled: !error,
   });
-  const difficultiesOptions = useMemo<SelectOption[]>(
+  const { data: targetedGroupsData } = useTargetedGroupsQuery({
+    enabled: !error,
+  });
+  const targetedGroupsOptions = useMemo<SelectOption[]>(
     () =>
-      difficultiesData?.map((c) => ({
+      targetedGroupsData?.map((c) => ({
         value: c.id,
         label: c.name,
       })) ?? [],
-    [difficultiesData],
+    [targetedGroupsData],
+  );
+  const openToAllId = useMemo(
+    () => openToAllIdOf(targetedGroupsData),
+    [targetedGroupsData],
+  );
+  const accommodationOtherId = useMemo(
+    () => accommodationOtherIdOf(accessibilityData),
+    [accessibilityData],
+  );
+  const { data: sustainableDevelopmentGoalsData } =
+    useSustainableDevelopmentGoalsQuery({ enabled: !error });
+  const sustainableDevelopmentGoalsOptions = useMemo<SelectOption[]>(
+    () =>
+      sustainableDevelopmentGoalsData?.map((c) => ({
+        value: c.id,
+        label: formatSustainableDevelopmentGoal(c),
+      })) ?? [],
+    [sustainableDevelopmentGoalsData],
+  );
+  const { data: currenciesData } = useCurrenciesQuery({ enabled: !error });
+  // the core partner incentive submits the ISO CODE (custom fields submit the id)
+  const currenciesOptions = useMemo<SelectOption[]>(
+    () =>
+      currenciesData?.map((c) => ({
+        value: c.code,
+        label: formatCurrency(c),
+      })) ?? [],
+    [currenciesData],
   );
 
   // Time Intervals
@@ -377,49 +539,9 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   const formRef7 = useRef<HTMLFormElement>(null);
   const formRef8 = useRef<HTMLFormElement>(null);
 
-  const [formData, setFormData] = useState<OpportunityRequestViewModel>({
-    id: opportunity?.id ?? null,
-    title: opportunity?.title ?? "",
-    summary: opportunity?.summary ?? "",
-    description: opportunity?.description ?? "",
-    typeId: opportunity?.typeId ?? "",
-    categories: opportunity?.categories?.map((x) => x.id) ?? [],
-    uRL: opportunity?.url ?? "",
-    languages: opportunity?.languages?.map((x) => x.id) ?? [],
-    countries: opportunity?.countries?.map((x) => x.id) ?? [],
-    difficultyId: opportunity?.difficultyId ?? "",
-    commitmentIntervalCount: opportunity?.commitmentIntervalCount ?? null,
-    commitmentIntervalId: opportunity?.commitmentIntervalId ?? "",
-    dateStart: opportunity?.dateStart ?? null,
-    dateEnd: opportunity?.dateEnd ?? null,
-    participantLimit: opportunity?.participantLimit ?? null,
-    zltoReward: opportunity?.zltoReward ?? null,
-    zltoRewardPool: opportunity?.zltoRewardPool ?? null,
-    skills: opportunity?.skills?.map((x) => x.id) ?? [],
-    keywords: opportunity?.keywords ?? [],
-    verificationEnabled: opportunity?.verificationEnabled ?? null,
-    verificationMethod: opportunity?.verificationMethod
-      ? VerificationMethod[opportunity.verificationMethod]
-      : null,
-    verificationTypes: opportunity?.verificationTypes ?? [],
-    credentialIssuanceEnabled: opportunity?.credentialIssuanceEnabled ?? false,
-    ssiSchemaName: opportunity?.ssiSchemaName ?? null,
-    engagementTypeId: opportunity?.engagementTypeId ?? null,
-    organizationId: id,
-    instructions: opportunity?.instructions ?? "",
-    postAsActive: opportunity?.published ?? false,
-    shareWithPartners: opportunity?.shareWithPartners ?? false,
-    hidden: opportunity?.hidden ?? false,
-    showZltoReward: !!(opportunity?.zltoReward ?? false),
-    showZltoRewardPool: !!(opportunity?.zltoRewardPool ?? false),
-    externalId: opportunity?.externalId ?? "",
-    customFields:
-      opportunity?.customFields?.map((f) => ({
-        key: f.key,
-        value: f.value,
-        values: f.values,
-      })) ?? [],
-  });
+  const [formData, setFormData] = useState<OpportunityRequestViewModel>(() =>
+    toOpportunityRequestViewModel(opportunity, id),
+  );
 
   const schemaStep1 = z.object({
     title: z
@@ -444,6 +566,10 @@ const OpportunityAdminDetails: NextPageWithLayout<{
         (value) => (value ?? "") === "" || REGEX_URL_VALIDATION.test(value!),
         "Please enter a valid URL - example.com | www.example.com | https://www.example.com",
       ),
+    provider: z
+      .string()
+      .max(255, "Provider cannot exceed 255 characters.")
+      .nullish(),
   });
 
   const {
@@ -529,19 +655,37 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     [schemasOptions],
   );
 
+  // Job cross-field rules on the system-controlled custom fields (salary / employment). Inert for
+  // any type whose definitions lack those keys. Salary depends on the core `incentivized` answer
+  // (Rewards step), so it reads the committed value.
+  const customFieldRules = useCallback<CustomFieldRules>(
+    (values) =>
+      applyCustomFieldRules(customFieldDefinitions, values, {
+        incentivized: formData.incentivized,
+      }),
+    [customFieldDefinitions, formData.incentivized],
+  );
+
   const schemaStep2 = z
     .object({
-      difficultyId: z.string().optional(),
       languages: z
         .array(z.string(), { required_error: "Language is required" })
         .min(1, "Language is required."),
       countries: z
-        .array(z.string(), { required_error: "Country is required" })
+        .array(
+          z.object({
+            countryId: z.string(),
+            region: z.string().nullable(),
+            city: z.string().nullable(),
+            coordinates: z.array(z.number()).nullable(),
+          }),
+          { required_error: "Country is required" },
+        )
         .min(1, "Country is required."),
       commitmentIntervalCount: z
         .union([z.nan(), z.null(), z.number()])
         .optional(),
-      commitmentIntervalId: z.string().optional(),
+      commitmentIntervalId: z.string().nullish(),
       dateStart: z
         .union([z.null(), z.string(), z.date()])
         .refine((val) => val !== null, {
@@ -595,17 +739,31 @@ const OpportunityAdminDetails: NextPageWithLayout<{
             }
           }
         }),
+      ageFrom: z.union([z.nan(), z.null(), z.number()]).optional(),
+      ageTo: z.union([z.nan(), z.null(), z.number()]).optional(),
+      targetedGroups: z.array(z.string()).nullish(),
+      sustainableDevelopmentGoals: z.array(z.string()).nullish(),
+      accessibilitySupport: z.nativeEnum(AccessibilitySupport).nullish(),
+      accommodations: z.array(z.string()).nullish(),
+      accommodationOtherDescription: z.string().nullish(),
       // definition-driven custom fields; validated against their definitions below
       customFields: z.array(z.any()).nullish(),
     })
     .superRefine((val, ctx) => {
       if (val == null) return;
 
+      // Job cross-field rules (shown next to each field by <CustomFields rules>). A field they
+      // disable does not apply, so it is not validated on its own either.
+      const customFieldRuleResult = customFieldRules(
+        (val.customFields ?? []) as CustomFieldValueRequest[],
+      );
+
       // custom fields must be valid before leaving/saving this step
-      for (const { error } of getCustomFieldErrors(
+      for (const { key, error } of getCustomFieldErrors(
         customFieldDefinitions,
         val.customFields,
       )) {
+        if (customFieldRuleResult.disabledKeys?.has(key)) continue;
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: error,
@@ -613,11 +771,114 @@ const OpportunityAdminDetails: NextPageWithLayout<{
         });
       }
 
-      if (!isJobOpportunity && !val.difficultyId) {
+      for (const { message } of customFieldRuleResult.errors ?? []) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Difficulty is required.",
-          path: ["difficultyId"],
+          message,
+          path: ["customFields"],
+        });
+      }
+
+      // a place (region / city) is optional per country, up to the API's length limit
+      if (
+        val.countries.some(
+          (c) =>
+            (c.region?.length ?? 0) > COUNTRY_PLACE_MAX_LENGTH ||
+            (c.city?.length ?? 0) > COUNTRY_PLACE_MAX_LENGTH,
+        )
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Region and city cannot exceed ${COUNTRY_PLACE_MAX_LENGTH} characters.`,
+          path: ["countries"],
+        });
+      }
+
+      // age: optional inclusive whole-year bounds
+      const ageFrom = finiteOrNull(val.ageFrom);
+      const ageTo = finiteOrNull(val.ageTo);
+      for (const [path, age] of [
+        ["ageFrom", ageFrom],
+        ["ageTo", ageTo],
+      ] as const) {
+        if (age !== null && (!Number.isInteger(age) || age < 0 || age > 32767))
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Age must be a whole number of 0 or more.",
+            path: [path],
+          });
+      }
+      if (ageFrom !== null && ageTo !== null && ageTo < ageFrom) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "To age must be greater than or equal to from age.",
+          path: ["ageTo"],
+        });
+      }
+
+      // targeted groups: "Open to all" cannot be combined with another group
+      const targetedGroups = val.targetedGroups ?? [];
+      if (
+        openToAllId &&
+        targetedGroups.includes(openToAllId) &&
+        new Set(targetedGroups).size > 1
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "Open to all cannot be combined with another targeted group.",
+          path: ["targetedGroups"],
+        });
+      }
+
+      // accessibility: Yes requires accommodations; only Yes / AvailableOnRequest allow them
+      const accommodations = val.accommodations ?? [];
+      if (
+        val.accessibilitySupport === AccessibilitySupport.Yes &&
+        accommodations.length === 0
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Select at least one accommodation.",
+          path: ["accommodations"],
+        });
+      }
+      if (
+        accommodations.length > 0 &&
+        !allowsAccommodations(val.accessibilitySupport)
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "Accommodations can only be listed when support is Yes or Available on request.",
+          path: ["accommodations"],
+        });
+      }
+      if (
+        accommodationOtherId &&
+        accommodations.includes(accommodationOtherId)
+      ) {
+        const description = val.accommodationOtherDescription?.trim() ?? "";
+        if (!description)
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Please describe the other accommodation.",
+            path: ["accommodationOtherDescription"],
+          });
+        else if (description.length > 500)
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "The description cannot exceed 500 characters.",
+            path: ["accommodationOtherDescription"],
+          });
+      }
+
+      // Jobs: an application deadline is required (API "Manual" rule set)
+      if (isJobOpportunity && !val.dateEnd) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "An application deadline is required for Jobs.",
+          path: ["dateEnd"],
         });
       }
 
@@ -660,6 +921,22 @@ const OpportunityAdminDetails: NextPageWithLayout<{
         });
       }
 
+      // Jobs: effort is optional, but the number and time frame come together
+      if (isJobOpportunity) {
+        if (hasCommitmentIntervalCount && !val.commitmentIntervalId)
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Time frame is required when a number is entered.",
+            path: ["commitmentIntervalId"],
+          });
+        if (!hasCommitmentIntervalCount && val.commitmentIntervalId)
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Number is required when a time frame is selected.",
+            path: ["commitmentIntervalCount"],
+          });
+      }
+
       // ensure dateEnd is not before dateStart
       if (val.dateEnd && val.dateStart) {
         // Since both dates are strings in YYYY-MM-DD format, we can compare them directly
@@ -674,9 +951,16 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       }
     });
 
+  // Incentive + reward (API OpportunityRequestValidatorBase). `rewardType` alone decides which
+  // reward's fields apply; the other reward's values are ignored here and cleared on submit.
   const schemaStep3 = z
     .object({
-      showZltoReward: z.boolean().optional(),
+      incentivized: z.boolean().nullable(),
+      rewardType: z.nativeEnum(RewardType),
+      partnerIncentiveAmount: z
+        .union([z.nan(), z.null(), z.number()])
+        .optional(),
+      partnerIncentiveCurrency: z.string().nullish(),
       showZltoRewardPool: z.boolean().optional(),
       zltoReward: z.union([z.nan(), z.null(), z.number()]),
       zltoRewardPool: z.union([z.nan(), z.null(), z.number()]),
@@ -684,7 +968,67 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     .superRefine((val, ctx) => {
       if (val == null) return;
 
-      if (val.showZltoReward) {
+      // manual capture requires an explicit answer (legacy / imported data may be unspecified)
+      if (val.incentivized == null) {
+        ctx.addIssue({
+          message:
+            "Please choose whether this opportunity offers an incentive.",
+          code: z.ZodIssueCode.custom,
+          path: ["incentivized"],
+        });
+      }
+
+      if (val.incentivized === false && val.rewardType !== RewardType.None) {
+        ctx.addIssue({
+          message:
+            "An opportunity offering a reward cannot be marked as not incentivized.",
+          code: z.ZodIssueCode.custom,
+          path: ["rewardType"],
+        });
+      }
+
+      if (isJobOpportunity && val.rewardType === RewardType.ZLTO) {
+        ctx.addIssue({
+          message: "Jobs do not support ZLTO rewards.",
+          code: z.ZodIssueCode.custom,
+          path: ["rewardType"],
+        });
+        return;
+      }
+
+      // an incentivized non-Job must say what the incentive is (a Job's pay is its salary)
+      if (
+        !isJobOpportunity &&
+        val.incentivized === true &&
+        val.rewardType === RewardType.None
+      ) {
+        ctx.addIssue({
+          message: "Please choose the reward this opportunity offers.",
+          code: z.ZodIssueCode.custom,
+          path: ["rewardType"],
+        });
+      }
+
+      if (val.rewardType === RewardType.PartnerIncentive) {
+        const amountError = getPartnerIncentiveAmountError(
+          val.partnerIncentiveAmount,
+        );
+        if (amountError)
+          ctx.addIssue({
+            message: amountError,
+            code: z.ZodIssueCode.custom,
+            path: ["partnerIncentiveAmount"],
+          });
+
+        if (!val.partnerIncentiveCurrency)
+          ctx.addIssue({
+            message: "Currency is required.",
+            code: z.ZodIssueCode.custom,
+            path: ["partnerIncentiveCurrency"],
+          });
+      }
+
+      if (val.rewardType === RewardType.ZLTO) {
         if (
           val.zltoReward != null &&
           organisation?.zltoRewardBalanceCurrentFinancialYear != null &&
@@ -773,9 +1117,20 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       }
     });
 
-  const schemaStep4 = z.object({
-    skills: z.array(z.string()).optional(),
-  });
+  const schemaStep4 = z
+    .object({
+      skills: z.array(z.string()).optional(),
+    })
+    .superRefine((val, ctx) => {
+      // Jobs: core skills are the REQUIRED skills (API "Manual" rule set)
+      if (isJobOpportunity && (val.skills?.length ?? 0) === 0) {
+        ctx.addIssue({
+          message: "At least one required skill is required for Jobs.",
+          code: z.ZodIssueCode.custom,
+          path: ["skills"],
+        });
+      }
+    });
 
   const schemaStep5 = z.object({
     keywords: z.array(z.string()).min(1, "Keyword is required."),
@@ -881,6 +1236,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     control: controlStep2,
     watch: watchStep2,
     getValues: getValuesStep2,
+    setValue: setValueStep2,
     reset: resetStep2,
     trigger: triggerStep2,
   } = useForm({
@@ -890,6 +1246,11 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   });
   const watchDateEnd = watchStep2("dateEnd");
   const watchParticipantLimit = watchStep2("participantLimit");
+  const watchAccessibilitySupport = watchStep2("accessibilitySupport");
+  const watchAccommodations = watchStep2("accommodations");
+  const watchAccommodationOtherDescription = watchStep2(
+    "accommodationOtherDescription",
+  );
 
   const {
     register: registerStep3,
@@ -907,8 +1268,24 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     mode: "all",
   });
   const watchZltoReward = watchStep3("zltoReward");
-  const watchShowZltoReward = watchStep3("showZltoReward");
+  const watchIncentivized = watchStep3("incentivized");
+  const watchRewardType = watchStep3("rewardType");
   const watchShowZltoRewardPool = watchStep3("showZltoRewardPool");
+
+  // ZLTO needs the organisation's current financial-year pool. It stays on offer when the
+  // opportunity already uses it, so the existing reward can still be seen and changed.
+  const zltoRewardAvailable =
+    !isJobOpportunity &&
+    (!!organisation?.zltoRewardPoolCurrentFinancialYear ||
+      normalizeRewardType(opportunity?.rewardType, opportunity?.zltoReward) ===
+        RewardType.ZLTO ||
+      watchRewardType === RewardType.ZLTO);
+  const rewardTypeOptions = [
+    // an incentivized non-Job must name its reward; a Job's pay is its salary
+    ...(isJobOpportunity ? [RewardType.None] : []),
+    ...(zltoRewardAvailable ? [RewardType.ZLTO] : []),
+    RewardType.PartnerIncentive,
+  ];
 
   const {
     handleSubmit: handleSubmitStep4,
@@ -1105,16 +1482,33 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     setFormData((prev) => ({ ...prev, ssiSchemaName: null }));
   }, [selectedTypeName, setValueStep7, setFormData]);
 
+  // Job rules span steps 2 (deadline, effort), 3 (no ZLTO; pay may be salary-only) and 4 (skills)
   useEffect(() => {
     void triggerStep1();
     void triggerStep2();
-  }, [isJobOpportunity, triggerStep1, triggerStep2]);
+    void triggerStep3();
+    void triggerStep4();
+  }, [
+    isJobOpportunity,
+    triggerStep1,
+    triggerStep2,
+    triggerStep3,
+    triggerStep4,
+  ]);
 
   // re-validate step 2 when the applicable custom-field definitions load/change
-  // (they arrive asynchronously and drive the customFields validation)
+  // (they arrive asynchronously and drive the customFields validation), when the lookups the
+  // targeted-group / accessibility rules resolve against load, and when the committed
+  // `incentivized` answer changes (Job salary details cannot coexist with "No")
   useEffect(() => {
     void triggerStep2();
-  }, [customFieldDefinitions, triggerStep2]);
+  }, [
+    customFieldDefinitions,
+    openToAllId,
+    accommodationOtherId,
+    formData.incentivized,
+    triggerStep2,
+  ]);
 
   useEffect(() => {
     // trigger validation when watchVerificationEnabled & watchVerificationMethod changes (for required field indicators to refresh)
@@ -1176,16 +1570,40 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       summary: formData.summary,
       instructions: formData.instructions,
       url: formData.uRL,
-      zltoReward: formData.zltoReward,
+      // only the selected reward's values apply (the others are cleared on submit)
+      zltoReward:
+        formData.rewardType === RewardType.ZLTO ? formData.zltoReward : null,
       zltoRewardCumulative: 0,
-      zltoRewardEstimate: formData.zltoReward,
+      zltoRewardEstimate:
+        formData.rewardType === RewardType.ZLTO ? formData.zltoReward : null,
       verificationEnabled: formData.verificationEnabled ?? false,
       verificationMethod: formData.verificationMethod,
-      difficulty:
-        formData.difficultyId && difficultiesData
-          ? (difficultiesData.find((x) => x.id == formData.difficultyId)
-              ?.name ?? "")
-          : "",
+      provider: formData.provider?.trim() || null,
+      incentivized: formData.incentivized,
+      rewardType: formData.rewardType,
+      partnerIncentiveAmount:
+        formData.rewardType === RewardType.PartnerIncentive
+          ? finiteOrNull(formData.partnerIncentiveAmount)
+          : null,
+      partnerIncentiveCurrency:
+        formData.rewardType === RewardType.PartnerIncentive
+          ? formData.partnerIncentiveCurrency
+          : null,
+      accessibilitySupport: formData.accessibilitySupport,
+      accommodationOtherDescription: formData.accommodationOtherDescription,
+      ageFrom: finiteOrNull(formData.ageFrom),
+      ageTo: finiteOrNull(formData.ageTo),
+      accommodations: (formData.accommodations ?? []).flatMap(
+        (x) => accessibilityData?.find((y) => y.id === x) ?? [],
+      ),
+      targetedGroups: (formData.targetedGroups ?? []).flatMap(
+        (x) => targetedGroupsData?.find((y) => y.id === x) ?? [],
+      ),
+      sustainableDevelopmentGoals: (
+        formData.sustainableDevelopmentGoals ?? []
+      ).flatMap(
+        (x) => sustainableDevelopmentGoalsData?.find((y) => y.id === x) ?? [],
+      ),
       commitmentInterval:
         formData.commitmentIntervalId && timeIntervalsData
           ? (timeIntervalsData.find(
@@ -1215,24 +1633,28 @@ const OpportunityAdminDetails: NextPageWithLayout<{
           : "",
       published: true,
       yomaInfoURL: "",
-      categories:
-        formData.categories && categoriesData
-          ? formData.categories?.map(
-              (x) => categoriesData.find((y) => y.id == x)!,
-            )
-          : [],
-      countries:
-        formData.countries && countriesData
-          ? formData.countries?.map(
-              (x) => countriesData.find((y) => y.id == x)!,
-            )
-          : [],
-      languages:
-        formData.languages && languagesData
-          ? formData.languages?.map(
-              (x) => languagesData.find((y) => y.id == x)!,
-            )
-          : [],
+      // lookups may not have loaded (or may no longer list an id): skip what cannot be resolved
+      categories: (formData.categories ?? []).flatMap(
+        (x) => categoriesData?.find((y) => y.id == x) ?? [],
+      ),
+      countries: (formData.countries ?? []).flatMap(
+        (x): OpportunityCountryInfo[] => {
+          const country = countriesData?.find((y) => y.id == x.countryId);
+          if (!country) return [];
+          const worldwide = isWorldwideCountry(country.id, countriesData);
+          return [
+            {
+              ...country,
+              region: worldwide ? null : x.region,
+              city: worldwide ? null : x.city,
+              coordinates: worldwide || !x.city ? null : x.coordinates,
+            },
+          ];
+        },
+      ),
+      languages: (formData.languages ?? []).flatMap(
+        (x) => languagesData?.find((y) => y.id == x) ?? [],
+      ),
       skills:
         formData.skills && cacheSkills
           ? formData.skills
@@ -1254,12 +1676,14 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       opportunityId,
       id,
       opportunityTypesData,
-      difficultiesData,
       timeIntervalsData,
       engagementTypesData,
       categoriesData,
       countriesData,
       languagesData,
+      accessibilityData,
+      targetedGroupsData,
+      sustainableDevelopmentGoalsData,
       cacheSkills,
     ],
   );
@@ -1424,6 +1848,44 @@ const OpportunityAdminDetails: NextPageWithLayout<{
             ((v.value != null && v.value.trim() !== "") ||
               (v.values != null && v.values.length > 0)),
         );
+        // Job rules: dependents of an undisclosed salary / permanent employment are cleared
+        data.customFields = applyCustomFieldRules(
+          customFieldDefinitions,
+          data.customFields,
+          { incentivized: data.incentivized },
+        ).values;
+
+        // countries: every selected country resends its place (full update REPLACES them);
+        // Worldwide carries none, and coordinates only ever accompany a city
+        data.countries = sanitizeRequestCountries(
+          data.countries,
+          countriesData,
+        );
+
+        // core metadata: blanks → null, unset numbers → null, selections consistent with rules
+        data.provider = data.provider?.trim() || null;
+        data.ageFrom = finiteOrNull(data.ageFrom);
+        data.ageTo = finiteOrNull(data.ageTo);
+        data.commitmentIntervalId = data.commitmentIntervalId || null;
+        data.commitmentIntervalCount = finiteOrNull(
+          data.commitmentIntervalCount,
+        );
+        data.targetedGroups = data.targetedGroups ?? [];
+        data.sustainableDevelopmentGoals =
+          data.sustainableDevelopmentGoals ?? [];
+        data.accessibilitySupport = normalizeAccessibilitySupport(
+          data.accessibilitySupport,
+        );
+        data.accommodations = allowsAccommodations(data.accessibilitySupport)
+          ? (data.accommodations ?? [])
+          : [];
+        // the description belongs to the Other accommodation (kept if Other is unresolved)
+        data.accommodationOtherDescription =
+          data.accommodations.length > 0 &&
+          (!accommodationOtherId ||
+            data.accommodations.includes(accommodationOtherId))
+            ? data.accommodationOtherDescription?.trim() || null
+            : null;
 
         // convert dates to string in format "YYYY-MM-DD"
         data.dateStart = data.dateStart
@@ -1451,15 +1913,33 @@ const OpportunityAdminDetails: NextPageWithLayout<{
           data.shareWithPartners = false;
         }
 
-        // clear the zlto reward if not shown
-        if (!data.showZltoReward) {
+        // rewards: Jobs never carry ZLTO; "not incentivized" carries no reward; only the
+        // selected reward type's values are sent (None carries neither)
+        if (isJobOpportunityTypeValue(data.typeId)) {
+          if (data.rewardType === RewardType.ZLTO)
+            data.rewardType = RewardType.None;
           data.zltoReward = null;
           data.zltoRewardPool = null;
+        }
+        if (data.incentivized === false) data.rewardType = RewardType.None;
+        if (data.rewardType !== RewardType.ZLTO) {
+          data.zltoReward = null;
+          data.zltoRewardPool = null;
+          data.showZltoRewardPool = false;
         }
 
         // clear the zlto reward pool if not shown
         if (!data.showZltoRewardPool) {
           data.zltoRewardPool = null;
+        }
+
+        if (data.rewardType === RewardType.PartnerIncentive) {
+          data.partnerIncentiveAmount = finiteOrNull(
+            data.partnerIncentiveAmount,
+          );
+        } else {
+          data.partnerIncentiveAmount = null;
+          data.partnerIncentiveCurrency = null;
         }
 
         // disable sharing if hidden
@@ -1546,16 +2026,18 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       router,
       returnUrl,
       customFieldDefinitions,
+      countriesData,
+      accommodationOtherId,
     ],
   );
 
   const onSubmitStep = useCallback(
     async (nextStep: number, data: FieldValues) => {
-      // set form data
-      const model = {
+      // set form data; a change of type to Job drops any ZLTO reward right away
+      const model = withoutJobZlto({
         ...formData,
         ...(data as OpportunityRequestBase),
-      };
+      });
 
       setFormData(model);
 
@@ -1719,64 +2201,11 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     onSuccess: (updatedOpportunity) => {
                       // Map the returned Opportunity back to OpportunityRequestViewModel
                       // so formData reflects the server state before the user submits.
-                      const mapped: OpportunityRequestViewModel = {
-                        id: updatedOpportunity.id ?? null,
-                        title: updatedOpportunity.title ?? "",
-                        summary: updatedOpportunity.summary ?? "",
-                        description: updatedOpportunity.description ?? "",
-                        typeId: updatedOpportunity.typeId ?? "",
-                        categories:
-                          updatedOpportunity.categories?.map((x) => x.id) ?? [],
-                        uRL: updatedOpportunity.url ?? "",
-                        languages:
-                          updatedOpportunity.languages?.map((x) => x.id) ?? [],
-                        countries:
-                          updatedOpportunity.countries?.map((x) => x.id) ?? [],
-                        difficultyId: updatedOpportunity.difficultyId ?? "",
-                        commitmentIntervalCount:
-                          updatedOpportunity.commitmentIntervalCount ?? null,
-                        commitmentIntervalId:
-                          updatedOpportunity.commitmentIntervalId ?? "",
-                        dateStart: updatedOpportunity.dateStart ?? null,
-                        dateEnd: updatedOpportunity.dateEnd ?? null,
-                        participantLimit:
-                          updatedOpportunity.participantLimit ?? null,
-                        zltoReward: updatedOpportunity.zltoReward ?? null,
-                        zltoRewardPool:
-                          updatedOpportunity.zltoRewardPool ?? null,
-                        skills:
-                          updatedOpportunity.skills?.map((x) => x.id) ?? [],
-                        keywords: updatedOpportunity.keywords ?? [],
-                        verificationEnabled:
-                          updatedOpportunity.verificationEnabled ?? null,
-                        verificationMethod:
-                          updatedOpportunity.verificationMethod
-                            ? VerificationMethod[
-                                updatedOpportunity.verificationMethod
-                              ]
-                            : null,
-                        verificationTypes:
-                          updatedOpportunity.verificationTypes ?? [],
-                        credentialIssuanceEnabled:
-                          updatedOpportunity.credentialIssuanceEnabled ?? false,
-                        ssiSchemaName: updatedOpportunity.ssiSchemaName ?? null,
-                        engagementTypeId:
-                          updatedOpportunity.engagementTypeId ?? null,
-                        organizationId: id,
-                        instructions: updatedOpportunity.instructions ?? "",
-                        postAsActive: updatedOpportunity.published ?? false,
-                        shareWithPartners:
-                          updatedOpportunity.shareWithPartners ?? false,
-                        hidden: updatedOpportunity.hidden ?? false,
-                        showZltoReward: !!(
-                          updatedOpportunity.zltoReward ?? false
-                        ),
-                        showZltoRewardPool: !!(
-                          updatedOpportunity.zltoRewardPool ?? false
-                        ),
-                        externalId: updatedOpportunity.externalId ?? "",
-                      };
-                      setFormData(mapped);
+                      // The shared mapper keeps custom fields, country places and the core
+                      // metadata: the next full update would otherwise wipe them.
+                      setFormData(
+                        toOpportunityRequestViewModel(updatedOpportunity, id),
+                      );
                       setOppExpiredModalVisible(false);
                     },
                   })
@@ -2163,6 +2592,30 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     </FormField>
 
                     <FormField
+                      label="Provider"
+                      subLabel="Optional. The brand or partner that delivers this opportunity, if it isn't your organisation (e.g. a franchise or programme partner). This is shown to people and is searchable."
+                      showWarningIcon={
+                        !!formStateStep1.errors.provider?.message
+                      }
+                      showError={
+                        !!formStateStep1.touchedFields.provider ||
+                        formStateStep1.isSubmitted
+                      }
+                      error={formStateStep1.errors.provider?.message}
+                    >
+                      <FormInput
+                        className="md:w-1/2"
+                        inputProps={{
+                          type: "text",
+                          placeholder: "Enter provider...",
+                          maxLength: 255,
+                          id: "input_provider", // e2e
+                          ...registerStep1("provider"),
+                        }}
+                      />
+                    </FormField>
+
+                    <FormField
                       label="Summary"
                       subLabel="A short summary of the opportunity (max 150 characters). This will be displayed on the search results."
                       showWarningIcon={!!formStateStep1.errors.summary?.message}
@@ -2298,102 +2751,81 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       />
                     </FormField>
 
-                    <FormField
-                      label="Location"
-                      subLabel="The countries or regions where the opportunity is available. This is used for searchability and will be displayed on the opportunity page."
-                      showWarningIcon={
-                        !!formStateStep2.errors.countries?.message
-                      }
-                      showError={
-                        !!formStateStep2.touchedFields.countries ||
-                        formStateStep2.isSubmitted
-                      }
-                      error={formStateStep2.errors.countries?.message}
-                    >
-                      <Controller
-                        control={controlStep2}
-                        name="countries"
-                        render={({ field: { onChange, value, onBlur } }) => (
-                          <Select
-                            instanceId="countries"
-                            classNames={{
-                              control: () =>
-                                "input w-full !border-gray pr-0 pl-2 h-fit py-1 md:w-1/2",
-                            }}
-                            isMulti={true}
-                            options={countriesOptions}
-                            onBlur={onBlur} // mark the field as touched
-                            onChange={(val) =>
-                              onChange(val.map((c) => c.value))
+                    {/* One controller renders the country select AND the per-country places,
+                        since both edit the same `countries` entries. */}
+                    <Controller
+                      control={controlStep2}
+                      name="countries"
+                      render={({ field: { onChange, value, onBlur } }) => (
+                        <>
+                          <FormField
+                            label="Location"
+                            subLabel="The countries or regions where the opportunity is available. This is used for searchability and will be displayed on the opportunity page."
+                            showWarningIcon={
+                              !!formStateStep2.errors.countries?.message
                             }
-                            value={countriesOptions?.filter((c) =>
-                              value?.includes(c.value),
-                            )}
-                            // fix menu z-index issue
-                            menuPortalTarget={htmlRef.current}
-                            styles={{
-                              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                              placeholder: (base) => ({
-                                ...base,
-                                color: "#A3A6AF",
-                              }),
-                            }}
-                            inputId="input_countries" // e2e
-                            placeholder="Select countries..."
-                          />
-                        )}
-                      />
-                    </FormField>
+                            showError={
+                              !!formStateStep2.touchedFields.countries ||
+                              formStateStep2.isSubmitted
+                            }
+                            error={formStateStep2.errors.countries?.message}
+                          >
+                            <Select
+                              instanceId="countries"
+                              classNames={{
+                                control: () =>
+                                  "input w-full !border-gray pr-0 pl-2 h-fit py-1 md:w-1/2",
+                              }}
+                              isMulti={true}
+                              options={countriesOptions}
+                              onBlur={onBlur} // mark the field as touched
+                              // kept countries keep their place; removed ones drop it
+                              onChange={(val) =>
+                                onChange(
+                                  selectRequestCountries(
+                                    value,
+                                    val.map((c) => c.value),
+                                  ),
+                                )
+                              }
+                              value={countriesOptions?.filter((c) =>
+                                value?.some((x) => x.countryId === c.value),
+                              )}
+                              // fix menu z-index issue
+                              menuPortalTarget={htmlRef.current}
+                              styles={SELECT_STYLES}
+                              inputId="input_countries" // e2e
+                              placeholder="Select countries..."
+                            />
+                          </FormField>
 
-                    <FormField
-                      label="Difficulty"
-                      subLabel="The difficulty level of the opportunity. This will be displayed on the opportunity page."
-                      showWarningIcon={
-                        !!formStateStep2.errors.difficultyId?.message
-                      }
-                      showError={
-                        !!formStateStep2.touchedFields.difficultyId ||
-                        formStateStep2.isSubmitted
-                      }
-                      error={formStateStep2.errors.difficultyId?.message}
-                    >
-                      <Controller
-                        control={controlStep2}
-                        name="difficultyId"
-                        render={({ field: { onChange, value, onBlur } }) => (
-                          <Select
-                            instanceId="difficultyId"
-                            classNames={{
-                              control: () =>
-                                "input w-full !border-gray pr-0 pl-2 md:w-1/2",
-                            }}
-                            isMulti={false}
-                            isClearable={true}
-                            options={difficultiesOptions}
-                            onBlur={onBlur} // mark the field as touched
-                            onChange={(val) => onChange(val?.value)}
-                            value={difficultiesOptions?.find(
-                              (c) => c.value === value,
-                            )}
-                            // fix menu z-index issue
-                            menuPortalTarget={htmlRef.current}
-                            styles={{
-                              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                              placeholder: (base) => ({
-                                ...base,
-                                color: "#A3A6AF",
-                              }),
-                            }}
-                            inputId="input_difficultyId" // e2e
-                            placeholder="Select difficulty..."
-                          />
-                        )}
-                      />
-                    </FormField>
+                          {/* PLACES: optional region / city per selected country (not Worldwide) */}
+                          {(value ?? []).some(
+                            (c) =>
+                              !isWorldwideCountry(c.countryId, countriesData),
+                          ) && (
+                            <FormField
+                              label="Where in each country? (optional)"
+                              subLabel="Add a province / region or a city if the opportunity is only available there. It powers “near me” and region search; leave it blank if it's available across the whole country. Worldwide has no place."
+                            >
+                              <OpportunityCountryPlaces
+                                value={value}
+                                countries={countriesData}
+                                onChange={onChange}
+                              />
+                            </FormField>
+                          )}
+                        </>
+                      )}
+                    />
 
                     <FormField
                       label="Effort"
-                      subLabel="The effort required to complete the opportunity. This will be displayed on the opportunity page."
+                      subLabel={
+                        isJobOpportunity
+                          ? "Optional for Jobs: the time commitment, as a number and a time frame together. This will be displayed on the opportunity page."
+                          : "The effort required to complete the opportunity. This will be displayed on the opportunity page."
+                      }
                       showWarningIcon={
                         !!formStateStep2.errors.commitmentIntervalCount
                           ?.message ||
@@ -2446,10 +2878,14 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                                 }}
                                 options={timeIntervalsOptions}
                                 onBlur={onBlur} // mark the field as touched
-                                onChange={(val) => onChange(val?.value)}
-                                value={timeIntervalsOptions?.find(
-                                  (c) => c.value === value,
-                                )}
+                                // Jobs may clear it; never send "" (null = unset)
+                                isClearable={isJobOpportunity}
+                                onChange={(val) => onChange(val?.value ?? null)}
+                                value={
+                                  timeIntervalsOptions?.find(
+                                    (c) => c.value === value,
+                                  ) ?? null
+                                }
                                 styles={{
                                   placeholder: (base) => ({
                                     ...base,
@@ -2467,14 +2903,18 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
                     <FormField
                       label="Availability"
-                      subLabel="When this opportunity will be available for completion. The end date is optional."
+                      subLabel={
+                        isJobOpportunity
+                          ? "When this Job opens, and its application deadline (end date), which is required for Jobs."
+                          : "When this opportunity will be available for completion. The end date is optional."
+                      }
                       showWarningIcon={
                         !!formStateStep2.errors.dateStart?.message ||
                         !!formStateStep2.errors.dateEnd?.message
                       }
                     >
                       <div className="flex flex-col gap-2">
-                        {!watchDateEnd && (
+                        {!watchDateEnd && !isJobOpportunity && (
                           <FormMessage messageType={FormMessageType.Warning}>
                             Heads up! An end date is required to share this
                             opportunity with partners. We recommend setting an
@@ -2597,13 +3037,204 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       />
                     </FormField>
 
+                    <FormField
+                      label="Age range (optional)"
+                      subLabel="The inclusive ages, in whole years, this opportunity is for. Set either or both; youth outside the range can view it but cannot submit it for verification."
+                      showWarningIcon={
+                        !!formStateStep2.errors.ageFrom?.message ||
+                        !!formStateStep2.errors.ageTo?.message
+                      }
+                    >
+                      <div className="grid gap-4 md:w-1/2 md:grid-cols-2">
+                        <FormField
+                          showError={
+                            !!formStateStep2.touchedFields.ageFrom ||
+                            formStateStep2.isSubmitted
+                          }
+                          error={formStateStep2.errors.ageFrom?.message}
+                        >
+                          <input
+                            type="number"
+                            className="input border-gray focus:border-gray w-full rounded-md focus:outline-none"
+                            placeholder="From age..."
+                            aria-label="From age"
+                            id="input_ageFrom" // e2e
+                            {...registerStep2("ageFrom", {
+                              valueAsNumber: true,
+                            })}
+                          />
+                        </FormField>
+                        <FormField
+                          showError={
+                            !!formStateStep2.touchedFields.ageTo ||
+                            formStateStep2.isSubmitted
+                          }
+                          error={formStateStep2.errors.ageTo?.message}
+                        >
+                          <input
+                            type="number"
+                            className="input border-gray focus:border-gray w-full rounded-md focus:outline-none"
+                            placeholder="To age..."
+                            aria-label="To age"
+                            id="input_ageTo" // e2e
+                            {...registerStep2("ageTo", {
+                              valueAsNumber: true,
+                            })}
+                          />
+                        </FormField>
+                      </div>
+                    </FormField>
+
+                    <FormField
+                      label="Targeted groups (optional)"
+                      subLabel="Who this opportunity is aimed at. Informational only — it does not restrict who can take part. “Open to all” cannot be combined with another group."
+                      showWarningIcon={
+                        !!formStateStep2.errors.targetedGroups?.message
+                      }
+                      showError={
+                        !!formStateStep2.touchedFields.targetedGroups ||
+                        formStateStep2.isSubmitted
+                      }
+                      error={formStateStep2.errors.targetedGroups?.message}
+                    >
+                      <Controller
+                        control={controlStep2}
+                        name="targetedGroups"
+                        render={({ field: { onChange, value, onBlur } }) => (
+                          <Select
+                            instanceId="targetedGroups"
+                            classNames={{
+                              control: () =>
+                                "input w-full !border-gray pr-0 pl-2 h-fit py-1 md:w-1/2",
+                            }}
+                            isMulti={true}
+                            options={targetedGroupsOptions}
+                            onBlur={onBlur} // mark the field as touched
+                            onChange={(val) =>
+                              onChange(
+                                withExclusiveOpenToAll(
+                                  value ?? [],
+                                  val.map((c) => c.value),
+                                  openToAllId,
+                                ),
+                              )
+                            }
+                            value={targetedGroupsOptions.filter((c) =>
+                              value?.includes(c.value),
+                            )}
+                            // fix menu z-index issue
+                            menuPortalTarget={htmlRef.current}
+                            styles={SELECT_STYLES}
+                            inputId="input_targetedGroups" // e2e
+                            placeholder="Select targeted groups..."
+                          />
+                        )}
+                      />
+                    </FormField>
+
+                    <FormField
+                      label="Sustainable Development Goals (optional)"
+                      subLabel="The UN Sustainable Development Goals this opportunity contributes to."
+                      showWarningIcon={
+                        !!formStateStep2.errors.sustainableDevelopmentGoals
+                          ?.message
+                      }
+                      showError={
+                        !!formStateStep2.touchedFields
+                          .sustainableDevelopmentGoals ||
+                        formStateStep2.isSubmitted
+                      }
+                      error={
+                        formStateStep2.errors.sustainableDevelopmentGoals
+                          ?.message
+                      }
+                    >
+                      <Controller
+                        control={controlStep2}
+                        name="sustainableDevelopmentGoals"
+                        render={({ field: { onChange, value, onBlur } }) => (
+                          <Select
+                            instanceId="sustainableDevelopmentGoals"
+                            classNames={{
+                              control: () =>
+                                "input w-full !border-gray pr-0 pl-2 h-fit py-1 md:w-1/2",
+                            }}
+                            isMulti={true}
+                            options={sustainableDevelopmentGoalsOptions}
+                            onBlur={onBlur} // mark the field as touched
+                            onChange={(val) =>
+                              onChange(val.map((c) => c.value))
+                            }
+                            value={sustainableDevelopmentGoalsOptions.filter(
+                              (c) => value?.includes(c.value),
+                            )}
+                            // fix menu z-index issue
+                            menuPortalTarget={htmlRef.current}
+                            styles={SELECT_STYLES}
+                            inputId="input_sustainableDevelopmentGoals" // e2e
+                            placeholder="Select goals..."
+                          />
+                        )}
+                      />
+                    </FormField>
+
+                    {/* ACCESSIBILITY: support status, accommodations and Other description are
+                        kept consistent by the component; each value is written back here. */}
+                    <OpportunityAccessibilityFields
+                      value={{
+                        accessibilitySupport: watchAccessibilitySupport ?? null,
+                        accommodations: watchAccommodations ?? null,
+                        accommodationOtherDescription:
+                          watchAccommodationOtherDescription ?? null,
+                      }}
+                      options={accessibilityData}
+                      onChange={(next) => {
+                        const options = {
+                          shouldDirty: true,
+                          shouldTouch: true,
+                          shouldValidate: true,
+                        };
+                        setValueStep2(
+                          "accessibilitySupport",
+                          next.accessibilitySupport,
+                          options,
+                        );
+                        setValueStep2(
+                          "accommodations",
+                          next.accommodations,
+                          options,
+                        );
+                        setValueStep2(
+                          "accommodationOtherDescription",
+                          next.accommodationOtherDescription,
+                          options,
+                        );
+                      }}
+                      errors={{
+                        accessibilitySupport:
+                          formStateStep2.errors.accessibilitySupport?.message,
+                        accommodations:
+                          formStateStep2.errors.accommodations?.message,
+                        accommodationOtherDescription:
+                          formStateStep2.errors.accommodationOtherDescription
+                            ?.message,
+                      }}
+                      showErrors={
+                        formStateStep2.isSubmitted ||
+                        !!formStateStep2.touchedFields.accessibilitySupport
+                      }
+                      menuPortalTarget={htmlRef.current}
+                    />
+
                     {(customFieldDefinitions?.length ?? 0) > 0 && (
                       <div className="divider" />
                     )}
 
                     {/* CUSTOM FIELDS (definition-driven, YOM-1244 / YOM-1255) */}
                     {/* Managed by the step 2 form so values partake in zod validation
-                        (gates "Next") and dirty tracking (unsaved-changes dialog). */}
+                        (gates "Next") and dirty tracking (unsaved-changes dialog).
+                        `rules` applies the API's protected Job contracts (salary /
+                        employment); inert for types without those keys. */}
                     <Controller
                       control={controlStep2}
                       name="customFields"
@@ -2614,6 +3245,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                           values={value}
                           onChange={onChange}
                           showErrors={formStateStep2.isSubmitted}
+                          rules={customFieldRules}
                         />
                       )}
                     />
@@ -2645,37 +3277,14 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                   <div className="mb-4 flex flex-col gap-2">
                     <h5 className="font-bold tracking-wider">Rewards</h5>
                     <p className="-mt-2 text-sm">
-                      Choose the reward that participants will earn after
-                      successfully completing the opportunity.
+                      Say whether participants are paid or rewarded, and how.
                     </p>
                     {isJobOpportunity && (
-                      <FormMessage messageType={FormMessageType.Warning}>
-                        Rewards cannot be set for opportunities of type
-                        {` '${OPPORTUNITY_TYPE_NANE_JOB}'.`}
+                      <FormMessage messageType={FormMessageType.Info}>
+                        {`Opportunities of type '${OPPORTUNITY_TYPE_NANE_JOB}' cannot offer ZLTO. A Job's pay is captured in its salary fields on the Details step; a partner incentive can still be recorded here.`}
                       </FormMessage>
                     )}
-                    {!isJobOpportunity &&
-                      !organisation?.zltoRewardPoolCurrentFinancialYear && (
-                        <FormMessage messageType={FormMessageType.Warning}>
-                          Heads up! Your organisation does not have a current
-                          financial year ZLTO reward pool. Please contact
-                          support to set it up for your organisation.
-                        </FormMessage>
-                      )}
-                    {/* Canonical vocabulary (T0): "Remaining balance (this financial year)",
-                        formatted through the shared formatter so it reads identically to the same
-                        figure on the organisation page and in Treasury. */}
-                    {!isJobOpportunity &&
-                      organisation?.zltoRewardPoolCurrentFinancialYear && (
-                        <div className="badge bg-orange !rounded-full px-4 text-white">
-                          {`Remaining balance ${LABEL_SUFFIX_FY}: ${formatZlto(
-                            organisation.zltoRewardBalanceCurrentFinancialYear,
-                          )} ZLTO`}
-                        </div>
-                      )}
-                    {!isJobOpportunity && !formStateStep3.isValid && (
-                      <FormRequiredFieldMessage />
-                    )}
+                    {!formStateStep3.isValid && <FormRequiredFieldMessage />}
                   </div>
 
                   <form
@@ -2685,73 +3294,360 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       onSubmitStep(4, data),
                     )}
                   >
+                    {/* INCENTIVIZED: required on manual capture; null on legacy data */}
+                    <FormField
+                      label="Incentive"
+                      subLabel="Does this opportunity offer pay, ZLTO or another incentive?"
+                      showWarningIcon={
+                        !!formStateStep3.errors.incentivized?.message
+                      }
+                      showError={
+                        !!formStateStep3.touchedFields.incentivized ||
+                        formStateStep3.isSubmitted
+                      }
+                      error={formStateStep3.errors.incentivized?.message}
+                    >
+                      <Controller
+                        control={controlStep3}
+                        name="incentivized"
+                        render={({ field: { onChange, onBlur, value } }) => (
+                          <div className="flex flex-row flex-wrap gap-6">
+                            <div>
+                              <FormRadio
+                                id="incentivizedYes"
+                                label="Yes"
+                                inputProps={{
+                                  name: "incentivized",
+                                  checked: value === true,
+                                  onBlur,
+                                  onChange: () => onChange(true),
+                                }}
+                              />
+                            </div>
+                            <div>
+                              <FormRadio
+                                id="incentivizedNo"
+                                label="No"
+                                inputProps={{
+                                  name: "incentivized",
+                                  checked: value === false,
+                                  onBlur,
+                                  onChange: () => {
+                                    // not incentivized ⇒ no reward of any kind
+                                    setValueStep3(
+                                      "rewardType",
+                                      RewardType.None,
+                                      {
+                                        shouldDirty: true,
+                                        shouldValidate: true,
+                                      },
+                                    );
+                                    onChange(false);
+                                  },
+                                }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      />
+                    </FormField>
+
+                    {isJobOpportunity && watchIncentivized === false && (
+                      <FormMessage messageType={FormMessageType.Warning}>
+                        A Job marked as not incentivized cannot disclose a
+                        salary.
+                      </FormMessage>
+                    )}
+
+                    {/* REWARD TYPE: None (Jobs only — pay is the salary) / ZLTO / Partner incentive */}
+                    {watchIncentivized === true && (
+                      <FormField
+                        label="Reward type"
+                        subLabel={
+                          isJobOpportunity
+                            ? "Choose None when the pay is the salary alone, or record a partner incentive on top of it."
+                            : "What participants receive on completion."
+                        }
+                        showWarningIcon={
+                          !!formStateStep3.errors.rewardType?.message
+                        }
+                        showError={
+                          !!formStateStep3.touchedFields.rewardType ||
+                          formStateStep3.isSubmitted
+                        }
+                        error={formStateStep3.errors.rewardType?.message}
+                      >
+                        <Controller
+                          control={controlStep3}
+                          name="rewardType"
+                          render={({ field: { onChange, onBlur, value } }) => (
+                            <div className="flex flex-row flex-wrap gap-6">
+                              {rewardTypeOptions.map((rewardType) => (
+                                <div key={rewardType}>
+                                  <FormRadio
+                                    id={`rewardType${rewardType}`}
+                                    label={REWARD_TYPE_LABELS[rewardType]}
+                                    inputProps={{
+                                      name: "rewardType",
+                                      checked: value === rewardType,
+                                      onBlur,
+                                      onChange: () => onChange(rewardType),
+                                    }}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        />
+                      </FormField>
+                    )}
+
+                    {/* PARTNER INCENTIVE: informational amount + ISO currency code */}
+                    {watchIncentivized === true &&
+                      watchRewardType === RewardType.PartnerIncentive && (
+                        <FormField
+                          label="Partner incentive"
+                          subLabel="The amount and currency of the incentive the partner provides. Informational only: Yoma does not pay or convert it."
+                          showWarningIcon={
+                            !!formStateStep3.errors.partnerIncentiveAmount
+                              ?.message ||
+                            !!formStateStep3.errors.partnerIncentiveCurrency
+                              ?.message
+                          }
+                        >
+                          <div className="grid gap-4 md:w-1/2 md:grid-cols-2">
+                            <FormField
+                              showError={
+                                !!formStateStep3.touchedFields
+                                  .partnerIncentiveAmount ||
+                                formStateStep3.isSubmitted
+                              }
+                              error={
+                                formStateStep3.errors.partnerIncentiveAmount
+                                  ?.message
+                              }
+                            >
+                              <input
+                                type="number"
+                                step="any"
+                                className="input border-gray focus:border-gray w-full rounded-md focus:outline-none"
+                                placeholder="Enter amount..."
+                                aria-label="Partner incentive amount"
+                                id="input_partnerIncentiveAmount" // e2e
+                                {...registerStep3("partnerIncentiveAmount", {
+                                  valueAsNumber: true,
+                                })}
+                              />
+                            </FormField>
+                            <FormField
+                              showError={
+                                !!formStateStep3.touchedFields
+                                  .partnerIncentiveCurrency ||
+                                formStateStep3.isSubmitted
+                              }
+                              error={
+                                formStateStep3.errors.partnerIncentiveCurrency
+                                  ?.message
+                              }
+                            >
+                              <Controller
+                                control={controlStep3}
+                                name="partnerIncentiveCurrency"
+                                render={({
+                                  field: { onChange, value, onBlur },
+                                }) => (
+                                  <Select
+                                    instanceId="partnerIncentiveCurrency"
+                                    classNames={{
+                                      control: () =>
+                                        "input w-full !border-gray pr-0 pl-2",
+                                    }}
+                                    isClearable={true}
+                                    options={currenciesOptions}
+                                    onBlur={onBlur} // mark the field as touched
+                                    onChange={(val) =>
+                                      onChange(val?.value ?? null)
+                                    }
+                                    value={
+                                      currenciesOptions.find(
+                                        (c) => c.value === value,
+                                      ) ?? null
+                                    }
+                                    // fix menu z-index issue
+                                    menuPortalTarget={htmlRef.current}
+                                    styles={SELECT_STYLES}
+                                    inputId="input_partnerIncentiveCurrency" // e2e
+                                    placeholder="Select currency..."
+                                  />
+                                )}
+                              />
+                            </FormField>
+                          </div>
+                        </FormField>
+                      )}
+
+                    {/* ZLTO: the existing reward / pool capture, now driven by rewardType */}
                     <>
-                      {!isJobOpportunity &&
-                        organisation?.zltoRewardPoolCurrentFinancialYear && (
+                      {watchIncentivized === true &&
+                        watchRewardType === RewardType.ZLTO && (
                           <>
+                            {!organisation?.zltoRewardPoolCurrentFinancialYear && (
+                              <FormMessage
+                                messageType={FormMessageType.Warning}
+                              >
+                                Heads up! Your organisation does not have a
+                                current financial year ZLTO reward pool. Please
+                                contact support to set it up for your
+                                organisation.
+                              </FormMessage>
+                            )}
+                            {/* Canonical vocabulary (T0): "Remaining balance (this financial year)",
+                                formatted through the shared formatter so it reads identically to
+                                the same figure on the organisation page and in Treasury. */}
+                            {!!organisation?.zltoRewardPoolCurrentFinancialYear && (
+                              <div className="badge bg-orange !rounded-full px-4 text-white">
+                                {`Remaining balance ${LABEL_SUFFIX_FY}: ${formatZlto(
+                                  organisation.zltoRewardBalanceCurrentFinancialYear,
+                                )} ZLTO`}
+                              </div>
+                            )}
+
                             <FormField
                               label="Individual Reward"
                               subLabel="This will be the amount issued to the individual that completes the opportunity."
                               showWarningIcon={
-                                !!formStateStep3.errors.showZltoReward?.message
+                                !!formStateStep3.errors.zltoReward?.message
                               }
                               showError={
-                                !!formStateStep3.touchedFields.showZltoReward ||
+                                !!formStateStep3.touchedFields.zltoReward ||
+                                formStateStep3.isSubmitted
+                              }
+                              error={formStateStep3.errors.zltoReward?.message}
+                            >
+                              <Controller
+                                control={controlStep3}
+                                name="zltoReward"
+                                render={({ field: { onBlur } }) => (
+                                  <input
+                                    type="number"
+                                    className="input border-gray focus:border-gray w-1/2 rounded-md focus:outline-none"
+                                    placeholder="Enter reward amount..."
+                                    {...registerStep3("zltoReward", {
+                                      valueAsNumber: true,
+                                    })}
+                                    onBlur={(e) => {
+                                      onBlur(); // mark the field as touched
+
+                                      // default pool to limit & reward
+                                      const participantLimit =
+                                        getValuesStep2("participantLimit");
+                                      const zltoReward = parseInt(
+                                        e.target.value,
+                                      );
+
+                                      if (
+                                        participantLimit !== null &&
+                                        !isNaN(zltoReward)
+                                      ) {
+                                        setValueStep3(
+                                          "zltoRewardPool",
+                                          participantLimit * zltoReward,
+                                        );
+                                      }
+                                    }}
+                                  />
+                                )}
+                              />
+                            </FormField>
+
+                            <FormField
+                              label="Total Reward"
+                              subLabel={`This is a limit you can set on the opportunity, meaning the first youth to complete the opportunity will receive rewards, until the limit is reached. ${
+                                watchParticipantLimit
+                                  ? `A participant limit of ${watchParticipantLimit} is set, so the pool will default to ${
+                                      watchParticipantLimit
+                                        ? `${watchParticipantLimit} (limit)`
+                                        : "limit"
+                                    } * ${
+                                      watchZltoReward
+                                        ? `${watchZltoReward} (reward)`
+                                        : "reward"
+                                    }. This can be changed.`
+                                  : ""
+                              }`}
+                              showWarningIcon={
+                                !!formStateStep3.errors.showZltoRewardPool
+                                  ?.message
+                              }
+                              showError={
+                                !!formStateStep3.touchedFields
+                                  .showZltoRewardPool ||
                                 formStateStep3.isSubmitted
                               }
                               error={
-                                formStateStep3.errors.showZltoReward?.message
+                                formStateStep3.errors.showZltoRewardPool
+                                  ?.message
                               }
                             >
                               <FormCheckbox
-                                id="showZltoReward"
-                                label="I want to issue Zlto reward upon completion"
+                                id="showZltoRewardPool"
+                                label="I want to limit the total amount of zlto rewarded"
                                 inputProps={{
-                                  ...registerStep3(`showZltoReward`),
+                                  ...registerStep3(`showZltoRewardPool`),
                                 }}
                               />
                             </FormField>
 
-                            {watchShowZltoReward && (
+                            {watchShowZltoRewardPool && (
                               <>
                                 <FormField
                                   showError={
-                                    !!formStateStep3.touchedFields.zltoReward ||
+                                    !!formStateStep3.touchedFields
+                                      .zltoRewardPool ||
                                     formStateStep3.isSubmitted
                                   }
                                   error={
-                                    formStateStep3.errors.zltoReward?.message
+                                    formStateStep3.errors.zltoRewardPool
+                                      ?.message
                                   }
                                 >
                                   <Controller
                                     control={controlStep3}
-                                    name="zltoReward"
+                                    name="zltoRewardPool"
                                     render={({ field: { onBlur } }) => (
                                       <input
                                         type="number"
                                         className="input border-gray focus:border-gray w-1/2 rounded-md focus:outline-none"
-                                        placeholder="Enter reward amount..."
-                                        {...registerStep3("zltoReward", {
+                                        placeholder="Enter pool amount..."
+                                        {...registerStep3("zltoRewardPool", {
                                           valueAsNumber: true,
                                         })}
                                         onBlur={(e) => {
                                           onBlur(); // mark the field as touched
 
-                                          // default pool to limit & reward
+                                          // default pool to limit & reward (when clearing the pool value)
                                           const participantLimit =
                                             getValuesStep2("participantLimit");
-                                          const zltoReward = parseInt(
+                                          const zltoReward =
+                                            getValuesStep3("zltoReward");
+                                          const zltoRewardPool = parseInt(
                                             e.target.value,
                                           );
 
-                                          if (
-                                            participantLimit !== null &&
-                                            !isNaN(zltoReward)
-                                          ) {
-                                            setValueStep3(
-                                              "zltoRewardPool",
-                                              participantLimit * zltoReward,
-                                            );
+                                          if (participantLimit !== null) {
+                                            if (
+                                              zltoReward !== null &&
+                                              zltoReward !== undefined &&
+                                              !isNaN(zltoReward) &&
+                                              (zltoRewardPool === null ||
+                                                zltoRewardPool === undefined ||
+                                                isNaN(zltoRewardPool))
+                                            ) {
+                                              setValueStep3(
+                                                "zltoRewardPool",
+                                                participantLimit * zltoReward,
+                                              );
+                                            }
                                           }
                                         }}
                                       />
@@ -2759,133 +3655,27 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                                   />
                                 </FormField>
 
-                                <FormField
-                                  label="Total Reward"
-                                  subLabel={`This is a limit you can set on the opportunity, meaning the first youth to complete the opportunity will receive rewards, until the limit is reached. ${
-                                    watchParticipantLimit
-                                      ? `A participant limit of ${watchParticipantLimit} is set, so the pool will default to ${
-                                          watchParticipantLimit
-                                            ? `${watchParticipantLimit} (limit)`
-                                            : "limit"
-                                        } * ${
-                                          watchZltoReward
-                                            ? `${watchZltoReward} (reward)`
-                                            : "reward"
-                                        }. This can be changed.`
-                                      : ""
-                                  }`}
-                                  showWarningIcon={
-                                    !!formStateStep3.errors.showZltoRewardPool
-                                      ?.message
-                                  }
-                                  showError={
-                                    !!formStateStep3.touchedFields
-                                      .showZltoRewardPool ||
-                                    formStateStep3.isSubmitted
-                                  }
-                                  error={
-                                    formStateStep3.errors.showZltoRewardPool
-                                      ?.message
-                                  }
-                                >
-                                  <FormCheckbox
-                                    id="showZltoRewardPool"
-                                    label="I want to limit the total amount of zlto rewarded"
-                                    inputProps={{
-                                      ...registerStep3(`showZltoRewardPool`),
-                                    }}
-                                  />
-                                </FormField>
-
-                                {watchShowZltoRewardPool && (
-                                  <>
-                                    <FormField
-                                      showError={
-                                        !!formStateStep3.touchedFields
-                                          .zltoRewardPool ||
-                                        formStateStep3.isSubmitted
-                                      }
-                                      error={
-                                        formStateStep3.errors.zltoRewardPool
-                                          ?.message
-                                      }
-                                    >
-                                      <Controller
-                                        control={controlStep3}
-                                        name="zltoRewardPool"
-                                        render={({ field: { onBlur } }) => (
-                                          <input
-                                            type="number"
-                                            className="input border-gray focus:border-gray w-1/2 rounded-md focus:outline-none"
-                                            placeholder="Enter pool amount..."
-                                            {...registerStep3(
-                                              "zltoRewardPool",
-                                              {
-                                                valueAsNumber: true,
-                                              },
-                                            )}
-                                            onBlur={(e) => {
-                                              onBlur(); // mark the field as touched
-
-                                              // default pool to limit & reward (when clearing the pool value)
-                                              const participantLimit =
-                                                getValuesStep2(
-                                                  "participantLimit",
-                                                );
-                                              const zltoReward =
-                                                getValuesStep3("zltoReward");
-                                              const zltoRewardPool = parseInt(
-                                                e.target.value,
-                                              );
-
-                                              if (participantLimit !== null) {
-                                                if (
-                                                  zltoReward !== null &&
-                                                  zltoReward !== undefined &&
-                                                  !isNaN(zltoReward) &&
-                                                  (zltoRewardPool === null ||
-                                                    zltoRewardPool ===
-                                                      undefined ||
-                                                    isNaN(zltoRewardPool))
-                                                ) {
-                                                  setValueStep3(
-                                                    "zltoRewardPool",
-                                                    participantLimit *
-                                                      zltoReward,
-                                                  );
-                                                }
-                                              }
-                                            }}
-                                          />
-                                        )}
-                                      />
-                                    </FormField>
-
-                                    {opportunity?.zltoRewardPool != null && (
-                                      <FormMessage
-                                        messageType={FormMessageType.Info}
-                                      >
-                                        <strong>Opportunity-Level Pool:</strong>{" "}
-                                        This opportunity currently has a ZLTO
-                                        pool of{" "}
-                                        <strong>
-                                          {opportunity?.zltoRewardPool ?? "0"}
-                                        </strong>
-                                        . The cumulative ZLTO awarded is{" "}
-                                        <strong>
-                                          {opportunity?.zltoRewardCumulative ??
-                                            "0"}
-                                        </strong>
-                                        . The remaining balance is{" "}
-                                        <strong>
-                                          {opportunity?.zltoRewardBalance ??
-                                            "0"}
-                                        </strong>
-                                        . Once depleted, no more ZLTO can be
-                                        awarded for this opportunity.
-                                      </FormMessage>
-                                    )}
-                                  </>
+                                {opportunity?.zltoRewardPool != null && (
+                                  <FormMessage
+                                    messageType={FormMessageType.Info}
+                                  >
+                                    <strong>Opportunity-Level Pool:</strong>{" "}
+                                    This opportunity currently has a ZLTO pool
+                                    of{" "}
+                                    <strong>
+                                      {opportunity?.zltoRewardPool ?? "0"}
+                                    </strong>
+                                    . The cumulative ZLTO awarded is{" "}
+                                    <strong>
+                                      {opportunity?.zltoRewardCumulative ?? "0"}
+                                    </strong>
+                                    . The remaining balance is{" "}
+                                    <strong>
+                                      {opportunity?.zltoRewardBalance ?? "0"}
+                                    </strong>
+                                    . Once depleted, no more ZLTO can be awarded
+                                    for this opportunity.
+                                  </FormMessage>
                                 )}
                               </>
                             )}
@@ -2935,8 +3725,12 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     )}
                   >
                     <FormField
-                      label="Skills"
-                      subLabel="Which skills will the Youth be awarded with upon completion? This will be displayed on the opportunity page."
+                      label={isJobOpportunity ? "Required skills" : "Skills"}
+                      subLabel={
+                        isJobOpportunity
+                          ? "Which skills does this Job require? At least one is required for Jobs. This will be displayed on the opportunity page."
+                          : "Which skills will the Youth be awarded with upon completion? This will be displayed on the opportunity page."
+                      }
                       showWarningIcon={!!formStateStep4.errors.skills?.message}
                       showError={
                         !!formStateStep4.touchedFields.skills ||

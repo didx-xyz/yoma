@@ -7,7 +7,7 @@
 export const TYPE_ORDER: readonly string[] = [
   "Job",
   "Learning",
-  "Task",
+  "ImpactAction",
   "Event",
   "Other",
 ];

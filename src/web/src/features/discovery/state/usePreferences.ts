@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSetAtom } from "jotai";
 import { useSession } from "next-auth/react";
 import type {
   UserPreferenceScope,
@@ -8,10 +9,11 @@ import {
   getUserPreferences,
   saveUserPreferences,
 } from "~/api/services/userPreferences";
+import { userProfileAtom } from "~/lib/store";
 
 /**
- * The youth's stored preferences, read through the façade (mocked locally until the presets API
- * lands). Anonymous visitors get session-held answers; signed-in youths their stored preset.
+ * The youth's stored preferences. Anonymous visitors get session-held answers; signed-in youths
+ * their saved preferences (`/user/preferences`, plus the place from their profile).
  *
  * The "seen personalization" marker is separate from the preferences themselves — skipping the
  * dialog still counts as seen, so it never auto-opens twice.
@@ -30,6 +32,7 @@ export function usePreferences(): {
   scope: UserPreferenceScope;
   /** `undefined` while loading; `null` = never captured. */
   preferences: UserPreferences | null | undefined;
+  /** Rejects with a readable message when the save — or the place, on the profile — fails. */
   save: (preferences: UserPreferences) => Promise<UserPreferences>;
   readPersonalizationSeen: () => boolean;
   markPersonalizationSeen: () => void;
@@ -38,19 +41,26 @@ export function usePreferences(): {
   const scope: UserPreferenceScope =
     status === "authenticated" ? "user" : "anonymous";
   const queryClient = useQueryClient();
+  const setUserProfile = useSetAtom(userProfileAtom);
   const queryKey = ["discovery", "preferences", scope];
 
   const { data } = useQuery({
     queryKey,
     queryFn: () => getUserPreferences(scope),
     enabled: status !== "loading",
-    staleTime: Infinity, // the façade is the only writer, and it updates the cache below
+    staleTime: Infinity, // this hook is the only writer, and it updates the cache below
   });
 
   const { mutateAsync: save } = useMutation({
-    mutationFn: (preferences: UserPreferences) =>
-      saveUserPreferences(scope, preferences),
-    onSuccess: (saved) => queryClient.setQueryData(queryKey, saved),
+    mutationFn: async (preferences: UserPreferences) => {
+      const saved = await saveUserPreferences(scope, preferences);
+      // Whatever was saved is the truth now — even when the place then failed to save.
+      queryClient.setQueryData(queryKey, saved.preferences);
+      // The place is a profile field: keep the cached session profile in step with it.
+      if (saved.profile) setUserProfile(saved.profile);
+      if (saved.locationError) throw new Error(saved.locationError);
+      return saved.preferences;
+    },
   });
 
   return {

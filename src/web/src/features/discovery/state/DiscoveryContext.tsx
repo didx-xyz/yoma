@@ -14,7 +14,7 @@ import type {
 import { userProfileAtom } from "~/lib/store";
 import type { ChipLabelResolver, DiscoveryChip } from "../lib/chipModel";
 import { buildChips } from "../lib/chipModel";
-import { engagementLabel } from "../lib/engagementLabels";
+import { ageInYears } from "../lib/dates";
 import type { DiscoveryAction } from "../lib/discoveryReducer";
 import { homeCountryId as resolveHomeCountryId } from "../lib/location";
 import type { InheritedFragments } from "../lib/preferenceMapping";
@@ -29,6 +29,8 @@ import type {
 } from "../lib/types";
 import { hasActiveFilters } from "../lib/types";
 import {
+  engagementDisplayName,
+  sdgLabel,
   useDiscoveryLookups,
   type DiscoveryLookups,
 } from "./useDiscoveryLookups";
@@ -135,15 +137,20 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
   const [preferenceUndo, setPreferenceUndo] =
     useState<PreferenceSnapshot | null>(null);
 
+  // Identity-derived: only a signed-in youth has a date of birth to read.
+  const age =
+    scope === "user" ? ageInYears(profile?.dateOfBirth, new Date()) : null;
+
   const fragments = useMemo(
     () =>
       preferences
         ? mapPreferencesToFilters(preferences, {
             countryId: homeCountryId,
+            age,
             categories: lookups.categories,
           })
         : {},
-    [preferences, homeCountryId, lookups.categories],
+    [preferences, homeCountryId, age, lookups.categories],
   );
 
   const effectiveFilters = applyInheritedFragments(
@@ -167,14 +174,17 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
       case "countries":
         return byId(lookups.countries);
       case "engagementTypes":
-        // Through the ONE engagement display map (Online → Remote, Offline → On-site).
-        return engagementLabel(byId(lookups.engagementTypes));
+        return engagementDisplayName(lookups.engagementTypes, value);
       case "commitment":
         return byId(lookups.timeIntervals);
       case "languages":
         return byId(lookups.languages);
-      case "providers":
-        return byId(lookups.organizations);
+      case "accommodations":
+        return byId(lookups.accommodations);
+      case "sdgs": {
+        const goal = lookups.sdgs.find((g) => g.id === value);
+        return goal ? sdgLabel(goal) : value;
+      }
       default:
         return value;
     }

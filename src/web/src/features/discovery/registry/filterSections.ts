@@ -20,7 +20,8 @@ import {
  * between breakpoints.
  *
  * Primary (2026-09-22 BA alignment): Categories · Where · Engagement · How long · Accessibility ·
- * Language. Behind "More filters": Paid and rewards · Skills · SDGs · Provider. Paid moved off
+ * Language. Behind "More filters": Paid and rewards · Skills · SDGs · Provider. Only Skills is
+ * still pending (2026-09-29) — the search has no skills facet. Paid moved off
  * the primary list when Engagement took its place on the search bar — one definition, two homes,
  * so the section and the bar segment can never disagree.
  *
@@ -33,12 +34,11 @@ export type FilterControlKind =
   | "chips"
   /** Country multi-select, then region / city (one country) and distance — the Where section. */
   | "location"
-  | "gate"
   | "lookupSearch"
   | "range"
-  /** Free text with suggestions as you type, matching anywhere in the name — never the full list. */
-  | "typeahead"
-  /** Paid (inert until the Is Paid field exists) above the live ZLTO reward chips. */
+  /** One free-text "contains" value, committed on Enter / blur — the Provider section. */
+  | "text"
+  /** Paid or rewarded / Unpaid above the ZLTO reward chips — one section, two facets. */
   | "rewards";
 
 /** Which `DiscoveryFilters` slot the section reads and writes. */
@@ -49,21 +49,27 @@ export type FilterSectionBinding =
   | "commitment"
   | "zlto"
   | "languages"
-  | "providers";
+  | "accommodations"
+  | "sdgs"
+  | "provider";
 
 /**
  * Which `DiscoveryFilters` facet a preference fragment feeds each binding through — the ONE
  * mapping shared by the section model (inherited-aware selection) and the section badge.
- * `null` = no preference can feed this binding.
+ * `null` = no preference can feed this binding. Paid and rewards (`zlto`) receives the
+ * incentive preference through its Paid half. Accessibility is deliberately `null`: the stored
+ * requirements are not applied to the feed (see `preferenceMapping.ts`).
  */
 export const FACET_FOR_BINDING = {
   categories: "categories",
   countries: "countries",
   engagementTypes: "engagementTypes",
   commitment: "commitment",
-  zlto: null,
+  zlto: "incentivized",
   languages: "languages",
-  providers: null,
+  accommodations: null,
+  sdgs: null,
+  provider: null,
 } as const satisfies Record<FilterSectionBinding, string | null>;
 
 export interface FilterSectionDef {
@@ -93,8 +99,7 @@ export interface FilterSectionDef {
   group: "primary" | "more";
 }
 
-const pendingNote =
-  "Coming soon — the opportunity fields this filters on arrive with the finalised field definitions (YOM-1264).";
+const pendingNote = "Coming soon — the search can't filter on this yet.";
 
 /**
  * The type row is not a registry section (it binds `types`, which no `FilterSectionBinding`
@@ -120,8 +125,8 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     group: "primary",
   },
   // The BA's Location model: Country → Province/Region → City (English names, "contains"), plus
-  // distance from the picked city's centroid. Region and city need exactly one country; the
-  // search does not filter on them yet (LOCATION_SEARCH_LIVE) and the control says so.
+  // distance from the picked city's centroid. Region and city need exactly one country. Live
+  // since 2026-09-29 (LOCATION_SEARCH_LIVE).
   {
     id: "where",
     label: "Where",
@@ -131,9 +136,10 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     binding: "countries",
     optIn: false,
     hint: null,
-    // Jason, 2026-09-28: opportunities with no region or city are INCLUDED.
+    // Jason, 2026-09-28: opportunities with no region or city are INCLUDED. The API's radius
+    // search, by contrast, leaves out anything without coordinates.
     nullRule:
-      "Opportunities that don't name a region or city stay in your results.",
+      "Opportunities that don't name a region or city stay in your results; a distance search leaves out those without a mapped city.",
     pendingNote: null,
     group: "primary",
   },
@@ -171,18 +177,22 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     pendingNote: null,
     group: "primary",
   },
+  // Live since 2026-09-29 over the accommodations published opportunities list. The API needs
+  // ALL picked accommodations and leaves out opportunities that list none — the reverse of the
+  // BA's "stays in results for now", which is why the youth's stored requirements are NOT applied
+  // here automatically (preferenceMapping.ts) and the line below says what picking one does.
   {
     id: "accessibility",
     label: "Accessibility",
     question: "Need accommodations?",
     icon: IoShieldCheckmarkOutline,
-    control: "gate",
-    binding: null,
+    control: "chips",
+    binding: "accommodations",
     optIn: true,
     hint: null,
     nullRule:
-      "Includes opportunities that haven't described their accommodations — for now.",
-    pendingNote,
+      "Shows only opportunities that list every accommodation you pick — ones that haven't described their accommodations are left out.",
+    pendingNote: null,
     group: "primary",
   },
   // Every opportunity carries at least one language (the API requires it on create), so there
@@ -201,8 +211,10 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     pendingNote: null,
     group: "primary",
   },
-  // Demoted 2026-09-22 when Engagement took Pay's place on the search bar. The ZLTO half is live
-  // (a core facet); the Paid half is inert until the Is Paid / Reward Type fields exist.
+  // Demoted 2026-09-22 when Engagement took Pay's place on the search bar. Both halves live since
+  // 2026-09-29: Paid is the core `incentivized` field (pay, ZLTO or another incentive — the BA's
+  // "Is Paid", renamed by the API) and ZLTO is the reward facet. There is no public sort, so
+  // "sorted last" for unspecified opportunities is not claimed.
   {
     id: "pay",
     label: "Paid and rewards",
@@ -213,12 +225,11 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     optIn: false,
     hint: null,
     nullRule:
-      "Opportunities that don't say whether they pay stay in the results, sorted last — once the paid filter is live.",
-    pendingNote:
-      "Paid / not paid arrives with the Is Paid field (YOM-1264). ZLTO rewards filter today.",
+      "Opportunities that haven't said whether they pay or reward stay in your results.",
+    pendingNote: null,
     group: "more",
   },
-  // Demoted, not deleted — partners ask for Provider; Skills and SDGs await their API facets.
+  // Demoted, not deleted — partners ask for Provider; Skills awaits a search facet.
   {
     id: "skills",
     label: "Skills",
@@ -238,23 +249,25 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     question: "Which global goals matter to you?",
     icon: IoGlobeOutline,
     control: "chips",
-    binding: null,
+    binding: "sdgs",
     optIn: false,
     hint: null,
-    nullRule: null,
-    pendingNote,
+    nullRule: "Opportunities that don't name a goal stay in your results.",
+    pendingNote: null,
     group: "more",
   },
+  // The Provider FIELD (2026-09-28) — informational text such as "KFC", not the organisation that
+  // posts the opportunity. The organisation typeahead this replaced filtered something else.
   {
     id: "provider",
     label: "Provider",
     question: "Who runs it?",
     icon: IoBusinessOutline,
-    control: "typeahead",
-    binding: "providers",
+    control: "text",
+    binding: "provider",
     optIn: false,
-    hint: "Type part of a name — matches anywhere in it.",
-    nullRule: null,
+    hint: "The provider named on the opportunity — type part of it, e.g. KFC.",
+    nullRule: "Opportunities that don't name a provider stay in your results.",
     pendingNote: null,
     group: "more",
   },

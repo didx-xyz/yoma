@@ -4,8 +4,10 @@ import { IoChevronForward } from "react-icons/io5";
 import type { OpportunityInfo } from "~/api/models/opportunity";
 import { cardStatus } from "../../lib/cardStatus";
 import { formatNumber } from "../../lib/format";
+import { moneyFactsOf, resolveMoneyBadge } from "../../lib/money";
+import { useDiscovery } from "../../state/DiscoveryContext";
 import { LIST_COLUMNS } from "./listColumns";
-import { typeBadgeClass } from "./typeBadge";
+import { typeBadgeClass, typeLabel } from "./typeBadge";
 
 /**
  * The compact-list row — one line of aligned columns on desktop, a three-line stack on mobile
@@ -23,9 +25,13 @@ export const OpportunityRow: React.FC<{
   const closesClass = closing.urgent
     ? "font-semibold text-pink"
     : "text-gray-dark";
-  // Pay (salary / partner incentive / is-paid) is pending YOM-1264 fields — see lib/money.ts.
-  // Until then the pay slot is honestly empty; ZLTO stays in its own reward slot.
-  const pay = "—";
+  const { lookups } = useDiscovery();
+  // The pay line from the one money precedence (`lib/money.ts`); ZLTO keeps its own reward slot.
+  const money = resolveMoneyBadge(moneyFactsOf(opportunity));
+  const pay = money.payLine
+    ? `${money.payLine}${money.partnerPaid ? " (partner-paid)" : ""}`
+    : "—";
+  const type = typeLabel(lookups.types, opportunity.type);
 
   return (
     <Link
@@ -43,7 +49,7 @@ export const OpportunityRow: React.FC<{
           <span
             className={`rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wide uppercase ${typeBadgeClass(opportunity.type)}`}
           >
-            {opportunity.type}
+            {type}
           </span>
         </span>
         <span className={LIST_COLUMNS.title}>
@@ -78,7 +84,7 @@ export const OpportunityRow: React.FC<{
           <span
             className={`rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wide uppercase ${typeBadgeClass(opportunity.type)}`}
           >
-            {opportunity.type}
+            {type}
           </span>
           <span className={`text-xs ${closesClass}`}>{closing.label}</span>
         </div>

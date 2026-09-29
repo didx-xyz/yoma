@@ -3,6 +3,7 @@ import type { UserPreferences } from "~/api/models/userPreferences";
 import type { StepBlockDef } from "../../registry/preferenceSteps";
 import { Message } from "../shared/Message";
 import { usePreferenceOptions } from "./usePreferenceOptions";
+import { AccessibilityBlock } from "./blocks/AccessibilityBlock";
 import { GoalCards } from "./blocks/GoalCards";
 import { IdentityReadonly } from "./blocks/IdentityReadonly";
 import { LocationBlock } from "./blocks/LocationBlock";
@@ -25,7 +26,9 @@ export const StepBlock: React.FC<{
 
   // Selection semantics keyed by the PREFERENCE, not by the block kind — `rows` and `pills`
   // are purely visual, so the registry can swap kinds without cross-wiring another preference.
-  // Time commitment is single-select (one maximum); engagement is multi-select (2026-09-22).
+  // All three pill preferences are single-select, and tapping the chosen pill clears it: time
+  // commitment (one maximum), engagement (one, since 2026-09-29 — the API stores one) and the
+  // incentive preference (`yes` / `no` entries, none = no preference).
   const pillSelection = (): {
     active: (id: string) => boolean;
     toggle: (id: string) => void;
@@ -41,9 +44,21 @@ export const StepBlock: React.FC<{
                 : { intervalId: id, count: 1 },
           }),
       };
+    if (block.prefKey === "incentivized")
+      return {
+        active: (id) =>
+          draft.incentivized !== null && draft.incentivized === (id === "yes"),
+        toggle: (id) => {
+          const value = id === "yes";
+          onPatch({
+            incentivized: draft.incentivized === value ? null : value,
+          });
+        },
+      };
     return {
-      active: (id) => draft.engagement.includes(id),
-      toggle: (id) => onPatch({ engagement: toggleIn(draft.engagement, id) }),
+      active: (id) => draft.engagement === id,
+      toggle: (id) =>
+        onPatch({ engagement: draft.engagement === id ? null : id }),
     };
   };
 
@@ -99,26 +114,13 @@ export const StepBlock: React.FC<{
           </div>
         );
       }
-      case "toggle":
+      case "accessibility":
         return (
-          <label className="border-gray flex items-center gap-3 rounded-xl border p-3">
-            <input
-              type="checkbox"
-              className="toggle checked:[--input-color:var(--color-green)]"
-              checked={draft.accessibility.enabled}
-              onChange={(e) =>
-                onPatch({
-                  accessibility: {
-                    ...draft.accessibility,
-                    enabled: e.target.checked,
-                  },
-                })
-              }
-            />
-            <span className="text-sm font-semibold">
-              Only show opportunities with accommodations
-            </span>
-          </label>
+          <AccessibilityBlock
+            options={options}
+            draft={draft}
+            onPatch={onPatch}
+          />
         );
       case "lookupSearch":
         return <SkillSearch draft={draft} onPatch={onPatch} />;

@@ -26,9 +26,14 @@ import {
   sanitizeCustomFieldFilters,
 } from "./CustomFieldFilters";
 
-/** Maps a list of {name} lookups to react-select options (values are names). */
-const toOptions = (items: { name: string }[]): SelectOption[] =>
-  items.map((item) => ({ value: item.name, label: item.name }));
+/** Maps a list of {name} lookups to react-select options (values are names; labels prefer displayName). */
+const toOptions = (
+  items: { name: string; displayName?: string | null }[],
+): SelectOption[] =>
+  items.map((item) => ({
+    value: item.name,
+    label: item.displayName || item.name,
+  }));
 
 export const OpportunityAdminFilterVertical: React.FC<{
   htmlRef: HTMLDivElement;

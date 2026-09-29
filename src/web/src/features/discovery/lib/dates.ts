@@ -20,3 +20,24 @@ export function closingInfo(dateEnd: string | null, now: Date): ClosingInfo {
     urgent: false,
   };
 }
+
+/**
+ * Whole years since a date of birth, the way the API counts them for its age bounds (the
+ * birthday itself counts). `null` for a missing or unparseable date — the age preference then
+ * simply does not apply.
+ */
+export function ageInYears(
+  dateOfBirth: string | null | undefined,
+  now: Date,
+): number | null {
+  if (!dateOfBirth) return null;
+  const born = new Date(dateOfBirth);
+  if (Number.isNaN(born.getTime())) return null;
+  let age = now.getUTCFullYear() - born.getUTCFullYear();
+  const beforeBirthday =
+    now.getUTCMonth() < born.getUTCMonth() ||
+    (now.getUTCMonth() === born.getUTCMonth() &&
+      now.getUTCDate() < born.getUTCDate());
+  if (beforeBirthday) age -= 1;
+  return age >= 0 ? age : null;
+}

@@ -1,6 +1,6 @@
 import { OPPORTUNITY_TYPE_NANE_JOB } from "~/lib/constants";
 import type { FacetStatus } from "../../lib/apiStatus";
-import { engagementLabel } from "../../lib/engagementLabels";
+import { incentivizedLabel } from "../../lib/chipGroups";
 import { upToIntervalLabel } from "../../lib/format";
 import { whereSummary } from "../../lib/location";
 import { owningPreference } from "../../lib/preferenceMapping";
@@ -10,6 +10,7 @@ import type {
 } from "../../registry/filterSections";
 import { useDiscovery } from "../../state/DiscoveryContext";
 import type { LookupKey } from "../../state/useDiscoveryLookups";
+import { sdgLabel } from "../../state/useDiscoveryLookups";
 
 /**
  * Adapts one registry section to a uniform control model — options, selection, toggle — from the
@@ -37,20 +38,28 @@ export interface SectionModel {
   status: FacetStatus;
   /** A one-line reason the options are withheld right now (e.g. ZLTO while Type includes Job). */
   notice: string | null;
+  /** The Paid half of Paid and rewards — a second facet in the same section. */
+  secondary: SectionModel | null;
+  /** The free-text value of a `text` control, and how to commit it (`null` clears). */
+  text: { value: string | null; commit: (value: string | null) => void } | null;
 }
 
-/** Which lookup each binding's options come from, for `status`. */
-const LOOKUP_FOR_BINDING: Record<FilterSectionBinding, LookupKey> = {
+/** Which lookup each binding's options come from, for `status`; `null` = no lookup (free text). */
+const LOOKUP_FOR_BINDING: Record<FilterSectionBinding, LookupKey | null> = {
   categories: "categories",
   countries: "countries",
   engagementTypes: "engagementTypes",
   commitment: "timeIntervals",
   zlto: "zltoRanges",
   languages: "languages",
-  providers: "organizations",
+  accommodations: "accommodations",
+  sdgs: "sdgs",
+  provider: null,
 };
 
 const HAS_REWARD_ID = "has-reward";
+const PAID_ID = "paid";
+const UNPAID_ID = "unpaid";
 
 export function useSectionModel(section: FilterSectionDef): SectionModel {
   const {
@@ -62,17 +71,19 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
     skipPreference,
   } = useDiscovery();
   const { filters } = state;
+  const lookupKey =
+    section.binding === null ? null : LOOKUP_FOR_BINDING[section.binding];
+  // No lookup behind it: a pending section's note already says what it is; free text has none.
   const status: FacetStatus =
-    section.binding === null
-      ? "ok" // no lookup behind it — the pending note already says what it is
-      : lookups.status[LOOKUP_FOR_BINDING[section.binding]];
+    lookupKey === null ? "ok" : lookups.status[lookupKey];
 
   type ListFacet =
     | "categories"
     | "countries"
     | "engagementTypes"
     | "languages"
-    | "providers";
+    | "accommodations"
+    | "sdgs";
 
   const listModel = (
     options: SectionOption[],
@@ -104,11 +115,52 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
       summary: selected.length === 0 ? "Any" : `${selected.length} selected`,
       status,
       notice: null,
+      secondary: null,
+      text: null,
     };
   };
 
   const named = (items: { id: string; name: string }[]): SectionOption[] =>
     items.map((item) => ({ id: item.id, label: item.name, count: null }));
+
+  // Paid or rewarded / Unpaid — `incentivized`, which the incentive preference also feeds. A
+  // different value REPLACES the inherited one (the preference is skipped in the same change),
+  // so the two can never disagree about what the search is doing.
+  const paidModel = (): SectionModel => {
+    const effective = effectiveFilters.incentivized;
+    const selectedId =
+      effective === null ? null : effective ? PAID_ID : UNPAID_ID;
+    return {
+      options: [
+        { id: PAID_ID, label: incentivizedLabel(true), count: null },
+        { id: UNPAID_ID, label: incentivizedLabel(false), count: null },
+      ],
+      selected: selectedId ? [selectedId] : [],
+      toggle: (id) => {
+        const value = id === PAID_ID;
+        const inherited =
+          fragments.incentivized?.incentivized !== undefined &&
+          filters.incentivized === null &&
+          effective !== null;
+        if (effective === value) {
+          if (inherited) skipPreference("incentivized");
+          else
+            dispatch({ kind: "patchFilters", patch: { incentivized: null } });
+          return;
+        }
+        dispatch({
+          kind: "patchFilters",
+          patch: { incentivized: value },
+          skip: fragments.incentivized ? ["incentivized"] : undefined,
+        });
+      },
+      summary: effective === null ? "Any" : incentivizedLabel(effective),
+      status: "ok",
+      notice: null,
+      secondary: null,
+      text: null,
+    };
+  };
 
   switch (section.binding) {
     case "categories":
@@ -133,21 +185,48 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
       };
     }
     case "engagementTypes":
-      // Display names through the ONE engagement map (Online → Remote, Offline → On-site).
+      // The lookup's displayName (Remote / On-site / Hybrid), never its enum-like name.
       return listModel(
         lookups.engagementTypes.map((e) => ({
           id: e.id,
-          label: engagementLabel(e.name),
+          label: e.displayName || e.name,
           count: null,
         })),
         "engagementTypes",
       );
     case "languages":
       return listModel(named(lookups.languages), "languages");
-    case "providers":
-      // No preference feeds providers (FACET_FOR_BINDING.providers is null) — manual only,
-      // but routed through listModel so behaviour stays uniform.
-      return listModel(named(lookups.organizations), "providers");
+    case "accommodations":
+      // Manual only — the stored accessibility requirements are not inherited (see
+      // `preferenceMapping.ts`), so the section never reads FROM PREFERENCES.
+      return listModel(named(lookups.accommodations), "accommodations");
+    case "sdgs":
+      return listModel(
+        lookups.sdgs.map((goal) => ({
+          id: goal.id,
+          label: sdgLabel(goal),
+          count: null,
+        })),
+        "sdgs",
+      );
+    case "provider":
+      return {
+        options: [],
+        selected: [],
+        toggle: () => undefined,
+        summary: filters.provider ?? "Any",
+        status,
+        notice: null,
+        secondary: null,
+        text: {
+          value: filters.provider,
+          commit: (value) =>
+            dispatch({
+              kind: "patchFilters",
+              patch: { provider: value?.trim() || null },
+            }),
+        },
+      };
     case "commitment": {
       const options = lookups.timeIntervals.map((i) => ({
         id: i.id,
@@ -177,6 +256,8 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
           : "Any",
         status,
         notice: null,
+        secondary: null,
+        text: null,
       };
     }
     case "zlto": {
@@ -197,6 +278,8 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
             { id: HAS_REWARD_ID, label: "With ZLTO reward", count: null },
             ...named(lookups.zltoRanges),
           ];
+      const paid = paidModel();
+      const inPlay = selected.length + paid.selected.length;
       return {
         options,
         selected,
@@ -212,9 +295,16 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
                       : [...filters.zltoRanges, id],
                   },
           }),
-        summary: selected.length === 0 ? "Any" : `${selected.length} selected`,
+        summary:
+          inPlay === 0
+            ? "Any"
+            : selected.length === 0
+              ? paid.summary
+              : `${inPlay} selected`,
         status,
         notice: jobSelected ? "Jobs do not carry ZLTO." : null,
+        secondary: paid,
+        text: null,
       };
     }
     case null:
@@ -225,6 +315,8 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
         summary: "Coming soon",
         status,
         notice: null,
+        secondary: null,
+        text: null,
       };
   }
 }

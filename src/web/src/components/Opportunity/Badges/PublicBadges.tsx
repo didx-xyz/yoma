@@ -18,9 +18,14 @@ import {
   IoBulbOutline,
 } from "react-icons/io5";
 import Moment from "react-moment";
+import { EngagementTypeOption } from "~/api/models/common";
 import type { OpportunityInfo } from "~/api/models/opportunity";
 import { DATE_FORMAT_HUMAN, OPPORTUNITY_TYPE_NANE_JOB } from "~/lib/constants";
-import { getCommitmentDisplay } from "~/components/Opportunity/opportunityTypeTheme";
+import {
+  getCommitmentDisplay,
+  getEngagementConfig,
+  getTypeConfig,
+} from "~/components/Opportunity/opportunityTypeTheme";
 import ZltoRewardBadge from "./ZltoRewardBadge";
 
 interface BadgesProps {
@@ -104,14 +109,16 @@ const PublicBadges: React.FC<BadgesProps> = ({
               </span>
             </div>
           )}
-          {opportunity?.type === "Micro-task" && (
+          {opportunity?.type === "ImpactAction" && (
             <div
               className={`${showToolTips ? "tooltip tooltip-secondary cursor-help before:text-[0.6875rem]" : ""}`}
               {...(showToolTips && { "data-tip": "Quick task" })}
             >
               <span className="badge badge-sm border border-amber-200 bg-amber-50 whitespace-nowrap text-amber-700">
                 <IoFlashOutline className="h-4 w-4" />
-                <span className="ml-1">{opportunity.type}</span>
+                <span className="ml-1">
+                  {getTypeConfig(opportunity.type).label}
+                </span>
               </span>
             </div>
           )}
@@ -153,36 +160,42 @@ const PublicBadges: React.FC<BadgesProps> = ({
 
       {opportunity?.engagementType && (
         <>
-          {opportunity?.engagementType === "Hybrid" && (
+          {opportunity?.engagementType === EngagementTypeOption.Hybrid && (
             <div
               className={`${showToolTips ? "tooltip tooltip-secondary cursor-help before:text-[0.6875rem]" : ""}`}
-              {...(showToolTips && { "data-tip": "Online and in-person" })}
+              {...(showToolTips && { "data-tip": "Remote and on-site" })}
             >
               <span className="badge badge-sm border border-indigo-200 bg-indigo-50 whitespace-nowrap text-indigo-700">
                 <IoLaptopOutline className="h-4 w-4" />
-                <span className="ml-1">{opportunity.engagementType}</span>
+                <span className="ml-1">
+                  {getEngagementConfig(opportunity.engagementType)?.label}
+                </span>
               </span>
             </div>
           )}
-          {opportunity?.engagementType === "Offline" && (
+          {opportunity?.engagementType === EngagementTypeOption.OnSite && (
             <div
               className={`${showToolTips ? "tooltip tooltip-secondary cursor-help before:text-[0.6875rem]" : ""}`}
-              {...(showToolTips && { "data-tip": "In-person only" })}
+              {...(showToolTips && { "data-tip": "On-site only" })}
             >
               <span className="badge badge-sm border border-orange-200 bg-orange-50 whitespace-nowrap text-orange-700">
                 <IoHomeOutline className="h-4 w-4" />
-                <span className="ml-1">{opportunity.engagementType}</span>
+                <span className="ml-1">
+                  {getEngagementConfig(opportunity.engagementType)?.label}
+                </span>
               </span>
             </div>
           )}
-          {opportunity?.engagementType === "Online" && (
+          {opportunity?.engagementType === EngagementTypeOption.Remote && (
             <div
               className={`${showToolTips ? "tooltip tooltip-secondary cursor-help before:text-[0.6875rem]" : ""}`}
-              {...(showToolTips && { "data-tip": "Fully online" })}
+              {...(showToolTips && { "data-tip": "Fully remote" })}
             >
               <span className="badge badge-sm border border-teal-200 bg-teal-50 whitespace-nowrap text-teal-700">
                 <IoGlobeOutline className="h-4 w-4" />
-                <span className="ml-1">{opportunity.engagementType}</span>
+                <span className="ml-1">
+                  {getEngagementConfig(opportunity.engagementType)?.label}
+                </span>
               </span>
             </div>
           )}

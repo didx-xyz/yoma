@@ -245,8 +245,35 @@ export const VerificationImport: React.FC<InputProps> = ({
                     <li>Surname</li>
                     <li>Gender (Male, Female, Prefer not to say)</li>
                     <li>
-                      Country (use ISO CodeAlpha2, e.g. US|GB for United States
-                      and United Kingdom)
+                      Country (one ISO CodeAlpha2 code, e.g. ZA for South
+                      Africa; Worldwide (WW) is not allowed)
+                    </li>
+                    <li>
+                      DateCompleted (YYYY-MM-DD or YYYY/MM/DD; defaults to the
+                      current date if omitted)
+                    </li>
+                  </ul>
+                </div>
+
+                <div>
+                  <p className="font-semibold">Optional Custom Field Columns</p>
+                  <p className="mb-3">
+                    These come after the core columns. Use each only for its
+                    opportunity type and leave it blank for the others:
+                  </p>
+                  <ul className="ml-5 list-disc text-sm">
+                    <li>
+                      jobEmploymentStartDate (Job — the actual start date,
+                      strictly YYYY-MM-DD; not the application deadline)
+                    </li>
+                    <li>
+                      impactActionImpactAchieved (Impact Action — the outcome,
+                      up to 1000 characters)
+                    </li>
+                    <li>
+                      eventRole (Event — Participant, Speaker, Panelist,
+                      FacilitatorTrainer, CoOrganiser or Volunteer; blank leaves
+                      it unspecified)
                     </li>
                   </ul>
                 </div>

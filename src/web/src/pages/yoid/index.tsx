@@ -6,6 +6,7 @@ import { env } from "process";
 import { useState, type ReactElement } from "react";
 import { searchCredentials } from "~/api/services/credentials";
 import { searchMyOpportunitiesSummary } from "~/api/services/myOpportunities";
+import { UserSkillType } from "~/api/models/user";
 import { getUserSkills } from "~/api/services/user";
 import { Header } from "~/components/Common/Header";
 import Suspense from "~/components/Common/Suspense";
@@ -75,8 +76,8 @@ const YoIDDashboard: NextPageWithLayout<{
     error: skillsError,
     isLoading: skillsIsLoading,
   } = useQuery({
-    queryKey: ["User", "Skills"],
-    queryFn: () => getUserSkills(),
+    queryKey: ["User", "Skills", UserSkillType.Verified],
+    queryFn: () => getUserSkills(UserSkillType.Verified),
     enabled: !error,
   });
 

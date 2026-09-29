@@ -28,6 +28,11 @@ import {
  * Location below country: `region=` and `city=` (English names), `pt=lat,lng` (the picked
  * city's centroid, ROUNDED to 2 decimals ≈ 1 km — Copy link shares the URL, so it must never
  * carry more precision than "which city") and `km=` (one of the radius options).
+ *
+ * 2026-09-29, with the new core facets: `paid=1|0` (incentivized), `acc=` (accommodations),
+ * `sdg=` and `provider=` (free text — it replaces `org=`, the organisation ids the Provider
+ * section held before the Provider field existed; nothing reads `org=` any more). `age` has no
+ * param: it is inherited from the profile only, never chosen here.
  */
 
 type Query = Record<string, string | string[] | undefined>;
@@ -76,6 +81,7 @@ export function parseDiscoveryQuery(query: Query): DiscoveryState {
   const [intervalId, countRaw] = time?.split(":") ?? [];
   const count = Number(countRaw);
   const reward = single(query, "reward");
+  const paid = single(query, "paid");
   const sort = single(query, "sort");
   const view = single(query, "view");
   const page = Number(single(query, "page"));
@@ -98,10 +104,14 @@ export function parseDiscoveryQuery(query: Query): DiscoveryState {
         intervalId && Number.isFinite(count) && count > 0
           ? { intervalId, count }
           : null,
+      incentivized: paid === null ? null : paid === "1",
       hasReward: reward === null ? null : reward === "1",
       zltoRanges: list(query, "zlto"),
       languages: list(query, "lang"),
-      providers: list(query, "org"),
+      accommodations: list(query, "acc"),
+      sdgs: list(query, "sdg"),
+      provider: single(query, "provider"),
+      age: null,
       customFields: parseCustomFields(single(query, "cf")),
     },
     preferencesOff: single(query, "prefsOff") === "1",
@@ -131,10 +141,14 @@ export function serializeDiscoveryState(state: DiscoveryState): string {
     ["engagement", filters.engagementTypes],
     ["zlto", filters.zltoRanges],
     ["lang", filters.languages],
-    ["org", filters.providers],
+    ["acc", filters.accommodations],
+    ["sdg", filters.sdgs],
   ];
   for (const [key, values] of lists)
     if (values.length > 0) params.set(key, values.join(","));
+  if (filters.provider) params.set("provider", filters.provider);
+  if (filters.incentivized !== null)
+    params.set("paid", filters.incentivized ? "1" : "0");
   if (filters.region) params.set("region", filters.region);
   if (filters.city) params.set("city", filters.city);
   if (filters.point)

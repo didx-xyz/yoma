@@ -503,6 +503,7 @@ const Opportunities: NextPageWithLayout<{
           {appliedFilterCount > 0 && (
             <OpportunityAdminFilterBadges
               searchFilter={searchFilter}
+              lookups_types={lookups_types}
               lookups_customFieldDefinitions={lookups_customFieldDefinitions}
               onSubmit={onSubmitFilter}
               className="-ml-2"

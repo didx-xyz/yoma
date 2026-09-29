@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import type {
+  Accessibility,
   Country,
   EngagementType,
   Language,
+  SustainableDevelopmentGoal,
   TimeInterval,
 } from "~/api/models/lookups";
 import type {
@@ -10,13 +12,13 @@ import type {
   OpportunitySearchCriteriaZltoRewardRange,
   OpportunityType,
 } from "~/api/models/opportunity";
-import type { OrganizationInfo } from "~/api/models/organisation";
 import { getEngagementTypes, getTimeIntervals } from "~/api/services/lookups";
 import {
+  getOpportunityAccommodations,
   getOpportunityCategories,
   getOpportunityCountries,
   getOpportunityLanguages,
-  getOpportunityOrganizations,
+  getOpportunitySustainableDevelopmentGoals,
   getOpportunityTypes,
   getZltoRewardRanges,
 } from "~/api/services/opportunities";
@@ -26,8 +28,11 @@ import { sortTypes } from "../lib/typeOrder";
 
 /**
  * The lookups the discovery surface renders options and labels from. All static-ish reference
- * data, cached for the session. Providers (organisations) and skills are searched on demand by
- * their `lookupSearch` controls rather than loaded up front.
+ * data, cached for the session. Skills are searched on demand by their `lookupSearch` control
+ * rather than loaded up front; Provider is free text and needs no list.
+ *
+ * Facet lists come from the `search/filter/*` endpoints, which list only values published
+ * opportunities actually use — an option that could only ever return nothing is not offered.
  *
  * A lookup that does not load is REPORTED, never papered over: an empty option list that looks
  * like "no countries exist" is indistinguishable from a broken page. It is reported IN THE
@@ -43,8 +48,9 @@ export type LookupKey =
   | "languages"
   | "engagementTypes"
   | "timeIntervals"
-  | "organizations"
-  | "zltoRanges";
+  | "zltoRanges"
+  | "accommodations"
+  | "sdgs";
 
 export interface DiscoveryLookups {
   types: OpportunityType[];
@@ -53,8 +59,9 @@ export interface DiscoveryLookups {
   languages: Language[];
   engagementTypes: EngagementType[];
   timeIntervals: TimeInterval[];
-  organizations: OrganizationInfo[];
   zltoRanges: OpportunitySearchCriteriaZltoRewardRange[];
+  accommodations: Accessibility[];
+  sdgs: SustainableDevelopmentGoal[];
   /** Opportunity Type enum name → GUID, for the search request. */
   typeIdByName: Record<string, string>;
   /** Per lookup: `ok`, `unavailable` (404) or `failed`. Consumed by the section it feeds. */
@@ -99,14 +106,19 @@ export function useDiscoveryLookups(): DiscoveryLookups {
     queryFn: () => getTimeIntervals(),
     ...options,
   });
-  const organizationsQuery = useQuery({
-    queryKey: ["discovery", "lookup", "organizations"],
-    queryFn: () => getOpportunityOrganizations(),
-    ...options,
-  });
   const zltoRangesQuery = useQuery({
     queryKey: ["discovery", "lookup", "zltoRanges"],
     queryFn: () => getZltoRewardRanges(),
+    ...options,
+  });
+  const accommodationsQuery = useQuery({
+    queryKey: ["discovery", "lookup", "accommodations"],
+    queryFn: () => getOpportunityAccommodations(),
+    ...options,
+  });
+  const sdgsQuery = useQuery({
+    queryKey: ["discovery", "lookup", "sdgs"],
+    queryFn: () => getOpportunitySustainableDevelopmentGoals(),
     ...options,
   });
 
@@ -117,12 +129,15 @@ export function useDiscoveryLookups(): DiscoveryLookups {
     languagesQuery,
     engagementTypesQuery,
     timeIntervalsQuery,
-    organizationsQuery,
     zltoRangesQuery,
+    accommodationsQuery,
+    sdgsQuery,
   ];
-  // Presented in the fixed enum-name order (Job · Learning · Task · Event · Other, unknown types
-  // after) everywhere on the surface; labels still come from `displayName`.
+  // Presented in the fixed enum-name order (Job · Learning · ImpactAction · Event · Other,
+  // unknown types after) everywhere on the surface; labels still come from `displayName`.
   const types = typesQuery.data ? sortTypes(typesQuery.data) : undefined;
+  const status = (query: (typeof queries)[number]): FacetStatus =>
+    query.isPending ? "loading" : facetStatus(query.isError, query.error);
 
   return {
     types: types ?? [],
@@ -131,27 +146,20 @@ export function useDiscoveryLookups(): DiscoveryLookups {
     languages: languagesQuery.data ?? [],
     engagementTypes: engagementTypesQuery.data ?? [],
     timeIntervals: timeIntervalsQuery.data ?? [],
-    organizations: organizationsQuery.data ?? [],
     zltoRanges: zltoRangesQuery.data ?? [],
+    accommodations: accommodationsQuery.data ?? [],
+    sdgs: sdgsQuery.data ?? [],
     typeIdByName: Object.fromEntries((types ?? []).map((t) => [t.name, t.id])),
     status: {
-      types: facetStatus(typesQuery.isError, typesQuery.error),
-      categories: facetStatus(categoriesQuery.isError, categoriesQuery.error),
-      countries: facetStatus(countriesQuery.isError, countriesQuery.error),
-      languages: facetStatus(languagesQuery.isError, languagesQuery.error),
-      engagementTypes: facetStatus(
-        engagementTypesQuery.isError,
-        engagementTypesQuery.error,
-      ),
-      timeIntervals: facetStatus(
-        timeIntervalsQuery.isError,
-        timeIntervalsQuery.error,
-      ),
-      organizations: facetStatus(
-        organizationsQuery.isError,
-        organizationsQuery.error,
-      ),
-      zltoRanges: facetStatus(zltoRangesQuery.isError, zltoRangesQuery.error),
+      types: status(typesQuery),
+      categories: status(categoriesQuery),
+      countries: status(countriesQuery),
+      languages: status(languagesQuery),
+      engagementTypes: status(engagementTypesQuery),
+      timeIntervals: status(timeIntervalsQuery),
+      zltoRanges: status(zltoRangesQuery),
+      accommodations: status(accommodationsQuery),
+      sdgs: status(sdgsQuery),
     },
     typesFailed: typesQuery.isError,
     retry: () => {
@@ -159,3 +167,17 @@ export function useDiscoveryLookups(): DiscoveryLookups {
     },
   };
 }
+
+/** The engagement type's label — the lookup's `displayName`, never its enum-like `name`. */
+export const engagementDisplayName = (
+  engagementTypes: EngagementType[],
+  value: string,
+  by: "id" | "name" = "id",
+): string => {
+  const hit = engagementTypes.find((e) => e[by] === value);
+  return hit?.displayName || hit?.name || value;
+};
+
+/** "13. Climate action" — the goal's number leads, as on every SDG list. */
+export const sdgLabel = (goal: SustainableDevelopmentGoal): string =>
+  `${goal.number}. ${goal.name}`;

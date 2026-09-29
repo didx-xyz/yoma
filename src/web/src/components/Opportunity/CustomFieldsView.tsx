@@ -7,6 +7,8 @@ import {
 } from "~/api/models/opportunity";
 import DetailSection from "~/components/Common/DetailSection";
 import {
+  useCurrenciesQuery,
+  useEducationsQuery,
   useOpportunityCountriesQuery,
   useOpportunityLanguagesQuery,
   useSkillsQuery,
@@ -71,8 +73,20 @@ export const CustomFieldsView: React.FC<CustomFieldsViewProps> = ({
   const needsSkill = defs.some(
     (d) => lookupTypeOf(d) === CustomFieldLookupType.Skill,
   );
+  const needsEducation = defs.some(
+    (d) => lookupTypeOf(d) === CustomFieldLookupType.Education,
+  );
+  const needsCurrency = defs.some(
+    (d) => lookupTypeOf(d) === CustomFieldLookupType.Currency,
+  );
   const { data: countriesData } = useOpportunityCountriesQuery({
     enabled: needsCountry,
+  });
+  const { data: educationsData } = useEducationsQuery({
+    enabled: needsEducation,
+  });
+  const { data: currenciesData } = useCurrenciesQuery({
+    enabled: needsCurrency,
   });
   const { data: languagesData } = useOpportunityLanguagesQuery({
     enabled: needsLanguage,
@@ -92,6 +106,18 @@ export const CustomFieldsView: React.FC<CustomFieldsViewProps> = ({
   const skillMap = useMemo(
     () => new Map((skillsData?.items ?? []).map((s) => [s.id, s.name])),
     [skillsData?.items],
+  );
+  const educationMap = useMemo(
+    () => new Map((educationsData ?? []).map((e) => [e.id, e.name])),
+    [educationsData],
+  );
+  // Currency custom fields store the lookup id, not the ISO code
+  const currencyMap = useMemo(
+    () =>
+      new Map(
+        (currenciesData ?? []).map((c) => [c.id, `${c.code} — ${c.name}`]),
+      ),
+    [currenciesData],
   );
 
   const valueByKey = useMemo(() => {
@@ -129,6 +155,10 @@ export const CustomFieldsView: React.FC<CustomFieldsViewProps> = ({
         return languageMap.get(value) ?? value;
       case CustomFieldLookupType.Skill:
         return skillMap.get(value) ?? value;
+      case CustomFieldLookupType.Education:
+        return educationMap.get(value) ?? value;
+      case CustomFieldLookupType.Currency:
+        return currencyMap.get(value) ?? value;
       default:
         return (
           definition.options?.find(
@@ -153,7 +183,7 @@ export const CustomFieldsView: React.FC<CustomFieldsViewProps> = ({
     const raw = item.value;
     if (raw == null || raw.trim() === "") return null;
     if (dataType === CustomFieldDataType.Boolean)
-      return raw === "true" ? "Yes" : "No";
+      return raw.trim().toLowerCase() === "true" ? "Yes" : "No";
     if (dataType === CustomFieldDataType.DateTime)
       return utcToDateInput(raw) || raw;
     return raw;

@@ -116,7 +116,12 @@ export const OPPORTUNITY_TYPE_NANE_JOB = "Job";
 // epic on `master` and work without custom fields.
 //
 // Setting this to `true` restores the full framework; nothing else needs changing.
-export const CUSTOM_FIELDS_ENABLED = false;
+//
+// ON since 2026-09-29. The cash-out release has shipped from `master`, and the API on this branch
+// makes the framework mandatory: every opportunity type now has a REQUIRED Difficulty custom
+// field (and Jobs many more), so with this `false` the editor sends no custom fields and every
+// manual create / update is rejected. Setting it back to `false` breaks opportunity saving.
+export const CUSTOM_FIELDS_ENABLED = true;
 
 export const THEME_BLUE = "blue";
 export const THEME_GREEN = "green";

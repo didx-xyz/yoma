@@ -53,16 +53,16 @@ export const TYPE_CONFIG: Record<string, TypeConfig> = {
     ctaClassName: "bg-blue hover:bg-blue-dark text-white",
     gotoExternalLinkButtonText: "View event",
   },
-  "Micro-task": {
-    label: "Task",
-    badgeLabel: "Task",
+  ImpactAction: {
+    label: "Impact Action",
+    badgeLabel: "Impact Action",
     badgeClassName: "bg-yellow text-white",
     bubbleClassName: "bg-gradient-to-br from-yellow-light to-yellow/30",
     accentClassName: "border-yellow",
-    ctaText: "View task →",
-    ctaTitle: "View this micro-task",
+    ctaText: "View impact action →",
+    ctaTitle: "View this impact action",
     ctaClassName: "bg-yellow/90 hover:bg-yellow/60 text-white",
-    gotoExternalLinkButtonText: "View task",
+    gotoExternalLinkButtonText: "View impact action",
   },
   Other: {
     label: "Other",
@@ -94,15 +94,15 @@ export const getTypeConfig = (type: string | undefined): TypeConfig => {
 };
 
 // Per-engagement-type display config. Lets us override the raw value's label
-// (e.g. show "Online / Offline" instead of "Hybrid").
+// (e.g. show "On-site" instead of the enum name "OnSite").
 export interface EngagementConfig {
   label: string; // display label for the engagement type
 }
 
 export const ENGAGEMENT_CONFIG: Record<string, EngagementConfig> = {
-  Hybrid: { label: "Online / Offline" },
-  Online: { label: "Online" },
-  Offline: { label: "Offline" },
+  Remote: { label: "Remote" },
+  OnSite: { label: "On-site" },
+  Hybrid: { label: "Hybrid" },
 };
 
 // Returns the display config for an engagement type, or null when there isn't

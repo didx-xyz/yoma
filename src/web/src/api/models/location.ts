@@ -53,6 +53,51 @@ const coordinatesOf = (raw: unknown): LocationCoordinates | null => {
     : null;
 };
 
+/**
+ * The API's wire forms (user profile and opportunity countries, API 2026-09-28). Coordinates are
+ * `[longitude, latitude]` — GeoJSON order, the reverse of how they are usually spoken — and the
+ * source is a provider-neutral enum name. `placeId` has no API counterpart: it is used only while
+ * resolving a new pick and is `null` on anything read back.
+ */
+export type ApiLocationSource = "Lookup" | "Device" | "Manual";
+
+const TO_API_SOURCE: Record<LocationSource, ApiLocationSource> = {
+  places: "Lookup",
+  device: "Device",
+  manual: "Manual",
+};
+
+const FROM_API_SOURCE: Record<ApiLocationSource, LocationSource> = {
+  Lookup: "places",
+  Device: "device",
+  Manual: "manual",
+};
+
+export const toApiCoordinates = (
+  coordinates: LocationCoordinates | null,
+): number[] | null =>
+  coordinates ? [coordinates.longitude, coordinates.latitude] : null;
+
+export const fromApiCoordinates = (
+  raw: number[] | null | undefined,
+): LocationCoordinates | null =>
+  Array.isArray(raw) &&
+  raw.length === 2 &&
+  raw.every((n) => typeof n === "number" && Number.isFinite(n))
+    ? { longitude: raw[0]!, latitude: raw[1]! }
+    : null;
+
+export const toApiLocationSource = (
+  source: LocationSource | null,
+): ApiLocationSource | null => (source ? TO_API_SOURCE[source] : null);
+
+export const fromApiLocationSource = (
+  raw: string | null | undefined,
+): LocationSource | null =>
+  raw && raw in FROM_API_SOURCE
+    ? FROM_API_SOURCE[raw as ApiLocationSource]
+    : null;
+
 /** Repairs a client-held place of unknown vintage; anything unexpected becomes empty. */
 export const normalizeLocationPlace = (raw: unknown): LocationPlace => {
   if (typeof raw !== "object" || raw === null) return EMPTY_LOCATION_PLACE;

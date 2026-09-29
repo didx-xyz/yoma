@@ -3,9 +3,13 @@ import ApiClient from "~/lib/axiosClient";
 import ApiServer from "~/lib/axiosServer";
 import type { Settings, SettingsRequest } from "../models/common";
 import type {
+  UserGoalLookup,
+  UserPreferencesRequest,
+  UserPreferencesResponse,
   UserProfile,
   UserRequestProfile,
   UserSkillInfo,
+  UserSkillType,
 } from "../models/user";
 
 export const patchUser = async (
@@ -62,12 +66,44 @@ export const updateSettings = async (
   return data;
 };
 
+/**
+ * The youth's skills. Unfiltered, the API returns BOTH earned (`Verified`) and self-attested
+ * skills, so every earned-skills view (passport, YoID, the drawer card) must ask for `Verified`.
+ */
 export const getUserSkills = async (
+  type: UserSkillType | null,
   context?: GetServerSidePropsContext,
 ): Promise<UserSkillInfo[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
-  const { data } = await instance.get<UserSkillInfo[]>("/user/skills");
+  const { data } = await instance.get<UserSkillInfo[]>(
+    type ? `/user/skills?type=${type}` : "/user/skills",
+  );
 
+  return data;
+};
+
+/** Authenticated (User role). The five sentence-case goals; render `name`. */
+export const getUserGoals = async (): Promise<UserGoalLookup[]> => {
+  const { data } = await (await ApiClient).get<UserGoalLookup[]>("/user/goal");
+  return data;
+};
+
+/** Never-saved preferences come back as null scalars and empty lists, not a 404. */
+export const getUserPreferencesApi =
+  async (): Promise<UserPreferencesResponse> => {
+    const { data } = await (
+      await ApiClient
+    ).get<UserPreferencesResponse>("/user/preferences");
+    return data;
+  };
+
+/** Complete replacement — send every field; the full updated preferences come back. */
+export const patchUserPreferences = async (
+  request: UserPreferencesRequest,
+): Promise<UserPreferencesResponse> => {
+  const { data } = await (
+    await ApiClient
+  ).patch<UserPreferencesResponse>("/user/preferences", request);
   return data;
 };
