@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import type {
   Accessibility,
   Country,
+  Currency,
   EngagementType,
   Language,
   SustainableDevelopmentGoal,
@@ -12,7 +13,11 @@ import type {
   OpportunitySearchCriteriaZltoRewardRange,
   OpportunityType,
 } from "~/api/models/opportunity";
-import { getEngagementTypes, getTimeIntervals } from "~/api/services/lookups";
+import {
+  getCurrencies,
+  getEngagementTypes,
+  getTimeIntervals,
+} from "~/api/services/lookups";
 import {
   getOpportunityAccommodations,
   getOpportunityCategories,
@@ -29,7 +34,8 @@ import { sortTypes } from "../lib/typeOrder";
 /**
  * The lookups the discovery surface renders options and labels from. All static-ish reference
  * data, cached for the session. Skills are searched on demand by their `lookupSearch` control
- * rather than loaded up front; Provider is free text and needs no list.
+ * rather than loaded up front; Provider is free text and needs no list. Currencies label a Job's
+ * salary on the cards (its currency custom field holds a lookup id).
  *
  * Facet lists come from the `search/filter/*` endpoints, which list only values published
  * opportunities actually use — an option that could only ever return nothing is not offered.
@@ -50,7 +56,8 @@ export type LookupKey =
   | "timeIntervals"
   | "zltoRanges"
   | "accommodations"
-  | "sdgs";
+  | "sdgs"
+  | "currencies";
 
 export interface DiscoveryLookups {
   types: OpportunityType[];
@@ -62,6 +69,7 @@ export interface DiscoveryLookups {
   zltoRanges: OpportunitySearchCriteriaZltoRewardRange[];
   accommodations: Accessibility[];
   sdgs: SustainableDevelopmentGoal[];
+  currencies: Currency[];
   /** Opportunity Type enum name → GUID, for the search request. */
   typeIdByName: Record<string, string>;
   /** Per lookup: `ok`, `unavailable` (404) or `failed`. Consumed by the section it feeds. */
@@ -121,6 +129,11 @@ export function useDiscoveryLookups(): DiscoveryLookups {
     queryFn: () => getOpportunitySustainableDevelopmentGoals(),
     ...options,
   });
+  const currenciesQuery = useQuery({
+    queryKey: ["discovery", "lookup", "currencies"],
+    queryFn: () => getCurrencies(),
+    ...options,
+  });
 
   const queries = [
     typesQuery,
@@ -132,6 +145,7 @@ export function useDiscoveryLookups(): DiscoveryLookups {
     zltoRangesQuery,
     accommodationsQuery,
     sdgsQuery,
+    currenciesQuery,
   ];
   // Presented in the fixed enum-name order (Job · Learning · ImpactAction · Event · Other,
   // unknown types after) everywhere on the surface; labels still come from `displayName`.
@@ -149,6 +163,7 @@ export function useDiscoveryLookups(): DiscoveryLookups {
     zltoRanges: zltoRangesQuery.data ?? [],
     accommodations: accommodationsQuery.data ?? [],
     sdgs: sdgsQuery.data ?? [],
+    currencies: currenciesQuery.data ?? [],
     typeIdByName: Object.fromEntries((types ?? []).map((t) => [t.name, t.id])),
     status: {
       types: status(typesQuery),
@@ -160,6 +175,7 @@ export function useDiscoveryLookups(): DiscoveryLookups {
       zltoRanges: status(zltoRangesQuery),
       accommodations: status(accommodationsQuery),
       sdgs: status(sdgsQuery),
+      currencies: status(currenciesQuery),
     },
     typesFailed: typesQuery.isError,
     retry: () => {

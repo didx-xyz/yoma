@@ -27,7 +27,9 @@ export const OpportunityRow: React.FC<{
     : "text-gray-dark";
   const { lookups } = useDiscovery();
   // The pay line from the one money precedence (`lib/money.ts`); ZLTO keeps its own reward slot.
-  const money = resolveMoneyBadge(moneyFactsOf(opportunity));
+  const money = resolveMoneyBadge(
+    moneyFactsOf(opportunity, lookups.currencies),
+  );
   const pay = money.payLine
     ? `${money.payLine}${money.partnerPaid ? " (partner-paid)" : ""}`
     : "—";

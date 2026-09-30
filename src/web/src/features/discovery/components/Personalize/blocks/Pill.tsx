@@ -8,6 +8,7 @@ export const Pill: React.FC<{
 }> = ({ label, active, onToggle }) => (
   <button
     type="button"
+    aria-pressed={active}
     onClick={onToggle}
     // 44px on touch, compact from md up — the same rule as the filter panel's option pills.
     className={`flex min-h-11 items-center rounded-full border px-2.5 text-[11px] md:min-h-9 md:text-xs ${

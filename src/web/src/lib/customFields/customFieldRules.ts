@@ -46,6 +46,17 @@ export const JOB_CUSTOM_FIELD_KEYS = {
   employmentDurationUnit: "jobEmploymentDurationUnit",
 } as const;
 
+/**
+ * Mirrors `CustomFieldConstants.Job.Salary.PayIntervalOptions` (API). Not used by a rule here —
+ * the discovery cards label a disclosed salary's interval from it (`features/discovery/lib/money`).
+ */
+export const JOB_PAY_INTERVAL_OPTIONS = {
+  PerYear: "PerYear",
+  PerMonth: "PerMonth",
+  PerHour: "PerHour",
+  PerEngagement: "PerEngagement",
+} as const;
+
 /** Mirrors the API's `EmploymentType` enum — the only employment options a rule interprets. */
 export const JOB_EMPLOYMENT_TYPE_OPTIONS = {
   Permanent: "Permanent",

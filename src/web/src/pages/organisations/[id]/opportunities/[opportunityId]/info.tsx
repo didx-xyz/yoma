@@ -9,20 +9,14 @@ import { type ParsedUrlQuery } from "node:querystring";
 import { type ReactElement } from "react";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import {
-  IoAccessibilityOutline,
   IoBulbOutline,
   IoBusinessOutline,
-  IoEarthOutline,
-  IoGiftOutline,
   IoLanguageOutline,
   IoLocationOutline,
-  IoPeopleCircleOutline,
   IoPeopleOutline,
-  IoPersonOutline,
   IoPricetagsOutline,
   IoTimeOutline,
 } from "react-icons/io5";
-import { RewardType } from "~/api/models/opportunity";
 import { getOpportunityInfoByIdAdminOrgAdminOrUser } from "~/api/services/opportunities";
 import {
   OPPORTUNITY_QUERY_KEYS,
@@ -32,14 +26,7 @@ import {
 import { AvatarImage } from "~/components/AvatarImage";
 import DetailSection from "~/components/Common/DetailSection";
 import { formatCountryPlace } from "~/components/Opportunity/Admin/OpportunityCountryPlaces";
-import {
-  formatAccessibilitySupport,
-  formatAgeRange,
-  formatIncentivized,
-  formatPartnerIncentive,
-  formatRewardType,
-  formatSustainableDevelopmentGoal,
-} from "~/components/Opportunity/Admin/opportunityCoreFields";
+import { OpportunityCoreDetails } from "~/components/Opportunity/OpportunityCoreDetails";
 import { OpportunityCustomFieldsSection } from "~/components/Opportunity/OpportunityCustomFieldsSection";
 import MainLayout from "~/components/Layout/Main";
 import OrgAdminBadges from "~/components/Opportunity/Badges/OrgAdminBadges";
@@ -64,7 +51,7 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { ROLE_ADMIN } from "~/lib/constants";
+import { OPPORTUNITY_TYPE_NANE_JOB, ROLE_ADMIN } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { currentOrganisationInactiveAtom } from "~/lib/store";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
@@ -175,21 +162,6 @@ const OpportunityDetails: NextPageWithLayout<{
   const commitmentDisplay = opportunity
     ? getCommitmentDisplay(opportunity)
     : null;
-  const rewardTypeLabel =
-    opportunity?.rewardType !== RewardType.None
-      ? formatRewardType(opportunity?.rewardType)
-      : null;
-  const partnerIncentive =
-    opportunity?.rewardType === RewardType.PartnerIncentive
-      ? formatPartnerIncentive(
-          opportunity.partnerIncentiveAmount,
-          opportunity.partnerIncentiveCurrency,
-        )
-      : null;
-  const accessibilitySupportLabel = formatAccessibilitySupport(
-    opportunity?.accessibilitySupport,
-  );
-  const ageRange = formatAgeRange(opportunity?.ageFrom, opportunity?.ageTo);
 
   let commitmentSummary = "";
   if (commitmentDisplay?.totalHours != null) {
@@ -402,7 +374,12 @@ const OpportunityDetails: NextPageWithLayout<{
                 <div className="divide-gray flex flex-col divide-y rounded-lg bg-white p-6">
                   {(opportunity?.skills?.length ?? 0) > 0 && (
                     <DetailSection
-                      title="Skills you will learn"
+                      // a Job's skills are its requirements, never awarded on completion
+                      title={
+                        opportunity?.type === OPPORTUNITY_TYPE_NANE_JOB
+                          ? "Skills required"
+                          : "Skills you will learn"
+                      }
                       icon={<IoBulbOutline className="text-green h-5 w-5" />}
                       className="pb-4"
                     >
@@ -514,115 +491,10 @@ const OpportunityDetails: NextPageWithLayout<{
                       <div className="my-2 text-sm">{opportunity.provider}</div>
                     </DetailSection>
                   )}
-                  <DetailSection
-                    title="Incentive"
-                    icon={<IoGiftOutline className="text-green h-5 w-5" />}
-                  >
-                    <div className="my-2 flex flex-wrap gap-2">
-                      <div
-                        className={`badge h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold ${
-                          opportunity.incentivized == null
-                            ? "bg-gray-light text-gray-dark"
-                            : "bg-green text-white"
-                        }`}
-                      >
-                        {formatIncentivized(opportunity.incentivized)}
-                      </div>
-                      {rewardTypeLabel && (
-                        <div className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white">
-                          {rewardTypeLabel}
-                        </div>
-                      )}
-                      {partnerIncentive && (
-                        <div className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white">
-                          {partnerIncentive}
-                        </div>
-                      )}
-                    </div>
-                  </DetailSection>
-                  {(!!accessibilitySupportLabel ||
-                    (opportunity?.accommodations?.length ?? 0) > 0) && (
-                    <DetailSection
-                      title="Accessibility"
-                      icon={
-                        <IoAccessibilityOutline className="text-green h-5 w-5" />
-                      }
-                    >
-                      <div className="my-2 flex flex-col gap-2">
-                        {accessibilitySupportLabel && (
-                          <div className="text-sm">
-                            {`Support: ${accessibilitySupportLabel}`}
-                          </div>
-                        )}
-                        {(opportunity?.accommodations?.length ?? 0) > 0 && (
-                          <div className="flex flex-wrap gap-2">
-                            {opportunity?.accommodations?.map((item) => (
-                              <div
-                                key={item.id}
-                                className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
-                              >
-                                {item.name}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        {!!opportunity?.accommodationOtherDescription && (
-                          <div className="text-gray-dark text-sm">
-                            {opportunity.accommodationOtherDescription}
-                          </div>
-                        )}
-                      </div>
-                    </DetailSection>
-                  )}
-                  {!!ageRange && (
-                    <DetailSection
-                      title="Age range"
-                      icon={<IoPersonOutline className="text-green h-5 w-5" />}
-                    >
-                      <div className="badge bg-green my-2 h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white">
-                        {ageRange}
-                      </div>
-                    </DetailSection>
-                  )}
-                  {(opportunity?.targetedGroups?.length ?? 0) > 0 && (
-                    <DetailSection
-                      title="Targeted groups"
-                      icon={
-                        <IoPeopleCircleOutline className="text-green h-5 w-5" />
-                      }
-                    >
-                      <div className="my-2 flex flex-wrap gap-2">
-                        {opportunity?.targetedGroups?.map((item) => (
-                          <div
-                            key={item.id}
-                            className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
-                          >
-                            {item.name}
-                          </div>
-                        ))}
-                      </div>
-                    </DetailSection>
-                  )}
-                  {(opportunity?.sustainableDevelopmentGoals?.length ?? 0) >
-                    0 && (
-                    <DetailSection
-                      title="Sustainable Development Goals"
-                      icon={<IoEarthOutline className="text-green h-5 w-5" />}
-                    >
-                      <div className="my-2 flex flex-wrap gap-2">
-                        {opportunity?.sustainableDevelopmentGoals?.map(
-                          (item) => (
-                            <div
-                              key={item.id}
-                              className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
-                            >
-                              {formatSustainableDevelopmentGoal(item)}
-                            </div>
-                          ),
-                        )}
-                      </div>
-                    </DetailSection>
-                  )}
+                  <OpportunityCoreDetails
+                    opportunity={opportunity}
+                    showUnspecifiedIncentive
+                  />
                   {/* CUSTOM FIELDS (definition-driven, read-only). Renders nothing
                       when there are no values. */}
                   <OpportunityCustomFieldsSection

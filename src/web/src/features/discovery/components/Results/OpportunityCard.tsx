@@ -63,7 +63,10 @@ export const OpportunityCard: React.FC<{
           >
             {typeLabel(lookups.types, opportunity.type)}
           </span>
-          <MoneyBadge compact facts={moneyFactsOf(opportunity)} />
+          <MoneyBadge
+            compact
+            facts={moneyFactsOf(opportunity, lookups.currencies)}
+          />
         </div>
         <h3 className="line-clamp-2 text-sm leading-snug font-semibold tracking-normal md:text-base">
           {opportunity.title}

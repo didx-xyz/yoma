@@ -204,6 +204,31 @@ export function isValidDateOnly(value: string): boolean {
   );
 }
 
+// Definitions carry .NET patterns (the API validates with System.Text.RegularExpressions).
+// The string anchors differ: `\A` / `\z` / `\Z` are anchors in .NET but match a literal
+// "A" / "z" / "Z" in JavaScript, so `\A[\s\S]{1,500}\z` rejected every normal value.
+// Translate them outside character classes; everything else is shared syntax.
+export function toEcmaScriptPattern(pattern: string): string {
+  let out = "";
+  let inClass = false;
+  for (let i = 0; i < pattern.length; i++) {
+    const char = pattern[i];
+    if (char === "\\" && i + 1 < pattern.length) {
+      const next = pattern[i + 1];
+      i++;
+      if (!inClass && next === "A") out += "^";
+      else if (!inClass && next === "z") out += "$";
+      else if (!inClass && next === "Z") out += "(?=\\n?$)";
+      else out += char + next;
+      continue;
+    }
+    if (char === "[") inClass = true;
+    else if (char === "]") inClass = false;
+    out += char;
+  }
+  return out;
+}
+
 // Pure per-field validator, shared by this component's inline errors and the
 // caller's zod schema (so both agree without duplicating rules).
 export function getCustomFieldError(
@@ -230,7 +255,11 @@ export function getCustomFieldError(
     entry?.value
   ) {
     try {
-      if (!new RegExp(definition.validationRegex).test(entry.value))
+      if (
+        !new RegExp(toEcmaScriptPattern(definition.validationRegex)).test(
+          entry.value,
+        )
+      )
         return (
           definition.validationErrorMessage ?? "Please enter a valid value."
         );

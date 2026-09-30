@@ -48,6 +48,7 @@ import {
   OpportunityTypeBadge,
 } from "~/components/Opportunity/opportunityTypeTheme";
 import { OpportunityCompletionEdit } from "~/components/Opportunity/OpportunityCompletionEdit";
+import { OpportunityCoreDetails } from "~/components/Opportunity/OpportunityCoreDetails";
 import { OpportunityCustomFieldsSection } from "~/components/Opportunity/OpportunityCustomFieldsSection";
 import Share from "~/components/Opportunity/Share";
 import { SignInButton } from "~/components/SignInButton";
@@ -58,7 +59,10 @@ import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { OPPORTUNITY_QUERY_KEYS } from "~/hooks/useOpportunityMutations";
 import analytics from "~/lib/analytics";
-import { SETTING_USER_POPUP_LEAVINGYOMA } from "~/lib/constants";
+import {
+  OPPORTUNITY_TYPE_NANE_JOB,
+  SETTING_USER_POPUP_LEAVINGYOMA,
+} from "~/lib/constants";
 import { userProfileAtom } from "~/lib/store";
 import { isUserProfileCompleted } from "~/lib/utils/profile";
 import { type User } from "~/server/auth";
@@ -1160,7 +1164,12 @@ const OpportunityPublicDetails: React.FC<{
               <div className="divide-gray flex flex-col divide-y rounded-lg bg-white p-4 md:p-6">
                 {(opportunityInfo.skills?.length ?? 0) > 0 && (
                   <DetailSection
-                    title="Skills you will learn"
+                    // a Job's skills are its requirements, never awarded on completion
+                    title={
+                      opportunityInfo.type === OPPORTUNITY_TYPE_NANE_JOB
+                        ? "Skills required"
+                        : "Skills you will learn"
+                    }
                     icon={<IoBulbOutline className="text-green h-5 w-5" />}
                     className="pb-4 first:pt-0 last:pb-0"
                   >
@@ -1271,6 +1280,9 @@ const OpportunityPublicDetails: React.FC<{
                     </div>
                   </DetailSection>
                 )}
+
+                {/* incentive, accessibility, age range, groups, SDGs — as on the admin info page */}
+                <OpportunityCoreDetails opportunity={opportunityInfo} />
 
                 {/* CUSTOM FIELDS (definition-driven, read-only) */}
                 <OpportunityCustomFieldsSection

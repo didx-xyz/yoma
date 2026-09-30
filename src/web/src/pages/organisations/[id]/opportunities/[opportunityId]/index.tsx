@@ -506,7 +506,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     () =>
       engagementTypesData?.map((c) => ({
         value: c.id,
-        label: c.name,
+        // the lookup's label ("On-site"), not its enum-like name ("OnSite")
+        label: c.displayName || c.name,
       })) ?? [],
     [engagementTypesData],
   );

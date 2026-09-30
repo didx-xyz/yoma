@@ -13,8 +13,9 @@ import { useDiscovery } from "../../state/DiscoveryContext";
  * preferences are overridden. Never on load, never automatic.
  *
  * "Make this my default" persists the overrides one-tap through the façade: a skipped preference
- * is cleared from the preset. It is deliberately NOT called "save to profile" — the line
- * directly above promises this never touches the profile or the YoID, and a preset is neither.
+ * is cleared from the preset. It is deliberately NOT called "save to profile" — a preset is
+ * neither the profile nor the YoID. (The strip no longer promises "never touches your profile":
+ * signed in, a place picked in the wizard IS written to the profile — see `LiveCountPanel`.)
  * Saving leaves an inline undo, because a one-tap write with no way back is not one-tap.
  * Identity-derived skips (country, age) have no preset field, so they stay per-search and raise
  * no offer. "Not now" dismisses the CURRENT override set only — the next change to the skips
@@ -63,7 +64,7 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
           <span className="font-semibold">Tune your feed.</span>{" "}
           <span className="text-gray-dark">
             Tell us what you&apos;re looking for — set once, used on every
-            search, never touching your profile or your YoID.
+            search. Your YoID is never touched.
           </span>
         </p>
         <button
@@ -155,8 +156,7 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
                 {tunedTo || "your preferences"}
               </span>
               <span className="text-gray-dark block text-[11px]">
-                Set once, used on every search — it never touches your profile
-                or your YoID.
+                Set once, used on every search. Your YoID is never touched.
               </span>
             </>
           )}

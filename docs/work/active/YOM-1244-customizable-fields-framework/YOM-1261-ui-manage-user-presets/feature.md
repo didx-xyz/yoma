@@ -30,7 +30,7 @@ This ticket is capture and management only.
 | --- | --- |
 | [YOM-1264](https://linear.app/didx/issue/YOM-1264) (BA/design) | The preset list is not final. The design accommodates additions by construction — see Plan — but the field set cannot be signed off |
 | ~~[YOM-1257](https://linear.app/didx/issue/YOM-1257) (api)~~ | **Resolved 2026-09-29** — `GET` / `PATCH /user/preferences` landed; the wizard is wired to it and the mock is gone |
-| [YOM-1258](https://linear.app/didx/issue/YOM-1258) (api) | No server-side preset→filter mapping yet — discovery still composes it client-side (YOM-1262). Not a blocker for capture |
+| ~~[YOM-1258](https://linear.app/didx/issue/YOM-1258) (api)~~ | **Superseded by YOM-1262 (PM, 2026-09-30)** — discovery composes preferences into filters client-side; no API mapping will come |
 
 ~~Consequence for the build: preferences are mocked behind one façade.~~ Superseded 2026-09-29 —
 see Decisions. The shape the wizard edits is still the web model in `api/models/userPreferences.ts`;

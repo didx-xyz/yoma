@@ -7,7 +7,7 @@
 - **Ticket**: [YOM-1262](https://linear.app/didx/issue/YOM-1262)
 - **Owner**: Jason
 - **Areas**: web
-- **Status**: in-progress — live on the preferences, location and core-field APIs (2026-09-29); DEV pass outstanding
+- **Status**: in-progress — live on the APIs; local browser pass done 2026-09-30; design review and DEV pass outstanding
 - **Started**: 2026-08-27 (design); 2026-08-27 (implementation, behind the mock façade)
 
 > Folder created 2026-08-27 to hold the design. Implementation started the same day **behind the
@@ -32,7 +32,7 @@ Capturing preferences is [YOM-1261](../YOM-1261-ui-manage-user-presets/feature.m
 | Blocker | Note |
 | --- | --- |
 | ~~[YOM-1257](https://linear.app/didx/issue/YOM-1257) (api)~~ | **Resolved 2026-09-29** — preferences are live (`/user/preferences`); the mock is removed |
-| [YOM-1258](https://linear.app/didx/issue/YOM-1258) (api) | No server-side preset→filter mapping; inheritance keeps composing client-side (`preferenceMapping.ts`). Not blocking |
+| ~~[YOM-1258](https://linear.app/didx/issue/YOM-1258) (api)~~ | **Superseded by this ticket (PM, 2026-09-30)** — no server-side preset→filter mapping; inheritance composes client-side (`preferenceMapping.ts`) |
 | [YOM-1264](https://linear.app/didx/issue/YOM-1264) (BA/design) | The preference set and the final filter mapping are not signed off; Difficulty and the Job fields are seeded, the other types' fields are not |
 | [YOM-1260](https://linear.app/didx/issue/YOM-1260) must land first | Presets resolve to filter criteria, so this builds on that feature's clause shape and operator matrix |
 | ~~Location API (Adrian)~~ | **Resolved 2026-09-29** — the place is a profile field (full `PATCH /user`), search takes nested per-country entries; `LOCATION_SEARCH_LIVE` is `true`. Distance only matches opportunities with coordinates, which today only admins add by hand |
@@ -200,9 +200,9 @@ commitment set; **accessibility excludes** those that have not described their a
       fixed by enum name; one engagement display map; card status rule (`lib/cardStatus.ts`);
       Where reserved inputs; Provider typeahead; Skills caption; Paid and rewards composite with
       ZLTO hidden while Type includes Job; SOON / "Show all N" styling removed from badges.
-- [ ] Browser pass of the manual test script (brief §10) — first full pass by Jason 2026-09-03
-      (findings fixed same day, see Decisions); re-verify the round-2 fixes on screen, then the
-      2026-09-23 handoff's manual test steps.
+- [x] Browser pass of the manual test script (brief §10) — first full pass by Jason 2026-09-03;
+      **local pass of the 2026-09-29 manual steps 1–8 on 2026-09-30, all passing** (findings fixed
+      the same day — [`../handoffs/2026-09-30-a.md`](../handoffs/2026-09-30-a.md)).
 - [x] Where section: region / city / distance **live** through the shared `LocationInput`
       (2026-09-28, see Decisions) — mocked search: not sent until `LOCATION_SEARCH_LIVE` flips.
       The "my country only" switch is still not built.
@@ -223,8 +223,9 @@ commitment set; **accessibility excludes** those that have not described their a
       profile making the place save fail visibly).
 - [x] ~~Follow-up ticket for the admin form adopting `LocationInput`~~ — done in this session
       instead (2026-09-29, Jason's call): one place per non-Worldwide country in the editor.
-- [ ] Raise the API asks with Adrian — epic README asks 1, 2, 5, 6, 9, 12, 13 still stand; 3, 4, 7, 8, 14–16
-      are resolved; **new asks 17–21 (2026-09-29)**.
+- [x] Raise the API asks with Adrian — epic README asks 1, 2, 5, 6, 9, 12, 13 still stand; 3, 4, 7, 8, 14–16
+      are resolved; asks 17–21 (2026-09-29) and 22 (2026-09-30) are left for Adrian in the
+      2026-09-30 handoff. **The API takes priority for now** (Jason) — web does not wait on them.
 - [x] Live preset data (2026-09-29): mock, DEV allowance and `PreferencesMockDevTool` removed.
 - [ ] Client decision on the per-type card layouts (canvas page 4) — if taken up, it becomes its own
       ticket with two new opportunity fields.
@@ -246,8 +247,12 @@ commitment set; **accessibility excludes** those that have not described their a
       the section, the bar segment and wizard step 4 read the lookup's `displayName` (verified:
       Hybrid / On-site / Remote). `Task` → `ImpactAction` in `typeOrder` / `typeBadge` /
       the goal mapping; cards and rows show the type's `displayName` ("Impact Action").
-- [ ] Salary on the card's pay line — Job custom fields (currency is a lookup id, pay interval an
-      option key), so the card needs the definitions + currency lookup to label it. Not built.
+- [x] Salary on the card's pay line (2026-09-30) — from the Job's system-controlled salary fields:
+      the currency lookup (one cached request) labels the id, `JOB_PAY_INTERVAL_OPTIONS` the
+      interval ("ZAR 20 000–30 000 / mo").
+- [ ] Design review (claude.design session, 2026-09-30 brief in the handoff): the welcome step,
+      card field set (**known issue: cards do not show the summary** — dropped in the 2026-08-31
+      field set), the detail-page layout, and the discovery page's vertical space.
 
 ## Decisions
 
@@ -748,6 +753,20 @@ commitment set; **accessibility excludes** those that have not described their a
     (their filters keep unspecified opportunities, so they would not narrow).
   - **URL**: `paid=`, `acc=`, `sdg=`, `provider=` added; `org=` retired. Age has no param.
   - **Wording**: the wizard panel now says only the picked place is added to the profile.
+
+- 2026-09-30 (local browser pass — [`../handoffs/2026-09-30-a.md`](../handoffs/2026-09-30-a.md)):
+  - **The API takes priority for now on asks 17–22** (Jason). Web keeps what it built against
+    today's contract and does not wait on the answers.
+  - **YOM-1258 is superseded by this ticket** (PM): preferences stay composed into search
+    filters on the web; the API executes the search.
+  - **Salary feeds the card's pay line** from the Job custom fields, keyed only on the protected
+    keys and pay-interval option keys (the rules module's principle). "Paid — amount not
+    disclosed" was false for a Job that disclosed one.
+  - **Deadlines are labelled in UTC.** The API stores the end of that calendar day in UTC, so a
+    local-time label read "Apply by 01 Jan" for a 31 Dec deadline in Johannesburg. The day count
+    stays on absolute time.
+  - **The banner no longer promises "never touches your profile"** — signed in, a place picked
+    in the wizard is written to the profile. It now says only that the YoID is never touched.
 
 ## BA sign-off summary (2026-09-22)
 

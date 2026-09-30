@@ -59,7 +59,7 @@ Tickets with no folder yet — add one when work starts:
 | Ticket                                                                                                  | Area      | Note                                                                                        |
 | ------------------------------------------------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------- |
 | [YOM-1264](https://linear.app/didx/issue/YOM-1264)                                                      | design/BA | Final Opportunity CFs, completion CFs and User Presets. **Blocks YOM-1261 / YOM-1262**      |
-| [YOM-1258](https://linear.app/didx/issue/YOM-1258)                                                      | api       | API-side preset mapping superseded: Web composes effective filters; API executes them. Confirm ticket disposition with PM. |
+| [YOM-1258](https://linear.app/didx/issue/YOM-1258)                                                      | api       | **Superseded by YOM-1262** (PM, 2026-09-30): Web composes effective filters; API executes them. No API work remains. |
 
 Job opportunity skills represent role requirements, not evidence of attainment. Completing a Job must not award those skills as Verified; the CF branch now enforces this centrally, and the same fix requires a separate Production hotfix before CF ships.
 
@@ -81,7 +81,7 @@ User location extends the existing profile country. User/profile upsert requests
 | YOM-1255 | Let Web render, capture and display configured fields without hardcoding them.            |
 | YOM-1260 | Let youth/admins filter using configured fields.                                          |
 | YOM-1257 | Store reusable youth Opportunity-discovery presets.                                       |
-| YOM-1258 | Superseded API-side mapping proposal; Web composes saved preferences into search criteria. |
+| YOM-1258 | Superseded by YOM-1262 (PM, 2026-09-30) — Web composes saved preferences into search criteria. |
 | YOM-1259 | Align the Opportunity category taxonomy independently of custom fields.                   |
 | YOM-1261 | Let youth manage their presets.                                                           |
 | YOM-1262 | Let youth apply presets during discovery.                                                 |
@@ -177,7 +177,7 @@ descriptions on YOM-1244 are stale and should not be trusted over this table.**
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Definition discovery | `GET /opportunity/custom/field/definition?types={Type}` (anonymous, repeatable `types`), `GET /opportunity/{id}/custom/field/definition` (admin / org admin), `GET /myopportunity/{opportunityId}/custom/field/definition` (user)                                                  |
 | `types` binding      | the **`Type` enum name** (`Other` / `Learning` / `Event` / `Job` / `Task`), **not** the type GUID. Passing a GUID silently returns only the generic definitions                                                                                                                    |
-| Definition shape     | `key`, `title`, `description`, `group`, `subGroup`, `dataType`, `lookupType`, `validationRegex`, `isRequired`, `supportsMultiple`, `sortOrder`, `options[]`. `lookupType` **exists** (`Country` / `Language` / `Skill`; `null` → inline `options`); `defaultValue` was **removed** |
+| Definition shape     | `key`, `title`, `description`, `group`, `subGroup`, `dataType`, `lookupType`, `validationRegex`, `isRequired`, `supportsMultiple`, `sortOrder`, `options[]`. `lookupType` **exists** (`Country` / `Language` / `Skill`; `null` → inline `options`); `defaultValue` was **removed**. `validationRegex` is **.NET syntax** — web translates the `\A` / `\z` / `\Z` anchors (`toEcmaScriptPattern`, 2026-09-30; ask 22) |
 | Data types           | `String`, `Integer`, `Decimal`, `Boolean`, `Date` (`yyyy-MM-dd`, no UTC — 2026-09-29), `DateTime`, `Option`                                                                                                                                                                                                           |
 | Ordering             | Group → SubGroup → SortOrder → Title; options by SortOrder → Name                                                                                                                                                                                                                  |
 | Values (write)       | non-option → `value`; **every** Option field → `values`. Inline options submit the option **`key`**; lookup-backed options submit the lookup **GUID**                                                                                                                              |
@@ -383,7 +383,7 @@ Decisions 2026-09-22.
 | Blocker                                                             | Severity | Note                                                                                                                                                                                                                                                                                                                                                                                                |
 | ------------------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | YOM-1264 (BA/design) — final field definitions and User Presets     | High     | Everything shipped so far runs on seeded `[Sample] …` definitions                                                                                                                                                                                                                                                                                                                                   |
-| YOM-1257 (preferences API)                                          | Med      | Preferences storage and self-service endpoints exist. Jason's prototype still uses a mock façade; Web must wire it to the live contract and send the effective filter request. API-side preset mapping (YOM-1258) is no longer required.                                                                                                                                                    |
+| YOM-1257 (preferences API)                                          | Med      | Preferences storage and self-service endpoints exist. Jason's prototype still uses a mock façade; Web must wire it to the live contract and send the effective filter request. API-side preset mapping (YOM-1258) is no longer required — superseded by YOM-1262 (PM, 2026-09-30).                                                                                                                                                    |
 | YOM-1260 must land before the presets chain                         | Med      | Presets resolve to filter criteria                                                                                                                                                                                                                                                                                                                                                                  |
 | Credential provider (Aries CloudAPI) — schema create/update failing | Med      | **Narrowed 2026-08-18** (Jason): reads are serving again, so `GET /ssi/schema` and wallet retrieval work — YOM-1283 was verified live on that basis. Only schema **create/update** still fails, which is the one thing keeping YOM-1281 and YOM-1282 in review: YOM-1281 cannot exercise its mutations, and YOM-1282 cannot reach one real type-specific schema. Both stay mocked locally meanwhile |
 
@@ -524,6 +524,24 @@ The web side is built to an ASSUMED contract; please confirm or correct:
     needs them filled before an admin save succeeds; and no seeded opportunity carries a place,
     coordinates, provider, SDGs, accommodations or age bounds, so distance and the new facets
     cannot be exercised on local data. A few seeded examples would make the preview testable.
+    **Also (2026-09-30):** seeded Impact Actions leave the required `impactActionDifficulty`
+    empty (same save block), and none carries `impactActionToolsRequired`, so the Tools filter
+    returns 0 locally.
+
+**Added 2026-09-30** (local browser pass — [`handoffs/2026-09-30-a.md`](./handoffs/2026-09-30-a.md)):
+
+22. **Definition regexes use .NET-only anchors.** `impactActionToolsOtherDescription`
+    (`\A[\s\S]{1,500}\z`) and `impactActionImpactAchieved` (`\A[\s\S]{1,1000}\z`). In
+    JavaScript `\A` / `\z` match a literal "A" / "z", so the web rejected every normal value
+    until it started translating them (2026-09-30). Either keep definition patterns to the shared
+    subset (`^…$` means the same for these two), or confirm `validationRegex` is .NET syntax by
+    contract — web now assumes the latter.
+
+> **Decision 2026-09-30 (Jason): the API takes priority for now on asks 17–22.** Web keeps the
+> behaviour it built against today's contract — single engagement preference, accessibility
+> requirements saved but not applied, goals mapped by name, "or unspecified" filters as the API
+> defines them, the anchor translation — and does not wait on answers. Adrian: answer or schedule
+> at your pace; each ask names what web would change. **YOM-1258 is superseded by YOM-1262 (PM).**
 
 **Adrian, one API-side conflict resolution on this branch (2026-09-05)** — flagged because it is
 your area and web did not author either side. Merging `master` into
@@ -553,6 +571,12 @@ API pod image matches the DB schema — and expect it to re-break whenever anoth
 DEV, until this epic merges. Owner: Adrian / infra.
 
 ## Changelog
+
+- 2026-09-30: Local browser pass of manual steps 1–8 (all pass). Fixed on web: .NET regex anchors
+  in definitions (ask 22), Job salary on discovery cards, partner-incentive decimals, deadline
+  labels in UTC, core metadata on the public opportunity page (shared `OpportunityCoreDetails`),
+  engagement `displayName` in the editor, "Skills required" for Jobs, banner copy, `aria-pressed`
+  on wizard pills. Decisions: API takes priority on asks 17–22; YOM-1258 superseded by YOM-1262.
 
 - 2026-09-29 (later): Web absorbed Adrian's `4c4b0ebd` (Impact Action tools / activity fields) and `35da1e0b` (optional completion fields, new `Date` data type) — `Date` in the editor, view and filters; the Impact Action Other ↔ description rule in the renamed `customFieldRules.ts`; CSV samples and both import help texts updated. Local DB must be recreated again (the CF migration was edited).
 

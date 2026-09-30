@@ -22,6 +22,7 @@ export const GoalCards: React.FC<{
         <button
           key={entry.id}
           type="button"
+          aria-pressed={active}
           aria-disabled={entry.comingSoon}
           onClick={() =>
             !entry.comingSoon &&

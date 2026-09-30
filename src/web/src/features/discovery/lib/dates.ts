@@ -15,8 +15,11 @@ export function closingInfo(dateEnd: string | null, now: Date): ClosingInfo {
   if (days === 0) return { label: "Closes today", urgent: true };
   if (days <= 7)
     return { label: `${days} day${days === 1 ? "" : "s"} left`, urgent: true };
+  // The API stores the deadline as the END of that calendar day in UTC (…T23:59:59.999Z), so
+  // it is labelled in UTC — as the rest of the site does (`fmtDate`, opportunityTypeTheme).
+  // In local time a 31 Dec deadline read "Apply by 01 Jan" in Johannesburg.
   return {
-    label: `Apply by ${end.toLocaleDateString("en-ZA", { day: "numeric", month: "short" })}`,
+    label: `Apply by ${end.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" })}`,
     urgent: false,
   };
 }
