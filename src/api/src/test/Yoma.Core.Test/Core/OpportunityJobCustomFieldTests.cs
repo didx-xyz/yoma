@@ -209,7 +209,8 @@ namespace Yoma.Core.Test.Core
     private static List<CustomFieldDefinition> Definitions()
     {
       var seeds = new ApplicationDb_CF_Configuration().UpOperations.OfType<InsertDataOperation>().ToList();
-      var definitions = Assert.Single(seeds, o => o.Table == "CustomFieldDefinition" && o.Columns.Contains("LookupType"));
+      var definitions = Assert.Single(seeds, o => o.Table == "CustomFieldDefinition" &&
+        o.Values[0, 0] is Guid id && id == new Guid("cf0b0001-0929-4cf0-a100-000000000001"));
       var options = Assert.Single(seeds, o => o.Table == "CustomFieldOption" &&
         o.Values[0, 0] is Guid id && id == new Guid("cf0b0001-0929-4cf0-a100-000000000101"));
       var result = new List<CustomFieldDefinition>();

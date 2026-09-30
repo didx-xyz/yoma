@@ -37,25 +37,24 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
 
       RuleFor(x => x.DateStart)
         .NotEmpty()
-        .When((model, context) => model.CommitmentInterval == null && !AutoFinalizedVerification(context))
+        .When((model, context) => model.CommitmentInterval == null && RequiresParticipationPeriod(context))
         .WithMessage("Start date is required when the commitment interval (time to complete) is not specified.");
 
       RuleFor(x => x.CommitmentInterval)
         .NotNull()
-        .When((model, context) => !model.DateStart.HasValue && !AutoFinalizedVerification(context))
-        .WithMessage("Commitment interval (time to complete) is required when start date is not specified.")
-        .DependentRules(() =>
-        {
-          RuleFor(x => x.CommitmentInterval!.Id)
-            .Must(id => id != Guid.Empty && CommitmentIntervalExists(id))
-            .WithMessage("Commitment interval is empty or does not exist.")
-            .When(x => x.CommitmentInterval != null);
+        .When((model, context) => !model.DateStart.HasValue && RequiresParticipationPeriod(context))
+        .WithMessage("Commitment interval (time to complete) is required when start date is not specified.");
 
-          RuleFor(x => x.CommitmentInterval!.Count)
-            .GreaterThanOrEqualTo((short)1)
-            .WithMessage("Commitment interval count must be greater than or equal to 1.")
-            .When(x => x.CommitmentInterval != null);
-        });
+      // Optional participation periods still require a valid interval when supplied.
+      RuleFor(x => x.CommitmentInterval!.Id)
+        .Must(id => id != Guid.Empty && CommitmentIntervalExists(id))
+        .WithMessage("Commitment interval is empty or does not exist.")
+        .When(x => x.CommitmentInterval != null);
+
+      RuleFor(x => x.CommitmentInterval!.Count)
+        .GreaterThanOrEqualTo((short)1)
+        .WithMessage("Commitment interval count must be greater than or equal to 1.")
+        .When(x => x.CommitmentInterval != null);
 
       RuleFor(x => x.DateEnd)
         .NotEmpty()
@@ -107,6 +106,16 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
     {
       return context.RootContextData.TryGetValue(nameof(MyOpportunityVerificationOptions.AutoFinalizedVerification), out var value) &&
         value is true;
+    }
+
+    private static bool RequiresParticipationPeriod(ValidationContext<MyOpportunityRequestVerify> context)
+    {
+      if (AutoFinalizedVerification(context)) return false;
+
+      // A verified venture outcome need not represent a timed participation period.
+      // Dates or commitment may still be supplied and are validated when present.
+      return !context.RootContextData.TryGetValue(nameof(Opportunity.Models.Opportunity.Type), out var type) ||
+        type is not Opportunity.Type.Entrepreneurship;
     }
 
     private bool CommitmentIntervalExists(Guid id)

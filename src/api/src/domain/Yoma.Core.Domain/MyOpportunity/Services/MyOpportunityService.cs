@@ -2026,6 +2026,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       var validationContext = new ValidationContext<MyOpportunityRequestVerify>(request);
       validationContext.RootContextData[nameof(MyOpportunityVerificationOptions.AutoFinalizedVerification)] = options.AutoFinalizedVerification;
+      validationContext.RootContextData[nameof(Opportunity.Models.Opportunity.Type)] = opportunity.Type;
       var validationResult = await _myOpportunityRequestValidatorVerify.ValidateAsync(validationContext);
       if (!validationResult.IsValid) throw new ValidationException(validationResult.Errors);
 

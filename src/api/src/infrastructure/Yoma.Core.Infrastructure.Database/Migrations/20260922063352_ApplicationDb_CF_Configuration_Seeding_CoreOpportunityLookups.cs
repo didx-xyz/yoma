@@ -13,7 +13,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
     internal static void Seed(MigrationBuilder migrationBuilder)
     {
       #region Lookups
-      var created = new DateTimeOffset(2026, 9, 28, 0, 0, 0, TimeSpan.Zero);
+      var created = DateTimeOffset.UtcNow;
 
       #region Currencies
       // Stable snapshot of SIX ISO 4217 List One, retrieved 2026-09-28.

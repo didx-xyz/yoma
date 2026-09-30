@@ -94,6 +94,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
       {
         RuleFor(x => x.Incentivized)
             .NotNull()
+            .When(x => !TypeIsEntrepreneurship(x.TypeId))
             .WithMessage("An incentivized selection is required.");
       });
 
@@ -205,15 +206,15 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .When(x => x.VerificationEnabled)
           .WithMessage("A verification method is required when verification is enabled.");
 
-      // Commitment interval is required except for Job opportunities If specified it must exist
+      // Jobs and Entrepreneurship may omit commitment; supplied interval and count must stay paired.
       RuleFor(x => x.CommitmentIntervalId)
           .Cascade(CascadeMode.Stop)
           .Must((model, intervalId) =>
           {
             if (!TypeExists(model.TypeId)) return true;
 
-            var isJob = TypeIsJob(model.TypeId);
-            return isJob
+            var optional = TypeAllowsOptionalCommitment(model.TypeId);
+            return optional
               ? intervalId.HasValue == model.CommitmentIntervalCount.HasValue
               : intervalId.HasValue;
           })
@@ -221,15 +222,15 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .Must(intervalId => !intervalId.HasValue || TimeIntervalExists(intervalId))
           .WithMessage("Specified time interval is invalid or does not exist.");
 
-      // Commitment interval count is required except for Job opportunities
+      // Other opportunity types require both commitment fields.
       RuleFor(x => x.CommitmentIntervalCount)
           .Cascade(CascadeMode.Stop)
           .Must((model, count) =>
           {
             if (!TypeExists(model.TypeId)) return true;
 
-            var isJob = TypeIsJob(model.TypeId);
-            return isJob
+            var optional = TypeAllowsOptionalCommitment(model.TypeId);
+            return optional
               ? count.HasValue == model.CommitmentIntervalId.HasValue
               : count.HasValue;
           })
@@ -391,6 +392,24 @@ namespace Yoma.Core.Domain.Opportunity.Validators
 
       var type = _opportunityTypeService.GetByIdOrNull(typeId);
       return type != null && type.Name.Equals(Type.Job.ToString(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool TypeIsEntrepreneurship(Guid typeId)
+    {
+      if (typeId == Guid.Empty) return false;
+
+      var type = _opportunityTypeService.GetByIdOrNull(typeId);
+      return type != null && type.Name.Equals(Type.Entrepreneurship.ToString(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool TypeAllowsOptionalCommitment(Guid typeId)
+    {
+      if (typeId == Guid.Empty) return false;
+
+      var type = _opportunityTypeService.GetByIdOrNull(typeId);
+      return type != null &&
+        (type.Name.Equals(Type.Job.ToString(), StringComparison.OrdinalIgnoreCase) ||
+        type.Name.Equals(Type.Entrepreneurship.ToString(), StringComparison.OrdinalIgnoreCase));
     }
 
     private bool TimeIntervalExists(Guid? id)

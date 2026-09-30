@@ -24,7 +24,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
     {
       #region MyOpportunity
       #region Custom Fields
-      var created = new DateTimeOffset(2026, 9, 29, 0, 0, 0, TimeSpan.Zero);
+      var created = DateTimeOffset.UtcNow;
 
       // These describe the individual completion, not the advertised Opportunity.
       // Existing completions have no inferred values. Credential schema mappings follow

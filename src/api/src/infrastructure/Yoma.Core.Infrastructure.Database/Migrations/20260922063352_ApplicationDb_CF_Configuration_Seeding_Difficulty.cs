@@ -26,7 +26,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
     {
       #region Opportunity
       #region Custom Fields
-      var created = new DateTimeOffset(2026, 9, 29, 0, 0, 0, TimeSpan.Zero);
+      var created = DateTimeOffset.UtcNow;
 
       // Protect the four non-Job contracts used by partner mappings and the temporary SSI bridge.
       // Job experience has no runtime dependency: it remains ordinary configurable metadata.

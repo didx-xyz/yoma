@@ -25,7 +25,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
     {
       #region Opportunity
       #region Custom Fields
-      var created = new DateTimeOffset(2026, 9, 29, 0, 0, 0, TimeSpan.Zero);
+      var created = DateTimeOffset.UtcNow;
 
       // Difficulty already occupies Requirements position 10. Tools describe what the
       // participant needs, not what the provider supplies. Optional fields need no backfill.

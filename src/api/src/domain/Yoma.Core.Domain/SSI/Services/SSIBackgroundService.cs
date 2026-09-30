@@ -636,7 +636,7 @@ namespace Yoma.Core.Domain.SSI.Services
         Opportunity.Type.Other => Opportunity.CustomFieldConstants.Difficulty.Keys.Other,
         Opportunity.Type.ImpactAction => Opportunity.CustomFieldConstants.Difficulty.Keys.ImpactAction,
         Opportunity.Type.Event => Opportunity.CustomFieldConstants.Difficulty.Keys.Event,
-        Opportunity.Type.Job => null,
+        Opportunity.Type.Job or Opportunity.Type.Entrepreneurship => null,
         _ => throw new NotSupportedException($"Opportunity type '{opportunity.Type}' is not supported")
       };
       if (key == null) return null;

@@ -2578,6 +2578,21 @@ namespace Yoma.Core.Domain.Opportunity.Services
             break;
           }
 
+        case Type.Entrepreneurship:
+          {
+            var programmes = opportunity.CustomFields.Selections(CustomFieldConstants.Entrepreneurship.Programme.Type);
+            var description = opportunity.CustomFields.Scalar(CustomFieldConstants.Entrepreneurship.Programme.OtherDescription);
+            var other = programmes.Contains(EntrepreneurshipProgrammeType.Other.ToString());
+
+            if (other && string.IsNullOrWhiteSpace(description))
+              throw new ValidationException("Other programme is required when Other is selected.");
+
+            if (!other && !string.IsNullOrWhiteSpace(description))
+              throw new ValidationException("Other programme is only supported when Other is selected.");
+
+            break;
+          }
+
         case Type.Other:
         case Type.Learning:
         case Type.Event:

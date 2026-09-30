@@ -22,6 +22,7 @@ namespace Yoma.Core.Test.Core
   public class OpportunityCoreFieldsTests
   {
     private static readonly Guid JobId = Guid.NewGuid();
+    private static readonly Guid EntrepreneurshipId = Guid.NewGuid();
     private static readonly Guid AccommodationId = Guid.NewGuid();
     private static readonly Guid OtherId = Guid.NewGuid();
     private static readonly Guid OpenToAllId = Guid.NewGuid();
@@ -183,6 +184,27 @@ namespace Yoma.Core.Test.Core
     }
 
     [Fact]
+    public void EntrepreneurshipMayOmitIncentiveAndCommitmentButSuppliedCommitmentMustBePaired()
+    {
+      var validator = CreateValidator();
+      var request = new OpportunityRequestCreate { TypeId = EntrepreneurshipId };
+
+      var errors = validator.Validate(request, options => options.IncludeRuleSets("default", "Manual")).Errors;
+      Assert.DoesNotContain(errors, o => o.PropertyName == nameof(request.Incentivized));
+      Assert.DoesNotContain(errors, o => o.PropertyName == nameof(request.CommitmentIntervalId));
+      Assert.DoesNotContain(errors, o => o.PropertyName == nameof(request.CommitmentIntervalCount));
+
+      request.CommitmentIntervalCount = 4;
+      errors = validator.Validate(request).Errors;
+      Assert.Contains(errors, o => o.PropertyName == nameof(request.CommitmentIntervalId));
+
+      request.CommitmentIntervalCount = null;
+      request.Incentivized = true;
+      errors = validator.Validate(request).Errors;
+      Assert.Contains(errors, o => o.PropertyName == nameof(request.RewardType));
+    }
+
+    [Fact]
     public void JobsCannotOfferZltoButCanHaveSalaryWithoutAReward()
     {
       var request = new OpportunityRequestCreate { TypeId = JobId, Incentivized = true };
@@ -270,6 +292,11 @@ namespace Yoma.Core.Test.Core
       {
         Id = JobId,
         Name = Domain.Opportunity.Type.Job.ToString()
+      });
+      types.Setup(o => o.GetByIdOrNull(EntrepreneurshipId)).Returns(new Domain.Opportunity.Models.Lookups.OpportunityType
+      {
+        Id = EntrepreneurshipId,
+        Name = Domain.Opportunity.Type.Entrepreneurship.ToString()
       });
       var currencies = new Mock<ICurrencyService>();
       currencies.Setup(o => o.List()).Returns([new Currency { Code = "USD", Name = "US Dollar" }]);

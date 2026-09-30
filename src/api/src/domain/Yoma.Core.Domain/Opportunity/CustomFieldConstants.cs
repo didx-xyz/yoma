@@ -65,6 +65,17 @@ namespace Yoma.Core.Domain.Opportunity
     }
     #endregion
 
+    #region Entrepreneurship
+    public static class Entrepreneurship
+    {
+      public static class Programme
+      {
+        public const string Type = "entrepreneurshipProgrammeType";
+        public const string OtherDescription = "entrepreneurshipProgrammeOtherDescription";
+      }
+    }
+    #endregion
+
     #region Difficulty
     public static class Difficulty
     {

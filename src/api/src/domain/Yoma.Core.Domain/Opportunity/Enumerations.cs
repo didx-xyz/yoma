@@ -62,10 +62,20 @@ namespace Yoma.Core.Domain.Opportunity
     Event,
     Job,
     [Description("Impact Action")]
-    ImpactAction
+    ImpactAction,
+    Entrepreneurship
   }
 
   public enum Category
+  {
+    Other
+  }
+
+  /// <summary>
+  /// Only the programme option interpreted by cross-field validation belongs in code.
+  /// Other programme values remain configurable custom-field options.
+  /// </summary>
+  public enum EntrepreneurshipProgrammeType
   {
     Other
   }

@@ -25,7 +25,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
     {
       #region Opportunity
       #region Custom Fields
-      var created = new DateTimeOffset(2026, 9, 29, 0, 0, 0, TimeSpan.Zero);
+      var created = DateTimeOffset.UtcNow;
 
       // Experience level is already seeded with Difficulty. Languages, deadline and required
       // skills reuse core fields. No historical salary, qualification or employment data is inferred.
