@@ -4,15 +4,23 @@ import { IoOptionsOutline, IoSearchOutline } from "react-icons/io5";
 import AnimatedText from "~/components/Opportunity/AnimatedText";
 import { formatNumber } from "../../lib/format";
 import { whereSummary } from "../../lib/location";
+import {
+  SEGMENT_TONE_TEXT,
+  segmentTone,
+  type SegmentTone,
+} from "../../lib/segmentTone";
 import { isDefaultDiscoveryState } from "../../lib/urlCodec";
 import { useDiscovery } from "../../state/DiscoveryContext";
 import { FiltersDialog } from "../Filters/FiltersDialog";
 import { FiltersSheet } from "../Filters/FiltersSheet";
 import { PersonalizeDialog } from "../Personalize/PersonalizeDialog";
+import { CurrentFilters } from "../Results/CurrentFilters";
 import { DiscoveryResults } from "../Results/DiscoveryResults";
 import { SegmentedSearchBar } from "../SearchBar/SegmentedSearchBar";
 import { FloatingFilterButton } from "../shared/FloatingFilterButton";
 import { KeepAnswersPrompt } from "../shared/KeepAnswersPrompt";
+import { PreferenceBanner } from "../shared/PreferenceBanner";
+import { CategoryCarousel } from "./CategoryCarousel";
 import { DiscoveryLanding } from "./DiscoveryLanding";
 import { MyOpportunitiesLink } from "./MyOpportunitiesLink";
 import { QuickSearchRow } from "./QuickSearchRow";
@@ -22,6 +30,10 @@ import { QuickSearchRow } from "./QuickSearchRow";
  * bar on desktop; badges above one search pill on mobile), then landing or results. Personalization opens
  * automatically on the first visit only; afterwards the banner, the sheet's preference block and
  * this surface's Edit entry points reopen it.
+ *
+ * Round 7 layout (2026-09-30, artboard 12a): the hero holds title · count · quick searches · bar ·
+ * Browse by category (pills); the white area opens with the preference banner and the framed
+ * Current filters row — ONE instance of each for landing and results — then the page body.
  */
 export const DiscoverySurface: React.FC = () => {
   const {
@@ -85,7 +97,9 @@ export const DiscoverySurface: React.FC = () => {
   // desktop bar names (type, where, engagement — each first value "+N"), then a count of the other
   // facets in play. Effective filters, so the inherited layer shows on landing as it does on the
   // desktop bar.
-  const pillSummary = ((): string | null => {
+  // Each named part carries its segment's tone — the round-7 colour rule (green = this search,
+  // purple = preferences), as on the desktop bar.
+  const pillSummary = ((): { text: string; tone: SegmentTone }[] | null => {
     const f = effectiveFilters;
     const firstPlus = (facet: "types" | "engagementTypes"): string | null => {
       const values = f[facet];
@@ -93,11 +107,17 @@ export const DiscoverySurface: React.FC = () => {
       const first = resolveLabel(facet, values[0]!);
       return values.length > 1 ? `${first} +${values.length - 1}` : first;
     };
-    const named = [
-      firstPlus("types"),
-      whereSummary(f, (id) => resolveLabel("countries", id)),
-      firstPlus("engagementTypes"),
-    ].filter((s): s is string => s !== null);
+    const named = (
+      [
+        [firstPlus("types"), "type"],
+        [whereSummary(f, (id) => resolveLabel("countries", id)), "where"],
+        [firstPlus("engagementTypes"), "engagement"],
+      ] as const
+    ).flatMap(([text, segment]) =>
+      text === null
+        ? []
+        : [{ text, tone: segmentTone(state.filters, f, segment) }],
+    );
     const others = [
       f.categories.length > 0,
       f.commitment !== null,
@@ -111,8 +131,13 @@ export const DiscoverySurface: React.FC = () => {
       f.age !== null,
       f.customFields.length > 0,
     ].filter(Boolean).length;
-    const parts = [...named, ...(others > 0 ? [`+${others}`] : [])];
-    return parts.length > 0 ? parts.join(" · ") : null;
+    const parts = [
+      ...named,
+      ...(others > 0
+        ? [{ text: `+${others}`, tone: "empty" as SegmentTone }]
+        : []),
+    ];
+    return parts.length > 0 ? parts : null;
   })();
 
   return (
@@ -175,7 +200,7 @@ export const DiscoverySurface: React.FC = () => {
             <button
               type="button"
               onClick={() => setFiltersOpen(true)}
-              className="flex min-h-12 grow items-center gap-3 rounded-full bg-white px-4 py-1.5 text-left text-black"
+              className="flex min-h-12 min-w-0 grow items-center gap-3 rounded-full bg-white px-4 py-1.5 text-left text-black"
             >
               <IoSearchOutline className="text-gray-dark h-5 w-5 shrink-0" />
               <span className="min-w-0 grow">
@@ -183,35 +208,50 @@ export const DiscoverySurface: React.FC = () => {
                   {state.filters.q ?? "Search opportunities"}
                 </span>
                 {pillSummary && (
-                  <span className="text-gray-dark block truncate text-[11px]">
-                    {pillSummary}
-                  </span>
-                )}
-              </span>
-              <span className="text-gray-dark flex shrink-0 items-center gap-1">
-                <IoOptionsOutline className="h-5 w-5" />
-                {chips.length > 0 && (
-                  <span className="bg-purple flex h-5 w-5 items-center justify-center rounded-full text-xs text-white">
-                    {chips.length}
+                  <span className="text-gray-dark block truncate text-[11px] font-semibold">
+                    {pillSummary.map((part, index) => (
+                      <React.Fragment key={part.text}>
+                        {index > 0 && " · "}
+                        <span className={SEGMENT_TONE_TEXT[part.tone]}>
+                          {part.text}
+                        </span>
+                      </React.Fragment>
+                    ))}
                   </span>
                 )}
               </span>
             </button>
+            {/* The Filters entry, green like the desktop bar's (green = filters). Same sheet
+                as the pill — the pill kept its tap target, the count moved out here. */}
+            <button
+              type="button"
+              onClick={() => setFiltersOpen(true)}
+              aria-label={
+                chips.length > 0 ? `Filters (${chips.length})` : "Filters"
+              }
+              className="bg-green hover:bg-green-dark flex min-h-12 shrink-0 items-center justify-center gap-1 rounded-full px-3.5 text-sm font-semibold text-white"
+            >
+              <IoOptionsOutline className="h-5 w-5" />
+              {chips.length > 0 && <span>{chips.length}</span>}
+            </button>
             <MyOpportunitiesLink />
           </div>
+          <CategoryCarousel />
         </div>
       </header>
 
       <FloatingFilterButton onOpen={() => setFiltersOpen(true)} />
 
-      {/* 32px is the page's vertical rhythm — hero → banner → chips → carousel → results — held
+      {/* 32px is the page's vertical rhythm — hero → banner → Current filters → results — held
           to 24px below md, where the fold is the scarcer resource. */}
-      <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 md:gap-8 md:py-8">
+      <main className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-4">
         <KeepAnswersPrompt />
+        <PreferenceBanner onEdit={editPreferences} />
+        <CurrentFilters />
         {landing ? (
-          <DiscoveryLanding onEditPreferences={editPreferences} now={now} />
+          <DiscoveryLanding now={now} />
         ) : (
-          <DiscoveryResults onEditPreferences={editPreferences} now={now} />
+          <DiscoveryResults now={now} />
         )}
       </main>
 

@@ -6,21 +6,18 @@ import {
   EMPTY_DISCOVERY_FILTERS,
 } from "../../lib/types";
 import { useDiscovery } from "../../state/DiscoveryContext";
-import { AppliedChips } from "../Results/AppliedChips";
-import { PreferenceBanner } from "../shared/PreferenceBanner";
-import { CategoryCarousel } from "./CategoryCarousel";
 import { DiscoveryRail } from "./DiscoveryRail";
 
 /**
- * The landing surface — search not yet run: preference strip, the inherited chips (so the active
- * preference layer is visible before any search), the category carousel, then the discovery
- * rails. The first rail is preference-driven and labelled as such; "New this week" leans on the
+ * The landing surface — search not yet run: the discovery rails. The preference strip, the
+ * Current filters row (inherited chips, so the active preference layer is visible before any
+ * search) and Browse by category are the SURFACE's since round 7 (2026-09-30), one instance each
+ * for landing and results. The first rail is preference-driven and labelled as such; "New this week" leans on the
  * API's newest-first default ordering.
  */
 export const DiscoveryLanding: React.FC<{
-  onEditPreferences: () => void;
   now: Date;
-}> = ({ onEditPreferences, now }) => {
+}> = ({ now }) => {
   const { effectiveFilters, chips } = useDiscovery();
 
   const preferenceState: DiscoveryState = {
@@ -35,9 +32,6 @@ export const DiscoveryLanding: React.FC<{
 
   return (
     <div className="flex flex-col gap-6 md:gap-8">
-      <PreferenceBanner onEdit={onEditPreferences} />
-      <AppliedChips />
-      <CategoryCarousel />
       {tunedTo && (
         <DiscoveryRail
           title={`Because your feed is tuned to ${tunedTo}`}

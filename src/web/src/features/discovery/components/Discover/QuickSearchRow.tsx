@@ -23,9 +23,11 @@ const badgeClassFor = (applied: boolean): string =>
     ? "border-green bg-green text-white"
     : "border-gray hover:border-green bg-white text-black";
 
-export const QuickSearchRow: React.FC<{ wrap?: boolean }> = ({
-  wrap = true,
-}) => {
+export const QuickSearchRow: React.FC<{
+  wrap?: boolean;
+  /** Called after a badge is tapped — the welcome step closes the dialog (round 7). */
+  onPick?: () => void;
+}> = ({ wrap = true, onPick }) => {
   const { state, dispatch, lookups, homeCountryId, effectiveFilters } =
     useDiscovery();
   const hasPoint = effectiveFilters.point !== null;
@@ -64,7 +66,10 @@ export const QuickSearchRow: React.FC<{ wrap?: boolean }> = ({
           key={badge.id}
           type="button"
           aria-pressed={applied}
-          onClick={() => dispatch({ kind: "toggleQuickSearch", criteria })}
+          onClick={() => {
+            dispatch({ kind: "toggleQuickSearch", criteria });
+            onPick?.();
+          }}
           // Panel homes are thumb-sized (44px); the hero's scrolling row stays compact.
           className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-[11px] whitespace-nowrap md:px-3 md:text-xs ${
             wrap ? "min-h-11 md:min-h-9" : "min-h-7 md:min-h-9"

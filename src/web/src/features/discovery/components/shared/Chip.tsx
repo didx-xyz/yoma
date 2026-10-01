@@ -3,7 +3,6 @@ import {
   IoArrowUndoOutline,
   IoClose,
   IoInformationCircleOutline,
-  IoPersonOutline,
 } from "react-icons/io5";
 import type { DiscoveryChip } from "../../lib/chipModel";
 
@@ -38,7 +37,6 @@ export const Chip: React.FC<{
         title={chip.note ? `${label} — ${chip.note}` : label}
         className="bg-gray-light text-gray-dark inline-flex min-h-8 shrink-0 items-center gap-1 rounded-full px-3 py-1 text-xs"
       >
-        <IoPersonOutline className="h-4 w-4 shrink-0 opacity-60" />
         <span className="line-clamp-2 max-w-40 opacity-60 md:truncate">
           {label}
         </span>
@@ -55,7 +53,6 @@ export const Chip: React.FC<{
         title={title}
         className="bg-gray-light text-gray-dark inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-xs"
       >
-        <IoPersonOutline className="h-4 w-4 shrink-0 opacity-60" />
         <span className="line-clamp-2 max-w-40 line-through opacity-60 md:truncate">
           {label}
         </span>
@@ -75,11 +72,14 @@ export const Chip: React.FC<{
     <span
       title={title}
       className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-xs motion-reduce:animate-none ${
-        inherited ? "bg-purple-tint text-purple" : "bg-green-light text-green"
+        inherited
+          ? "bg-purple-tint text-purple"
+          : "bg-green-light text-green border-green/25 border"
       } ${pending} ${pulse ? "animate-pulse" : ""}`}
     >
-      {inherited && <IoPersonOutline className="h-4 w-4 shrink-0" />}
-      <span className="line-clamp-2 max-w-40 md:truncate">{label}</span>
+      <span className="line-clamp-2 max-w-40 font-semibold md:truncate">
+        {label}
+      </span>
       <button
         type="button"
         onClick={onRemove}

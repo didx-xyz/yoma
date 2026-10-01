@@ -4428,11 +4428,14 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             results.
                           </FormMessage>
 
+                          {/* The public page's component in the round-7 layout (Jason, 2026-09-30):
+                              what the experimental public page shows, buttons inactive */}
                           <OpportunityPublicDetails
                             opportunityInfo={opportunityInfo}
                             user={null}
                             error={error}
                             preview={true}
+                            layout="experimental"
                           />
                         </div>
                       </div>

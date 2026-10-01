@@ -1,6 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import { IoOptionsOutline } from "react-icons/io5";
 import { whereSummary } from "../../lib/location";
+import {
+  SEGMENT_TONE_DOT,
+  SEGMENT_TONE_TEXT,
+  segmentTone,
+  type SegmentId,
+} from "../../lib/segmentTone";
 import { FILTER_SECTIONS } from "../../registry/filterSections";
 import { useDiscovery } from "../../state/DiscoveryContext";
 import { SectionPopover } from "./SectionPopover";
@@ -17,8 +23,12 @@ import { SectionPopover } from "./SectionPopover";
  * SEARCH · WHAT · WHERE · HOW LONG · ENGAGEMENT (2026-09-22): Engagement replaced Pay, which
  * moved under "More filters". Registry-backed segments use the SECTION id, so the popover reuses
  * the Engagement section definition — one definition, two homes.
+ *
+ * Round 7 colour rule (2026-09-30): a segment's value is green with a dot when this search set
+ * it, purple when the preferences supply it, grey when empty (`lib/segmentTone.ts`); the Filters
+ * button and its count are green.
  */
-const SEGMENTS: { id: string; label: string }[] = [
+const SEGMENTS: { id: SegmentId; label: string }[] = [
   { id: "search", label: "Search" },
   { id: "type", label: "What" },
   { id: "where", label: "Where" },
@@ -29,7 +39,7 @@ const SEGMENTS: { id: string; label: string }[] = [
 export const SegmentedSearchBar: React.FC<{ onOpenFilters: () => void }> = ({
   onOpenFilters,
 }) => {
-  const { effectiveFilters, chips, resolveLabel } = useDiscovery();
+  const { state, effectiveFilters, chips, resolveLabel } = useDiscovery();
   const [openSection, setOpenSection] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -111,9 +121,26 @@ export const SegmentedSearchBar: React.FC<{ onOpenFilters: () => void }> = ({
                 <span className="text-gray-dark text-[10px] font-bold tracking-wide uppercase">
                   {segment.label}
                 </span>
-                <span className="max-w-32 truncate text-xs font-semibold">
-                  {summaryFor(segment.id)}
-                </span>
+                {(() => {
+                  const tone = segmentTone(
+                    state.filters,
+                    effectiveFilters,
+                    segment.id,
+                  );
+                  const dot = SEGMENT_TONE_DOT[tone];
+                  return (
+                    <span
+                      className={`flex max-w-32 items-center gap-1.5 text-xs font-semibold ${SEGMENT_TONE_TEXT[tone]}`}
+                    >
+                      {dot && (
+                        <span
+                          className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`}
+                        />
+                      )}
+                      <span className="truncate">{summaryFor(segment.id)}</span>
+                    </span>
+                  );
+                })()}
               </button>
               {openSection === segment.id && (
                 <SectionPopover
@@ -131,12 +158,12 @@ export const SegmentedSearchBar: React.FC<{ onOpenFilters: () => void }> = ({
             setOpenSection(null);
             onOpenFilters();
           }}
-          className="bg-purple hover:bg-purple-shade flex min-h-10 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm font-semibold text-white"
+          className="bg-green hover:bg-green-dark flex min-h-10 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm font-semibold text-white"
         >
           <IoOptionsOutline className="h-4 w-4" />
           Filters
           {chips.length > 0 && (
-            <span className="text-purple flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs">
+            <span className="text-green flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs">
               {chips.length}
             </span>
           )}

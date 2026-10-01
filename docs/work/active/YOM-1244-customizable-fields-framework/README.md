@@ -574,6 +574,16 @@ DEV, until this epic merges. Owner: Adrian / infra.
 
 ## Changelog
 
+- 2026-09-30 / 10-01: Discovery round-7 visual pass (claude.design brief) on YOM-1262:
+  - header-owned category pills;
+  - preference chips in the purple banner, this search's chips in a green twin panel;
+  - redesigned cards with the summary restored;
+  - experimental single-column detail pages (`/opportunities/{id}/experimental` and the admin
+    `…/info/experimental`, also used by the editor Preview) — the classic pages are untouched;
+  - a first-visit welcome step.
+
+  Deviations from the canvas are listed in [`handoffs/2026-09-30-b.md`](./handoffs/2026-09-30-b.md).
+
 - 2026-09-30: Local browser pass of manual steps 1–8 (all pass). Fixed on web: .NET regex anchors
   in definitions (ask 22), Job salary on discovery cards, partner-incentive decimals, deadline
   labels in UTC, core metadata on the public opportunity page (shared `OpportunityCoreDetails`),

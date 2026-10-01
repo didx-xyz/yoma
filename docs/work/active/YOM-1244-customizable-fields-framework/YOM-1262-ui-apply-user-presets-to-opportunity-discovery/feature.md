@@ -250,9 +250,13 @@ commitment set; **accessibility excludes** those that have not described their a
 - [x] Salary on the card's pay line (2026-09-30) — from the Job's system-controlled salary fields:
       the currency lookup (one cached request) labels the id, `JOB_PAY_INTERVAL_OPTIONS` the
       interval ("ZAR 20 000–30 000 / mo").
-- [ ] Design review (claude.design session, 2026-09-30 brief in the handoff): the welcome step,
-      card field set (**known issue: cards do not show the summary** — dropped in the 2026-08-31
-      field set), the detail-page layout, and the discovery page's vertical space.
+- [x] Design review (claude.design session) → **round-7 visual pass built 2026-09-30**
+      ([`../handoffs/2026-09-30-b.md`](../handoffs/2026-09-30-b.md)): header-owned categories +
+      Current filters, the colour rule, cards with the summary restored, the experimental detail
+      pages, the welcome step. Every place the canvas was not followed is listed there.
+- [ ] Round-7 follow-ups: `next build`; copy review of the new strings; decide when the
+      experimental detail pages replace the classic ones. (Classic regression and the admin page
+      at 390 checked 2026-10-01.)
 
 ## Decisions
 
@@ -767,6 +771,34 @@ commitment set; **accessibility excludes** those that have not described their a
     stays on absolute time.
   - **The banner no longer promises "never touches your profile"** — signed in, a place picked
     in the wizard is written to the profile. It now says only that the YoID is never touched.
+
+- 2026-09-30 (round-7 visual pass, claude.design brief — [`../handoffs/2026-09-30-b.md`](../handoffs/2026-09-30-b.md)):
+  - **Category pills in the purple header supersede the 2026-09-05 "shared square card"** (Jason):
+    first 10, then "See more". The banner and Current filters row are the surface's — one instance
+    for landing and results (the zero-results inline chips stay, per 2026-09-05).
+  - **Colour rule: green = filters, purple = preferences** — segment values, chips, category
+    pills, the Filters button.
+  - **Cards restore the summary** (dropped 2026-08-31) and gain one band badge (`cardStatus`:
+    Ending soon / Featured), up to two per-type facts (`lib/cardFacts.ts`, protected keys only —
+    Job qualification is left out) and the type button (existing CTA copy, drawn inside the card
+    link, never an inline action).
+  - **Detail page: experimental routes, existing pages untouched** (Jason). Discovery links to
+    `/opportunities/{id}/experimental`; the admin twin is `…/info/experimental`; the editor's
+    Preview renders the public component in the experimental layout. Same sections and
+    conditions, regrouped into Overview · Requirements · Who it's for · Impact · Provider ·
+    Details.
+  - **Welcome step 0** until the wizard is completed once; no counts on type tiles (no per-type
+    count endpoint, no fan-out).
+- 2026-10-01 (Jason's review of round 7): **preference chips live in the purple banner; this
+  search's chips in a green twin panel** (no "Current filters" label), each scrolling sideways on
+  mobile. **Zero results is a friendly card with large CTAs, no repeated chips** — supersedes the
+  2026-09-05 inline chips. Categories show 6 + See more / See less. Detail: "Overview" → "About";
+  the admin page gets a Rewards tab and the Manage opportunity menu in a full sticky panel on
+  mobile too.
+- 2026-10-01 (Jason): **Copy link and Sort are hidden** from the results header (commented out,
+  not deleted) — space, and sorting waits for the API (Newest is the only order today). The
+  mobile list's "compact list" explainer is gone; preference chips drop the person icon (the
+  purple banner carries that meaning).
 
 ## BA sign-off summary (2026-09-22)
 

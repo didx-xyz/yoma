@@ -20,11 +20,23 @@ import { closingInfo } from "./dates";
  * `status` arrives as the enum NAME ("Active") — the model's `Status | string` — so both forms
  * are accepted. Places render from exposed fields only (`participantLimit`, counts, and the
  * API's own `participantLimitReached`); nothing is computed from anything else.
+ *
+ * `highlight` is the card band's ONE badge (round 7, 2026-09-30), chosen from signals the card
+ * already has — no new rules: an open opportunity closing within the urgency window reads
+ * "Ending soon" (the same `urgent` flag that colours its closing label), else a featured one
+ * reads "Featured" (the API's flag the old page's Featured row uses). Closed shows none — the
+ * status row already says so. Labels stay ≤ 14 characters so a badge never reaches the logo.
  */
+export interface CardHighlight {
+  label: string;
+  tone: "urgent" | "featured";
+}
+
 export interface CardStatus {
   closing: ClosingInfo;
   closed: boolean;
   places: string | null;
+  highlight: CardHighlight | null;
 }
 
 const statusName = (status: OpportunityInfo["status"]): string =>
@@ -42,20 +54,27 @@ export function cardStatus(
       closing: { label: "Closed", urgent: false },
       closed,
       places: null,
+      highlight: null,
     };
 
+  let highlight: CardHighlight | null = null;
+  if (closing.urgent) highlight = { label: "Ending soon", tone: "urgent" };
+  else if (opportunity.featured)
+    highlight = { label: "Featured", tone: "featured" };
+
   if (opportunity.participantLimit === null)
-    return { closing, closed, places: null };
+    return { closing, closed, places: null, highlight };
 
   const full =
     opportunity.participantLimitReached ||
     opportunity.participantCountTotal >= opportunity.participantLimit;
-  if (full) return { closing, closed, places: "No places left" };
+  if (full) return { closing, closed, places: "No places left", highlight };
 
   const left = opportunity.participantLimit - opportunity.participantCountTotal;
   return {
     closing,
     closed,
     places: `${left} of ${opportunity.participantLimit} places left`,
+    highlight,
   };
 }

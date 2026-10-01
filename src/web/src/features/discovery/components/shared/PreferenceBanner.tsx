@@ -5,6 +5,8 @@ import {
   applySkipsToPreferences,
 } from "../../lib/preferenceMapping";
 import { useDiscovery } from "../../state/DiscoveryContext";
+import { useChipPulse } from "../../state/useChipPulse";
+import { AppliedChips } from "../Results/AppliedChips";
 
 /**
  * The preference strip above the results — and the ONE home for preference state on this page.
@@ -17,6 +19,8 @@ import { useDiscovery } from "../../state/DiscoveryContext";
  * neither the profile nor the YoID. (The strip no longer promises "never touches your profile":
  * signed in, a place picked in the wizard IS written to the profile — see `LiveCountPanel`.)
  * Saving leaves an inline undo, because a one-tap write with no way back is not one-tap.
+ * Since 2026-10-01 the preference CHIPS live here too (inherited, switched-off, inapplicable) —
+ * every purple thing in one panel; this search's own filters have the green panel below.
  * Identity-derived skips (country, age) have no preset field, so they stay per-search and raise
  * no offer. "Not now" dismisses the CURRENT override set only — the next change to the skips
  * brings the offer back (the dismissal is keyed to a signature of the skipped keys).
@@ -40,6 +44,7 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
     preferenceUndo: undoTo,
     setPreferenceUndo: setUndoTo,
   } = useDiscovery();
+  const pulse = useChipPulse();
   const [saving, setSaving] = useState(false);
   const [saveFailed, setSaveFailed] = useState(false);
   const [dismissedSignature, setDismissedSignature] = useState<string | null>(
@@ -183,6 +188,7 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
           />
         </span>
       </div>
+      <AppliedChips kind="inherited" pulseChipId={pulse} />
       {/* Second LINE of this panel, not a panel of its own — preference state has one home. */}
       {savableSkips.length > 0 && skipSignature !== dismissedSignature && (
         <div className="border-purple-tint flex flex-wrap items-center gap-x-2.5 gap-y-1 border-t pt-2 text-xs">

@@ -5,7 +5,8 @@ import { useDiscovery } from "../../state/DiscoveryContext";
 /**
  * Floating "Filters" entry point once the hero (and its own Filters button) has scrolled away —
  * the discovery counterpart of the old page's `FilterTab`, restyled to match the segmented bar's
- * Filters button, count badge included. Fixed at the top on both breakpoints.
+ * Filters button, count badge included (green since round 7 — green = filters). Fixed at the top
+ * on both breakpoints.
  */
 const SHOW_AFTER_SCROLL_Y = 300;
 
@@ -34,14 +35,14 @@ export const FloatingFilterButton: React.FC<{ onOpen: () => void }> = ({
       onClick={onOpen}
       tabIndex={visible ? 0 : -1}
       aria-hidden={!visible}
-      className={`bg-purple hover:bg-purple-shade shadow-custom fixed top-20 left-1/2 z-30 flex min-h-9 -translate-x-1/2 items-center gap-1.5 rounded-b-xl px-4 text-sm font-semibold text-white transition-opacity duration-300 select-none motion-reduce:transition-none ${
+      className={`bg-green hover:bg-green-dark shadow-custom fixed top-20 left-1/2 z-30 flex min-h-9 -translate-x-1/2 items-center gap-1.5 rounded-b-xl px-4 text-sm font-semibold text-white transition-opacity duration-300 select-none motion-reduce:transition-none ${
         visible ? "opacity-100" : "pointer-events-none opacity-0"
       }`}
     >
       <IoOptionsOutline className="h-4 w-4" />
       Filters
       {chips.length > 0 && (
-        <span className="text-purple flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs">
+        <span className="text-green flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs">
           {chips.length}
         </span>
       )}

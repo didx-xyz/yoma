@@ -14,26 +14,26 @@ import {
   DISCOVERY_PAGE_SIZE,
   useDiscoveryResults,
 } from "../../state/useDiscoveryResults";
-import { CategoryCarousel } from "../Discover/CategoryCarousel";
-import { CopyLinkButton } from "../shared/CopyLinkButton";
+// NB: re-enable with the copy button below
+// import { CopyLinkButton } from "../shared/CopyLinkButton";
 import { Message } from "../shared/Message";
-import { PreferenceBanner } from "../shared/PreferenceBanner";
-import { AppliedChips } from "./AppliedChips";
+import { NoMatches } from "./NoMatches";
 import { ResultsGrid } from "./ResultsGrid";
 import { ResultsList } from "./ResultsList";
-import { SortControl } from "./SortControl";
+// NB: re-enable with the sort control below (once the API supports sorting)
+// import { SortControl } from "./SortControl";
 import { ViewToggle } from "./ViewToggle";
 
 /**
- * The applied-search surface: banner, chips, the category carousel (current position, per the
- * design decision), the count row, then the results in the chosen view. Loading keeps the
+ * The applied-search surface: the count row, then the results in the chosen view. The banner,
+ * the Current filters row and Browse by category sit above it, owned by the surface since round 7
+ * (2026-09-30). Loading keeps the
  * previous results mounted and fades them — one spinner beside the count, never one per card,
  * `motion-reduce` throughout.
  */
 export const DiscoveryResults: React.FC<{
-  onEditPreferences: () => void;
   now: Date;
-}> = ({ onEditPreferences, now }) => {
+}> = ({ now }) => {
   const {
     state,
     dispatch,
@@ -51,14 +51,6 @@ export const DiscoveryResults: React.FC<{
     lookups.typeIdByName,
     ready && lookups.types.length > 0,
   );
-
-  // Pulse the chip that caused the reload: whatever id wasn't in the previous chip set.
-  const previousChipIds = useRef<Set<string>>(new Set());
-  const newChipId =
-    chips.find((c) => !previousChipIds.current.has(c.id))?.id ?? null;
-  useEffect(() => {
-    previousChipIds.current = new Set(chips.map((c) => c.id));
-  });
 
   // Paging jumps back to the count row — the new page starts at its top, not mid-scroll.
   // (This and the explicit "Show N results" actions are the ONLY scroll triggers; a filter
@@ -84,10 +76,6 @@ export const DiscoveryResults: React.FC<{
   const total = results?.totalCount ?? null;
   const pages =
     total !== null ? Math.max(1, Math.ceil(total / DISCOVERY_PAGE_SIZE)) : 1;
-  // Whether the zero-results state has anything to offer removing (free text is not a chip).
-  const removableFilters =
-    chips.length > 0 || state.filters.customFields.length > 0;
-
   // "[count] match(es) for [first filter] + N filter(s)" — states WHAT the count counts while
   // staying short: first value only, the rest as a count (the chips row above carries the full
   // set). Struck-through (skipped) and inapplicable chips are not filtering, and neither are
@@ -117,9 +105,6 @@ export const DiscoveryResults: React.FC<{
 
   return (
     <div className="flex flex-col gap-6 md:gap-8">
-      <PreferenceBanner onEdit={onEditPreferences} />
-      <AppliedChips pulseChipId={loading ? newChipId : null} />
-      <CategoryCarousel />
       {/* One drag-scrollable row: count left, controls right — never wraps into page height.
           The pager scrolls back up to this row, so it carries the anchor ref. */}
       <div ref={resultsAnchorRef} className="scroll-mt-20">
@@ -146,11 +131,13 @@ export const DiscoveryResults: React.FC<{
             )}
           </h2>
           <div className="ml-auto flex shrink-0 items-center gap-2 md:gap-3">
-            <CopyLinkButton />
-            <SortControl
+            {/* NB: copy button removed for now to save space */}
+            {/* <CopyLinkButton /> */}
+            {/* NB: sorting disabled for now till API supports it */}
+            {/* <SortControl
               sort={state.sort}
               onChange={(sort) => dispatch({ kind: "setSort", sort })}
-            />
+            /> */}
             <ViewToggle view={state.view} onChange={setView} />
           </div>
         </ScrollableContainer>
@@ -173,19 +160,10 @@ export const DiscoveryResults: React.FC<{
           </button>
         </Message>
       )}
-      {/* Zero results is a dead end unless the way out is on screen: the applied filters render
-          inline, removable, so relaxing the search is one tap rather than a hunt back up the
-          page (2026-09-05). */}
-      {!loading && !failed && total === 0 && (
-        <div className="flex flex-col gap-2">
-          <Message kind="warning">
-            {removableFilters
-              ? "No matches. Try removing a filter:"
-              : "No matches for this search. Try another word, or widen your filters."}
-          </Message>
-          {removableFilters && <AppliedChips />}
-        </div>
-      )}
+      {/* Zero results is a dead end unless the way out is on screen (2026-09-05). Since
+          2026-10-01 that is a friendly empty state with a large way out, not a second copy of the
+          chips — the filters panel and the banner sit right above it (Jason). */}
+      {!loading && !failed && total === 0 && <NoMatches />}
       {/* Loading keeps the previous results mounted and fades them — no blur, no scale (browser
           feedback: the background blur read as the page breaking, a plain fade does not). */}
       <div

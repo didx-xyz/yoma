@@ -49,6 +49,7 @@ import {
 } from "~/components/Opportunity/opportunityTypeTheme";
 import { OpportunityCompletionEdit } from "~/components/Opportunity/OpportunityCompletionEdit";
 import { OpportunityCoreDetails } from "~/components/Opportunity/OpportunityCoreDetails";
+import { OpportunityDetailSections } from "~/components/Opportunity/Experimental/OpportunityDetailSections";
 import { OpportunityCustomFieldsSection } from "~/components/Opportunity/OpportunityCustomFieldsSection";
 import Share from "~/components/Opportunity/Share";
 import { SignInButton } from "~/components/SignInButton";
@@ -98,11 +99,18 @@ const OpportunityPublicDetails: React.FC<{
   opportunityInfo: OpportunityInfo;
   error?: number;
   preview: boolean;
-}> = ({ user, opportunityInfo, error, preview }) => {
+  /**
+   * `experimental` = the round-7 single-column layout (anchor tabs, sticky bar, disclosure
+   * sections). Same actions, dialogs and rules; only the body changes. Default: the existing
+   * layout, so every current page renders exactly as before.
+   */
+  layout?: "classic" | "experimental";
+}> = ({ user, opportunityInfo, error, preview, layout = "classic" }) => {
   const queryClient = useQueryClient();
   const router = useRouter();
   const hasTrackedView = useRef(false);
   const hasResumedActionRef = useRef(false);
+  const headerCardRef = useRef<HTMLDivElement>(null);
   // Per-type theming for the new (V2) details design (badge, CTA, accent).
   const typeConfig = getTypeConfig(opportunityInfo?.type);
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
@@ -578,6 +586,204 @@ const OpportunityPublicDetails: React.FC<{
     saveOpportunity,
   ]);
 
+  // The header card's buttons, declared once so the classic and the experimental (round 7)
+  // layouts arrange the SAME elements — handlers, conditions and copy cannot drift apart.
+  const compactOnMobile =
+    layout === "experimental" ? "max-md:w-10 max-md:min-w-10 max-md:px-0" : "";
+  const goToButton = opportunityInfo.url &&
+    opportunityInfo.status !== "Expired" && (
+      <button
+        type="button"
+        className={`btn btn-sm bg-green hover:bg-green-dark disabled:bg-green h-10 w-full rounded-full text-sm text-white normal-case md:w-[250px]`}
+        title="Clicking this button will take you to an external site to continue this opportunity. Remember to return to this page to upload your completion certificate and earn your achievement!"
+        onClick={onGoToOpportunity}
+        disabled={preview || blockPartnerHandoff}
+      >
+        <IoMdOpen className="mr-1 h-5 w-5" />
+        {externalLinkButtonText}
+      </button>
+    );
+  const completionButtons = opportunityInfo.verificationEnabled && (
+    <>
+      {/* only show completion button if verification is manual, start date has been reached,
+                    and the opportunity is not yet completed or rejected */}
+      {opportunityInfo.verificationMethod == "Manual" &&
+        new Date(opportunityInfo.dateStart) < new Date() &&
+        (verificationStatus == null ||
+          verificationStatus == undefined ||
+          verificationStatus.status == "None" ||
+          verificationStatus.status == "Rejected") &&
+        !opportunityInfo.participantLimitReached &&
+        !verificationStatusIsLoading && (
+          <button
+            type="button"
+            className="btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[280px]"
+            title="Upload your completion files to earn your achievement and have this opportunity added to your CV."
+            onClick={() => {
+              // 📊 ANALYTICS: track "Upload completion files" button click
+              analytics.trackEvent("opportunity_upload_files_clicked", {
+                opportunityId: opportunityInfo.id,
+                opportunityTitle: opportunityInfo.title,
+              });
+
+              if (user) {
+                setCompleteOpportunityDialogVisible(true);
+              } else {
+                showLoginDialog("complete");
+              }
+            }}
+          >
+            <IoMdArrowUp className="mr-1 h-5 w-5" />
+            Upload your completion files
+          </button>
+        )}
+
+      {verificationStatus &&
+        verificationStatus.status == "Pending" &&
+        (isPartnerManagedPendingSubmission ? (
+          <button
+            type="button"
+            className="btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[250px]"
+            title={`This submission is read-only while pending${verificationStatus?.percentComplete != null ? ` and is ${verificationStatus.percentComplete}% complete` : ""}, so Yoma does not offer cancel or delete actions here.`}
+            onClick={() => {
+              // 📊 ANALYTICS: track "Pending verification" button click
+              analytics.trackEvent("opportunity_pending_verification_clicked", {
+                opportunityId: opportunityInfo.id,
+                opportunityTitle: opportunityInfo.title,
+              });
+
+              setCancelOpportunityDialogVisible(true);
+            }}
+          >
+            <FaInfoCircle className="h-4 w-4 shrink-0" />
+            {verificationStatus?.percentComplete != null
+              ? `Pending verification (${verificationStatus.percentComplete}%)`
+              : "Pending verification"}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[250px]"
+            title="Your submission is currently under review. If you would like to cancel your application and delete all uploaded files, click the button to see cancellation options."
+            onClick={() => {
+              // 📊 ANALYTICS: track "Pending verification" button click
+              analytics.trackEvent("opportunity_pending_verification_clicked", {
+                opportunityId: opportunityInfo.id,
+                opportunityTitle: opportunityInfo.title,
+              });
+
+              setCancelOpportunityDialogVisible(true);
+            }}
+          >
+            <FaInfoCircle className="h-4 w-4 shrink-0" />
+            Pending verification
+          </button>
+        ))}
+
+      {verificationStatus && verificationStatus.status == "Completed" && (
+        <div
+          className="md:text-md border-green text-green flex h-10 items-center justify-center rounded-full border bg-white px-4 text-center text-sm font-bold"
+          title="You have completed this opportunity!"
+        >
+          Completed
+          <IoMdCheckmark
+            strikethroughThickness={2}
+            overlineThickness={2}
+            underlineThickness={2}
+            className="ml-1 h-4 w-4"
+          />
+        </div>
+      )}
+    </>
+  );
+  const saveButton = (
+    <button
+      type="button"
+      className={`btn btn-sm h-10 w-full shrink flex-nowrap rounded-full text-sm normal-case md:max-w-[120px] ${compactOnMobile} ${
+        isOppSaved
+          ? "border-yellow bg-yellow-light text-yellow"
+          : "border-green text-green hover:bg-green-dark bg-white hover:text-white"
+      }`}
+      title="Save this opportunity to easily find it later from your profile page."
+      onClick={onUpdateSavedOpportunity}
+      disabled={
+        !(opportunityInfo.published && opportunityInfo.status == "Active") ||
+        preview
+      }
+    >
+      <IoMdBookmark
+        className={`h-5 w-5 ${compactOnMobile ? "md:mr-1" : "mr-1"}`}
+      />
+
+      <span className={compactOnMobile ? "hidden md:inline" : undefined}>
+        {isOppSaved ? "Saved" : "Save"}
+      </span>
+    </button>
+  );
+  const shareButton = (
+    <button
+      type="button"
+      className={`btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full shrink flex-nowrap rounded-full bg-white text-sm normal-case hover:text-white md:max-w-[120px] ${compactOnMobile}`}
+      title="Share this opportunity with your friends and network to help more people discover it!"
+      onClick={onShareOpportunity}
+      // ensure opportunity is published and active (user logged in check is done in function)
+      disabled={
+        !(opportunityInfo.published && opportunityInfo.status == "Active") ||
+        preview
+      }
+    >
+      <IoMdShare
+        className={`h-5 w-5 ${compactOnMobile ? "md:mr-1" : "mr-1"}`}
+      />
+      <span className={compactOnMobile ? "hidden md:inline" : undefined}>
+        Share
+      </span>
+    </button>
+  );
+  // The sticky bar's and the mobile bottom bar's compact set (experimental layout only).
+  const barActions = (
+    <>
+      {opportunityInfo.url && opportunityInfo.status !== "Expired" && (
+        <button
+          type="button"
+          className="btn btn-sm bg-green hover:bg-green-dark disabled:bg-green h-10 grow rounded-full px-5 text-sm text-white normal-case md:grow-0"
+          onClick={onGoToOpportunity}
+          disabled={preview || blockPartnerHandoff}
+        >
+          {externalLinkButtonText}
+        </button>
+      )}
+      <button
+        type="button"
+        aria-label={isOppSaved ? "Saved" : "Save"}
+        className={`btn btn-sm h-10 w-10 shrink-0 rounded-full px-0 ${
+          isOppSaved
+            ? "border-yellow bg-yellow-light text-yellow"
+            : "border-green text-green hover:bg-green-dark bg-white hover:text-white"
+        }`}
+        onClick={onUpdateSavedOpportunity}
+        disabled={
+          !(opportunityInfo.published && opportunityInfo.status == "Active") ||
+          preview
+        }
+      >
+        <IoMdBookmark className="h-5 w-5" />
+      </button>
+      <button
+        type="button"
+        aria-label="Share"
+        className="btn border-green text-green btn-sm hover:bg-green-dark h-10 w-10 shrink-0 rounded-full bg-white px-0 hover:text-white"
+        onClick={onShareOpportunity}
+        disabled={
+          !(opportunityInfo.published && opportunityInfo.status == "Active") ||
+          preview
+        }
+      >
+        <IoMdShare className="h-5 w-5" />
+      </button>
+    </>
+  );
+
   if (error) {
     if (error === 401) return <Unauthenticated />;
     else if (error === 403) return <Unauthorized />;
@@ -950,7 +1156,10 @@ const OpportunityPublicDetails: React.FC<{
 
       {opportunityInfo && (
         <div className="flex flex-col gap-4">
-          <div className="relative flex grow flex-col rounded-lg bg-white p-4 shadow-lg md:p-6">
+          <div
+            ref={headerCardRef}
+            className="relative flex grow flex-col rounded-lg bg-white p-4 shadow-lg md:p-6"
+          >
             <div className="flex items-start gap-3">
               <div className="min-w-0 flex-1">
                 <h4 className="font-family-nunito line-clamp-2 text-xl font-bold text-black md:text-2xl">
@@ -992,306 +1201,195 @@ const OpportunityPublicDetails: React.FC<{
               <OpportunityMetaTextRow data={opportunityInfo} />
             </div>
 
-            {/* BUTTONS */}
-            <div className="mt-2 flex flex-col gap-4 md:flex-row">
-              <div className="flex grow flex-col gap-4 md:flex-row">
-                {opportunityInfo.url &&
-                  opportunityInfo.status !== "Expired" && (
-                    <button
-                      type="button"
-                      className={`btn btn-sm bg-green hover:bg-green-dark disabled:bg-green h-10 w-full rounded-full text-sm text-white normal-case md:w-[250px]`}
-                      title="Clicking this button will take you to an external site to continue this opportunity. Remember to return to this page to upload your completion certificate and earn your achievement!"
-                      onClick={onGoToOpportunity}
-                      disabled={preview || blockPartnerHandoff}
-                    >
-                      <IoMdOpen className="mr-1 h-5 w-5" />
-                      {externalLinkButtonText}
-                    </button>
+            {/* BUTTONS — one set of elements, two arrangements (see goToButton above) */}
+            {layout === "experimental" ? (
+              // Round 7: mobile — Apply + Save + Share on one row, Upload below
+              <div className="mt-2 flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
+                <div className="flex items-center gap-2 md:contents">
+                  {goToButton && (
+                    <div className="min-w-0 grow md:grow-0">{goToButton}</div>
                   )}
-
-                {opportunityInfo.verificationEnabled && (
-                  <>
-                    {/* only show completion button if verification is manual, start date has been reached,
-                    and the opportunity is not yet completed or rejected */}
-                    {opportunityInfo.verificationMethod == "Manual" &&
-                      new Date(opportunityInfo.dateStart) < new Date() &&
-                      (verificationStatus == null ||
-                        verificationStatus == undefined ||
-                        verificationStatus.status == "None" ||
-                        verificationStatus.status == "Rejected") &&
-                      !opportunityInfo.participantLimitReached &&
-                      !verificationStatusIsLoading && (
-                        <button
-                          type="button"
-                          className="btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[280px]"
-                          title="Upload your completion files to earn your achievement and have this opportunity added to your CV."
-                          onClick={() => {
-                            // 📊 ANALYTICS: track "Upload completion files" button click
-                            analytics.trackEvent(
-                              "opportunity_upload_files_clicked",
-                              {
-                                opportunityId: opportunityInfo.id,
-                                opportunityTitle: opportunityInfo.title,
-                              },
-                            );
-
-                            if (user) {
-                              setCompleteOpportunityDialogVisible(true);
-                            } else {
-                              showLoginDialog("complete");
-                            }
-                          }}
-                        >
-                          <IoMdArrowUp className="mr-1 h-5 w-5" />
-                          Upload your completion files
-                        </button>
-                      )}
-
-                    {verificationStatus &&
-                      verificationStatus.status == "Pending" &&
-                      (isPartnerManagedPendingSubmission ? (
-                        <button
-                          type="button"
-                          className="btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[250px]"
-                          title={`This submission is read-only while pending${verificationStatus?.percentComplete != null ? ` and is ${verificationStatus.percentComplete}% complete` : ""}, so Yoma does not offer cancel or delete actions here.`}
-                          onClick={() => {
-                            // 📊 ANALYTICS: track "Pending verification" button click
-                            analytics.trackEvent(
-                              "opportunity_pending_verification_clicked",
-                              {
-                                opportunityId: opportunityInfo.id,
-                                opportunityTitle: opportunityInfo.title,
-                              },
-                            );
-
-                            setCancelOpportunityDialogVisible(true);
-                          }}
-                        >
-                          <FaInfoCircle className="h-4 w-4 shrink-0" />
-                          {verificationStatus?.percentComplete != null
-                            ? `Pending verification (${verificationStatus.percentComplete}%)`
-                            : "Pending verification"}
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          className="btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[250px]"
-                          title="Your submission is currently under review. If you would like to cancel your application and delete all uploaded files, click the button to see cancellation options."
-                          onClick={() => {
-                            // 📊 ANALYTICS: track "Pending verification" button click
-                            analytics.trackEvent(
-                              "opportunity_pending_verification_clicked",
-                              {
-                                opportunityId: opportunityInfo.id,
-                                opportunityTitle: opportunityInfo.title,
-                              },
-                            );
-
-                            setCancelOpportunityDialogVisible(true);
-                          }}
-                        >
-                          <FaInfoCircle className="h-4 w-4 shrink-0" />
-                          Pending verification
-                        </button>
-                      ))}
-
-                    {verificationStatus &&
-                      verificationStatus.status == "Completed" && (
-                        <div
-                          className="md:text-md border-green text-green flex h-10 items-center justify-center rounded-full border bg-white px-4 text-center text-sm font-bold"
-                          title="You have completed this opportunity!"
-                        >
-                          Completed
-                          <IoMdCheckmark
-                            strikethroughThickness={2}
-                            overlineThickness={2}
-                            underlineThickness={2}
-                            className="ml-1 h-4 w-4"
-                          />
-                        </div>
-                      )}
-                  </>
+                  <div className="hidden md:contents">{completionButtons}</div>
+                  <div className="ml-auto flex shrink-0 gap-2">
+                    {saveButton}
+                    {shareButton}
+                  </div>
+                </div>
+                <div className="flex flex-col md:hidden">
+                  {completionButtons}
+                </div>
+                {preview && (
+                  <p className="text-purple text-xs font-semibold">
+                    Buttons are inactive in preview.
+                  </p>
                 )}
               </div>
+            ) : (
+              <div className="mt-2 flex flex-col gap-4 md:flex-row">
+                <div className="flex grow flex-col gap-4 md:flex-row">
+                  {goToButton}
+                  {completionButtons}
+                </div>
 
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  className={`btn btn-sm h-10 w-full shrink flex-nowrap rounded-full text-sm normal-case md:max-w-[120px] ${
-                    isOppSaved
-                      ? "border-yellow bg-yellow-light text-yellow"
-                      : "border-green text-green hover:bg-green-dark bg-white hover:text-white"
-                  }`}
-                  title="Save this opportunity to easily find it later from your profile page."
-                  onClick={onUpdateSavedOpportunity}
-                  disabled={
-                    !(
-                      opportunityInfo.published &&
-                      opportunityInfo.status == "Active"
-                    ) || preview
-                  }
-                >
-                  <IoMdBookmark className="mr-1 h-5 w-5" />
-
-                  {isOppSaved ? "Saved" : "Save"}
-                </button>
-
-                <button
-                  type="button"
-                  className="btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full shrink flex-nowrap rounded-full bg-white text-sm normal-case hover:text-white md:max-w-[120px]"
-                  title="Share this opportunity with your friends and network to help more people discover it!"
-                  onClick={onShareOpportunity}
-                  // ensure opportunity is published and active (user logged in check is done in function)
-                  disabled={
-                    !(
-                      opportunityInfo.published &&
-                      opportunityInfo.status == "Active"
-                    ) || preview
-                  }
-                >
-                  <IoMdShare className="mr-1 h-5 w-5" />
-                  Share
-                </button>
+                <div className="flex gap-2">
+                  {saveButton}
+                  {shareButton}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
-          <div className="flex flex-col gap-4 md:flex-row">
-            <div className="grow rounded-lg bg-white p-2 shadow-lg md:w-[66%]">
-              <Editor value={opportunityInfo.description} readonly={true} />
-            </div>
-            <div className="flex flex-col gap-2 rounded-lg shadow-lg md:w-[33%]">
-              <div className="divide-gray flex flex-col divide-y rounded-lg bg-white p-4 md:p-6">
-                {(opportunityInfo.skills?.length ?? 0) > 0 && (
-                  <DetailSection
-                    // a Job's skills are its requirements, never awarded on completion
-                    title={
-                      opportunityInfo.type === OPPORTUNITY_TYPE_NANE_JOB
-                        ? "Skills required"
-                        : "Skills you will learn"
-                    }
-                    icon={<IoBulbOutline className="text-green h-5 w-5" />}
-                    className="pb-4 first:pt-0 last:pb-0"
-                  >
-                    <div className="my-2 flex flex-wrap gap-1">
-                      {opportunityInfo.skills?.map((item) => (
-                        <div
-                          key={item.id}
-                          className="badge bg-green px-2 py-1 text-white"
-                        >
-                          {item.name}
-                        </div>
-                      ))}
-                    </div>
-                  </DetailSection>
-                )}
-                {/* Commitment copy comes from master's `commitmentSummary` (total hours when
-                    the API knows them, else the interval label), rendered in this branch's
-                    shared DetailSection rather than master's hand-rolled block. */}
-                {commitmentSummary && (
-                  <DetailSection
-                    title="How much time you will need"
-                    icon={<IoTimeOutline className="text-green h-5 w-5" />}
-                  >
-                    <div className="my-2 text-sm">
-                      {`This task should not take you more than ${commitmentSummary}.`}
-                      <br />
-                      <p className="mt-2">
-                        The estimated times provided are just a guideline. You
-                        have as much time as you need to complete the tasks at
-                        your own pace. Focus on engaging with the materials and
-                        doing your best without feeling rushed by the time
-                        estimates.
-                      </p>
-                    </div>
-                  </DetailSection>
-                )}
-                {(opportunityInfo.categories?.length ?? 0) > 0 && (
-                  <DetailSection
-                    title="Topics"
-                    icon={<IoPricetagsOutline className="text-green h-5 w-5" />}
-                  >
-                    <div className="my-2 flex flex-wrap gap-1">
-                      {opportunityInfo.categories?.map((item) => (
-                        <div
-                          key={item.id}
-                          className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
-                        >
-                          {item.name}
-                        </div>
-                      ))}
-                    </div>
-                  </DetailSection>
-                )}
-                {(opportunityInfo.languages?.length ?? 0) > 0 && (
-                  <DetailSection
-                    title="Languages"
-                    icon={<IoLanguageOutline className="text-green h-5 w-5" />}
-                  >
-                    <div className="my-2 flex flex-wrap gap-1">
-                      {opportunityInfo.languages?.map((item) => (
-                        <div
-                          key={item.id}
-                          className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
-                        >
-                          {item.name}
-                        </div>
-                      ))}
-                    </div>
-                  </DetailSection>
-                )}
-                {/* informational provider text — not the owning organisation */}
-                {!!opportunityInfo.provider?.trim() && (
-                  <DetailSection
-                    title="Provider"
-                    icon={
-                      <IoStorefrontOutline className="text-green h-5 w-5" />
-                    }
-                  >
-                    <div className="badge bg-green my-2 h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white">
-                      {opportunityInfo.provider}
-                    </div>
-                  </DetailSection>
-                )}
-                {(opportunityInfo.countries?.length ?? 0) > 0 && (
-                  <DetailSection
-                    title="Countries"
-                    icon={<IoLocationOutline className="text-green h-5 w-5" />}
-                    className="pt-4 first:pt-0"
-                  >
-                    <div className="my-2 flex flex-wrap gap-1">
-                      {opportunityInfo.countries?.map((country) => {
-                        // optional place within the country: "City, Region"
-                        const place = [country.city, country.region]
-                          .filter(Boolean)
-                          .join(", ");
-
-                        return (
+          {layout === "experimental" ? (
+            <OpportunityDetailSections
+              opportunity={opportunityInfo}
+              headerRef={headerCardRef}
+              barActions={barActions}
+              preview={preview}
+            />
+          ) : (
+            <div className="flex flex-col gap-4 md:flex-row">
+              <div className="grow rounded-lg bg-white p-2 shadow-lg md:w-[66%]">
+                <Editor value={opportunityInfo.description} readonly={true} />
+              </div>
+              <div className="flex flex-col gap-2 rounded-lg shadow-lg md:w-[33%]">
+                <div className="divide-gray flex flex-col divide-y rounded-lg bg-white p-4 md:p-6">
+                  {(opportunityInfo.skills?.length ?? 0) > 0 && (
+                    <DetailSection
+                      // a Job's skills are its requirements, never awarded on completion
+                      title={
+                        opportunityInfo.type === OPPORTUNITY_TYPE_NANE_JOB
+                          ? "Skills required"
+                          : "Skills you will learn"
+                      }
+                      icon={<IoBulbOutline className="text-green h-5 w-5" />}
+                      className="pb-4 first:pt-0 last:pb-0"
+                    >
+                      <div className="my-2 flex flex-wrap gap-1">
+                        {opportunityInfo.skills?.map((item) => (
                           <div
-                            key={country.id}
+                            key={item.id}
+                            className="badge bg-green px-2 py-1 text-white"
+                          >
+                            {item.name}
+                          </div>
+                        ))}
+                      </div>
+                    </DetailSection>
+                  )}
+                  {/* Commitment copy comes from master's `commitmentSummary` (total hours when
+                      the API knows them, else the interval label), rendered in this branch's
+                      shared DetailSection rather than master's hand-rolled block. */}
+                  {commitmentSummary && (
+                    <DetailSection
+                      title="How much time you will need"
+                      icon={<IoTimeOutline className="text-green h-5 w-5" />}
+                    >
+                      <div className="my-2 text-sm">
+                        {`This task should not take you more than ${commitmentSummary}.`}
+                        <br />
+                        <p className="mt-2">
+                          The estimated times provided are just a guideline. You
+                          have as much time as you need to complete the tasks at
+                          your own pace. Focus on engaging with the materials
+                          and doing your best without feeling rushed by the time
+                          estimates.
+                        </p>
+                      </div>
+                    </DetailSection>
+                  )}
+                  {(opportunityInfo.categories?.length ?? 0) > 0 && (
+                    <DetailSection
+                      title="Topics"
+                      icon={
+                        <IoPricetagsOutline className="text-green h-5 w-5" />
+                      }
+                    >
+                      <div className="my-2 flex flex-wrap gap-1">
+                        {opportunityInfo.categories?.map((item) => (
+                          <div
+                            key={item.id}
                             className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
                           >
-                            {place
-                              ? `${country.name} — ${place}`
-                              : country.name}
+                            {item.name}
                           </div>
-                        );
-                      })}
-                    </div>
-                  </DetailSection>
-                )}
+                        ))}
+                      </div>
+                    </DetailSection>
+                  )}
+                  {(opportunityInfo.languages?.length ?? 0) > 0 && (
+                    <DetailSection
+                      title="Languages"
+                      icon={
+                        <IoLanguageOutline className="text-green h-5 w-5" />
+                      }
+                    >
+                      <div className="my-2 flex flex-wrap gap-1">
+                        {opportunityInfo.languages?.map((item) => (
+                          <div
+                            key={item.id}
+                            className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
+                          >
+                            {item.name}
+                          </div>
+                        ))}
+                      </div>
+                    </DetailSection>
+                  )}
+                  {/* informational provider text — not the owning organisation */}
+                  {!!opportunityInfo.provider?.trim() && (
+                    <DetailSection
+                      title="Provider"
+                      icon={
+                        <IoStorefrontOutline className="text-green h-5 w-5" />
+                      }
+                    >
+                      <div className="badge bg-green my-2 h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white">
+                        {opportunityInfo.provider}
+                      </div>
+                    </DetailSection>
+                  )}
+                  {(opportunityInfo.countries?.length ?? 0) > 0 && (
+                    <DetailSection
+                      title="Countries"
+                      icon={
+                        <IoLocationOutline className="text-green h-5 w-5" />
+                      }
+                      className="pt-4 first:pt-0"
+                    >
+                      <div className="my-2 flex flex-wrap gap-1">
+                        {opportunityInfo.countries?.map((country) => {
+                          // optional place within the country: "City, Region"
+                          const place = [country.city, country.region]
+                            .filter(Boolean)
+                            .join(", ");
 
-                {/* incentive, accessibility, age range, groups, SDGs — as on the admin info page */}
-                <OpportunityCoreDetails opportunity={opportunityInfo} />
+                          return (
+                            <div
+                              key={country.id}
+                              className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
+                            >
+                              {place
+                                ? `${country.name} — ${place}`
+                                : country.name}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </DetailSection>
+                  )}
 
-                {/* CUSTOM FIELDS (definition-driven, read-only) */}
-                <OpportunityCustomFieldsSection
-                  type={opportunityInfo.type}
-                  values={opportunityInfo.customFields}
-                />
+                  {/* incentive, accessibility, age range, groups, SDGs — as on the admin info page */}
+                  <OpportunityCoreDetails opportunity={opportunityInfo} />
+
+                  {/* CUSTOM FIELDS (definition-driven, read-only) */}
+                  <OpportunityCustomFieldsSection
+                    type={opportunityInfo.type}
+                    values={opportunityInfo.customFields}
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </>

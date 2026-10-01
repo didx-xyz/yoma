@@ -7,42 +7,43 @@ import { useDiscovery } from "../../state/DiscoveryContext";
 import { Chip } from "../shared/Chip";
 
 /**
- * The applied-chip row above the results — every provenance class, plus the type-scoped
- * custom-field clauses labelled through YOM-1260's labeler (values only; Exists shows the
- * title). Clear filters sits at the end of the row and takes out the SESSION's filters only —
- * inherited chips stay, because preferences are a standing setting rather than part of this
- * search (2026-09-05).
+ * One row of applied chips, of ONE kind (round 7 follow-up, 2026-10-01):
+ *
+ *   inherited — the preference layer (inherited, switched-off and inapplicable chips). Rendered
+ *               inside the preference banner, so everything purple sits together.
+ *   manual    — this search's own filters, plus the type-scoped custom-field clauses labelled
+ *               through YOM-1260's labeler (values only; Exists shows the title). Rendered by
+ *               the filters panel, which owns "Clear filters".
+ *
+ * Mobile: one drag-scrollable line (`ScrollableContainer`); desktop: the chips wrap. Removing an
+ * inherited chip skips its preference for this search; removing a manual one edits the filter.
  */
-export const AppliedChips: React.FC<{ pulseChipId?: string | null }> = ({
-  pulseChipId,
-}) => {
-  const {
-    state,
-    dispatch,
-    chips,
-    effectiveFilters,
-    clearFilters,
-    hasFilters,
-    skipPreference,
-  } = useDiscovery();
+export const AppliedChips: React.FC<{
+  kind: "inherited" | "manual";
+  pulseChipId?: string | null;
+}> = ({ kind, pulseChipId }) => {
+  const { state, dispatch, chips, effectiveFilters, skipPreference } =
+    useDiscovery();
   const types = effectiveFilters.types;
+  const clauses = kind === "manual" ? state.filters.customFields : [];
   const { data: definitions } = useOpportunityCustomFieldDefinitionsQuery(
     types.length > 0 ? types : null,
-    { enabled: types.length > 0 && state.filters.customFields.length > 0 },
+    { enabled: types.length > 0 && clauses.length > 0 },
   );
   const labelFor = useCustomFieldFilterLabeler(definitions);
 
-  const hasAny = chips.length > 0 || state.filters.customFields.length > 0;
-  if (!hasAny) return null;
+  const rowChips = chips.filter((c) =>
+    kind === "manual" ? c.provenance === "manual" : c.provenance !== "manual",
+  );
+  if (rowChips.length === 0 && clauses.length === 0) return null;
 
   return (
-    // One drag-scrollable row — chips never wrap into a tall block.
     <ScrollableContainer
-      className="flex items-center gap-2 overflow-x-auto pb-1"
-      showShadows={true}
-      shadowFromClassName="from-gray-light" // the page body's background
+      containerClassName=""
+      className="flex items-center gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible md:pb-0"
+      showShadows={false}
     >
-      {chips.map((chip) => (
+      {rowChips.map((chip) => (
         <Chip
           key={chip.id}
           chip={chip}
@@ -68,7 +69,7 @@ export const AppliedChips: React.FC<{ pulseChipId?: string | null }> = ({
           }
         />
       ))}
-      {state.filters.customFields.map((clause) => (
+      {clauses.map((clause) => (
         <Chip
           key={`cf:${clause.key}:${clause.operator}`}
           chip={{
@@ -103,18 +104,6 @@ export const AppliedChips: React.FC<{ pulseChipId?: string | null }> = ({
           onUndo={() => undefined}
         />
       ))}
-      {/* Only when this search carries filters of its own. A row of purely inherited chips has
-          nothing for this button to clear — offering it there would imply it takes the
-          preferences off too, which is exactly what it must not do. */}
-      {hasFilters && (
-        <button
-          type="button"
-          onClick={clearFilters}
-          className="text-purple shrink-0 text-xs font-semibold whitespace-nowrap underline"
-        >
-          Clear filters
-        </button>
-      )}
     </ScrollableContainer>
   );
 };

@@ -1,32 +1,69 @@
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
+import {
+  IoAccessibilityOutline,
+  IoBriefcaseOutline,
+  IoCalendarOutline,
+  IoConstructOutline,
+  IoStarOutline,
+  IoTimeOutline,
+} from "react-icons/io5";
 import type { OpportunityInfo } from "~/api/models/opportunity";
+import { getTypeConfig } from "~/components/Opportunity/opportunityTypeTheme";
+import type { CardFactKind } from "../../lib/cardFacts";
+import { cardFacts } from "../../lib/cardFacts";
 import { cardStatus } from "../../lib/cardStatus";
+import { detailHref } from "../../lib/detailHref";
 import { moneyFactsOf } from "../../lib/money";
+import { useCardDefinitions } from "../../state/useCardDefinitions";
 import { useDiscovery } from "../../state/DiscoveryContext";
 import { engagementDisplayName } from "../../state/useDiscoveryLookups";
 import { MoneyBadge } from "./MoneyBadge";
-import { typeBadgeClass, typeLabel } from "./typeBadge";
+import {
+  typeBadgeClass,
+  typeBandClass,
+  typeButtonClass,
+  typeLabel,
+} from "./typeBadge";
+
+export const FACT_ICONS: Record<CardFactKind, React.ElementType> = {
+  employment: IoBriefcaseOutline,
+  effort: IoTimeOutline,
+  difficulty: IoStarOutline,
+  tools: IoConstructOutline,
+  date: IoCalendarOutline,
+  accessibility: IoAccessibilityOutline,
+};
+
+export const HIGHLIGHT_CLASSES = {
+  urgent: "bg-pink text-white",
+  featured: "bg-white text-purple",
+} as const;
 
 /**
- * The grid card. Box discipline: FIXED height per breakpoint — content never grows the box, a
- * missing field leaves its slot empty, the title clamps to two lines and the footer row is
- * pinned to the bottom so a row of cards with different title lengths still aligns. Any future
- * per-type layout must share this box.
+ * The grid card (round 7, artboard 9a, 2026-09-30). Box discipline: FIXED height per breakpoint —
+ * every slot reserves its lines, so a missing field leaves its slot empty and a row of cards
+ * aligns; nothing grows the box.
  *
- * Field set (2026-08-31 revision §7): type badge + reward · title · location + engagement (one
- * meta line, engagement by its lookup displayName) · up to two skill chips + a "+N" counter ·
- * due date and participant places, both from `lib/cardStatus.ts` — the one rule that keeps
- * "Closed" and "N of N places left" from appearing together.
+ * Band: the org logo centred on the type's tint, ONE highlight badge top-right (`cardStatus`).
+ * Body, top to bottom: type chip + money (`lib/money.ts`) · title (2 lines) · org · place ·
+ * engagement · summary (2 lines — restored; dropped on 2026-08-31) · up to two priority facts
+ * (`lib/cardFacts.ts`) · status + places (`lib/cardStatus.ts`) · the type button.
+ *
+ * The whole card is the one link to the detail page, so the type button is drawn, not nested:
+ * it goes where the card goes and never acts inline. Its label is the type's existing CTA copy
+ * (`getTypeConfig`), its colour the type chip's. Mobile keeps every field — a shorter band, the
+ * facts on one line, status + places beside the button.
  */
 export const OpportunityCard: React.FC<{
   opportunity: OpportunityInfo;
   now: Date;
 }> = ({ opportunity, now }) => {
   const { lookups } = useDiscovery();
-  const { closing, places } = cardStatus(opportunity, now);
-  const skills = opportunity.skills ?? [];
+  const definitions = useCardDefinitions();
+  const { closing, places, highlight } = cardStatus(opportunity, now);
+  const facts = cardFacts(opportunity, definitions);
   // The most specific place the first country names — its city, else the country.
   const firstCountry = opportunity.countries?.[0];
   const location = firstCountry?.city ?? firstCountry?.name ?? null;
@@ -38,28 +75,37 @@ export const OpportunityCard: React.FC<{
           "name",
         )
       : null;
-  const meta = [location, engagement].filter(Boolean).join(" · ");
+  const place = [location, engagement].filter(Boolean).join(" · ");
 
   return (
     <Link
-      href={`/opportunities/${opportunity.id}`}
-      className="shadow-custom flex h-64 flex-col overflow-hidden rounded-xl bg-white transition hover:shadow-lg motion-reduce:transition-none md:h-72"
+      href={detailHref(opportunity.id)}
+      className="shadow-custom flex h-71 flex-col overflow-hidden rounded-xl bg-white transition hover:shadow-lg motion-reduce:transition-none md:h-90"
     >
-      <div className="bg-beige flex h-16 shrink-0 items-center justify-center md:h-20">
+      <div
+        className={`relative flex h-12 shrink-0 items-center justify-center md:h-20 ${typeBandClass(opportunity.type)}`}
+      >
         {opportunity.organizationLogoURL && (
           <Image
             src={opportunity.organizationLogoURL}
             alt=""
-            width={40}
-            height={40}
-            className="h-10 w-10 rounded-full object-contain"
+            width={48}
+            height={48}
+            className="h-9 w-9 rounded-full bg-white object-contain md:h-12 md:w-12"
           />
         )}
+        {highlight && (
+          <span
+            className={`absolute top-2 right-2 rounded-full px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap shadow-sm ${HIGHLIGHT_CLASSES[highlight.tone]}`}
+          >
+            {highlight.label}
+          </span>
+        )}
       </div>
-      <div className="flex grow flex-col gap-1 p-3">
+      <div className="flex min-h-0 grow flex-col gap-1.5 p-3">
         <div className="flex items-center justify-between gap-2">
           <span
-            className={`rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wide uppercase ${typeBadgeClass(opportunity.type)}`}
+            className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wide uppercase ${typeBadgeClass(opportunity.type)}`}
           >
             {typeLabel(lookups.types, opportunity.type)}
           </span>
@@ -68,36 +114,50 @@ export const OpportunityCard: React.FC<{
             facts={moneyFactsOf(opportunity, lookups.currencies)}
           />
         </div>
-        <h3 className="line-clamp-2 text-sm leading-snug font-semibold tracking-normal md:text-base">
+        <h3 className="line-clamp-2 h-10 text-sm leading-5 font-semibold tracking-normal md:h-11 md:text-base md:leading-5.5">
           {opportunity.title}
         </h3>
-        {meta && <p className="text-gray-dark truncate text-xs">{meta}</p>}
-        {skills.length > 0 && (
-          <p className="flex items-center gap-1 overflow-hidden">
-            {skills.slice(0, 2).map((skill) => (
-              <span
-                key={skill.id}
-                className="bg-gray-light max-w-28 truncate rounded-full px-2 py-0.5 text-[10px]"
-              >
-                {skill.name}
-              </span>
-            ))}
-            {skills.length > 2 && (
-              <span className="text-gray-dark text-[10px]">
-                +{skills.length - 2}
-              </span>
-            )}
-          </p>
-        )}
-        <div className="mt-auto flex items-center justify-between gap-2 pt-1 text-xs">
-          <span
-            className={
-              closing.urgent ? "text-pink font-semibold" : "text-gray-dark"
-            }
-          >
-            {closing.label}
+        {/* The org name gives way first, so a long one never pushes the place out of view */}
+        <p className="text-gray-dark flex h-4 min-w-0 text-xs leading-4 whitespace-nowrap">
+          <span className="min-w-0 truncate font-semibold text-black">
+            {opportunity.organizationName}
           </span>
-          {places && <span className="text-gray-dark truncate">{places}</span>}
+          {place && (
+            <span className="max-w-[60%] shrink-0 truncate">{` · ${place}`}</span>
+          )}
+        </p>
+        <p className="text-gray-dark line-clamp-2 h-8 text-xs leading-4">
+          {opportunity.summary}
+        </p>
+        <ul className="text-gray-dark flex h-4 gap-3 overflow-hidden text-xs leading-4 md:h-8 md:flex-col md:gap-0">
+          {facts.map((fact) => {
+            const Icon = FACT_ICONS[fact.kind];
+            return (
+              <li key={fact.kind} className="flex min-w-0 items-center gap-1.5">
+                <Icon className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{fact.text}</span>
+              </li>
+            );
+          })}
+        </ul>
+        <div className="mt-auto flex items-center gap-3 md:flex-col md:items-stretch md:gap-1.5">
+          <div className="flex min-w-0 grow flex-col text-xs leading-4 md:flex-row md:items-center md:justify-between md:gap-2">
+            <span
+              className={`truncate ${
+                closing.urgent ? "text-pink font-semibold" : "text-gray-dark"
+              }`}
+            >
+              {closing.label}
+            </span>
+            {places && (
+              <span className="text-gray-dark truncate">{places}</span>
+            )}
+          </div>
+          <span
+            className={`flex h-10 shrink-0 items-center justify-center rounded-lg px-4 text-sm font-semibold whitespace-nowrap md:w-full ${typeButtonClass(opportunity.type)}`}
+          >
+            {getTypeConfig(opportunity.type).ctaText}
+          </span>
         </div>
       </div>
     </Link>
