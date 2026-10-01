@@ -138,6 +138,7 @@ import {
   MAX_FILE_SIZE_LABEL,
   MAX_FILE_VIDEO_SIZE_LABEL,
   OPPORTUNITY_TYPE_ID_JOB,
+  OPPORTUNITY_TYPE_NAME_ENTREPRENEURSHIP,
   OPPORTUNITY_TYPE_NANE_JOB,
   PAGE_SIZE_MEDIUM,
   REGEX_URL_VALIDATION,
@@ -604,6 +605,12 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   );
   const selectedTypeName = selectedType?.name ?? null;
 
+  // Entrepreneurship (API, 2026-09-29): like a Job, effort is optional (number and time frame
+  // still come together); unlike any other type, the incentive may be left unanswered.
+  const isEntrepreneurshipOpportunity =
+    selectedTypeName === OPPORTUNITY_TYPE_NAME_ENTREPRENEURSHIP;
+  const commitmentOptional = isJobOpportunity || isEntrepreneurshipOpportunity;
+
   // 👇 Custom Fields (YOM-1244 / YOM-1255 — Task 1)
   const {
     data: customFieldDefinitions,
@@ -888,7 +895,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
         typeof commitmentIntervalCount === "number" &&
         !isNaN(commitmentIntervalCount);
 
-      if (!isJobOpportunity && !hasCommitmentIntervalCount) {
+      if (!commitmentOptional && !hasCommitmentIntervalCount) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: "Number is required.",
@@ -914,7 +921,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
         }
       }
 
-      if (!isJobOpportunity && !val.commitmentIntervalId) {
+      if (!commitmentOptional && !val.commitmentIntervalId) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: "Time frame is required.",
@@ -922,8 +929,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
         });
       }
 
-      // Jobs: effort is optional, but the number and time frame come together
-      if (isJobOpportunity) {
+      // Jobs and Entrepreneurship: effort is optional, but the number and time frame come together
+      if (commitmentOptional) {
         if (hasCommitmentIntervalCount && !val.commitmentIntervalId)
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -969,8 +976,9 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     .superRefine((val, ctx) => {
       if (val == null) return;
 
-      // manual capture requires an explicit answer (legacy / imported data may be unspecified)
-      if (val.incentivized == null) {
+      // manual capture requires an explicit answer (legacy / imported data may be unspecified),
+      // except for Entrepreneurship, where "Not specified" is a valid answer (API "Manual" rule set)
+      if (val.incentivized == null && !isEntrepreneurshipOpportunity) {
         ctx.addIssue({
           message:
             "Please choose whether this opportunity offers an incentive.",
@@ -1483,7 +1491,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     setFormData((prev) => ({ ...prev, ssiSchemaName: null }));
   }, [selectedTypeName, setValueStep7, setFormData]);
 
-  // Job rules span steps 2 (deadline, effort), 3 (no ZLTO; pay may be salary-only) and 4 (skills)
+  // Job rules span steps 2 (deadline, effort), 3 (no ZLTO; pay may be salary-only) and 4 (skills);
+  // Entrepreneurship's span 2 (effort) and 3 (the incentive may be unanswered)
   useEffect(() => {
     void triggerStep1();
     void triggerStep2();
@@ -1491,6 +1500,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     void triggerStep4();
   }, [
     isJobOpportunity,
+    isEntrepreneurshipOpportunity,
     triggerStep1,
     triggerStep2,
     triggerStep3,
@@ -1922,7 +1932,9 @@ const OpportunityAdminDetails: NextPageWithLayout<{
           data.zltoReward = null;
           data.zltoRewardPool = null;
         }
-        if (data.incentivized === false) data.rewardType = RewardType.None;
+        // an unanswered incentive (Entrepreneurship only) carries no reward either: the API
+        // rejects a rewarded non-Job that is not marked as incentivized
+        if (data.incentivized !== true) data.rewardType = RewardType.None;
         if (data.rewardType !== RewardType.ZLTO) {
           data.zltoReward = null;
           data.zltoRewardPool = null;
@@ -2823,8 +2835,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     <FormField
                       label="Effort"
                       subLabel={
-                        isJobOpportunity
-                          ? "Optional for Jobs: the time commitment, as a number and a time frame together. This will be displayed on the opportunity page."
+                        commitmentOptional
+                          ? `Optional for ${isJobOpportunity ? "Jobs" : (selectedType?.displayName ?? OPPORTUNITY_TYPE_NAME_ENTREPRENEURSHIP)}: the time commitment, as a number and a time frame together. This will be displayed on the opportunity page.`
                           : "The effort required to complete the opportunity. This will be displayed on the opportunity page."
                       }
                       showWarningIcon={
@@ -2879,8 +2891,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                                 }}
                                 options={timeIntervalsOptions}
                                 onBlur={onBlur} // mark the field as touched
-                                // Jobs may clear it; never send "" (null = unset)
-                                isClearable={isJobOpportunity}
+                                // optional effort may be cleared; never send "" (null = unset)
+                                isClearable={commitmentOptional}
                                 onChange={(val) => onChange(val?.value ?? null)}
                                 value={
                                   timeIntervalsOptions?.find(
@@ -3295,10 +3307,15 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       onSubmitStep(4, data),
                     )}
                   >
-                    {/* INCENTIVIZED: required on manual capture; null on legacy data */}
+                    {/* INCENTIVIZED: required on manual capture (Entrepreneurship may leave it
+                        unanswered); null on legacy data */}
                     <FormField
                       label="Incentive"
-                      subLabel="Does this opportunity offer pay, ZLTO or another incentive?"
+                      subLabel={
+                        isEntrepreneurshipOpportunity
+                          ? "Does this programme offer pay, ZLTO or another incentive? Optional: choose Not specified if it is not known. Revenue the venture earns is not an incentive."
+                          : "Does this opportunity offer pay, ZLTO or another incentive?"
+                      }
                       showWarningIcon={
                         !!formStateStep3.errors.incentivized?.message
                       }
@@ -3348,6 +3365,31 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                                 }}
                               />
                             </div>
+                            {isEntrepreneurshipOpportunity && (
+                              <div>
+                                <FormRadio
+                                  id="incentivizedNotSpecified"
+                                  label="Not specified"
+                                  inputProps={{
+                                    name: "incentivized",
+                                    checked: value == null,
+                                    onBlur,
+                                    onChange: () => {
+                                      // unanswered ⇒ no reward (API: a reward needs a Yes)
+                                      setValueStep3(
+                                        "rewardType",
+                                        RewardType.None,
+                                        {
+                                          shouldDirty: true,
+                                          shouldValidate: true,
+                                        },
+                                      );
+                                      onChange(null);
+                                    },
+                                  }}
+                                />
+                              </div>
+                            )}
                           </div>
                         )}
                       />

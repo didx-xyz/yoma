@@ -201,8 +201,8 @@ export const OpportunityImport: React.FC<InputProps> = ({
                   <ul className="ml-5 list-disc">
                     <li>Title</li>
                     <li>
-                      Type (Learning, Event, Other, ImpactAction, Job — use
-                      ImpactAction for Impact Action)
+                      Type (Learning, Event, Other, ImpactAction, Job,
+                      Entrepreneurship — use ImpactAction for Impact Action)
                     </li>
                     <li>
                       Categories (use | to separate multiple; names containing
@@ -256,15 +256,17 @@ export const OpportunityImport: React.FC<InputProps> = ({
 
                 <div>
                   <p className="font-semibold">
-                    For Job opportunities the following are optional:
+                    For Job and Entrepreneurship opportunities the following are
+                    optional:
                   </p>
                   <ul className="ml-5 list-disc">
                     <li>EffortCount</li>
                     <li>EffortInterval</li>
                   </ul>
                   <p className="mt-3">
-                    If EffortCount is provided for a Job opportunity,
-                    EffortInterval must also be provided, and vice versa.
+                    If EffortCount is provided for a Job or Entrepreneurship
+                    opportunity, EffortInterval must also be provided, and vice
+                    versa.
                   </p>
                 </div>
 
@@ -366,6 +368,7 @@ export const OpportunityImport: React.FC<InputProps> = ({
                       Job: CF:jobExperienceLevel (None, EntryJunior, Mid,
                       Senior)
                     </li>
+                    <li>Entrepreneurship: none</li>
                   </ul>
                   <p className="mt-3">
                     The jobs sample also includes the other Job custom field
@@ -393,6 +396,25 @@ export const OpportunityImport: React.FC<InputProps> = ({
                       (VerifiedFacilitationSession,
                       WaterQualityMonitoringSession,
                       VerifiedInclusiveStorytelling)
+                    </li>
+                  </ul>
+                  <p className="mt-3">
+                    Entrepreneurship rows may also use these optional columns:
+                  </p>
+                  <ul className="ml-5 list-disc">
+                    <li>
+                      CF:entrepreneurshipProgrammeType (BeGreen, EKYAN,
+                      JACompanyProgramme, UmuziVentures, SupaMotoAcademy, Other)
+                    </li>
+                    <li>
+                      CF:entrepreneurshipProgrammeOtherDescription (up to 255
+                      characters; required with Other and not allowed without it
+                      — to clear both, leave both cells empty)
+                    </li>
+                    <li>
+                      CF:entrepreneurshipVentureStageTargeted (IdeaPreVenture,
+                      InformalSelfEmployed, RegisteredEarlyStage,
+                      EstablishedGrowth)
                     </li>
                   </ul>
                 </div>

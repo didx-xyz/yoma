@@ -239,10 +239,10 @@ commitment set; **accessibility excludes** those that have not described their a
       Fixed-term exclusive, Minimum qualification GUIDE ONLY) hold with no per-field code.
 - [ ] **Regression check once the category taxonomy migration (YOM-1259) is deployed:** 16 tiles
       on the carousel and 16 chips in Categories / wizard Interests with "Show all 16"; the
-      Climate action badge resolves "Agriculture, Food, Environment and Climate"; Start a business
-      resolves "Business, Finance & Marketing"; drop the pre-migration names from
-      `quickSearches.ts` and `preferenceMapping.ts` once no environment serves them; confirm the
-      facet counts are no longer grand totals on DEV.
+      Climate action badge resolves "Agriculture, Food, Environment and Climate"; drop the
+      pre-migration names from `quickSearches.ts` once no environment serves them; confirm the
+      facet counts are no longer grand totals on DEV. (Start a business maps to the
+      Entrepreneurship type since 2026-10-01, so it no longer depends on the taxonomy.)
 - [x] **Engagement Type rename** (2026-09-29): `lib/engagementLabels.ts` deleted; cards, chips,
       the section, the bar segment and wizard step 4 read the lookup's `displayName` (verified:
       Hybrid / On-site / Remote). `Task` → `ImpactAction` in `typeOrder` / `typeBadge` /
@@ -256,6 +256,17 @@ commitment set; **accessibility excludes** those that have not described their a
       pages, the welcome step. Every place the canvas was not followed is listed there.
 - [ ] Round-7 follow-ups: `next build`; copy review of the new strings. (The tabbed detail
       layout replaced the classic one behind the kill-switch on 2026-10-01.)
+- [x] **Entrepreneurship type** (Adrian's `f0194e90`, 2026-10-01 —
+      [`../handoffs/2026-10-01-b.md`](../handoffs/2026-10-01-b.md)): type order (before Other),
+      blue-dark chip / band / button, "View programme" copy, welcome tile icon, a `programme`
+      card fact, "Start a business" → the type, the list's type column widened to fit it.
+- [ ] BA to confirm "Start a business" → Entrepreneurship type (the sheet says the Category).
+- [x] Discovery is the navbar's search page behind the kill-switch (`OPPORTUNITIES_SEARCH_URL`),
+      and the cards link only through their button, with a mobile arrow on the list row
+      (2026-10-01).
+- [ ] Point the remaining legacy `/opportunities` entry points at discovery (search boxes,
+      category links, banners, referral pages, the detail back link). Each needs its query
+      params mapped.
 
 ## Decisions
 
@@ -803,6 +814,38 @@ commitment set; **accessibility excludes** those that have not described their a
   not deleted) — space, and sorting waits for the API (Newest is the only order today). The
   mobile list's "compact list" explainer is gone; preference chips drop the person icon (the
   purple banner carries that meaning).
+- 2026-10-01 (Jason, Entrepreneurship type — [`../handoffs/2026-10-01-b.md`](../handoffs/2026-10-01-b.md)):
+  - **"Start a business" maps to the Entrepreneurship type, not the Category "Business, Finance &
+    Marketing".** This supersedes 2026-09-22's mapping and departs from the BA sheet, which
+    predates the type; it is pending BA confirmation. The goal chip now reads "Type: …". The
+    by-name category path (and `categories` in `PreferenceProfileContext`) is removed, because no
+    goal maps to a category any more.
+  - **Theme: blue-dark**, the colour discovery had left unused: chip and button `bg-blue-dark`,
+    band `bg-blue-light`, outline `border-blue-dark`. The same blue-dark goes in `TYPE_CONFIG`
+    for the detail headers, where Event is already the lighter `bg-blue` (that palette predates
+    discovery's). Copy is "View programme →" / "Go to programme"; the welcome tile and goal card
+    use `IoRocketOutline`.
+  - **Card facts: programme · effort.** The programme is the option name, or the Other
+    description when Other is picked. The venture stage targeted is not a system-controlled key,
+    so it stays off the card (the same reason as Job qualification).
+  - **The list's type column is `w-32`** (was `w-24`): "ENTREPRENEURSHIP" measures 123px. At
+    768px the title column narrows from about 136px to 104px; nothing overflows.
+- 2026-10-01 (Jason): **`/opportunities/discover` is the default search page while the kill-switch
+  is on.** The navbar's Opportunities link uses `OPPORTUNITIES_SEARCH_URL` (`lib/constants.ts`):
+  discover when `CUSTOM_FIELDS_ENABLED` is on, `/opportunities` when it is off. Only the navbar
+  changed. The other entry points still open the legacy page:
+  - the home and YoID search boxes (`?query=` builders);
+  - the About category links, the World Cleanup Day banner and payout copy;
+  - the referral pages;
+  - the detail page's back link.
+
+  Moving them means mapping legacy query params onto the discovery codec.
+- 2026-10-01 (Jason): **The cards are not clickable; only their button is.** On the grid card and
+  the list row, the type button is now the one `<Link>` to the detail page, and the body is a
+  plain `div` with no hover lift. This is how the legacy `OpportunityPublicSmall` cards already
+  work, and it supersedes 2026-09-30's "type button drawn inside the card link". The mobile list
+  row had no button, so it gains a 40px round outline arrow in the type's colour, labelled with
+  the type's `ctaTitle`.
 
 ## BA sign-off summary (2026-09-22)
 
@@ -860,7 +903,7 @@ web)**
 
 | Preset field | Status | Mapping | Null rule |
 | --- | --- | --- | --- |
-| User Goal | new, single-select | Get a Job → Type Job · Learn New Skills → Learning · Volunteer / Make an Impact → Impact Task · **Start a Business → Category "Business, Finance & Marketing"**; Attend events → Event is a design proposal | not applied when unset |
+| User Goal | new, single-select | Get a Job → Type Job · Learn New Skills → Learning · Volunteer / Make an Impact → Impact Task · **Start a Business → Category "Business, Finance & Marketing"** (web maps it to the Entrepreneurship type since 2026-10-01, pending BA — see Decisions); Attend events → Event is a design proposal | not applied when unset |
 | Target Career Categories | new, multi-select | Opportunity Categories, any overlap | not applied when empty |
 | Maximum Time Commitment | new (in contention — AWAITING SIGN-OFF) | interval + count, normalised, ≤ | **include Not specified** |
 | Engagement Preference | new, **multi-select** (BA feedback) | Engagement Type | **exclude opportunities with no engagement type** |

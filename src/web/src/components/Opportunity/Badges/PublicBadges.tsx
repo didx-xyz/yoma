@@ -16,11 +16,16 @@ import {
   IoHomeOutline,
   IoGlobeOutline,
   IoBulbOutline,
+  IoRocketOutline,
 } from "react-icons/io5";
 import Moment from "react-moment";
 import { EngagementTypeOption } from "~/api/models/common";
 import type { OpportunityInfo } from "~/api/models/opportunity";
-import { DATE_FORMAT_HUMAN, OPPORTUNITY_TYPE_NANE_JOB } from "~/lib/constants";
+import {
+  DATE_FORMAT_HUMAN,
+  OPPORTUNITY_TYPE_NAME_ENTREPRENEURSHIP,
+  OPPORTUNITY_TYPE_NANE_JOB,
+} from "~/lib/constants";
 import {
   getCommitmentDisplay,
   getEngagementConfig,
@@ -152,6 +157,21 @@ const PublicBadges: React.FC<BadgesProps> = ({
               <span className="badge badge-sm border border-sky-200 bg-sky-50 whitespace-nowrap text-sky-700">
                 <IoBriefcaseOutline className="h-4 w-4" />
                 <span className="ml-1">{opportunity.type}</span>
+              </span>
+            </div>
+          )}
+          {opportunity?.type === OPPORTUNITY_TYPE_NAME_ENTREPRENEURSHIP && (
+            <div
+              className={`${showToolTips ? "tooltip tooltip-secondary cursor-help before:text-[0.6875rem]" : ""}`}
+              {...(showToolTips && {
+                "data-tip": "Entrepreneurship programme",
+              })}
+            >
+              <span className="badge badge-sm border border-cyan-200 bg-cyan-50 whitespace-nowrap text-cyan-700">
+                <IoRocketOutline className="h-4 w-4" />
+                <span className="ml-1">
+                  {getTypeConfig(opportunity.type).label}
+                </span>
               </span>
             </div>
           )}

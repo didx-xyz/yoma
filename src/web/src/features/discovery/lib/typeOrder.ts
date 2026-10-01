@@ -1,7 +1,7 @@
 /**
  * The order the type row (and every other type list on this surface) presents the Opportunity
  * Types in — by enum NAME, never by GUID or displayName. Labels keep coming from the lookup's
- * `displayName`; this is order only. A type the list does not know (a sixth type, tomorrow)
+ * `displayName`; this is order only. A type the list does not know (a seventh type, tomorrow)
  * is appended after these in the order the API returned it, so nothing is ever dropped.
  */
 export const TYPE_ORDER: readonly string[] = [
@@ -9,6 +9,7 @@ export const TYPE_ORDER: readonly string[] = [
   "Learning",
   "ImpactAction",
   "Event",
+  "Entrepreneurship",
   "Other",
 ];
 

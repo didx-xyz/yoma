@@ -1,4 +1,4 @@
-Email,PhoneNumber,FirstName,Surname,Gender,Country,DateCompleted,OpportunityExternalId,jobEmploymentStartDate,impactActionImpactAchieved,eventRole
+Email,PhoneNumber,FirstName,Surname,Gender,Country,DateCompleted,OpportunityExternalId,CF:jobEmploymentStartDate,CF:impactActionImpactAchieved,CF:eventRole
 ,+12025550123,John,Doe,Male,US,2024/12/31,External_ID1,,,
 jane.smith@example.com,,Jane,Smith,Female,AU,2024/02/02,External_ID2,,,
 ali.khan@example.com,+925512345678,,,Male,FR,2024/03/02,External_ID3,,,

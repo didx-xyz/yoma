@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
+import { IoArrowForward } from "react-icons/io5";
 import type { OpportunityInfo } from "~/api/models/opportunity";
 import { getTypeConfig } from "~/components/Opportunity/opportunityTypeTheme";
 import { cardFacts } from "../../lib/cardFacts";
@@ -21,8 +22,11 @@ import { typeBadgeClass, typeLabel, typeOutlineClass } from "./typeBadge";
  * where · key fact · status · places · the type button in outline. Same sources as the card:
  * `lib/money.ts`, `lib/cardFacts.ts`, `lib/cardStatus.ts`.
  *
- * Mobile is a two-line row — title, then type chip · money · place — with the status on the
- * right; the summary, facts and button stay on the card and the detail page.
+ * Mobile is a two-line row — title, then type chip · money · place — with the status and a
+ * compact arrow button on the right; the summary and facts stay on the card and the detail page.
+ *
+ * The button is the row's ONLY link to the detail page (Jason, 2026-10-01 — as on the grid card);
+ * the row itself is not clickable.
  */
 export const OpportunityRow: React.FC<{
   opportunity: OpportunityInfo;
@@ -80,11 +84,11 @@ export const OpportunityRow: React.FC<{
     </span>
   );
 
+  const cta = getTypeConfig(opportunity.type);
+  const href = detailHref(opportunity.id);
+
   return (
-    <Link
-      href={detailHref(opportunity.id)}
-      className="shadow-custom block rounded-lg bg-white px-3 py-2 hover:shadow-lg"
-    >
+    <div className="shadow-custom rounded-lg bg-white px-3 py-2">
       {/* Desktop: one aligned line, widths from LIST_COLUMNS */}
       <div className="hidden items-center gap-3 text-sm md:flex">
         {tile}
@@ -126,11 +130,13 @@ export const OpportunityRow: React.FC<{
           {places ?? "—"}
         </span>
         <span className={LIST_COLUMNS.action}>
-          <span
-            className={`flex h-9 items-center justify-center rounded-lg border bg-white px-3 text-xs font-semibold whitespace-nowrap ${typeOutlineClass(opportunity.type)}`}
+          <Link
+            href={href}
+            title={cta.ctaTitle}
+            className={`flex h-9 items-center justify-center rounded-lg border bg-white px-3 text-xs font-semibold whitespace-nowrap transition hover:brightness-110 motion-reduce:transition-none ${typeOutlineClass(opportunity.type)}`}
           >
-            {getTypeConfig(opportunity.type).ctaText}
-          </span>
+            {cta.ctaText}
+          </Link>
         </span>
       </div>
 
@@ -158,7 +164,15 @@ export const OpportunityRow: React.FC<{
         >
           {closing.label}
         </span>
+        <Link
+          href={href}
+          title={cta.ctaTitle}
+          aria-label={cta.ctaTitle}
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border bg-white ${typeOutlineClass(opportunity.type)}`}
+        >
+          <IoArrowForward className="h-4 w-4" aria-hidden />
+        </Link>
       </div>
-    </Link>
+    </div>
   );
 };

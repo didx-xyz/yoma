@@ -79,6 +79,13 @@ is `multipart/form-data` with `CustomFields` as one JSON-encoded form field
       completion read view, custom-field metadata on `MyOpportunity/OpportunityListItem`.
 - [x] **T3 — Details.** `OpportunityCustomFieldsSection` on the org-admin and public detail pages;
       sidebar sections refactored onto `DetailSection`.
+- [x] **Entrepreneurship type** (Adrian's `f0194e90`, 2026-10-01 —
+      [`../handoffs/2026-10-01-b.md`](../handoffs/2026-10-01-b.md)): editor effort optional and
+      paired; incentive "Not specified"; the programme Other ↔ description rule; Integer
+      `validationRegex`; both import help texts. The completion form needed no change.
+- [ ] Drive the Entrepreneurship editor (Rewards "Not specified", the programme Other rule) and a
+      youth completion (the three required venture fields, "Jobs created" = -1) signed in. Not
+      done 2026-10-01: that session had no signed-in API or browser access.
 - [ ] Re-verify every surface once the BA-approved definitions land (YOM-1264). No code change
       should be needed — that is the point of the definition-driven rule.
 - [ ] Resolve the Skill label fallback if a batch skill get-by-ids ever appears (see Gotchas).
@@ -100,6 +107,15 @@ is `multipart/form-data` with `CustomFields` as one JSON-encoded form field
   it takes definitions and values, and knows nothing about Opportunity vs MyOpportunity.
 - 2026-07-27: Completion reuses the same editor and validators; only the definitions source and
   the multipart submission differ.
+- 2026-10-01 (Jason): **Entrepreneurship's Rewards step offers "Not specified"** beside Yes / No,
+  mirroring the API's Manual rule set. While it is unanswered there is no reward; submit forces
+  None, because the API rejects a rewarded non-Job that is not marked incentivized. Effort is
+  optional and paired, as for Jobs. The type is detected by the selected type's enum **name**
+  (`OPPORTUNITY_TYPE_NAME_ENTREPRENEURSHIP`), never its GUID.
+- 2026-10-01: **`validationRegex` now also applies to Integer values**, tested against the
+  normalised text the API tests (`int.ToString()`, so "007" → "7"), and Strings are trimmed
+  first, as the API does. Previously only Strings were checked, so `entrepreneurshipJobsCreated`
+  = -1 failed only on save. Other data types stay API-only: no definition gives them a pattern.
 
 ## Links
 

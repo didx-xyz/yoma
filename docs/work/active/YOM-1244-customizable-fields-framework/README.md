@@ -38,7 +38,7 @@ The shared Engagement Type lookup now has enum-compatible keys `Remote`, `OnSite
 
 The User preference formerly proposed as `PaidWorkPreference` is now nullable `UserPreferences.Incentivized` and applies to every Opportunity type. This means a preference for any incentive, not only wages or cash. The sheet's proposed Opportunity `Is Paid` field and discovery mapping need revisiting before implementation; `IsIncentivized` is the candidate name, while Reward Type still describes the incentive. No matching/ranking is part of the User-preferences change. Preferences are a one-to-one User-owned table, with category, accessibility and language selections in preference-owned link tables; skills remain in UserSkills. The self-service API uses `categories` and `languages` under UserPreferences, not User or UserProfile fields.
 
-Entrepreneurship is now a Yoma Opportunity type, based on Mpho's later confirmation rather than the credential deck's earlier partner-direct draft. Its programme metadata and individual venture outcomes use separate Opportunity/MyOpportunity CF definitions. Core incentive and commitment are optional for this type. It selects `Opportunity|Default` until the type-specific credential/schema phase; see the [API handoff](YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/handoffs/2026-09-29-b.md) before Web integration or credential mapping.
+Entrepreneurship is now a Yoma Opportunity type, based on Mpho's later confirmation rather than the credential deck's earlier partner-direct draft. Its programme metadata and individual venture outcomes use separate Opportunity/MyOpportunity CF definitions. Core incentive and commitment are optional for this type. It selects `Opportunity|Default` until the type-specific credential/schema phase; see the [API handoff](YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/handoffs/2026-09-29-b.md) before Web integration or credential mapping. Web integrated it on 2026-10-01 ([handoff](handoffs/2026-10-01-b.md)): the editor mirrors the optional effort and the unanswered incentive, the programme Other ↔ description rule is in `customFieldRules.ts`, and the "Start a business" goal now maps to this type.
 
 | Folder                                                                                                                                                           | Ticket                                             | Area | Status                                                                                |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ---- | ------------------------------------------------------------------------------------- |
@@ -266,7 +266,7 @@ Both child features build on the same components — extend these rather than ad
 | Editing        | `components/Opportunity/CustomFields.tsx` (+ `getCustomFieldError(s)`, `getCustomFieldNumberError`)                                                    |
 | Read-only      | `components/Opportunity/CustomFieldsView.tsx`                                                                                                          |
 | Filtering      | `components/Opportunity/CustomFieldFilters.tsx`                                                                                                        |
-| CF rules       | `lib/customFields/customFieldRules.ts` — mirrors the API's `AssertCrossFieldRules` (Job salary / employment, Impact Action tools) on its SYSTEM keys only; inert without them |
+| CF rules       | `lib/customFields/customFieldRules.ts` — mirrors the API's `AssertCrossFieldRules` (Job salary / employment, Impact Action tools, Entrepreneurship programme) on its SYSTEM keys only; inert without them |
 | Places         | `components/Location/LocationInput.tsx` (youth + admin), `components/Opportunity/Admin/OpportunityCountryPlaces.tsx`; wire forms in `api/models/location.ts` |
 | Search payload | `toSearchFilterPayload` (`api/services/opportunities.ts`) — callers pass country ids; the three search requests send `[{ countryId }]`                  |
 
@@ -381,6 +381,11 @@ because the alternative is the structural invisibility above. Detail and the oth
 that review are in
 [YOM-1262's feature doc](./YOM-1262-ui-apply-user-presets-to-opportunity-discovery/feature.md),
 Decisions 2026-09-22.
+
+**Updated 2026-10-01 (Jason).** `Start a business` maps to the new **Entrepreneurship Opportunity
+type**, not the Category. The BA's Category mapping predates the type (API, 2026-09-29), so this
+**departs from the signed-off sheet and needs BA confirmation**. Reverting is one line in
+`preferenceMapping.ts`. Every goal now maps to a Type; the by-name category path is removed.
 
 ## Out of Scope (whole epic)
 
@@ -556,6 +561,24 @@ The web side is built to an ASSUMED contract; please confirm or correct:
 > defines them, the anchor translation — and does not wait on answers. Adrian: answer or schedule
 > at your pace; each ask names what web would change. **YOM-1258 is superseded by YOM-1262 (PM).**
 
+**Added 2026-10-01** (Entrepreneurship integration — [`handoffs/2026-10-01-b.md`](./handoffs/2026-10-01-b.md)):
+
+23. **The completions CSV sample has no `CF:` prefix on its custom-field headers.**
+    `src/api/src/other/MyOpportunityInfoCsvImport_Sample.csv` (from `35da1e0b`) has bare
+    `jobEmploymentStartDate,impactActionImpactAchieved,eventRole` headers.
+    `CSVImportHelper.ValidateHeader` rejects any column that is neither a model column nor
+    `CF:`-prefixed, so the sample as shipped should fail on its header. This was found by
+    reading the code, not by running an import. Web fixed its own copy (`public/docs/…`) and the
+    help text on 2026-10-01; the API copy is yours. The Entrepreneurship completion columns are
+    in the web help, but in neither sample.
+24. **A Job with no effort cannot be completed through the web form.** The form sends no start
+    date or commitment. `PerformActionSendForVerificationApplyDefaults` defaults the commitment
+    only from the opportunity, and a Job's effort is optional, so it may have none.
+    `RequiresParticipationPeriod` now exempts only Entrepreneurship, so that submission should
+    fail with "Start date is required when the commitment interval…". Either exempt Jobs too, or
+    tell web to collect a start date for them. Not reproduced: the session had no signed-in API
+    access.
+
 **Adrian, one API-side conflict resolution on this branch (2026-09-05)** — flagged because it is
 your area and web did not author either side. Merging `master` into
 `feature/custom-fields-framework` (PR #1924) collided on `Opportunity.Type`: master had added
@@ -584,6 +607,18 @@ API pod image matches the DB schema — and expect it to re-break whenever anoth
 DEV, until this epic merges. Owner: Adrian / infra.
 
 ## Changelog
+
+- 2026-10-01 (later): Web absorbed Adrian's `f0194e90` (Entrepreneurship type):
+  - editor: optional effort and a "Not specified" incentive for this type;
+  - the programme Other ↔ description rule;
+  - the type's blue-dark theme, "View programme" copy and a programme card fact;
+  - "Start a business" → the type (BA to confirm);
+  - the Integer `validationRegex` mirrored;
+  - import help, and the completions sample's `CF:` headers;
+  - asks 23–24 filed.
+
+  Also: `/opportunities/discover` is the navbar's search page while `CUSTOM_FIELDS_ENABLED` is
+  on, and the discovery cards link only through their button.
 
 - 2026-10-01: The round-7 tabbed detail layout is live on `/opportunities/{id}`, the admin `info`
   page and the editor Preview, behind `CUSTOM_FIELDS_ENABLED` (off → classic). The `…/experimental`

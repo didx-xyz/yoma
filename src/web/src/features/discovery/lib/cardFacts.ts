@@ -3,6 +3,7 @@ import type {
   OpportunityInfo,
 } from "~/api/models/opportunity";
 import { formatAccessibilitySupport } from "~/components/Opportunity/Admin/opportunityCoreFields";
+import { ENTREPRENEURSHIP_PROGRAMME_OPTIONS } from "~/lib/customFields/customFieldRules";
 
 /**
  * The card's "up to two priority facts" (round 7, artboard 9a) — ONE place decides them, like
@@ -17,6 +18,8 @@ import { formatAccessibilitySupport } from "~/components/Opportunity/Admin/oppor
  *   Learning  effort · difficulty
  *   Impact    tools · effort
  *   Event     date · accessibility
+ *   Entrepreneurship  programme · effort   (programme only: the venture stage targeted is not
+ *                                           a system-controlled key either; added 2026-10-01)
  *   Other     effort
  *
  * Custom-field facts key ONLY on the API's protected keys (\`CustomFieldConstants\`), and label
@@ -29,7 +32,8 @@ export type CardFactKind =
   | "difficulty"
   | "tools"
   | "date"
-  | "accessibility";
+  | "accessibility"
+  | "programme";
 
 export interface CardFact {
   kind: CardFactKind;
@@ -41,6 +45,7 @@ const PRIORITY: Record<string, CardFactKind[]> = {
   Learning: ["effort", "difficulty"],
   ImpactAction: ["tools", "effort"],
   Event: ["date", "accessibility"],
+  Entrepreneurship: ["programme", "effort"],
   Other: ["effort"],
 };
 
@@ -50,6 +55,8 @@ const KEYS = {
   employmentDuration: "jobEmploymentDuration",
   employmentDurationUnit: "jobEmploymentDurationUnit",
   toolsRequired: "impactActionToolsRequired",
+  programmeType: "entrepreneurshipProgrammeType",
+  programmeOtherDescription: "entrepreneurshipProgrammeOtherDescription",
   difficulty: {
     Learning: "learningDifficulty",
     ImpactAction: "impactActionDifficulty",
@@ -98,6 +105,15 @@ export function cardFacts(
       case "difficulty": {
         const key = KEYS.difficulty[opportunity.type];
         return key ? (optionNames(key)[0] ?? null) : null;
+      }
+      case "programme": {
+        // "Other" carries its own name in the description (`customFieldRules.ts` pairs them)
+        const other = (field(KEYS.programmeType)?.values ?? []).includes(
+          ENTREPRENEURSHIP_PROGRAMME_OPTIONS.Other,
+        );
+        const description = field(KEYS.programmeOtherDescription)?.value;
+        if (other && description) return description;
+        return optionNames(KEYS.programmeType)[0] ?? null;
       }
       case "tools": {
         const names = optionNames(KEYS.toolsRequired);

@@ -259,7 +259,7 @@ export function useOpportunityTypesQuery(options?: { enabled?: boolean }) {
 /**
  * Definition-driven custom field definitions (create/edit page).
  * Keyed on the selected opportunity type name(s), so the query re-runs whenever the
- * watched opportunity type changes. `types` are enum names: Other | Learning | Event | Job | ImpactAction.
+ * watched opportunity type changes. `types` are enum names: Other | Learning | Event | Job | ImpactAction | Entrepreneurship.
  *
  * Disabled outright when `CUSTOM_FIELDS_ENABLED` is off. This is the chokepoint for the whole
  * read side of the framework: every editor, read-only section and filter panel keys off the

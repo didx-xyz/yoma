@@ -4,7 +4,7 @@ import {
   IoBriefcaseOutline,
   IoCalendarOutline,
   IoHeartOutline,
-  IoStarOutline,
+  IoRocketOutline,
 } from "react-icons/io5";
 import type { PreferenceKey } from "../lib/types";
 
@@ -96,7 +96,7 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
             label: "Volunteer & give back",
             icon: IoHeartOutline,
           },
-          { id: "biz", label: "Start a business", icon: IoStarOutline },
+          { id: "biz", label: "Start a business", icon: IoRocketOutline },
         ],
       },
     ],

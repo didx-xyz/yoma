@@ -85,6 +85,8 @@ export const OPPORTUNITY_TYPE_ID_MICROTASK =
 export const OPPORTUNITY_TYPE_ID_OTHER = "5D67758F-3F06-47C6-8B62-420B33126665";
 export const OPPORTUNITY_TYPE_ID_JOB = "9C2D1A8E-3A4B-4F7A-9E2D-7F1C6B8A2D55";
 export const OPPORTUNITY_TYPE_NANE_JOB = "Job";
+/** Type enum NAME (never the GUID). Commitment and the incentive answer are optional for it (API). */
+export const OPPORTUNITY_TYPE_NAME_ENTREPRENEURSHIP = "Entrepreneurship";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Customizable fields framework (YOM-1244) — release kill-switch.
@@ -108,8 +110,9 @@ export const OPPORTUNITY_TYPE_NANE_JOB = "Job";
 //     discovery preferences dev tool. Both mock façades are forced to their real service,
 //     so no fixture can serve regardless of environment or a stale localStorage choice;
 //   • the `/opportunities/discover` page entirely — it is the preset-driven prototype, so it
-//     404s and the user menu's "My preferences" link goes with it. `/opportunities` is
-//     untouched and remains the discovery surface.
+//     404s and the user menu's "My preferences" link goes with it. While on, it is the navbar's
+//     Opportunities link (`OPPORTUNITIES_SEARCH_URL`); off, that link returns to `/opportunities`,
+//     which is otherwise untouched.
 //
 // What it deliberately leaves alone: the credential schema selector on the opportunity
 // wizard's Credential step and the youth passport credential display. Both predate this
@@ -122,6 +125,14 @@ export const OPPORTUNITY_TYPE_NANE_JOB = "Job";
 // field (and Jobs many more), so with this `false` the editor sends no custom fields and every
 // manual create / update is rejected. Setting it back to `false` breaks opportunity saving.
 export const CUSTOM_FIELDS_ENABLED = true;
+
+/**
+ * The youth opportunity search the navigation opens: the discovery surface while the framework
+ * is on, else the legacy `/opportunities` page (which `/opportunities/discover` 404s without).
+ */
+export const OPPORTUNITIES_SEARCH_URL = CUSTOM_FIELDS_ENABLED
+  ? "/opportunities/discover"
+  : "/opportunities";
 
 export const THEME_BLUE = "blue";
 export const THEME_GREEN = "green";

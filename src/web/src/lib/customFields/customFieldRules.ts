@@ -4,7 +4,7 @@ import type {
 } from "~/api/models/opportunity";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Custom-field cross-field rules (YOM-1244 — Job and Impact Action fields)
+// Custom-field cross-field rules (YOM-1244 — Job, Impact Action and Entrepreneurship fields)
 //
 // WHY THIS EXISTS. Custom fields are otherwise rendered and validated purely from
 // their definitions. The definition contract has no conditional visibility or
@@ -18,8 +18,8 @@ import type {
 // This module MIRRORS those API contracts so the editor can disable and clear
 // dependent fields and explain a conflict before the save is rejected. It:
 //   - keys ONLY on those system-controlled definition keys, plus the option keys
-//     a rule interprets (Job employment Permanent / FixedTerm, Impact Action tool
-//     Other); never on titles, labels or other options;
+//     a rule interprets (Job employment Permanent / FixedTerm, Impact Action tool and
+//     Entrepreneurship programme Other); never on titles, labels or other options;
 //   - is INERT when a controlling key is absent from the loaded definitions, so
 //     other types and future definition changes are unaffected;
 //   - is pure; the API remains the authority. Keep it in step with the API.
@@ -33,6 +33,15 @@ export const IMPACT_ACTION_CUSTOM_FIELD_KEYS = {
 
 /** Mirrors the API's `ImpactActionTool` enum — the one tool option a rule interprets. */
 export const IMPACT_ACTION_TOOL_OPTIONS = { Other: "Other" } as const;
+
+/** Mirrors `CustomFieldConstants.Entrepreneurship` (API). Persisted contracts — never rename. */
+export const ENTREPRENEURSHIP_CUSTOM_FIELD_KEYS = {
+  programmeType: "entrepreneurshipProgrammeType",
+  programmeOtherDescription: "entrepreneurshipProgrammeOtherDescription",
+} as const;
+
+/** Mirrors the API's `EntrepreneurshipProgrammeType` enum — the one programme option a rule interprets. */
+export const ENTREPRENEURSHIP_PROGRAMME_OPTIONS = { Other: "Other" } as const;
 
 /** Mirrors `CustomFieldConstants.Job` (API). Persisted contracts — never rename. */
 export const JOB_CUSTOM_FIELD_KEYS = {
@@ -65,6 +74,7 @@ export const JOB_EMPLOYMENT_TYPE_OPTIONS = {
 
 const K = JOB_CUSTOM_FIELD_KEYS;
 const IA = IMPACT_ACTION_CUSTOM_FIELD_KEYS;
+const EN = ENTREPRENEURSHIP_CUSTOM_FIELD_KEYS;
 
 /** Salary details that an undisclosed salary must not carry. */
 const SALARY_DETAIL_KEYS = [
@@ -128,8 +138,9 @@ const numberOf = (
 /**
  * Applies the API's cross-field rules (`AssertCrossFieldRules`) to a custom-field collection.
  * Job salary rules run only when `jobSalaryDisclosed` is among the definitions, employment rules
- * only when `jobEmploymentType` is, and the Impact Action tools rule only when both tools keys
- * are. Otherwise the input is returned untouched.
+ * only when `jobEmploymentType` is, the Impact Action tools rule only when both tools keys are,
+ * and the Entrepreneurship programme rule only when both programme keys are. Otherwise the
+ * input is returned untouched.
  */
 export function applyCustomFieldRules(
   definitions: CustomFieldDefinition[] | null | undefined,
@@ -283,6 +294,23 @@ export function applyCustomFieldRules(
       });
   }
   //#endregion Impact Action tools
+
+  //#region Entrepreneurship programme — the Other description belongs to the Other programme
+  // Same shape as the tools rule: "Other programme is required when Other is selected" /
+  // "…is only supported when Other is selected", checked on every write path.
+  if (defined(EN.programmeType) && defined(EN.programmeOtherDescription)) {
+    const other = selectionsOf(input, EN.programmeType).some((programme) =>
+      sameKey(programme, ENTREPRENEURSHIP_PROGRAMME_OPTIONS.Other),
+    );
+    if (!other) disable([EN.programmeOtherDescription]);
+    else if (scalarOf(input, EN.programmeOtherDescription) === null)
+      errors.push({
+        key: EN.programmeOtherDescription,
+        message:
+          "Name the other programme — it is required when Other is selected.",
+      });
+  }
+  //#endregion Entrepreneurship programme
 
   if (cleared.size === 0) return { values: input, disabledKeys, errors };
 

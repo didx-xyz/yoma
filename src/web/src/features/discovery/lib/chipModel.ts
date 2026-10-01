@@ -163,7 +163,7 @@ function locationNote(
 
 // Inherited first, in mapping order. Hidden wholesale only by the master switch. The group is
 // the preference's own label where it has one, else the label of the facet the fragment carries
-// (the Goal fragment is a Type for four goals and a Category for "Start a business").
+// (the Goal fragment carries a Type, so its chip reads "Type: …").
 function inheritedChips(
   entries: [PreferenceKey, Partial<DiscoveryFilters>][],
   preferencesOff: boolean,

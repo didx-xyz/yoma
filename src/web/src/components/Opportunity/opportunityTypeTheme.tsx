@@ -64,6 +64,17 @@ export const TYPE_CONFIG: Record<string, TypeConfig> = {
     ctaClassName: "bg-yellow/90 hover:bg-yellow/60 text-white",
     gotoExternalLinkButtonText: "View impact action",
   },
+  Entrepreneurship: {
+    label: "Entrepreneurship",
+    badgeLabel: "Entrepreneurship",
+    badgeClassName: "bg-blue-dark text-white",
+    bubbleClassName: "bg-gradient-to-br from-blue-light to-blue-dark/30",
+    accentClassName: "border-blue-dark",
+    ctaText: "View programme →",
+    ctaTitle: "View this entrepreneurship programme",
+    ctaClassName: "bg-blue-dark hover:bg-blue text-white",
+    gotoExternalLinkButtonText: "Go to programme",
+  },
   Other: {
     label: "Other",
     badgeLabel: "Opportunity",

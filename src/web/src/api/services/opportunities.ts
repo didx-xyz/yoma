@@ -205,7 +205,7 @@ export const getOpportunityById = async (
 // Definition-driven custom fields (YOM-1244 / YOM-1255).
 // Returns active custom field definitions applicable to the supplied opportunity type(s).
 // When no types are supplied, only definitions applicable to all opportunity types are returned.
-// `types` values are the opportunity type names (enum names): Other | Learning | Event | Job | ImpactAction.
+// `types` values are the opportunity type names (enum names): Other | Learning | Event | Job | ImpactAction | Entrepreneurship.
 export const getOpportunityCustomFieldDefinitions = async (
   types?: string[] | null,
   context?: GetServerSidePropsContext | GetStaticPropsContext,

@@ -3,9 +3,9 @@ import type { DiscoveryFilters, PreferenceKey } from "./types";
 /**
  * Chip group labels — data for `chipModel.ts`, the one place chip wording lives.
  *
- * `goal` is deliberately absent from the preference groups: its fragment is a TYPE for four
- * goals and a CATEGORY for "Start a business" (BA mapping, 2026-09-22), so its chip takes the
- * group of whatever facet the fragment actually carries (`FACET_GROUPS`).
+ * `goal` is deliberately absent from the preference groups: its chip takes the group of
+ * whatever facet the fragment actually carries (`FACET_GROUPS`) — a TYPE for every goal since
+ * 2026-10-01, when "Start a business" moved from a Category to the Entrepreneurship type.
  */
 export const PREF_GROUPS: Partial<Record<PreferenceKey, string>> = {
   targetCategories: "Interests",

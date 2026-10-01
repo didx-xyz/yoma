@@ -6,6 +6,7 @@ import {
   IoEllipsisHorizontal,
   IoHeartOutline,
   IoPeopleOutline,
+  IoRocketOutline,
   IoSchoolOutline,
   IoSparklesOutline,
 } from "react-icons/io5";
@@ -20,6 +21,7 @@ const TYPE_ICONS: Record<string, React.ElementType> = {
   Learning: IoSchoolOutline,
   ImpactAction: IoHeartOutline,
   Event: IoPeopleOutline,
+  Entrepreneurship: IoRocketOutline,
   Other: IoEllipsisHorizontal,
 };
 

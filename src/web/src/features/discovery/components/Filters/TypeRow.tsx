@@ -20,8 +20,8 @@ import { SectionHeader } from "./SectionHeader";
  * here). Provenance-aware like every other control: selection shows the EFFECTIVE types, and
  * deselecting the inherited one skips the Goal preference for this search — the same semantics
  * as removing its chip. State carries the enum `name`; the label shows `displayName`. Order
- * comes from the lookup, already sorted Job · Learning · ImpactAction · Event · Other by
- * `lib/typeOrder` (a sixth type lands after these; the row wraps). "Impact Action" is the
+ * comes from the lookup, already sorted Job · Learning · ImpactAction · Event · Entrepreneurship
+ * · Other by `lib/typeOrder` (a seventh type lands after these; the row wraps). "Impact Action" is the
  * lookup's displayName — reference data — so there is no display map here.
  */
 export const TypeRow: React.FC<{

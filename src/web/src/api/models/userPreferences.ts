@@ -54,7 +54,7 @@ export interface UserPreferenceAccessibility {
 }
 
 export interface UserPreferences {
-  /** `"biz"` maps to a Category (Business, Finance & Marketing) rather than a Type — BA, 2026-09-22. */
+  /** Each goal maps to a Type; `"biz"` to Entrepreneurship since 2026-10-01 (was a Category, BA 2026-09-22). */
   goal: UserGoal | null;
   /** Opportunity Category ids (Opportunity Categories taxonomy). */
   targetCategories: string[];

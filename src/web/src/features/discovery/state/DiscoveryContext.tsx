@@ -147,10 +147,9 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
         ? mapPreferencesToFilters(preferences, {
             countryId: homeCountryId,
             age,
-            categories: lookups.categories,
           })
         : {},
-    [preferences, homeCountryId, age, lookups.categories],
+    [preferences, homeCountryId, age],
   );
 
   const effectiveFilters = applyInheritedFragments(

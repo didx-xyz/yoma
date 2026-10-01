@@ -258,22 +258,76 @@ export const VerificationImport: React.FC<InputProps> = ({
                 <div>
                   <p className="font-semibold">Optional Custom Field Columns</p>
                   <p className="mb-3">
-                    These come after the core columns. Use each only for its
-                    opportunity type and leave it blank for the others:
+                    These come after the core columns, each headed CF: plus the
+                    field key. Use each only for its opportunity type and leave
+                    it blank for the others:
                   </p>
                   <ul className="ml-5 list-disc text-sm">
                     <li>
-                      jobEmploymentStartDate (Job — the actual start date,
+                      CF:jobEmploymentStartDate (Job — the actual start date,
                       strictly YYYY-MM-DD; not the application deadline)
                     </li>
                     <li>
-                      impactActionImpactAchieved (Impact Action — the outcome,
-                      up to 1000 characters)
+                      CF:impactActionImpactAchieved (Impact Action — the
+                      outcome, up to 1000 characters)
                     </li>
                     <li>
-                      eventRole (Event — Participant, Speaker, Panelist,
+                      CF:eventRole (Event — Participant, Speaker, Panelist,
                       FacilitatorTrainer, CoOrganiser or Volunteer; blank leaves
                       it unspecified)
+                    </li>
+                  </ul>
+                  <p className="mt-3 mb-3">
+                    Entrepreneurship — the participant&apos;s venture. All
+                    optional here (a manual submission requires the first
+                    three); blank leaves a value unreported:
+                  </p>
+                  <ul className="ml-5 list-disc text-sm">
+                    <li>
+                      CF:entrepreneurshipBusinessName (up to 255 characters)
+                    </li>
+                    <li>
+                      CF:entrepreneurshipBusinessSummary (up to 300 characters)
+                    </li>
+                    <li>
+                      CF:entrepreneurshipBusinessRegistered (Yes or No — No for
+                      an informal venture)
+                    </li>
+                    <li>
+                      CF:entrepreneurshipRegistrationReference (up to 125
+                      characters, only for a registered venture)
+                    </li>
+                    <li>
+                      CF:entrepreneurshipSector (ISIC Rev. 5 section letter, A
+                      to V — the same options as the Job industry)
+                    </li>
+                    <li>
+                      CF:entrepreneurshipJobsCreated (zero or more, excluding
+                      the founder)
+                    </li>
+                    <li>
+                      CF:entrepreneurshipRevenueBand (PreRevenue, Under100,
+                      From100To500, From500To2000, From2000To10000, Over10000 —
+                      USD a month)
+                    </li>
+                    <li>
+                      CF:entrepreneurshipRevenueCurrency (ISO currency code,
+                      e.g. ZAR)
+                    </li>
+                    <li>
+                      CF:entrepreneurshipFundingTypes (Grant, SeedAngel, Equity,
+                      FormalLoan, CommunityFinance, FamilyFriends,
+                      CompetitionPrize, InKind; separate several with |)
+                    </li>
+                    <li>
+                      CF:entrepreneurshipFundingAmountBand (Under500,
+                      From500To2000, From2000To10000, From10000To50000,
+                      Over50000 — USD in total)
+                    </li>
+                    <li>CF:entrepreneurshipFunder (up to 255 characters)</li>
+                    <li>
+                      CF:entrepreneurshipClientLocation (LocalCommunity,
+                      Regional, National, CrossBorder, InternationalOnline)
                     </li>
                   </ul>
                 </div>

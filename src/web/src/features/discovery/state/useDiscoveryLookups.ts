@@ -147,8 +147,9 @@ export function useDiscoveryLookups(): DiscoveryLookups {
     sdgsQuery,
     currenciesQuery,
   ];
-  // Presented in the fixed enum-name order (Job · Learning · ImpactAction · Event · Other,
-  // unknown types after) everywhere on the surface; labels still come from `displayName`.
+  // Presented in the fixed enum-name order (Job · Learning · ImpactAction · Event ·
+  // Entrepreneurship · Other, unknown types after) everywhere on the surface; labels still come
+  // from `displayName`.
   const types = typesQuery.data ? sortTypes(typesQuery.data) : undefined;
   const status = (query: (typeof queries)[number]): FacetStatus =>
     query.isPending ? "loading" : facetStatus(query.isError, query.error);

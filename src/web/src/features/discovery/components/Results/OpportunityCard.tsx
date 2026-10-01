@@ -6,6 +6,7 @@ import {
   IoBriefcaseOutline,
   IoCalendarOutline,
   IoConstructOutline,
+  IoRibbonOutline,
   IoStarOutline,
   IoTimeOutline,
 } from "react-icons/io5";
@@ -34,6 +35,7 @@ export const FACT_ICONS: Record<CardFactKind, React.ElementType> = {
   tools: IoConstructOutline,
   date: IoCalendarOutline,
   accessibility: IoAccessibilityOutline,
+  programme: IoRibbonOutline,
 };
 
 export const HIGHLIGHT_CLASSES = {
@@ -51,8 +53,8 @@ export const HIGHLIGHT_CLASSES = {
  * engagement · summary (2 lines — restored; dropped on 2026-08-31) · up to two priority facts
  * (`lib/cardFacts.ts`) · status + places (`lib/cardStatus.ts`) · the type button.
  *
- * The whole card is the one link to the detail page, so the type button is drawn, not nested:
- * it goes where the card goes and never acts inline. Its label is the type's existing CTA copy
+ * The type button is the card's ONLY link to the detail page (Jason, 2026-10-01 — the card body is
+ * not clickable, as on the legacy cards). Its label is the type's existing CTA copy
  * (`getTypeConfig`), its colour the type chip's. Mobile keeps every field — a shorter band, the
  * facts on one line, status + places beside the button.
  */
@@ -77,11 +79,10 @@ export const OpportunityCard: React.FC<{
       : null;
   const place = [location, engagement].filter(Boolean).join(" · ");
 
+  const cta = getTypeConfig(opportunity.type);
+
   return (
-    <Link
-      href={detailHref(opportunity.id)}
-      className="shadow-custom flex h-71 flex-col overflow-hidden rounded-xl bg-white transition hover:shadow-lg motion-reduce:transition-none md:h-90"
-    >
+    <div className="shadow-custom flex h-71 flex-col overflow-hidden rounded-xl bg-white md:h-90">
       <div
         className={`relative flex h-12 shrink-0 items-center justify-center md:h-20 ${typeBandClass(opportunity.type)}`}
       >
@@ -153,13 +154,15 @@ export const OpportunityCard: React.FC<{
               <span className="text-gray-dark truncate">{places}</span>
             )}
           </div>
-          <span
-            className={`flex h-10 shrink-0 items-center justify-center rounded-lg px-4 text-sm font-semibold whitespace-nowrap md:w-full ${typeButtonClass(opportunity.type)}`}
+          <Link
+            href={detailHref(opportunity.id)}
+            title={cta.ctaTitle}
+            className={`flex h-10 shrink-0 items-center justify-center rounded-lg px-4 text-sm font-semibold whitespace-nowrap transition hover:brightness-110 motion-reduce:transition-none md:w-full ${typeButtonClass(opportunity.type)}`}
           >
-            {getTypeConfig(opportunity.type).ctaText}
-          </span>
+            {cta.ctaText}
+          </Link>
         </div>
       </div>
-    </Link>
+    </div>
   );
 };

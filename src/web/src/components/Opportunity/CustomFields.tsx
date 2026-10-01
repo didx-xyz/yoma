@@ -229,6 +229,19 @@ export function toEcmaScriptPattern(pattern: string): string {
   return out;
 }
 
+// The API tests `validationRegex` against the NORMALISED value, for every data type
+// (`CustomFieldValueService.Normalize`): a String trimmed, an Integer as its invariant
+// `int` text ("007" → "7", "-0" → "0"), so `entrepreneurshipJobsCreated`'s
+// non-negative pattern rejects "-1" here rather than on save. Other types are not
+// mirrored — no definition gives them a pattern — and are left to the API.
+function patternSubject(dataType: string, value: string): string | null {
+  if (dataType === CustomFieldDataType.String) return value.trim();
+  if (dataType === CustomFieldDataType.Integer)
+    // only reached once getCustomFieldNumberError accepted it as an Int32 (`-?\d+`)
+    return String(Number(value) + 0);
+  return null;
+}
+
 // Pure per-field validator, shared by this component's inline errors and the
 // caller's zod schema (so both agree without duplicating rules).
 export function getCustomFieldError(
@@ -248,16 +261,13 @@ export function getCustomFieldError(
       return "Please enter a valid date.";
   }
 
-  if (
-    !empty &&
-    dataType === CustomFieldDataType.String &&
-    definition.validationRegex &&
-    entry?.value
-  ) {
+  const subject =
+    !empty && entry?.value ? patternSubject(dataType, entry.value) : null;
+  if (subject !== null && definition.validationRegex) {
     try {
       if (
         !new RegExp(toEcmaScriptPattern(definition.validationRegex)).test(
-          entry.value,
+          subject,
         )
       )
         return (

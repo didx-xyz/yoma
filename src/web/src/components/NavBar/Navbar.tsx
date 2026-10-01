@@ -11,7 +11,7 @@ import { IoMdClose, IoMdMenu, IoMdSettings } from "react-icons/io";
 import type { TabItem } from "~/api/models/common";
 import type { OrganizationInfo } from "~/api/models/user";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
-import { ROLE_ADMIN } from "~/lib/constants";
+import { OPPORTUNITIES_SEARCH_URL, ROLE_ADMIN } from "~/lib/constants";
 import {
   RoleView,
   activeNavigationRoleViewAtom,
@@ -50,7 +50,8 @@ const getNavBarLinksUser = (
     {
       title: "Opportunities",
       description: "Opportunities",
-      url: "/opportunities",
+      // the discovery surface while the kill-switch is on, else the legacy search
+      url: OPPORTUNITIES_SEARCH_URL,
       badgeCount: null,
       selected: false,
     },

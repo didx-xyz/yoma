@@ -13,7 +13,7 @@ import type { CustomFieldFilter } from "~/api/models/opportunity";
 export interface DiscoveryFilters {
   /** Free-text search — `valueContains`. */
   q: string | null;
-  /** Opportunity Type enum NAMEs (Job | Learning | Event | ImpactAction | Other), never GUIDs. Multi-select. */
+  /** Opportunity Type enum NAMEs (Job | Learning | Event | ImpactAction | Entrepreneurship | Other), never GUIDs. Multi-select. */
   types: string[];
   /** Opportunity Category ids. */
   categories: string[];

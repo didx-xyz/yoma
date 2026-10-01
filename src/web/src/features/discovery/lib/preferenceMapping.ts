@@ -23,8 +23,8 @@ import type { DiscoveryFilters, PreferenceKey } from "./types";
 
 /**
  * What the mapping READS (never writes): identity fields resolved by the caller from the
- * profile, and the category lookup so a goal that maps to a CATEGORY resolves by name at
- * runtime — never a hard-coded id, and robust to the taxonomy migration (YOM-1259).
+ * profile. (It also read the category lookup while "Start a business" mapped to a Category by
+ * name; every goal maps to a Type since 2026-10-01.)
  */
 export interface PreferenceProfileContext {
   /**
@@ -39,35 +39,16 @@ export interface PreferenceProfileContext {
    * end). Visible and skippable like any inherited value.
    */
   age: number | null;
-  categories: { id: string; name: string }[];
 }
 
-const GOAL_TO_TYPE: Partial<Record<UserGoal, string>> = {
+const GOAL_TO_TYPE: Record<UserGoal, string> = {
   job: "Job",
   learn: "Learning",
   event: "Event", // design proposal, awaiting BA confirmation — see the feature doc
   impact: "ImpactAction", // renamed from Task 2026-09-28; displayed "Impact Action"
-};
-
-/**
- * "Start a business" maps to a Category, not a Type (BA sheet, 2026-09-22). The approved
- * taxonomy name first, the pre-migration name second; exact, case-insensitive; first match wins.
- */
-const GOAL_TO_CATEGORY_NAMES: Partial<Record<UserGoal, readonly string[]>> = {
-  biz: ["Business, Finance & Marketing", "Business and Entrepreneurship"],
-};
-
-const categoryByName = (
-  categories: { id: string; name: string }[],
-  names: readonly string[],
-): string | null => {
-  for (const name of names) {
-    const hit = categories.find(
-      (c) => c.name.toLowerCase() === name.toLowerCase(),
-    );
-    if (hit) return hit.id;
-  }
-  return null;
+  // The BA mapped it to the Category "Business, Finance & Marketing" (2026-09-22), before the
+  // Entrepreneurship type existed (API, 2026-09-29). Jason, 2026-10-01: the type — pending BA.
+  biz: "Entrepreneurship",
 };
 
 /** One fragment per preference, so each inherited chip can be switched off individually. */
@@ -81,17 +62,8 @@ export function mapPreferencesToFilters(
 ): InheritedFragments {
   const fragments: InheritedFragments = {};
 
-  if (preferences.goal) {
-    const type = GOAL_TO_TYPE[preferences.goal];
-    const categoryNames = GOAL_TO_CATEGORY_NAMES[preferences.goal];
-    const categoryId = categoryNames
-      ? categoryByName(profile.categories, categoryNames)
-      : null;
-    if (type) fragments.goal = { types: [type] };
-    else if (categoryId) fragments.goal = { categories: [categoryId] };
-    // A category goal whose name is not in the loaded lookup yields no fragment — visible as
-    // "nothing inherited" rather than a wrong filter.
-  }
+  if (preferences.goal)
+    fragments.goal = { types: [GOAL_TO_TYPE[preferences.goal]] };
 
   if (preferences.targetCategories.length > 0)
     fragments.targetCategories = { categories: preferences.targetCategories };

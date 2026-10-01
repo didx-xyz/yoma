@@ -85,7 +85,6 @@ export const PersonalizeDialog: React.FC<{
       countryId: homeCountryId(scope, profile?.countryId ?? null, draft),
       age:
         scope === "user" ? ageInYears(profile?.dateOfBirth, new Date()) : null,
-      categories: lookups.categories,
     }),
     false,
     [],

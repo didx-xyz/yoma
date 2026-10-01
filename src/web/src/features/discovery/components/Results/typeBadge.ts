@@ -8,6 +8,7 @@ const TYPE_BADGE_CLASSES: Record<string, string> = {
   Learning: "bg-green text-white",
   Event: "bg-orange text-white",
   ImpactAction: "bg-purple-light text-white",
+  Entrepreneurship: "bg-blue-dark text-white",
   Other: "bg-gray-dark text-white",
 };
 
@@ -30,6 +31,7 @@ const TYPE_BAND_CLASSES: Record<string, string> = {
   Learning: "bg-green-light",
   Event: "bg-orange/10",
   ImpactAction: "bg-purple-light/15",
+  Entrepreneurship: "bg-blue-light",
   Other: "bg-gray-light",
 };
 
@@ -38,6 +40,7 @@ const TYPE_BUTTON_CLASSES: Record<string, string> = {
   Learning: "bg-green text-white",
   Event: "bg-orange text-white",
   ImpactAction: "bg-purple-light text-white",
+  Entrepreneurship: "bg-blue-dark text-white",
   Other: "bg-gray-dark text-white",
 };
 
@@ -46,6 +49,7 @@ const TYPE_OUTLINE_CLASSES: Record<string, string> = {
   Learning: "border-green text-green",
   Event: "border-orange text-orange",
   ImpactAction: "border-purple-light text-purple-light",
+  Entrepreneurship: "border-blue-dark text-blue-dark",
   Other: "border-gray-dark text-gray-dark",
 };
 

@@ -10,7 +10,8 @@
  */
 export const LIST_COLUMNS = {
   tile: "w-10 shrink-0",
-  badge: "w-24 shrink-0",
+  // fits the longest type chip, "ENTREPRENEURSHIP" (123px; w-24 let it run into the title)
+  badge: "w-32 shrink-0",
   title: "min-w-0 flex-1",
   money: "w-[140px] shrink-0",
   where: "hidden w-[130px] shrink-0 lg:block",
