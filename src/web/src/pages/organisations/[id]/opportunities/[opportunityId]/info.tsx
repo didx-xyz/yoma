@@ -27,6 +27,7 @@ import { AvatarImage } from "~/components/AvatarImage";
 import DetailSection from "~/components/Common/DetailSection";
 import { formatCountryPlace } from "~/components/Opportunity/Admin/OpportunityCountryPlaces";
 import { OpportunityCoreDetails } from "~/components/Opportunity/OpportunityCoreDetails";
+import { OpportunityAdminInfo } from "~/components/Opportunity/TabbedDetails/OpportunityAdminInfo";
 import { OpportunityCustomFieldsSection } from "~/components/Opportunity/OpportunityCustomFieldsSection";
 import MainLayout from "~/components/Layout/Main";
 import OrgAdminBadges from "~/components/Opportunity/Badges/OrgAdminBadges";
@@ -51,7 +52,11 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { OPPORTUNITY_TYPE_NANE_JOB, ROLE_ADMIN } from "~/lib/constants";
+import {
+  CUSTOM_FIELDS_ENABLED,
+  OPPORTUNITY_TYPE_NANE_JOB,
+  ROLE_ADMIN,
+} from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { currentOrganisationInactiveAtom } from "~/lib/store";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
@@ -121,13 +126,21 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 // 👇 PAGE COMPONENT: Opportunity Detail
 // this page is accessed from the /organisations/[id]/.. pages (OrgAdmin role)
 // or from the /admin/opportunities/.. pages (Admin role). the retunUrl query param is used to redirect back to the admin page
-const OpportunityDetails: NextPageWithLayout<{
+interface OpportunityInfoPageProps {
   id: string;
   opportunityId: string;
   user: User;
   theme: string;
   error?: number;
-}> = ({ id, opportunityId, user, error }) => {
+}
+
+/** The CLASSIC two-column info page — rendered only while the kill-switch is off (see below). */
+const OpportunityInfoClassic: React.FC<OpportunityInfoPageProps> = ({
+  id,
+  opportunityId,
+  user,
+  error,
+}) => {
   const router = useRouter();
   const { returnUrl } = router.query;
   const currentOrganisationInactive = useAtomValue(
@@ -534,6 +547,20 @@ const OpportunityDetails: NextPageWithLayout<{
     </>
   );
 };
+
+/**
+ * The release kill-switch picks the layout (2026-10-01, Jason): `CUSTOM_FIELDS_ENABLED` on → the
+ * tabbed round-7 page (`OpportunityAdminInfo`), off → the classic one above. Same props, same
+ * server-side data; a build-time constant, so the choice never changes between renders.
+ */
+const OpportunityDetails: NextPageWithLayout<OpportunityInfoPageProps> = (
+  props,
+) =>
+  CUSTOM_FIELDS_ENABLED ? (
+    <OpportunityAdminInfo {...props} />
+  ) : (
+    <OpportunityInfoClassic {...props} />
+  );
 
 OpportunityDetails.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;

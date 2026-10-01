@@ -125,6 +125,17 @@ approved definitions are now being added to the consolidated CF configuration mi
 > opportunity saving. `/opportunities/discover` and "My preferences" are reachable again; the two
 > points below about the September release are history. The preference mock it gated is gone.
 
+> **Added 2026-10-01: the flag also picks the opportunity DETAIL layout** (Jason). It's on, so
+> `/opportunities/{id}`, `/organisations/{org}/opportunities/{id}/info` and the editor's step-8
+> Preview render the round-7 tabbed layout (`components/Opportunity/TabbedDetails/`). Off, all
+> three fall back to the classic two-column layout, untouched.
+>
+> The chokepoints are:
+> - `OpportunityPublicDetails`'s default `layout` (public page and Preview);
+> - the page component in `info.tsx`.
+>
+> The temporary `…/experimental` routes are gone.
+
 **`CUSTOM_FIELDS_ENABLED` in `src/web/src/lib/constants.ts` was `false`** (2026-09-16 → 09-29).
 The branch ships a release _without_ this framework, so cash-out can go out while the framework
 waits on YOM-1264, YOM-1257/1258, and a live pass over credential schema create/update. Flip it to
@@ -573,6 +584,10 @@ API pod image matches the DB schema — and expect it to re-break whenever anoth
 DEV, until this epic merges. Owner: Adrian / infra.
 
 ## Changelog
+
+- 2026-10-01: The round-7 tabbed detail layout is live on `/opportunities/{id}`, the admin `info`
+  page and the editor Preview, behind `CUSTOM_FIELDS_ENABLED` (off → classic). The `…/experimental`
+  routes are removed.
 
 - 2026-09-30 / 10-01: Discovery round-7 visual pass (claude.design brief) on YOM-1262:
   - header-owned category pills;

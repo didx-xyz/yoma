@@ -49,7 +49,7 @@ import {
 } from "~/components/Opportunity/opportunityTypeTheme";
 import { OpportunityCompletionEdit } from "~/components/Opportunity/OpportunityCompletionEdit";
 import { OpportunityCoreDetails } from "~/components/Opportunity/OpportunityCoreDetails";
-import { OpportunityDetailSections } from "~/components/Opportunity/Experimental/OpportunityDetailSections";
+import { OpportunityDetailSections } from "~/components/Opportunity/TabbedDetails/OpportunityDetailSections";
 import { OpportunityCustomFieldsSection } from "~/components/Opportunity/OpportunityCustomFieldsSection";
 import Share from "~/components/Opportunity/Share";
 import { SignInButton } from "~/components/SignInButton";
@@ -61,6 +61,7 @@ import { Unauthorized } from "~/components/Status/Unauthorized";
 import { OPPORTUNITY_QUERY_KEYS } from "~/hooks/useOpportunityMutations";
 import analytics from "~/lib/analytics";
 import {
+  CUSTOM_FIELDS_ENABLED,
   OPPORTUNITY_TYPE_NANE_JOB,
   SETTING_USER_POPUP_LEAVINGYOMA,
 } from "~/lib/constants";
@@ -100,12 +101,22 @@ const OpportunityPublicDetails: React.FC<{
   error?: number;
   preview: boolean;
   /**
-   * `experimental` = the round-7 single-column layout (anchor tabs, sticky bar, disclosure
-   * sections). Same actions, dialogs and rules; only the body changes. Default: the existing
-   * layout, so every current page renders exactly as before.
+   * `tabbed` = the round-7 single-column layout (anchor tabs, sticky bar, disclosure sections,
+   * `TabbedDetails/`); `classic` = the two-column layout before it. Same actions, dialogs and
+   * rules; only the body (and the header's button arrangement) changes.
+   *
+   * Default: the release kill-switch picks it (2026-10-01, Jason) — `CUSTOM_FIELDS_ENABLED`
+   * on → tabbed, off → classic — so the public page and the editor preview follow the flag
+   * from this one place.
    */
-  layout?: "classic" | "experimental";
-}> = ({ user, opportunityInfo, error, preview, layout = "classic" }) => {
+  layout?: "classic" | "tabbed";
+}> = ({
+  user,
+  opportunityInfo,
+  error,
+  preview,
+  layout = CUSTOM_FIELDS_ENABLED ? "tabbed" : "classic",
+}) => {
   const queryClient = useQueryClient();
   const router = useRouter();
   const hasTrackedView = useRef(false);
@@ -586,10 +597,10 @@ const OpportunityPublicDetails: React.FC<{
     saveOpportunity,
   ]);
 
-  // The header card's buttons, declared once so the classic and the experimental (round 7)
-  // layouts arrange the SAME elements — handlers, conditions and copy cannot drift apart.
+  // The header card's buttons, declared once so the classic and the tabbed (round 7) layouts
+  // arrange the SAME elements — handlers, conditions and copy cannot drift apart.
   const compactOnMobile =
-    layout === "experimental" ? "max-md:w-10 max-md:min-w-10 max-md:px-0" : "";
+    layout === "tabbed" ? "max-md:w-10 max-md:min-w-10 max-md:px-0" : "";
   const goToButton = opportunityInfo.url &&
     opportunityInfo.status !== "Expired" && (
       <button
@@ -740,7 +751,7 @@ const OpportunityPublicDetails: React.FC<{
       </span>
     </button>
   );
-  // The sticky bar's and the mobile bottom bar's compact set (experimental layout only).
+  // The sticky bar's and the mobile bottom bar's compact set (tabbed layout only).
   const barActions = (
     <>
       {opportunityInfo.url && opportunityInfo.status !== "Expired" && (
@@ -1202,7 +1213,7 @@ const OpportunityPublicDetails: React.FC<{
             </div>
 
             {/* BUTTONS — one set of elements, two arrangements (see goToButton above) */}
-            {layout === "experimental" ? (
+            {layout === "tabbed" ? (
               // Round 7: mobile — Apply + Save + Share on one row, Upload below
               <div className="mt-2 flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
                 <div className="flex items-center gap-2 md:contents">
@@ -1239,7 +1250,7 @@ const OpportunityPublicDetails: React.FC<{
             )}
           </div>
 
-          {layout === "experimental" ? (
+          {layout === "tabbed" ? (
             <OpportunityDetailSections
               opportunity={opportunityInfo}
               headerRef={headerCardRef}

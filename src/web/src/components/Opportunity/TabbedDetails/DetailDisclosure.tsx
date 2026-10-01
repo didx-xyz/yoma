@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { IoChevronDown, IoChevronForward } from "react-icons/io5";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Experimental detail layout (round 7, artboards 11a–11e, 2026-09-30) — the
+// Tabbed detail layout (round 7, artboards 11a–11e, 2026-09-30) — the
 // disclosure pieces. A section is CLOSED by default: its title, a count and a
 // one-line preview. OPEN, it shows chips (first 6 on desktop, 4 on mobile, then
 // "Show all N") or key–value rows with a short note.

@@ -254,9 +254,8 @@ commitment set; **accessibility excludes** those that have not described their a
       ([`../handoffs/2026-09-30-b.md`](../handoffs/2026-09-30-b.md)): header-owned categories +
       Current filters, the colour rule, cards with the summary restored, the experimental detail
       pages, the welcome step. Every place the canvas was not followed is listed there.
-- [ ] Round-7 follow-ups: `next build`; copy review of the new strings; decide when the
-      experimental detail pages replace the classic ones. (Classic regression and the admin page
-      at 390 checked 2026-10-01.)
+- [ ] Round-7 follow-ups: `next build`; copy review of the new strings. (The tabbed detail
+      layout replaced the classic one behind the kill-switch on 2026-10-01.)
 
 ## Decisions
 
@@ -795,6 +794,11 @@ commitment set; **accessibility excludes** those that have not described their a
   2026-09-05 inline chips. Categories show 6 + See more / See less. Detail: "Overview" → "About";
   the admin page gets a Rewards tab and the Manage opportunity menu in a full sticky panel on
   mobile too.
+- 2026-10-01 (Jason): **the tabbed detail layout replaces the experimental routes.** It is the real
+  `/opportunities/{id}` and `…/info` page, and the editor Preview, whenever the release
+  kill-switch `CUSTOM_FIELDS_ENABLED` is on; off, the classic layout returns. Discovery links to
+  `/opportunities/{id}` again. Supersedes 2026-09-30's "separate experimental routes, existing
+  pages untouched".
 - 2026-10-01 (Jason): **Copy link and Sort are hidden** from the results header (commented out,
   not deleted) — space, and sorting waits for the API (Newest is the only order today). The
   mobile list's "compact list" explainer is gone; preference chips drop the person icon (the

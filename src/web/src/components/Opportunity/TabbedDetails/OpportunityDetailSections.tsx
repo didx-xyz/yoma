@@ -43,8 +43,10 @@ import { ClampedDescription } from "./ClampedDescription";
 import { ChipList, DetailDisclosure, KeyValueRows } from "./DetailDisclosure";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// OpportunityDetailSections — the EXPERIMENTAL detail body (round 7, artboards
-// 11a–11e, 2026-09-30). One column under the header card:
+// OpportunityDetailSections — the TABBED detail body (round 7, artboards
+// 11a–11e, 2026-09-30; the live layout behind the release kill-switch since
+// 2026-10-01 — `CUSTOM_FIELDS_ENABLED` off falls back to the classic one).
+// One column under the header card:
 //
 //   anchor tabs  About · Requirements · Who it's for · Impact · Provider · Details (+ host
 //                groups, e.g. the admin page's Rewards)

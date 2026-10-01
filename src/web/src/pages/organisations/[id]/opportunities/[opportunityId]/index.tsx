@@ -4428,14 +4428,13 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             results.
                           </FormMessage>
 
-                          {/* The public page's component in the round-7 layout (Jason, 2026-09-30):
-                              what the experimental public page shows, buttons inactive */}
+                          {/* The public page's own component and layout — the kill-switch picks tabbed vs
+                              classic in OpportunityPublicDetails; buttons inactive here */}
                           <OpportunityPublicDetails
                             opportunityInfo={opportunityInfo}
                             user={null}
                             error={error}
                             preview={true}
-                            layout="experimental"
                           />
                         </div>
                       </div>

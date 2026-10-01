@@ -1,12 +1,7 @@
-import { QueryClient, dehydrate } from "@tanstack/react-query";
-import axios from "axios";
 import { useAtomValue } from "jotai";
-import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { type ParsedUrlQuery } from "node:querystring";
-import { type ReactElement, useRef } from "react";
+import { useRef } from "react";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import {
   IoAlertCircleOutline,
@@ -16,10 +11,7 @@ import {
   IoPeopleOutline,
   IoPersonAddOutline,
 } from "react-icons/io5";
-import { getOpportunityInfoByIdAdminOrgAdminOrUser } from "~/api/services/opportunities";
 import { AvatarImage } from "~/components/AvatarImage";
-import { OpportunityDetailSections } from "~/components/Opportunity/Experimental/OpportunityDetailSections";
-import MainLayout from "~/components/Layout/Main";
 import OrgAdminBadges from "~/components/Opportunity/Badges/OrgAdminBadges";
 import PullSyncBadge from "~/components/Opportunity/Badges/PullSyncBadge";
 import ZltoRewardBadge from "~/components/Opportunity/Badges/ZltoRewardBadge";
@@ -42,81 +34,32 @@ import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityB
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
-  OPPORTUNITY_QUERY_KEYS,
   useOpportunityInfoQuery,
   useOrganisationByIdQuery,
 } from "~/hooks/useOpportunityMutations";
 import { ROLE_ADMIN } from "~/lib/constants";
-import { config } from "~/lib/react-query-config";
 import { currentOrganisationInactiveAtom } from "~/lib/store";
-import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
-import type { NextPageWithLayout } from "~/pages/_app";
-import { authOptions, type User } from "~/server/auth";
+import { getSafeUrl } from "~/lib/utils";
+import { type User } from "~/server/auth";
+import { OpportunityDetailSections } from "./OpportunityDetailSections";
 
 /** "1 view" · "12 views" */
 const plural = (count: number, noun: string): string =>
   `${count} ${noun}${count === 1 ? "" : "s"}`;
 
-interface IParams extends ParsedUrlQuery {
-  id: string;
-  opportunityId: string;
-  returnUrl?: string;
-}
-
-// ⚠️ SSR — as the existing info page
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { id, opportunityId } = context.params as IParams;
-  const session = await getServerSession(context.req, context.res, authOptions);
-  const queryClient = new QueryClient(config);
-  let errorCode = null;
-
-  if (!session) return { props: { error: 401 } };
-
-  const theme = getThemeFromRole(session, id);
-
-  try {
-    const dataOpportunityInfo = await getOpportunityInfoByIdAdminOrgAdminOrUser(
-      opportunityId,
-      context,
-    );
-    await queryClient.prefetchQuery({
-      queryKey: OPPORTUNITY_QUERY_KEYS.info(opportunityId),
-      queryFn: () => dataOpportunityInfo,
-    });
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status) {
-      if (error.response.status === 404)
-        return { notFound: true, props: { theme: theme } };
-      else errorCode = error.response.status;
-    } else errorCode = 500;
-  }
-
-  return {
-    props: {
-      dehydratedState: dehydrate(queryClient),
-      user: session?.user ?? null,
-      id: id,
-      opportunityId: opportunityId,
-      theme: theme,
-      error: errorCode,
-    },
-  };
-}
-
 /**
- * EXPERIMENTAL admin opportunity info (round 7, artboard 11d, 2026-09-30): the public page's
- * single-column body (`OpportunityDetailSections` — the same sections as the public page) under
- * an ADMIN header card: the status chips, the existing "Manage opportunity" menu (edit,
- * activate / deactivate, visibility, featured, delete, links …), the participant figures and
- * views, and no youth buttons. The menu rides in the sticky panel too — the full panel on mobile
- * as well (`stickyMode="full"`). The existing Rewards block is the last tab, "Rewards".
- * The existing `info` page is untouched.
+ * The org-admin opportunity info page in the TABBED layout (round 7, artboard 11d; live since
+ * 2026-10-01 behind the kill-switch — `info.tsx` renders this when `CUSTOM_FIELDS_ENABLED`, its
+ * classic body otherwise). The public page's single-column body (`OpportunityDetailSections` —
+ * the same sections) under an ADMIN header card: the status chips, the existing "Manage
+ * opportunity" menu (edit, activate / deactivate, visibility, featured, delete, links …), the
+ * participant figures and views, and no youth buttons. The menu rides in the sticky panel too —
+ * the full panel on mobile as well (`stickyMode="full"`). The Rewards block is the last tab.
  */
-const OpportunityInfoExperimental: NextPageWithLayout<{
+export const OpportunityAdminInfo: React.FC<{
   id: string;
   opportunityId: string;
   user: User;
-  theme: string;
   error?: number;
 }> = ({ id, opportunityId, user, error }) => {
   const router = useRouter();
@@ -255,12 +198,14 @@ const OpportunityInfoExperimental: NextPageWithLayout<{
               </div>
 
               <div className="mt-2 flex flex-col gap-3 md:flex-row md:items-center">
-                <div className="flex items-center gap-2">
+                {/* Right-aligned and last: its menu opens leftwards from the button, so on the
+                    left edge it would run off the card (Jason, 2026-10-01). */}
+                <div className="order-last flex items-center justify-end gap-2 md:ml-auto">
                   {manageOpportunity}
                 </div>
 
                 {/* The existing Participants figures (plus views), as one line */}
-                <p className="text-gray-dark flex flex-wrap items-center gap-x-4 gap-y-1 text-xs md:ml-auto md:justify-end">
+                <p className="text-gray-dark flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
                   <span className={STAT}>
                     <IoEyeOutline className={STAT_ICON} />
                     {plural(opportunity.countViewed ?? 0, "view")}
@@ -342,16 +287,3 @@ const OpportunityInfoExperimental: NextPageWithLayout<{
     </>
   );
 };
-
-OpportunityInfoExperimental.getLayout = function getLayout(page: ReactElement) {
-  return <MainLayout>{page}</MainLayout>;
-};
-
-// 👇 return theme from component properties. this is set server-side (getServerSideProps)
-OpportunityInfoExperimental.theme = function getTheme(
-  page: ReactElement<{ theme: string }>,
-) {
-  return page.props.theme;
-};
-
-export default OpportunityInfoExperimental;
