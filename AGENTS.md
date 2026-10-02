@@ -107,6 +107,32 @@ Rules:
 - Keep commits scoped to one component where possible.
 - PR titles follow the same convention; PRs merge with the PR number appended (e.g. `feat: opportunity details cleanup (#1912)`).
 
+## Web Tasks — Agent Roles (`src/web` only)
+
+Every task that changes `src/web/` runs through the roles in `.claude/agents/`: `designer`,
+`developer`, `reviewer` and `tester`. The main session is the **lead**. It plans, delegates to
+the roles, passes their results on, and owns the gates. API work is unaffected.
+
+| Change                                                                  | Roles, in order                                                                                                  |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Visible to users: layout, styling, components, motion, copy             | designer (spec) → **Jason approves** → developer → reviewer + tester in parallel → developer fixes → designer (compare with the spec) |
+| Web logic with no visible change                                        | developer → reviewer + tester → developer fixes                                                                  |
+| Trivial: a typo, a comment, a one-line copy fix                         | developer → tester (static checks only)                                                                          |
+
+- **Gates:**
+  - Jason approves the design spec before implementation starts;
+  - Jason approves every commit and push.
+- **Fix loops:** at most three rounds of fixes, then stop and ask Jason.
+- **Hand-offs go through files**, not chat:
+  - the designer's spec lives in the feature folder;
+  - the lead records the reviewer's findings and the tester's report in the session handoff.
+- **One developer at a time,** in the main checkout. The running dev server serves it, so the
+  tester sees the changes.
+- **Other agents** (Codex, Cursor, …) without these roles follow the same steps in order,
+  themselves.
+
+The browser tooling, ports and access rules are in `src/web/AGENTS.md`, "Agent roles".
+
 ## General Rules for Agents
 
 - Do not modify `helm/`, CI workflows (`.github/workflows/`), or `env.secrets` files unless explicitly asked.
