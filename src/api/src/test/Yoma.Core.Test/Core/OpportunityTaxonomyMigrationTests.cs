@@ -330,6 +330,7 @@ namespace Yoma.Core.Test.Core
 
       await using (var typeCommand = new NpgsqlCommand("""
         SELECT "Id", "Name", "DisplayName" FROM "Opportunity"."OpportunityType"
+        WHERE "Id" = 'f12a9d90-a8f6-4914-8ca5-6acf209f7312'
         """, connection, transaction))
       await using (var typeReader = await typeCommand.ExecuteReaderAsync(TestContext.Current.CancellationToken))
       {
@@ -520,16 +521,36 @@ namespace Yoma.Core.Test.Core
           ('D306BEA3-04AA-4778-969F-4F92DA45559E', 'No formal education (No schooling attended)', CURRENT_TIMESTAMP),
           ('D0DDBF9F-6AF1-46BE-9465-BD6B8D47B752', 'Other', CURRENT_TIMESTAMP);
         CREATE SCHEMA "Opportunity";
+        CREATE SCHEMA "Payout";
+        CREATE TABLE "Payout"."Transaction" (
+          "Id" uuid PRIMARY KEY, "Currency" varchar(10) NOT NULL);
         CREATE TABLE "Opportunity"."Opportunity" (
           "Id" uuid PRIMARY KEY, "TypeId" uuid NULL,
-          "ZltoReward" numeric(8,2) NULL, "ZltoRewardPool" numeric(12,2) NULL);
+          "ZltoReward" numeric(8,2) NULL, "ZltoRewardPool" numeric(12,2) NULL,
+          "DifficultyId" uuid NULL, "OrganizationId" uuid NULL,
+          "CommitmentIntervalId" uuid NULL, "CommitmentIntervalCount" smallint NULL,
+          "StatusId" uuid NULL, "Keywords" text NULL,
+          "DateStart" timestamptz NULL, "DateEnd" timestamptz NULL,
+          "CredentialIssuanceEnabled" boolean NULL, "Featured" boolean NULL,
+          "EngagementTypeId" uuid NULL, "ShareWithPartners" boolean NULL, "Hidden" boolean NULL,
+          "DateCreated" timestamptz NULL, "CreatedByUserId" uuid NULL,
+          "DateModified" timestamptz NULL, "ModifiedByUserId" uuid NULL);
+        CREATE TABLE "Opportunity"."MyOpportunity" ("Id" uuid PRIMARY KEY);
+        CREATE TABLE "Opportunity"."OpportunityDifficulty" (
+          "Id" uuid PRIMARY KEY, "Name" varchar(125) NOT NULL);
+        ALTER TABLE "Opportunity"."Opportunity"
+          ADD CONSTRAINT "FK_Opportunity_OpportunityDifficulty_DifficultyId"
+          FOREIGN KEY ("DifficultyId") REFERENCES "Opportunity"."OpportunityDifficulty" ("Id");
+        CREATE INDEX "IX_Opportunity_DifficultyId" ON "Opportunity"."Opportunity" ("DifficultyId");
+        CREATE INDEX "IX_Opportunity_TypeId_OrganizationId_ZltoReward_DifficultyId_C~"
+          ON "Opportunity"."Opportunity" ("TypeId", "OrganizationId", "ZltoReward", "DifficultyId");
         CREATE TABLE "Opportunity"."OpportunityCountries" (
           "Id" uuid PRIMARY KEY, "DateCreated" timestamptz NOT NULL);
         CREATE TABLE "Opportunity"."OpportunityType" (
           "Id" uuid PRIMARY KEY, "Name" varchar(125) NOT NULL UNIQUE,
-          "DisplayName" varchar(125) NOT NULL);
+          "DisplayName" varchar(125) NOT NULL, "DateCreated" timestamptz NOT NULL);
         INSERT INTO "Opportunity"."OpportunityType" VALUES (
-          'f12a9d90-a8f6-4914-8ca5-6acf209f7312', 'Task', 'Task');
+          'f12a9d90-a8f6-4914-8ca5-6acf209f7312', 'Task', 'Task', '2020-01-01Z'::timestamptz);
         CREATE TABLE "Opportunity"."OpportunityCategory" (
           "Id" uuid PRIMARY KEY, "Name" varchar(125) NOT NULL UNIQUE,
           "ImageURL" varchar(2048) NOT NULL, "DateCreated" timestamptz NOT NULL);
@@ -538,6 +559,23 @@ namespace Yoma.Core.Test.Core
           "CategoryId" uuid NOT NULL REFERENCES "Opportunity"."OpportunityCategory"("Id"),
           "DateCreated" timestamptz NOT NULL, UNIQUE ("OpportunityId", "CategoryId"));
         """);
+
+      // The configuration migration now also seeds CFs. Reuse the real framework's
+      // table definitions rather than duplicating every column in this taxonomy fixture.
+      using var context = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>()
+        .UseNpgsql(connection.ConnectionString, options => options.UseNetTopologySuite()).Options);
+      var frameworkTables = new ApplicationDb_Custom_Fields_Treasury_Payout_SSI().UpOperations
+        .OfType<CreateTableOperation>().Where(o => o.Schema == "Core").ToList();
+      await Execute(connection, transaction, "CREATE SCHEMA \"Core\";");
+      var commands = context.GetService<IMigrationsSqlGenerator>()
+        .Generate(frameworkTables, context.GetService<IDesignTimeModel>().Model);
+      foreach (var command in commands)
+        await Execute(connection, transaction, command.CommandText);
+      await Execute(connection, transaction, """
+        ALTER TABLE "Core"."CustomFieldDefinition"
+          ADD COLUMN "IsSchemaMapped" boolean NOT NULL DEFAULT false;
+        """);
+
       foreach (var (id, name) in LegacyCategories)
       {
         await using var command = new NpgsqlCommand("""

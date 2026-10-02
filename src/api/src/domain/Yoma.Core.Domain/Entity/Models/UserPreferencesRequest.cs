@@ -18,9 +18,9 @@ namespace Yoma.Core.Domain.Entity.Models
     public short? CommitmentIntervalCount { get; set; }
 
     /// <summary>
-    /// Optional preferred way of participating. Null clears it.
+    /// Complete preferred engagement selection. Null or empty clears it.
     /// </summary>
-    public Guid? EngagementTypeId { get; set; }
+    public List<Guid>? EngagementTypes { get; set; }
 
     /// <summary>
     /// True prefers an incentive, false prefers none; null clears the preference.

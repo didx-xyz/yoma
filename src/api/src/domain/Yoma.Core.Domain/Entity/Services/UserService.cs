@@ -35,6 +35,7 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IOpportunityCategoryService _opportunityCategoryService;
     private readonly IAccessibilityService _accessibilityService;
     private readonly ILanguageService _languageService;
+    private readonly IEngagementTypeService _engagementTypeService;
     private readonly ISSITenantService _ssiTenantService;
     private readonly ISSICredentialService _ssiCredentialService;
     private readonly ISettingsDefinitionService _settingsDefinitionService;
@@ -48,6 +49,7 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IRepository<UserPreferenceCategory> _userPreferenceCategoryRepository;
     private readonly IRepository<UserPreferenceAccessibilityRequirement> _userPreferenceAccessibilityRequirementRepository;
     private readonly IRepository<UserPreferenceLanguage> _userPreferenceLanguageRepository;
+    private readonly IRepository<UserPreferenceEngagementType> _userPreferenceEngagementTypeRepository;
     private readonly IRepository<UserLoginHistory> _userLoginHistoryRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
     private readonly IMediator _mediator;
@@ -60,6 +62,7 @@ namespace Yoma.Core.Domain.Entity.Services
         IOpportunityCategoryService opportunityCategoryService,
         IAccessibilityService accessibilityService,
         ILanguageService languageService,
+        IEngagementTypeService engagementTypeService,
         ISSITenantService ssiTenantService,
         ISSICredentialService ssiCredentialService,
         ISettingsDefinitionService settingsDefinitionService,
@@ -73,6 +76,7 @@ namespace Yoma.Core.Domain.Entity.Services
         IRepository<UserPreferenceCategory> userPreferenceCategoryRepository,
         IRepository<UserPreferenceAccessibilityRequirement> userPreferenceAccessibilityRequirementRepository,
         IRepository<UserPreferenceLanguage> userPreferenceLanguageRepository,
+        IRepository<UserPreferenceEngagementType> userPreferenceEngagementTypeRepository,
         IRepository<UserLoginHistory> userLoginHistoryRepository,
         IExecutionStrategyService executionStrategyService,
         IMediator mediator)
@@ -83,6 +87,7 @@ namespace Yoma.Core.Domain.Entity.Services
       _opportunityCategoryService = opportunityCategoryService ?? throw new ArgumentNullException(nameof(opportunityCategoryService));
       _accessibilityService = accessibilityService ?? throw new ArgumentNullException(nameof(accessibilityService));
       _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
+      _engagementTypeService = engagementTypeService ?? throw new ArgumentNullException(nameof(engagementTypeService));
       _ssiTenantService = ssiTenantService ?? throw new ArgumentNullException(nameof(ssiTenantService));
       _ssiCredentialService = ssiCredentialService ?? throw new ArgumentNullException(nameof(ssiCredentialService));
       _settingsDefinitionService = settingsDefinitionService ?? throw new ArgumentNullException(nameof(settingsDefinitionService));
@@ -96,6 +101,7 @@ namespace Yoma.Core.Domain.Entity.Services
       _userPreferenceCategoryRepository = userPreferenceCategoryRepository ?? throw new ArgumentNullException(nameof(userPreferenceCategoryRepository));
       _userPreferenceAccessibilityRequirementRepository = userPreferenceAccessibilityRequirementRepository ?? throw new ArgumentNullException(nameof(userPreferenceAccessibilityRequirementRepository));
       _userPreferenceLanguageRepository = userPreferenceLanguageRepository ?? throw new ArgumentNullException(nameof(userPreferenceLanguageRepository));
+      _userPreferenceEngagementTypeRepository = userPreferenceEngagementTypeRepository ?? throw new ArgumentNullException(nameof(userPreferenceEngagementTypeRepository));
       _userLoginHistoryRepository = userLoginHistoryRepository ?? throw new ArgumentNullException(nameof(userLoginHistoryRepository));
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
       _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
@@ -647,6 +653,56 @@ namespace Yoma.Core.Domain.Entity.Services
           if (item == null) continue;
           await _userPreferenceAccessibilityRequirementRepository.Delete(item);
         }
+        scope.Complete();
+      });
+    }
+
+    public async Task AssignPreferenceEngagementTypes(User user, List<Guid>? engagementTypeIds)
+    {
+      ArgumentNullException.ThrowIfNull(user);
+      if (engagementTypeIds == null || engagementTypeIds.Count == 0) return;
+
+      engagementTypeIds = [.. engagementTypeIds.Distinct()];
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+
+        foreach (var engagementTypeId in engagementTypeIds)
+        {
+          var engagementType = _engagementTypeService.GetById(engagementTypeId);
+          if (_userPreferenceEngagementTypeRepository.Query()
+            .Any(item => item.UserId == user.Id && item.EngagementTypeId == engagementType.Id)) continue;
+
+          await _userPreferenceEngagementTypeRepository.Create(new UserPreferenceEngagementType
+          {
+            UserId = user.Id,
+            EngagementTypeId = engagementType.Id
+          });
+        }
+
+        scope.Complete();
+      });
+    }
+
+    public async Task RemovePreferenceEngagementTypes(User user, List<Guid>? engagementTypeIds)
+    {
+      ArgumentNullException.ThrowIfNull(user);
+      if (engagementTypeIds == null || engagementTypeIds.Count == 0) return;
+
+      engagementTypeIds = [.. engagementTypeIds.Distinct()];
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+
+        foreach (var engagementTypeId in engagementTypeIds)
+        {
+          var item = _userPreferenceEngagementTypeRepository.Query()
+            .SingleOrDefault(value => value.UserId == user.Id && value.EngagementTypeId == engagementTypeId);
+          if (item == null) continue;
+
+          await _userPreferenceEngagementTypeRepository.Delete(item);
+        }
+
         scope.Complete();
       });
     }

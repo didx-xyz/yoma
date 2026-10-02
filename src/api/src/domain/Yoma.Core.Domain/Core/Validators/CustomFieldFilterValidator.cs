@@ -14,7 +14,12 @@ namespace Yoma.Core.Domain.Core.Validators
         .WithMessage("{PropertyName} is required.");
 
       RuleFor(o => o.Operator)
-        .IsInEnum();
+        .IsInEnum()
+        .When(o => o.Operator.HasValue);
+
+      RuleFor(o => o.Unspecified)
+        .IsInEnum()
+        .When(o => o.Unspecified.HasValue);
 
       RuleFor(o => o.Value)
         .Must(o => o == null || !o.Contains(CustomFieldValue.Value_Delimiter))
@@ -49,6 +54,14 @@ namespace Yoma.Core.Domain.Core.Validators
       var hasValueTo = !string.IsNullOrWhiteSpace(filter.ValueTo);
       var hasValues = filter.Values?.Count > 0;
 
+      if (filter.Unspecified == UnspecifiedMatch.Only)
+        return !filter.Operator.HasValue && !hasValue && !hasValueTo && !hasValues;
+
+      // Invalid wire enum values are validation failures, not unsupported runtime branches.
+      if (!filter.Operator.HasValue || !Enum.IsDefined(filter.Operator.Value)) return false;
+      if (filter.Operator == CustomFieldFilterOperator.Exists &&
+        filter.Unspecified is UnspecifiedMatch.Include or UnspecifiedMatch.Only) return false;
+
       return filter.Operator switch
       {
         CustomFieldFilterOperator.Exists =>
@@ -69,7 +82,7 @@ namespace Yoma.Core.Domain.Core.Validators
         CustomFieldFilterOperator.Between =>
           hasValue && hasValueTo && !hasValues,
 
-        _ => false
+        _ => throw new NotSupportedException($"Custom field operator '{filter.Operator}' is not supported")
       };
     }
     #endregion

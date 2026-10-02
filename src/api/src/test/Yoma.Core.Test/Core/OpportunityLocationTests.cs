@@ -71,7 +71,8 @@ namespace Yoma.Core.Test.Core
       Assert.Equal(2, await textQuery.CountAsync(cancellationToken));
       Assert.Single(await repository.Contains(source, o => o.City, "cape").ToListAsync(cancellationToken));
       Assert.Equal(50000, await repository.Contains(source, o => o.Region, "gauteng").CountAsync(cancellationToken));
-      Assert.Single(await repository.Contains(source, o => o.City, "cape%").ToListAsync(cancellationToken));
+      Assert.Empty(await repository.Contains(source, o => o.City, "cape%").ToListAsync(cancellationToken));
+      Assert.Empty(await repository.Contains(source, o => o.City, "Cape_Town").ToListAsync(cancellationToken));
       Assert.Empty(await repository.Contains(source.Where(o => o.CountryId != CountryId), o => o.City, "cape").ToListAsync(cancellationToken));
 
       // Verify geography projection back to the unchanged API array, not only filtering SQL.
@@ -162,12 +163,13 @@ namespace Yoma.Core.Test.Core
     [Fact]
     public void SearchValidatorAllowsIndependentCountriesAndRequiresPairedRadiusCoordinatesPerEntry()
     {
-      var validator = new OpportunitySearchFilterValidator(
-        new Domain.Core.Validators.CoordinatesValidator(), Mock.Of<IAccessibilityService>());
-      var country = new OpportunitySearchFilterCountry { CountryId = CountryId, City = "Cape Town" };
+      var validator = new OpportunitySearchFilterValidator(new OpportunitySearchSelectionValidator(
+        new Domain.Core.Validators.CoordinatesValidator(), Mock.Of<ICountryService>(),
+        Mock.Of<IAccessibilityService>(), new Domain.Core.Validators.CustomFieldFilterValidator()));
+      var country = new OpportunitySearchFilterCountry { CountryId = CountryId, City = new() { Value = "Cape Town" } };
       var filter = new OpportunitySearchFilterAdmin { PageNumber = 1, PageSize = 10, Countries = [country] };
       Assert.True(validator.Validate(filter).IsValid);
-      country.Region = "Western Cape";
+      country.Region = new() { Value = "Western Cape" };
       Assert.True(validator.Validate(filter).IsValid);
       country.Region = null;
       filter.Countries.Add(new OpportunitySearchFilterCountry { CountryId = Guid.NewGuid() });
@@ -175,18 +177,18 @@ namespace Yoma.Core.Test.Core
       filter.Countries.Add(new OpportunitySearchFilterCountry { CountryId = CountryId });
       Assert.False(validator.Validate(filter).IsValid);
       filter.Countries.RemoveAt(2);
-      country.RadiusKm = 25;
+      country.Radius = new() { Value = new() { RadiusKm = 25 } };
       Assert.False(validator.Validate(filter).IsValid);
-      country.Coordinates = [18.4231, -33.9221];
+      country.Radius.Value!.Coordinates = [18.4231, -33.9221];
       Assert.False(validator.Validate(filter).IsValid);
       country.City = null;
       Assert.True(validator.Validate(filter).IsValid);
-      country.Region = "Western Cape";
+      country.Region = new() { Value = "Western Cape" };
       Assert.False(validator.Validate(filter).IsValid);
       country.Region = null;
-      country.RadiusKm = double.NaN;
+      country.Radius!.Value!.RadiusKm = double.NaN;
       Assert.False(validator.Validate(filter).IsValid);
-      country.RadiusKm = 25;
+      country.Radius!.Value!.RadiusKm = 25;
       filter.Countries[1].CountryId = Guid.Empty;
       Assert.False(validator.Validate(filter).IsValid);
     }
@@ -221,8 +223,9 @@ namespace Yoma.Core.Test.Core
       };
       filter.NormalizeForHashing();
       Assert.Equal(2, filter.Countries!.Count);
-      var validator = new OpportunitySearchFilterValidator(
-        new Domain.Core.Validators.CoordinatesValidator(), Mock.Of<IAccessibilityService>());
+      var validator = new OpportunitySearchFilterValidator(new OpportunitySearchSelectionValidator(
+        new Domain.Core.Validators.CoordinatesValidator(), Mock.Of<ICountryService>(),
+        Mock.Of<IAccessibilityService>(), new Domain.Core.Validators.CustomFieldFilterValidator()));
 
       Assert.False(validator.Validate(filter).IsValid);
 

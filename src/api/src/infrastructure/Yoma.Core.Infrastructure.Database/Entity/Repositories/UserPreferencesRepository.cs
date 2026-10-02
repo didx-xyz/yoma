@@ -37,12 +37,15 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
           ? null
           : Enum.Parse<Domain.Core.TimeIntervalOption>(entity.CommitmentInterval.Name, true),
         CommitmentIntervalCount = entity.CommitmentIntervalCount,
-        EngagementTypeId = entity.EngagementTypeId,
-        EngagementType = entity.EngagementType == null
-          ? null
-          : Enum.Parse<Domain.Core.EngagementTypeOption>(entity.EngagementType.Name, true),
+        EngagementTypes = entity.EngagementTypes == null
+          ? new List<Domain.Lookups.Models.EngagementType>()
+          : entity.EngagementTypes.Select(item => new Domain.Lookups.Models.EngagementType
+          {
+            Id = item.EngagementTypeId,
+            Name = item.EngagementType.Name,
+            DisplayName = item.EngagementType.DisplayName
+          }).OrderBy(item => item.DisplayName).ToList(),
         Incentivized = entity.Incentivized,
-        AccessibilityRequirementOtherDescription = entity.AccessibilityRequirementOtherDescription,
         Categories = entity.Categories == null
           ? new List<Domain.Opportunity.Models.Lookups.OpportunityCategory>()
           : entity.Categories.Select(item => new Domain.Opportunity.Models.Lookups.OpportunityCategory
@@ -64,6 +67,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
           .OrderBy(item => item.Name == AccessibilityOption.Other.ToString())
           .ThenBy(item => item.Name)
           .ToList(),
+        AccessibilityRequirementOtherDescription = entity.AccessibilityRequirementOtherDescription,
         Languages = entity.Languages == null
           ? new List<Domain.Lookups.Models.Language>()
           : entity.Languages.Select(item => new Domain.Lookups.Models.Language
@@ -89,7 +93,6 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         GoalId = item.GoalId,
         CommitmentIntervalId = item.CommitmentIntervalId,
         CommitmentIntervalCount = item.CommitmentIntervalCount,
-        EngagementTypeId = item.EngagementTypeId,
         Incentivized = item.Incentivized,
         AccessibilityRequirementOtherDescription = item.AccessibilityRequirementOtherDescription,
         DateCreated = now,
@@ -111,7 +114,6 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
       entity.GoalId = item.GoalId;
       entity.CommitmentIntervalId = item.CommitmentIntervalId;
       entity.CommitmentIntervalCount = item.CommitmentIntervalCount;
-      entity.EngagementTypeId = item.EngagementTypeId;
       entity.Incentivized = item.Incentivized;
       entity.AccessibilityRequirementOtherDescription = item.AccessibilityRequirementOtherDescription;
       entity.DateModified = DateTimeOffset.UtcNow;

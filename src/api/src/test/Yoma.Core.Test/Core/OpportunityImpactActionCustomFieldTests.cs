@@ -59,9 +59,26 @@ namespace Yoma.Core.Test.Core
     [InlineData("Other", "   ")]
     [InlineData("Computer", "Water sampling kit")]
     [InlineData(null, "Water sampling kit")]
-    public void IncompleteOtherPairsAreRejectedIncludingMergedPatchState(string? tools, string? description)
+    public void ManualCaptureRequiresCompleteOtherPairs(string? tools, string? description)
     {
       Assert.Throws<ValidationException>(() => ValidateRelationship(tools, description));
+    }
+
+    [Theory]
+    [InlineData(null, null)]
+    [InlineData("Other", null)]
+    [InlineData("Other", "   ")]
+    [InlineData(null, "Water sampling kit")]
+    [InlineData("Computer", null)]
+    public void ImportsAndSyncAllowMissingOtherCompanions(string? tools, string? description)
+    {
+      ValidateRelationship(tools, description, false);
+    }
+
+    [Fact]
+    public void ImportsAndSyncRejectKnownContradictoryOtherCompanions()
+    {
+      Assert.Throws<ValidationException>(() => ValidateRelationship("Computer", "Water sampling kit", false));
     }
 
     [Fact]
@@ -102,7 +119,7 @@ namespace Yoma.Core.Test.Core
     #endregion
 
     #region Private Members
-    private static void ValidateRelationship(string? tools, string? description)
+    private static void ValidateRelationship(string? tools, string? description, bool enforceRequired = true)
     {
       var method = typeof(OpportunityService).GetMethod("AssertCrossFieldRules", BindingFlags.NonPublic | BindingFlags.Static)!;
       var fields = new List<CustomFieldValueItem>();
@@ -124,7 +141,11 @@ namespace Yoma.Core.Test.Core
 
       try
       {
-        method.Invoke(null, [new Domain.Opportunity.Models.Opportunity { Type = Domain.Opportunity.Type.ImpactAction, CustomFields = fields }, true]);
+        method.Invoke(null, [new Domain.Opportunity.Models.Opportunity
+        {
+          Type = Domain.Opportunity.Type.ImpactAction,
+          CustomFields = fields
+        }, enforceRequired]);
       }
       catch (TargetInvocationException exception) when (exception.InnerException != null)
       {

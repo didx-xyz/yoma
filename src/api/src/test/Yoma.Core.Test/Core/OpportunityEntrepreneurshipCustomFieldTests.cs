@@ -56,12 +56,19 @@ namespace Yoma.Core.Test.Core
     }
 
     [Theory]
-    [InlineData(null, null, true)]
-    [InlineData("BeGreen", null, true)]
-    [InlineData("Other", "New programme", true)]
-    [InlineData("Other", null, false)]
-    [InlineData("BeGreen", "New programme", false)]
-    public void ProgrammeOtherDescriptionMustMatchOtherSelection(string? programme, string? description, bool valid)
+    [InlineData(null, null, true, true)]
+    [InlineData("BeGreen", null, true, true)]
+    [InlineData("Other", "New programme", true, true)]
+    [InlineData("Other", null, true, false)]
+    [InlineData(null, "New programme", true, false)]
+    [InlineData("BeGreen", "New programme", true, false)]
+    [InlineData(null, null, false, true)]
+    [InlineData("Other", null, false, true)]
+    [InlineData(null, "New programme", false, true)]
+    [InlineData("BeGreen", null, false, true)]
+    [InlineData("BeGreen", "New programme", false, false)]
+    public void ProgrammeOtherCompanionsRespectManualAndExternalRequiredness(
+      string? programme, string? description, bool enforceRequired, bool valid)
     {
       var fields = new List<CustomFieldValueItem>();
       if (programme != null)
@@ -88,7 +95,7 @@ namespace Yoma.Core.Test.Core
         {
           Type = Domain.Opportunity.Type.Entrepreneurship,
           CustomFields = fields
-        }, true]);
+        }, enforceRequired]);
       }
       catch (TargetInvocationException error) when (error.InnerException != null)
       {

@@ -3,9 +3,11 @@ using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Globalization;
 using System.Transactions;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Opportunity.Helpers;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
@@ -38,7 +40,7 @@ using Yoma.Core.Domain.SSI.Interfaces;
 
 namespace Yoma.Core.Domain.Opportunity.Services
 {
-  public class OpportunityService : IOpportunityService
+  public partial class OpportunityService : IOpportunityService
   {
     #region Class Variables
     private readonly ILogger<OpportunityService> _logger;
@@ -152,7 +154,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         IExecutionStrategyService executionStrategyService)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-      _appSettings = appSettings.Value ?? throw new ArgumentNullException(nameof(appSettings));
+      _appSettings = appSettings?.Value ?? throw new ArgumentNullException(nameof(appSettings));
       _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
 
       _opportunityStatusService = opportunityStatusService ?? throw new ArgumentNullException(nameof(opportunityStatusService));
@@ -170,7 +172,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _userService = userService ?? throw new ArgumentNullException(nameof(userService));
       _notificationURLFactory = notificationURLFactory ?? throw new ArgumentNullException(nameof(notificationURLFactory));
       _notificationDeliveryService = notificationDeliveryService ?? throw new ArgumentNullException(nameof(notificationDeliveryService));
-      _identityProviderClient = identityProviderClientFactory.CreateClient() ?? throw new ArgumentNullException(nameof(identityProviderClientFactory));
+      _identityProviderClient = identityProviderClientFactory?.CreateClient() ?? throw new ArgumentNullException(nameof(identityProviderClientFactory));
       _syncStateService = syncStateService ?? throw new ArgumentNullException(nameof(syncStateService));
       _treasuryService = treasuryService ?? throw new ArgumentNullException(nameof(treasuryService));
       _partnerService = partnerService ?? throw new ArgumentNullException(nameof(partnerService));
@@ -387,8 +389,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         var filter = new OpportunitySearchFilterAdmin
         {
-          Organizations = organizations,
-          Categories = [item.Id],
+          Organizations = organizations == null ? null : new() { Value = organizations },
+          Categories = new() { Value = [item.Id] },
           TotalCountOnly = true
         };
 
@@ -412,19 +414,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
       var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
 
-      var predicate = PredicateBuilder.False<OpportunityCategory>();
-      foreach (var state in publishedStates)
-      {
-        predicate = state switch
-        {
-          PublishedState.NotStarted => predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart > DateTimeOffset.UtcNow),
-          PublishedState.Active => predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart <= DateTimeOffset.UtcNow),
-          PublishedState.Expired => predicate.Or(o => o.OpportunityStatusId == statusExpiredId),
-          _ => throw new InvalidOperationException($"Published state of '{state}' is not supported"),
-        };
-      }
-
-      query = query.Where(predicate);
+      query = query.Where(OpportunityPublishedStateHelper.Predicate<OpportunityCategory>(publishedStates,
+        o => o.OpportunityStatusId, o => o.OpportunityDateStart,
+        o => o.OpportunityDateEnd, statusActiveId, statusExpiredId, DateTimeOffset.UtcNow));
 
       var categoryIds = query.Select(o => o.CategoryId).Distinct().ToList();
 
@@ -437,7 +429,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         var filter = new OpportunitySearchFilterAdmin
         {
-          Categories = [item.Id],
+          Categories = new() { Value = [item.Id] },
           PublishedStates = publishedStates,
           TotalCountOnly = true,
           ExcludeHidden = true
@@ -485,19 +477,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
         userCountryId = user.CountryId;
       }
 
-      var predicate = PredicateBuilder.False<OpportunityCountry>();
-      foreach (var state in publishedStates)
-      {
-        predicate = state switch
-        {
-          PublishedState.NotStarted => predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart > DateTimeOffset.UtcNow),
-          PublishedState.Active => predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart <= DateTimeOffset.UtcNow),
-          PublishedState.Expired => predicate.Or(o => o.OpportunityStatusId == statusExpiredId),
-          _ => throw new InvalidOperationException($"Published state of '{state}' is not supported"),
-        };
-      }
-
-      query = query.Where(predicate);
+      query = query.Where(OpportunityPublishedStateHelper.Predicate<OpportunityCountry>(publishedStates,
+        o => o.OpportunityStatusId, o => o.OpportunityDateStart,
+        o => o.OpportunityDateEnd, statusActiveId, statusExpiredId, DateTimeOffset.UtcNow));
 
       var countryOpportunities = query
         .GroupBy(o => o.CountryId)
@@ -548,19 +530,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var languageSiteId = string.IsNullOrEmpty(languageCodeAlpha2Site) ? null : (Guid?)_languageService.GetByCodeAlpha2(languageCodeAlpha2Site).Id;
 
-      var predicate = PredicateBuilder.False<OpportunityLanguage>();
-      foreach (var state in publishedStates)
-      {
-        predicate = state switch
-        {
-          PublishedState.NotStarted => predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart > DateTimeOffset.UtcNow),
-          PublishedState.Active => predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart <= DateTimeOffset.UtcNow),
-          PublishedState.Expired => predicate.Or(o => o.OpportunityStatusId == statusExpiredId),
-          _ => throw new InvalidOperationException($"Published state of '{state}' is not supported"),
-        };
-      }
-
-      query = query.Where(predicate);
+      query = query.Where(OpportunityPublishedStateHelper.Predicate<OpportunityLanguage>(publishedStates,
+        o => o.OpportunityStatusId, o => o.OpportunityDateStart,
+        o => o.OpportunityDateEnd, statusActiveId, statusExpiredId, DateTimeOffset.UtcNow));
 
       var languageOpportunities = query
         .GroupBy(o => o.LanguageId)
@@ -608,19 +580,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
       var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
 
-      var predicate = PredicateBuilder.False<OpportunityAccommodation>();
-      foreach (var state in publishedStates)
-      {
-        predicate = state switch
-        {
-          PublishedState.NotStarted => predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart > DateTimeOffset.UtcNow),
-          PublishedState.Active => predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart <= DateTimeOffset.UtcNow),
-          PublishedState.Expired => predicate.Or(o => o.OpportunityStatusId == statusExpiredId),
-          _ => throw new InvalidOperationException($"Published state of '{state}' is not supported"),
-        };
-      }
-
-      query = query.Where(predicate);
+      query = query.Where(OpportunityPublishedStateHelper.Predicate<OpportunityAccommodation>(publishedStates,
+        o => o.OpportunityStatusId, o => o.OpportunityDateStart,
+        o => o.OpportunityDateEnd, statusActiveId, statusExpiredId, DateTimeOffset.UtcNow));
 
       var selectionOpportunities = query
         .GroupBy(o => o.AccommodationId)
@@ -667,19 +629,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
       var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
 
-      var predicate = PredicateBuilder.False<OpportunityTargetedGroup>();
-      foreach (var state in publishedStates)
-      {
-        predicate = state switch
-        {
-          PublishedState.NotStarted => predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart > DateTimeOffset.UtcNow),
-          PublishedState.Active => predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart <= DateTimeOffset.UtcNow),
-          PublishedState.Expired => predicate.Or(o => o.OpportunityStatusId == statusExpiredId),
-          _ => throw new InvalidOperationException($"Published state of '{state}' is not supported"),
-        };
-      }
-
-      query = query.Where(predicate);
+      query = query.Where(OpportunityPublishedStateHelper.Predicate<OpportunityTargetedGroup>(publishedStates,
+        o => o.OpportunityStatusId, o => o.OpportunityDateStart,
+        o => o.OpportunityDateEnd, statusActiveId, statusExpiredId, DateTimeOffset.UtcNow));
 
       var selectionOpportunities = query
         .GroupBy(o => o.TargetedGroupId)
@@ -726,19 +678,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
       var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
 
-      var predicate = PredicateBuilder.False<OpportunitySustainableDevelopmentGoal>();
-      foreach (var state in publishedStates)
-      {
-        predicate = state switch
-        {
-          PublishedState.NotStarted => predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart > DateTimeOffset.UtcNow),
-          PublishedState.Active => predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart <= DateTimeOffset.UtcNow),
-          PublishedState.Expired => predicate.Or(o => o.OpportunityStatusId == statusExpiredId),
-          _ => throw new InvalidOperationException($"Published state of '{state}' is not supported"),
-        };
-      }
-
-      query = query.Where(predicate);
+      query = query.Where(OpportunityPublishedStateHelper.Predicate<OpportunitySustainableDevelopmentGoal>(publishedStates,
+        o => o.OpportunityStatusId, o => o.OpportunityDateStart,
+        o => o.OpportunityDateEnd, statusActiveId, statusExpiredId, DateTimeOffset.UtcNow));
 
       var selectionOpportunities = query
         .GroupBy(o => o.SustainableDevelopmentGoalId)
@@ -788,19 +730,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
       var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
 
-      var predicate = PredicateBuilder.False<Models.Opportunity>();
-      foreach (var state in publishedStates)
-      {
-        predicate = state switch
-        {
-          PublishedState.NotStarted => predicate.Or(o => o.StatusId == statusActiveId && o.DateStart > DateTimeOffset.UtcNow),
-          PublishedState.Active => predicate.Or(o => o.StatusId == statusActiveId && o.DateStart <= DateTimeOffset.UtcNow),
-          PublishedState.Expired => predicate.Or(o => o.StatusId == statusExpiredId),
-          _ => throw new InvalidOperationException($"Published state of '{state}' is not supported"),
-        };
-      }
-
-      query = query.Where(predicate);
+      query = query.Where(OpportunityPublishedStateHelper.Predicate<Models.Opportunity>(publishedStates,
+        o => o.StatusId, o => o.DateStart,
+        o => o.DateEnd, statusActiveId, statusExpiredId, DateTimeOffset.UtcNow));
 
       var organizationOpportunities = query
         .GroupBy(o => o.OrganizationId)
@@ -841,19 +773,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
       var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
 
-      var predicate = PredicateBuilder.False<Models.Opportunity>();
-      foreach (var state in publishedStates)
-      {
-        predicate = state switch
-        {
-          PublishedState.NotStarted => predicate.Or(o => o.StatusId == statusActiveId && o.DateStart > DateTimeOffset.UtcNow),
-          PublishedState.Active => predicate.Or(o => o.StatusId == statusActiveId && o.DateStart <= DateTimeOffset.UtcNow),
-          PublishedState.Expired => predicate.Or(o => o.StatusId == statusExpiredId),
-          _ => throw new InvalidOperationException($"Published state of '{state}' is not supported"),
-        };
-      }
-
-      query = query.Where(predicate);
+      query = query.Where(OpportunityPublishedStateHelper.Predicate<Models.Opportunity>(publishedStates,
+        o => o.StatusId, o => o.DateStart,
+        o => o.DateEnd, statusActiveId, statusExpiredId, DateTimeOffset.UtcNow));
 
       query = query.Where(o => o.CommitmentIntervalId.HasValue && o.CommitmentIntervalCount.HasValue);
 
@@ -908,19 +830,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
       var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
 
-      var predicate = PredicateBuilder.False<Models.Opportunity>();
-      foreach (var state in publishedStates)
-      {
-        predicate = state switch
-        {
-          PublishedState.NotStarted => predicate.Or(o => o.StatusId == statusActiveId && o.DateStart > DateTimeOffset.UtcNow),
-          PublishedState.Active => predicate.Or(o => o.StatusId == statusActiveId && o.DateStart <= DateTimeOffset.UtcNow),
-          PublishedState.Expired => predicate.Or(o => o.StatusId == statusExpiredId),
-          _ => throw new InvalidOperationException($"Published state of '{state}' is not supported"),
-        };
-      }
-
-      query = query.Where(predicate);
+      query = query.Where(OpportunityPublishedStateHelper.Predicate<Models.Opportunity>(publishedStates,
+        o => o.StatusId, o => o.DateStart,
+        o => o.DateEnd, statusActiveId, statusExpiredId, DateTimeOffset.UtcNow));
 
       var minValue = query.Min(o => o.ZltoReward);
       var maxValue = query.Max(o => o.ZltoReward);
@@ -956,16 +868,35 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
-      ParseOpportunitySearchFilterCommitmentInterval(filter);
-      ParseOpportunitySearchFilterZltoReward(filter);
+      filter.SanitizeCollections();
+      PrepareSearchSelection(filter);
+      if (filter.Groups != null)
+        foreach (var group in filter.Groups)
+          if (group?.AnyOf != null)
+            foreach (var branch in group.AnyOf)
+              if (branch != null) PrepareSearchSelection(branch);
 
       _opportunitySearchFilterValidator.ValidateAndThrow(filter);
 
-      _customFieldValueService.ValidateAndHydrateFilters(CustomFieldEntityType.Opportunity, filter.CustomFields);
+      HydrateSearchSelection(filter);
+      if (filter.Groups != null)
+        foreach (var group in filter.Groups)
+          foreach (var branch in group.AnyOf) HydrateSearchSelection(branch);
 
       var query = _opportunityRepository.Query(true);
 
-      //date range
+      // Mandatory scope is outside every OR group. An empty authorised set must
+      // remain empty, never fall back to an unrestricted organisation query.
+      if (ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
+      {
+        if (filter.Organizations?.Value?.Count > 0)
+          _organizationService.IsAdminsOf(filter.Organizations.Value, true);
+
+        var permitted = _organizationService.ListAdminsOf(false).Select(o => o.Id).ToList();
+        query = query.Where(o => permitted.Contains(o.OrganizationId));
+      }
+
+      // Root-only date, status and internal ID restrictions.
       if (filter.StartDate.HasValue)
       {
         filter.StartDate = filter.StartDate.Value.RemoveTime();
@@ -978,237 +909,38 @@ namespace Yoma.Core.Domain.Opportunity.Services
         query = query.Where(o => o.DateEnd <= filter.EndDate.Value);
       }
 
-      //organizations
-      if (ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
+      if (filter.Statuses?.Count > 0)
       {
-        if (filter.Organizations != null && filter.Organizations.Count != 0)
-        {
-          filter.Organizations = [.. filter.Organizations.Distinct()];
-          _organizationService.IsAdminsOf(filter.Organizations, true);
-        }
-        else
-          filter.Organizations = [.. _organizationService.ListAdminsOf(false).Select(o => o.Id)];
-      }
-
-      if (filter.Organizations != null && filter.Organizations.Count != 0)
-        query = query.Where(o => filter.Organizations.Contains(o.OrganizationId));
-
-      //types
-      if (filter.Types != null && filter.Types.Count != 0)
-      {
-        filter.Types = [.. filter.Types.Distinct()];
-        query = query.Where(o => filter.Types.Contains(o.TypeId));
-      }
-
-      //categories
-      if (filter.Categories != null && filter.Categories.Count != 0)
-      {
-        filter.Categories = [.. filter.Categories.Distinct()];
-        query = query.Where(opportunity => _opportunityCategoryRepository.Query().Any(
-            opportunityCategory => filter.Categories.Contains(opportunityCategory.CategoryId) && opportunityCategory.OpportunityId == opportunity.Id));
-      }
-
-      //languages
-      if (filter.Languages != null && filter.Languages.Count != 0)
-      {
-        filter.Languages = [.. filter.Languages.Distinct()];
-        query = query.Where(opportunity => _opportunityLanguageRepository.Query().Any(
-           opportunityLanguage => filter.Languages.Contains(opportunityLanguage.LanguageId) && opportunityLanguage.OpportunityId == opportunity.Id));
-      }
-
-      // Country and location must match a single mapping, not different countries on the opportunity.
-      if (filter.Countries?.Count > 0)
-      {
-        var countryPredicate = PredicateBuilder.False<Models.Opportunity>();
-        foreach (var country in filter.Countries)
-        {
-          var locations = _opportunityCountryRepository.Query().Where(o => o.CountryId == country.CountryId);
-          // Validation makes radius and region/city mutually exclusive. Unknown coordinates cannot establish distance.
-          if (country.RadiusKm.HasValue && country.Coordinates != null)
-            locations = _opportunityCountryRepository.WithinRadius(locations, country.Coordinates, country.RadiusKm.Value);
-          else
-          {
-            // AND the supplied text criteria on this mapping, retaining unspecified fields for incomplete partner data.
-            if (!string.IsNullOrEmpty(country.Region))
-              locations = locations.Where(_opportunityCountryRepository.Contains(o => o.Region, country.Region)
-                .Or(o => o.Region == null));
-            if (!string.IsNullOrEmpty(country.City))
-              locations = locations.Where(_opportunityCountryRepository.Contains(o => o.City, country.City)
-                .Or(o => o.City == null));
-          }
-          // Country entries are alternatives, as with the former list of country IDs.
-          countryPredicate = countryPredicate.Or(opportunity => locations.Any(location => location.OpportunityId == opportunity.Id));
-        }
-        query = query.Where(countryPredicate);
-      }
-
-      if (filter.PublishedStates != null)
-      {
-        var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
-        query = query.Where(o => o.OrganizationStatusId == organizationStatusActiveId);
-
-        var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
-        var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
-
-        var predicate = PredicateBuilder.False<Models.Opportunity>();
-        foreach (var state in filter.PublishedStates)
-        {
-          predicate = state switch
-          {
-            PublishedState.NotStarted => predicate.Or(o => o.StatusId == statusActiveId && o.DateStart > DateTimeOffset.UtcNow),
-            PublishedState.Active => predicate.Or(o => o.StatusId == statusActiveId && o.DateStart <= DateTimeOffset.UtcNow),
-            PublishedState.Expired => predicate.Or(o => o.StatusId == statusExpiredId),
-            _ => throw new InvalidOperationException($"Published state of '{state}' is not supported"),
-          };
-        }
-
-        query = query.Where(predicate);
-      }
-
-      //engagementTypes
-      if (filter.EngagementTypes != null && filter.EngagementTypes.Count != 0)
-      {
-        filter.EngagementTypes = [.. filter.EngagementTypes.Distinct()];
-        query = query.Where(o => !o.EngagementTypeId.HasValue || filter.EngagementTypes.Contains(o.EngagementTypeId.Value)); ///always included of not explicitly defined
-      }
-
-      //statuses
-      if (filter.Statuses != null && filter.Statuses.Count != 0)
-      {
-        filter.Statuses = [.. filter.Statuses.Distinct()];
-        var statusIds = filter.Statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
+        var statusIds = filter.Statuses.Distinct()
+          .Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
         query = query.Where(o => statusIds.Contains(o.StatusId));
       }
 
-      //opportunities (explicit internal filter; if specified and empty, no results will be returned)
       if (filter.Opportunities != null)
-      {
-        filter.Opportunities = [.. filter.Opportunities.Distinct()];
         query = query.Where(o => filter.Opportunities.Contains(o.Id));
+
+      if (filter.PublishedStates != null)
+      {
+        var organizationActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
+        query = query.Where(o => o.OrganizationStatusId == organizationActiveId);
+        query = ApplyPublishedStates(query, filter.PublishedStates);
       }
 
-      //commitmentInterval
-      if (filter.CommitmentInterval != null)
-      {
-        //options
-        if (filter.CommitmentInterval.OptionsParsed != null && filter.CommitmentInterval.OptionsParsed.Count != 0)
+      query = ApplySearchSelection(query, filter);
+
+      // Each group is an independent AND restriction; its branches are alternatives.
+      // ID subqueries keep all criteria in SQL and cannot relax the outer scope.
+      if (filter.Groups != null)
+        foreach (var group in filter.Groups)
         {
-          var distinctItems = filter.CommitmentInterval.OptionsParsed
-            .Select(item => new { item.Id, item.Count })
-            .Distinct()
-            .ToList();
-
-          var predicate = PredicateBuilder.False<Models.Opportunity>();
-
-          foreach (var item in distinctItems)
+          IQueryable<Guid>? matchingIds = null;
+          foreach (var branch in group.AnyOf)
           {
-            var intervalId = item.Id;
-            var intervalCount = item.Count;
-
-            predicate = predicate.Or(o =>
-              o.CommitmentIntervalId.HasValue &&
-              o.CommitmentIntervalCount.HasValue &&
-              o.CommitmentIntervalId.Value == intervalId &&
-              o.CommitmentIntervalCount.Value == intervalCount);
+            var branchIds = ApplySearchSelection(_opportunityRepository.Query(false), branch).Select(o => o.Id);
+            matchingIds = matchingIds == null ? branchIds : matchingIds.Union(branchIds);
           }
-
-          query = query.Where(predicate);
+          query = query.Where(o => matchingIds!.Contains(o.Id));
         }
-
-        //Interval
-        if (filter.CommitmentInterval.Interval != null)
-        {
-          var filterIntervalName = _timeIntervalService.GetById(filter.CommitmentInterval.Interval.Id).Name;
-          var filterCountInMinutes = TimeIntervalHelper.ConvertToMinutes(filterIntervalName, filter.CommitmentInterval.Interval.Count);
-
-          var minuteIntervalId = _timeIntervalService.GetByName(TimeIntervalOption.Minute.ToString()).Id;
-          var hourIntervalId = _timeIntervalService.GetByName(TimeIntervalOption.Hour.ToString()).Id;
-          var dayIntervalId = _timeIntervalService.GetByName(TimeIntervalOption.Day.ToString()).Id;
-          var weekIntervalId = _timeIntervalService.GetByName(TimeIntervalOption.Week.ToString()).Id;
-          var monthIntervalId = _timeIntervalService.GetByName(TimeIntervalOption.Month.ToString()).Id;
-
-          query = query.Where(o =>
-            o.CommitmentIntervalId.HasValue &&
-            o.CommitmentIntervalCount.HasValue &&
-            (
-              (o.CommitmentIntervalId.Value == minuteIntervalId && o.CommitmentIntervalCount.Value <= filterCountInMinutes) ||
-              (o.CommitmentIntervalId.Value == hourIntervalId && (long)o.CommitmentIntervalCount.Value * 60 <= filterCountInMinutes) ||
-              (o.CommitmentIntervalId.Value == dayIntervalId && (long)o.CommitmentIntervalCount.Value * 60 * 24 <= filterCountInMinutes) ||
-              (o.CommitmentIntervalId.Value == weekIntervalId && (long)o.CommitmentIntervalCount.Value * 60 * 24 * 7 <= filterCountInMinutes) ||
-              (o.CommitmentIntervalId.Value == monthIntervalId && (long)o.CommitmentIntervalCount.Value * 60 * 24 * 30 <= filterCountInMinutes)
-            ));
-        }
-      }
-
-      // provider
-      if (!string.IsNullOrEmpty(filter.Provider))
-        query = query.Where(_opportunityRepository.Contains(o => o.Provider, filter.Provider).Or(o => o.Provider == null));
-
-      // incentives
-      if (filter.Incentivized.HasValue)
-        query = query.Where(o => !o.Incentivized.HasValue || o.Incentivized == filter.Incentivized);
-      if (filter.RewardTypes?.Count > 0)
-        query = query.Where(o => filter.RewardTypes.Contains(o.RewardType));
-
-      // accessibility support
-      if (filter.AccessibilitySupport.HasValue)
-        query = query.Where(o => !o.AccessibilitySupport.HasValue || o.AccessibilitySupport == filter.AccessibilitySupport);
-
-      // age bounds
-      if (filter.Age.HasValue)
-        query = query.Where(o => (!o.AgeFrom.HasValue || o.AgeFrom <= filter.Age) && (!o.AgeTo.HasValue || o.AgeTo >= filter.Age));
-
-      // Accessibility intentionally requires ALL selected accommodations and excludes unknowns.
-      if (!string.IsNullOrEmpty(filter.AccommodationOtherDescription))
-        query = query.Where(_opportunityRepository.Contains(o => o.AccommodationOtherDescription, filter.AccommodationOtherDescription));
-
-      if (filter.Accommodations?.Count > 0)
-        foreach (var id in filter.Accommodations.Distinct())
-        {
-          var matching = _opportunityAccommodationRepository.Query().Where(o => o.AccommodationId == id).Select(o => o.OpportunityId);
-          query = query.Where(o => matching.Contains(o.Id));
-        }
-
-      // Targeted groups use ANY matching selection and include unspecified rows.
-      if (filter.TargetedGroups?.Count > 0)
-      {
-        var all = _opportunityTargetedGroupRepository.Query().Select(o => o.OpportunityId);
-        var matching = _opportunityTargetedGroupRepository.Query().Where(o => filter.TargetedGroups.Contains(o.TargetedGroupId)).Select(o => o.OpportunityId);
-        query = query.Where(o => !all.Contains(o.Id) || matching.Contains(o.Id));
-      }
-
-      // Sustainable development goals use ANY matching selection and include unspecified rows.
-      if (filter.SustainableDevelopmentGoals?.Count > 0)
-      {
-        var all = _opportunitySustainableDevelopmentGoalRepository.Query().Select(o => o.OpportunityId);
-        var matching = _opportunitySustainableDevelopmentGoalRepository.Query().Where(o => filter.SustainableDevelopmentGoals.Contains(o.SustainableDevelopmentGoalId)).Select(o => o.OpportunityId);
-        query = query.Where(o => !all.Contains(o.Id) || matching.Contains(o.Id));
-      }
-
-      // zlto reward
-      if (filter.ZltoReward != null)
-      {
-        //ranges
-        if (filter.ZltoReward.RangesParsed != null && filter.ZltoReward.RangesParsed.Count != 0)
-        {
-          var distinctItems = filter.ZltoReward.RangesParsed
-             .Select(item => new { item.From, item.To })
-             .Distinct()
-             .ToList();
-
-          query = query.Where(o => o.ZltoReward.HasValue);
-
-          var predicate = PredicateBuilder.False<Models.Opportunity>();
-          foreach (var item in distinctItems)
-            predicate = predicate.Or(o => o.ZltoReward >= item.From && o.ZltoReward <= item.To);
-
-          query = query.Where(predicate);
-        }
-
-        //hasReward: when true, only opportunities with zlto rewards are included; otherwise, both rewarded and non-rewarded opportunities are included
-        if (filter.ZltoReward.HasReward == true)
-          query = query.Where(o => o.ZltoReward > 0);
-      }
 
       //featured
       if (filter.Featured == true)
@@ -1224,7 +956,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       // Recheck non-text filters during hydration, including authorization and visibility guards.
       // Keep custom-field constraints on both page selection and hydration.
-      query = _opportunityRepository.WhereCustomFields(query, filter.CustomFields);
       var hydrationQuery = query;
 
       //valueContains (includes organizations, types, categories, opportunities and skills)
@@ -1269,6 +1000,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         result.TotalCount = query.Count();
         return result;
       }
+
+      ApplySearchOrdering(filter);
 
       if (filter.OrderInstructions == null || filter.OrderInstructions.Count == 0)
         throw new ArgumentOutOfRangeException(nameof(filter), $"{filter.OrderInstructions} are required");
@@ -2511,16 +2244,16 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         case Type.ImpactAction:
           {
-            // Validate the merged state for every capture path: a patch cannot remove Other
-            // while retaining its description, or select Other without describing the tool.
+            // Manual capture requires the Other companion. Imports/sync may omit either
+            // field, but a known non-Other selection cannot carry an Other description.
             var tools = opportunity.CustomFields.Selections(CustomFieldConstants.ImpactAction.Tools.Required);
             var description = opportunity.CustomFields.Scalar(CustomFieldConstants.ImpactAction.Tools.OtherDescription);
             var other = tools.Contains(ImpactActionTool.Other.ToString());
 
-            if (other && string.IsNullOrWhiteSpace(description))
+            if (enforceRequired && other && string.IsNullOrWhiteSpace(description))
               throw new ValidationException("Other tool description is required when Other is selected.");
 
-            if (!other && !string.IsNullOrWhiteSpace(description))
+            if (!other && !string.IsNullOrWhiteSpace(description) && (enforceRequired || tools.Count > 0))
               throw new ValidationException("Other tool description is only supported when Other is selected.");
 
             break;
@@ -2580,14 +2313,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         case Type.Entrepreneurship:
           {
+            // Apply the same manual-required / external-optional companion policy as tools.
             var programmes = opportunity.CustomFields.Selections(CustomFieldConstants.Entrepreneurship.Programme.Type);
             var description = opportunity.CustomFields.Scalar(CustomFieldConstants.Entrepreneurship.Programme.OtherDescription);
             var other = programmes.Contains(EntrepreneurshipProgrammeType.Other.ToString());
 
-            if (other && string.IsNullOrWhiteSpace(description))
+            if (enforceRequired && other && string.IsNullOrWhiteSpace(description))
               throw new ValidationException("Other programme is required when Other is selected.");
 
-            if (!other && !string.IsNullOrWhiteSpace(description))
+            if (!other && !string.IsNullOrWhiteSpace(description) && (enforceRequired || programmes.Count > 0))
               throw new ValidationException("Other programme is only supported when Other is selected.");
 
             break;
@@ -2960,39 +2694,43 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return organizations;
     }
 
-    private static void ParseOpportunitySearchFilterCommitmentInterval(OpportunitySearchFilterAdmin filter)
+    private static void ParseOpportunitySearchFilterCommitmentInterval(OpportunitySearchSelection filter)
     {
-      if (filter.CommitmentInterval == null || filter.CommitmentInterval.Options == null || filter.CommitmentInterval.Options.Count == 0)
-        return;
-      filter.CommitmentInterval.Options = [.. filter.CommitmentInterval.Options.Distinct()];
+      var value = filter.CommitmentInterval?.Value;
+      if (value?.Options?.Count is not > 0) return;
 
-      filter.CommitmentInterval.OptionsParsed = [];
+      value.Options = [.. value.Options.Distinct()];
 
-      foreach (var item in filter.CommitmentInterval.Options)
+      value.OptionsParsed = [];
+
+      foreach (var item in value.Options)
       {
         var parts = item?.Split('|');
-        if (parts?.Length != 2 || !short.TryParse(parts[0], out var count) || !Guid.TryParse(parts[1], out var id))
-          throw new ArgumentException($"Commitment interval id of '{item}' does not match the expected format", nameof(filter));
+        if (parts?.Length != 2 || !short.TryParse(parts[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out var count) ||
+          !Guid.TryParse(parts[1], out var id))
+          throw new ValidationException($"Commitment option '{item}' must use the format count|intervalId.");
 
-        filter.CommitmentInterval.OptionsParsed.Add(new OpportunitySearchFilterCommitmentIntervalItem { Id = id, Count = count });
+        value.OptionsParsed.Add(new OpportunitySearchFilterCommitmentIntervalItem { Id = id, Count = count });
       }
     }
 
-    private static void ParseOpportunitySearchFilterZltoReward(OpportunitySearchFilterAdmin filter)
+    private static void ParseOpportunitySearchFilterZltoReward(OpportunitySearchSelection filter)
     {
-      if (filter.ZltoReward == null || filter.ZltoReward.Ranges == null || filter.ZltoReward.Ranges.Count == 0)
-        return;
-      filter.ZltoReward.Ranges = [.. filter.ZltoReward.Ranges.Distinct()];
+      var value = filter.ZltoReward?.Value;
+      if (value?.Ranges?.Count is not > 0) return;
 
-      filter.ZltoReward.RangesParsed = [];
+      value.Ranges = [.. value.Ranges.Distinct()];
 
-      foreach (var item in filter.ZltoReward.Ranges)
+      value.RangesParsed = [];
+
+      foreach (var item in value.Ranges)
       {
         var parts = item?.Split('|');
-        if (parts?.Length != 2 || !decimal.TryParse(parts[0], out var from) || !decimal.TryParse(parts[1], out var to))
-          throw new ArgumentException($"Commitment interval id of '{item}' does not match the expected format", nameof(filter));
+        if (parts?.Length != 2 || !decimal.TryParse(parts[0], NumberStyles.Number, CultureInfo.InvariantCulture, out var from) ||
+          !decimal.TryParse(parts[1], NumberStyles.Number, CultureInfo.InvariantCulture, out var to))
+          throw new ValidationException($"ZLTO reward range '{item}' must use the format from|to with invariant numbers.");
 
-        filter.ZltoReward.RangesParsed.Add(new OpportunitySearchFilterZltoRewardRange { From = from, To = to });
+        value.RangesParsed.Add(new OpportunitySearchFilterZltoRewardRange { From = from, To = to });
       }
     }
 

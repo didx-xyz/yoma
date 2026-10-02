@@ -14,7 +14,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
     #region Constructor
     public MyOpportunityRequestValidatorVerify(ITimeIntervalService timeIntervalService)
     {
-      _timeIntervalService = timeIntervalService;
+      _timeIntervalService = timeIntervalService ?? throw new ArgumentNullException(nameof(timeIntervalService));
 
       RuleFor(x => x.Certificate).Must(file => file == null || file.Length > 0).WithMessage("{PropertyName} is optional, but if specified, cannot be empty.");
       RuleFor(x => x.VoiceNote).Must(file => file == null || file.Length > 0).WithMessage("{PropertyName} is optional, but if specified, cannot be empty.");
@@ -112,10 +112,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
     {
       if (AutoFinalizedVerification(context)) return false;
 
-      // A verified venture outcome need not represent a timed participation period.
+      // A placement or verified venture outcome need not represent a timed participation period.
       // Dates or commitment may still be supplied and are validated when present.
       return !context.RootContextData.TryGetValue(nameof(Opportunity.Models.Opportunity.Type), out var type) ||
-        type is not Opportunity.Type.Entrepreneurship;
+        type is not (Opportunity.Type.Job or Opportunity.Type.Entrepreneurship);
     }
 
     private bool CommitmentIntervalExists(Guid id)

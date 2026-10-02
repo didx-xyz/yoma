@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Moq;
 using Xunit;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Core.Services;
@@ -74,6 +75,53 @@ namespace Yoma.Core.Test.Core
       Assert.Throws<ValidationException>(() => impactService.Validate(CustomFieldEntityType.MyOpportunity, "ImpactAction",
         [new CustomFieldValueRequest { Key = "impactActionImpactAchieved", Value = new string('x', 1001) }],
         CustomFieldUpsertMode.PutEnforceRequired));
+    }
+
+    [Theory]
+    [InlineData(CustomFieldEntityType.Opportunity)]
+    [InlineData(CustomFieldEntityType.MyOpportunity)]
+    public void ConfiguredRequirednessAppliesToManualCaptureNotImportsOrSync(CustomFieldEntityType entityType)
+    {
+      var definition = new CustomFieldDefinition
+      {
+        Id = Guid.NewGuid(),
+        EntityType = entityType.ToString(),
+        EntityContext = "Event",
+        Key = "requiredFlag",
+        Title = "Required flag",
+        DataType = CustomFieldDataType.Boolean,
+        IsRequired = true,
+        IsActive = true
+      };
+      var definitions = new Mock<ICustomFieldDefinitionService>();
+      definitions.Setup(o => o.List(entityType, true, true, "Event"))
+        .Returns([definition]);
+      var service = new CustomFieldValueService(
+        definitions.Object, Mock.Of<ICountryService>(), Mock.Of<ILanguageService>(),
+        Mock.Of<ISkillService>(), Mock.Of<IEducationService>(), Mock.Of<ICurrencyService>(),
+        Mock.Of<IRepository<CustomFieldValue>>(), Mock.Of<IExecutionStrategyService>());
+
+      // Manual admin writes and youth submissions require configured mandatory values.
+      Assert.Throws<ValidationException>(() => service.Validate(
+        entityType, "Event", null, CustomFieldUpsertMode.PutEnforceRequired));
+      service.Validate(entityType, "Event",
+        [new CustomFieldValueRequest { Key = definition.Key, Value = "false" }],
+        CustomFieldUpsertMode.PutEnforceRequired);
+
+      // External capture permits omissions and explicit clearing, not malformed values.
+      service.Validate(entityType, "Event", null, CustomFieldUpsertMode.PatchAllowMissingRequired);
+      var cleared = new List<CustomFieldValueRequest> { new() { Key = definition.Key } };
+      cleared.NormalizeForPatch();
+      service.Validate(entityType, "Event", cleared, CustomFieldUpsertMode.PatchAllowMissingRequired);
+      Assert.Throws<ValidationException>(() => service.Validate(entityType, "Event",
+        [new CustomFieldValueRequest { Key = definition.Key, Value = "not-a-boolean" }],
+        CustomFieldUpsertMode.PatchAllowMissingRequired));
+
+      // Instant/action links deliberately do not process completion CFs.
+      Assert.False(new Domain.MyOpportunity.Models.MyOpportunityVerificationOptions
+      {
+        InstantVerification = true
+      }.CustomFieldUpsertMode.Process());
     }
 
     #endregion

@@ -29,14 +29,16 @@ definitions to the BA-approved set (YOM-1264) without a code change.
 
 ## Child Features
 
+**Current search/preference contract (2026-10-01):** the [consolidated API handoff](./handoffs/2026-10-01-c.md) records the agreed decisions for asks 1–24, exact request shapes/defaults and test evidence. It supersedes the historical search/preference-cardinality notes below. The implementation is uncommitted for Adrian's review; API and Web must move to the breaking shapes together. Web continues to own preference composition and skips.
+
 | [YOM-1259 taxonomy implementation](./YOM-1259-api-update-the-opportunity-category-lookup-to-the-new-taxonomy/feature.md) | API / Adrian | in-progress |
 | --- | --- | --- |
 
 Taxonomy CSV imports accept final names only; partner-specific vocabulary is handled separately.
 
-The shared Engagement Type lookup now has enum-compatible keys `Remote`, `OnSite`, `Hybrid` and display names `Remote`, `On-site`, `Hybrid`. Existing lookup IDs and Opportunity associations are retained. CSV import/export and the ordinary lookup service use canonical names only. Each partner with an engagement field explicitly maps its legacy wire values `Online`/`Offline` to `Remote`/`OnSite` before lookup resolution; this does not make them CSV aliases. User engagement preference is single-select; Opportunity discovery's engagement filter can remain multi-select.
+The shared Engagement Type lookup now has enum-compatible keys `Remote`, `OnSite`, `Hybrid` and display names `Remote`, `On-site`, `Hybrid`. Existing lookup IDs and Opportunity associations are retained. CSV import/export and the ordinary lookup service use canonical names only. Each partner with an engagement field explicitly maps its legacy wire values `Online`/`Offline` to `Remote`/`OnSite` before lookup resolution; this does not make them CSV aliases. User engagement preference is now multi-select (`engagementTypes`), retaining any previous scalar choice through a forward migration. Opportunity engagement remains single-select; discovery accepts multiple alternatives. Hybrid is distinct from selecting both Remote and On-site.
 
-The User preference formerly proposed as `PaidWorkPreference` is now nullable `UserPreferences.Incentivized` and applies to every Opportunity type. This means a preference for any incentive, not only wages or cash. The sheet's proposed Opportunity `Is Paid` field and discovery mapping need revisiting before implementation; `IsIncentivized` is the candidate name, while Reward Type still describes the incentive. No matching/ranking is part of the User-preferences change. Preferences are a one-to-one User-owned table, with category, accessibility and language selections in preference-owned link tables; skills remain in UserSkills. The self-service API uses `categories` and `languages` under UserPreferences, not User or UserProfile fields.
+The User preference formerly proposed as `PaidWorkPreference` is nullable `UserPreferences.Incentivized` and applies to every Opportunity type. This means a preference for any incentive, not only wages or cash. Opportunity now uses `Incentivized`, with Reward Type describing the incentive. Web supplies the effective criterion; an inclusive root incentive criterion ranks explicit matches before unknowns. Preferences are a one-to-one User-owned table, with category, accessibility, engagement and language selections in preference-owned link tables; skills remain in UserSkills. The self-service API uses `categories` and `languages` under UserPreferences, not User or UserProfile fields.
 
 Entrepreneurship is now a Yoma Opportunity type, based on Mpho's later confirmation rather than the credential deck's earlier partner-direct draft. Its programme metadata and individual venture outcomes use separate Opportunity/MyOpportunity CF definitions. Core incentive and commitment are optional for this type. It selects `Opportunity|Default` until the type-specific credential/schema phase; see the [API handoff](YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/handoffs/2026-09-29-b.md) before Web integration or credential mapping. Web integrated it on 2026-10-01 ([handoff](handoffs/2026-10-01-b.md)): the editor mirrors the optional effort and the unanswered incentive, the programme Other ↔ description rule is in `customFieldRules.ts`, and the "Start a business" goal now maps to this type.
 
@@ -382,10 +384,12 @@ that review are in
 [YOM-1262's feature doc](./YOM-1262-ui-apply-user-presets-to-opportunity-discovery/feature.md),
 Decisions 2026-09-22.
 
-**Updated 2026-10-01 (Jason).** `Start a business` maps to the new **Entrepreneurship Opportunity
+**Historical Web state before the search revision (2026-10-01, Jason).** `Start a business` maps to the new **Entrepreneurship Opportunity
 type**, not the Category. The BA's Category mapping predates the type (API, 2026-09-29), so this
 **departs from the signed-off sheet and needs BA confirmation**. Reverting is one line in
 `preferenceMapping.ts`. Every goal now maps to a Type; the by-name category path is removed.
+
+**Agreed replacement (2026-10-01, Adrian):** Start a business maps to Entrepreneurship type **OR** Business, Finance & Marketing category so related Learning opportunities remain discoverable. Web composes a generic OR group using stable lookup IDs; skipping the goal removes that group. The API does not hardcode the goal mapping. See the [current handoff](./handoffs/2026-10-01-c.md#web-composition-and-binding--jason).
 
 ## Out of Scope (whole epic)
 
@@ -427,6 +431,8 @@ flag it in a handoff here before merging.
 
 **Discovery-surface asks for Adrian (2026-08-27, from the YOM-1261/1262 build — details in
 [`handoffs/2026-08-27-c.md`](./handoffs/2026-08-27-c.md)):**
+
+The following is the historical ask log, not the current API contract. The [2026-10-01 disposition table](./handoffs/2026-10-01-c.md#original-asks-124--disposition) lists every ask in numeric order, including intentionally unchanged items and Web responsibilities.
 
 1. `/opportunity/search` ordering: `OrderInstructions` is internal (always DateCreated desc), so
    the designed _Ending soonest_ / _Most ZLTO_ sorts ship disabled. Ask: a public sort enum.

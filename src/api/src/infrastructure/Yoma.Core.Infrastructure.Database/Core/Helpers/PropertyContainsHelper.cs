@@ -12,8 +12,9 @@ namespace Yoma.Core.Infrastructure.Database.Core.Helpers
       ArgumentNullException.ThrowIfNull(value);
 
       // Build a case-insensitive substring predicate that EF translates to PostgreSQL ILIKE.
-      var pattern = $"%{value}%";
-      Expression<Func<string?, bool>> match = text => EF.Functions.ILike(text!, pattern);
+      var literal = value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
+      var pattern = $"%{literal}%";
+      Expression<Func<string?, bool>> match = text => EF.Functions.ILike(text!, pattern, "\\");
       var body = ReplacingExpressionVisitor.Replace(match.Parameters[0], property.Body, match.Body);
       return Expression.Lambda<Func<T, bool>>(body, property.Parameters);
     }

@@ -2,6 +2,13 @@ using System.ComponentModel;
 
 namespace Yoma.Core.Domain.Opportunity
 {
+  public enum OpportunitySearchOrderField
+  {
+    DateCreated,
+    DateEnd,
+    ZltoReward
+  }
+
   public enum RewardType
   {
     [Description("None")]

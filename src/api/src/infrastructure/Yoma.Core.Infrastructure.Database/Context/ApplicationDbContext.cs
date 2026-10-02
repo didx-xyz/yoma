@@ -76,6 +76,8 @@ namespace Yoma.Core.Infrastructure.Database.Context
 
     public DbSet<UserPreferences> UserPreferences { get; set; }
 
+    public DbSet<UserPreferenceEngagementType> UserPreferenceEngagementTypes { get; set; }
+
     public DbSet<UserPreferenceCategory> UserPreferenceCategories { get; set; }
     public DbSet<UserPreferenceAccessibilityRequirement> UserPreferenceAccessibilityRequirements { get; set; }
 

@@ -105,7 +105,7 @@ namespace Yoma.Core.Test.Entity
     }
 
     [Fact]
-    public void EngagementTypeIsSingleSelectAndUsesTheSharedLookup()
+    public void EngagementTypesAreMultiSelectAndUseTheSharedLookup()
     {
       var id = Guid.NewGuid();
       var lookup = new Mock<IEngagementTypeService>();
@@ -118,18 +118,17 @@ namespace Yoma.Core.Test.Entity
       var validator = new UserPreferencesRequestValidator(Mock.Of<ISkillService>(), Mock.Of<IOpportunityCategoryService>(),
         Mock.Of<IUserGoalService>(), Mock.Of<ITimeIntervalService>(), Mock.Of<IAccessibilityService>(), lookup.Object, Mock.Of<ILanguageService>());
 
-      Assert.True(validator.Validate(new UserPreferencesRequest { EngagementTypeId = id }).IsValid);
+      Assert.True(validator.Validate(new UserPreferencesRequest { EngagementTypes = [id] }).IsValid);
       Assert.True(validator.Validate(new UserPreferencesRequest()).IsValid);
-      Assert.False(validator.Validate(new UserPreferencesRequest { EngagementTypeId = Guid.NewGuid() }).IsValid);
-      Assert.False(validator.Validate(new UserPreferencesRequest { EngagementTypeId = Guid.Empty }).IsValid);
+      Assert.False(validator.Validate(new UserPreferencesRequest { EngagementTypes = [Guid.NewGuid()] }).IsValid);
+      Assert.False(validator.Validate(new UserPreferencesRequest { EngagementTypes = [Guid.Empty] }).IsValid);
 
       var preferences = new UserPreferences
       {
-        EngagementTypeId = id,
-        EngagementType = Domain.Core.EngagementTypeOption.OnSite
+        EngagementTypes = [new EngagementType { Id = id, Name = "OnSite", DisplayName = "On-site" }]
       };
-      Assert.Equal(id, preferences.EngagementTypeId);
-      Assert.Equal(Domain.Core.EngagementTypeOption.OnSite, preferences.EngagementType);
+      Assert.Equal(id, Assert.Single(preferences.EngagementTypes).Id);
+      Assert.Equal("On-site", Assert.Single(preferences.EngagementTypes).DisplayName);
       Assert.Equal(Domain.Core.EngagementTypeOption.OnSite, Enum.Parse<Domain.Core.EngagementTypeOption>("OnSite"));
       Assert.Equal("On-site", Domain.Core.EngagementTypeOption.OnSite.ToDescription());
       Assert.Equal("\"OnSite\"", Newtonsoft.Json.JsonConvert.SerializeObject(
@@ -556,13 +555,14 @@ namespace Yoma.Core.Test.Entity
         .Returns<Func<Task>, bool>(async (action, _) => await action());
 
       var service = new UserService(Options.Create(new AppSettings()), Mock.Of<IBlobService>(), lookup.Object,
-        categoryLookup.Object, accommodationLookup.Object, languageLookup.Object,
+        categoryLookup.Object, accommodationLookup.Object, languageLookup.Object, Mock.Of<IEngagementTypeService>(),
         Mock.Of<Domain.SSI.Interfaces.ISSITenantService>(), Mock.Of<Domain.SSI.Interfaces.ISSICredentialService>(),
         Mock.Of<ISettingsDefinitionService>(), Mock.Of<IDelayedExecutionService>(),
         new UserRequestValidator(Mock.Of<ICountryService>(), Mock.Of<IEducationService>(), Mock.Of<IGenderService>(), new Domain.Core.Validators.CoordinatesValidator()),
         new UserSearchFilterValidator(), new SettingsRequestValidator(),
         Mock.Of<IRepositoryValueContainsWithNavigation<User>>(), skills.Object, organizations.Object,
         preferredCategories.Object, accessibilityRequirements.Object, preferredLanguages.Object,
+        Mock.Of<IRepository<UserPreferenceEngagementType>>(),
         Mock.Of<IRepository<UserLoginHistory>>(), strategy.Object, Mock.Of<IMediator>());
       return (service, skills, organizations, lookup);
     }

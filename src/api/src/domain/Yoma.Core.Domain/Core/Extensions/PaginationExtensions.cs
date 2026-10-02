@@ -7,12 +7,12 @@ namespace Yoma.Core.Domain.Core.Extensions
   {
     #region Public Members
     // Call after validation and ordering, inside the existing PaginationEnabled branch.
-    public static IQueryable<T> Page<T>(this IQueryable<T> query, PaginationFilter filter)
+    public static IQueryable<T> Page<T>(this IQueryable<T> query, Interfaces.IPaginationFilter filter)
     {
       return query.Skip((filter.PageNumber!.Value - 1) * filter.PageSize!.Value).Take(filter.PageSize.Value);
     }
 
-    public static IEnumerable<T> Page<T>(this IEnumerable<T> query, PaginationFilter filter)
+    public static IEnumerable<T> Page<T>(this IEnumerable<T> query, Interfaces.IPaginationFilter filter)
     {
       return query.Skip((filter.PageNumber!.Value - 1) * filter.PageSize!.Value).Take(filter.PageSize.Value);
     }
@@ -21,7 +21,7 @@ namespace Yoma.Core.Domain.Core.Extensions
     // Passing an unrestricted query could disclose a row reassigned after page IDs were selected.
     public static (int? TotalCount, List<T> Items) ToPageWithChildren<T>(
       this IQueryable<T> query,
-      PaginationFilter filter,
+      Interfaces.IPaginationFilter filter,
       Expression<Func<T, Guid>> idSelector,
       IQueryable<T> hydrationQuery,
       bool hydratePageSeparately = true)

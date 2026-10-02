@@ -859,8 +859,8 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
       if (numbers.Count == 0) return null;
 
-      return _sustainableDevelopmentGoalService.List().Where(goal => numbers.Contains(goal.Number))
-        .OrderBy(goal => goal.Number).Select(goal => goal.Id).ToList();
+      return [.. _sustainableDevelopmentGoalService.List().Where(goal => numbers.Contains(goal.Number))
+        .OrderBy(goal => goal.Number).Select(goal => goal.Id)];
     }
 
     private List<Domain.Lookups.Models.Skill>? GetSkills(Course course)

@@ -29,12 +29,14 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
 
     public IQueryable<Domain.Opportunity.Models.Opportunity> Query(LockMode lockMode)
     {
-      return Query(false).WithLock(lockMode);
+      return Query(false, lockMode);
     }
 
     public IQueryable<Domain.Opportunity.Models.Opportunity> Query(bool includeChildItems, LockMode lockMode)
     {
-      return Query(includeChildItems).WithLock(lockMode);
+      // Keep the locked root at the outer SQL level; collection projections must not nest its alias.
+      // Split-child reads use the same transaction and do not acquire separate root locks.
+      return Query(includeChildItems).AsSplitQuery().WithLock(lockMode);
     }
 
     public IQueryable<Domain.Opportunity.Models.Opportunity> Query(bool includeChildItems)
@@ -205,8 +207,24 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
 
       foreach (var filter in filters)
       {
-        var ids = _context.CustomFieldValue.MatchingEntityIds(CustomFieldEntityType.Opportunity, filter);
-        query = query.Where(o => ids.Contains(o.Id));
+        var presentIds = _context.CustomFieldValue
+          .Where(o => o.CustomFieldDefinitionId == filter.CustomFieldDefinitionId && o.OpportunityId.HasValue)
+          .Select(o => o.OpportunityId!.Value);
+
+        var predicate = PredicateBuilder.False<Domain.Opportunity.Models.Opportunity>();
+        if (filter.Unspecified != UnspecifiedMatch.Only)
+        {
+          var matchedIds = _context.CustomFieldValue.MatchingEntityIds(CustomFieldEntityType.Opportunity, filter);
+          predicate = o => matchedIds.Contains(o.Id);
+        }
+
+        predicate = Domain.Core.Helpers.SearchCriterionHelper.Apply(predicate,
+          o => !presentIds.Contains(o.Id), filter.Unspecified);
+
+        if (filter.AppliesToTypeId.HasValue)
+          predicate = predicate.Or(o => o.TypeId != filter.AppliesToTypeId.Value);
+
+        query = query.Where(predicate);
       }
 
       return query;

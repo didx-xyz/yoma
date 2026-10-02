@@ -1043,6 +1043,31 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.ToTable("UserPreferenceCategories", "Entity");
         });
 
+      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.UserPreferenceEngagementType", b =>
+        {
+          b.Property<Guid>("Id")
+            .ValueGeneratedOnAdd()
+            .HasColumnType("uuid");
+
+          b.Property<DateTimeOffset>("DateCreated")
+            .HasColumnType("timestamp with time zone");
+
+          b.Property<Guid>("EngagementTypeId")
+            .HasColumnType("uuid");
+
+          b.Property<Guid>("UserId")
+            .HasColumnType("uuid");
+
+          b.HasKey("Id");
+
+          b.HasIndex("EngagementTypeId");
+
+          b.HasIndex("UserId", "EngagementTypeId")
+            .IsUnique();
+
+          b.ToTable("UserPreferenceEngagementTypes", "Entity");
+        });
+
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.UserPreferenceLanguage", b =>
         {
           b.Property<Guid>("Id")
@@ -1088,9 +1113,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.Property<DateTimeOffset>("DateModified")
             .HasColumnType("timestamp with time zone");
 
-          b.Property<Guid?>("EngagementTypeId")
-            .HasColumnType("uuid");
-
           b.Property<Guid?>("GoalId")
             .HasColumnType("uuid");
 
@@ -1100,8 +1122,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.HasKey("UserId");
 
           b.HasIndex("CommitmentIntervalId");
-
-          b.HasIndex("EngagementTypeId");
 
           b.HasIndex("GoalId");
 
@@ -3970,6 +3990,25 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.Navigation("Preferences");
         });
 
+      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.UserPreferenceEngagementType", b =>
+        {
+          b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.EngagementType", "EngagementType")
+            .WithMany()
+            .HasForeignKey("EngagementTypeId")
+            .OnDelete(DeleteBehavior.NoAction)
+            .IsRequired();
+
+          b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.UserPreferences", "Preferences")
+            .WithMany("EngagementTypes")
+            .HasForeignKey("UserId")
+            .OnDelete(DeleteBehavior.NoAction)
+            .IsRequired();
+
+          b.Navigation("EngagementType");
+
+          b.Navigation("Preferences");
+        });
+
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.UserPreferenceLanguage", b =>
         {
           b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Language", "Language")
@@ -3995,10 +4034,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             .WithMany()
             .HasForeignKey("CommitmentIntervalId");
 
-          b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.EngagementType", "EngagementType")
-            .WithMany()
-            .HasForeignKey("EngagementTypeId");
-
           b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.Lookups.UserGoal", "Goal")
             .WithMany()
             .HasForeignKey("GoalId");
@@ -4010,8 +4045,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             .IsRequired();
 
           b.Navigation("CommitmentInterval");
-
-          b.Navigation("EngagementType");
 
           b.Navigation("Goal");
 
@@ -4875,6 +4908,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.Navigation("AccessibilityRequirements");
 
           b.Navigation("Categories");
+
+          b.Navigation("EngagementTypes");
 
           b.Navigation("Languages");
         });

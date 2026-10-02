@@ -47,6 +47,10 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
     Task AssignPreferenceCategories(User user, List<Guid>? categoryIds);
 
+    Task AssignPreferenceEngagementTypes(User user, List<Guid>? engagementTypeIds);
+
+    Task RemovePreferenceEngagementTypes(User user, List<Guid>? engagementTypeIds);
+
     Task RemovePreferenceCategories(User user, List<Guid>? categoryIds);
 
     Task AssignAccessibilityRequirements(User user, List<Guid>? accessibilityIds);

@@ -116,10 +116,10 @@ namespace Yoma.Core.Infrastructure.Database.Core.Extensions
       var result = filter.DataType switch
       {
         CustomFieldDataType.Integer or CustomFieldDataType.Decimal =>
-          ApplyNumericComparison(query, filter.Operator, ParseNumeric(filter.Value)),
+          ApplyNumericComparison(query, filter.Operator!.Value, ParseNumeric(filter.Value)),
 
         CustomFieldDataType.Date or CustomFieldDataType.DateTime =>
-          ApplyDateTimeComparison(query, filter.Operator, ParseDateTime(filter.Value)),
+          ApplyDateTimeComparison(query, filter.Operator!.Value, ParseDateTime(filter.Value)),
 
         _ => throw new InvalidOperationException(
           $"Custom field data type '{filter.DataType}' does not support filter operator '{filter.Operator}'")

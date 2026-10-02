@@ -343,61 +343,61 @@ BEGIN
 	END LOOP;
 END $$ LANGUAGE plpgsql;
 
--- Custom fields (local/dev): derive required selections from active metadata, not field keys.
--- One active option is sufficient for both single- and multi-select fields. Optional fields
--- remain empty; existing selections are preserved when this block is run again.
--- Extend the data-type handling as new CF configurations are introduced. Do not guess values
--- for lookup-backed, scalar or regex-constrained fields; report them explicitly for follow-up.
+-- Custom fields (local/dev): required values follow the active metadata.
+-- Boolean and shared-lookup selections are supported; no completion CFs or user
+-- preferences are seeded. Other and non-permanent employment need companion fields,
+-- so ordinary complete fixtures use an explicit option instead.
 DO $$
 DECLARE
     V_Definition RECORD;
     V_OptionKeys TEXT[];
-    V_OptionDelimiter TEXT;
+    V_Value TEXT;
+    V_Delimiter TEXT;
 BEGIN
     FOR V_Definition IN
         SELECT "Id", "Key", "EntityContext", "DataType", "LookupType", "ValidationRegex", "SupportsMultiple"
         FROM "Core"."CustomFieldDefinition"
-        WHERE "EntityType" = 'Opportunity'
-          AND "IsActive" = TRUE
-          AND "IsRequired" = TRUE
+        WHERE "EntityType" = 'Opportunity' AND "IsActive" = TRUE AND "IsRequired" = TRUE
         ORDER BY "Group", "SubGroup", "SortOrder", "Key"
     LOOP
-        IF V_Definition."DataType" <> 'Option'
-            OR V_Definition."LookupType" IS NOT NULL
-            OR V_Definition."ValidationRegex" IS NOT NULL THEN
-            RAISE NOTICE 'CF seed skipped %: no generator for data type %, lookup % or validation regex %.',
+        V_Value := NULL;
+        V_OptionKeys := NULL;
+
+        IF V_Definition."DataType" = 'Boolean' THEN
+            V_Value := 'false';
+        ELSIF V_Definition."DataType" = 'Option' AND V_Definition."LookupType" = 'Education' THEN
+            SELECT "Id"::TEXT INTO V_Value FROM "Lookup"."Education" ORDER BY "Name" LIMIT 1;
+        ELSIF V_Definition."DataType" = 'Option' AND V_Definition."LookupType" = 'Currency' THEN
+            SELECT "Id"::TEXT INTO V_Value FROM "Lookup"."Currency" WHERE "Code" = 'USD' LIMIT 1;
+        ELSIF V_Definition."DataType" = 'Option' AND V_Definition."LookupType" IS NULL THEN
+            SELECT ARRAY_AGG("Key" ORDER BY "SortOrder", "Key") INTO V_OptionKeys
+            FROM "Core"."CustomFieldOption"
+            WHERE "CustomFieldDefinitionId" = V_Definition."Id"
+              AND "IsActive" = TRUE AND "Key" <> 'Other'
+              AND (V_Definition."Key" <> 'jobEmploymentType' OR "Key" = 'Permanent');
+        END IF;
+
+        IF V_Value IS NULL AND COALESCE(CARDINALITY(V_OptionKeys), 0) = 0 THEN
+            RAISE NOTICE 'CF seed skipped %: no generator for type %, lookup % or regex %.',
                 V_Definition."Key", V_Definition."DataType", V_Definition."LookupType", V_Definition."ValidationRegex";
             CONTINUE;
         END IF;
 
-        SELECT ARRAY_AGG("Key" ORDER BY "SortOrder", "Key")
-        INTO V_OptionKeys
-        FROM "Core"."CustomFieldOption"
-        WHERE "CustomFieldDefinitionId" = V_Definition."Id"
-          AND "IsActive" = TRUE;
-
-        IF COALESCE(CARDINALITY(V_OptionKeys), 0) = 0 THEN
-            RAISE NOTICE 'CF seed skipped %: no active options configured.', V_Definition."Key";
-            CONTINUE;
-        END IF;
-
-        -- Multi-select storage uses boundary delimiters for exact option matching in SQL.
-        V_OptionDelimiter := CASE WHEN V_Definition."SupportsMultiple" = TRUE THEN '|' ELSE '' END;
+        V_Delimiter := CASE WHEN V_Definition."SupportsMultiple" = TRUE THEN '|' ELSE '' END;
 
         INSERT INTO "Core"."CustomFieldValue"(
             "Id", "CustomFieldDefinitionId", "OpportunityId", "Value", "DateCreated", "DateModified"
         )
         SELECT gen_random_uuid(), V_Definition."Id", O."Id",
-               V_OptionDelimiter || V_OptionKeys[1 + FLOOR(RANDOM() * CARDINALITY(V_OptionKeys))::INT] || V_OptionDelimiter,
+               V_Delimiter || COALESCE(V_Value,
+                   V_OptionKeys[1 + FLOOR(RANDOM() * CARDINALITY(V_OptionKeys))::INT]) || V_Delimiter,
                CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
         FROM "Opportunity"."Opportunity" O
         JOIN "Opportunity"."OpportunityType" T ON T."Id" = O."TypeId"
         WHERE (V_Definition."EntityContext" IS NULL OR V_Definition."EntityContext" = T."Name")
           AND NOT EXISTS (
-              SELECT 1
-              FROM "Core"."CustomFieldValue" V
-              WHERE V."CustomFieldDefinitionId" = V_Definition."Id"
-                AND V."OpportunityId" = O."Id"
+              SELECT 1 FROM "Core"."CustomFieldValue" V
+              WHERE V."CustomFieldDefinitionId" = V_Definition."Id" AND V."OpportunityId" = O."Id"
           );
     END LOOP;
 END $$ LANGUAGE plpgsql;
@@ -426,15 +426,15 @@ BEGIN
     END IF;
 END $$;
 
--- Categories
+-- Categories: one to three real selections, not every category on every row.
 INSERT INTO "Opportunity"."OpportunityCategories"("Id", "OpportunityId", "CategoryId", "DateCreated")
-SELECT
-    gen_random_uuid(),
-    O."Id" AS "OpportunityId",
-    OC."Id" AS "CategoryId",
-    (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+SELECT gen_random_uuid(), O."Id", C."Id", CURRENT_TIMESTAMP
 FROM "Opportunity"."Opportunity" O
-CROSS JOIN "Opportunity"."OpportunityCategory" OC;
+CROSS JOIN LATERAL (
+    SELECT "Id" FROM "Opportunity"."OpportunityCategory"
+    ORDER BY MD5(O."Id"::TEXT || "Id"::TEXT)
+    LIMIT 1 + MOD(ABS(HASHTEXT(O."Id"::TEXT)::BIGINT), 3)
+) C;
 
 -- Countries (ensure ZA or WW always present; cover WW-only / ZA-only / ZA+random)
 INSERT INTO "Opportunity"."OpportunityCountries"("Id", "OpportunityId", "CountryId", "DateCreated", "DateModified")
@@ -470,35 +470,189 @@ CROSS JOIN LATERAL (
   WHERE (mod(abs(hashtext(O."Id"::text)), 10) >= 8)
 ) C;
 
--- Languages
-INSERT INTO "Opportunity"."OpportunityLanguages"("Id", "OpportunityId", "LanguageId", "DateCreated")
-SELECT
-    gen_random_uuid(),
-    O."Id" AS "OpportunityId",
-    R."LanguageId",
-    (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
-FROM "Opportunity"."Opportunity" O
-CROSS JOIN (
-    SELECT "Id" AS "LanguageId"
+-- Languages: independent selections per opportunity, not one global sample.
+WITH "Choices" AS MATERIALIZED (
+    SELECT "Id", ROW_NUMBER() OVER (ORDER BY "Id") AS "Index"
     FROM "Lookup"."Language"
-    ORDER BY RANDOM()
-    LIMIT 10
-) AS R;
-
--- Skills
-INSERT INTO "Opportunity"."OpportunitySkills"("Id", "OpportunityId", "SkillId", "DateCreated")
-SELECT
-    gen_random_uuid(),
-    O."Id" AS "OpportunityId",
-    R."SkillId",
-    (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+), "ChoiceCount" AS (
+    SELECT COUNT(*) AS "Count" FROM "Choices"
+)
+INSERT INTO "Opportunity"."OpportunityLanguages"("Id", "OpportunityId", "LanguageId", "DateCreated")
+SELECT gen_random_uuid(), O."Id", L."Id", CURRENT_TIMESTAMP
 FROM "Opportunity"."Opportunity" O
-CROSS JOIN (
-    SELECT "Id" AS "SkillId"
+CROSS JOIN "ChoiceCount" C
+CROSS JOIN LATERAL GENERATE_SERIES(0, MOD(ABS(HASHTEXT(O."Id"::TEXT)::BIGINT), 3)::INT) N("Offset")
+JOIN "Choices" L ON L."Index" = 1 + MOD(ABS(HASHTEXT(O."Id"::TEXT)::BIGINT) + N."Offset", C."Count");
+
+-- Skills: a varied controlled selection; Job skills remain requirements.
+-- Enumerate once, then hash-join a few indexes per opportunity (no repeated taxonomy sort).
+WITH "Choices" AS MATERIALIZED (
+    SELECT "Id", ROW_NUMBER() OVER (ORDER BY "Id") AS "Index"
     FROM "Lookup"."Skill"
-    ORDER BY RANDOM()
-    LIMIT 10
-) AS R;
+), "ChoiceCount" AS (
+    SELECT COUNT(*) AS "Count" FROM "Choices"
+)
+INSERT INTO "Opportunity"."OpportunitySkills"("Id", "OpportunityId", "SkillId", "DateCreated")
+SELECT gen_random_uuid(), O."Id", S."Id", CURRENT_TIMESTAMP
+FROM "Opportunity"."Opportunity" O
+CROSS JOIN "ChoiceCount" C
+CROSS JOIN LATERAL GENERATE_SERIES(0, MOD(ABS(HASHTEXT(O."Id"::TEXT)::BIGINT), 4)::INT) N("Offset")
+JOIN "Choices" S ON S."Index" = 1 + MOD(ABS(HASHTEXT(O."Id"::TEXT)::BIGINT) + N."Offset", C."Count");
+
+-- Search fixtures (local/dev only): complete selections and deliberately unknown
+-- partner-like metadata stay distinguishable. Location remains a country mapping;
+-- no user location/preferences are seeded.
+CREATE TEMP TABLE "SearchFixtures" ON COMMIT PRESERVE ROWS AS
+SELECT "Id", ROW_NUMBER() OVER (ORDER BY "DateCreated" DESC, "Id") AS "Number"
+FROM "Opportunity"."Opportunity"
+ORDER BY "DateCreated" DESC, "Id"
+LIMIT 24;
+
+-- Deliberately incomplete rows are clearly labelled, not presented as valid manual saves.
+DELETE FROM "Opportunity"."OpportunityLanguages" L USING "SearchFixtures" F
+WHERE L."OpportunityId" = F."Id" AND MOD(F."Number", 6) = 0;
+DELETE FROM "Opportunity"."OpportunitySkills" S USING "SearchFixtures" F
+WHERE S."OpportunityId" = F."Id" AND MOD(F."Number", 6) = 0;
+
+UPDATE "Opportunity"."Opportunity" O
+SET "Title" = 'Search fixture ' || LPAD(F."Number"::TEXT, 2, '0') || ' - ' || T."Name" ||
+        CASE WHEN MOD(F."Number", 3) = 0 OR F."Number" = 11 THEN ' (incomplete partner-like)' ELSE '' END,
+    "Provider" = CASE WHEN MOD(F."Number", 3) = 0 THEN NULL ELSE 'Fixture provider' END,
+    "OrganizationId" = (SELECT "Id" FROM "Entity"."Organization"
+        WHERE "StatusId" = (SELECT "Id" FROM "Entity"."OrganizationStatus" WHERE "Name" = 'Active')
+        ORDER BY "Id" LIMIT 1),
+    "StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" = 'Active'),
+    "DateStart" = CASE WHEN F."Number" = 8 THEN CURRENT_TIMESTAMP + INTERVAL '2 days'
+        ELSE CURRENT_TIMESTAMP - INTERVAL '2 days' END,
+    "DateEnd" = CASE WHEN F."Number" = 7 THEN CURRENT_TIMESTAMP - INTERVAL '1 hour'
+        WHEN F."Number" = 8 THEN CURRENT_TIMESTAMP + INTERVAL '3 days'
+        WHEN F."Number" = 9 THEN NULL
+        ELSE CURRENT_TIMESTAMP + INTERVAL '30 days' + F."Number" * INTERVAL '1 hour' END,
+    "EngagementTypeId" = CASE WHEN MOD(F."Number", 3) = 0 THEN NULL
+        ELSE (SELECT "Id" FROM "Lookup"."EngagementType"
+            WHERE "Name" = CASE WHEN MOD(F."Number", 2) = 0 THEN 'Remote' ELSE 'OnSite' END) END,
+    "Incentivized" = CASE WHEN MOD(F."Number", 3) = 0 THEN NULL
+        WHEN T."Name" = 'Job' THEN FALSE
+        ELSE MOD(F."Number", 2) = 0 END,
+    "RewardType" = CASE WHEN T."Name" <> 'Job' AND MOD(F."Number", 3) <> 0
+        AND MOD(F."Number", 2) = 0 THEN 'ZLTO' ELSE 'None' END,
+    "ZltoReward" = CASE WHEN T."Name" <> 'Job' AND MOD(F."Number", 3) <> 0
+        AND MOD(F."Number", 2) = 0 THEN F."Number" * 25 ELSE NULL END,
+    "ZltoRewardPool" = CASE WHEN T."Name" <> 'Job' AND MOD(F."Number", 3) <> 0
+        AND MOD(F."Number", 2) = 0 THEN 10000 ELSE NULL END,
+    "AccessibilitySupport" = CASE MOD(F."Number", 5)
+        WHEN 0 THEN NULL WHEN 1 THEN 'Yes' WHEN 2 THEN 'Yes'
+        WHEN 3 THEN 'No' ELSE 'AvailableOnRequest' END,
+    "AccommodationOtherDescription" = CASE WHEN F."Number" = 1 THEN 'Large-print material' ELSE NULL END,
+    "AgeFrom" = CASE MOD(F."Number", 4) WHEN 1 THEN 18 WHEN 3 THEN 21 ELSE NULL END,
+    "AgeTo" = CASE MOD(F."Number", 4) WHEN 2 THEN 30 WHEN 3 THEN 27 ELSE NULL END,
+    "CommitmentIntervalId" = CASE WHEN T."Name" IN ('Job', 'Entrepreneurship')
+        THEN NULL ELSE O."CommitmentIntervalId" END,
+    "CommitmentIntervalCount" = CASE WHEN T."Name" IN ('Job', 'Entrepreneurship')
+        THEN NULL ELSE O."CommitmentIntervalCount" END
+FROM "SearchFixtures" F, "Opportunity"."OpportunityType" T
+WHERE O."Id" = F."Id" AND T."Id" = O."TypeId";
+
+DELETE FROM "Opportunity"."OpportunityCountries" C USING "SearchFixtures" F
+WHERE C."OpportunityId" = F."Id";
+
+INSERT INTO "Opportunity"."OpportunityCountries"(
+    "Id", "OpportunityId", "CountryId", "Region", "City", "Coordinates", "DateCreated", "DateModified"
+)
+SELECT gen_random_uuid(), F."Id", C."Id",
+    CASE WHEN C."CodeAlpha2" = 'WW' OR MOD(F."Number", 6) = 0 THEN NULL
+        WHEN MOD(F."Number", 6) = 5 THEN 'Gauteng' ELSE 'Western Cape' END,
+    CASE WHEN C."CodeAlpha2" = 'WW' OR MOD(F."Number", 6) = 0 THEN NULL
+        WHEN MOD(F."Number", 6) = 5 THEN 'Johannesburg' ELSE 'Cape Town' END,
+    CASE WHEN C."CodeAlpha2" = 'WW' OR MOD(F."Number", 6) IN (0, 5) THEN NULL
+        ELSE ST_Project(ST_SetSRID(ST_MakePoint(18.4231, -33.9221), 4326)::geography,
+            CASE MOD(F."Number", 6) WHEN 1 THEN 5000 WHEN 2 THEN 20000
+                WHEN 3 THEN 60000 ELSE 150000 END, 0) END,
+    CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM "SearchFixtures" F
+JOIN "Lookup"."Country" C ON
+    (F."Number" = 23 AND C."CodeAlpha2" = 'WW') OR
+    (F."Number" <> 23 AND C."CodeAlpha2" = 'ZA') OR
+    (F."Number" = 24 AND C."CodeAlpha2" = 'WW');
+
+INSERT INTO "Opportunity"."OpportunityAccommodations"(
+    "Id", "OpportunityId", "AccommodationId", "DateCreated"
+)
+SELECT gen_random_uuid(), F."Id", A."Id", CURRENT_TIMESTAMP
+FROM "SearchFixtures" F
+JOIN "Lookup"."Accessibility" A ON
+    (MOD(F."Number", 5) = 1 AND A."Name" IN ('Wheelchair accessible', 'Quiet workspace')) OR
+    (MOD(F."Number", 5) = 2 AND A."Name" = 'Quiet workspace') OR
+    (MOD(F."Number", 5) = 4 AND MOD(F."Number", 2) = 0 AND A."Name" = 'Quiet workspace') OR
+    (F."Number" IN (1, 11) AND A."Name" = 'Other');
+
+INSERT INTO "Opportunity"."OpportunityTargetedGroups"("Id", "OpportunityId", "TargetedGroupId", "DateCreated")
+SELECT gen_random_uuid(), F."Id", G."Id", CURRENT_TIMESTAMP
+FROM "SearchFixtures" F
+CROSS JOIN LATERAL (
+    SELECT "Id" FROM "Lookup"."TargetedGroup"
+    WHERE MOD(F."Number", 3) <> 0 ORDER BY MD5(F."Id"::TEXT || "Id"::TEXT) LIMIT 1
+) G;
+
+INSERT INTO "Opportunity"."OpportunitySustainableDevelopmentGoals"(
+    "Id", "OpportunityId", "SustainableDevelopmentGoalId", "DateCreated"
+)
+SELECT gen_random_uuid(), F."Id", G."Id", CURRENT_TIMESTAMP
+FROM "SearchFixtures" F
+CROSS JOIN LATERAL (
+    SELECT "Id" FROM "Lookup"."SustainableDevelopmentGoal"
+    WHERE MOD(F."Number", 3) <> 0 ORDER BY "Number" LIMIT 2
+) G;
+
+-- A disclosed salary example complements the ordinary false/absent amount fixtures.
+INSERT INTO "Core"."CustomFieldValue"(
+    "Id", "CustomFieldDefinitionId", "OpportunityId", "Value", "ValueNumeric", "DateCreated", "DateModified"
+)
+SELECT gen_random_uuid(), D."Id", O."Id", V."Value", V."Numeric", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM (SELECT O."Id" FROM "Opportunity"."Opportunity" O
+    JOIN "Opportunity"."OpportunityType" T ON T."Id" = O."TypeId"
+    WHERE T."Name" = 'Job' ORDER BY O."DateCreated" DESC LIMIT 1) O
+JOIN (VALUES ('jobSalaryMinimum', '1000', 1000::NUMERIC),
+             ('jobSalaryCurrency', (SELECT "Id"::TEXT FROM "Lookup"."Currency" WHERE "Code" = 'USD'), NULL::NUMERIC),
+             ('jobPayInterval', 'PerMonth', NULL::NUMERIC)) V("Key", "Value", "Numeric") ON TRUE
+JOIN "Core"."CustomFieldDefinition" D ON D."Key" = V."Key" AND D."IsActive" = TRUE;
+
+UPDATE "Core"."CustomFieldValue" V SET "Value" = 'true'
+FROM "Core"."CustomFieldDefinition" D, "Opportunity"."Opportunity" O, "Opportunity"."OpportunityType" T
+WHERE V."CustomFieldDefinitionId" = D."Id" AND D."Key" = 'jobSalaryDisclosed'
+  AND V."OpportunityId" = O."Id" AND O."TypeId" = T."Id" AND T."Name" = 'Job'
+  AND O."Id" = (SELECT O2."Id" FROM "Opportunity"."Opportunity" O2
+      WHERE O2."TypeId" = T."Id" ORDER BY O2."DateCreated" DESC LIMIT 1);
+
+DROP TABLE "SearchFixtures";
+
+-- Representative optional filters use active definition/option metadata. Leave
+-- some rows empty so missing-value policies remain testable; never choose Other
+-- without its conditional text companion. These are not production defaults.
+INSERT INTO "Core"."CustomFieldValue"(
+    "Id", "CustomFieldDefinitionId", "OpportunityId", "Value", "DateCreated", "DateModified"
+)
+SELECT gen_random_uuid(), D."Id", O."Id",
+    CASE WHEN D."SupportsMultiple" = TRUE THEN '|' || V."Value" || '|' ELSE V."Value" END,
+    CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM "Opportunity"."Opportunity" O
+JOIN "Opportunity"."OpportunityType" T ON T."Id" = O."TypeId"
+JOIN "Core"."CustomFieldDefinition" D ON D."EntityType" = 'Opportunity'
+    AND D."EntityContext" = T."Name" AND D."IsActive" = TRUE
+    AND D."Key" IN ('impactActionToolsRequired', 'impactActionVerifiedActivityType',
+        'entrepreneurshipProgrammeType', 'entrepreneurshipVentureStageTargeted')
+CROSS JOIN LATERAL (
+    SELECT STRING_AGG(X."Key", '|' ORDER BY X."SortOrder", X."Key") AS "Value"
+    FROM (
+        SELECT P."Key", P."SortOrder" FROM "Core"."CustomFieldOption" P
+        WHERE P."CustomFieldDefinitionId" = D."Id" AND P."IsActive" = TRUE AND P."Key" <> 'Other'
+        ORDER BY MD5(O."Id"::TEXT || P."Key")
+        LIMIT CASE WHEN D."SupportsMultiple" = TRUE THEN 2 ELSE 1 END
+    ) X
+) V
+WHERE MOD(ABS(HASHTEXT(O."Id"::TEXT)::BIGINT), 3) <> 0 AND V."Value" IS NOT NULL
+    AND NOT EXISTS (SELECT 1 FROM "Core"."CustomFieldValue" E
+        WHERE E."OpportunityId" = O."Id" AND E."CustomFieldDefinitionId" = D."Id");
 
 -- Verification types
 INSERT INTO "Opportunity"."OpportunityVerificationTypes"
