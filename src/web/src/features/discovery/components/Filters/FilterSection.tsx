@@ -24,7 +24,9 @@ export const FilterSection: React.FC<{
   const { state, fragments, lookups } = useDiscovery();
   const [open, setOpen] = useState(() => model.selected.length > 0);
   const contentRef = useRef<HTMLDivElement>(null);
-  const expanded = alwaysOpen || open;
+  // No search facet yet (Skills): a disabled row that never opens, its caption always shown.
+  const disabled = section.binding === null;
+  const expanded = alwaysOpen || (open && !disabled);
 
   const toggleOpen = (): void => {
     const opening = !open;
@@ -59,21 +61,19 @@ export const FilterSection: React.FC<{
           icon={section.icon}
           label={section.label}
           value={model.summary}
-          subtitle={expanded ? section.hint : null}
+          subtitle={expanded || disabled ? section.hint : null}
           expanded={expanded}
           onToggle={toggleOpen}
+          disabled={disabled}
           badges={
-            <>
-              {inheritedActive && (
-                <Badge
-                  intent="provenance"
-                  title="This search inherits a value here from your preferences"
-                >
-                  FROM PREFERENCES
-                </Badge>
-              )}
-              {section.optIn && <Badge intent="consent">OPT-IN</Badge>}
-            </>
+            inheritedActive && (
+              <Badge
+                intent="provenance"
+                title="This search inherits a value here from your preferences"
+              >
+                FROM PREFERENCES
+              </Badge>
+            )
           }
         />
       )}

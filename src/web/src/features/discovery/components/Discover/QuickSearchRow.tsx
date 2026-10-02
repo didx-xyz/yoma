@@ -25,9 +25,15 @@ const badgeClassFor = (applied: boolean): string =>
 
 export const QuickSearchRow: React.FC<{
   wrap?: boolean;
+  /**
+   * A 2-column grid of full-width pills instead (the welcome step, round 10). An odd last pill
+   * spans both columns, so 4, 5 or 6 badges never leave a half-width orphan. 44px tall below
+   * `lg` (the touch-target rule), 42px from `lg`.
+   */
+  grid?: boolean;
   /** Called after a badge is tapped — the welcome step closes the dialog (round 7). */
   onPick?: () => void;
-}> = ({ wrap = true, onPick }) => {
+}> = ({ wrap = true, grid = false, onPick }) => {
   const { state, dispatch, lookups, homeCountryId, effectiveFilters } =
     useDiscovery();
   const hasPoint = effectiveFilters.point !== null;
@@ -56,11 +62,22 @@ export const QuickSearchRow: React.FC<{
         >;
       } => entry.criteria !== null,
     )
-    .map(({ badge, criteria }) => {
+    .map(({ badge, criteria }, i, all) => {
       const label =
         typeof badge.label === "function" ? badge.label(ctx) : badge.label;
       const applied = isQuickSearchApplied(state.filters, criteria);
       const Icon = badge.icon;
+      // Panel homes are thumb-sized (44px); the hero's scrolling row stays compact. The grid
+      // picks its own whole size string rather than overriding these. A grid pill is half the
+      // panel wide, so a long country ("Jobs in Central African Republic") wraps to a second
+      // line inside it instead of running into its neighbour — still the full name, on touch too.
+      const sizeClass = grid
+        ? `min-h-11 w-full justify-start px-4 py-1.5 text-left text-[13px] leading-tight font-semibold lg:min-h-[42px] ${
+            all.length % 2 === 1 && i === all.length - 1 ? "col-span-2" : ""
+          }`
+        : `px-2.5 text-[11px] whitespace-nowrap md:px-3 md:text-xs ${
+            wrap ? "min-h-11 md:min-h-9" : "min-h-7 md:min-h-9"
+          }`;
       return (
         <button
           key={badge.id}
@@ -70,10 +87,7 @@ export const QuickSearchRow: React.FC<{
             dispatch({ kind: "toggleQuickSearch", criteria });
             onPick?.();
           }}
-          // Panel homes are thumb-sized (44px); the hero's scrolling row stays compact.
-          className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-[11px] whitespace-nowrap md:px-3 md:text-xs ${
-            wrap ? "min-h-11 md:min-h-9" : "min-h-7 md:min-h-9"
-          } ${badgeClassFor(applied)}`}
+          className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border ${sizeClass} ${badgeClassFor(applied)}`}
         >
           <Icon className="h-4 w-4 shrink-0" />
           {label}
@@ -82,6 +96,8 @@ export const QuickSearchRow: React.FC<{
     });
 
   if (badges.length === 0) return null;
+
+  if (grid) return <div className="grid grid-cols-2 gap-2">{badges}</div>;
 
   // Hero rows drag-scroll through the app's ScrollableContainer; panel homes wrap in place.
   return wrap ? (

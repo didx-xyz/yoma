@@ -93,6 +93,35 @@ export const DiscoverySurface: React.FC = () => {
 
   const editPreferences = (): void => setPersonalizeOpen(true);
 
+  // The hero's rotating line. On results, the two preference sentences only while a preference
+  // actually applies (round 10): signed out with no answers they would describe nothing.
+  const refine = "Refine your search with the filters";
+  // "1 matches your search" / "2 530 match your search" — the verb agrees with the count.
+  const matching =
+    count !== null
+      ? `${formatNumber(count)} ${count === 1 ? "matches" : "match"} your search`
+      : null;
+  const resultsSentences = chips.some((c) => c.provenance === "inherited")
+    ? [
+        matching ?? refine,
+        // The chips sit BELOW the hero, so "above the results" pointed the wrong way (browser
+        // feedback, 2026-09-05).
+        "Your preferences shape these results — adjust any chip below",
+        "Switch your preferences off any time — this search only",
+      ]
+    : matching !== null
+      ? [matching, refine]
+      : [refine];
+  const heroSentences = landing
+    ? [
+        count !== null
+          ? `${formatNumber(count)} open right now`
+          : "Opportunities across jobs, learning, events and more",
+        "Set your preferences once — every search uses them",
+        "Earn ZLTO while you build your future",
+      ]
+    : resultsSentences;
+
   // The compact pill's second line — "Jobs · South Africa · Remote +1 · +3": the three facets the
   // desktop bar names (type, where, engagement — each first value "+N"), then a count of the other
   // facets in play. Effective filters, so the inherited layer shows on landing as it does on the
@@ -128,6 +157,7 @@ export const DiscoverySurface: React.FC = () => {
       f.accommodations.length > 0,
       f.sdgs.length > 0,
       f.provider !== null,
+      f.featured !== null,
       f.age !== null,
       f.customFields.length > 0,
     ].filter(Boolean).length;
@@ -154,25 +184,10 @@ export const DiscoverySurface: React.FC = () => {
             </h3>
             <div className="flex justify-center pt-1">
               <AnimatedText
-                sentences={
-                  landing
-                    ? [
-                        count !== null
-                          ? `${formatNumber(count)} open right now`
-                          : "Opportunities across jobs, learning, events and more",
-                        "Set your preferences once — every search uses them",
-                        "Earn ZLTO while you build your future",
-                      ]
-                    : [
-                        count !== null
-                          ? `${formatNumber(count)} match your search`
-                          : "Refine your search with the filters",
-                        // The chips sit BELOW the hero, so "above the results" pointed the
-                        // wrong way (browser feedback, 2026-09-05).
-                        "Your preferences shape these results — adjust any chip below",
-                        "Switch your preferences off any time — this search only",
-                      ]
-                }
+                // Remounted when the number of sentences changes, so it never holds an index
+                // past the end of a shorter list (it only wraps on its 6s tick).
+                key={heroSentences.length}
+                sentences={heroSentences}
               />
             </div>
           </div>

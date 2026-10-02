@@ -133,7 +133,7 @@ export interface CommitmentDisplayData {
   commitmentIntervalTotalHours?: number | null;
 }
 
-const fmtDate = (dateStr: string) =>
+export const fmtDate = (dateStr: string) =>
   new Date(dateStr).toLocaleDateString("en-GB", {
     day: "numeric",
     month: "short",

@@ -11,6 +11,12 @@ import { IoChevronDown } from "react-icons/io5";
  *
  * `expanded === null` means the block has no collapse chrome (the always-open type row): no
  * chevron, and the row renders as a heading instead of a button.
+ *
+ * Round 10 (2026-10-02): below `sm` the value is a second line under the label instead of hidden,
+ * for every block alike, so only density changes between the containers. A `disabled` block (a
+ * section the search cannot filter on yet) is a greyed row that never opens: no chevron, no
+ * toggle, and its value ("Coming soon") as plain grey text at the right — never a pill
+ * (2026-09-22). Its subtitle stays visible and undimmed.
  */
 export const SectionHeader: React.FC<{
   icon: IconType;
@@ -22,6 +28,7 @@ export const SectionHeader: React.FC<{
   badges?: React.ReactNode;
   expanded: boolean | null;
   onToggle?: () => void;
+  disabled?: boolean;
 }> = ({
   icon: Icon,
   label,
@@ -30,34 +37,53 @@ export const SectionHeader: React.FC<{
   badges,
   expanded,
   onToggle,
+  disabled = false,
 }) => {
   const row = (
     <>
       <Icon className="text-gray-dark h-5 w-5 shrink-0" />
-      <span className="shrink-0 text-[15px] font-semibold whitespace-nowrap">
-        {label}
-      </span>
-      {value !== null && (
-        <span className="text-gray-dark hidden min-w-0 flex-1 truncate text-xs sm:block">
-          {value}
+      <span className="flex min-w-0 flex-1 flex-col sm:flex-row sm:items-center sm:gap-3">
+        {/* Truncates below `sm` only, so a long label beside a badge ("Entrepreneurship filters"
+            · FROM THIS TYPE at 360px) never runs under it; from `sm` the value gives way. */}
+        <span className="truncate text-[15px] font-semibold sm:shrink-0">
+          {label}
         </span>
-      )}
+        {value !== null && !disabled && (
+          <span className="text-gray-dark min-w-0 truncate text-[13px] sm:flex-1 sm:text-xs">
+            {value}
+          </span>
+        )}
+      </span>
       <span className="ml-auto flex shrink-0 items-center gap-2">
         {badges}
-        {expanded !== null && (
-          <IoChevronDown
-            className={`h-5 w-5 transition-transform motion-reduce:transition-none ${
-              expanded ? "rotate-180" : ""
-            }`}
-          />
-        )}
+        {disabled
+          ? value !== null && (
+              <span className="text-gray-dark text-xs">{value}</span>
+            )
+          : expanded !== null && (
+              <IoChevronDown
+                className={`h-5 w-5 transition-transform motion-reduce:transition-none ${
+                  expanded ? "rotate-180" : ""
+                }`}
+              />
+            )}
       </span>
     </>
   );
 
   return (
     <>
-      {expanded === null ? (
+      {disabled ? (
+        // `role="group"` so assistive tech honours `aria-disabled` (a bare div's is ignored).
+        <div
+          role="group"
+          aria-label={label}
+          aria-disabled="true"
+          className="flex min-h-11 w-full items-center gap-3 py-2 opacity-50"
+        >
+          {row}
+        </div>
+      ) : expanded === null ? (
         <div className="flex min-h-11 w-full items-center gap-3 py-2">
           {row}
         </div>

@@ -81,11 +81,10 @@ export interface FilterSectionDef {
   control: FilterControlKind;
   /**
    * `null` = the search API has no core facet for this yet ("the API contract wins"): the section
-   * renders visible but inert with `pendingNote` — never failing silently, never a mock filter.
+   * renders as a disabled "Coming soon" row that never opens (round 10, 2026-10-02) — never
+   * failing silently, never a mock filter. `pendingNote` is what its control would say.
    */
   binding: FilterSectionBinding | null;
-  /** OPT-IN badge; the gate copy is stated before the control can be switched on. */
-  optIn: boolean;
   /** 13px helper under the header — what the section matches on, when that is not obvious. */
   hint: string | null;
   /**
@@ -108,7 +107,7 @@ const pendingNote = "Coming soon — the search can't filter on this yet.";
  */
 export const TYPE_ROW_QUESTION = "What type of opportunity?";
 export const TYPE_ROW_HINT =
-  "Pick one or more — each type adds its own filters.";
+  "Pick one or more. Each type adds its own filters.";
 
 export const FILTER_SECTIONS: FilterSectionDef[] = [
   {
@@ -118,7 +117,6 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     icon: IoGridOutline,
     control: "chips",
     binding: "categories",
-    optIn: false,
     hint: null,
     nullRule: null,
     pendingNote: null,
@@ -134,7 +132,6 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     icon: IoLocationOutline,
     control: "location",
     binding: "countries",
-    optIn: false,
     hint: null,
     // Jason, 2026-09-28: opportunities with no region or city are INCLUDED. The API's radius
     // search, by contrast, leaves out anything without coordinates.
@@ -154,7 +151,6 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     icon: IoWifiOutline,
     control: "chips",
     binding: "engagementTypes",
-    optIn: false,
     hint: null,
     nullRule:
       "Includes opportunities that don't say how you take part — for now; they'll be hidden while this is set once the search API applies the rule.",
@@ -170,7 +166,6 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     icon: IoTimeOutline,
     control: "range",
     binding: "commitment",
-    optIn: false,
     hint: null,
     nullRule:
       "Excludes opportunities that don't state a time commitment — for now; the rule is to include them once the search API changes.",
@@ -188,7 +183,6 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     icon: IoShieldCheckmarkOutline,
     control: "chips",
     binding: "accommodations",
-    optIn: true,
     hint: null,
     nullRule:
       "Shows only opportunities that list every accommodation you pick — ones that haven't described their accommodations are left out.",
@@ -204,7 +198,6 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     icon: IoLanguageOutline,
     control: "chips",
     binding: "languages",
-    optIn: false,
     hint: null,
     nullRule:
       "Every opportunity lists at least one language, so none are left out for missing data.",
@@ -222,7 +215,6 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     icon: IoCashOutline,
     control: "rewards",
     binding: "zlto",
-    optIn: false,
     hint: null,
     nullRule:
       "Opportunities that haven't said whether they pay or reward stay in your results.",
@@ -237,7 +229,6 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     icon: IoSparklesOutline,
     control: "lookupSearch",
     binding: null,
-    optIn: false,
     hint: "For jobs this matches required skills; for everything else, the skills you will earn.",
     nullRule: null,
     pendingNote,
@@ -250,7 +241,6 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     icon: IoGlobeOutline,
     control: "chips",
     binding: "sdgs",
-    optIn: false,
     hint: null,
     nullRule: "Opportunities that don't name a goal stay in your results.",
     pendingNote: null,
@@ -265,7 +255,6 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     icon: IoBusinessOutline,
     control: "text",
     binding: "provider",
-    optIn: false,
     hint: "The provider named on the opportunity — type part of it, e.g. KFC.",
     nullRule: "Opportunities that don't name a provider stay in your results.",
     pendingNote: null,

@@ -6,13 +6,14 @@ import { formatNumber } from "../../lib/format";
 import { owningPreference } from "../../lib/preferenceMapping";
 import { useDiscovery } from "../../state/DiscoveryContext";
 
-/** Pills shown before "See more" reveals the rest inline (10 in round 7; 6 since 2026-10-01). */
+/** Pills shown before "Show all N" reveals the rest inline (10 in round 7; 6 since 2026-10-01). */
 const FIRST_SHOWN = 6;
 
 /**
  * Browse by category — compact pills in the purple header (round 7, 2026-09-30; supersedes the
  * 2026-09-05 "shared square card" decision, Jason's call). Icon + name + count, the first six then
- * "See more" (and "See less" once open); the pills wrap and centre on desktop and run as one sideways row on mobile.
+ * "Show all N" (and "Show fewer" once open — round 10, the detail page's wording); the pills wrap
+ * and centre on desktop and run as one sideways row on mobile.
  * Order, counts (the category lookup's, zero included) and the toggle below are unchanged.
  *
  * Colour follows the surface rule — GREEN = filters, PURPLE = preferences: a category this
@@ -118,13 +119,12 @@ export const CategoryCarousel: React.FC<{
             {expanded ? (
               <>
                 <IoChevronUp className="h-3.5 w-3.5" />
-                See less
+                Show fewer
               </>
             ) : (
               <>
                 <IoChevronDown className="h-3.5 w-3.5" />
-                See more
-                <span className="font-normal opacity-70">+{hidden}</span>
+                Show all {lookups.categories.length}
               </>
             )}
           </button>,

@@ -22,8 +22,9 @@ import { typeBadgeClass, typeLabel, typeOutlineClass } from "./typeBadge";
  * where · key fact · status · places · the type button in outline. Same sources as the card:
  * `lib/money.ts`, `lib/cardFacts.ts`, `lib/cardStatus.ts`.
  *
- * Mobile is a two-line row — title, then type chip · money · place — with the status and a
- * compact arrow button on the right; the summary and facts stay on the card and the detail page.
+ * Mobile is a two-part row — the title (up to two lines since round 10; the row grows to fit),
+ * then type chip · money · place — with the status and a compact arrow button on the right; the
+ * summary and facts stay on the card and the detail page.
  *
  * The button is the row's ONLY link to the detail page (Jason, 2026-10-01 — as on the grid card);
  * the row itself is not clickable.
@@ -144,7 +145,7 @@ export const OpportunityRow: React.FC<{
       <div className="flex items-center gap-3 md:hidden">
         {tile}
         <span className="flex min-w-0 grow flex-col gap-0.5">
-          <span className="line-clamp-1 text-sm font-semibold">
+          <span className="line-clamp-2 text-sm font-semibold">
             {opportunity.title}
           </span>
           <span className="flex min-w-0 items-center gap-2 text-xs">

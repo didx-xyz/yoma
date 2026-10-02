@@ -62,11 +62,26 @@ export const DiscoveryResults: React.FC<{
     // eslint-disable-next-line react-hooks/exhaustive-deps -- page transitions only
   }, [state.page]);
 
+  // The chips that actually filter: struck-through (skipped) and inapplicable chips do not, and
+  // neither do pending ones (region / city / distance until the Location search lands). The
+  // heading and the recent-search label both name only these.
+  const filteringChipValues = chips
+    .filter(
+      (c) =>
+        (c.provenance === "inherited" || c.provenance === "manual") &&
+        !c.pending,
+    )
+    .map((c) => c.value);
+
   // Record the search once its results arrive (imperative side effect, not derived state).
   useEffect(() => {
     if (!results || loading) return;
     recordRecentSearch({
-      label: state.filters.q ?? chips.map((c) => c.value).join(" · ") ?? "",
+      // No word and no filtering chip (`prefsOff=1` alone) is every opportunity — never a
+      // blank row.
+      label:
+        state.filters.q ??
+        (filteringChipValues.join(" · ") || "All opportunities"),
       queryString: serializeDiscoveryState(state),
       resultCount: results.totalCount,
     });
@@ -78,18 +93,10 @@ export const DiscoveryResults: React.FC<{
     total !== null ? Math.max(1, Math.ceil(total / DISCOVERY_PAGE_SIZE)) : 1;
   // "[count] match(es) for [first filter] + N filter(s)" — states WHAT the count counts while
   // staying short: first value only, the rest as a count (the chips row above carries the full
-  // set). Struck-through (skipped) and inapplicable chips are not filtering, and neither are
-  // pending ones (region / city / distance until the Location search lands) — none of them may
-  // claim the count.
+  // set). Only the filtering chips may claim the count.
   const filterValues = [
     ...(effectiveFilters.q ? [`“${effectiveFilters.q}”`] : []),
-    ...chips
-      .filter(
-        (c) =>
-          (c.provenance === "inherited" || c.provenance === "manual") &&
-          !c.pending,
-      )
-      .map((c) => c.value),
+    ...filteringChipValues,
   ];
   const heading = (count: number): string => {
     if (filterValues.length === 0)
@@ -97,9 +104,13 @@ export const DiscoveryResults: React.FC<{
     // Custom-field clauses are chipped separately (not in the chip model), but they filter —
     // count them in the remainder. A clause can only exist while its type chip does, so
     // `filterValues` is never empty when clauses are set.
+    // No-break spaces inside "+ 1 filter", so a wrapped heading (below `sm`) moves it to the
+    // next line whole rather than orphaning "filter".
     const rest = filterValues.length - 1 + effectiveFilters.customFields.length;
     return `${formatNumber(count)} ${count === 1 ? "match" : "matches"} for ${filterValues[0]}${
-      rest > 0 ? ` + ${rest} ${rest === 1 ? "filter" : "filters"}` : ""
+      rest > 0
+        ? ` +\u00a0${rest}\u00a0${rest === 1 ? "filter" : "filters"}`
+        : ""
     }`;
   };
 
@@ -113,7 +124,9 @@ export const DiscoveryResults: React.FC<{
           showShadows={true}
           shadowFromClassName="from-gray-light" // the page body's background
         >
-          <h2 className="flex shrink-0 items-center gap-2 text-base font-bold tracking-normal whitespace-nowrap md:text-lg">
+          {/* Below `sm` the heading wraps (a long word can break) so the view toggle always
+              stays on screen; from `sm` it is one line, as before. */}
+          <h2 className="flex min-w-0 items-center gap-2 text-base font-bold tracking-normal sm:shrink-0 sm:whitespace-nowrap md:text-lg">
             {total === null ? (
               // First load only. A static word, not a shimmer: the surface has exactly one
               // loading treatment (fade the results, blur the previous number).
@@ -122,7 +135,7 @@ export const DiscoveryResults: React.FC<{
               // While updating, the previous number stays and only the TEXT blurs — never a
               // swapped-in placeholder box (browser feedback, 2026-09-03).
               <span
-                className={`transition duration-300 motion-reduce:transition-none ${
+                className={`min-w-0 wrap-break-word transition duration-300 motion-reduce:transition-none ${
                   loading ? "opacity-60 blur-[2px]" : ""
                 }`}
               >

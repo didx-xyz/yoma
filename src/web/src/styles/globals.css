@@ -70,6 +70,11 @@
   --animate-bounce-once: bounce-once 0.5s ease-in-out forwards;
   --animate-bounce-right: bounce-right 4s ease-in-out infinite;
   --animate-pulse-rotate-right: pulse-rotate-right 1.6s ease-in-out infinite;
+  /* Discovery welcome step (round 10, 2026-10-02); inert unless a class uses them */
+  --animate-welcome-in: welcome-in 320ms ease-out both;
+  --animate-rise-in: rise-in 280ms ease-out both;
+  --animate-drift: drift 18s ease-in-out infinite alternate;
+  --animate-halo: halo 700ms ease-in-out 1 both;
 
   /* Positioning */
   --inset-1/5: 20%;
@@ -305,6 +310,45 @@
       opacity: 1;
       transform: rotate(14deg) scale(1.4);
       animation-timing-function: ease-out;
+    }
+  }
+  @keyframes welcome-in {
+    0% {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes rise-in {
+    0% {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes drift {
+    0% {
+      transform: translate(-16px, 10px);
+    }
+    100% {
+      transform: translate(16px, -10px);
+    }
+  }
+  @keyframes halo {
+    0%,
+    100% {
+      box-shadow: 0 0 0 6px
+        color-mix(in srgb, var(--color-orange) 22%, transparent);
+    }
+    50% {
+      box-shadow: 0 0 0 12px
+        color-mix(in srgb, var(--color-orange) 22%, transparent);
     }
   }
 }

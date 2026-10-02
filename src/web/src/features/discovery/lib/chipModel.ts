@@ -266,5 +266,8 @@ function manualChips(
     );
   if (manual.provider)
     chips.push(manualChip("provider", manual.provider, manual.provider));
+  // "Picks: Featured" — the facet's only control; removing it resets to the scalar default.
+  if (manual.featured === true)
+    chips.push(manualChip("featured", "true", "Featured"));
   return chips;
 }

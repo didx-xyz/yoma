@@ -28,8 +28,7 @@ export const PreferencesBlock: React.FC<{ onEdit: () => void }> = ({
           <IoPersonOutline className="text-purple h-4 w-4" />
         </span>
         <span className="text-gray-dark grow text-xs">
-          No preferences set — personalize your feed once and every search uses
-          it.
+          No preferences yet. Set them once and every search uses them.
         </span>
         <button
           type="button"

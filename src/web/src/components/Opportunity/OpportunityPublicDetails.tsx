@@ -49,6 +49,7 @@ import {
 } from "~/components/Opportunity/opportunityTypeTheme";
 import { OpportunityCompletionEdit } from "~/components/Opportunity/OpportunityCompletionEdit";
 import { OpportunityCoreDetails } from "~/components/Opportunity/OpportunityCoreDetails";
+import { DetailHeaderCard } from "~/components/Opportunity/TabbedDetails/DetailHeaderCard";
 import { OpportunityDetailSections } from "~/components/Opportunity/TabbedDetails/OpportunityDetailSections";
 import { OpportunityCustomFieldsSection } from "~/components/Opportunity/OpportunityCustomFieldsSection";
 import Share from "~/components/Opportunity/Share";
@@ -598,14 +599,19 @@ const OpportunityPublicDetails: React.FC<{
   ]);
 
   // The header card's buttons, declared once so the classic and the tabbed (round 7) layouts
-  // arrange the SAME elements — handlers, conditions and copy cannot drift apart.
-  const compactOnMobile =
-    layout === "tabbed" ? "max-md:w-10 max-md:min-w-10 max-md:px-0" : "";
+  // arrange the SAME elements — handlers, conditions and copy cannot drift apart. Where the
+  // tabbed layout sizes a button its own way (round 10: 48px, Save and Share as circles on
+  // mobile), the WHOLE class string is picked by layout, so the classic strings are untouched.
+  const tabbed = layout === "tabbed";
   const goToButton = opportunityInfo.url &&
     opportunityInfo.status !== "Expired" && (
       <button
         type="button"
-        className={`btn btn-sm bg-green hover:bg-green-dark disabled:bg-green h-10 w-full rounded-full text-sm text-white normal-case md:w-[250px]`}
+        className={
+          tabbed
+            ? "btn btn-sm bg-green hover:bg-green-dark disabled:bg-green h-12 w-full rounded-full px-6 text-sm text-white normal-case md:w-auto md:whitespace-nowrap"
+            : `btn btn-sm bg-green hover:bg-green-dark disabled:bg-green h-10 w-full rounded-full text-sm text-white normal-case md:w-[250px]`
+        }
         title="Clicking this button will take you to an external site to continue this opportunity. Remember to return to this page to upload your completion certificate and earn your achievement!"
         onClick={onGoToOpportunity}
         disabled={preview || blockPartnerHandoff}
@@ -628,7 +634,11 @@ const OpportunityPublicDetails: React.FC<{
         !verificationStatusIsLoading && (
           <button
             type="button"
-            className="btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[280px]"
+            className={
+              tabbed
+                ? "btn bg-gray-light text-purple btn-sm hover:bg-gray h-12 w-full rounded-full border-transparent px-5 text-sm normal-case md:w-auto"
+                : "btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[280px]"
+            }
             title="Upload your completion files to earn your achievement and have this opportunity added to your CV."
             onClick={() => {
               // 📊 ANALYTICS: track "Upload completion files" button click
@@ -710,23 +720,27 @@ const OpportunityPublicDetails: React.FC<{
   const saveButton = (
     <button
       type="button"
-      className={`btn btn-sm h-10 w-full shrink flex-nowrap rounded-full text-sm normal-case md:max-w-[120px] ${compactOnMobile} ${
+      className={`${
+        tabbed
+          ? "btn btn-sm h-12 w-12 min-w-12 shrink-0 flex-nowrap rounded-full px-0 text-sm normal-case md:w-auto md:px-5"
+          : "btn btn-sm h-10 w-full shrink flex-nowrap rounded-full text-sm normal-case md:max-w-[120px]"
+      } ${
         isOppSaved
           ? "border-yellow bg-yellow-light text-yellow"
           : "border-green text-green hover:bg-green-dark bg-white hover:text-white"
       }`}
       title="Save this opportunity to easily find it later from your profile page."
+      // tabbed: icon-only below md, so the name comes from here, not the long title
+      aria-label={tabbed ? (isOppSaved ? "Saved" : "Save") : undefined}
       onClick={onUpdateSavedOpportunity}
       disabled={
         !(opportunityInfo.published && opportunityInfo.status == "Active") ||
         preview
       }
     >
-      <IoMdBookmark
-        className={`h-5 w-5 ${compactOnMobile ? "md:mr-1" : "mr-1"}`}
-      />
+      <IoMdBookmark className={`h-5 w-5 ${tabbed ? "md:mr-1" : "mr-1"}`} />
 
-      <span className={compactOnMobile ? "hidden md:inline" : undefined}>
+      <span className={tabbed ? "hidden md:inline" : undefined}>
         {isOppSaved ? "Saved" : "Save"}
       </span>
     </button>
@@ -734,8 +748,13 @@ const OpportunityPublicDetails: React.FC<{
   const shareButton = (
     <button
       type="button"
-      className={`btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full shrink flex-nowrap rounded-full bg-white text-sm normal-case hover:text-white md:max-w-[120px] ${compactOnMobile}`}
+      className={
+        tabbed
+          ? "btn border-green text-green btn-sm hover:bg-green-dark h-12 w-12 min-w-12 shrink-0 flex-nowrap rounded-full bg-white px-0 text-sm normal-case hover:text-white md:w-auto md:px-5"
+          : "btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full shrink flex-nowrap rounded-full bg-white text-sm normal-case hover:text-white md:max-w-[120px]"
+      }
       title="Share this opportunity with your friends and network to help more people discover it!"
+      aria-label={tabbed ? "Share" : undefined}
       onClick={onShareOpportunity}
       // ensure opportunity is published and active (user logged in check is done in function)
       disabled={
@@ -743,21 +762,18 @@ const OpportunityPublicDetails: React.FC<{
         preview
       }
     >
-      <IoMdShare
-        className={`h-5 w-5 ${compactOnMobile ? "md:mr-1" : "mr-1"}`}
-      />
-      <span className={compactOnMobile ? "hidden md:inline" : undefined}>
-        Share
-      </span>
+      <IoMdShare className={`h-5 w-5 ${tabbed ? "md:mr-1" : "mr-1"}`} />
+      <span className={tabbed ? "hidden md:inline" : undefined}>Share</span>
     </button>
   );
-  // The sticky bar's and the mobile bottom bar's compact set (tabbed layout only).
+  // The sticky bar's and the mobile bottom bar's compact set (tabbed layout only): 50px in the
+  // mobile bottom bar, 40px in the desktop sticky panel.
   const barActions = (
     <>
       {opportunityInfo.url && opportunityInfo.status !== "Expired" && (
         <button
           type="button"
-          className="btn btn-sm bg-green hover:bg-green-dark disabled:bg-green h-10 grow rounded-full px-5 text-sm text-white normal-case md:grow-0"
+          className="btn btn-sm bg-green hover:bg-green-dark disabled:bg-green h-[50px] grow rounded-full px-5 text-sm text-white normal-case md:h-10 md:grow-0"
           onClick={onGoToOpportunity}
           disabled={preview || blockPartnerHandoff}
         >
@@ -767,7 +783,7 @@ const OpportunityPublicDetails: React.FC<{
       <button
         type="button"
         aria-label={isOppSaved ? "Saved" : "Save"}
-        className={`btn btn-sm h-10 w-10 shrink-0 rounded-full px-0 ${
+        className={`btn btn-sm h-[50px] w-[50px] shrink-0 rounded-full px-0 md:h-10 md:w-10 ${
           isOppSaved
             ? "border-yellow bg-yellow-light text-yellow"
             : "border-green text-green hover:bg-green-dark bg-white hover:text-white"
@@ -783,7 +799,7 @@ const OpportunityPublicDetails: React.FC<{
       <button
         type="button"
         aria-label="Share"
-        className="btn border-green text-green btn-sm hover:bg-green-dark h-10 w-10 shrink-0 rounded-full bg-white px-0 hover:text-white"
+        className="btn border-green text-green btn-sm hover:bg-green-dark h-[50px] w-[50px] shrink-0 rounded-full bg-white px-0 hover:text-white md:h-10 md:w-10"
         onClick={onShareOpportunity}
         disabled={
           !(opportunityInfo.published && opportunityInfo.status == "Active") ||
@@ -1167,75 +1183,79 @@ const OpportunityPublicDetails: React.FC<{
 
       {opportunityInfo && (
         <div className="flex flex-col gap-4">
-          <div
-            ref={headerCardRef}
-            className="relative flex grow flex-col rounded-lg bg-white p-4 shadow-lg md:p-6"
-          >
-            <div className="flex items-start gap-3">
-              <div className="min-w-0 flex-1">
-                <h4 className="font-family-nunito line-clamp-2 text-xl font-bold text-black md:text-2xl">
-                  {opportunityInfo.title}
-                </h4>
-
-                <div className="mt-1">
-                  <OpportunityOrgCountriesRow data={opportunityInfo} />
-                </div>
-              </div>
-
-              <div className="shrink-0">
-                <AvatarImage
-                  icon={opportunityInfo.organizationLogoURL ?? null}
-                  alt="Company Logo"
-                  size={60}
-                />
-              </div>
-            </div>
-
-            {/* BADGES */}
-            <div className="mt-4 mb-2 flex flex-col gap-2 md:my-2">
-              <div className="flex flex-row flex-wrap items-center gap-2">
-                <OpportunityTypeBadge
-                  data={opportunityInfo}
-                  className={typeConfig.badgeClassName}
-                />
-                <OpportunityEngagementTypeBadge
-                  data={opportunityInfo}
-                  className={"bg-gray-light text-gray-dark"}
-                />
-                {opportunityInfo.zltoRewardEstimate != null && (
-                  <ZltoRewardBadge
-                    amount={opportunityInfo.zltoRewardEstimate}
-                    showToolTips={true}
-                  />
-                )}
-              </div>
-              <OpportunityMetaTextRow data={opportunityInfo} />
-            </div>
-
-            {/* BUTTONS — one set of elements, two arrangements (see goToButton above) */}
-            {layout === "tabbed" ? (
-              // Round 7: mobile — Apply + Save + Share on one row, Upload below
-              <div className="mt-2 flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
-                <div className="flex items-center gap-2 md:contents">
+          {layout === "tabbed" ? (
+            <DetailHeaderCard ref={headerCardRef} opportunity={opportunityInfo}>
+              {/* BUTTONS — the same elements (see goToButton above). Round 10: the call to
+                  action, Save and Share together, Upload right-aligned (on its own line when
+                  the row is too narrow, e.g. 768); on mobile Save and Share are circles beside
+                  the call to action, and Upload sits below */}
+              <div className="mt-5 flex flex-col gap-2.5 md:flex-row md:flex-wrap md:items-center">
+                <div className="flex items-center gap-2.5">
                   {goToButton && (
                     <div className="min-w-0 grow md:grow-0">{goToButton}</div>
                   )}
-                  <div className="hidden md:contents">{completionButtons}</div>
-                  <div className="ml-auto flex shrink-0 gap-2">
+                  <div className="flex shrink-0 gap-2.5 max-md:ml-auto">
                     {saveButton}
                     {shareButton}
                   </div>
                 </div>
-                <div className="flex flex-col md:hidden">
+                <div className="flex flex-col gap-2 empty:hidden md:ml-auto md:flex-row md:items-center">
                   {completionButtons}
                 </div>
-                {preview && (
-                  <p className="text-purple text-xs font-semibold">
-                    Buttons are inactive in preview.
-                  </p>
-                )}
               </div>
-            ) : (
+              {preview && (
+                <p className="text-purple mt-2 text-xs font-semibold">
+                  Buttons are inactive in preview.
+                </p>
+              )}
+            </DetailHeaderCard>
+          ) : (
+            <div
+              ref={headerCardRef}
+              className="relative flex grow flex-col rounded-lg bg-white p-4 shadow-lg md:p-6"
+            >
+              <div className="flex items-start gap-3">
+                <div className="min-w-0 flex-1">
+                  <h4 className="font-family-nunito line-clamp-2 text-xl font-bold text-black md:text-2xl">
+                    {opportunityInfo.title}
+                  </h4>
+
+                  <div className="mt-1">
+                    <OpportunityOrgCountriesRow data={opportunityInfo} />
+                  </div>
+                </div>
+
+                <div className="shrink-0">
+                  <AvatarImage
+                    icon={opportunityInfo.organizationLogoURL ?? null}
+                    alt="Company Logo"
+                    size={60}
+                  />
+                </div>
+              </div>
+
+              {/* BADGES */}
+              <div className="mt-4 mb-2 flex flex-col gap-2 md:my-2">
+                <div className="flex flex-row flex-wrap items-center gap-2">
+                  <OpportunityTypeBadge
+                    data={opportunityInfo}
+                    className={typeConfig.badgeClassName}
+                  />
+                  <OpportunityEngagementTypeBadge
+                    data={opportunityInfo}
+                    className={"bg-gray-light text-gray-dark"}
+                  />
+                  {opportunityInfo.zltoRewardEstimate != null && (
+                    <ZltoRewardBadge
+                      amount={opportunityInfo.zltoRewardEstimate}
+                      showToolTips={true}
+                    />
+                  )}
+                </div>
+                <OpportunityMetaTextRow data={opportunityInfo} />
+              </div>
+
+              {/* BUTTONS — one set of elements, two arrangements (see goToButton above) */}
               <div className="mt-2 flex flex-col gap-4 md:flex-row">
                 <div className="flex grow flex-col gap-4 md:flex-row">
                   {goToButton}
@@ -1247,8 +1267,8 @@ const OpportunityPublicDetails: React.FC<{
                   {shareButton}
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {layout === "tabbed" ? (
             <OpportunityDetailSections

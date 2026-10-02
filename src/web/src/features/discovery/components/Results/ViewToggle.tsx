@@ -2,7 +2,11 @@ import React from "react";
 import { IoGridOutline, IoListOutline } from "react-icons/io5";
 import type { DiscoveryViewMode } from "../../lib/types";
 
-/** Grid ↔ list. A rendering preference — switching issues no request and changes no count. */
+/**
+ * Grid ↔ list. A rendering preference — switching issues no request and changes no count.
+ * Icon-only below `sm` (round 10), so it fits beside a long results heading; the `aria-label`
+ * names each button either way.
+ */
 export const ViewToggle: React.FC<{
   view: DiscoveryViewMode;
   onChange: (view: DiscoveryViewMode) => void;
@@ -20,12 +24,12 @@ export const ViewToggle: React.FC<{
         aria-pressed={view === id}
         aria-label={`${label} view`}
         onClick={() => onChange(id)}
-        className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs ${
+        className={`flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs sm:px-3 ${
           view === id ? "bg-purple font-semibold text-white" : "text-gray-dark"
         }`}
       >
         <Icon className="h-4 w-4" />
-        {label}
+        <span className="hidden sm:inline">{label}</span>
       </button>
     ))}
   </div>

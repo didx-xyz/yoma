@@ -87,7 +87,7 @@ export function buildSearchFilter(
     age: filters.age,
     valueContains: filters.q,
     customFields: filters.customFields.length > 0 ? filters.customFields : null,
-    featured: null,
+    featured: filters.featured,
     mostViewed: null,
     mostCompleted: null,
     publishedStates: null, // the service defaults to Active + NotStarted

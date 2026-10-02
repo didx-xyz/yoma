@@ -36,6 +36,7 @@ export const FACET_GROUPS: Partial<Record<keyof DiscoveryFilters, string>> = {
   accommodations: "Accessibility",
   sdgs: "SDGs",
   provider: "Provider",
+  featured: "Picks",
   age: "Age",
 };
 

@@ -7,7 +7,7 @@
 - **Ticket**: [YOM-1262](https://linear.app/didx/issue/YOM-1262)
 - **Owner**: Jason
 - **Areas**: web
-- **Status**: in-progress — live on the APIs; local browser pass done 2026-09-30; design review and DEV pass outstanding
+- **Status**: in-progress — round-10 design review built 2026-10-02; admin signed-in pass and DEV pass outstanding
 - **Started**: 2026-08-27 (design); 2026-08-27 (implementation, behind the mock façade)
 
 > Folder created 2026-08-27 to hold the design. Implementation started the same day **behind the
@@ -264,9 +264,21 @@ commitment set; **accessibility excludes** those that have not described their a
 - [x] Discovery is the navbar's search page behind the kill-switch (`OPPORTUNITIES_SEARCH_URL`),
       and the cards link only through their button, with a mobile arrow on the list row
       (2026-10-01).
-- [ ] **claude.design review** of the welcome step, the detail pages and the landing rails. The
-      inputs and choices are in [`handoffs/2026-10-02-a.md`](handoffs/2026-10-02-a.md). Build
-      its output through the agent roles in a later session.
+- [x] **claude.design review, round 10** (2026-10-02, built through the agent roles —
+      [`handoffs/2026-10-02-b.md`](handoffs/2026-10-02-b.md)). The brief, artboards and checked
+      task list are in [`design/`](design/2026-10-02-tasks.md); Jason's answers head the task list.
+      Built: welcome step W1–W8, tabbed detail D1–D10 + D13, admin header A1–A3, landing rails
+      R1–R5 with a `featured` facet, copy C1–C11. Not built by Jason's choice: W9, D11, D12, A4, C12.
+- [x] Round-10 follow-ups F1–F4 (2026-10-02, [`design/2026-10-02-followups.md`](design/2026-10-02-followups.md)):
+      the welcome takes its content's height and never scrolls on desktop; Get started morphs
+      into step 1; open chip sections carry a note; focus starts on Get started.
+- [ ] Jason's browser: the welcome does not auto-open even after clearing the seen flag — waiting
+      on his storage state (no regression reproduced in a fresh profile).
+- [ ] Signed-in pass of the round-10 admin header (A1–A3) and the editor Preview, on local with the
+      seeded org admin — approved by Jason, waiting on how the tester gets the password.
+- [ ] Round-10 items the seed cannot show: the Age row, Global goals (SDGs), Provider card,
+      Starts / Ongoing / Depleted facts, Pending / Completed buttons, the five-pill welcome grid.
+- [ ] `next build --webpack` without a dev server on `.next` (still outstanding from round 7).
 - [ ] Point the remaining legacy `/opportunities` entry points at discovery (search boxes,
       category links, banners, referral pages, the detail back link). Each needs its query
       params mapped.
@@ -860,6 +872,83 @@ commitment set; **accessibility excludes** those that have not described their a
   - **`FreeTextSearchInput` follows `q` when it changes from outside** (recent-search replay, a
     quick search, removing the chip). It used to keep its stale draft and commit it over the
     replayed query on the next blur.
+- 2026-10-02 (claude.design round 10, Jason's answers to the checked task list —
+  [`design/2026-10-02-tasks.md`](design/2026-10-02-tasks.md), handoff
+  [`handoffs/2026-10-02-b.md`](handoffs/2026-10-02-b.md)):
+  - **Landing rails: at most four** (Jason's cap). Picked for you (only while an inherited chip
+    exists) · Featured · Newest on Yoma · Done in under an hour — three signed out, four with
+    preferences, one search each. Every rail but Picked for you ignores preferences, so its
+    See all carries `prefsOff=1`. Not built: lazy loading (pointless at ≤ 4), card skeletons
+    (2026-09-05, one loading treatment), the brief's rail swap when preferences go off (the
+    landing only renders in the default state, so it cannot happen) and "Most completed" (the
+    API re-orders by completions — a sort, against 2026-08-27's Newest-only).
+  - **A `featured` facet** so the Featured rail's See all reproduces its set: `featured: boolean
+    | null` on `DiscoveryFilters`, URL `featured=1` only (the API filters only on `Featured ==
+    true`, so a `0` would filter nothing), passed through to the search and the count, a manual
+    chip "Picks: Featured". No filter-panel section and no preference inherits it, so breakpoint
+    parity is unaffected. `hasActiveFilters` now compares key by key, so the parser's key order no
+    longer matters.
+  - **Kept against the brief:** "FROM THIS TYPE" (2026-08-27 — it is the last mark of a
+    conditional section); full type names at 390, no "Impact" / "Business" map (2026-09-22);
+    the Reward stays in the fact strip at 390; open long lists never span both columns (a card
+    must not jump under the cursor). OPT-IN goes.
+  - **"Show all {N}" / "Show fewer"** on the category toggle, superseding 2026-10-01's
+    "See more / See less" (copy only; the six-first rule stands).
+  - **Detail page (tabbed only; classic untouched, confirmed with a one-time local kill-switch
+    flip):** Effort shows the interval ("4 minutes") instead of rounded-up hours; "Earn {n} ZLTO";
+    the spots-left caption stays under the strip; Nunito, not the unloaded Nunito Sans. A section
+    body mounts on first open and stays mounted — mounting it on load fired the Additional
+    details lookups (skills, 500; education) for every visitor. **A group that renders one card
+    lets it span both columns** (the brief said "odd card fills the left cell"; decided by which
+    sections render, never by open state, so nothing jumps) — the Provider card included.
+    Flagged to Jason to veto.
+  - **Admin header:** the public header (chips, logo, fact strip) with the status chips on the
+    chip row and a stat strip from the existing strings in place of the youth actions; the views
+    / participants line stays; Rewards is a gold-tinted tab with a dark label (AA).
+  - **No matches has three states** — a word only (Clear search), filters (Clear filters),
+    preferences narrowing (Search without my preferences, then whichever clear applies). The
+    clear button appears only when it has something to clear (2026-09-05). A facet that cannot
+    filter yet (Skills) is a disabled "Coming soon" row, plain text, never a pill (2026-09-22).
+  - **Recent searches** are labelled from the chips that actually filter, "All opportunities"
+    when there are none (the `?prefsOff=1` See all used to store an empty label).
+  - **Welcome step:** 1072 × 600 at `lg`, one column below `lg`; tiles in discovery's
+    `typeBadge.ts` colours (Event orange, as on the cards behind it); quick searches in a
+    2-column grid at every width, an odd last pill spanning. Motion is one-shot except the orbs'
+    drift, and all of it is off under `motion-reduce`.
+- 2026-10-02 (Jason's follow-ups to round 10; spec
+  [`design/2026-10-02-followups.md`](design/2026-10-02-followups.md), every recommendation in it
+  approved — supersedes the welcome's fixed 1072 × 600 in the entry above):
+  - **The welcome takes its content's height** from `md` up, capped at the viewport less 64px.
+    The fixed 600px left 75–85px empty bands, and between 768 and 1023px wide the one-column
+    layout scrolled about 170px. Two height tiers from `lg` (≤ 680px, ≤ 600px) tighten the
+    padding, the gaps, the count and the tiles; each property is set by one tier only, because
+    the ranges overlap. Result: no inner scroll on desktop down to a 560px-tall window. Mobile
+    is unchanged (it fits 390 × 844; shorter screens scroll with the buttons pinned).
+  - **Get started morphs into step 1.** One mounted frame: the welcome fades out over 100ms,
+    then the box eases to the wizard's 896 × 736 and from purple to white over 300ms, and
+    step 1 rises in. The developer holds the measured height through the fade instead of
+    animating from `auto`, which snapped; this works in every browser, not only Chromium.
+    Focus moves to step 1's heading. Reduced motion: final size at once, one 150ms fade.
+  - **Focus starts on Get started when the welcome opens** — keyboard users used to start in
+    the page behind the (non-modal) dialog. The ring shows only after keyboard use, and a focused
+    text field is never robbed of focus.
+  - **Open chip sections carry a one-line note** in the preview's slot (13px `text-gray-dark`, no
+    icon), tabbed layout only: Incentive, Skills required / Skills you will learn, Languages,
+    Accessibility (when it shows chips), Targeted groups, Countries, Global goals (SDGs), Topics.
+    The strings are in the spec's F3 table. Time needed, Age range, Additional details and
+    Provider get none — they show no chips.
+  - **Jason's "welcome not showing": no regression found, his case not yet explained.** In a fresh
+    profile it opens on every path tried: hard load, navbar navigation, reduced motion, a
+    background tab, a query string. It auto-opens only while the device has no
+    `yoma.discovery.personalizationSeen` flag (2026-09-05) and no preferences. Anonymous answers
+    in `sessionStorage` count, and finishing the wizard stores them even when every step is
+    skipped. Clearing the flag alone did not bring it back for Jason, and his storage state is
+    still awaited.
+- 2026-10-02 (Jason): **the lone-card span is vetoed.** Detail section cards flow into the two
+  columns from `lg`, and an odd card fills the row's left cell, even when it is a group's only card
+  and including the Provider card, as the brief has it. This supersedes the "a group that renders
+  one card lets it span both columns" bullet in the round-10 entry above. The description and the
+  admin Rewards block still span the full width.
 
 ## BA sign-off summary (2026-09-22)
 

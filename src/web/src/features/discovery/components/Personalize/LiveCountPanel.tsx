@@ -14,7 +14,9 @@ export const LiveCountPanel: React.FC<{
   counting: boolean;
   /** The count request failed — say so; the wizard still saves fine without it. */
   failed?: boolean;
-}> = ({ count, counting, failed = false }) => {
+  /** Extra classes on the purple root (the welcome → step 1 text fade, round 10). */
+  className?: string;
+}> = ({ count, counting, failed = false, className = "" }) => {
   const floored = count !== null && count < FLOOR;
 
   let body: React.ReactNode;
@@ -55,7 +57,9 @@ export const LiveCountPanel: React.FC<{
     );
 
   return (
-    <div className="bg-purple flex shrink-0 grow-0 items-center gap-3 rounded-t-2xl p-4 text-white md:basis-85 md:flex-col md:items-start md:justify-between md:rounded-t-none md:rounded-l-2xl md:p-8">
+    <div
+      className={`bg-purple flex shrink-0 grow-0 items-center gap-3 rounded-t-2xl p-4 text-white md:basis-85 md:flex-col md:items-start md:justify-between md:rounded-t-none md:rounded-l-2xl md:p-8 ${className}`}
+    >
       <div className="md:flex md:flex-col md:gap-2">
         <p className="text-purple-soft text-[10px] font-bold tracking-widest uppercase">
           Tuning your feed

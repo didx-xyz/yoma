@@ -9,7 +9,7 @@ import type {
 } from "./types";
 import {
   DEFAULT_DISCOVERY_STATE,
-  EMPTY_DISCOVERY_FILTERS,
+  hasActiveFilters,
   PREFERENCE_KEYS,
 } from "./types";
 
@@ -33,6 +33,9 @@ import {
  * `sdg=` and `provider=` (free text — it replaces `org=`, the organisation ids the Provider
  * section held before the Provider field existed; nothing reads `org=` any more). `age` has no
  * param: it is inherited from the profile only, never chosen here.
+ *
+ * 2026-10-02 (round 10): `featured=1`, the landing's Featured rail. Only `1` is read: the API
+ * filters on `featured == true` alone, so a `0` would be a filter that filters nothing.
  */
 
 type Query = Record<string, string | string[] | undefined>;
@@ -111,6 +114,7 @@ export function parseDiscoveryQuery(query: Query): DiscoveryState {
       accommodations: list(query, "acc"),
       sdgs: list(query, "sdg"),
       provider: single(query, "provider"),
+      featured: single(query, "featured") === "1" ? true : null,
       age: null,
       customFields: parseCustomFields(single(query, "cf")),
     },
@@ -147,6 +151,7 @@ export function serializeDiscoveryState(state: DiscoveryState): string {
   for (const [key, values] of lists)
     if (values.length > 0) params.set(key, values.join(","));
   if (filters.provider) params.set("provider", filters.provider);
+  if (filters.featured) params.set("featured", "1");
   if (filters.incentivized !== null)
     params.set("paid", filters.incentivized ? "1" : "0");
   if (filters.region) params.set("region", filters.region);
@@ -182,7 +187,6 @@ export function isDefaultDiscoveryState(state: DiscoveryState): boolean {
     serializeDiscoveryState({
       ...state,
       view: DEFAULT_DISCOVERY_STATE.view,
-    }) === "" &&
-    JSON.stringify(state.filters) === JSON.stringify(EMPTY_DISCOVERY_FILTERS)
+    }) === "" && !hasActiveFilters(state.filters)
   );
 }

@@ -44,7 +44,7 @@ export const FreeTextSearchInput: React.FC<{
           commit(draft);
         }}
         onKeyDown={(e) => e.key === "Enter" && commit(draft)}
-        placeholder="Search titles, summaries and keywords…"
+        placeholder="Search by title or keyword…"
         className="min-w-0 grow"
         aria-label="Search opportunities"
         autoFocus={autoFocus}

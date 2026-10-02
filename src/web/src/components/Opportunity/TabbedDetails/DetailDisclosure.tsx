@@ -1,16 +1,20 @@
 import React, { useState } from "react";
-import { IoChevronDown, IoChevronForward } from "react-icons/io5";
+import { IoChevronForward } from "react-icons/io5";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Tabbed detail layout (round 7, artboards 11a–11e, 2026-09-30) — the
-// disclosure pieces. A section is CLOSED by default: its title, a count and a
-// one-line preview. OPEN, it shows chips (first 6 on desktop, 4 on mobile, then
-// "Show all N") or key–value rows with a short note.
+// Tabbed detail layout (round 7, artboards 11a–11e, 2026-09-30; cards round 10,
+// 2026-10-02) — the disclosure pieces. Each section is its own card. CLOSED by
+// default: a tinted icon square, the title, a count and a one-line preview. OPEN,
+// it shows chips (first 6 on desktop, 4 on mobile, then "Show all N") or a short
+// note; a chip section's preview slot then says what the list means. A static
+// section (Age range) is the row alone, with nothing to open.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const DetailDisclosure: React.FC<{
   id: string;
   icon: React.ReactNode;
+  /** The icon square's tint: its background and icon colour (one per group). */
+  toneClass: string;
   title: string;
   /** List sections: how many items. */
   count?: number | null;
@@ -18,44 +22,54 @@ export const DetailDisclosure: React.FC<{
   valueHint?: string | null;
   /** The closed row's one-line preview. */
   preview?: string | null;
+  /**
+   * The open row's line in the same slot: what the chips mean for the youth (round 10
+   * follow-ups). It wraps, never truncates, and fades in with the body.
+   */
+  note?: string | null;
+  /** A value row with nothing to open: no button, no chevron, no body. */
+  static?: boolean;
   open: boolean;
   onToggle: () => void;
   /** The section a tab tap just opened — marked with the green edge. */
   focused?: boolean;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }> = ({
   id,
   icon,
+  toneClass,
   title,
   count,
   valueHint,
   preview,
+  note,
+  static: isStatic = false,
   open,
   onToggle,
   focused = false,
   children,
-}) => (
-  <div
-    className={`border-gray-light border-b last:border-b-0 ${
-      // an inset edge, not a border: a border would push the row's content 4px sideways
-      focused ? "shadow-[inset_4px_0_0_var(--color-green)]" : ""
-    }`}
-  >
-    <button
-      type="button"
-      aria-expanded={open}
-      aria-controls={`section-${id}-body`}
-      onClick={onToggle}
-      // Top-aligned with no minimum height, so opening never moves the title: the one-line
-      // preview simply gives way to the content below it (centring inside a min-height made
-      // the title jump ~6px whenever a preview line disappeared).
-      className="flex w-full items-start gap-3 px-4 py-3.5 text-left md:px-5"
-    >
-      <span className="text-gray-dark flex h-5 w-5 shrink-0 items-center justify-center">
+}) => {
+  // The content mounts on the first open and then stays: an unopened section costs nothing
+  // (Additional details' `CustomFieldsView` runs lookup queries when it mounts), while a
+  // section opened once keeps its state ("Show all") and eases shut. Updated during render —
+  // React's pattern for state derived from a prop's history — so it mounts in the same commit
+  // that turns the row 0fr → 1fr, and the first open eases too.
+  const [everOpened, setEverOpened] = useState(open);
+  if (open && !everOpened) setEverOpened(true);
+
+  // Top-aligned with no minimum height, so opening never moves the title: the one-line
+  // preview simply gives way to the content below it (centring inside a min-height made
+  // the title jump ~6px whenever a preview line disappeared).
+  const row = "flex w-full items-start gap-3.5 px-5 py-[18px] text-left";
+  const heading = (
+    <>
+      <span
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${toneClass}`}
+      >
         {icon}
       </span>
       <span className="min-w-0 grow">
-        <span className="block text-sm font-semibold text-black">
+        <span className="block text-[15px] font-extrabold text-black">
           {title}
           {count != null && (
             <span className="text-gray-dark font-normal">{` · ${count}`}</span>
@@ -65,27 +79,73 @@ export const DetailDisclosure: React.FC<{
           )}
         </span>
         {!open && preview && (
-          <span className="text-gray-dark block truncate text-xs">
+          <span className="text-gray-dark block truncate text-sm">
             {preview}
           </span>
         )}
+        {open && note && (
+          <span className="text-gray-dark mt-0.5 block text-[13px] leading-snug motion-safe:animate-[fade-in_220ms_ease-out_both]">
+            {note}
+          </span>
+        )}
       </span>
-      {open ? (
-        <IoChevronDown className="text-gray-dark mt-0.5 h-4 w-4 shrink-0" />
-      ) : (
-        <IoChevronForward className="text-gray-dark mt-0.5 h-4 w-4 shrink-0" />
-      )}
-    </button>
-    {open && (
-      <div id={`section-${id}-body`} className="px-4 pb-4 md:pr-5 md:pl-13">
-        {children}
-      </div>
-    )}
-  </div>
-);
+    </>
+  );
 
+  return (
+    <div
+      className={`border-gray rounded-[18px] border bg-white ${
+        // a static row has nothing to open, so it does not answer the pointer
+        isStatic
+          ? ""
+          : "hover:border-gray-dark/30 transition-colors duration-120 motion-reduce:transition-none"
+      } ${
+        // an inset edge, not a border: a border would push the row's content 4px sideways
+        focused ? "shadow-[inset_4px_0_0_var(--color-green)]" : ""
+      }`}
+    >
+      {isStatic ? (
+        <div className={row}>{heading}</div>
+      ) : (
+        <>
+          <button
+            type="button"
+            aria-expanded={open}
+            aria-controls={`section-${id}-body`}
+            onClick={onToggle}
+            className={row}
+          >
+            {heading}
+            <IoChevronForward
+              className={`text-gray-dark mt-3 h-4 w-4 shrink-0 transition-transform duration-220 motion-reduce:transition-none ${
+                open ? "rotate-90" : ""
+              }`}
+            />
+          </button>
+          {/* The frame always exists, so opening and closing can ease the height (0fr ↔
+              1fr); inert while closed, so its links and buttons are out of the tab order. */}
+          <div
+            id={`section-${id}-body`}
+            inert={!open}
+            className={`grid transition-[grid-template-rows] duration-220 ease-out motion-reduce:transition-none ${
+              open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+            }`}
+          >
+            <div className="overflow-hidden">
+              {(open || everOpened) && (
+                <div className="px-5 pb-5 md:pl-[74px]">{children}</div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+/** Soft chips: solid green is kept for the call to action. */
 const CHIP =
-  "badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white";
+  "bg-green-light text-green items-center rounded-full px-3 py-[5px] text-[13px] font-bold";
 
 /** Chips: the first 4 (mobile) / 6 (desktop), then "Show all N". */
 export const ChipList: React.FC<{
@@ -97,11 +157,12 @@ export const ChipList: React.FC<{
   return (
     <div className="flex flex-wrap items-center gap-2">
       {items.map((item, index) => {
-        let visibility = "";
-        if (!all && index >= DESKTOP) visibility = "hidden";
-        else if (!all && index >= MOBILE) visibility = "hidden md:inline-flex";
+        // the display class is chosen whole: `hidden` beside an `inline-flex` would conflict
+        let display = "inline-flex";
+        if (!all && index >= DESKTOP) display = "hidden";
+        else if (!all && index >= MOBILE) display = "hidden md:inline-flex";
         return (
-          <span key={item.id} className={`${CHIP} ${visibility}`}>
+          <span key={item.id} className={`${CHIP} ${display}`}>
             {item.label}
           </span>
         );
@@ -120,22 +181,3 @@ export const ChipList: React.FC<{
     </div>
   );
 };
-
-/** Key–value rows, with an optional short note underneath. */
-export const KeyValueRows: React.FC<{
-  rows: { label: string; value: string }[];
-  note?: string | null;
-}> = ({ rows, note }) => (
-  <div className="flex flex-col">
-    {rows.map((row) => (
-      <div
-        key={row.label}
-        className="border-gray-light flex justify-between gap-4 border-b py-2 text-sm last:border-b-0"
-      >
-        <span className="text-gray-dark">{row.label}</span>
-        <span className="text-right font-semibold">{row.value}</span>
-      </div>
-    ))}
-    {note && <p className="text-gray-dark pt-2 text-xs">{note}</p>}
-  </div>
-);

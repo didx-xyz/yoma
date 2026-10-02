@@ -1,24 +1,23 @@
 import React from "react";
 
 /**
- * The ONE badge on the discovery surface — three badges, two intents, one set of metrics
+ * The ONE badge on the discovery surface — two badges, one intent, one set of metrics
  * (height, radius, tracking, weight). Before this they were hand-rolled spans that had drifted
  * in size and, worse, in meaning.
  *
  * | Badge            | Intent        | Reads as                                  |
  * | ---------------- | ------------- | ----------------------------------------- |
- * | OPT-IN           | consent       | you choose to switch this on              |
  * | FROM THIS TYPE   | provenance    | present because of the selected type      |
  * | FROM PREFERENCES | provenance    | value inherited from your saved preset    |
  *
  * The amber `availability` intent (SOON) went with the quick-search coming-soon state on
- * 2026-09-22: a facet that cannot filter yet is either a pending note inside its section or not
- * drawn at all — never a badge.
+ * 2026-09-22: a facet that cannot filter yet is either a pending note inside its section or a
+ * disabled row — never a badge. The grey `consent` intent (OPT-IN, on Accessibility) went in
+ * round 10 (2026-10-02).
  */
-export type BadgeIntent = "consent" | "provenance";
+export type BadgeIntent = "provenance";
 
 const TONES: Record<BadgeIntent, string> = {
-  consent: "bg-gray-light text-gray-dark",
   provenance: "bg-purple-tint text-purple",
 };
 

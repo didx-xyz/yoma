@@ -3,30 +3,15 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useRef } from "react";
 import { IoMdArrowRoundBack } from "react-icons/io";
-import {
-  IoAlertCircleOutline,
-  IoCheckmarkDoneOutline,
-  IoEyeOutline,
-  IoHourglassOutline,
-  IoPeopleOutline,
-  IoPersonAddOutline,
-} from "react-icons/io5";
-import { AvatarImage } from "~/components/AvatarImage";
+import { IoEyeOutline, IoPeopleOutline } from "react-icons/io5";
+import type { OpportunityInfo } from "~/api/models/opportunity";
 import OrgAdminBadges from "~/components/Opportunity/Badges/OrgAdminBadges";
 import PullSyncBadge from "~/components/Opportunity/Badges/PullSyncBadge";
-import ZltoRewardBadge from "~/components/Opportunity/Badges/ZltoRewardBadge";
 import {
   OpportunityActionDisplayStyle,
   OpportunityActionOptions,
   OpportunityActions,
 } from "~/components/Opportunity/OpportunityActions";
-import {
-  getTypeConfig,
-  OpportunityEngagementTypeBadge,
-  OpportunityMetaTextRow,
-  OpportunityOrgCountriesRow,
-  OpportunityTypeBadge,
-} from "~/components/Opportunity/opportunityTypeTheme";
 import OpportunityRewardContext from "~/components/Opportunity/Rewards/OpportunityRewardContext";
 import { PageBackground } from "~/components/PageBackground";
 import { InternalServerError } from "~/components/Status/InternalServerError";
@@ -41,6 +26,13 @@ import { ROLE_ADMIN } from "~/lib/constants";
 import { currentOrganisationInactiveAtom } from "~/lib/store";
 import { getSafeUrl } from "~/lib/utils";
 import { type User } from "~/server/auth";
+import {
+  DetailHeaderCard,
+  stripColumns,
+  TILE,
+  TILE_LABEL,
+  TILE_VALUE,
+} from "./DetailHeaderCard";
 import { OpportunityDetailSections } from "./OpportunityDetailSections";
 
 /** "1 view" · "12 views" */
@@ -48,13 +40,69 @@ const plural = (count: number, noun: string): string =>
   `${count} ${noun}${count === 1 ? "" : "s"}`;
 
 /**
+ * The participant figures as tiles (round 10), the fact strip's metrics without icons: the
+ * existing strings split into value + label, each shown exactly when it was on the old line.
+ * Completed and pending only when > 0 — pending is the existing link to its verifications —
+ * and the limit when there is one ("Limit reached" in orange once it is hit).
+ */
+const AdminStatStrip: React.FC<{
+  opportunity: OpportunityInfo;
+  pendingHref: string;
+}> = ({ opportunity, pendingHref }) => {
+  const completed = opportunity.participantCountCompleted ?? 0;
+  const pending = opportunity.participantCountPending ?? 0;
+  const limit = opportunity.participantLimit;
+  const limitReached = opportunity.participantLimitReached;
+
+  const tiles: React.ReactNode[] = [];
+  if (completed > 0)
+    tiles.push(
+      <div key="completed" className={`${TILE} bg-green-light`}>
+        <span className={TILE_VALUE}>{completed}</span>
+        <span className={TILE_LABEL}>completed</span>
+      </div>,
+    );
+  if (pending > 0)
+    tiles.push(
+      <Link
+        key="pending"
+        href={pendingHref}
+        className={`${TILE} bg-orange-light hover:bg-yellow-tint block transition-colors duration-120 motion-reduce:transition-none`}
+      >
+        <span className={TILE_VALUE}>{pending}</span>
+        <span className={`${TILE_LABEL} underline`}>pending</span>
+      </Link>,
+    );
+  if (limit != null || limitReached)
+    tiles.push(
+      <div key="limit" className={`${TILE} bg-gray-light`}>
+        {limit != null && <span className={TILE_VALUE}>{limit}</span>}
+        {limitReached ? (
+          <span className="text-orange block text-xs font-semibold">
+            Limit reached
+          </span>
+        ) : (
+          <span className={TILE_LABEL}>limit</span>
+        )}
+      </div>,
+    );
+  if (tiles.length === 0) return null;
+
+  return (
+    <div className={`grid gap-3 ${stripColumns(tiles.length)}`}>{tiles}</div>
+  );
+};
+
+/**
  * The org-admin opportunity info page in the TABBED layout (round 7, artboard 11d; live since
  * 2026-10-01 behind the kill-switch — `info.tsx` renders this when `CUSTOM_FIELDS_ENABLED`, its
  * classic body otherwise). The public page's single-column body (`OpportunityDetailSections` —
- * the same sections) under an ADMIN header card: the status chips, the existing "Manage
- * opportunity" menu (edit, activate / deactivate, visibility, featured, delete, links …), the
- * participant figures and views, and no youth buttons. The menu rides in the sticky panel too —
- * the full panel on mobile as well (`stickyMode="full"`). The Rewards block is the last tab.
+ * the same sections) under the public header card (round 10, `DetailHeaderCard`) with the ADMIN
+ * pieces: the status chips on the chip row, the participant figures as a stat strip, the views
+ * and participants line, the existing "Manage opportunity" menu (edit, activate / deactivate,
+ * visibility, featured, delete, links …) and no youth buttons. The menu rides in the sticky
+ * panel too — the full panel on mobile as well (`stickyMode="full"`). The Rewards block is the
+ * last tab, a gold pill.
  */
 export const OpportunityAdminInfo: React.FC<{
   id: string;
@@ -81,7 +129,6 @@ export const OpportunityAdminInfo: React.FC<{
     else return <InternalServerError />;
   }
 
-  const typeConfig = getTypeConfig(opportunity?.type);
   const pendingHref = `/organisations/${id}/verifications?opportunity=${opportunityId}&verificationStatus=Pending${
     returnUrl ? `&returnUrl=${encodeURIComponent(returnUrl.toString())}` : ""
   }`;
@@ -147,106 +194,50 @@ export const OpportunityAdminInfo: React.FC<{
 
         {opportunity && (
           <div className="flex flex-col gap-4">
-            {/* ADMIN HEADER CARD */}
-            <div
+            {/* ADMIN HEADER CARD — the public card: status chips, type chip and the
+                externally-managed badge on the chip row; title, logo and fact strip as public;
+                the participant figures and the Manage menu instead of the youth buttons */}
+            <DetailHeaderCard
               ref={headerCardRef}
-              className="relative flex flex-col rounded-lg bg-white p-4 shadow-lg md:p-6"
+              opportunity={opportunity}
+              leadingChips={
+                <OrgAdminBadges
+                  opportunity={opportunity}
+                  isAdmin={user?.roles.includes(ROLE_ADMIN)}
+                />
+              }
+              trailingChips={<PullSyncBadge opportunity={opportunity} />}
             >
-              <div className="flex items-start gap-3">
-                <div className="min-w-0 flex-1">
-                  <h4 className="font-family-nunito line-clamp-2 text-xl font-bold text-black md:text-2xl">
-                    {opportunity.title}
-                  </h4>
-                  <div className="mt-1 flex items-center gap-2">
-                    <div className="min-w-0 flex-1">
-                      <OpportunityOrgCountriesRow data={opportunity} />
-                    </div>
-                    <PullSyncBadge opportunity={opportunity} />
-                  </div>
-                </div>
-                <div className="shrink-0">
-                  <AvatarImage
-                    icon={opportunity.organizationLogoURL ?? null}
-                    alt="Company Logo"
-                    size={60}
-                  />
-                </div>
-              </div>
-
-              <div className="mt-4 mb-2 flex flex-col gap-2 md:my-2">
-                <div className="flex flex-row flex-wrap items-center gap-2">
-                  <OpportunityTypeBadge
-                    data={opportunity}
-                    className={typeConfig.badgeClassName}
-                  />
-                  <OpportunityEngagementTypeBadge
-                    data={opportunity}
-                    className="bg-gray-light text-gray-dark"
-                  />
-                  {opportunity.zltoRewardEstimate != null && (
-                    <ZltoRewardBadge
-                      amount={opportunity.zltoRewardEstimate}
-                      showToolTips={true}
-                    />
-                  )}
-                  <OrgAdminBadges
+              <div className="mt-5 flex flex-col gap-3 md:flex-row md:items-start md:gap-6">
+                <div className="flex min-w-0 grow flex-col gap-2">
+                  <AdminStatStrip
                     opportunity={opportunity}
-                    isAdmin={user?.roles.includes(ROLE_ADMIN)}
+                    pendingHref={pendingHref}
                   />
+                  {/* The existing views and participants figures, as one grey line */}
+                  <p className="text-gray-dark flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+                    <span className={STAT}>
+                      <IoEyeOutline className={STAT_ICON} />
+                      {plural(opportunity.countViewed ?? 0, "view")}
+                    </span>
+                    <span className={STAT}>
+                      <IoPeopleOutline className={STAT_ICON} />
+                      {plural(
+                        opportunity.participantCountTotal ?? 0,
+                        "participant",
+                      )}
+                    </span>
+                  </p>
                 </div>
-                <OpportunityMetaTextRow data={opportunity} />
-              </div>
 
-              <div className="mt-2 flex flex-col gap-3 md:flex-row md:items-center">
-                {/* Right-aligned and last: its menu opens leftwards from the button, so on the
-                    left edge it would run off the card (Jason, 2026-10-01). */}
-                <div className="order-last flex items-center justify-end gap-2 md:ml-auto">
+                {/* Right-aligned and last, in the DOM too (so the keyboard meets it after the
+                    stats): its menu opens leftwards from the button, so on the left edge it
+                    would run off the card (Jason, 2026-10-01). */}
+                <div className="flex shrink-0 items-center justify-end gap-2 md:ml-auto">
                   {manageOpportunity}
                 </div>
-
-                {/* The existing Participants figures (plus views), as one line */}
-                <p className="text-gray-dark flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-                  <span className={STAT}>
-                    <IoEyeOutline className={STAT_ICON} />
-                    {plural(opportunity.countViewed ?? 0, "view")}
-                  </span>
-                  <span className={STAT}>
-                    <IoPeopleOutline className={STAT_ICON} />
-                    {plural(
-                      opportunity.participantCountTotal ?? 0,
-                      "participant",
-                    )}
-                  </span>
-                  {(opportunity.participantCountCompleted ?? 0) > 0 && (
-                    <span className={STAT}>
-                      <IoCheckmarkDoneOutline className={STAT_ICON} />
-                      {`${opportunity.participantCountCompleted} completed`}
-                    </span>
-                  )}
-                  {(opportunity.participantCountPending ?? 0) > 0 && (
-                    <Link
-                      href={pendingHref}
-                      className={`${STAT} text-yellow font-semibold underline`}
-                    >
-                      <IoHourglassOutline className={STAT_ICON} />
-                      {`${opportunity.participantCountPending} pending`}
-                    </Link>
-                  )}
-                  {opportunity.participantLimit != null && (
-                    <span className={STAT}>
-                      <IoPersonAddOutline className={STAT_ICON} />
-                      {`Limit ${opportunity.participantLimit}`}
-                    </span>
-                  )}
-                  {opportunity.participantLimitReached && (
-                    <span className={`${STAT} text-orange font-semibold`}>
-                      <IoAlertCircleOutline className={STAT_ICON} />
-                      Limit reached
-                    </span>
-                  )}
-                </p>
               </div>
-            </div>
+            </DetailHeaderCard>
 
             <OpportunityDetailSections
               opportunity={opportunity}
@@ -260,6 +251,8 @@ export const OpportunityAdminInfo: React.FC<{
                       {
                         id: "rewards",
                         label: "Rewards",
+                        // a gold pill while inactive, purple like every tab when active
+                        tone: "reward",
                         // the existing info page's block; its heading is the group label now
                         content: (
                           <div className="shadow-custom flex flex-col gap-3 rounded-xl bg-white p-4 md:p-6">
