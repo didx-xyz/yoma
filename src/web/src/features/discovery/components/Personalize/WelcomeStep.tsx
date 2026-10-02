@@ -12,7 +12,6 @@ import {
 } from "react-icons/io5";
 import { formatNumber } from "../../lib/format";
 import { useDiscovery } from "../../state/DiscoveryContext";
-import { CategoryCarousel } from "../Discover/CategoryCarousel";
 import { QuickSearchRow } from "../Discover/QuickSearchRow";
 
 /** Type-tile icons by Opportunity Type enum name — presentation only, as `typeBadge.ts`. */
@@ -32,8 +31,9 @@ const TYPE_ICONS: Record<string, React.ElementType> = {
  *
  * Left: the dialog's own live count (the same query as `LiveCountPanel` — no new request), Jason's
  * welcome copy, Get started (→ step 1 of 6) and Browse on my own (closes). Right, "Or jump straight
- * in": type tiles, the shipped quick searches and the category pills — each tap applies that filter
- * through the existing actions and closes the dialog.
+ * in": type tiles and the shipped quick searches — each tap applies that filter through the
+ * existing actions and closes the dialog. The category pills were taken out on 2026-10-02 (Jason):
+ * expanding them scrolled the whole dialog. They stay in the discovery header.
  *
  * Type tiles carry no counts and the quick searches none either: the API has no per-type count,
  * and a request per tile is exactly what the no-fan-out rule forbids.
@@ -163,11 +163,6 @@ export const WelcomeStep: React.FC<{
                 <QuickSearchRow onPick={onPicked} />
               </div>
             </div>
-            <CategoryCarousel
-              label="Categories"
-              align="start"
-              onPick={onPicked}
-            />
           </div>
         </div>
       </div>

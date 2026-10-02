@@ -264,6 +264,9 @@ commitment set; **accessibility excludes** those that have not described their a
 - [x] Discovery is the navbar's search page behind the kill-switch (`OPPORTUNITIES_SEARCH_URL`),
       and the cards link only through their button, with a mobile arrow on the list row
       (2026-10-01).
+- [ ] **claude.design review** of the welcome step, the detail pages and the landing rails. The
+      inputs and choices are in [`handoffs/2026-10-02-a.md`](handoffs/2026-10-02-a.md). Build
+      its output through the agent roles in a later session.
 - [ ] Point the remaining legacy `/opportunities` entry points at discovery (search boxes,
       category links, banners, referral pages, the detail back link). Each needs its query
       params mapped.
@@ -846,6 +849,17 @@ commitment set; **accessibility excludes** those that have not described their a
   work, and it supersedes 2026-09-30's "type button drawn inside the card link". The mobile list
   row had no button, so it gains a 40px round outline arrow in the type's colour, labelled with
   the type's `ctaTitle`.
+- 2026-10-02 (Jason — [`handoffs/2026-10-02-a.md`](handoffs/2026-10-02-a.md)):
+  - **The welcome step's right column drops the category pills.** Expanding them scrolled the
+    whole dialog. They stay in the discovery header. The rest of the welcome step is left for the
+    claude.design review.
+  - **"New this week" → "See all" opens `?prefsOff=1`.** The rail searches with empty filters and
+    ignores preferences, so its full set is every opportunity with preferences off. The default
+    order is newest by start date, so no sort parameter is needed. The empty query string it had
+    linked to the landing page itself.
+  - **`FreeTextSearchInput` follows `q` when it changes from outside** (recent-search replay, a
+    quick search, removing the chip). It used to keep its stale draft and commit it over the
+    replayed query on the next blur.
 
 ## BA sign-off summary (2026-09-22)
 

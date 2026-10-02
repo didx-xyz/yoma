@@ -16,6 +16,14 @@ export const FreeTextSearchInput: React.FC<{
   autoFocus?: boolean;
 }> = ({ initial, onCommit, onFocusChange, autoFocus = false }) => {
   const [draft, setDraft] = useState(initial ?? "");
+  // Follow the committed value when it changes from OUTSIDE — replaying a recent search, a quick
+  // search, removing the chip. Without this the field kept its stale draft, and the next blur
+  // committed it over the replayed query. (React's "adjust state on a prop change" pattern.)
+  const [synced, setSynced] = useState(initial);
+  if (initial !== synced) {
+    setSynced(initial);
+    setDraft(initial ?? "");
+  }
 
   const commit = (value: string): void => {
     const q = value.trim() === "" ? null : value.trim();
@@ -50,7 +58,7 @@ export const FreeTextSearchInput: React.FC<{
             commit("");
           }}
           aria-label="Clear search"
-          className="text-gray-dark flex h-8 w-8 shrink-0 items-center justify-center hover:text-black"
+          className="text-gray-dark -mr-1 flex h-8 w-8 shrink-0 items-center justify-center hover:text-black"
         >
           <IoCloseCircleOutline className="h-5 w-5" />
         </button>
@@ -60,7 +68,7 @@ export const FreeTextSearchInput: React.FC<{
         onMouseDown={keepFocus}
         onClick={() => commit(draft)}
         aria-label="Search"
-        className="bg-purple hover:bg-purple-shade -mr-2.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white"
+        className="bg-purple hover:bg-purple-shade -mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white"
       >
         <IoSearchOutline className="h-4 w-4" />
       </button>

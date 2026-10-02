@@ -45,7 +45,13 @@ export const DiscoveryLanding: React.FC<{
         title="New this week"
         subtitle="The newest opportunities across Yoma"
         filters={EMPTY_DISCOVERY_FILTERS}
-        seeAllQueryString=""
+        // The rail ignores preferences, so its "See all" is every opportunity with preferences
+        // off — newest first, the API's default order. An empty query string was the landing
+        // page itself, so the link went nowhere (2026-10-02).
+        seeAllQueryString={serializeDiscoveryState({
+          ...DEFAULT_DISCOVERY_STATE,
+          preferencesOff: true,
+        })}
         now={now}
       />
     </div>
