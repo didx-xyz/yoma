@@ -39,9 +39,9 @@ namespace Yoma.Core.Domain.Entity.Validators
           .Must(count => !count.HasValue || count > 0)
           .WithMessage("Commitment interval count must be greater than 0.");
 
-      RuleFor(x => x.EngagementTypeId)
-          .Must(id => !id.HasValue || id.Value != Guid.Empty && engagementTypeService.GetByIdOrNull(id.Value) != null)
-          .WithMessage("Engagement type is optional, but must exist if specified.");
+      RuleFor(x => x.EngagementTypes)
+          .Must(ids => ids == null || ids.All(id => id != Guid.Empty && engagementTypeService.GetByIdOrNull(id) != null))
+          .WithMessage("Engagement types are optional, but must exist if specified.");
 
       RuleFor(x => x.Categories)
           .Must(categories => categories == null || categories.All(id => id != Guid.Empty && opportunityCategoryService.GetByIdOrNull(id) != null))

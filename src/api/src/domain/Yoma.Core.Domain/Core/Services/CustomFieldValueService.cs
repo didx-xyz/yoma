@@ -118,6 +118,14 @@ namespace Yoma.Core.Domain.Core.Services
         filter.Key = definition.Key;
         filter.CustomFieldDefinitionId = definition.Id;
         filter.DataType = definition.DataType;
+        filter.EntityContext = definition.EntityContext;
+
+        // The Opportunity query owns the new missing-value policies. Keep the existing
+        // MyOpportunity search contract strict until its own search work is agreed.
+        if (entityType == CustomFieldEntityType.MyOpportunity && filter.Unspecified is UnspecifiedMatch.Include or UnspecifiedMatch.Only)
+          throw new ValidationException("Unspecified custom-field policies are supported only by Opportunity search.");
+
+        if (filter.Unspecified == UnspecifiedMatch.Only) continue;
 
         ValidateFilterOperator(definition, filter);
         NormalizeFilterValues(definition, filter);

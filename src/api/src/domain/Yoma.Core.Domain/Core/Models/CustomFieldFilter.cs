@@ -7,7 +7,9 @@ namespace Yoma.Core.Domain.Core.Models
   {
     public string Key { get; set; } = null!;
 
-    public CustomFieldFilterOperator Operator { get; set; }
+    public CustomFieldFilterOperator? Operator { get; set; }
+
+    public UnspecifiedMatch? Unspecified { get; set; }
 
     public string? Value { get; set; }
 
@@ -29,5 +31,15 @@ namespace Yoma.Core.Domain.Core.Models
     /// </summary>
     [JsonIgnore]
     public CustomFieldDataType? DataType { get; set; }
+
+    [JsonIgnore]
+    public string? EntityContext { get; set; }
+
+    /// <summary>
+    /// Resolved Opportunity context ID. Non-applicable types pass a scoped clause;
+    /// they are not classified as missing values for that definition.
+    /// </summary>
+    [JsonIgnore]
+    public Guid? AppliesToTypeId { get; set; }
   }
 }

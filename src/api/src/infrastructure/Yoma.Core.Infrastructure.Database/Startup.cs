@@ -107,6 +107,7 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddScoped<IRepositoryValueContainsWithNavigation<User>, UserRepository>();
       services.AddScoped<IRepository<UserLoginHistory>, UserLoginHistoryRepository>();
       services.AddScoped<IRepository<UserPreferences>, UserPreferencesRepository>();
+      services.AddScoped<IRepository<UserPreferenceEngagementType>, UserPreferenceEngagementTypeRepository>();
       services.AddScoped<IRepository<UserPreferenceAccessibilityRequirement>, UserPreferenceAccessibilityRequirementRepository>();
       services.AddScoped<IRepository<UserPreferenceCategory>, UserPreferenceCategoryRepository>();
       services.AddScoped<IRepository<UserPreferenceLanguage>, UserPreferenceLanguageRepository>();

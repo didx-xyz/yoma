@@ -158,14 +158,18 @@ namespace Yoma.Core.Domain.Core.Extensions
     {
       if (filters == null) return null;
 
-      filters.ForEach(o => o.Values = o.Values?.OrderBy(value => value, StringComparer.OrdinalIgnoreCase).ToList());
+      filters.ForEach(o =>
+      {
+        if (o != null) o.Values = o.Values?.OrderBy(value => value, StringComparer.OrdinalIgnoreCase).ToList();
+      });
 
       return [.. filters
-        .OrderBy(o => o.Key, StringComparer.OrdinalIgnoreCase)
-        .ThenBy(o => o.Operator)
-        .ThenBy(o => o.Value, StringComparer.Ordinal)
-        .ThenBy(o => o.ValueTo, StringComparer.Ordinal)
-        .ThenBy(o => string.Join(CustomFieldValue.Value_Delimiter, o.Values ?? []), StringComparer.Ordinal)];
+        .OrderBy(o => o?.Key, StringComparer.OrdinalIgnoreCase)
+        .ThenBy(o => o?.Operator)
+        .ThenBy(o => o?.Unspecified)
+        .ThenBy(o => o?.Value, StringComparer.Ordinal)
+        .ThenBy(o => o?.ValueTo, StringComparer.Ordinal)
+        .ThenBy(o => string.Join(CustomFieldValue.Value_Delimiter, o?.Values ?? []), StringComparer.Ordinal)];
     }
     #endregion
   }

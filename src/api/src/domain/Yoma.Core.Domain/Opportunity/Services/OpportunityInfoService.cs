@@ -40,7 +40,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         IDownloadService downloadService,
         ITreasuryService treasuryService)
     {
-      _appSettings = appSettings.Value ?? throw new ArgumentNullException(nameof(appSettings));
+      _appSettings = appSettings?.Value ?? throw new ArgumentNullException(nameof(appSettings));
       _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
       _opportunityService = opportunityService ?? throw new ArgumentNullException(nameof(opportunityService));
       _myOpportunityService = myOpportunityService ?? throw new ArgumentNullException(nameof(myOpportunityService));
@@ -111,6 +111,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
     public OpportunitySearchResultsInfo Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
     {
       var searchResult = _opportunityService.Search(filter, ensureOrganizationAuthorization);
+      if (filter.TotalCountOnly)
+        return new OpportunitySearchResultsInfo { TotalCount = searchResult.TotalCount };
+
       var treasuryInfo = _treasuryService.GetInfo();
 
       var results = new OpportunitySearchResultsInfo
@@ -133,28 +136,32 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         PublishedStates = filter.PublishedStates == null || filter.PublishedStates.Count == 0 ?
           [PublishedState.NotStarted, PublishedState.Active] : filter.PublishedStates,
-        Types = filter.Types,
         Provider = filter.Provider,
         Incentivized = filter.Incentivized,
         RewardTypes = filter.RewardTypes,
         AccessibilitySupport = filter.AccessibilitySupport,
         AccommodationOtherDescription = filter.AccommodationOtherDescription,
-        Age = filter.Age,
         Accommodations = filter.Accommodations,
         TargetedGroups = filter.TargetedGroups,
         SustainableDevelopmentGoals = filter.SustainableDevelopmentGoals,
+        Age = filter.Age,
+        Types = filter.Types,
         Categories = filter.Categories,
         Languages = filter.Languages,
         Countries = filter.Countries,
         Organizations = filter.Organizations,
+        EngagementTypes = filter.EngagementTypes,
+        Skills = filter.Skills,
         CommitmentInterval = filter.CommitmentInterval,
         ZltoReward = filter.ZltoReward,
+        CustomFields = filter.CustomFields,
         Featured = filter.Featured,
         ShareWithPartners = filter.ShareWithPartners,
-        EngagementTypes = filter.EngagementTypes,
         ValueContains = filter.ValueContains,
-        CustomFields = filter.CustomFields,
+        Groups = filter.Groups,
+        Ordering = filter.Ordering,
         TotalCountOnly = filter.TotalCountOnly,
+        AdditionalMembers = filter.AdditionalMembers,
         ExcludeHidden = true,
         PageNumber = filter.PageNumber,
         PageSize = filter.PageSize,
@@ -174,6 +181,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (mostViewed && mostCompleted)
         throw new FluentValidation.ValidationException("'Most Viewed' and 'Most Completed' filters are mutually exclusive and cannot be used together");
 
+      if (filter.Ordering != null && (mostViewed || mostCompleted))
+        throw new FluentValidation.ValidationException("Explicit ordering cannot be combined with MostViewed or MostCompleted.");
+
       Dictionary<Guid, int>? aggregatedByViewedOrCompleted = null;
       if (mostViewed)
       {
@@ -186,10 +196,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
         filterInternal.Opportunities = aggregatedByViewedOrCompleted?.Keys.ToList() ?? [];
       }
 
-      //ordering based on aggregatedByViewedOrCompleted ordering; if null will result in no results, thus no ordering applied
-      if (mostViewed || mostCompleted)
+      // Empty popularity sets yield no results; retain valid default ordering.
+      // Non-empty sets retain the established popularity rank.
+      if ((mostViewed || mostCompleted) && aggregatedByViewedOrCompleted != null)
       {
-        filterInternal.OrderInstructions = aggregatedByViewedOrCompleted == null ? null :
+        filterInternal.OrderInstructions =
         [
           new() { OrderBy = opportunity => aggregatedByViewedOrCompleted.Keys.ToList().IndexOf(opportunity.Id), SortOrder = Core.FilterSortOrder.Ascending }
         ];
@@ -214,6 +225,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
     public async Task<(bool scheduleForProcessing, string? fileName, byte[]? bytes)> ExportOrScheduleToCSV(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
+      if (filter.TotalCountOnly)
+        throw new FluentValidation.ValidationException("Count-only is a search control and cannot be used for CSV export.");
 
       if (!filter.PaginationEnabled)
       {
@@ -233,6 +246,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
     public (string fileName, byte[] bytes) ExportToCSV(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization, bool appendDateStamp)
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
+      if (filter.TotalCountOnly)
+        throw new FluentValidation.ValidationException("Count-only is a search control and cannot be used for CSV export.");
 
       var result = Search(filter, ensureOrganizationAuthorization);
       if (result.Items == null) throw new InvalidOperationException("Search results expected but null");

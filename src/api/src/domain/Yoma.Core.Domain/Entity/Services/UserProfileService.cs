@@ -147,13 +147,19 @@ namespace Yoma.Core.Domain.Entity.Services
         preferences.GoalId = request.GoalId;
         preferences.CommitmentIntervalId = request.CommitmentIntervalId;
         preferences.CommitmentIntervalCount = request.CommitmentIntervalCount;
-        preferences.EngagementTypeId = request.EngagementTypeId;
         preferences.Incentivized = request.Incentivized;
         preferences.AccessibilityRequirementOtherDescription = request.AccessibilityRequirementOtherDescription;
         if (isNew)
           await _userPreferencesRepository.Create(preferences);
         else
           await _userPreferencesRepository.Update(preferences);
+
+        // Engagement selections replace the complete collection, like other preferences.
+        var engagementTypesToRemove = preferences.EngagementTypes.Where(o =>
+          request.EngagementTypes == null || !request.EngagementTypes.Contains(o.Id))
+          .Select(o => o.Id).ToList();
+        await _userService.RemovePreferenceEngagementTypes(user, engagementTypesToRemove);
+        await _userService.AssignPreferenceEngagementTypes(user, request.EngagementTypes);
 
         var categoriesToRemove = preferences.Categories.Where(o =>
           request.Categories == null || !request.Categories.Contains(o.Id))

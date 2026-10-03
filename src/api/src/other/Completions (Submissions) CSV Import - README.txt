@@ -17,7 +17,7 @@ It is written for our custom GPT to follow deterministically (no guessing; refer
   ➜ The core header row and order must match the sample. Optional custom-field columns follow the core columns.
 
 **Sample headers (core columns first, then optional custom fields):**
-Email,PhoneNumber,FirstName,Surname,Gender,Country,DateCompleted,OpportunityExternalId,jobEmploymentStartDate,impactActionImpactAchieved,eventRole
+Email,PhoneNumber,FirstName,Surname,Gender,Country,DateCompleted,OpportunityExternalId,CF:jobEmploymentStartDate,CF:impactActionImpactAchieved,CF:eventRole,CF:entrepreneurshipBusinessName,CF:entrepreneurshipBusinessSummary,CF:entrepreneurshipBusinessRegistered,CF:entrepreneurshipRegistrationReference,CF:entrepreneurshipSector,CF:entrepreneurshipJobsCreated,CF:entrepreneurshipRevenueBand,CF:entrepreneurshipRevenueCurrency,CF:entrepreneurshipFundingTypes,CF:entrepreneurshipFundingAmountBand,CF:entrepreneurshipFunder,CF:entrepreneurshipClientLocation
 
 ------------------------------------------------------------------------------
 
@@ -25,7 +25,7 @@ Email,PhoneNumber,FirstName,Surname,Gender,Country,DateCompleted,OpportunityExte
 
 - File type: CSV
 - CSV delimiter: **comma (`,` only)**
-- Core headers are **case-sensitive** and must match the sample file order. The three custom-field columns are optional; use them only for the matching Opportunity type and leave other types blank.
+- Core headers are **case-sensitive** and must match the sample file order. Custom-field headers must use `CF:<definition key>` (case-sensitive), never bare keys or display titles. Use only active definitions for the matching Opportunity type; irrelevant types remain blank. Required Entrepreneurship completion values must be supplied for non-instant submissions.
 - Whitespace: trim all cells; an empty cell after trim is treated as **missing**
 - Dates: **two accepted formats** (zero-padded):
   - `YYYY-MM-DD`  (e.g., 2025-09-01)
@@ -69,13 +69,22 @@ At least **one** of **Email** or **PhoneNumber** must be provided (the “Userna
   - Length: **1–50** characters
   - Must match an existing Opportunity’s ExternalId
 
-- **jobEmploymentStartDate** (Job completions only)
+- **CF:jobEmploymentStartDate** (Job completions only)
   - Optional actual placement start date, strictly `YYYY-MM-DD`; not the application deadline
-- **impactActionImpactAchieved** (Impact Action completions only)
+- **CF:impactActionImpactAchieved** (Impact Action completions only)
   - Optional outcome description, up to 1000 characters
-- **eventRole** (Event completions only)
+- **CF:eventRole** (Event completions only)
   - Optional role: `Participant`, `Speaker`, `Panelist`, `FacilitatorTrainer`, `CoOrganiser`, or `Volunteer`
   - If omitted or blank, the role remains unspecified
+
+- **Entrepreneurship completion custom fields**
+  - Required for non-instant completions: `CF:entrepreneurshipBusinessName`, `CF:entrepreneurshipBusinessSummary`, `CF:entrepreneurshipBusinessRegistered`.
+  - The remaining Entrepreneurship columns in the sample are optional; registration reference applies only when registered.
+  - Resolve active options through the API definitions and use their stable keys, not display titles. Multi-select values are separated with `|`.
+  - CSV shared lookups use readable external values: Country/Language alpha-2 codes, Currency ISO code (for example `USD`), and full Education/Skill names. This differs from JSON API requests, which use lookup IDs.
+  - Boolean values are `true`/`false` (the established CSV Yes/No values are also accepted); integer/decimal values use invariant formatting.
+  - The API validates metadata and cross-field rules; never substitute `not available` for a missing value.
+  - Actual completion fields do not populate advertised Opportunity CFs or infer business achievements.
 
 ------------------------------------------------------------------------------
 
@@ -140,7 +149,7 @@ Human-readable messages remain short; the field name and offending value are sup
 ## 7) Examples
 
 **Headers:**  
-Email,PhoneNumber,FirstName,Surname,Gender,Country,DateCompleted,OpportunityExternalId,jobEmploymentStartDate,impactActionImpactAchieved,eventRole
+Email,PhoneNumber,FirstName,Surname,Gender,Country,DateCompleted,OpportunityExternalId,CF:jobEmploymentStartDate,CF:impactActionImpactAchieved,CF:eventRole,CF:entrepreneurshipBusinessName,CF:entrepreneurshipBusinessSummary,CF:entrepreneurshipBusinessRegistered,CF:entrepreneurshipRegistrationReference,CF:entrepreneurshipSector,CF:entrepreneurshipJobsCreated,CF:entrepreneurshipRevenueBand,CF:entrepreneurshipRevenueCurrency,CF:entrepreneurshipFundingTypes,CF:entrepreneurshipFundingAmountBand,CF:entrepreneurshipFunder,CF:entrepreneurshipClientLocation
 
 **Valid (email given, date in `YYYY-MM-DD`):**
 ```csv

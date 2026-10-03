@@ -2,6 +2,13 @@ using System.ComponentModel;
 
 namespace Yoma.Core.Domain.Core
 {
+  public enum UnspecifiedMatch
+  {
+    Exclude,
+    Include,
+    Only
+  }
+
   public enum LocationSource
   {
     // Selected from a location provider's search/autocomplete results.

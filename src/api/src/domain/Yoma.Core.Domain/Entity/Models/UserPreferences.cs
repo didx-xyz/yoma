@@ -19,9 +19,7 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public short? CommitmentIntervalCount { get; set; }
 
-    public Guid? EngagementTypeId { get; set; }
-
-    public Core.EngagementTypeOption? EngagementType { get; set; }
+    public List<EngagementType> EngagementTypes { get; set; } = [];
 
     /// <summary>
     /// True prefers opportunities with an incentive, false those without one; null means no preference.

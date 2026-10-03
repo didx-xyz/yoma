@@ -28,6 +28,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         OpportunityId = entity.OpportunityId,
         OpportunityStatusId = entity.Opportunity.Status.Id,
         OpportunityDateStart = entity.Opportunity.DateStart,
+        OpportunityDateEnd = entity.Opportunity.DateEnd,
         OpportunityHidden = entity.Opportunity.Hidden,
         OrganizationId = entity.Opportunity.OrganizationId,
         OrganizationStatusId = entity.Opportunity.Organization.Status.Id,
@@ -36,6 +37,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         Region = entity.Region,
         City = entity.City,
         Coordinates = Core.Helpers.CoordinatesHelper.ToArray(entity.Coordinates),
+        HasCoordinates = entity.Coordinates != null,
         DateModified = entity.DateModified,
         DateCreated = entity.DateCreated
       });

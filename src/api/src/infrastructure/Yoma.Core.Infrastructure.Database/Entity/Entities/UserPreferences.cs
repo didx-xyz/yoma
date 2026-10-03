@@ -22,9 +22,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
 
     public short? CommitmentIntervalCount { get; set; }
 
-    [ForeignKey(nameof(EngagementTypeId))]
-    public Guid? EngagementTypeId { get; set; }
-    public EngagementType? EngagementType { get; set; }
+    public ICollection<UserPreferenceEngagementType>? EngagementTypes { get; set; }
 
     public bool? Incentivized { get; set; }
 

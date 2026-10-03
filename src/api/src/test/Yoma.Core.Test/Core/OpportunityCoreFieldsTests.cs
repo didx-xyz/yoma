@@ -49,16 +49,17 @@ namespace Yoma.Core.Test.Core
       accessibility.Setup(o => o.GetByIdOrNull(OtherId))
         .Returns(new Accessibility { Id = OtherId, Name = AccessibilityOption.Other.ToString() });
 
-      var validator = new OpportunitySearchFilterValidator(
-        new Domain.Core.Validators.CoordinatesValidator(), accessibility.Object);
+      var validator = new OpportunitySearchFilterValidator(new OpportunitySearchSelectionValidator(
+        new Domain.Core.Validators.CoordinatesValidator(), Mock.Of<ICountryService>(),
+        accessibility.Object, new Domain.Core.Validators.CustomFieldFilterValidator()));
       var filter = new OpportunitySearchFilterAdmin
       {
-        Accommodations = otherSelected ? [OtherId] : [AccommodationId],
-        AccommodationOtherDescription = description
+        Accommodations = new() { Value = otherSelected ? [OtherId] : [AccommodationId] },
+        AccommodationOtherDescription = description == null ? null : new() { Value = description },
+        TotalCountOnly = true
       };
 
-      var result = validator.Validate(filter, options =>
-        options.IncludeProperties(o => o.AccommodationOtherDescription));
+      var result = validator.Validate(filter);
 
       Assert.Equal(valid, result.IsValid);
     }

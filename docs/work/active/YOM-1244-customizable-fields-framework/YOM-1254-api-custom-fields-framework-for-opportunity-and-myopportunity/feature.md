@@ -27,11 +27,17 @@ of the temporary seeded field set.
 
 The shared contract is documented in the [epic README](../README.md). The implementation is owned
 by the Core custom-field services and repositories, then composed into Opportunity,
-MyOpportunity, CSV import and PartnerSync flows. Final scripted definitions remain pending until
-the BA field map is approved.
+MyOpportunity, CSV import and PartnerSync flows. Approved Opportunity/MyOpportunity definitions
+are already seeded; final credential/schema mapping remains separate. The current Opportunity
+search contract is in the [2026-10-01 consolidated handoff](../handoffs/2026-10-01-c.md);
+older search shapes are superseded.
 
 ## Tasks
 
+- [x] Implement the agreed Opportunity search revision: per-criterion unspecified policies, country-scoped criteria, bounded OR groups, public ordering, scoped CF applicability and count-only on youth/admin searches.
+- [x] Correct Job participation defaults and downstream Pending review queries; repair the completion CSV sample and preserve root row locking during CSV validation.
+- [x] Add varied Local/Dev search fixtures, regression tests and authenticated API checks; document asks 1–24 in one consolidated handoff.
+- [ ] Adrian reviews the uncommitted search diff; integrate the breaking API/Web shapes together before shared-environment acceptance testing.
 - [x] Add the Entrepreneurship Opportunity type, type-specific core validation, and separate Opportunity/ MyOpportunity CF definitions. Use `Opportunity|Default` until the final credential-schema phase; see the 2026-09-29-b handoff.
 - [x] Verify the Entrepreneurship configuration with a fresh local PostgreSQL migration, authenticated Opportunity create/update and manual-verification API smoke tests. The youth submission remains Pending; credential issuance is covered by the final schema phase.
 - [ ] Map partner-specific entrepreneurship data only after Umuzi, ixo or JA confirms its source fields and verified outcome trigger.
@@ -59,7 +65,7 @@ the BA field map is approved.
 - [x] Disable temporary sample seeding for the cash-out release; the obsolete helper is now removed as approved seeding starts.
 - [x] Seed type-specific Difficulty/Job experience definitions and options; migrate legacy non-Job levels, remove the core field and use the existing CF framework for capture, filtering and integrations.
 - [x] Verify Difficulty with a full pre-CF database upgrade, fresh Docker migration/post.sql, five-type API CRUD/filter/validation checks and CSV import/report export. Add metadata-driven local CF option seeding; see the consolidated handover for coverage and limits.
-- [ ] Introduce the approved field map in a new migration when CF is released.
+- [x] Introduce the approved Difficulty, Job, Impact Action, Event completion and Entrepreneurship field configurations in migrations; final credential mappings remain separate.
 - [ ] Re-run end-to-end API, CSV and partner mapping validation against the final definitions.
 - [x] Seed Job-specific definitions and official industry/occupation options, extend generic lookup-backed CFs with Education/Currency, enforce conditional consistency and map supported partner values. Update the API CSV sample and consolidated handover.
 - [x] Review Job implementation with Adrian; complete fresh migration/post.sql, authenticated Job API CRUD/validation/rollback/filter checks and CSV import/report smoke tests. Update the Jobs sheet's final implementation column; see consolidated handover for evidence and UI/partner limits.
@@ -67,6 +73,9 @@ the BA field map is approved.
 
 ## Decisions
 
+- 2026-10-02: Reconfirmed the original capture-path policy: configured CF requiredness is enforced only on manual admin Opportunity saves and manual youth completion submissions. Partner sync and CSV permit missing CFs; supplied values remain validated. Instant/action links skip CF processing. Made the existing Impact Action/Entrepreneurship Other-companion rules follow that same boundary; no required flags or capture modes changed.
+- 2026-10-02: Final search review corrected malformed commitment/reward inputs to return validation errors, standardized invariant range parsing, guarded the shared pagination offset against Int32 overflow and removed unnecessary treasury hydration from admin count-only. Local/Dev search fixtures retain varied ordering dates but stay valid for a month rather than expiring within hours. The taxonomy integration fixture now includes the prerequisites added as the consolidated configuration migration evolved; no production migration logic was changed by this test-fixture correction. See the existing consolidated handoff for rerun evidence and the unrelated full-suite test-harness failures.
+- 2026-10-01: The API executes effective Opportunity criteria, not saved User Preferences. Generic `SearchCriterion<T>` policies, bounded groups, ordering and type-scoped CF applicability replace case-by-case search overrides. Count-only and CSV use the same authorised filter; other entity searches are unchanged. Job participation dates/effort are optional, and Pending review eligibility uses the Opportunity start rather than nullable youth participation start. See the [final contract](../handoffs/2026-10-01-c.md) for defaults, breaks, verification and Jason's composition rules. No commit is authorised before Adrian's review.
 - 2026-09-29: Entrepreneurship is a new Yoma Opportunity type, superseding the draft credential deck's standalone partner-issued premise. Opportunity `ProgrammeType`/`VentureStageTargeted` metadata is shared; venture facts are MyOpportunity completion CFs. Manual capture may omit Incentivized and both commitment fields, and a manual Entrepreneurship verification may omit start date/commitment while retaining its completion end date. Existing core organisation, verification, category, country, language, skills and engagement fields are reused; no venture location is inferred from programme location. The generic `Opportunity|Default` schema is selected until type-specific credential schemas are implemented in the final CF phase. See [Entrepreneurship handoff](handoffs/2026-09-29-b.md) for fields, validation and unresolved partner mappings.
 - 2026-09-29: Adrian chose client-side preference-to-filter composition, matching Jason's prototype. Opportunity search does not load User Preferences and accepts the effective core/CF criteria directly. Remove `ApplyUserPresets`; expose `TotalCountOnly` on the public search filter. A count-only response contains `totalCount` and no items, using the same predicates as ordinary search without item hydration, engagement counts or treasury lookup. Pagination is optional for this path. See the 2026-09-29 handoff for the Web contract and prototype gaps.
 - 2026-09-29: The three MyOpportunity completion fields are optional. Job Employment Start Date is date-only (`yyyy-MM-dd`), Impact Achieved accepts text up to 1000 characters, and Event Role is a controlled single-select with no default. Adrian confirmed that instant links intentionally skip custom-field processing; no Event-specific verification logic is added. Existing completed records are not backfilled; credential mapping follows in the final CF phase. The sheet's Job placement-status and Event/Impact duplicate completion booleans are not added.

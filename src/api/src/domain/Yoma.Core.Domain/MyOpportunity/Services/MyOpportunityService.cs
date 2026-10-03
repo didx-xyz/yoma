@@ -237,7 +237,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         {
           // items that can be completed, thus started opportunities (active) or expired opportunities that relate to active organizations
           VerificationStatus.Pending =>
-              predicate.Or(o => o.VerificationStatusId == verificationStatusId && ((o.OpportunityStatusId == opportunityStatusActiveId && o.DateStart <= DateTimeOffset.UtcNow) ||
+              predicate.Or(o => o.VerificationStatusId == verificationStatusId && ((o.OpportunityStatusId == opportunityStatusActiveId && o.OpportunityDateStart <= DateTimeOffset.UtcNow) ||
               o.OpportunityStatusId == opportunityStatusExpiredId) && o.OrganizationStatusId == organizationStatusActiveId),
 
           // all, irrespective of related opportunity and organization status
@@ -661,8 +661,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             switch (status)
             {
               case VerificationStatus.Pending:
-                //items that can be completed, thus started opportunities (active) or expired opportunities that relates to active organizations
-                predicate = predicate.Or(o => o.VerificationStatusId == verificationStatusId && ((o.OpportunityStatusId == opportunityStatusActiveId && o.DateStart <= DateTimeOffset.UtcNow) ||
+                // Review eligibility follows the opportunity, not optional participation timing.
+                // Job/Entrepreneurship submissions with no youth start date remain reviewable.
+                predicate = predicate.Or(o => o.VerificationStatusId == verificationStatusId && ((o.OpportunityStatusId == opportunityStatusActiveId && o.OpportunityDateStart <= DateTimeOffset.UtcNow) ||
                     o.OpportunityStatusId == opportunityStatusExpiredId) && o.OrganizationStatusId == organizationStatusActiveId);
                 break;
 
@@ -1128,7 +1129,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var opportunityStatusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
       var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
 
-      //Keep the existing Search count predicates, including MyOpportunity.DateStart for pending verification.
+      // Keep counts aligned with review search; optional youth timing is not an eligibility gate.
       return [.. _myOpportunityRepository.Query(false)
         .Where(o => opportunityIds.Contains(o.OpportunityId))
         .GroupBy(o => o.OpportunityId)
@@ -1139,7 +1140,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           CountNavigatedExternalLink = group.Count(o => o.ActionId == actionNavigatedId),
           ParticipantCountPending = group.Count(o =>
             o.ActionId == actionVerificationId && o.VerificationStatusId == verificationPendingId &&
-            ((o.OpportunityStatusId == opportunityStatusActiveId && o.DateStart <= DateTimeOffset.UtcNow) ||
+            ((o.OpportunityStatusId == opportunityStatusActiveId && o.OpportunityDateStart <= DateTimeOffset.UtcNow) ||
               o.OpportunityStatusId == opportunityStatusExpiredId) && o.OrganizationStatusId == organizationStatusActiveId)
         })];
     }
@@ -1939,6 +1940,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       }
 
       if (request.DateStart.HasValue || request.CommitmentInterval != null) return;
+
+      // Placement attests an outcome, not advertised work effort. Genuine supplied timing
+      // is still validated; historical timing is retained because its origin is unknown.
+      if (opportunity.Type == Opportunity.Type.Job) return;
 
       if (!opportunity.CommitmentIntervalId.HasValue || !opportunity.CommitmentIntervalCount.HasValue || !opportunity.CommitmentInterval.HasValue)
         return;

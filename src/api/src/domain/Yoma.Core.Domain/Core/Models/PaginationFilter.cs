@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Yoma.Core.Domain.Core.Models
 {
-  public class PaginationFilter
+  public class PaginationFilter : Interfaces.IPaginationFilter
   {
     public int? PageNumber { get; set; }
 
