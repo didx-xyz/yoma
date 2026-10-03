@@ -272,10 +272,15 @@ commitment set; **accessibility excludes** those that have not described their a
 - [x] Round-10 follow-ups F1–F4 (2026-10-02, [`design/2026-10-02-followups.md`](design/2026-10-02-followups.md)):
       the welcome takes its content's height and never scrolls on desktop; Get started morphs
       into step 1; open chip sections carry a note; focus starts on Get started.
-- [ ] Jason's browser: the welcome does not auto-open even after clearing the seen flag — waiting
-      on his storage state (no regression reproduced in a fresh profile).
-- [ ] Signed-in pass of the round-10 admin header (A1–A3) and the editor Preview, on local with the
-      seeded org admin — approved by Jason, waiting on how the tester gets the password.
+- [x] Jason's browser: the welcome did not auto-open after clearing the seen flag. Jason
+      solved it on his side (2026-10-02); no code change.
+- [x] Signed-in pass of the round-10 admin header (A1–A3) and the editor Preview, on local with the
+      seeded org admin (2026-10-02). Both pass at 1440 and 390. The Preview was
+      reached on a Learning opportunity: the seeded Job fails the editor's Details validation, and
+      filling the fields locally was refused. The seed does not carry the Completed tile, "Limit
+      reached" or the pull-sync badge.
+- [x] Keep the active pill in view in the sticky / pinned tab bars at 390. This is the designer's
+      fix; the gap predates round 10 on the public page.
 - [ ] Round-10 items the seed cannot show: the Age row, Global goals (SDGs), Provider card,
       Starts / Ongoing / Depleted facts, Pending / Completed buttons, the five-pill welcome grid.
 - [ ] `next build --webpack` without a dev server on `.next` (still outstanding from round 7).
@@ -949,6 +954,13 @@ commitment set; **accessibility excludes** those that have not described their a
   and including the Provider card, as the brief has it. This supersedes the "a group that renders
   one card lets it span both columns" bullet in the round-10 entry above. The description and the
   admin Rewards block still span the full width.
+- 2026-10-02 (Jason): **the missing welcome is solved on Jason's side**, with no code change. It
+  closes the open item in the follow-ups entry above.
+- 2026-10-02 (Jason: "do what you think is best"): **every tab bar keeps its active pill in
+  view.** `DetailTabs` scrolls only the bar's own sideways scroll (`nav.scrollTo`, smooth unless
+  reduced motion), never `scrollIntoView`, which also moves the page and interrupts `goTo`. The
+  failing case was the 390 sticky / pinned bar after a tap on Details or Rewards. It predates
+  round 10 on the public page.
 
 ## BA sign-off summary (2026-09-22)
 

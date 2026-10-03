@@ -144,11 +144,32 @@ const NAVBAR_PX = 80;
 /** Room between the sticky panel and the group heading a tab tap lands on. */
 const LANDING_GAP_PX = 12;
 
+/** The bar's `p-1.5`: a tab revealed at the left edge keeps it. */
+const TABS_PAD_PX = 6;
+/** The right-edge fade mask: a tab revealed at the right edge clears it. */
+const TABS_FADE_PX = 40;
+
+/**
+ * Scrolls the bar sideways (never the window, unlike `scrollIntoView`, which would cut short
+ * `goTo`'s page scroll) until the active tab is fully visible. A hidden bar is left alone.
+ */
+const revealActiveTab = (nav: HTMLElement, behavior: ScrollBehavior): void => {
+  if (nav.clientWidth === 0) return;
+  const tab = nav.querySelector<HTMLElement>('[aria-current="location"]');
+  if (!tab) return;
+  const start = tab.offsetLeft;
+  const end = start + tab.offsetWidth;
+  if (start < nav.scrollLeft)
+    nav.scrollTo({ left: start - TABS_PAD_PX, behavior });
+  else if (end > nav.scrollLeft + nav.clientWidth)
+    nav.scrollTo({ left: end + TABS_FADE_PX - nav.clientWidth, behavior });
+};
+
 /**
  * The anchor tabs as a segmented pill bar (round 10): one purple fill slides under the active
  * tab. Each home — in flow, the sticky panel, the mobile pin — renders its own instance and
- * measures its own fill. The bar scrolls sideways when it does not fit; below `md` it then
- * fades out at its right edge while more tabs are hidden there.
+ * measures its own fill. The bar scrolls sideways when it does not fit, keeping the active tab
+ * in view; below `md` it then fades out at its right edge while more tabs are hidden there.
  */
 const DetailTabs: React.FC<{
   groups: GroupDef[];
@@ -192,6 +213,24 @@ const DetailTabs: React.FC<{
       observer.disconnect();
       nav.removeEventListener("scroll", measure);
     };
+  }, [active, groupKey]);
+
+  // keep the active tab in view: on a tap or a scroll-spy change, and when a hidden home
+  // (display: none below its breakpoint) shows
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const reduce = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    revealActiveTab(nav, reduce ? "auto" : "smooth");
+    let shownWidth = nav.clientWidth;
+    const observer = new ResizeObserver(() => {
+      if (shownWidth === 0 && nav.clientWidth > 0) revealActiveTab(nav, "auto");
+      shownWidth = nav.clientWidth;
+    });
+    observer.observe(nav);
+    return () => observer.disconnect();
   }, [active, groupKey]);
 
   return (
