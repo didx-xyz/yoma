@@ -17,10 +17,10 @@ import { SectionHeader } from "./SectionHeader";
 
 /**
  * Block 5 — the type-conditional custom-field filters, appearing and disappearing with the type
- * selection. Two or more types split into "Details (all types)" (what every selected type
- * returns — the generic definitions) plus one section per type carrying only ITS additions;
- * with one type selected there is nothing to share and the single "«DisplayName» filters"
- * section carries everything. See `useTypeDefinitions` for why the split is an intersection.
+ * selection. Two or more types split into "Details (all types)" (the generic definitions, with no
+ * type context) plus one section per type carrying only ITS own; with one type selected there is
+ * nothing to share and the single "«DisplayName» filters" section carries everything. See
+ * `splitTypeDefinitions` for the split.
  *
  * Inside each section, one nested disclosure per definition GROUP (the "More filters" pattern),
  * from the endpoint's own grouping in the order returned — nothing keyed to a specific field.

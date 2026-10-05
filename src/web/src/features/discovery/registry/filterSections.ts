@@ -21,9 +21,14 @@ import {
  *
  * Primary (2026-09-22 BA alignment): Categories · Where · Engagement · How long · Accessibility ·
  * Language. Behind "More filters": Paid and rewards · Skills · SDGs · Provider. Only Skills is
- * still pending (2026-09-29) — the search has no skills facet. Paid moved off
+ * still pending: the saved skills narrow jobs through the preference layer (2026-10-03), but
+ * there is no manual skills pick yet. Paid moved off
  * the primary list when Engagement took its place on the search bar — one definition, two homes,
  * so the section and the bar segment can never disagree.
+ *
+ * Each `nullRule` states the revised search contract (2026-10-03). Engagement and Accessibility
+ * state both modes in their one line, because a manual pick turns the whole criterion strict
+ * ("the manual mode wins"): the line predicts what the next tap does.
  *
  * "Who it is for" (admin-side targeted groups) is deliberately ABSENT: targeting never restricts
  * who can apply, so offering it to a youth implies a constraint that does not exist.
@@ -57,8 +62,8 @@ export type FilterSectionBinding =
  * Which `DiscoveryFilters` facet a preference fragment feeds each binding through — the ONE
  * mapping shared by the section model (inherited-aware selection) and the section badge.
  * `null` = no preference can feed this binding. Paid and rewards (`zlto`) receives the
- * incentive preference through its Paid half. Accessibility is deliberately `null`: the stored
- * requirements are not applied to the feed (see `preferenceMapping.ts`).
+ * incentive preference through its Paid half; Accessibility the saved requirements, inherited
+ * since 2026-10-03 (see `preferenceMapping.ts`).
  */
 export const FACET_FOR_BINDING = {
   categories: "categories",
@@ -67,7 +72,7 @@ export const FACET_FOR_BINDING = {
   commitment: "commitment",
   zlto: "incentivized",
   languages: "languages",
-  accommodations: null,
+  accommodations: "accommodations",
   sdgs: null,
   provider: null,
 } as const satisfies Record<FilterSectionBinding, string | null>;
@@ -89,8 +94,7 @@ export interface FilterSectionDef {
   hint: string | null;
   /**
    * Missing-data rule stated in words, one line — users cannot infer include-vs-exclude
-   * semantics. States what the search ACTUALLY does today; where the BA rule differs and the
-   * API has not moved yet, the line says so rather than promising the rule.
+   * semantics. States what the search ACTUALLY does today, in every mode the section can be in.
    */
   nullRule: string | null;
   pendingNote: string | null;
@@ -98,7 +102,7 @@ export interface FilterSectionDef {
   group: "primary" | "more";
 }
 
-const pendingNote = "Coming soon — the search can't filter on this yet.";
+const skillsPendingNote = "Coming soon — you can't pick skills here yet.";
 
 /**
  * The type row is not a registry section (it binds `types`, which no `FilterSectionBinding`
@@ -108,6 +112,12 @@ const pendingNote = "Coming soon — the search can't filter on this yet.";
 export const TYPE_ROW_QUESTION = "What type of opportunity?";
 export const TYPE_ROW_HINT =
   "Pick one or more. Each type adds its own filters.";
+/**
+ * Under the type pills while a goal brings in a category of any type ("Start a business",
+ * 2026-10-03): the row shows only the goal's type, yet that category's other types appear too.
+ */
+export const typeRowGoalLine = (categoryName: string): string =>
+  `Your goal also brings in ${categoryName} opportunities of any type.`;
 
 export const FILTER_SECTIONS: FilterSectionDef[] = [
   {
@@ -133,17 +143,17 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     control: "location",
     binding: "countries",
     hint: null,
-    // Jason, 2026-09-28: opportunities with no region or city are INCLUDED. The API's radius
-    // search, by contrast, leaves out anything without coordinates.
+    // Jason, 2026-09-28: opportunities with no region or city are INCLUDED. The inherited home
+    // country also sends Worldwide, except with a radius on (2026-10-03). The radius search's own
+    // rule (no coordinates, left out) is `DISTANCE_NOTE`, shown beside the distance control.
     nullRule:
-      "Opportunities that don't name a region or city stay in your results; a distance search leaves out those without a mapped city.",
+      "Ones that don't name a region or city stay in. Your country from your preferences also brings in worldwide ones, except in a distance search.",
     pendingNote: null,
     group: "primary",
   },
   // The id doubles as the search-bar segment id (SEARCH · WHAT · WHERE · HOW LONG · ENGAGEMENT).
-  // NB: the BA rule is "hidden while a value is selected", but the search API currently INCLUDES
-  // opportunities with no engagement type when the filter is set — the copy states the actual
-  // behaviour; the exclusion is filed as an API ask (epic README, 2026-09-22).
+  // Modes by provenance (2026-10-03): a manual pick leaves out opportunities with no engagement
+  // type (the BA rule); inherited only, they stay in, since the partner job feeds set none.
   {
     id: "engagement",
     label: "Engagement",
@@ -153,12 +163,12 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     binding: "engagementTypes",
     hint: null,
     nullRule:
-      "Includes opportunities that don't say how you take part — for now; they'll be hidden while this is set once the search API applies the rule.",
+      "Picked here, opportunities that don't say how you take part are left out. From your preferences, they stay in.",
     pendingNote: null,
     group: "primary",
   },
-  // NB: the API currently EXCLUDES opportunities with no commitment set from an interval filter,
-  // the opposite of the BA rule ("includes") — copy states the actual behaviour; flagged to Adrian.
+  // A maximum keeps opportunities with no commitment set — the BA rule, which the revised search
+  // contract applies (2026-10-03).
   {
     id: "time",
     label: "How long",
@@ -168,14 +178,14 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     binding: "commitment",
     hint: null,
     nullRule:
-      "Excludes opportunities that don't state a time commitment — for now; the rule is to include them once the search API changes.",
+      "Opportunities that don't state a time commitment stay in your results.",
     pendingNote: null,
     group: "primary",
   },
-  // Live since 2026-09-29 over the accommodations published opportunities list. The API needs
-  // ALL picked accommodations and leaves out opportunities that list none — the reverse of the
-  // BA's "stays in results for now", which is why the youth's stored requirements are NOT applied
-  // here automatically (preferenceMapping.ts) and the line below says what picking one does.
+  // Every picked accommodation must be listed, and an explicit No never matches. Modes by
+  // provenance (2026-10-03): a manual pick leaves out opportunities that list none; the saved
+  // requirements, inherited, keep them (`preferenceMapping.ts`). Inherited needs are private: the
+  // section stays collapsed and its header says "Your needs" (`useSectionModel`).
   {
     id: "accessibility",
     label: "Accessibility",
@@ -185,12 +195,12 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     binding: "accommodations",
     hint: null,
     nullRule:
-      "Shows only opportunities that list every accommodation you pick — ones that haven't described their accommodations are left out.",
+      "Needs every accommodation you pick; ones that say No are left out. Picked here, so are ones with no list; from your preferences, they stay in.",
     pendingNote: null,
     group: "primary",
   },
-  // Every opportunity carries at least one language (the API requires it on create), so there
-  // is no "not specified" case for this filter to include or exclude.
+  // Partner opportunities can list no language (four of the local fixtures do), and the search
+  // leaves them out whenever a language is set.
   {
     id: "language",
     label: "Language",
@@ -200,14 +210,15 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     binding: "languages",
     hint: null,
     nullRule:
-      "Every opportunity lists at least one language, so none are left out for missing data.",
+      "Shows opportunities in any language you pick. Ones that don't list a language are left out.",
     pendingNote: null,
     group: "primary",
   },
   // Demoted 2026-09-22 when Engagement took Pay's place on the search bar. Both halves live since
   // 2026-09-29: Paid is the core `incentivized` field (pay, ZLTO or another incentive — the BA's
-  // "Is Paid", renamed by the API) and ZLTO is the reward facet. There is no public sort, so
-  // "sorted last" for unspecified opportunities is not claimed.
+  // "Is Paid", renamed by the API) and ZLTO is the reward facet. The API lists the explicit
+  // matches before the unspecified ones, whatever the sort (2026-10-03) — the results' incentive
+  // divider marks the change.
   {
     id: "pay",
     label: "Paid and rewards",
@@ -217,11 +228,12 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     binding: "zlto",
     hint: null,
     nullRule:
-      "Opportunities that haven't said whether they pay or reward stay in your results.",
+      "Opportunities that haven't specified an incentive stay in, listed after the ones that match.",
     pendingNote: null,
     group: "more",
   },
-  // Demoted, not deleted — partners ask for Provider; Skills awaits a search facet.
+  // Demoted, not deleted — partners ask for Provider. Skills has no manual pick yet: the saved
+  // skills narrow jobs through the preference layer (2026-10-03), which the hint says.
   {
     id: "skills",
     label: "Skills",
@@ -229,9 +241,9 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     icon: IoSparklesOutline,
     control: "lookupSearch",
     binding: null,
-    hint: "For jobs this matches required skills; for everything else, the skills you will earn.",
+    hint: "The skills in your preferences already narrow jobs; jobs that list no skills stay in.",
     nullRule: null,
-    pendingNote,
+    pendingNote: skillsPendingNote,
     group: "more",
   },
   {
@@ -247,7 +259,8 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     group: "more",
   },
   // The Provider FIELD (2026-09-28) — informational text such as "KFC", not the organisation that
-  // posts the opportunity. The organisation typeahead this replaced filtered something else.
+  // posts the opportunity. The organisation typeahead this replaced filtered something else. The
+  // revised search contract leaves out opportunities that name none (2026-10-03).
   {
     id: "provider",
     label: "Provider",
@@ -256,7 +269,7 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     control: "text",
     binding: "provider",
     hint: "The provider named on the opportunity — type part of it, e.g. KFC.",
-    nullRule: "Opportunities that don't name a provider stay in your results.",
+    nullRule: "Opportunities that don't name a provider are left out.",
     pendingNote: null,
     group: "more",
   },

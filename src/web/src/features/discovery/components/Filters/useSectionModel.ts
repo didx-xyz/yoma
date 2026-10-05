@@ -42,6 +42,11 @@ export interface SectionModel {
   secondary: SectionModel | null;
   /** The free-text value of a `text` control, and how to commit it (`null` clears). */
   text: { value: string | null; commit: (value: string | null) => void } | null;
+  /**
+   * Stays collapsed until the youth opens it, despite a selection: the selection is the private
+   * inherited accessibility needs alone (2026-10-03). The header still says it is active.
+   */
+  startCollapsed?: boolean;
 }
 
 /** Which lookup each binding's options come from, for `status`; `null` = no lookup (free text). */
@@ -196,10 +201,35 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
       );
     case "languages":
       return listModel(named(lookups.languages), "languages");
-    case "accommodations":
-      // Manual only — the stored accessibility requirements are not inherited (see
-      // `preferenceMapping.ts`), so the section never reads FROM PREFERENCES.
-      return listModel(named(lookups.accommodations), "accommodations");
+    case "accommodations": {
+      // The facet list, then any selected need it lacks — one no published opportunity lists
+      // yet, which still filters — labelled from the full list (the wizard's cached query).
+      const facetIds = new Set(lookups.accommodations.map((a) => a.id));
+      const unlisted = lookups.accessibility.filter(
+        (a) =>
+          !facetIds.has(a.id) && effectiveFilters.accommodations.includes(a.id),
+      );
+      const model = listModel(
+        named([...lookups.accommodations, ...unlisted]),
+        "accommodations",
+      );
+      // Inherited needs are private (2026-10-03): the header says "Your needs", never a count of
+      // them, and the section stays collapsed until opened — unless the youth picked one here.
+      const inherited =
+        state.preferencesOff ||
+        state.preferencesSkipped.includes("accessibility")
+          ? []
+          : (fragments.accessibility?.accommodations ?? []);
+      if (inherited.length === 0) return model;
+      const picks = filters.accommodations.filter(
+        (id) => !inherited.includes(id),
+      ).length;
+      return {
+        ...model,
+        summary: picks > 0 ? `Your needs +${picks}` : "Your needs",
+        startCollapsed: picks === 0,
+      };
+    }
     case "sdgs":
       return listModel(
         lookups.sdgs.map((goal) => ({

@@ -119,8 +119,9 @@ const dataTypeOf = (definition: CustomFieldDefinition) =>
 const lookupTypeOf = (definition: CustomFieldDefinition) =>
   (definition.lookupType as string | null) ?? null;
 
-const isMultiValueOperator = (operator: CustomFieldFilterOperator) =>
-  operator === OP.AnyOf || operator === OP.AllOf;
+const isMultiValueOperator = (
+  operator: CustomFieldFilterOperator | undefined,
+) => operator === OP.AnyOf || operator === OP.AllOf;
 
 /** Operators offered for a definition (AllOf only where the API allows it). */
 export function getCustomFieldFilterOperators(

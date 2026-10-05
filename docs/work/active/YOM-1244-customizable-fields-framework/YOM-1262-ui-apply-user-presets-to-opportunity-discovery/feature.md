@@ -7,7 +7,7 @@
 - **Ticket**: [YOM-1262](https://linear.app/didx/issue/YOM-1262)
 - **Owner**: Jason
 - **Areas**: web
-- **Status**: in-progress — round-10 design review built 2026-10-02; admin signed-in pass and DEV pass outstanding
+- **Status**: in-progress — on the revised search contract (built and tested locally 2026-10-03); DEV pass outstanding
 - **Started**: 2026-08-27 (design); 2026-08-27 (implementation, behind the mock façade)
 
 > Folder created 2026-08-27 to hold the design. Implementation started the same day **behind the
@@ -287,6 +287,27 @@ commitment set; **accessibility excludes** those that have not described their a
 - [ ] Point the remaining legacy `/opportunities` entry points at discovery (search boxes,
       category links, banners, referral pages, the detail back link). Each needs its query
       params mapped.
+- [x] **Move Web onto the revised search contract** (Adrian's `77646a74`, 2026-10-03; see
+      Decisions and [`handoffs/2026-10-03-a.md`](handoffs/2026-10-03-a.md)). Each wave was
+      reviewed and tested; W3 was also checked against its approved spec. Uncommitted at the
+      handoff, and it ships as one change:
+  - [x] W1: wire types and one converter; every legacy, admin and CSV search caller; the admin
+        status-tab counts as `totalCountOnly`; engagement preferences as a list; the completion
+        CSV sample synced with the API's.
+  - [x] W2: discovery composition with provenance (modes, the "Start a business" and saved-skills
+        groups, Worldwide, inherited accessibility and skills), the sort mapping,
+        `useTypeDefinitions` by `entityContext`, and unit tests for the builder and merge.
+  - [x] W3: the visible changes (multi-select engagement step and summary, Sort, section rule
+        copy, the new inherited chips, "not specified" wording, Job completion without "Time to
+        complete").
+- [ ] DEV pass of the search-contract move, once DEV runs an API on `77646a74` or later.
+- [ ] Follow-up, out of scope 2026-10-03: a per-section "Include not specified" switch. Today no UI
+      sends `Only`, and modes are fixed by provenance.
+- [ ] Follow-ups from the 2026-10-03 build:
+  - the live count's "counting" cue flickers off for 300 ms when the readiness gate reopens
+    (`state/useResultCount.ts`);
+  - the breakpoint-parity test (2026-08-27), now possible with `pnpm test`;
+  - the legacy `OpportunitiesGrid.tsx` duplicate-key warning.
 
 ## Decisions
 
@@ -961,6 +982,128 @@ commitment set; **accessibility excludes** those that have not described their a
   reduced motion), never `scrollIntoView`, which also moves the page and interrupts `goTo`. The
   failing case was the 390 sticky / pinned bar after a tap on Details or Rewards. It predates
   round 10 on the public page.
+- 2026-10-03 (the revised search contract: Adrian's `77646a74`, merged locally as `c2ca0eb9`;
+  the contract is [`../handoffs/2026-10-01-c.md`](../handoffs/2026-10-01-c.md)). Jason took the
+  first four in his 2026-10-01 review of the proposal and the rest on 2026-10-03. The API applies
+  no preferences; web sends only the effective criteria.
+  - **"Start a business" is the Entrepreneurship type OR the Business, Finance & Marketing
+    category**, sent as one OR group so related Learning stays in. Both IDs come from the
+    lookups, and the API hard-codes no goal. Skipping the goal removes the whole group. This
+    supersedes 2026-10-01's type-only mapping; BA confirmation is still pending.
+  - **A type-specific custom-field clause narrows only its own type.** A Job clause no longer
+    removes every Event from a Job + Event search: the API scopes clauses by the definition's
+    `entityContext`. Web still clears a type's clauses when the type is deselected.
+  - **Inherited engagement keeps opportunities that don't say; a manual pick is strict.** The
+    Jobberman and JobJack clients never set an engagement type, so a strict inherited filter
+    would hide every partner job.
+  - **The inherited home country also sends a plain Worldwide entry**, as the legacy page does.
+    Alison lists every course as Worldwide, so discovery was hiding them. The region / city place
+    attaches to the home-country entry, never to Worldwide.
+  - **No Worldwide while a radius is on** (2026-10-03). Distance and "Jobs near me" are a
+    deliberate "near me". Country-only and region / city searches keep Worldwide.
+  - **Manual types fold into the goal's type branch** (2026-10-03):
+    `anyOf: [{ types: manual ∪ [Entrepreneurship] }, { categories: [Business…] }]`, with no
+    root `types`. A root `types` AND the group would turn "Event + Start a business" into
+    "Events in the Business category". With the goal skipped, or another goal, manual types stay
+    a root `types`.
+  - **Saved skills narrow Jobs only, and inclusively** (2026-10-03). One group:
+    `anyOf: [{ types: [every non-Job type] }, { types: [Job], skills: { value, unspecified: "Include" } }]`,
+    where the skills are self-attested plus verified. The Jobberman and JobJack clients set no
+    skills, so a strict branch would hide every partner job. A manual skills pick, if a section
+    is ever exposed, is strict.
+  - **Accessibility requirements are now inherited, inclusively.** This supersedes 2026-09-29's
+    "saved but not inherited" (ask 18, answered by the contract). Opportunities that haven't said
+    stay in; an explicit No, or a list missing a need, never does. A manual pick is strict.
+  - **Modes are fixed by provenance** (2026-10-03). Inherited engagement and accommodations use
+    `Include`, inherited skills `Include` on the Job branch, and manual picks of all three
+    `Exclude`. Every other criterion keeps the API default. There is no per-section "Include
+    not specified" switch, so no UI sends `Only`; the switch is a follow-up in Tasks. Each
+    section states its rule in its copy.
+  - **Union, and the manual mode wins.** Inherited and manual values on one multi-select
+    criterion are unioned, under the manual mode if there is a manual pick, else the inherited
+    one. Scalars and a manual place replace the inherited value. To replace an inherited
+    multi-select, skip its preference.
+  - **The engagement preference is multi-select again**: the API stores a list
+    (`engagementTypes`). This reverses 2026-09-29's single-select.
+- 2026-10-03 (the build, W1–W3; handoff [`handoffs/2026-10-03-a.md`](handoffs/2026-10-03-a.md)).
+  Jason took the product calls as the roles raised them; the rest are the lead's.
+  - **One converter for every search.** `toSearchFilterPayload(input, endpoint)`
+    (`api/services/opportunitySearchPayload.ts`, a pure module) wraps a legacy or admin flat
+    filter with no mode, so those pages get the API defaults. It passes discovery's typed request
+    through untouched. It strips the other endpoint's root controls, because the API now rejects
+    unknown members, and drops empties. The admin status tabs count with `totalCountOnly`.
+  - **Unit tests run on Node 24's built-in `node:test`** (`pnpm test`; a resolve hook in
+    `src/web/test/`), with no new dependency. This settles 2026-08-27's "no test runner" for pure
+    modules; the breakpoint-parity test is still unwritten.
+  - **Worldwide and the Business category are request-only** (Jason, on the W3 spec). The
+    controls never show either as selected. Skipping the goal goes through its chip or
+    Entrepreneurship, not the category.
+  - **The saved skills group stays alongside the "Start a business" group** (`jobSkillsApply`).
+    Business-category Jobs come in through the category branch, and the skills group narrows
+    them. The skills chip ghosts only when that rule says it filters nothing.
+  - **A manual value that duplicates a surviving inherited one keeps the inherited mode** (Jason).
+    It is shown as inherited, and "Picked for you" → See all must count what its rail counts. The
+    reviewer argued it makes the Remote badge lenient while Remote is inherited; Jason kept it.
+  - **"Other" is left out of inherited accommodations** (Jason). Without its private description
+    it can't match the need, and under the every-need rule it would drop every opportunity that
+    doesn't list Other.
+  - **"Make this my default" on skipped skills clears the skills the youth added** (Jason).
+    While earned (verified) skills remain, the skip stays in the URL for this search, like
+    country and age; they apply again on the next visit. The offer says "Skills you've earned
+    still apply."
+  - **Inherited needs never reach the URL.** "Picked for you" → See all leaves them out (they
+    still apply at the destination, so the counts match). See all isn't drawn when its query
+    would be empty, which would otherwise link to the landing itself.
+  - **Readiness.** A search with preferences on waits for the preference layer: the preferences,
+    the verified skills, and the accessibility list only when needs are inherited. So its first
+    request is never sent and then replaced. Searches with preferences off, and the rails that
+    ignore preferences, wait only for the lookups. Every lookup counts as settled after its first
+    failure, so a failing list degrades the request at once.
+  - **The wizard opens only once the preferences have loaded** (Jason). `?personalize=1` used to
+    open it on an empty draft, and Finish would then PATCH a complete replacement over the saved
+    preferences.
+  - **The count body is the results body minus paging and `ordering`**, plus `totalCountOnly`.
+    Changing the sort doesn't refetch an identical count.
+- 2026-10-03 (W3, the visible changes; Jason approved the spec
+  [`design/2026-10-03-search-contract.md`](design/2026-10-03-search-contract.md) with every
+  recommendation, and the [compare](design/2026-10-03-search-contract-compare.md) matched):
+  - **Sort is back** (reverses 2026-10-01's "Sort is hidden"; Copy link stays hidden).
+    - It is a segmented control like the view toggle: inline from `lg`, its own full-width row
+      below.
+    - Newest · Ending soonest · Most ZLTO, all live. The 2026-09-05 "More sorts soon" pill is
+      gone.
+    - Most ZLTO is hidden on a Jobs-only search unless it is already selected; then a note
+      says Jobs are shown newest first.
+    - A sort change never scrolls.
+  - **The engagement step is multi-select**, and signing in with "Keep my answers" unions
+    engagement like the other lists.
+  - **The section rule lines state the new behaviour**, one line each, including both modes for
+    Engagement and Accessibility. Language now says opportunities with no language are left out
+    (partner data has some). Jason shortened the Accessibility line after the build so it fits
+    3 lines at 390.
+  - **Inherited accessibility needs are private.**
+    - The chip reads "Accessibility: your needs", and nothing else ever names or counts them: not
+      the tuned-to line, the rail subtitle, the results heading or the recent searches.
+    - The Accessibility section stays collapsed as "Your needs" while the needs are only
+      inherited. Opened, it lists every inherited need, including ones no opportunity lists.
+    - A need picked by hand stays named (Jason): it is this search's own pick.
+  - **"Start a business" shows as "Goal: Starting a business"**, plus one line under the type
+    pills naming the Business category it also brings in. Other goals keep "Type: …".
+  - **The skills chip** reads "{n} job skill(s)". It ghosts as "Not applied — this search has no
+    jobs" only when `jobSkillsApply` says the group filters nothing.
+  - **An "Incentive not specified" divider** sits before the first unspecified result while a
+    Paid filter is in effect. This builds the divider 2026-09-22 parked. It splits on the Paid
+    filter the page was fetched with, so it never marks old results.
+  - **Accessibility on cards and details never claims the provider meets a need.**
+    - Cards and details read "On request: …" for an on-request list.
+    - The tabbed detail page always has an Accessibility entry: a static row for Not specified,
+      Available on request or No, the way Age range is shown.
+    - The classic layout is untouched.
+  - **The Job completion review has no timing rows** for Jobs (Started on, Finished on, Time to
+    complete). For a Job they were derived or automatic; it reads "Jobs record a placement, not
+    time spent." instead.
+  - **The import help** says rows, column order, case-sensitive `CF:` headers and the Automatic
+    verification requirement.
 
 ## BA sign-off summary (2026-09-22)
 

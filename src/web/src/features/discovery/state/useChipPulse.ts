@@ -10,13 +10,14 @@ import { useDiscoveryResults } from "./useDiscoveryResults";
  * react-query shares it — no second request).
  */
 export function useChipPulse(): string | null {
-  const { state, effectiveFilters, lookups, ready, chips } = useDiscovery();
+  const { state, search, lookups, searchReady, chips } = useDiscovery();
   const landing = isDefaultDiscoveryState(state);
   const { loading } = useDiscoveryResults(
-    effectiveFilters,
+    search,
+    state.sort,
     state.page,
-    lookups.typeIdByName,
-    ready && lookups.types.length > 0 && !landing,
+    lookups,
+    searchReady && !landing,
   );
 
   const previousChipIds = useRef<Set<string>>(new Set());

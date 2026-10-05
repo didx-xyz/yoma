@@ -17,9 +17,12 @@ import { buildChips } from "../lib/chipModel";
 import { ageInYears } from "../lib/dates";
 import type { DiscoveryAction } from "../lib/discoveryReducer";
 import { homeCountryId as resolveHomeCountryId } from "../lib/location";
-import type { InheritedFragments } from "../lib/preferenceMapping";
+import type {
+  DiscoverySearch,
+  InheritedFragments,
+} from "../lib/preferenceMapping";
 import {
-  applyInheritedFragments,
+  composeSearch,
   mapPreferencesToFilters,
 } from "../lib/preferenceMapping";
 import type {
@@ -38,6 +41,7 @@ import { useAnonymousMigration } from "./useAnonymousMigration";
 import { useDiscoveryQuery } from "./useDiscoveryQuery";
 import { usePreferences } from "./usePreferences";
 import { useResultCount } from "./useResultCount";
+import { useVerifiedSkillIds } from "./useVerifiedSkillIds";
 import { useViewMode } from "./useViewMode";
 
 /** What "Make this my default" overwrote, so the banner can offer to put it back. */
@@ -72,6 +76,25 @@ export interface DiscoveryContextValue {
   preferenceUndo: PreferenceSnapshot | null;
   setPreferenceUndo: (snapshot: PreferenceSnapshot | null) => void;
   fragments: InheritedFragments;
+  /**
+   * The search with its provenance (`composeSearch`) — what every request on the surface is built
+   * from (`buildSearchFilter` / `buildCountFilter`).
+   */
+  search: DiscoverySearch;
+  /**
+   * Whether THIS search's request (`search`) can go out: the route and the lookups have settled,
+   * and — unless preferences are off — the preferences, (signed in) the verified skills and,
+   * while it inherits accessibility needs, the full accessibility list. So the first request is
+   * not replaced a moment later.
+   */
+  searchReady: boolean;
+  /**
+   * The same for a search built WITH the preference layer, inheriting these accessibility needs,
+   * whatever the switch says — the wizard's live count, over its draft.
+   */
+  preferenceSearchReady: (accessibilityNeeds: string[]) => boolean;
+  /** The signed-in youth's verified skill ids (none when signed out). */
+  verifiedSkillIds: string[];
   /** What the search actually runs with: manual state + surviving inherited fragments. */
   effectiveFilters: DiscoveryFilters;
   chips: DiscoveryChip[];
@@ -119,6 +142,7 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
   const {
     scope,
     preferences,
+    settled: preferencesSettled,
     save: savePreferences,
     readPersonalizationSeen,
     markPersonalizationSeen,
@@ -140,6 +164,10 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
   // Identity-derived: only a signed-in youth has a date of birth to read.
   const age =
     scope === "user" ? ageInYears(profile?.dateOfBirth, new Date()) : null;
+  // Signed in, the earned skills join the saved ones (one cached request a session).
+  const { ids: verifiedSkillIds, settled: verifiedSkillsSettled } =
+    useVerifiedSkillIds();
+  const { otherAccommodationId } = lookups;
 
   const fragments = useMemo(
     () =>
@@ -147,17 +175,37 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
         ? mapPreferencesToFilters(preferences, {
             countryId: homeCountryId,
             age,
+            verifiedSkillIds,
+            otherAccommodationId,
           })
         : {},
-    [preferences, homeCountryId, age],
+    [preferences, homeCountryId, age, verifiedSkillIds, otherAccommodationId],
   );
 
-  const effectiveFilters = applyInheritedFragments(
+  const search = composeSearch(
     state.filters,
     fragments,
     state.preferencesOff,
     state.preferencesSkipped,
   );
+  const effectiveFilters = search.filters;
+  // Everything a search is composed from has settled — the first request is the real one. The
+  // preference layer (the session, the preferences, the verified skills) only for a search that
+  // uses it: with preferences off it changes nothing, and must not hold the request. The full
+  // accessibility list only for a search that inherits needs: Other is found in it.
+  const preferenceSearchReady = (accessibilityNeeds: string[]): boolean =>
+    ready &&
+    lookups.searchReady &&
+    preferencesSettled &&
+    verifiedSkillsSettled &&
+    (accessibilityNeeds.length === 0 || lookups.accessibilitySettled);
+  const searchReady = state.preferencesOff
+    ? ready && lookups.searchReady
+    : preferenceSearchReady(
+        state.preferencesSkipped.includes("accessibility")
+          ? []
+          : (preferences?.accessibility.requirements ?? []),
+      );
 
   const resolveLabel: ChipLabelResolver = (facet, value) => {
     const byId = (items: { id: string; name: string }[]): string =>
@@ -179,7 +227,9 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
       case "languages":
         return byId(lookups.languages);
       case "accommodations":
-        return byId(lookups.accommodations);
+        // The facet list first, then the full list: a pick of a need no published opportunity
+        // lists (a stale or shared `acc=`) still reads as a name, never a GUID.
+        return byId([...lookups.accommodations, ...lookups.accessibility]);
       case "sdgs": {
         const goal = lookups.sdgs.find((g) => g.id === value);
         return goal ? sdgLabel(goal) : value;
@@ -195,6 +245,7 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
     state.preferencesOff,
     state.preferencesSkipped,
     resolveLabel,
+    lookups,
   );
 
   const clearFilters = (): void => dispatch({ kind: "clearFilters" });
@@ -224,11 +275,7 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
     count,
     counting,
     failed: countFailed,
-  } = useResultCount(
-    effectiveFilters,
-    lookups.typeIdByName,
-    ready && lookups.types.length > 0,
-  );
+  } = useResultCount(search, lookups, searchReady);
 
   const { setView } = useViewMode(
     state,
@@ -250,6 +297,10 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
     preferenceUndo,
     setPreferenceUndo,
     fragments,
+    search,
+    searchReady,
+    preferenceSearchReady,
+    verifiedSkillIds,
     effectiveFilters,
     chips,
     resolveLabel,

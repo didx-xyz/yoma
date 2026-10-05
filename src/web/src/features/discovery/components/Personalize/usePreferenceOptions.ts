@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
-import { UserSkillType } from "~/api/models/user";
 import {
   getAccessibilityOptions,
   getEducations,
@@ -8,7 +7,6 @@ import {
   getSkills,
 } from "~/api/services/lookups";
 import { getCategories } from "~/api/services/opportunities";
-import { getUserSkills } from "~/api/services/user";
 import { upToIntervalLabel } from "../../lib/format";
 import type { PreferenceOptionsSource } from "../../registry/preferenceSteps";
 import { useDiscovery } from "../../state/DiscoveryContext";
@@ -87,20 +85,6 @@ export function useSkillSearch(text: string): PreferenceOption[] {
     enabled: needle.length >= SKILL_SEARCH_MIN_CHARS,
   });
   return (data?.items ?? []).map((s) => ({ id: s.id, label: s.name }));
-}
-
-/**
- * The signed-in youth's VERIFIED skill ids — shown as "Already verified" and not selectable in
- * the self-attested picker (the API rejects a verified skill there). Empty when signed out.
- */
-export function useVerifiedSkillIds(): Set<string> {
-  const { status } = useSession();
-  const { data } = useQuery({
-    queryKey: ["User", "Skills", UserSkillType.Verified],
-    queryFn: () => getUserSkills(UserSkillType.Verified),
-    enabled: status === "authenticated",
-  });
-  return new Set((data ?? []).map((skill) => skill.id));
 }
 
 /** Identity lookups for the read-only block — labels only, never written. */

@@ -12,8 +12,9 @@ import { useSectionModel } from "./useSectionModel";
  * One universal section — header row (icon, label, live summary, badges, chevron) expanding in
  * place. The SAME component serves the desktop dialog, the mobile sheet and the standalone
  * popover: one section, all its homes. Collapsed by default UNLESS the section already carries a
- * selection (a hidden active filter reads as a broken page). Collapsed state is UI-only and never
- * touches the query.
+ * selection (a hidden active filter reads as a broken page) — except the inherited accessibility
+ * needs alone, which are private and stay collapsed until opened (2026-10-03); the header still
+ * says they apply. Collapsed state is UI-only and never touches the query.
  */
 export const FilterSection: React.FC<{
   section: FilterSectionDef;
@@ -22,7 +23,9 @@ export const FilterSection: React.FC<{
 }> = ({ section, alwaysOpen = false }) => {
   const model = useSectionModel(section);
   const { state, fragments, lookups } = useDiscovery();
-  const [open, setOpen] = useState(() => model.selected.length > 0);
+  const [open, setOpen] = useState(
+    () => model.selected.length > 0 && !model.startCollapsed,
+  );
   const contentRef = useRef<HTMLDivElement>(null);
   // No search facet yet (Skills): a disabled row that never opens, its caption always shown.
   const disabled = section.binding === null;

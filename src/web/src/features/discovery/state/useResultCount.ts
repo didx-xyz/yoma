@@ -1,8 +1,9 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { searchOpportunities } from "~/api/services/opportunities";
+import type { DiscoverySearch } from "../lib/preferenceMapping";
+import type { SearchLookups } from "../lib/searchRequest";
 import { buildCountFilter } from "../lib/searchRequest";
-import type { DiscoveryFilters } from "../lib/types";
 
 /**
  * The live result count — updates (debounced) as filters change, while results themselves apply
@@ -20,27 +21,33 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
 }
 
 export function useResultCount(
-  filters: DiscoveryFilters,
-  typeIdByName: Record<string, string>,
+  search: DiscoverySearch,
+  lookups: SearchLookups,
   enabled: boolean,
 ): { count: number | null; counting: boolean; failed: boolean } {
-  const request = buildCountFilter(filters, typeIdByName);
-  const debouncedKey = useDebouncedValue(JSON.stringify(request), 300);
+  const request = buildCountFilter(search, lookups);
+  // Debounced only once the request can be built. A key from before (lookups still loading)
+  // would otherwise go out the moment the count is enabled: one request with the wrong body.
+  const debouncedKey = useDebouncedValue(
+    enabled ? JSON.stringify(request) : null,
+    300,
+  );
 
-  const { data, isFetching, isError } = useQuery({
+  const { data, isFetching, isError, isPlaceholderData } = useQuery({
     queryKey: ["discovery", "count", debouncedKey],
     queryFn: () =>
-      searchOpportunities(JSON.parse(debouncedKey) as typeof request),
-    enabled,
+      searchOpportunities(JSON.parse(debouncedKey!) as typeof request),
+    enabled: debouncedKey !== null,
     placeholderData: keepPreviousData,
     staleTime: 60 * 1000,
   });
 
   // A failed count must not read as "still counting" — the button drops the number and says
-  // "Show results" rather than spinning on a request that is not coming back.
+  // "Show results" rather than spinning on a request that is not coming back. A held one does:
+  // while the gate is shut, the number shown is the previous search's.
   return {
     count: data?.totalCount ?? null,
-    counting: isFetching,
+    counting: isFetching || (isPlaceholderData && !enabled),
     failed: isError,
   };
 }

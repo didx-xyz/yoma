@@ -20,7 +20,11 @@ import {
   IoStorefrontOutline,
   IoTimeOutline,
 } from "react-icons/io5";
-import { RewardType, type OpportunityInfo } from "~/api/models/opportunity";
+import {
+  AccessibilitySupport,
+  RewardType,
+  type OpportunityInfo,
+} from "~/api/models/opportunity";
 import {
   finiteOrNull,
   formatAccessibilitySupport,
@@ -448,27 +452,42 @@ export const OpportunityDetailSections: React.FC<{
       id: a.id,
       label: a.name,
     }));
-    if (support || accommodations.length > 0)
+    // Always a row (2026-10-03): a youth whose feed keeps opportunities that haven't said must be
+    // able to tell them from the suitable ones. With nothing to open — no list — it is a static
+    // row like Age range: "Available on request", "No" or "Not specified".
+    const onRequest =
+      opportunity.accessibilitySupport ===
+      AccessibilitySupport.AvailableOnRequest;
+    if (accommodations.length === 0)
       list.push({
         id: "accessibility",
         group: "requirements",
         icon: <IoAccessibilityOutline className={ICON} />,
         toneClass: TONE.lilac,
         title: "Accessibility",
-        count: accommodations.length > 0 ? accommodations.length : null,
-        preview:
-          accommodations.length > 0
-            ? previewOf(accommodations.map((a) => a.label))
-            : `Support: ${support}`,
-        // only with chips: the "Support: …" line alone already says what it is
-        note:
-          accommodations.length > 0
-            ? "What this opportunity offers people with disabilities."
-            : null,
+        valueHint: support ?? "Not specified",
+        content: null,
+        static: true,
+      });
+    else
+      list.push({
+        id: "accessibility",
+        group: "requirements",
+        icon: <IoAccessibilityOutline className={ICON} />,
+        toneClass: TONE.lilac,
+        title: "Accessibility",
+        count: accommodations.length,
+        // An on-request list is what the provider can arrange, never an offer.
+        preview: `${onRequest ? "On request: " : ""}${previewOf(
+          accommodations.map((a) => a.label),
+        )}`,
+        note: onRequest
+          ? "What the provider can arrange if you ask."
+          : "What this opportunity offers people with disabilities.",
         content: (
           <div className="flex flex-col gap-2">
             {support && <div className="text-sm">{`Support: ${support}`}</div>}
-            {accommodations.length > 0 && <ChipList items={accommodations} />}
+            <ChipList items={accommodations} />
             {!!opportunity.accommodationOtherDescription && (
               <div className="text-gray-dark text-sm">
                 {opportunity.accommodationOtherDescription}

@@ -431,7 +431,8 @@ export function useOrgOpportunitiesListQuery(
 /**
  * Status-tab count for the admin & org-admin opportunity search pages.
  * The count honours every applied filter, so pass the same (id-based) filter as the
- * search itself — only paging and the statuses are overridden here.
+ * search itself — it is sent as a count-only search (`totalCountOnly`, no paging, no items),
+ * one request per tab, with only the statuses overridden.
  * Pass `null` as `status` for the “All” tab (queries all 4 statuses), and `null` as
  * `orgId` for the admin (all organisations) page.
  */
@@ -449,8 +450,9 @@ export function useOpportunityStatusCountQuery(
     queryFn: () => {
       const filter: OpportunitySearchFilterAdmin = {
         ...searchFilter,
-        pageNumber: 1,
-        pageSize: 1,
+        pageNumber: null,
+        pageSize: null,
+        totalCountOnly: true,
         statuses:
           status !== null
             ? [status]

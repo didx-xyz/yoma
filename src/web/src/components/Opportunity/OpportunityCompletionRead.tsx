@@ -11,7 +11,7 @@ import {
 import { IoMdPin } from "react-icons/io";
 import Moment from "react-moment";
 import type { MyOpportunityInfo } from "~/api/models/myOpportunity";
-import { DATE_FORMAT_HUMAN } from "~/lib/constants";
+import { DATE_FORMAT_HUMAN, OPPORTUNITY_TYPE_NANE_JOB } from "~/lib/constants";
 import { fetchClientEnv } from "~/lib/utils";
 import { getCommitmentDisplay } from "./opportunityTypeTheme";
 import { UserInitialsAvatar } from "../User/UserInitialsAvatar";
@@ -27,6 +27,7 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
   data,
 }) => {
   const [showLocation, setShowLocation] = useState(false);
+  const isJob = data?.opportunityType === OPPORTUNITY_TYPE_NANE_JOB;
   const commitmentDisplay = getCommitmentDisplay(data);
   /** Total hours when the API knows them, otherwise the interval label. */
   let commitmentTimeToComplete = commitmentDisplay?.label ?? "";
@@ -250,65 +251,76 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
         </div>
       ))}
 
-      <div className="text-gray-dark grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
-        {data?.dateStart && (
-          <div className="flex flex-row justify-between gap-2">
-            <span
-              className="font-semiboldx min-w-40 truncate text-nowrap"
-              title="Started on"
-            >
-              Started on:
-            </span>
-            <span
-              className="line-clamp-2 truncate font-bold"
-              title={data.dateStart}
-            >
-              <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-                {data.dateStart}
-              </Moment>
-            </span>
-          </div>
-        )}
+      {/* A Job records a placement, not time spent (2026-10-03): the youth's form asks for no
+          start date, the API fills the end with the submission day (or the Job's passed
+          deadline), and "Time to complete" fell back to the advertised effort — so none of the
+          three is shown for a Job. Its own fields (e.g. the employment start date) still render
+          below. */}
+      {isJob ? (
+        <p className="text-gray-dark text-sm">
+          Jobs record a placement, not time spent.
+        </p>
+      ) : (
+        <div className="text-gray-dark grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
+          {data?.dateStart && (
+            <div className="flex flex-row justify-between gap-2">
+              <span
+                className="font-semiboldx min-w-40 truncate text-nowrap"
+                title="Started on"
+              >
+                Started on:
+              </span>
+              <span
+                className="line-clamp-2 truncate font-bold"
+                title={data.dateStart}
+              >
+                <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+                  {data.dateStart}
+                </Moment>
+              </span>
+            </div>
+          )}
 
-        {data?.dateEnd && (
-          <div className="flex flex-row justify-between gap-2">
-            <span
-              className="font-semiboldx min-w-40 truncate text-nowrap"
-              title="Finished on"
-            >
-              Finished on:
-            </span>
-            <span
-              className="line-clamp-2 truncate font-bold"
-              title={data.dateEnd}
-            >
-              <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-                {data.dateEnd}
-              </Moment>
-            </span>
-          </div>
-        )}
+          {data?.dateEnd && (
+            <div className="flex flex-row justify-between gap-2">
+              <span
+                className="font-semiboldx min-w-40 truncate text-nowrap"
+                title="Finished on"
+              >
+                Finished on:
+              </span>
+              <span
+                className="line-clamp-2 truncate font-bold"
+                title={data.dateEnd}
+              >
+                <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+                  {data.dateEnd}
+                </Moment>
+              </span>
+            </div>
+          )}
 
-        {/* Commitment now comes from `getCommitmentDisplay` (master), which prefers the
+          {/* Commitment now comes from `getCommitmentDisplay` (master), which prefers the
             API's total hours and falls back to the interval label. Rendered in this
             surface's own label/value row rather than master's inline pair. */}
-        {commitmentDisplay && (
-          <div className="flex flex-row justify-between gap-2">
-            <span
-              className="font-semiboldx min-w-40 truncate text-nowrap"
-              title="Time to complete"
-            >
-              Time to complete:
-            </span>
-            <span
-              className="line-clamp-2 truncate font-bold"
-              title={commitmentTimeToComplete}
-            >
-              {commitmentTimeToComplete}
-            </span>
-          </div>
-        )}
-      </div>
+          {commitmentDisplay && (
+            <div className="flex flex-row justify-between gap-2">
+              <span
+                className="font-semiboldx min-w-40 truncate text-nowrap"
+                title="Time to complete"
+              >
+                Time to complete:
+              </span>
+              <span
+                className="line-clamp-2 truncate font-bold"
+                title={commitmentTimeToComplete}
+              >
+                {commitmentTimeToComplete}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* CUSTOM FIELDS (definition-driven, YOM-1244 / YOM-1255) */}
       {/* Read-only completion custom-field values, hydrated on MyOpportunityInfo.

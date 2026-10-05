@@ -18,7 +18,8 @@ import type { DiscoveryChip } from "../../lib/chipModel";
  * A `pending` chip (region / city / distance until the Location search API lands) is drawn with
  * a dashed outline and says so in its title: it is part of the search's state and the URL, but
  * not of the results. An `inheritedInapplicable` chip is ghosted with no action — the note is
- * the whole message.
+ * the whole message. On every other chip the note follows the label in the title (2026-10-03):
+ * what an inherited chip does, or every value behind its "+1".
  */
 const PENDING_TITLE = " — not applied to results yet";
 export const Chip: React.FC<{
@@ -29,12 +30,13 @@ export const Chip: React.FC<{
 }> = ({ chip, onRemove, onUndo, pulse }) => {
   const label = `${chip.group}: ${chip.value}`;
   const pending = chip.pending ? "border border-dashed border-current" : "";
-  const title = chip.pending ? `${label}${PENDING_TITLE}` : label;
+  const noted = chip.note ? `${label} — ${chip.note}` : label;
+  const title = chip.pending ? `${noted}${PENDING_TITLE}` : noted;
 
   if (chip.provenance === "inheritedInapplicable")
     return (
       <span
-        title={chip.note ? `${label} — ${chip.note}` : label}
+        title={noted}
         className="bg-gray-light text-gray-dark inline-flex min-h-8 shrink-0 items-center gap-1 rounded-full px-3 py-1 text-xs"
       >
         <span className="line-clamp-2 max-w-40 opacity-60 md:truncate">

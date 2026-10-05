@@ -110,21 +110,27 @@ Rules:
 ## Web Tasks — Agent Roles (`src/web` only)
 
 Every task that changes `src/web/` runs through the roles in `.claude/agents/`: `designer`,
-`developer`, `reviewer` and `tester`. The main session is the **lead**. It plans, delegates to
-the roles, passes their results on, and owns the gates. API work is unaffected.
+`developer`, `reviewer` and `tester`. A document about the web app for readers outside the dev
+team (a BA, testers, the client, a partner) goes through the `writer`. The main session is the
+**lead**. It plans, delegates to the roles, passes their results on, and owns the gates. API work
+is unaffected.
 
 | Change                                                                  | Roles, in order                                                                                                  |
 | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | Visible to users: layout, styling, components, motion, copy             | designer (spec) → **Jason approves** → developer → reviewer + tester in parallel → developer fixes → designer (compare with the spec) |
 | Web logic with no visible change                                        | developer → reviewer + tester → developer fixes                                                                  |
 | Trivial: a typo, a comment, a one-line copy fix                         | developer → tester (static checks only)                                                                          |
+| A document for readers outside the team: testing guide, BA review pack, release notes | writer → reviewer (fact check against the code) → writer fixes → **Jason approves** before it is shared |
 
 - **Gates:**
   - Jason approves the design spec before implementation starts;
+  - Jason approves a reader-facing document before it is shared outside the team;
   - Jason approves every commit and push.
 - **Fix loops:** at most three rounds of fixes, then stop and ask Jason.
 - **Hand-offs go through files**, not chat:
   - the designer's spec lives in the feature folder;
+  - the writer's document lives where the lead names it. A guide that spans tickets goes in the
+    epic folder, e.g. `testing/`;
   - the lead records the reviewer's findings and the tester's report in the session handoff.
 - **One developer at a time,** in the main checkout. The running dev server serves it, so the
   tester sees the changes.

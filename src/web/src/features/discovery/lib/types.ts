@@ -5,10 +5,9 @@ import type { CustomFieldFilter } from "~/api/models/opportunity";
  * The discovery surface's filter state. The URL is the single source of truth for all of it —
  * one parser, one serialiser (`urlCodec.ts`), no parallel React state mirroring it.
  *
- * Every field binds to a core `OpportunitySearchFilter` param except `customFields`, which
- * carries YOM-1260 clauses verbatim. Facets the search API cannot filter on yet (skills) have NO
- * slot here — their sections render as visible-but-pending in the registry rather than holding
- * state the request would silently drop.
+ * Every field binds to a search criterion (`searchRequest.ts` builds the request) except
+ * `customFields`, which carries YOM-1260 clauses verbatim. `age` and `skills` are inherited only:
+ * no control sets them and the URL never carries them.
  */
 export interface DiscoveryFilters {
   /** Free-text search — `valueContains`. */
@@ -36,7 +35,10 @@ export interface DiscoveryFilters {
    * region / city match, and EXCLUDES opportunities that carry no coordinates.
    */
   radiusKm: number | null;
-  /** EngagementType ids ("How you take part"). */
+  /**
+   * EngagementType ids ("How you take part"), any of them. Inherited only, opportunities that
+   * don't say stay in; a manual pick leaves them out (2026-10-03, `composeSearch`).
+   */
   engagementTypes: string[];
   /** "Up to" commitment — TimeInterval id + count. */
   commitment: { intervalId: string; count: number } | null;
@@ -48,7 +50,11 @@ export interface DiscoveryFilters {
   zltoRanges: string[];
   /** Language ids. */
   languages: string[];
-  /** Accessibility lookup ids — ALL must be listed; opportunities that list none are left out. */
+  /**
+   * Accessibility lookup ids — ALL must be listed, and an opportunity that says No never matches.
+   * Inherited only (the saved requirements), opportunities that list none stay in; a manual pick
+   * leaves them out (2026-10-03, `composeSearch`).
+   */
   accommodations: string[];
   /** Sustainable Development Goal ids — any of them, or no goals specified. */
   sdgs: string[];
@@ -65,7 +71,17 @@ export interface DiscoveryFilters {
    * skippable chip) — no control sets it. Opportunities with no age bounds stay in.
    */
   age: number | null;
-  /** Type-scoped custom-field clauses (YOM-1260 shape). Cleared when a type is deselected. */
+  /**
+   * Skill ids — inherited only (the saved self-attested skills plus, signed in, the verified
+   * ones): no control sets them and the URL never carries them. Sent as the Jobs-only skills
+   * group (`searchRequest.ts`), never as a root criterion, so jobs that list no skills stay in
+   * and other types are not narrowed.
+   */
+  skills: string[];
+  /**
+   * Custom-field clauses (YOM-1260 shape). The API scopes each to its definition's type, so a Job
+   * clause never narrows an Event. Cleared when a type is deselected.
+   */
   customFields: CustomFieldFilter[];
 }
 
@@ -120,6 +136,7 @@ export const EMPTY_DISCOVERY_FILTERS: DiscoveryFilters = {
   provider: null,
   featured: null,
   age: null,
+  skills: [],
   customFields: [],
 };
 

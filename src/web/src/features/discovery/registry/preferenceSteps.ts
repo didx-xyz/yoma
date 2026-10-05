@@ -129,7 +129,8 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
         kind: "lookupSearch",
         prefKey: "skills",
         heading: null,
-        note: "Only jobs are matched on required skills; learning and volunteering award skills instead.",
+        // The saved skills narrow Jobs only, inclusively (2026-10-03, `searchRequest.ts`).
+        note: "Your skills narrow jobs only: a job that asks for none of them is hidden, and one that lists no skills stays in.",
         optionsSource: "skills",
         entries: null,
       },
@@ -138,26 +139,27 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
   {
     id: "time-format",
     title: "How much time do you have?",
-    subheading: "The most time you can give, and how you'd like to take part.",
+    subheading:
+      "The most time you can give, and the ways you'd like to take part.",
     infoNote: null,
     blocks: [
       {
         kind: "pills",
         prefKey: "maxCommitment",
         heading: "How long", // matches the filter section's name
-        // Matches the section's null rule: the API's interval filter EXCLUDES unset commitments
-        // for now (the BA rule is to include them — an open API ask).
-        note: "Opportunities that don't state a time commitment are left out by this for now.",
+        // Matches the section's null rule: a maximum keeps opportunities with no commitment set
+        // (the revised search contract, 2026-10-03).
+        note: "Ones with no time commitment stay in your feed.",
         optionsSource: "commitmentIntervals",
         entries: null,
       },
-      // Single-select again since 2026-09-29: the API stores one engagement preference. The
-      // Engagement FILTER stays multi-select.
+      // Multi-select since 2026-10-03: the API stores a list (`engagementTypes`). Inherited, the
+      // opportunities that don't say stay in. The note's first sentence is the multi-select cue.
       {
         kind: "pills",
         prefKey: "engagement",
         heading: "How you take part",
-        note: "Pick the one that suits you best.",
+        note: "Pick any that suit you. Ones that don't say how you take part stay in your feed.",
         optionsSource: "engagementTypes",
         entries: null,
       },
@@ -167,7 +169,7 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
         kind: "pills",
         prefKey: "incentivized",
         heading: "Pay or rewards",
-        note: "Leave both off if it doesn't matter. Opportunities that haven't said stay in your feed.",
+        note: "Leave both off if it doesn't matter. Ones with no incentive specified stay in, after the ones that match.",
         optionsSource: null,
         entries: [
           { id: "yes", label: "Paid or rewarded" },
@@ -211,14 +213,14 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
     infoNote: null,
     blocks: [
       // The API's accessibility requirements (2026-09-28): the shared accessibility list, plus a
-      // description when Other is picked. SAVED, NOT APPLIED — the search's accommodations filter
-      // leaves out every opportunity that hasn't described its accommodations, and the BA rule
-      // (2026-09-22) is that those stay in. The note says both halves of that.
+      // description when Other is picked. Inherited since 2026-10-03, inclusively: opportunities
+      // that haven't described their accommodations stay in, an explicit No or a list missing a
+      // need never does (`preferenceMapping.ts`). Other and its description are never searched.
       {
         kind: "accessibility",
         prefKey: "accessibility",
         heading: "Accessibility",
-        note: "This doesn't hide anything from your feed — to see only opportunities that list what you need, use the Accessibility filter. It is never shared outside Yoma — not with partners, not in credentials, not in analytics.",
+        note: "Opportunities that say No, or whose list misses something you pick, are hidden from your feed. Ones that haven't said stay in. Your needs are never shared outside Yoma — not with partners, not in credentials, not in analytics.",
         optionsSource: "accessibility",
         entries: null,
       },

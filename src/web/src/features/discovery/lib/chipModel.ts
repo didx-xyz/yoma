@@ -1,6 +1,15 @@
 import {
+  ACCESSIBILITY_CHIP_VALUE,
+  ACCESSIBILITY_NOTE,
+  COUNTRY_NOTE,
   FACET_GROUPS,
+  GOAL_CHIPS,
+  GOAL_GROUP,
+  goalNote,
   incentivizedLabel,
+  JOB_SKILLS_INAPPLICABLE_NOTE,
+  JOB_SKILLS_NOTE,
+  jobSkillsLabel,
   MANUAL_LIST_FACETS,
   PREF_GROUPS,
 } from "./chipGroups";
@@ -11,8 +20,17 @@ import {
   locationFragmentState,
   placeLabel,
 } from "./location";
-import type { InheritedFragments } from "./preferenceMapping";
-import { applyInheritedFragments } from "./preferenceMapping";
+import type {
+  InheritedFragment,
+  InheritedFragments,
+} from "./preferenceMapping";
+import {
+  categoryIdByName,
+  composeSearch,
+  GOAL_CATEGORY_NAMES,
+} from "./preferenceMapping";
+import type { SearchLookups } from "./searchRequest";
+import { jobSkillsApply } from "./searchRequest";
 import type { DiscoveryFilters, PreferenceKey } from "./types";
 
 /**
@@ -21,10 +39,10 @@ import type { DiscoveryFilters, PreferenceKey } from "./types";
  * on screen, struck through, with an undo. Custom-field clauses are chipped by the surface via
  * YOM-1260's `useCustomFieldFilterLabeler` (a hook, so it cannot live here).
  *
- * A fourth class exists for the inherited location only: `inheritedInapplicable` — the youth's
- * place is not part of THIS search because the search is for another country (or names its own
- * place). Ghosted like a skipped chip but with no undo, because undoing would change nothing;
- * `note` says why.
+ * A fourth class, `inheritedInapplicable`, exists for two inherited chips: the location, when the
+ * search is for another country (or names its own place), and the skills, when the search can
+ * return no Job for them to narrow (`jobSkillsApply`, 2026-10-03). Ghosted like a skipped chip
+ * but with no undo, because undoing would change nothing; `note` says why.
  */
 export type ChipProvenance =
   | "inherited"
@@ -47,8 +65,17 @@ export interface DiscoveryChip {
    * API lands — `LOCATION_SEARCH_LIVE`). Drawn dashed; never counted as filtering.
    */
   pending: boolean;
-  /** Why an inapplicable chip is not part of this search. */
+  /**
+   * The chip's tooltip after its label: why an inapplicable chip is not part of this search, else
+   * what an inherited chip does, or every value of a multi-value one ("Remote, On-site").
+   */
   note: string | null;
+  /**
+   * The value is private — the inherited accessibility needs (2026-10-03). It is never repeated
+   * outside the chip: the summaries (`inheritedSummary`, `filteringSummary`) count it instead of
+   * naming it.
+   */
+  private: boolean;
 }
 
 /** Resolves a raw facet value (usually a lookup id) to its display name. */
@@ -86,6 +113,81 @@ const facetGroup = (fragment: Partial<DiscoveryFilters>): string | null => {
   return facet ? (FACET_GROUPS[facet] ?? null) : null;
 };
 
+/** Every value of a multi-value fragment, so its "+1" is never a dead end on desktop. */
+function allValuesNote(
+  fragment: Partial<DiscoveryFilters>,
+  resolve: ChipLabelResolver,
+): string | null {
+  const [facet, values] =
+    Object.entries(fragment).find(([, v]) => Array.isArray(v)) ?? [];
+  if (!facet || !Array.isArray(values) || values.length < 2) return null;
+  return (values as string[])
+    .map((value) => resolve(facet as keyof DiscoveryFilters, value))
+    .join(", ");
+}
+
+/**
+ * A goal that is more than a type names both halves, from the lookups. `null` when its category
+ * cannot be resolved: the request then sends the goal's type alone (`searchRequest.ts`).
+ */
+function goalChipNote(
+  fragment: InheritedFragment,
+  resolve: ChipLabelResolver,
+  lookups: SearchLookups,
+): string | null {
+  const names = fragment.userGoal
+    ? GOAL_CATEGORY_NAMES[fragment.userGoal]
+    : undefined;
+  const categoryId = names ? categoryIdByName(lookups.categories, names) : null;
+  const type = fragment.types?.[0];
+  return type && categoryId
+    ? goalNote(resolve("types", type), resolve("categories", categoryId))
+    : null;
+}
+
+/**
+ * An inherited chip's group, value and note. Most name the facet value their fragment carries;
+ * three say what they do instead (2026-10-03): a goal that is more than a type ("Goal: Starting a
+ * business"), the number of skills the Jobs-only group sends, and the accessibility needs, which
+ * are private — never named or counted, in the value or the note.
+ */
+function inheritedLabel(
+  key: PreferenceKey,
+  fragment: InheritedFragment,
+  resolve: ChipLabelResolver,
+  lookups: SearchLookups,
+): Pick<DiscoveryChip, "group" | "value" | "note" | "private"> {
+  const group = PREF_GROUPS[key] ?? facetGroup(fragment) ?? key;
+  const goal = fragment.userGoal ? GOAL_CHIPS[fragment.userGoal] : undefined;
+  if (key === "goal" && goal)
+    return {
+      group: GOAL_GROUP,
+      value: goal,
+      note: goalChipNote(fragment, resolve, lookups),
+      private: false,
+    };
+  if (key === "skills")
+    return {
+      group,
+      value: jobSkillsLabel(fragment.skills?.length ?? 0),
+      note: JOB_SKILLS_NOTE,
+      private: false,
+    };
+  if (key === "accessibility")
+    return {
+      group,
+      value: ACCESSIBILITY_CHIP_VALUE,
+      note: ACCESSIBILITY_NOTE,
+      private: true,
+    };
+  return {
+    group,
+    value: fragmentValue(fragment, resolve),
+    note: key === "country" ? COUNTRY_NOTE : allValuesNote(fragment, resolve),
+    private: false,
+  };
+}
+
 const manualChip = (
   facet: keyof DiscoveryFilters,
   raw: string,
@@ -100,6 +202,7 @@ const manualChip = (
   raw,
   pending: !LOCATION_SEARCH_LIVE && LOCATION_FACETS.includes(facet),
   note: null,
+  private: false,
 });
 
 const LOCATION_FACETS: (keyof DiscoveryFilters)[] = [
@@ -114,21 +217,19 @@ export function buildChips(
   preferencesOff: boolean,
   skipped: PreferenceKey[],
   resolve: ChipLabelResolver,
+  /** The request's lookups: whether the skills apply, and the goal's category name. */
+  lookups: SearchLookups,
 ): DiscoveryChip[] {
   const entries = Object.entries(fragments) as [
     PreferenceKey,
-    Partial<DiscoveryFilters>,
+    InheritedFragment,
   ][];
   const active = entries
     .filter(([key]) => !preferencesOff && !skipped.includes(key))
     .map(([, fragment]) => fragment);
 
-  const effective = applyInheritedFragments(
-    manual,
-    fragments,
-    preferencesOff,
-    skipped,
-  );
+  const search = composeSearch(manual, fragments, preferencesOff, skipped);
+  const effective = search.filters;
   const location = locationFragmentState(
     manual,
     fragments,
@@ -137,9 +238,9 @@ export function buildChips(
   );
 
   return [
-    ...inheritedChips(entries, preferencesOff, skipped, resolve, {
-      state: location,
-      countries: effective.countries,
+    ...inheritedChips(entries, preferencesOff, skipped, resolve, lookups, {
+      location: { state: location, countries: effective.countries },
+      jobSkillsApply: jobSkillsApply(search, lookups),
     }),
     ...manualChips(manual, active, resolve, effective),
   ];
@@ -163,15 +264,22 @@ function locationNote(
 
 // Inherited first, in mapping order. Hidden wholesale only by the master switch. The group is
 // the preference's own label where it has one, else the label of the facet the fragment carries
-// (the Goal fragment carries a Type, so its chip reads "Type: …").
+// (the Goal fragment carries a Type, so its chip reads "Type: …" — except for a goal that is
+// more than a type, `inheritedLabel`).
 function inheritedChips(
-  entries: [PreferenceKey, Partial<DiscoveryFilters>][],
+  entries: [PreferenceKey, InheritedFragment][],
   preferencesOff: boolean,
   skipped: PreferenceKey[],
   resolve: ChipLabelResolver,
-  location: { state: LocationFragmentState | null; countries: string[] },
+  lookups: SearchLookups,
+  context: {
+    location: { state: LocationFragmentState | null; countries: string[] };
+    /** The skills group goes out — W2's rule, so the chip and the request cannot disagree. */
+    jobSkillsApply: boolean;
+  },
 ): DiscoveryChip[] {
   if (preferencesOff) return [];
+  const { location } = context;
   return entries.map(([key, fragment]): DiscoveryChip => {
     const base = {
       id: `pref:${key}`,
@@ -179,6 +287,7 @@ function inheritedChips(
       prefKey: key,
       facet: null,
       raw: null,
+      private: false,
     };
     if (key === "location") {
       const inapplicable =
@@ -199,12 +308,20 @@ function inheritedChips(
         note: locationNote(location.state, location.countries, resolve),
       };
     }
+    const label = inheritedLabel(key, fragment, resolve, lookups);
+    // The skills narrow Jobs only: on a search that can return none, the chip filters nothing.
+    const inapplicable =
+      !skipped.includes(key) && key === "skills" && !context.jobSkillsApply;
     return {
       ...base,
-      value: fragmentValue(fragment, resolve),
-      provenance: skipped.includes(key) ? "inheritedOff" : "inherited",
+      ...label,
+      provenance: skipped.includes(key)
+        ? "inheritedOff"
+        : inapplicable
+          ? "inheritedInapplicable"
+          : "inherited",
       pending: false,
-      note: null,
+      note: inapplicable ? JOB_SKILLS_INAPPLICABLE_NOTE : label.note,
     };
   });
 }
@@ -271,3 +388,80 @@ function manualChips(
     chips.push(manualChip("featured", "true", "Featured"));
   return chips;
 }
+
+/**
+ * What a one-line summary of chips may say (2026-10-03): the values it can name, and how many
+ * chips it must count instead because their value is private. The banner's "tuned to" line, the
+ * "Picked for you" subtitle, the results heading and the recent-search label all go through it,
+ * so a private value cannot reach one of them.
+ */
+export interface ChipSummary {
+  named: string[];
+  unnamed: number;
+}
+
+const summarize = (chips: DiscoveryChip[]): ChipSummary => {
+  const named = chips.filter((c) => !c.private).map((c) => c.value);
+  return { named, unnamed: chips.length - named.length };
+};
+
+/** The preference layer in play: the active inherited chips, not skipped or inapplicable ones. */
+export const inheritedSummary = (chips: DiscoveryChip[]): ChipSummary =>
+  summarize(chips.filter((c) => c.provenance === "inherited"));
+
+/**
+ * The chips that actually filter: struck-through (skipped) and inapplicable chips do not, and
+ * neither do pending ones (region / city / distance until the Location search lands).
+ */
+export const filteringSummary = (chips: DiscoveryChip[]): ChipSummary =>
+  summarize(
+    chips.filter(
+      (c) =>
+        (c.provenance === "inherited" || c.provenance === "manual") &&
+        !c.pending,
+    ),
+  );
+
+/**
+ * "Starting a business · Up to 1 week · +2": the first `shown` nameable values, then the rest —
+ * private ones included — as a count. Empty when nothing can be named; the caller then says
+ * "your preferences".
+ */
+export function tunedToParts(summary: ChipSummary, shown: number): string[] {
+  if (summary.named.length === 0) return [];
+  const listed = summary.named.slice(0, shown);
+  const rest = summary.named.length - listed.length + summary.unnamed;
+  return rest > 0 ? [...listed, `+${rest}`] : listed;
+}
+
+/**
+ * The results heading's subject — "for {first} + {rest} filters". The free text leads, then the
+ * nameable filters; a private value is never the subject, only counted. With a private value
+ * alone, the subject is the layer it comes from, "your preferences". `extra` counts filters
+ * chipped elsewhere (custom-field clauses). `null` when nothing filters.
+ */
+export function headingSubject(
+  q: string | null,
+  summary: ChipSummary,
+  extra: number,
+): { first: string; rest: number } | null {
+  const values = [...(q ? [`“${q}”`] : []), ...summary.named];
+  if (values.length === 0 && summary.unnamed === 0) return null;
+  return {
+    first: values[0] ?? "your preferences",
+    rest: values.length + summary.unnamed - 1 + extra,
+  };
+}
+
+/**
+ * A recent search's label: the word, else the nameable filters. A private value is left out
+ * entirely; alone, it reads "Your preferences". No word and no filtering chip (`prefsOff=1`
+ * alone) is every opportunity — never a blank row.
+ */
+export const recentSearchLabel = (
+  q: string | null,
+  summary: ChipSummary,
+): string =>
+  q ??
+  (summary.named.join(" · ") ||
+    (summary.unnamed > 0 ? "Your preferences" : "All opportunities"));

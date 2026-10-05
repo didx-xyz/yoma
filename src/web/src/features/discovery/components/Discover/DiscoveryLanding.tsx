@@ -1,4 +1,6 @@
 import React from "react";
+import { inheritedSummary } from "../../lib/chipModel";
+import { manualSearch } from "../../lib/preferenceMapping";
 import { serializeDiscoveryState } from "../../lib/urlCodec";
 import type { DiscoveryFilters, DiscoveryState } from "../../lib/types";
 import {
@@ -40,15 +42,27 @@ const FEATURED_FILTERS: DiscoveryFilters = {
 export const DiscoveryLanding: React.FC<{
   now: Date;
 }> = ({ now }) => {
-  const { effectiveFilters, chips, lookups } = useDiscovery();
+  const { state, search, effectiveFilters, chips, lookups } = useDiscovery();
 
+  // "See all" writes the inherited values into the URL as this search's own. The count still
+  // matches the rail: the same preferences supply them there, so they keep their inherited modes
+  // (`composeSearch`), and the goal and skills groups, which have no param, stay inherited.
+  // Except the accessibility needs, which are private: in the URL they would be named in chips,
+  // recent searches, history and shared links, and turn strict with preferences off. The
+  // destination inherits them as the rail does.
   const preferenceState: DiscoveryState = {
     ...DEFAULT_DISCOVERY_STATE,
-    filters: effectiveFilters,
+    filters: {
+      ...effectiveFilters,
+      accommodations: state.filters.accommodations,
+    },
   };
-  const tunedTo = chips
-    .filter((c) => c.provenance === "inherited")
-    .map((c) => c.value.toLowerCase())
+  // The rail shows while ANY preference applies; its subtitle names only what may be named — never
+  // a private value — and falls back to the layer itself (2026-10-03).
+  const inherited = inheritedSummary(chips);
+  const personalized = inherited.named.length + inherited.unnamed > 0;
+  const tunedTo = inherited.named
+    .map((value) => value.toLowerCase())
     .slice(0, 2)
     .join(", ");
 
@@ -68,11 +82,16 @@ export const DiscoveryLanding: React.FC<{
 
   return (
     <div className="flex flex-col gap-8 md:gap-10">
-      {tunedTo && (
+      {personalized && (
         <DiscoveryRail
           title="Picked for you"
-          subtitle={`Because your feed is tuned to ${tunedTo}`}
-          filters={effectiveFilters}
+          subtitle={
+            tunedTo
+              ? `Because your feed is tuned to ${tunedTo}`
+              : "Because of your preferences"
+          }
+          search={search}
+          personalized
           seeAllQueryString={serializeDiscoveryState(preferenceState)}
           now={now}
         />
@@ -80,14 +99,14 @@ export const DiscoveryLanding: React.FC<{
       <DiscoveryRail
         title="Featured"
         subtitle="Hand-picked by the Yoma team"
-        filters={FEATURED_FILTERS}
+        search={manualSearch(FEATURED_FILTERS)}
         seeAllQueryString={withoutPreferences(FEATURED_FILTERS)}
         now={now}
       />
       <DiscoveryRail
         title="Newest on Yoma"
         subtitle="Latest start dates first"
-        filters={EMPTY_DISCOVERY_FILTERS}
+        search={manualSearch(EMPTY_DISCOVERY_FILTERS)}
         seeAllQueryString={withoutPreferences(EMPTY_DISCOVERY_FILTERS)}
         now={now}
       />
@@ -95,7 +114,7 @@ export const DiscoveryLanding: React.FC<{
         <DiscoveryRail
           title="Done in under an hour"
           subtitle="Quick wins that fit into your day"
-          filters={underAnHourFilters}
+          search={manualSearch(underAnHourFilters)}
           seeAllQueryString={withoutPreferences(underAnHourFilters)}
           now={now}
         />

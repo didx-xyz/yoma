@@ -90,6 +90,7 @@ export const AppliedChips: React.FC<{
             raw: null,
             pending: false,
             note: null,
+            private: false,
           }}
           onRemove={() =>
             dispatch({

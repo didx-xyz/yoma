@@ -8,12 +8,14 @@ import type {
   SustainableDevelopmentGoal,
   TimeInterval,
 } from "~/api/models/lookups";
+import { ACCESSIBILITY_NAME_OTHER } from "~/api/models/lookups";
 import type {
   OpportunityCategory,
   OpportunitySearchCriteriaZltoRewardRange,
   OpportunityType,
 } from "~/api/models/opportunity";
 import {
+  getAccessibilityOptions,
   getCurrencies,
   getEngagementTypes,
   getTimeIntervals,
@@ -28,7 +30,7 @@ import {
   getZltoRewardRanges,
 } from "~/api/services/opportunities";
 import type { FacetStatus } from "../lib/apiStatus";
-import { facetStatus } from "../lib/apiStatus";
+import { facetStatus, hasSettled } from "../lib/apiStatus";
 import { sortTypes } from "../lib/typeOrder";
 
 /**
@@ -68,10 +70,36 @@ export interface DiscoveryLookups {
   timeIntervals: TimeInterval[];
   zltoRanges: OpportunitySearchCriteriaZltoRewardRange[];
   accommodations: Accessibility[];
+  /**
+   * The FULL accessibility list — the wizard's, where `accommodations` is the facet list of what
+   * published opportunities use. Labels an inherited need no opportunity lists yet, in the
+   * Accessibility section (2026-10-03). The same cached query, never a request of its own.
+   */
+  accessibility: Accessibility[];
   sdgs: SustainableDevelopmentGoal[];
   currencies: Currency[];
   /** Opportunity Type enum name → GUID, for the search request. */
   typeIdByName: Record<string, string>;
+  /**
+   * The accessibility list's Other option, found by name in the full list (the one the wizard
+   * offers), else in the facet list. Never part of an inherited search: without its private
+   * description it cannot match the need (2026-10-03). `undefined` until the full list has
+   * settled, so no accessibility chip shows and then vanishes; `null` when neither list has it.
+   */
+  otherAccommodationId: string | null | undefined;
+  /**
+   * Whether the lookups every search request resolves through have settled: the types loaded (it
+   * sends their ids); the countries and categories loaded or failed once — Worldwide and the
+   * goal's category are found in them. A failed list degrades the request at once rather than
+   * holding it through the retries; one still loading would send a request that is replaced a
+   * moment later.
+   */
+  searchReady: boolean;
+  /**
+   * The full accessibility list has loaded or failed once, so `otherAccommodationId` is known.
+   * Only a search that inherits accessibility needs waits for it (`DiscoveryContext`).
+   */
+  accessibilitySettled: boolean;
   /** Per lookup: `ok`, `unavailable` (404) or `failed`. Consumed by the section it feeds. */
   status: Record<LookupKey, FacetStatus>;
   /** The Opportunity Types lookup specifically: the type row and block 5 cannot render without it. */
@@ -134,6 +162,13 @@ export function useDiscoveryLookups(): DiscoveryLookups {
     queryFn: () => getCurrencies(),
     ...options,
   });
+  // The FULL accessibility list — the wizard's query (`useAccessibilityOptions`), one cache entry.
+  // Read here only to find Other, which the facet list lacks when no opportunity lists it.
+  const accessibilityQuery = useQuery({
+    queryKey: ["discovery", "lookup", "accessibility"],
+    queryFn: () => getAccessibilityOptions(),
+    staleTime: Infinity,
+  });
 
   const queries = [
     typesQuery,
@@ -153,6 +188,8 @@ export function useDiscoveryLookups(): DiscoveryLookups {
   const types = typesQuery.data ? sortTypes(typesQuery.data) : undefined;
   const status = (query: (typeof queries)[number]): FacetStatus =>
     query.isPending ? "loading" : facetStatus(query.isError, query.error);
+  const otherIn = (list: { id: string; name: string }[] | undefined) =>
+    list?.find((option) => option.name === ACCESSIBILITY_NAME_OTHER)?.id;
 
   return {
     types: types ?? [],
@@ -163,9 +200,20 @@ export function useDiscoveryLookups(): DiscoveryLookups {
     timeIntervals: timeIntervalsQuery.data ?? [],
     zltoRanges: zltoRangesQuery.data ?? [],
     accommodations: accommodationsQuery.data ?? [],
+    accessibility: accessibilityQuery.data ?? [],
     sdgs: sdgsQuery.data ?? [],
     currencies: currenciesQuery.data ?? [],
     typeIdByName: Object.fromEntries((types ?? []).map((t) => [t.name, t.id])),
+    otherAccommodationId: hasSettled(accessibilityQuery)
+      ? (otherIn(accessibilityQuery.data) ??
+        otherIn(accommodationsQuery.data) ??
+        null)
+      : undefined,
+    searchReady:
+      (types?.length ?? 0) > 0 &&
+      hasSettled(countriesQuery) &&
+      hasSettled(categoriesQuery),
+    accessibilitySettled: hasSettled(accessibilityQuery),
     status: {
       types: status(typesQuery),
       categories: status(categoriesQuery),
@@ -180,7 +228,8 @@ export function useDiscoveryLookups(): DiscoveryLookups {
     },
     typesFailed: typesQuery.isError,
     retry: () => {
-      for (const query of queries) if (query.isError) void query.refetch();
+      for (const query of [...queries, accessibilityQuery])
+        if (query.isError) void query.refetch();
     },
   };
 }

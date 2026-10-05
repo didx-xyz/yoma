@@ -31,6 +31,8 @@ definitions to the BA-approved set (YOM-1264) without a code change.
 
 **Current search/preference contract (2026-10-01):** the [consolidated API handoff](./handoffs/2026-10-01-c.md) records the agreed decisions for asks 1–24, exact request shapes/defaults and test evidence. It supersedes the historical search/preference-cardinality notes below. The implementation is uncommitted for Adrian's review; API and Web must move to the breaking shapes together. Web continues to own preference composition and skips.
 
+**Web moved onto this contract on 2026-10-03** (on top of `77646a74`): every search caller, discovery's composition with provenance, and the visible changes. See the [YOM-1262 handoff](./YOM-1262-ui-apply-user-presets-to-opportunity-discovery/handoffs/2026-10-03-a.md). The branch now works only against an API on `77646a74` or later. For the BA and testers, the [testing guide](./testing/2026-10-03-discovery-testing-guide.md) explains the search, preferences, filters, details and admin changes in plain words. It has 68 tests and lists the decisions awaiting BA confirmation (TBC).
+
 | [YOM-1259 taxonomy implementation](./YOM-1259-api-update-the-opportunity-category-lookup-to-the-new-taxonomy/feature.md) | API / Adrian | in-progress |
 | --- | --- | --- |
 
@@ -270,7 +272,7 @@ Both child features build on the same components — extend these rather than ad
 | Filtering      | `components/Opportunity/CustomFieldFilters.tsx`                                                                                                        |
 | CF rules       | `lib/customFields/customFieldRules.ts` — mirrors the API's `AssertCrossFieldRules` (Job salary / employment, Impact Action tools, Entrepreneurship programme) on its SYSTEM keys only; inert without them |
 | Places         | `components/Location/LocationInput.tsx` (youth + admin), `components/Opportunity/Admin/OpportunityCountryPlaces.tsx`; wire forms in `api/models/location.ts` |
-| Search payload | `toSearchFilterPayload` (`api/services/opportunities.ts`) — callers pass country ids; the three search requests send `[{ countryId }]`                  |
+| Search payload | `toSearchFilterPayload(input, endpoint)` (`api/services/opportunitySearchPayload.ts`, 2026-10-03): wraps flat legacy and admin filters with no mode, and passes discovery's typed request through untouched. Discovery builds its request in `features/discovery/lib/searchRequest.ts` |
 
 Credential surfaces additionally share, extracted by YOM-1282:
 

@@ -4,7 +4,8 @@ import type {
   UserPreferences,
   UserPreferenceSkill,
 } from "~/api/models/userPreferences";
-import { useSkillSearch, useVerifiedSkillIds } from "../usePreferenceOptions";
+import { useVerifiedSkillIds } from "../../../state/useVerifiedSkillIds";
+import { useSkillSearch } from "../usePreferenceOptions";
 import { Pill } from "./Pill";
 
 /**
@@ -22,7 +23,7 @@ export const SkillSearch: React.FC<{
 }> = ({ draft, onPatch }) => {
   const [text, setText] = useState("");
   const results = useSkillSearch(text);
-  const verified = useVerifiedSkillIds();
+  const verified = new Set(useVerifiedSkillIds().ids);
   const selected = draft.selfReportedSkills;
 
   const toggle = (skill: UserPreferenceSkill): void => {

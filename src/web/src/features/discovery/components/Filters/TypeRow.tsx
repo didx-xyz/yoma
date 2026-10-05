@@ -1,9 +1,13 @@
 import React from "react";
 import { IoShapesOutline } from "react-icons/io5";
-import { owningPreference } from "../../lib/preferenceMapping";
+import {
+  categoryIdByName,
+  owningPreference,
+} from "../../lib/preferenceMapping";
 import {
   TYPE_ROW_HINT,
   TYPE_ROW_QUESTION,
+  typeRowGoalLine,
 } from "../../registry/filterSections";
 import { useDiscovery } from "../../state/DiscoveryContext";
 import { Message } from "../shared/Message";
@@ -32,6 +36,7 @@ export const TypeRow: React.FC<{
     state,
     dispatch,
     lookups,
+    search,
     effectiveFilters,
     fragments,
     skipPreference,
@@ -52,6 +57,14 @@ export const TypeRow: React.FC<{
   const selected = effectiveFilters.types
     .map((name) => lookups.types.find((t) => t.name === name)?.displayName)
     .filter((label): label is string => !!label);
+
+  // While the goal's fragment survives and brings in a category, the same id the request sends.
+  // Unresolved, the request sends the goal's type alone, so there is nothing to say.
+  const goalCategoryId = search.goalCategoryNames
+    ? categoryIdByName(lookups.categories, search.goalCategoryNames)
+    : null;
+  const goalCategory =
+    lookups.categories.find((c) => c.id === goalCategoryId)?.name ?? null;
 
   return (
     <section className={hideHeader ? "" : "border-gray border-b py-1"}>
@@ -102,6 +115,11 @@ export const TypeRow: React.FC<{
               );
             })}
           </div>
+        )}
+        {goalCategory && (
+          <p className="text-gray-dark text-[13px] leading-snug">
+            {typeRowGoalLine(goalCategory)}
+          </p>
         )}
       </div>
     </section>

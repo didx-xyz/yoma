@@ -26,9 +26,9 @@ export const StepBlock: React.FC<{
 
   // Selection semantics keyed by the PREFERENCE, not by the block kind — `rows` and `pills`
   // are purely visual, so the registry can swap kinds without cross-wiring another preference.
-  // All three pill preferences are single-select, and tapping the chosen pill clears it: time
-  // commitment (one maximum), engagement (one, since 2026-09-29 — the API stores one) and the
-  // incentive preference (`yes` / `no` entries, none = no preference).
+  // Time commitment (one maximum) and the incentive preference (`yes` / `no` entries) are
+  // single-select, and tapping the chosen pill clears it. Engagement is multi-select (the API
+  // stores a list, 2026-10-03): each tap toggles its own pill, and none = no preference.
   const pillSelection = (): {
     active: (id: string) => boolean;
     toggle: (id: string) => void;
@@ -56,9 +56,8 @@ export const StepBlock: React.FC<{
         },
       };
     return {
-      active: (id) => draft.engagement === id,
-      toggle: (id) =>
-        onPatch({ engagement: draft.engagement === id ? null : id }),
+      active: (id) => draft.engagement.includes(id),
+      toggle: (id) => onPatch({ engagement: toggleIn(draft.engagement, id) }),
     };
   };
 

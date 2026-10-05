@@ -31,8 +31,9 @@ import {
  *
  * 2026-09-29, with the new core facets: `paid=1|0` (incentivized), `acc=` (accommodations),
  * `sdg=` and `provider=` (free text — it replaces `org=`, the organisation ids the Provider
- * section held before the Provider field existed; nothing reads `org=` any more). `age` has no
- * param: it is inherited from the profile only, never chosen here.
+ * section held before the Provider field existed; nothing reads `org=` any more). `age` and
+ * `skills` have no param: they are inherited from the profile and the preferences only, never
+ * chosen here.
  *
  * 2026-10-02 (round 10): `featured=1`, the landing's Featured rail. Only `1` is read: the API
  * filters on `featured == true` alone, so a `0` would be a filter that filters nothing.
@@ -116,6 +117,7 @@ export function parseDiscoveryQuery(query: Query): DiscoveryState {
       provider: single(query, "provider"),
       featured: single(query, "featured") === "1" ? true : null,
       age: null,
+      skills: [],
       customFields: parseCustomFields(single(query, "cf")),
     },
     preferencesOff: single(query, "prefsOff") === "1",

@@ -16,8 +16,9 @@ import {
  * The anonymous → signed-in hand-over (YOM-1261). Anonymous answers live in `sessionStorage` and
  * die with the session; when a youth signs in while such answers exist, we offer ONCE to keep
  * them. Keeping merges them into the stored preset through the façade — an existing preset is
- * never overwritten silently (multi-selects union; the session's answers win where both set a
- * single value). Declining discards the session answers, which also retires the offer.
+ * never overwritten silently (multi-selects union, engagement included since the wizard step
+ * picks several; the session's answers win where both set a single value). Declining discards
+ * the session answers, which also retires the offer.
  */
 const hasAnswers = (preferences: UserPreferences | null): boolean =>
   preferences !== null &&

@@ -10,6 +10,7 @@ import {
   saveUserPreferences,
 } from "~/api/services/userPreferences";
 import { userProfileAtom } from "~/lib/store";
+import { hasSettled } from "../lib/apiStatus";
 
 /**
  * The youth's stored preferences. Anonymous visitors get session-held answers; signed-in youths
@@ -30,8 +31,13 @@ const seenStorage = (): Storage | null =>
 
 export function usePreferences(): {
   scope: UserPreferenceScope;
-  /** `undefined` while loading; `null` = never captured. */
+  /** `undefined` while loading (or after the read failed); `null` = never captured. */
   preferences: UserPreferences | null | undefined;
+  /**
+   * The read has answered or failed once — the search waits for it, so its first request is not
+   * replaced by the personalized one a moment later. A failed read degrades to no preferences.
+   */
+  settled: boolean;
   /** Rejects with a readable message when the save — or the place, on the profile — fails. */
   save: (preferences: UserPreferences) => Promise<UserPreferences>;
   readPersonalizationSeen: () => boolean;
@@ -44,12 +50,13 @@ export function usePreferences(): {
   const setUserProfile = useSetAtom(userProfileAtom);
   const queryKey = ["discovery", "preferences", scope];
 
-  const { data } = useQuery({
+  const query = useQuery({
     queryKey,
     queryFn: () => getUserPreferences(scope),
     enabled: status !== "loading",
     staleTime: Infinity, // this hook is the only writer, and it updates the cache below
   });
+  const { data } = query;
 
   const { mutateAsync: save } = useMutation({
     mutationFn: async (preferences: UserPreferences) => {
@@ -66,6 +73,7 @@ export function usePreferences(): {
   return {
     scope,
     preferences: data,
+    settled: status !== "loading" && hasSettled(query),
     save,
     readPersonalizationSeen: () => seenStorage()?.getItem(SEEN_KEY) === "1",
     markPersonalizationSeen: () => seenStorage()?.setItem(SEEN_KEY, "1"),

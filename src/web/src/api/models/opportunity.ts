@@ -33,15 +33,16 @@ export interface OpportunityRequestCountry {
 }
 
 /**
- * One country entry in an opportunity search. Entries are alternatives (OR); region AND city
- * must match that same country's mapping, case-insensitive "contains", and an opportunity with
- * no region / city stays IN. Alternatively `coordinates` + `radiusKm` — never with region / city
- * — which EXCLUDES opportunities without coordinates. Duplicate countries are rejected.
+ * One country with a place, as a flat filter caller holds it: region / city, or `coordinates` +
+ * `radiusKm` — never both. `toSearchFilterPayload` turns it into the wire
+ * `OpportunitySearchFilterCountry`, each part with no mode: region / city ("contains") keep an
+ * opportunity that names no place, and a radius leaves out one without coordinates.
  */
-export interface OpportunitySearchFilterCountry {
+export interface OpportunitySearchCountryLocation {
   countryId: string;
   region?: string | null;
   city?: string | null;
+  /** `[longitude, latitude]`. */
   coordinates?: number[] | null;
   radiusKm?: number | null;
 }
@@ -221,12 +222,11 @@ export interface OpportunityInfo extends OpportunityCoreMetadata {
   customFields?: CustomFieldValueItem[] | null;
 }
 
+/**
+ * The flat search filters the legacy and admin callers hold: bare ids, values and lists. The
+ * wire takes typed criteria (`OpportunitySearchRequest*` below); `toSearchFilterPayload` converts.
+ */
 export interface OpportunitySearchFilter extends OpportunitySearchFilterBase {
-  /**
-   * Count only (API 2026-09-29): the same predicates, `totalCount` back and NO `items`;
-   * pagination is optional. Public search only — the admin search has no such flag.
-   */
-  totalCountOnly?: boolean;
   publishedStates: PublishedState[] | null | string[]; //NB
   commitmentInterval: OpportunitySearchFilterCommitmentInterval | null;
   zltoReward: OpportunitySearchFilterZltoReward | null;
@@ -247,7 +247,7 @@ export interface OpportunitySearchFilterBase extends PaginationFilter {
    * Web-only: country entries with a region / city or a point + radius. When set it REPLACES
    * `countries` on the wire; it is never sent as its own property.
    */
-  countryLocations?: OpportunitySearchFilterCountry[] | null;
+  countryLocations?: OpportunitySearchCountryLocation[] | null;
   organizations: string[] | null;
   engagementTypes: string[] | null;
   featured: boolean | null;
@@ -271,7 +271,151 @@ export interface OpportunitySearchFilterBase extends PaginationFilter {
   sustainableDevelopmentGoals?: string[] | null;
   /** Whole years, within both inclusive bounds; an unset bound is unrestricted. */
   age?: number | null;
+  /**
+   * Count only: the same filtered query, `totalCount` back and NO `items`; paging is optional.
+   * Both searches; the CSV export rejects it.
+   */
+  totalCountOnly?: boolean;
 }
+
+//#region Search request wire shape (API 2026-10-03)
+// The revised search contract (epic handoff 2026-10-01-c). Every selection criterion travels as a
+// `SearchCriterion` except `age` (a plain number) and `countries` (a plain list of entries). The
+// flat filters above go through `toSearchFilterPayload` (`~/api/services/opportunitySearchPayload`),
+// which wraps each criterion with no mode so the API's default applies; a request typed with
+// these passes through it untouched.
+
+/** Enum names on the wire. What a criterion does with opportunities that have not said. */
+export enum UnspecifiedMatch {
+  /** Matching known values only. */
+  Exclude = "Exclude",
+  /** Matching values, or no value at all. A known, different value is not "no value". */
+  Include = "Include",
+  /** No value only — send no `value`. */
+  Only = "Only",
+}
+
+/**
+ * One criterion: the comparison value and the policy for opportunities that have no value. An
+ * omitted `unspecified` takes the criterion's API default, which differs per criterion; an
+ * omitted criterion does not filter. `types`, `organizations` and `rewardTypes` reject every mode.
+ */
+export interface SearchCriterion<T> {
+  value?: T;
+  unspecified?: UnspecifiedMatch;
+}
+
+export interface OpportunitySearchRadius {
+  /** `[longitude, latitude]`. */
+  coordinates: number[];
+  /** Positive kilometres. */
+  radiusKm: number;
+}
+
+/**
+ * One country in a search. Entries are alternatives (OR); region, city and radius apply to that
+ * same country's mapping. A radius is an alternative to region / city, never with them, and never
+ * on Worldwide; duplicate countries are rejected. Defaults: region / city Include, radius Exclude.
+ */
+export interface OpportunitySearchFilterCountry {
+  countryId: string;
+  region?: SearchCriterion<string>;
+  city?: SearchCriterion<string>;
+  radius?: SearchCriterion<OpportunitySearchRadius>;
+}
+
+/**
+ * The AND-ed criteria of the root search and of each OR branch. Paging, ordering and the other
+ * root controls are never branch members: the API rejects unknown members.
+ */
+export interface OpportunitySearchSelection {
+  provider?: SearchCriterion<string>;
+  incentivized?: SearchCriterion<boolean>;
+  rewardTypes?: SearchCriterion<RewardType[]>;
+  accessibilitySupport?: SearchCriterion<AccessibilitySupport>;
+  /** Requires the Other accommodation in `accommodations` of the same selection. */
+  accommodationOtherDescription?: SearchCriterion<string>;
+  /** ALL of these. */
+  accommodations?: SearchCriterion<string[]>;
+  targetedGroups?: SearchCriterion<string[]>;
+  sustainableDevelopmentGoals?: SearchCriterion<string[]>;
+  /** Whole years; no modes. */
+  age?: number;
+  types?: SearchCriterion<string[]>;
+  categories?: SearchCriterion<string[]>;
+  languages?: SearchCriterion<string[]>;
+  countries?: OpportunitySearchFilterCountry[];
+  organizations?: SearchCriterion<string[]>;
+  engagementTypes?: SearchCriterion<string[]>;
+  skills?: SearchCriterion<string[]>;
+  /** Exact `options` OR a maximum `interval`, never both; the one not in use may be left out. */
+  commitmentInterval?: SearchCriterion<
+    Partial<OpportunitySearchFilterCommitmentInterval>
+  >;
+  /** `ranges` OR `hasReward: true`, never both; the one not in use may be left out. */
+  zltoReward?: SearchCriterion<Partial<OpportunitySearchFilterZltoReward>>;
+  /** Duplicate keys in one selection are rejected. */
+  customFields?: CustomFieldFilter[];
+}
+
+/** Alternatives: one to eight branches. Groups (at most four) AND with the root and each other. */
+export interface OpportunitySearchGroup {
+  anyOf: OpportunitySearchSelection[];
+}
+
+/** Enum names on the wire. */
+export enum OpportunitySearchOrderField {
+  DateCreated = "DateCreated",
+  DateEnd = "DateEnd",
+  ZltoReward = "ZltoReward",
+}
+
+/** Enum names on the wire. */
+export enum FilterSortOrder {
+  Ascending = "Ascending",
+  Descending = "Descending",
+}
+
+/** One to three unique fields. Nulls sort last in either direction; ID ascending breaks ties. */
+export interface OpportunitySearchOrdering {
+  field: OpportunitySearchOrderField;
+  direction: FilterSortOrder;
+}
+
+/** The root controls both searches share, around the root selection. Never wrapped. */
+export interface OpportunitySearchRequestBase extends OpportunitySearchSelection {
+  pageNumber?: number | null;
+  pageSize?: number | null;
+  featured?: boolean | null;
+  shareWithPartners?: boolean | null;
+  valueContains?: string | null;
+  groups?: OpportunitySearchGroup[];
+  /** Omitted = the endpoint's default order. Not with an active `mostViewed` / `mostCompleted`. */
+  ordering?: OpportunitySearchOrdering[];
+  /** `totalCount` back and no `items`; paging is then optional. */
+  totalCountOnly?: boolean;
+}
+
+/** `POST /opportunity/search` — anonymous and youth. */
+export interface OpportunitySearchRequest extends OpportunitySearchRequestBase {
+  publishedStates?: PublishedState[] | string[] | null;
+  mostViewed?: boolean | null;
+  mostCompleted?: boolean | null;
+}
+
+/** `POST /opportunity/search/admin`. */
+export interface OpportunitySearchRequestAdmin extends OpportunitySearchRequestBase {
+  startDate?: string | null;
+  endDate?: string | null;
+  statuses?: Status[] | string[] | null;
+}
+
+/** `POST /opportunity/search/admin/csv` — the admin criteria; count-only is invalid here. */
+export type OpportunitySearchRequestAdminCSV = Omit<
+  OpportunitySearchRequestAdmin,
+  "totalCountOnly"
+>;
+//#endregion Search request wire shape
 
 export interface OpportunitySearchResultsInfo extends OpportunitySearchResultsBase {
   items: OpportunityInfo[];
@@ -586,11 +730,17 @@ export enum CustomFieldFilterOperator {
   Between = "Between",
 }
 
-/** One custom-field filter clause sent in OpportunitySearchFilter.customFields. */
+/** One custom-field filter clause sent in a search selection's `customFields`. */
 export interface CustomFieldFilter {
   /** Matches CustomFieldDefinition.key (case-insensitive, server-side). */
   key: string;
-  operator: CustomFieldFilterOperator;
+  /** Omitted only by an `Only` clause: `{ key, unspecified: "Only" }`, with no values. */
+  operator?: CustomFieldFilterOperator;
+  /**
+   * Opportunities the definition applies to that have no stored value. Default Exclude;
+   * `Exists` rejects Include and Only.
+   */
+  unspecified?: UnspecifiedMatch;
   /** Single scalar value (Equals / Contains / GreaterThan* / LessThan* / lower bound of Between). */
   value?: string | null;
   /** Upper bound — used only with Between. */

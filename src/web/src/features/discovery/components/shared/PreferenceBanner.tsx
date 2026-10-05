@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { IoPencilOutline, IoPersonOutline } from "react-icons/io5";
+import { inheritedSummary, tunedToParts } from "../../lib/chipModel";
 import {
-  SAVABLE_SKIP_KEYS,
   applySkipsToPreferences,
+  savableSkips as savableSkipsOf,
+  skipsAfterSave,
 } from "../../lib/preferenceMapping";
 import { useDiscovery } from "../../state/DiscoveryContext";
 import { useChipPulse } from "../../state/useChipPulse";
@@ -39,6 +41,7 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
     chips,
     preferences,
     savePreferences,
+    verifiedSkillIds,
     // Held on the context, not here: saving the last override can flip the surface from results
     // to landing, which remounts this banner (see `PreferenceSnapshot`).
     preferenceUndo: undoTo,
@@ -82,9 +85,7 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
       </div>
     );
 
-  const savableSkips = state.preferencesSkipped.filter((key) =>
-    SAVABLE_SKIP_KEYS.includes(key),
-  );
+  const savableSkips = savableSkipsOf(state.preferencesSkipped, preferences);
   const skipSignature = [...savableSkips].sort().join(",");
   const notNow = (): void => {
     window.sessionStorage.setItem(DISMISSED_KEY, skipSignature);
@@ -92,16 +93,15 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
   };
 
   // Every inherited value, not just the first: "tuned to Job" hid the four other things the
-  // feed was doing. Two by name, the rest as a count.
-  const inherited = chips
-    .filter((c) => c.provenance === "inherited")
-    .map((c) => c.value);
-  const tunedTo = [
-    ...inherited.slice(0, TUNED_TO_SHOWN),
-    ...(inherited.length > TUNED_TO_SHOWN
-      ? [`+${inherited.length - TUNED_TO_SHOWN}`]
-      : []),
-  ].join(" · ");
+  // feed was doing. Two by name, the rest as a count — a private value (the accessibility needs)
+  // only ever in the count.
+  const tunedTo = tunedToParts(inheritedSummary(chips), TUNED_TO_SHOWN).join(
+    " · ",
+  );
+  // Saving a skills skip clears only the self-attested skills: the earned (verified) ones still
+  // apply on the next visit (Jason, 2026-10-03), so the offer says so.
+  const earnedSkillsStay =
+    savableSkips.includes("skills") && verifiedSkillIds.length > 0;
 
   const saveOverrides = (): void => {
     setSaving(true);
@@ -116,12 +116,11 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
       .then(() => {
         setUndoTo(previous);
         // The persisted skips no longer exist as preferences; only the identity-derived
-        // (unsavable) ones stay switched off for this search.
+        // (unsavable) ones stay switched off for this search — and skills, while verified
+        // skills would bring the chip straight back (`skipsAfterSave`).
         dispatch({
           kind: "setSkippedPreferences",
-          keys: state.preferencesSkipped.filter(
-            (key) => !SAVABLE_SKIP_KEYS.includes(key),
-          ),
+          keys: skipsAfterSave(state.preferencesSkipped, verifiedSkillIds),
         });
       })
       .catch(() => setSaveFailed(true))
@@ -197,6 +196,7 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
               ? "1 preference is off for this search."
               : `${savableSkips.length} preferences are off for this search.`}{" "}
             Keep {savableSkips.length === 1 ? "it" : "them"} off from now on?
+            {earnedSkillsStay && " Skills you've earned still apply."}
           </span>
           <span className="flex items-center gap-2">
             <button

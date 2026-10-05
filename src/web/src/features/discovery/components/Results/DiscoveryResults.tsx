@@ -1,5 +1,10 @@
 import React, { useEffect, useRef } from "react";
 import ScrollableContainer from "~/components/Carousel/ScrollableContainer";
+import {
+  filteringSummary,
+  headingSubject,
+  recentSearchLabel,
+} from "../../lib/chipModel";
 import { formatNumber } from "../../lib/format";
 import {
   DISTANCE_NOTE,
@@ -8,6 +13,7 @@ import {
   LOCATION_SEARCH_LIVE,
 } from "../../lib/location";
 import { recordRecentSearch } from "../../lib/recentSearches";
+import { incentiveSplitAt, sortNote } from "../../lib/resultsOrder";
 import { serializeDiscoveryState } from "../../lib/urlCodec";
 import { useDiscovery } from "../../state/DiscoveryContext";
 import {
@@ -20,8 +26,7 @@ import { Message } from "../shared/Message";
 import { NoMatches } from "./NoMatches";
 import { ResultsGrid } from "./ResultsGrid";
 import { ResultsList } from "./ResultsList";
-// NB: re-enable with the sort control below (once the API supports sorting)
-// import { SortControl } from "./SortControl";
+import { SortControl } from "./SortControl";
 import { ViewToggle } from "./ViewToggle";
 
 /**
@@ -30,6 +35,9 @@ import { ViewToggle } from "./ViewToggle";
  * (2026-09-30). Loading keeps the
  * previous results mounted and fades them — one spinner beside the count, never one per card,
  * `motion-reduce` throughout.
+ *
+ * Sort is back since the revised search contract (2026-10-03): inline beside the view toggle from
+ * `lg`, its own row under the heading below it. A sort change never scrolls.
  */
 export const DiscoveryResults: React.FC<{
   now: Date;
@@ -37,51 +45,49 @@ export const DiscoveryResults: React.FC<{
   const {
     state,
     dispatch,
+    search,
     effectiveFilters,
     lookups,
-    ready,
+    searchReady,
     setView,
     chips,
     resultsAnchorRef,
     scrollToResults,
   } = useDiscovery();
   const { results, loading, failed, retry } = useDiscoveryResults(
-    effectiveFilters,
+    search,
+    state.sort,
     state.page,
-    lookups.typeIdByName,
-    ready && lookups.types.length > 0,
+    lookups,
+    searchReady,
   );
 
   // Paging jumps back to the count row — the new page starts at its top, not mid-scroll.
   // (This and the explicit "Show N results" actions are the ONLY scroll triggers; a filter
-  // change never scrolls.)
-  const previousPage = useRef(state.page);
+  // change never scrolls.) A sort change resets the page too, and never scrolls either
+  // (2026-09-03): the youth stays where the control is.
+  const previous = useRef({ page: state.page, sort: state.sort });
   useEffect(() => {
-    if (state.page !== previousPage.current) scrollToResults();
-    previousPage.current = state.page;
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- page transitions only
-  }, [state.page]);
+    if (
+      state.page !== previous.current.page &&
+      state.sort === previous.current.sort
+    )
+      scrollToResults();
+    previous.current = { page: state.page, sort: state.sort };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- page and sort transitions only
+  }, [state.page, state.sort]);
 
   // The chips that actually filter: struck-through (skipped) and inapplicable chips do not, and
   // neither do pending ones (region / city / distance until the Location search lands). The
-  // heading and the recent-search label both name only these.
-  const filteringChipValues = chips
-    .filter(
-      (c) =>
-        (c.provenance === "inherited" || c.provenance === "manual") &&
-        !c.pending,
-    )
-    .map((c) => c.value);
+  // heading and the recent-search label both name only these — and never a private value (the
+  // accessibility needs), which the heading counts and the label leaves out.
+  const filtering = filteringSummary(chips);
 
   // Record the search once its results arrive (imperative side effect, not derived state).
   useEffect(() => {
     if (!results || loading) return;
     recordRecentSearch({
-      // No word and no filtering chip (`prefsOff=1` alone) is every opportunity — never a
-      // blank row.
-      label:
-        state.filters.q ??
-        (filteringChipValues.join(" · ") || "All opportunities"),
+      label: recentSearchLabel(state.filters.q, filtering),
       queryString: serializeDiscoveryState(state),
       resultCount: results.totalCount,
     });
@@ -93,32 +99,49 @@ export const DiscoveryResults: React.FC<{
     total !== null ? Math.max(1, Math.ceil(total / DISCOVERY_PAGE_SIZE)) : 1;
   // "[count] match(es) for [first filter] + N filter(s)" — states WHAT the count counts while
   // staying short: first value only, the rest as a count (the chips row above carries the full
-  // set). Only the filtering chips may claim the count.
-  const filterValues = [
-    ...(effectiveFilters.q ? [`“${effectiveFilters.q}”`] : []),
-    ...filteringChipValues,
-  ];
+  // set). Only the filtering chips may claim the count. Custom-field clauses are chipped
+  // separately (not in the chip model), but they filter — counted in the remainder. A clause can
+  // only exist while its type chip does, so there is always a subject when clauses are set.
+  const subject = headingSubject(
+    effectiveFilters.q,
+    filtering,
+    effectiveFilters.customFields.length,
+  );
   const heading = (count: number): string => {
-    if (filterValues.length === 0)
+    if (!subject)
       return `${formatNumber(count)} ${count === 1 ? "opportunity" : "opportunities"}`;
-    // Custom-field clauses are chipped separately (not in the chip model), but they filter —
-    // count them in the remainder. A clause can only exist while its type chip does, so
-    // `filterValues` is never empty when clauses are set.
     // No-break spaces inside "+ 1 filter", so a wrapped heading (below `sm`) moves it to the
     // next line whole rather than orphaning "filter".
-    const rest = filterValues.length - 1 + effectiveFilters.customFields.length;
-    return `${formatNumber(count)} ${count === 1 ? "match" : "matches"} for ${filterValues[0]}${
+    const { first, rest } = subject;
+    return `${formatNumber(count)} ${count === 1 ? "match" : "matches"} for ${first}${
       rest > 0
         ? ` +\u00a0${rest}\u00a0${rest === 1 ? "filter" : "filters"}`
         : ""
     }`;
   };
 
+  const items = results?.items ?? [];
+  // Under a Paid filter the explicit matches come first, whatever the sort; the divider marks
+  // where the unspecified ones begin on this page. Split on the filter the page was fetched
+  // with: the previous search's page, kept on screen while the next loads, keeps a correct
+  // divider (the faded results never change layout) and never gets a wrong one.
+  const splitAt = incentiveSplitAt(results);
+  const note = sortNote(effectiveFilters.types, state.sort);
+  const sortControl = (className: string): React.ReactNode => (
+    <SortControl
+      sort={state.sort}
+      types={effectiveFilters.types}
+      onChange={(sort) => dispatch({ kind: "setSort", sort })}
+      className={className}
+    />
+  );
+
   return (
     <div className="flex flex-col gap-6 md:gap-8">
       {/* One drag-scrollable row: count left, controls right — never wraps into page height.
-          The pager scrolls back up to this row, so it carries the anchor ref. */}
-      <div ref={resultsAnchorRef} className="scroll-mt-20">
+          The pager scrolls back up to this row, so it carries the anchor ref. Below `lg` Sort
+          is a row of its own under it, inside the anchor, so the pager lands above both. */}
+      <div ref={resultsAnchorRef} className="flex scroll-mt-20 flex-col gap-3">
         <ScrollableContainer
           className="flex items-center gap-3 overflow-x-auto"
           showShadows={true}
@@ -146,15 +169,13 @@ export const DiscoveryResults: React.FC<{
           <div className="ml-auto flex shrink-0 items-center gap-2 md:gap-3">
             {/* NB: copy button removed for now to save space */}
             {/* <CopyLinkButton /> */}
-            {/* NB: sorting disabled for now till API supports it */}
-            {/* <SortControl
-              sort={state.sort}
-              onChange={(sort) => dispatch({ kind: "setSort", sort })}
-            /> */}
+            {sortControl("hidden lg:flex")}
             <ViewToggle view={state.view} onChange={setView} />
           </div>
         </ScrollableContainer>
+        {sortControl("flex lg:hidden")}
       </div>
+      {note && <Message>{note}</Message>}
       {!LOCATION_SEARCH_LIVE && hasLocationFilter(effectiveFilters) && (
         <Message kind="warning">{LOCATION_NOT_APPLIED}</Message>
       )}
@@ -185,9 +206,9 @@ export const DiscoveryResults: React.FC<{
         }`}
       >
         {state.view === "grid" ? (
-          <ResultsGrid items={results?.items ?? []} now={now} />
+          <ResultsGrid items={items} now={now} incentiveSplitAt={splitAt} />
         ) : (
-          <ResultsList items={results?.items ?? []} now={now} />
+          <ResultsList items={items} now={now} incentiveSplitAt={splitAt} />
         )}
       </div>
       {pages > 1 && (

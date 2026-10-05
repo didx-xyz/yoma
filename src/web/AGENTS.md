@@ -57,6 +57,8 @@ stop or restart them. If either is down, stop and tell the lead.
   `element.click()`.
 - **Timing:** the dev server compiles a route on its first hit, so give it 10–15 s.
 - **Ports 9222, 9333 and 9334 are Jason's own browser.** Never use or kill them.
+- **There is one throwaway slot.** The developer, tester, designer and writer (for a document's
+  screenshots) take turns on it. Each runs `anon.sh stop` before handing on.
 
 **Access.**
 - Passes are signed out unless the lead says Jason approved a sign-in for this task.
@@ -65,5 +67,19 @@ stop or restart them. If either is down, stop and tell the lead.
 - Signed-in screens nobody approved are reported as not tested.
 
 **Local data.** The seeded data is placeholder text, and every reseed changes the IDs. Look IDs
-up through the API (`snapshot.mjs` does) rather than reusing old ones. No seeded opportunity
-carries age bounds, a place, coordinates, a provider, SDGs or accommodations.
+up through the API (`snapshot.mjs` does) rather than reusing old ones. Since `77646a74`
+(`post.sql`, local and DEV only):
+
+- Categories (1–3 each), languages and skills vary per opportunity, and ordinary opportunities
+  stay open for 30 days after seeding.
+- 24 labelled search fixtures, titled "Search fixture NN - {type}", carry the new core fields:
+  - a provider, engagement type and incentive, except every third fixture ("incomplete
+    partner-like"), which has none of them;
+  - accessibility Yes, No, Available on request or missing, with accommodation lists and one
+    Other description;
+  - age bounds, SDGs and targeted groups;
+  - South African places in the Western Cape and Gauteng, and coordinates 5, 20, 60 and 150 km
+    from Cape Town;
+  - Worldwide on fixture 23 (alone) and 24 (with South Africa);
+  - a past end date (07), a future start (08) and no end date (09).
+- No user preferences or user location are seeded.

@@ -4,6 +4,7 @@ import { IoOptionsOutline, IoSearchOutline } from "react-icons/io5";
 import AnimatedText from "~/components/Opportunity/AnimatedText";
 import { formatNumber } from "../../lib/format";
 import { whereSummary } from "../../lib/location";
+import { jobSkillsApply } from "../../lib/searchRequest";
 import {
   SEGMENT_TONE_TEXT,
   segmentTone,
@@ -44,24 +45,29 @@ export const DiscoverySurface: React.FC = () => {
     migration,
     readPersonalizationSeen,
     chips,
+    search,
+    lookups,
     effectiveFilters,
     resolveLabel,
   } = useDiscovery();
   const router = useRouter();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [personalizeOpen, setPersonalizeOpen] = useState(false);
+  // The wizard seeds its draft from the stored preferences when it mounts, and Finish saves a
+  // COMPLETE replacement: opened before they load, it would edit an empty draft and wipe them.
+  // So it waits for them, however it was opened (`undefined` = not loaded, or the read failed).
+  const wizardShown = personalizeOpen && preferences !== undefined;
   const landing = isDefaultDiscoveryState(state);
   // One clock per render pass, so every card row shares identical urgency math.
   const now = useMemo(() => new Date(), []);
 
   // The page must not scroll behind an open dialog/sheet.
   useEffect(() => {
-    document.body.style.overflow =
-      filtersOpen || personalizeOpen ? "hidden" : "";
+    document.body.style.overflow = filtersOpen || wizardShown ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [filtersOpen, personalizeOpen]);
+  }, [filtersOpen, wizardShown]);
 
   // Auto-open once: never captured (or skipped) before, and only after hydration. It yields to
   // the sign-in "keep your answers" offer — `pendingAnonymous` is `undefined` while that offer
@@ -78,9 +84,13 @@ export const DiscoverySurface: React.FC = () => {
   }, [ready, preferences, migration.pendingAnonymous]);
 
   // Deep link from outside the surface (the avatar menu's "My preferences"): ?personalize=1
-  // opens the wizard, then leaves the URL clean — the param is an instruction, not state.
+  // opens the wizard, then leaves the URL clean — the param is an instruction, not state. Not
+  // before the preferences have loaded (signed in: `GET /user/preferences`; anonymous: the
+  // session read), which the wizard is seeded from; a failed read leaves the param unread.
+  const preferencesLoaded = preferences !== undefined;
   useEffect(() => {
-    if (!ready || router.query.personalize !== "1") return;
+    if (!ready || !preferencesLoaded || router.query.personalize !== "1")
+      return;
     setPersonalizeOpen(true);
     const query = { ...router.query };
     delete query.personalize;
@@ -89,7 +99,7 @@ export const DiscoverySurface: React.FC = () => {
       scroll: false,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot per param sighting
-  }, [ready, router.query.personalize]);
+  }, [ready, preferencesLoaded, router.query.personalize]);
 
   const editPreferences = (): void => setPersonalizeOpen(true);
 
@@ -154,7 +164,9 @@ export const DiscoverySurface: React.FC = () => {
         f.hasReward !== null ||
         f.zltoRanges.length > 0,
       f.languages.length > 0,
+      // Counted, never named: the needs are private, and the skills only while they narrow Jobs.
       f.accommodations.length > 0,
+      jobSkillsApply(search, lookups),
       f.sdgs.length > 0,
       f.provider !== null,
       f.featured !== null,
@@ -286,7 +298,7 @@ export const DiscoverySurface: React.FC = () => {
         />
       </div>
       {/* Mounted only while open — the dialog seeds its draft from stored preferences at mount. */}
-      {personalizeOpen && (
+      {wizardShown && (
         <PersonalizeDialog onClose={() => setPersonalizeOpen(false)} />
       )}
     </div>

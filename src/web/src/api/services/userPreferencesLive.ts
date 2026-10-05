@@ -148,7 +148,7 @@ const fromApi = (
           count: api.commitmentIntervalCount,
         }
       : null,
-  engagement: api.engagementTypeId,
+  engagement: api.engagementTypes.map((type) => type.id),
   incentivized: api.incentivized,
   languages: api.languages.map((language) => language.id),
   accessibility: {
@@ -166,7 +166,7 @@ const toApi = (
   goalId: goalIdOf(preferences.goal, goals),
   commitmentIntervalId: preferences.maxCommitment?.intervalId ?? null,
   commitmentIntervalCount: preferences.maxCommitment?.count ?? null,
-  engagementTypeId: preferences.engagement,
+  engagementTypes: preferences.engagement,
   incentivized: preferences.incentivized,
   categories: preferences.targetCategories,
   accessibilityRequirements: preferences.accessibility.requirements,

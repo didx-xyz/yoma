@@ -18,9 +18,10 @@ import type {
   OpportunitySearchCriteriaZltoRewardRange,
   OpportunitySearchFilter,
   OpportunitySearchFilterAdmin,
-  OpportunitySearchFilterBase,
-  OpportunitySearchFilterCountry,
   OpportunitySearchFilterCriteria,
+  OpportunitySearchRequest,
+  OpportunitySearchRequestAdmin,
+  OpportunitySearchRequestAdminCSV,
   OpportunitySearchResults,
   OpportunitySearchResultsInfo,
   OpportunityType,
@@ -31,39 +32,20 @@ import type {
 import type { OrganizationInfo } from "../models/organisation";
 import type { CSVImportResult } from "../models/opportunity";
 import { stripSyncedTitleSuffix } from "~/lib/opportunityUtils";
+import { toSearchFilterPayload } from "./opportunitySearchPayload";
 
-/**
- * The search filter's wire form. The API's `countries` is a list of country entries (API
- * 2026-09-28) while every web caller holds country ids, so the three search requests wrap each
- * id as `{ countryId }` here — one conversion, not one per page. `countryLocations` (discovery's
- * region / city / point entries) replaces the list when set and is never sent as its own field.
- */
-export const toSearchFilterPayload = <T extends OpportunitySearchFilterBase>(
-  filter: T,
-): Omit<T, "countries" | "countryLocations"> & {
-  countries: OpportunitySearchFilterCountry[] | null;
-} => {
-  const { countries, countryLocations, ...rest } = filter;
-  return {
-    ...rest,
-    countries:
-      countryLocations && countryLocations.length > 0
-        ? countryLocations
-        : countries && countries.length > 0
-          ? countries.map((countryId) => ({ countryId }))
-          : null,
-  };
-};
+// The three searches take a flat filter or a typed request; `toSearchFilterPayload` builds the
+// wire body for the named endpoint from either (see `./opportunitySearchPayload`).
 
 export const getOpportunitiesAdmin = async (
-  filter: OpportunitySearchFilterAdmin,
+  filter: OpportunitySearchFilterAdmin | OpportunitySearchRequestAdmin,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunitySearchResults> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
   const { data } = await instance.post<OpportunitySearchResults>(
     `/opportunity/search/admin`,
-    toSearchFilterPayload(filter),
+    toSearchFilterPayload(filter, "admin"),
   );
 
   // strip the partner external id suffix from externally managed opportunities
@@ -275,18 +257,17 @@ export const getOpportunityInfoById = async (
 };
 
 export const searchOpportunities = async (
-  filter: OpportunitySearchFilter,
+  filter: OpportunitySearchFilter | OpportunitySearchRequest,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunitySearchResultsInfo> => {
   const instance = context ? ApiServer(context) : await ApiClient;
+  const payload = toSearchFilterPayload(filter, "youth");
   // default published state to active & not started
-  if (!filter.publishedStates) {
-    filter.publishedStates = ["Active", "NotStarted"];
-  }
+  payload.publishedStates ??= ["Active", "NotStarted"];
 
   const { data } = await instance.post<OpportunitySearchResultsInfo>(
     `/opportunity/search`,
-    toSearchFilterPayload(filter),
+    payload,
   );
 
   // strip the partner external id suffix from externally managed opportunities
@@ -484,14 +465,14 @@ export const updateOpportunityHidden = async (
 };
 
 export const getOpportunitiesAdminExportToCSV = async (
-  filter: OpportunitySearchFilterAdmin,
+  filter: OpportunitySearchFilterAdmin | OpportunitySearchRequestAdminCSV,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<File> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
   const { data } = await instance.post(
     `/opportunity/search/admin/csv`,
-    toSearchFilterPayload(filter),
+    toSearchFilterPayload(filter, "adminCSV"), // count-only is stripped: the export rejects it
     {
       responseType: "blob", // set responseType to 'blob' or 'arraybuffer'
     },

@@ -1,6 +1,7 @@
-import type {
-  CustomFieldDefinition,
-  OpportunityInfo,
+import {
+  AccessibilitySupport,
+  type CustomFieldDefinition,
+  type OpportunityInfo,
 } from "~/api/models/opportunity";
 import { formatAccessibilitySupport } from "~/components/Opportunity/Admin/opportunityCoreFields";
 import { ENTREPRENEURSHIP_PROGRAMME_OPTIONS } from "~/lib/customFields/customFieldRules";
@@ -133,7 +134,13 @@ export function cardFacts(
         const accommodations = (opportunity.accommodations ?? []).map(
           (a) => a.name,
         );
-        if (accommodations.length > 0) return firstTwo(accommodations);
+        // An on-request list is what the provider can arrange, not an offer: the bare names
+        // read as one (2026-10-03).
+        if (accommodations.length > 0)
+          return opportunity.accessibilitySupport ===
+            AccessibilitySupport.AvailableOnRequest
+            ? `On request: ${firstTwo(accommodations)}`
+            : firstTwo(accommodations);
         const support = formatAccessibilitySupport(
           opportunity.accessibilitySupport,
         );

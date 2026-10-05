@@ -24,3 +24,13 @@ export const facetStatus = (isError: boolean, error: unknown): FacetStatus => {
   if (!isError) return "ok";
   return isNotFoundError(error) ? "unavailable" : "failed";
 };
+
+/**
+ * A query the search waits for has answered — or failed once. The search then goes out degraded
+ * at once rather than waiting out the retries (several seconds), and is rebuilt if a retry
+ * succeeds.
+ */
+export const hasSettled = (query: {
+  isPending: boolean;
+  failureCount: number;
+}): boolean => !(query.isPending && query.failureCount === 0);

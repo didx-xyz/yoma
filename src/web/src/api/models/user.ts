@@ -289,9 +289,8 @@ export interface UserPreferencesResponse {
   commitmentIntervalId: string | null;
   commitmentInterval: string | null;
   commitmentIntervalCount: number | null;
-  /** Single-select on the User, though the opportunity search filter takes several. */
-  engagementTypeId: string | null;
-  engagementType: string | null;
+  /** Multi-select (2026-10-03), ordered by display name. */
+  engagementTypes: { id: string; name: string; displayName: string }[];
   /** true = prefers any incentive, false = prefers none, null = no preference. */
   incentivized: boolean | null;
   categories: { id: string; name: string }[];
@@ -306,7 +305,8 @@ export interface UserPreferencesRequest {
   /** Interval and count travel together — both set or both null. */
   commitmentIntervalId: string | null;
   commitmentIntervalCount: number | null;
-  engagementTypeId: string | null;
+  /** The complete selection; empty clears it. */
+  engagementTypes: string[];
   incentivized: boolean | null;
   categories: string[];
   accessibilityRequirements: string[];

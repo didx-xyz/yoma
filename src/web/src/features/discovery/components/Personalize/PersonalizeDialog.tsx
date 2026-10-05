@@ -6,7 +6,7 @@ import type { UserPreferences } from "~/api/models/userPreferences";
 import { EMPTY_USER_PREFERENCES } from "~/api/models/userPreferences";
 import { userProfileAtom } from "~/lib/store";
 import {
-  applyInheritedFragments,
+  composeSearch,
   mapPreferencesToFilters,
 } from "../../lib/preferenceMapping";
 import { ageInYears } from "../../lib/dates";
@@ -52,6 +52,8 @@ export const PersonalizeDialog: React.FC<{
     dispatch,
     scrollToResults,
     scope,
+    preferenceSearchReady,
+    verifiedSkillIds,
   } = useDiscovery();
 
   // Escape and the browser Back button behave exactly like the X: seen, unsaved, closed.
@@ -121,13 +123,16 @@ export const PersonalizeDialog: React.FC<{
   const [saveError, setSaveError] = useState<string | null>(null);
   const accessibilityOptions = useAccessibilityOptions();
 
-  const previewFilters = applyInheritedFragments(
+  // The draft as the feed would apply it — the same composition and builder as the surface.
+  const previewSearch = composeSearch(
     EMPTY_DISCOVERY_FILTERS,
     mapPreferencesToFilters(draft, {
       // The DRAFT's country for an anonymous youth — the live count follows the picker.
       countryId: homeCountryId(scope, profile?.countryId ?? null, draft),
       age:
         scope === "user" ? ageInYears(profile?.dateOfBirth, new Date()) : null,
+      verifiedSkillIds,
+      otherAccommodationId: lookups.otherAccommodationId,
     }),
     false,
     [],
@@ -137,9 +142,9 @@ export const PersonalizeDialog: React.FC<{
     counting,
     failed: countFailed,
   } = useResultCount(
-    previewFilters,
-    lookups.typeIdByName,
-    lookups.types.length > 0,
+    previewSearch,
+    lookups,
+    preferenceSearchReady(draft.accessibility.requirements),
   );
 
   const current = PREFERENCE_STEPS[step]!;

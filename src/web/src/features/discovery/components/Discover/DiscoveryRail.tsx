@@ -1,7 +1,7 @@
 import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
 import { formatNumber } from "../../lib/format";
-import type { DiscoveryFilters } from "../../lib/types";
+import type { DiscoverySearch } from "../../lib/preferenceMapping";
 import { useDiscovery } from "../../state/DiscoveryContext";
 import { useDiscoveryResults } from "../../state/useDiscoveryResults";
 import { OpportunityCard } from "../Results/OpportunityCard";
@@ -11,8 +11,9 @@ const REVEAL_THRESHOLD = 0.15;
 const STAGGER_MS = 40;
 
 /**
- * One landing rail — a titled row of cards over a filter set, with "See all N" navigating to the
- * same set as a real search (the URL is the state, so a rail is just a saved query).
+ * One landing rail — a titled row of cards over a search (`composeSearch`, or `manualSearch` for a
+ * rail that ignores preferences) in the default order, with "See all N" navigating to the same
+ * set as a real search (the URL is the state, so a rail is just a saved query).
  *
  * Round 10 (2026-10-02): below `sm` the row is a sideways snap scroller (290px cards, the next one
  * peeking), a plain `div` because `ScrollableContainer`'s drag handler fights snapping; from `sm`
@@ -23,16 +24,30 @@ const STAGGER_MS = 40;
 export const DiscoveryRail: React.FC<{
   title: string;
   subtitle: string;
-  filters: DiscoveryFilters;
+  search: DiscoverySearch;
+  /**
+   * `search` is the surface's own (`useDiscovery().search`), preference layer and all, so it waits
+   * on the surface's gate (`searchReady`) too.
+   */
+  personalized?: boolean;
+  /** `""` (a search no URL can carry apart from the landing itself) draws no See all. */
   seeAllQueryString: string;
   now: Date;
-}> = ({ title, subtitle, filters, seeAllQueryString, now }) => {
-  const { lookups, ready } = useDiscovery();
+}> = ({
+  title,
+  subtitle,
+  search,
+  personalized = false,
+  seeAllQueryString,
+  now,
+}) => {
+  const { lookups, ready, searchReady } = useDiscovery();
   const { results } = useDiscoveryResults(
-    filters,
+    search,
+    "newest",
     1,
-    lookups.typeIdByName,
-    ready && lookups.types.length > 0,
+    lookups,
+    personalized ? searchReady : ready && lookups.searchReady,
   );
   const items = results?.items.slice(0, 4) ?? [];
   const drawn = items.length > 0;
@@ -69,14 +84,17 @@ export const DiscoveryRail: React.FC<{
           <h2 className="font-nunito text-base font-black tracking-normal md:text-lg">
             {title}
           </h2>
-          {results?.totalCount !== null && results !== undefined && (
-            <Link
-              href={`/opportunities/discover?${seeAllQueryString}`}
-              className="text-green shrink-0 text-xs font-semibold whitespace-nowrap md:text-sm"
-            >
-              See all {formatNumber(results.totalCount)} →
-            </Link>
-          )}
+          {/* An empty query string is the landing itself, never the set the rail shows. */}
+          {seeAllQueryString !== "" &&
+            results?.totalCount !== null &&
+            results !== undefined && (
+              <Link
+                href={`/opportunities/discover?${seeAllQueryString}`}
+                className="text-green shrink-0 text-xs font-semibold whitespace-nowrap md:text-sm"
+              >
+                See all {formatNumber(results.totalCount)} →
+              </Link>
+            )}
         </div>
         <p className="text-gray-dark text-sm">{subtitle}</p>
       </div>

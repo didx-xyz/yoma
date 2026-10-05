@@ -63,11 +63,11 @@ export interface UserPreferences {
   /** "At most this much time" per opportunity. */
   maxCommitment: UserPreferenceCommitment | null;
   /**
-   * One EngagementType lookup id. SINGLE-select again since 2026-09-29: the API stores one
-   * (`engagementTypeId`), which reverses the 2026-09-22 multi-select. The search FILTER still
-   * takes several. `normalizeUserPreferences` keeps the first of a stored list.
+   * EngagementType lookup ids. A list again since 2026-10-03: the API stores several
+   * (`engagementTypes`), which reverses 2026-09-29's single-select, and the wizard step picks
+   * several. `normalizeUserPreferences` reads a stored single id as a list of one.
    */
-  engagement: string | null;
+  engagement: string[];
   /**
    * true = prefers an opportunity with any incentive (pay, ZLTO, a voucher…), false = prefers
    * none, null = no preference. Not Job-specific, and not the reward type.
@@ -127,26 +127,23 @@ export const EMPTY_USER_PREFERENCES: UserPreferences = {
   targetCategories: [],
   selfReportedSkills: [],
   maxCommitment: null,
-  engagement: null,
+  engagement: [],
   incentivized: null,
   languages: [],
   accessibility: EMPTY_USER_ACCESSIBILITY,
   location: EMPTY_USER_LOCATION,
 };
 
-/** A stored list (2026-09-22 → 09-29) keeps its first id; anything else unexpected → none. */
-const normalizeEngagement = (raw: unknown): string | null => {
-  if (Array.isArray(raw)) {
-    const first: unknown = raw[0];
-    return typeof first === "string" && first !== "" ? first : null;
-  }
-  return typeof raw === "string" && raw !== "" ? raw : null;
-};
-
 const strings = (raw: unknown): string[] =>
   Array.isArray(raw)
     ? raw.filter((id): id is string => typeof id === "string")
     : [];
+
+/** A single stored id (2026-09-29 → 10-03) becomes a list of one; anything unexpected → none. */
+const normalizeEngagement = (raw: unknown): string[] => {
+  if (typeof raw === "string") return raw !== "" ? [raw] : [];
+  return [...new Set(strings(raw).filter((id) => id !== ""))];
+};
 
 /** The `{ enabled, needs }` toggle shape (before 2026-09-29) carried no requirement — none. */
 const normalizeAccessibility = (raw: unknown): UserPreferenceAccessibility => {
@@ -219,8 +216,9 @@ export const isEmptyUserPreferences = (preferences: UserPreferences): boolean =>
 /**
  * Merges session-held anonymous answers into a stored preset (the sign-in "keep your answers"
  * offer). The anonymous answers are the youth's most recent expression, so they win where set;
- * multi-selects union so nothing already stored is lost. Never called without the youth's
- * explicit yes — an existing preset is never overwritten silently.
+ * multi-selects union so nothing already stored is lost — engagement too, since the wizard step
+ * picks several (2026-10-03). Never called without the youth's explicit yes — an existing preset
+ * is never overwritten silently.
  *
  * Location: the PROFILE country always wins — it is the global country, not an answer. The
  * anonymous region / city / centroid carry over only when they were picked in that same
@@ -262,7 +260,7 @@ export const mergeUserPreferences = (
       (skill) => skill.id,
     ),
     maxCommitment: anonymous.maxCommitment ?? stored.maxCommitment,
-    engagement: anonymous.engagement ?? stored.engagement,
+    engagement: union(stored.engagement, anonymous.engagement, (id) => id),
     incentivized: anonymous.incentivized ?? stored.incentivized,
     languages: union(stored.languages, anonymous.languages, (id) => id),
     accessibility: {

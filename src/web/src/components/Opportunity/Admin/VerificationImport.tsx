@@ -221,18 +221,23 @@ export const VerificationImport: React.FC<InputProps> = ({
                 What must the file contain?
               </div>
               <div className="collapse-content space-y-4 text-sm">
+                <p className="mb-3">
+                  Start from the sample file and keep its core columns in the
+                  same order.
+                </p>
                 <div>
                   <p className="font-semibold">Required Properties</p>
-                  <p className="mb-3">
-                    The following properties must be provided for each
-                    opportunity:
-                  </p>
+                  <p className="mb-3">Every row must have:</p>
                   <ul className="ml-5 list-disc text-sm">
                     <li>Email or Phone Number (at least one required)</li>
                     <li>
                       Opportunity External Id (must match existing opportunity)
                     </li>
                   </ul>
+                  <p className="mt-3 mb-3">
+                    Imports work only for opportunities whose verification
+                    method is Automatic.
+                  </p>
                 </div>
 
                 <div>
@@ -259,8 +264,9 @@ export const VerificationImport: React.FC<InputProps> = ({
                   <p className="font-semibold">Optional Custom Field Columns</p>
                   <p className="mb-3">
                     These come after the core columns, each headed CF: plus the
-                    field key. Use each only for its opportunity type and leave
-                    it blank for the others:
+                    field key exactly as shown (headers are case-sensitive; a
+                    key without CF: is rejected). Use each only for its
+                    opportunity type and leave it blank for the others:
                   </p>
                   <ul className="ml-5 list-disc text-sm">
                     <li>
@@ -377,7 +383,7 @@ export const VerificationImport: React.FC<InputProps> = ({
                   <a
                     href="/docs/MyOpportunityInfoCsvImport_Sample.csv"
                     target="_blank"
-                    className="text-blue-600 underline"
+                    className="text-blue-dark underline"
                   >
                     sample import file
                   </a>{" "}
