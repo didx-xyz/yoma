@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using System.ComponentModel.DataAnnotations;
 using System.Net;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Lookups.Models;
@@ -186,7 +187,7 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Search for skills based on the supplied filter")]
+    [SwaggerOperation(Summary = "Search for skills using the supplied paged filter")]
     [HttpGet("skill")]
     [ProducesResponseType(typeof(SkillSearchResults), (int)HttpStatusCode.OK)]
     public IActionResult SearchSkills([FromQuery] SkillSearchFilter filter)
@@ -196,6 +197,20 @@ namespace Yoma.Core.Api.Controllers
       var result = _skillService.Search(filter);
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchSkills));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Resolve skills by a list of IDs. Returns all matches without pagination")]
+    [HttpPost("skill/ids")]
+    [ProducesResponseType(typeof(List<Skill>), (int)HttpStatusCode.OK)]
+    public IActionResult ListSkillsByIds([Required][FromBody] List<Guid> ids)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListSkillsByIds));
+
+      var result = _skillService.ListByIds(ids);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListSkillsByIds));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }

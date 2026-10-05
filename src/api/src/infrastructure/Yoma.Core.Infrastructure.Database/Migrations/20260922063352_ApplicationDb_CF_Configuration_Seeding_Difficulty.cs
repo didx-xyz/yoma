@@ -30,7 +30,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       // Protect the four non-Job contracts used by partner mappings and the temporary SSI bridge.
       // Job experience has no runtime dependency: it remains ordinary configurable metadata.
-      // Group by opportunity type; Requirements holds readiness/qualifications, not eligibility gates.
+      // Use one metadata grouping level; the UI supplies the type-specific heading.
+      // Requirements holds readiness/qualifications, not eligibility gates.
       // Sort in increments of ten to leave room for the next approved CFs and options.
       // Required applies to manual capture; CSV and partner sync use PatchAllowMissingRequired.
       migrationBuilder.InsertData(
@@ -41,31 +42,31 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
         {
           {
             new Guid("d1ff1c01-9b29-4cf0-a100-000000000001"), CustomFieldEntityType.Opportunity.ToString(), Domain.Opportunity.Type.Learning.ToString(),
-            CustomFieldConstants.Difficulty.Keys.Learning, "Difficulty", "Learning details", "Requirements",
+            CustomFieldConstants.Difficulty.Keys.Learning, "Difficulty", "Requirements", null!,
             CustomFieldDataType.Option.ToString(), true, false, 10,
             true, true, false, created, created
           },
           {
             new Guid("d1ff1c01-9b29-4cf0-a100-000000000002"), CustomFieldEntityType.Opportunity.ToString(), Domain.Opportunity.Type.Other.ToString(),
-            CustomFieldConstants.Difficulty.Keys.Other, "Difficulty", "Other details", "Requirements",
+            CustomFieldConstants.Difficulty.Keys.Other, "Difficulty", "Requirements", null!,
             CustomFieldDataType.Option.ToString(), true, false, 10,
             true, true, false, created, created
           },
           {
             new Guid("d1ff1c01-9b29-4cf0-a100-000000000003"), CustomFieldEntityType.Opportunity.ToString(), Domain.Opportunity.Type.ImpactAction.ToString(),
-            CustomFieldConstants.Difficulty.Keys.ImpactAction, "Difficulty", "Impact action details", "Requirements",
+            CustomFieldConstants.Difficulty.Keys.ImpactAction, "Difficulty", "Requirements", null!,
             CustomFieldDataType.Option.ToString(), true, false, 10,
             true, true, false, created, created
           },
           {
             new Guid("d1ff1c01-9b29-4cf0-a100-000000000004"), CustomFieldEntityType.Opportunity.ToString(), Domain.Opportunity.Type.Event.ToString(),
-            CustomFieldConstants.Difficulty.Keys.Event, "Difficulty", "Event details", "Requirements",
+            CustomFieldConstants.Difficulty.Keys.Event, "Difficulty", "Requirements", null!,
             CustomFieldDataType.Option.ToString(), true, false, 10,
             true, true, false, created, created
           },
           {
             new Guid("d1ff1c01-9b29-4cf0-a100-000000000005"), CustomFieldEntityType.Opportunity.ToString(), Domain.Opportunity.Type.Job.ToString(),
-            "jobExperienceLevel", "Experience level", "Job details", "Requirements",
+            "jobExperienceLevel", "Experience level", "Requirements", null!,
             CustomFieldDataType.Option.ToString(), true, false, 10,
             true, false, false, created, created
           }

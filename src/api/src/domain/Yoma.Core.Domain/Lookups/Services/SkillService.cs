@@ -22,6 +22,7 @@ namespace Yoma.Core.Domain.Lookups.Services
     private readonly ScheduleJobOptions _scheduleJobOptions;
     private readonly IMemoryCache _memoryCache;
     private readonly ILaborMarketProviderClient _laborMarketProviderClient;
+    private readonly LookupIdsValidator _lookupIdsValidator;
     private readonly SkillSearchFilterValidator _searchFilterValidator;
     private readonly IRepositoryBatchedValueContains<Skill> _skillRepository;
     private readonly IDistributedLockService _distributedLockService;
@@ -33,18 +34,21 @@ namespace Yoma.Core.Domain.Lookups.Services
         IOptions<ScheduleJobOptions> scheduleJobOptions,
         IMemoryCache memoryCache,
         ILaborMarketProviderClientFactory laborMarketProviderClientFactory,
+        LookupIdsValidator lookupIdsValidator,
         SkillSearchFilterValidator searchFilterValidator,
         IRepositoryBatchedValueContains<Skill> skillRepository,
         IDistributedLockService distributedLockService)
     {
-      _logger = logger;
-      _appSettings = appSettings.Value;
-      _scheduleJobOptions = scheduleJobOptions.Value;
-      _memoryCache = memoryCache;
-      _laborMarketProviderClient = laborMarketProviderClientFactory.CreateClient();
-      _searchFilterValidator = searchFilterValidator;
-      _skillRepository = skillRepository;
-      _distributedLockService = distributedLockService;
+      _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+      _appSettings = appSettings?.Value ?? throw new ArgumentNullException(nameof(appSettings));
+      _scheduleJobOptions = scheduleJobOptions?.Value ?? throw new ArgumentNullException(nameof(scheduleJobOptions));
+      _memoryCache = memoryCache ?? throw new ArgumentNullException(nameof(memoryCache));
+      _laborMarketProviderClient = (laborMarketProviderClientFactory
+        ?? throw new ArgumentNullException(nameof(laborMarketProviderClientFactory))).CreateClient();
+      _lookupIdsValidator = lookupIdsValidator ?? throw new ArgumentNullException(nameof(lookupIdsValidator));
+      _searchFilterValidator = searchFilterValidator ?? throw new ArgumentNullException(nameof(searchFilterValidator));
+      _skillRepository = skillRepository ?? throw new ArgumentNullException(nameof(skillRepository));
+      _distributedLockService = distributedLockService ?? throw new ArgumentNullException(nameof(distributedLockService));
     }
     #endregion
 
@@ -103,6 +107,23 @@ namespace Yoma.Core.Domain.Lookups.Services
         throw new ArgumentNullException(nameof(id));
 
       return List().SingleOrDefault(o => o.Id == id);
+    }
+
+    /// <summary>
+    /// Resolves all existing skills for the supplied IDs, independently of catalogue paging.
+    /// Duplicate IDs resolve once; unknown IDs are omitted rather than assigned another label.
+    /// </summary>
+    public List<Skill> ListByIds(List<Guid> ids)
+    {
+      ArgumentNullException.ThrowIfNull(ids, nameof(ids));
+
+      _lookupIdsValidator.ValidateAndThrow(ids);
+
+      var selectedIds = ids.ToHashSet();
+
+      return [.. List().Where(skill => selectedIds.Contains(skill.Id))
+        .OrderBy(skill => skill.Name)
+        .ThenBy(skill => skill.Id)];
     }
 
     public List<Skill> Contains(string value)

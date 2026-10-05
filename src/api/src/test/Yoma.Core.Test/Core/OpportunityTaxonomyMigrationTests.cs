@@ -482,6 +482,33 @@ namespace Yoma.Core.Test.Core
       Assert.Equal(LegacyCategories.Select(category => category.Name).Order(), names.Order());
     }
 
+    [Fact]
+    public async Task ConfigurationMigrationPersistsAllFieldsWithOneGroupingLevel()
+    {
+      await using var connection = await OpenTestConnection();
+      await using var transaction = await connection.BeginTransactionAsync(TestContext.Current.CancellationToken);
+      await CreateFixture(connection, transaction);
+      await ApplyMigration(connection, transaction);
+
+      await using var command = new NpgsqlCommand("""
+        SELECT
+          COUNT(*),
+          COUNT(*) FILTER (WHERE "SubGroup" IS NOT NULL),
+          COUNT(*) FILTER (WHERE "Group" ILIKE '%details%'),
+          COUNT(*) FILTER (WHERE "EntityContext" = 'Job' AND "Group" = 'Compensation'),
+          COUNT(*) FILTER (WHERE "EntityContext" = 'Entrepreneurship' AND "Group" = 'Outcomes')
+        FROM "Core"."CustomFieldDefinition";
+        """, connection, transaction);
+      await using var reader = await command.ExecuteReaderAsync(TestContext.Current.CancellationToken);
+
+      Assert.True(await reader.ReadAsync(TestContext.Current.CancellationToken));
+      Assert.Equal(39L, reader.GetInt64(0));
+      Assert.Equal(0L, reader.GetInt64(1));
+      Assert.Equal(0L, reader.GetInt64(2));
+      Assert.Equal(5L, reader.GetInt64(3));
+      Assert.Equal(7L, reader.GetInt64(4));
+    }
+
     private static async Task<NpgsqlConnection> OpenTestConnection()
     {
       var value = Environment.GetEnvironmentVariable("YOMA_TAXONOMY_TEST_CONNECTION");

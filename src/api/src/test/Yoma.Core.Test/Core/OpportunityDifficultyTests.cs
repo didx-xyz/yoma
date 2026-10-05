@@ -32,9 +32,9 @@ namespace Yoma.Core.Test.Core
         Assert.False(definition.SupportsMultiple);
         Assert.Equal(CustomFieldDataType.Option, definition.DataType);
         Assert.DoesNotContain("[Sample]", definition.Title);
-        Assert.Equal("Requirements", definition.SubGroup);
+        Assert.Equal("Requirements", definition.Group);
+        Assert.Null(definition.SubGroup);
         Assert.Equal(10, definition.SortOrder);
-        Assert.EndsWith(" details", definition.Group);
         Assert.Equal(Enumerable.Range(1, definition.Options!.Count).Select(o => o * 10),
           definition.Options.Select(o => o.SortOrder));
       });

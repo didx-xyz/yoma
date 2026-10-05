@@ -39,19 +39,19 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           {
             new Guid("cf0a0001-0929-4cf0-a100-000000000001"), CustomFieldEntityType.Opportunity.ToString(), Domain.Opportunity.Type.ImpactAction.ToString(),
             CustomFieldConstants.ImpactAction.Tools.Required, "Tools required", "Tools or equipment the participant needs for this action. Select Other for an unlisted requirement and describe it.",
-            "Impact action details", "Requirements", CustomFieldDataType.Option.ToString(), false, true,
+            "Requirements", null!, CustomFieldDataType.Option.ToString(), false, true,
             null!, null!, 20, true, true, false, created, created
           },
           {
             new Guid("cf0a0001-0929-4cf0-a100-000000000002"), CustomFieldEntityType.Opportunity.ToString(), Domain.Opportunity.Type.ImpactAction.ToString(),
             CustomFieldConstants.ImpactAction.Tools.OtherDescription, "Other tool description", "Required only when Other is selected in Tools required. Describe the unlisted tools or equipment, up to 500 characters.",
-            "Impact action details", "Requirements", CustomFieldDataType.String.ToString(), false, null!,
+            "Requirements", null!, CustomFieldDataType.String.ToString(), false, null!,
             @"\A[\s\S]{1,500}\z", "Other tool description must be between 1 and 500 characters.", 30, true, true, false, created, created
           },
           {
             new Guid("cf0a0001-0929-4cf0-a100-000000000003"), CustomFieldEntityType.Opportunity.ToString(), Domain.Opportunity.Type.ImpactAction.ToString(),
             "impactActionVerifiedActivityType", "Verified activity type", "Activity or session represented by completion. Describes the activity, not a separate credential schema or evidence of an already verified outcome.",
-            "Impact action details", "Activity", CustomFieldDataType.Option.ToString(), false, false,
+            "Activity", null!, CustomFieldDataType.Option.ToString(), false, false,
             null!, null!, 10, true, false, false, created, created
           }
         });

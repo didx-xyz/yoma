@@ -25,7 +25,9 @@ Email,PhoneNumber,FirstName,Surname,Gender,Country,DateCompleted,OpportunityExte
 
 - File type: CSV
 - CSV delimiter: **comma (`,` only)**
-- Core headers are **case-sensitive** and must match the sample file order. Custom-field headers must use `CF:<definition key>` (case-sensitive), never bare keys or display titles. Use only active definitions for the matching Opportunity type; irrelevant types remain blank. Required Entrepreneurship completion values must be supplied for non-instant submissions.
+- Core headers are **case-sensitive** and must match the sample file order. Custom-field headers must use `CF:<definition key>` (case-sensitive), never bare keys or display titles. Use only active definitions for the matching Opportunity type; irrelevant types remain blank.
+- **All custom fields are optional for CSV imports and Partner Sync**, including definitions marked required for manual capture. Missing values remain unspecified; supplied values must satisfy their metadata and applicable cross-field rules. Do not invent values to make an import look complete.
+- Manual youth submissions enforce the applicable required CF definitions. Instant/action-link completions intentionally bypass CF processing; they must not be treated as manual submissions or given invented defaults.
 - Whitespace: trim all cells; an empty cell after trim is treated as **missing**
 - Dates: **two accepted formats** (zero-padded):
   - `YYYY-MM-DD`  (e.g., 2025-09-01)
@@ -78,8 +80,8 @@ At least **one** of **Email** or **PhoneNumber** must be provided (the “Userna
   - If omitted or blank, the role remains unspecified
 
 - **Entrepreneurship completion custom fields**
-  - Required for non-instant completions: `CF:entrepreneurshipBusinessName`, `CF:entrepreneurshipBusinessSummary`, `CF:entrepreneurshipBusinessRegistered`.
-  - The remaining Entrepreneurship columns in the sample are optional; registration reference applies only when registered.
+  - All Entrepreneurship columns in this CSV are optional. Business name, summary and registered status are required only for manual youth submissions, not CSV or Partner Sync.
+  - Registration reference applies only when registered. Other conditional companions can be absent on imports, but supplied values must not contradict each other.
   - Resolve active options through the API definitions and use their stable keys, not display titles. Multi-select values are separated with `|`.
   - CSV shared lookups use readable external values: Country/Language alpha-2 codes, Currency ISO code (for example `USD`), and full Education/Skill names. This differs from JSON API requests, which use lookup IDs.
   - Boolean values are `true`/`false` (the established CSV Yes/No values are also accepted); integer/decimal values use invariant formatting.
@@ -122,6 +124,7 @@ OpportunityExternalId → OpportunityExternalId  (required; 1–50; must match e
 - Country: must exist in completions_countries.json when provided; **WW not allowed**
 - DateCompleted: valid date in one of the two accepted formats; defaults to now if missing
 - OpportunityExternalId: **required**; 1–50 chars; must map to an existing Opportunity
+- Custom fields: optional on CSV/Partner Sync; supplied fields must use active matching definitions and valid values. Manual requiredness does not change CSV requiredness.
 
 ------------------------------------------------------------------------------
 

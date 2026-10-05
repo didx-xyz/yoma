@@ -38,19 +38,19 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           {
             new Guid("cf0c0001-0929-4cf0-a100-000000000001"), CustomFieldEntityType.MyOpportunity.ToString(), Domain.Opportunity.Type.Job.ToString(),
             "jobEmploymentStartDate", "Employment start date", "Actual placement start date, when known. Distinct from the Job application deadline; use yyyy-MM-dd.",
-            "Completion details", "Placement", CustomFieldDataType.Date.ToString(), false, null!,
+            "Placement", null!, CustomFieldDataType.Date.ToString(), false, null!,
             null!, null!, 10, true, false, false, created, created
           },
           {
             new Guid("cf0c0001-0929-4cf0-a100-000000000002"), CustomFieldEntityType.MyOpportunity.ToString(), Domain.Opportunity.Type.ImpactAction.ToString(),
             "impactActionImpactAchieved", "Impact achieved", "Describe the impact achieved by this completed action, when known.",
-            "Completion details", "Impact", CustomFieldDataType.String.ToString(), false, null!,
+            "Impact", null!, CustomFieldDataType.String.ToString(), false, null!,
             @"\A[\s\S]{1,1000}\z", "Impact achieved must be between 1 and 1000 characters.", 10, true, false, false, created, created
           },
           {
             new Guid("cf0c0001-0929-4cf0-a100-000000000003"), CustomFieldEntityType.MyOpportunity.ToString(), Domain.Opportunity.Type.Event.ToString(),
             "eventRole", "Event role", "Role at the event, when known. No role is inferred from attendance.",
-            "Completion details", "Participation", CustomFieldDataType.Option.ToString(), false, false,
+            "Participation", null!, CustomFieldDataType.Option.ToString(), false, false,
             null!, null!, 10, true, false, false, created, created
           }
         });

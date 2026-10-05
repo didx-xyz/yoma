@@ -25,7 +25,8 @@ namespace Yoma.Core.Test.Core
       Assert.All(definitions, o =>
       {
         Assert.Equal("ImpactAction", o.EntityContext);
-        Assert.Equal("Impact action details", o.Group);
+        Assert.Contains(o.Group, new[] { "Requirements", "Activity" });
+        Assert.Null(o.SubGroup);
         Assert.False(o.IsRequired);
         Assert.True(o.IsActive);
         Assert.False(o.IsSchemaMapped);
@@ -34,7 +35,7 @@ namespace Yoma.Core.Test.Core
       var tools = Assert.Single(definitions, o => o.Key == CustomFieldConstants.ImpactAction.Tools.Required);
       Assert.True(tools.SupportsMultiple);
       Assert.True(tools.IsSystem);
-      Assert.Equal("Requirements", tools.SubGroup);
+      Assert.Equal("Requirements", tools.Group);
       Assert.Equal(13, tools.Options!.Count);
       Assert.Equal(ImpactActionTool.Other.ToString(), tools.Options.Last().Key);
 

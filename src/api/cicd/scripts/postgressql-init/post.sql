@@ -344,8 +344,8 @@ BEGIN
 END $$ LANGUAGE plpgsql;
 
 -- Custom fields (local/dev): required values follow the active metadata.
--- Boolean and shared-lookup selections are supported; no completion CFs or user
--- preferences are seeded. Other and non-permanent employment need companion fields,
+-- Boolean and shared-lookup selections are supported; user preferences remain
+-- unseeded. Other and non-permanent employment need companion fields,
 -- so ordinary complete fixtures use an explicit option instead.
 DO $$
 DECLARE
@@ -503,10 +503,35 @@ JOIN "Choices" S ON S."Index" = 1 + MOD(ABS(HASHTEXT(O."Id"::TEXT)::BIGINT) + N.
 -- partner-like metadata stay distinguishable. Location remains a country mapping;
 -- no user location/preferences are seeded.
 CREATE TEMP TABLE "SearchFixtures" ON COMMIT PRESERVE ROWS AS
-SELECT "Id", ROW_NUMBER() OVER (ORDER BY "DateCreated" DESC, "Id") AS "Number"
-FROM "Opportunity"."Opportunity"
-ORDER BY "DateCreated" DESC, "Id"
-LIMIT 24;
+WITH "Requested"("Number", "Type") AS (
+    VALUES
+        (1, 'Job'), (2, 'Job'), (3, 'ImpactAction'), (4, 'Event'),
+        (5, 'Job'), (6, 'Job'), (7, 'Learning'), (8, 'Event'),
+        (9, 'Entrepreneurship'), (10, 'Learning'), (11, 'ImpactAction'), (12, 'Event'),
+        (13, 'Learning'), (14, 'Event'), (15, 'Entrepreneurship'), (16, 'Entrepreneurship'),
+        (17, 'Other'), (18, 'Other'), (19, 'ImpactAction'), (20, 'Entrepreneurship'),
+        (21, 'Job'), (22, 'Job'), (23, 'Other'), (24, 'Learning')
+), "RequestedRows" AS (
+    SELECT "Number", "Type", ROW_NUMBER() OVER (PARTITION BY "Type" ORDER BY "Number") AS "Index"
+    FROM "Requested"
+), "Candidates" AS (
+    SELECT O."Id", T."Name" AS "Type",
+        ROW_NUMBER() OVER (PARTITION BY O."TypeId" ORDER BY O."DateCreated" DESC, O."Id") AS "Index"
+    FROM "Opportunity"."Opportunity" O
+    JOIN "Opportunity"."OpportunityType" T ON T."Id" = O."TypeId"
+)
+SELECT C."Id", R."Number"
+FROM "RequestedRows" R
+JOIN "Candidates" C ON C."Type" = R."Type" AND C."Index" = R."Index";
+
+-- Choose existing rows of the correct type: never retag an opportunity and leave
+-- unrelated type-specific CFs behind. Fail visibly if the generator is reduced too far.
+DO $$
+BEGIN
+    IF (SELECT COUNT(*) FROM "SearchFixtures") <> 24 THEN
+        RAISE EXCEPTION 'Search fixtures require enough generated rows of all six opportunity types.';
+    END IF;
+END $$;
 
 -- Deliberately incomplete rows are clearly labelled, not presented as valid manual saves.
 DELETE FROM "Opportunity"."OpportunityLanguages" L USING "SearchFixtures" F
@@ -522,10 +547,10 @@ SET "Title" = 'Search fixture ' || LPAD(F."Number"::TEXT, 2, '0') || ' - ' || T.
         WHERE "StatusId" = (SELECT "Id" FROM "Entity"."OrganizationStatus" WHERE "Name" = 'Active')
         ORDER BY "Id" LIMIT 1),
     "StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" = 'Active'),
-    "DateStart" = CASE WHEN F."Number" = 8 THEN CURRENT_TIMESTAMP + INTERVAL '2 days'
+    "DateStart" = CASE WHEN F."Number" = 8 THEN CURRENT_TIMESTAMP + INTERVAL '30 days'
         ELSE CURRENT_TIMESTAMP - INTERVAL '2 days' END,
     "DateEnd" = CASE WHEN F."Number" = 7 THEN CURRENT_TIMESTAMP - INTERVAL '1 hour'
-        WHEN F."Number" = 8 THEN CURRENT_TIMESTAMP + INTERVAL '3 days'
+        WHEN F."Number" = 8 THEN CURRENT_TIMESTAMP + INTERVAL '90 days'
         WHEN F."Number" = 9 THEN NULL
         ELSE CURRENT_TIMESTAMP + INTERVAL '30 days' + F."Number" * INTERVAL '1 hour' END,
     "EngagementTypeId" = CASE WHEN MOD(F."Number", 3) = 0 THEN NULL
@@ -609,22 +634,20 @@ INSERT INTO "Core"."CustomFieldValue"(
     "Id", "CustomFieldDefinitionId", "OpportunityId", "Value", "ValueNumeric", "DateCreated", "DateModified"
 )
 SELECT gen_random_uuid(), D."Id", O."Id", V."Value", V."Numeric", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-FROM (SELECT O."Id" FROM "Opportunity"."Opportunity" O
-    JOIN "Opportunity"."OpportunityType" T ON T."Id" = O."TypeId"
-    WHERE T."Name" = 'Job' ORDER BY O."DateCreated" DESC LIMIT 1) O
+FROM (SELECT "Id" FROM "SearchFixtures" WHERE "Number" = 1) O
 JOIN (VALUES ('jobSalaryMinimum', '1000', 1000::NUMERIC),
              ('jobSalaryCurrency', (SELECT "Id"::TEXT FROM "Lookup"."Currency" WHERE "Code" = 'USD'), NULL::NUMERIC),
              ('jobPayInterval', 'PerMonth', NULL::NUMERIC)) V("Key", "Value", "Numeric") ON TRUE
 JOIN "Core"."CustomFieldDefinition" D ON D."Key" = V."Key" AND D."IsActive" = TRUE;
 
 UPDATE "Core"."CustomFieldValue" V SET "Value" = 'true'
-FROM "Core"."CustomFieldDefinition" D, "Opportunity"."Opportunity" O, "Opportunity"."OpportunityType" T
+FROM "Core"."CustomFieldDefinition" D, "SearchFixtures" F
 WHERE V."CustomFieldDefinitionId" = D."Id" AND D."Key" = 'jobSalaryDisclosed'
-  AND V."OpportunityId" = O."Id" AND O."TypeId" = T."Id" AND T."Name" = 'Job'
-  AND O."Id" = (SELECT O2."Id" FROM "Opportunity"."Opportunity" O2
-      WHERE O2."TypeId" = T."Id" ORDER BY O2."DateCreated" DESC LIMIT 1);
+  AND V."OpportunityId" = F."Id" AND F."Number" = 1;
 
-DROP TABLE "SearchFixtures";
+-- Salary is an incentive, but not a Yoma ZLTO reward for Jobs.
+UPDATE "Opportunity"."Opportunity" O SET "Incentivized" = TRUE
+FROM "SearchFixtures" F WHERE O."Id" = F."Id" AND F."Number" = 1;
 
 -- Representative optional filters use active definition/option metadata. Leave
 -- some rows empty so missing-value policies remain testable; never choose Other
@@ -653,6 +676,11 @@ CROSS JOIN LATERAL (
 WHERE MOD(ABS(HASHTEXT(O."Id"::TEXT)::BIGINT), 3) <> 0 AND V."Value" IS NOT NULL
     AND NOT EXISTS (SELECT 1 FROM "Core"."CustomFieldValue" E
         WHERE E."OpportunityId" = O."Id" AND E."CustomFieldDefinitionId" = D."Id");
+
+-- Imported/synced opportunities can lack manually required metadata. Keep those
+-- labelled fixtures genuinely incomplete, including type-specific CFs.
+DELETE FROM "Core"."CustomFieldValue" V USING "SearchFixtures" F
+WHERE V."OpportunityId" = F."Id" AND (MOD(F."Number", 3) = 0 OR F."Number" = 11);
 
 -- Verification types
 INSERT INTO "Opportunity"."OpportunityVerificationTypes"
@@ -760,6 +788,7 @@ SELECT
 	(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 FROM "Opportunity"."Opportunity" O
 WHERE O."StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" = 'Active') AND O."DateStart" <= (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') AND O."DateEnd" > (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+    AND NOT EXISTS (SELECT 1 FROM "SearchFixtures" F WHERE F."Id" = O."Id")
 ORDER BY "DateCreated"
 OFFSET 30 ROWS
 FETCH NEXT 30 ROWS ONLY;
@@ -782,6 +811,7 @@ SELECT
 	(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 FROM "Opportunity"."Opportunity" O
 WHERE O."StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" = 'Active') AND O."DateStart" <= (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') AND O."DateEnd" > (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+    AND NOT EXISTS (SELECT 1 FROM "SearchFixtures" F WHERE F."Id" = O."Id")
 ORDER BY "DateCreated"
 OFFSET 60 ROWS
 FETCH NEXT 30 ROWS ONLY;
@@ -804,9 +834,45 @@ SELECT
 	(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 FROM "Opportunity"."Opportunity" O
 WHERE O."StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" = 'Active') AND O."DateStart" <= (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') AND O."DateEnd" > (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+    AND NOT EXISTS (SELECT 1 FROM "SearchFixtures" F WHERE F."Id" = O."Id")
 ORDER BY "DateCreated"
 OFFSET 90 ROWS
 FETCH NEXT 30 ROWS ONLY;
+
+-- Two controlled completion examples complement the varied generic rows:
+-- an Event awaiting review and a completed Job placement with an actual start date.
+INSERT INTO "Opportunity"."MyOpportunity"(
+    "Id", "UserId", "OpportunityId", "ActionId", "VerificationStatusId", "CommentVerification",
+    "DateStart", "DateEnd", "DateCompleted", "ZltoReward", "DateCreated", "DateModified"
+)
+SELECT gen_random_uuid(), (SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testuser@gmail.com'),
+    O."Id", (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification'),
+    (SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus"
+        WHERE "Name" = CASE WHEN F."Number" = 1 THEN 'Completed' ELSE 'Pending' END),
+    CASE WHEN F."Number" = 1 THEN 'Local fixture: confirmed placement' ELSE NULL END,
+    CASE WHEN F."Number" = 4 THEN O."DateStart" ELSE NULL END,
+    CASE WHEN F."Number" = 4 THEN CURRENT_TIMESTAMP ELSE NULL END,
+    CASE WHEN F."Number" = 1 THEN CURRENT_TIMESTAMP ELSE NULL END,
+    NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM "SearchFixtures" F
+JOIN "Opportunity"."Opportunity" O ON O."Id" = F."Id"
+WHERE F."Number" IN (1, 4);
+
+-- This one explicit test outcome is not an inferred value or a historical backfill.
+-- Other completion CFs remain absent so optional/missing-value handling is testable.
+INSERT INTO "Core"."CustomFieldValue"(
+    "Id", "CustomFieldDefinitionId", "MyOpportunityId", "Value", "ValueDateTime", "DateCreated", "DateModified"
+)
+SELECT gen_random_uuid(), D."Id", M."Id", TO_CHAR(CURRENT_DATE - 7, 'YYYY-MM-DD'),
+    (CURRENT_DATE - 7)::TIMESTAMP AT TIME ZONE 'UTC', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM "SearchFixtures" F
+JOIN "Opportunity"."MyOpportunity" M ON M."OpportunityId" = F."Id"
+    AND M."ActionId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification')
+JOIN "Core"."CustomFieldDefinition" D ON D."EntityType" = 'MyOpportunity'
+    AND D."EntityContext" = 'Job' AND D."Key" = 'jobEmploymentStartDate' AND D."IsActive" = TRUE
+WHERE F."Number" = 1;
+
+DROP TABLE "SearchFixtures";
 
 -- SSI Credential Issuance (Pending) for Verification (Completed) mapped to opportunities with CredentialIssuanceEnabled
 INSERT INTO "SSI"."CredentialIssuance"("Id", "SchemaTypeId", "ArtifactType", "SchemaName", "SchemaVersion", "StatusId", "UserId", "OrganizationId",

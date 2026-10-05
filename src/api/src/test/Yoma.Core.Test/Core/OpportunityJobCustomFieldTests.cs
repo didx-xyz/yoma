@@ -1,5 +1,7 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using System.Reflection;
 using Xunit;
@@ -10,6 +12,7 @@ using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Core.Services;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity;
+using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Services;
 using Yoma.Core.Infrastructure.Database.Migrations;
 
@@ -26,7 +29,8 @@ namespace Yoma.Core.Test.Core
       Assert.All(definitions, o =>
       {
         Assert.Equal("Job", o.EntityContext);
-        Assert.Equal("Job details", o.Group);
+        Assert.Contains(o.Group, new[] { "Compensation", "Employment", "Requirements", "Classification" });
+        Assert.Null(o.SubGroup);
         Assert.True(o.IsActive);
       });
 
@@ -62,6 +66,54 @@ namespace Yoma.Core.Test.Core
       var definition = Definitions().Single(o => o.Key == key);
       Assert.True(definition.IsSystem);
       Assert.Contains(definition.Options!, o => o.Key == option);
+    }
+
+    [Theory]
+    [InlineData(100, 0, true)]
+    [InlineData(0, 200, true)]
+    [InlineData(0, 0, null)]
+    [InlineData(null, null, null)]
+    public void JobJackIncentiveUsesStructuredSalaryWithoutInventingCurrencyOrUnpaidWork(int? minimum, int? maximum, bool? expected)
+    {
+      var types = new Mock<IOpportunityTypeService>();
+      types.Setup(service => service.GetByName(Domain.Opportunity.Type.Job.ToString()))
+        .Returns(new Domain.Opportunity.Models.Lookups.OpportunityType { Id = Guid.NewGuid() });
+      var categories = new Mock<IOpportunityCategoryService>();
+      categories.Setup(service => service.GetByName(Category.Other.ToString()))
+        .Returns(new Domain.Opportunity.Models.Lookups.OpportunityCategory { Id = Guid.NewGuid() });
+      var countries = new Mock<ICountryService>();
+      countries.Setup(service => service.GetByCodeAlpha2(Country.SouthAfrica.ToDescription()))
+        .Returns(new Domain.Lookups.Models.Country { Id = Guid.NewGuid() });
+      var languages = new Mock<ILanguageService>();
+      languages.Setup(service => service.GetByName(Language.English.ToString()))
+        .Returns(new Domain.Lookups.Models.Language { Id = Guid.NewGuid() });
+
+      var client = new Infrastructure.JobJack.Client.JobJackClient(
+        Mock.Of<ILogger<Infrastructure.JobJack.Client.JobJackClient>>(),
+        Options.Create(new Infrastructure.JobJack.Models.JobJackOptions { OrganizationIdYoma = Guid.NewGuid() }),
+        types.Object, categories.Object, countries.Object, languages.Object,
+        Mock.Of<ICustomFieldDefinitionService>(),
+        Mock.Of<IRepositoryBatched<Infrastructure.JobJack.Models.Opportunity>>(),
+        new Domain.PartnerSync.Validators.SyncFilterPullEntityValidator());
+      var source = new Infrastructure.JobJack.Models.Opportunity
+      {
+        ExternalId = "isolated-job",
+        Title = "Partner role",
+        SalaryLow = minimum,
+        SalaryHigh = maximum,
+        SalaryType = "Market Related",
+        DateCreated = DateTimeOffset.UtcNow
+      };
+      var mapper = typeof(Infrastructure.JobJack.Client.JobJackClient)
+        .GetMethod("ToOpportunity", BindingFlags.Instance | BindingFlags.NonPublic)!;
+      var result = (Domain.PartnerSync.Models.SyncItemEntity<Domain.Opportunity.Models.OpportunityRequestCreate>)
+        mapper.Invoke(client, [source])!;
+
+      Assert.Equal(expected, result.Item.Incentivized);
+      Assert.DoesNotContain(result.Item.CustomFields!, field => field.Key == CustomFieldConstants.Job.Salary.Currency);
+      Assert.Equal(expected == true, result.Item.CustomFields!.Any(field => field.Key == CustomFieldConstants.Job.Salary.Disclosed));
+      Assert.Null(result.Item.ZltoReward);
+      Assert.False(result.Item.VerificationEnabled);
     }
 
     [Fact]

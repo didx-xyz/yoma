@@ -285,7 +285,8 @@ namespace Yoma.Core.Domain.Core
     Language,
 
     /// <summary>
-    /// Skill lookup values are available from the public relative route <c>api/v3/lookup/skill</c>.
+    /// Skill lookup values are available through paged search at <c>api/v3/lookup/skill</c>.
+    /// Resolve selected IDs without paging through <c>POST api/v3/lookup/skill/ids</c>.
     /// </summary>
     Skill,
 

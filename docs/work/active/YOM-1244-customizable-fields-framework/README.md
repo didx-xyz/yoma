@@ -29,7 +29,7 @@ definitions to the BA-approved set (YOM-1264) without a code change.
 
 ## Child Features
 
-**Current search/preference contract (2026-10-01):** the [consolidated API handoff](./handoffs/2026-10-01-c.md) records the agreed decisions for asks 1–24, exact request shapes/defaults and test evidence. It supersedes the historical search/preference-cardinality notes below. The implementation is uncommitted for Adrian's review; API and Web must move to the breaking shapes together. Web continues to own preference composition and skips.
+**Current search/preference contract (2026-10-01):** the [consolidated API handoff](./handoffs/2026-10-01-c.md) records the agreed decisions for asks 1–24, exact request shapes/defaults and test evidence. It supersedes the historical search/preference-cardinality notes below. The API implementation was committed as `77646a74`; Web has moved to the same breaking shapes. Deploy API and Web together. Web continues to own preference composition and skips.
 
 **Web moved onto this contract on 2026-10-03** (on top of `77646a74`): every search caller, discovery's composition with provenance, and the visible changes. See the [YOM-1262 handoff](./YOM-1262-ui-apply-user-presets-to-opportunity-discovery/handoffs/2026-10-03-a.md). The branch now works only against an API on `77646a74` or later. For the BA and testers, the [testing guide](./testing/2026-10-03-discovery-testing-guide.md) explains the search, preferences, filters, details and admin changes in plain words. It has 68 tests and lists the decisions awaiting BA confirmation (TBC).
 
@@ -108,6 +108,10 @@ framework/schema work; Jason owns Web implementation and regression checks.
 **The framework and UI remain metadata-driven.** Every surface renders the definitions,
 options, groups and ordering returned by the API; do not hardcode a field-specific control.
 
+**Grouping decision (2026-10-05):** Web owns the overarching opportunity-type heading;
+the configured CF sections use one metadata-driven `group` level with null `subGroup`.
+This does not permit hardcoded field controls or field/option labels.
+
 Domain rules and partner mappings may depend on explicitly protected CF contracts.
 Use shared constants for the stable keys they reference, and an enum only for values
 code actually selects or interprets. Resolve options through the common CF extensions;
@@ -175,6 +179,8 @@ When adding a gate: never write `...(CUSTOM_FIELDS_ENABLED ? [x] : [])` at modul
 type-checks and compiles, then fails the production build with a bare-identifier `ReferenceError`.
 
 ## Shared API Contract
+
+**Presentation / selected lookup update (2026-10-05):** all 39 configured CFs now use one `group` level and null `subGroup`; Web owns the overarching type heading. Dedicated `POST /api/v3/lookup/skill/ids` resolves a non-empty JSON array of skill IDs and returns all matches without pagination or an application-level ID-count limit. Existing `GET /api/v3/lookup/skill` remains paged name search/catalogue browsing, without an IDs criterion. Other CF reference lists (Country, Language, Education, Currency) are complete, unpaged lists; inline options expose keys/names in their definition. The original development seed migration was edited, so Jason must recreate Local after pulling. The [consolidated review handoff](YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/handoffs/2026-10-05-a.md) records the exact contract, reset warning and seven confirmed decisions; Opportunity search behavior remains unchanged. Contextual reference/search-criteria endpoints are a later enhancement, not batched counts.
 
 ### Opportunity core metadata (2026-09-28)
 

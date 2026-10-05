@@ -23,7 +23,8 @@ namespace Yoma.Core.Test.Core
       Assert.All(definitions, definition =>
       {
         Assert.Equal(CustomFieldEntityType.MyOpportunity.ToString(), definition.EntityType);
-        Assert.Equal("Completion details", definition.Group);
+        Assert.Contains(definition.Group, new[] { "Placement", "Impact", "Participation" });
+        Assert.Null(definition.SubGroup);
         Assert.False(definition.IsRequired);
         Assert.False(definition.IsSchemaMapped);
       });

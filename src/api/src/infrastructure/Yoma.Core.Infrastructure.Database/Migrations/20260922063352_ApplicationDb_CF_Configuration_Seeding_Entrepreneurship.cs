@@ -39,19 +39,19 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           {
             new Guid("cf0e0001-0929-4cf0-a100-000000000001"), CustomFieldEntityType.Opportunity.ToString(), Domain.Opportunity.Type.Entrepreneurship.ToString(),
             CustomFieldConstants.Entrepreneurship.Programme.Type, "Programme", "Programme under which this entrepreneurship opportunity is run. Select Other and describe an unlisted programme.",
-            "Entrepreneurship details", "Programme", CustomFieldDataType.Option.ToString(), null!, false, false,
+            "Programme", null!, CustomFieldDataType.Option.ToString(), null!, false, false,
             null!, null!, 10, true, true, false, created, created
           },
           {
             new Guid("cf0e0001-0929-4cf0-a100-000000000002"), CustomFieldEntityType.Opportunity.ToString(), Domain.Opportunity.Type.Entrepreneurship.ToString(),
             CustomFieldConstants.Entrepreneurship.Programme.OtherDescription, "Other programme", "Required only when Other is selected. Name the programme, up to 255 characters.",
-            "Entrepreneurship details", "Programme", CustomFieldDataType.String.ToString(), null!, false, null!,
+            "Programme", null!, CustomFieldDataType.String.ToString(), null!, false, null!,
             @"\A[\s\S]{1,255}\z", "Other programme must be between 1 and 255 characters.", 20, true, true, false, created, created
           },
           {
             new Guid("cf0e0001-0929-4cf0-a100-000000000003"), CustomFieldEntityType.Opportunity.ToString(), Domain.Opportunity.Type.Entrepreneurship.ToString(),
             "entrepreneurshipVentureStageTargeted", "Venture stage targeted", "Stage the programme is designed for; this does not assert the stage reached by a participant.",
-            "Entrepreneurship details", "Programme", CustomFieldDataType.Option.ToString(), null!, false, false,
+            "Programme", null!, CustomFieldDataType.Option.ToString(), null!, false, false,
             null!, null!, 30, true, false, false, created, created
           }
         });
@@ -90,73 +90,73 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           {
             new Guid("cf0e0001-0929-4cf0-a100-000000000011"), CustomFieldEntityType.MyOpportunity.ToString(), Domain.Opportunity.Type.Entrepreneurship.ToString(),
             "entrepreneurshipBusinessName", "Business / venture name", "Venture or trading name. Informal self-employment can use a descriptive trading name.",
-            "Completion details", "Venture", CustomFieldDataType.String.ToString(), null!, true, null!,
+            "Venture", null!, CustomFieldDataType.String.ToString(), null!, true, null!,
             @"\A[\s\S]{1,255}\z", "Business / venture name must be between 1 and 255 characters.", 10, true, false, false, created, created
           },
           {
             new Guid("cf0e0001-0929-4cf0-a100-000000000012"), CustomFieldEntityType.MyOpportunity.ToString(), Domain.Opportunity.Type.Entrepreneurship.ToString(),
             "entrepreneurshipBusinessSummary", "Business summary", "Briefly describe what the venture does and who it serves, up to 300 characters.",
-            "Completion details", "Venture", CustomFieldDataType.String.ToString(), null!, true, null!,
+            "Venture", null!, CustomFieldDataType.String.ToString(), null!, true, null!,
             @"\A[\s\S]{1,300}\z", "Business summary must be between 1 and 300 characters.", 20, true, false, false, created, created
           },
           {
             new Guid("cf0e0001-0929-4cf0-a100-000000000013"), CustomFieldEntityType.MyOpportunity.ToString(), Domain.Opportunity.Type.Entrepreneurship.ToString(),
             "entrepreneurshipBusinessRegistered", "Business registered", "Select No for an informal or unregistered venture; registration is not a condition of participation.",
-            "Completion details", "Venture", CustomFieldDataType.Boolean.ToString(), null!, true, null!,
+            "Venture", null!, CustomFieldDataType.Boolean.ToString(), null!, true, null!,
             null!, null!, 30, true, false, false, created, created
           },
           {
             new Guid("cf0e0001-0929-4cf0-a100-000000000014"), CustomFieldEntityType.MyOpportunity.ToString(), Domain.Opportunity.Type.Entrepreneurship.ToString(),
             "entrepreneurshipRegistrationReference", "Registration reference", "Optional registration number or document reference when the venture is registered. Never use a placeholder for an informal venture.",
-            "Completion details", "Venture", CustomFieldDataType.String.ToString(), null!, false, null!,
+            "Venture", null!, CustomFieldDataType.String.ToString(), null!, false, null!,
             @"\A[\s\S]{1,125}\z", "Registration reference must be between 1 and 125 characters.", 40, true, false, false, created, created
           },
           {
             new Guid("cf0e0001-0929-4cf0-a100-000000000015"), CustomFieldEntityType.MyOpportunity.ToString(), Domain.Opportunity.Type.Entrepreneurship.ToString(),
             "entrepreneurshipSector", "Business sector", "Economic sector of this venture: UN ISIC Revision 5, Section level. Distinct from the programme's Opportunity category.",
-            "Completion details", "Venture", CustomFieldDataType.Option.ToString(), null!, false, false,
+            "Venture", null!, CustomFieldDataType.Option.ToString(), null!, false, false,
             null!, null!, 50, true, false, false, created, created
           },
           {
             new Guid("cf0e0001-0929-4cf0-a100-000000000016"), CustomFieldEntityType.MyOpportunity.ToString(), Domain.Opportunity.Type.Entrepreneurship.ToString(),
             "entrepreneurshipJobsCreated", "Jobs created", "Number of jobs created by the venture, excluding the founder. Zero is a valid reported outcome.",
-            "Completion details", "Outcomes", CustomFieldDataType.Integer.ToString(), null!, false, null!,
+            "Outcomes", null!, CustomFieldDataType.Integer.ToString(), null!, false, null!,
             @"\A(?:0|[1-9][0-9]*)\z", "Jobs created must be zero or a positive whole number.", 10, true, false, false, created, created
           },
           {
             new Guid("cf0e0001-0929-4cf0-a100-000000000017"), CustomFieldEntityType.MyOpportunity.ToString(), Domain.Opportunity.Type.Entrepreneurship.ToString(),
             "entrepreneurshipRevenueBand", "Monthly revenue band", "Monthly business revenue in USD-equivalent bands. Pre-revenue means no income yet; an omitted value means not reported.",
-            "Completion details", "Outcomes", CustomFieldDataType.Option.ToString(), null!, false, false,
+            "Outcomes", null!, CustomFieldDataType.Option.ToString(), null!, false, false,
             null!, null!, 20, true, false, false, created, created
           },
           {
             new Guid("cf0e0001-0929-4cf0-a100-000000000018"), CustomFieldEntityType.MyOpportunity.ToString(), Domain.Opportunity.Type.Entrepreneurship.ToString(),
             "entrepreneurshipRevenueCurrency", "Revenue currency", "Currency in which the business earns revenue. Informational; the monthly band uses USD-equivalent thresholds.",
-            "Completion details", "Outcomes", CustomFieldDataType.Option.ToString(), CustomFieldLookupType.Currency.ToString(), false, false,
+            "Outcomes", null!, CustomFieldDataType.Option.ToString(), CustomFieldLookupType.Currency.ToString(), false, false,
             null!, null!, 30, true, false, false, created, created
           },
           {
             new Guid("cf0e0001-0929-4cf0-a100-000000000019"), CustomFieldEntityType.MyOpportunity.ToString(), Domain.Opportunity.Type.Entrepreneurship.ToString(),
             "entrepreneurshipFundingTypes", "Funding acquired", "Types of funding actually secured by the venture, when known. This does not represent funding merely applied for.",
-            "Completion details", "Outcomes", CustomFieldDataType.Option.ToString(), null!, false, true,
+            "Outcomes", null!, CustomFieldDataType.Option.ToString(), null!, false, true,
             null!, null!, 40, true, false, false, created, created
           },
           {
             new Guid("cf0e0001-0929-4cf0-a100-000000000020"), CustomFieldEntityType.MyOpportunity.ToString(), Domain.Opportunity.Type.Entrepreneurship.ToString(),
             "entrepreneurshipFundingAmountBand", "Funding amount band", "Total funding secured, in USD-equivalent bands, when known.",
-            "Completion details", "Outcomes", CustomFieldDataType.Option.ToString(), null!, false, false,
+            "Outcomes", null!, CustomFieldDataType.Option.ToString(), null!, false, false,
             null!, null!, 50, true, false, false, created, created
           },
           {
             new Guid("cf0e0001-0929-4cf0-a100-000000000021"), CustomFieldEntityType.MyOpportunity.ToString(), Domain.Opportunity.Type.Entrepreneurship.ToString(),
             "entrepreneurshipFunder", "Funder", "Name of the funder or funding programme, when known.",
-            "Completion details", "Outcomes", CustomFieldDataType.String.ToString(), null!, false, null!,
+            "Outcomes", null!, CustomFieldDataType.String.ToString(), null!, false, null!,
             @"\A[\s\S]{1,255}\z", "Funder must be between 1 and 255 characters.", 60, true, false, false, created, created
           },
           {
             new Guid("cf0e0001-0929-4cf0-a100-000000000022"), CustomFieldEntityType.MyOpportunity.ToString(), Domain.Opportunity.Type.Entrepreneurship.ToString(),
             "entrepreneurshipClientLocation", "Customer reach", "Broad reach of the venture's customers, not a precise business location.",
-            "Completion details", "Outcomes", CustomFieldDataType.Option.ToString(), null!, false, false,
+            "Outcomes", null!, CustomFieldDataType.Option.ToString(), null!, false, false,
             null!, null!, 70, true, false, false, created, created
           }
         });
