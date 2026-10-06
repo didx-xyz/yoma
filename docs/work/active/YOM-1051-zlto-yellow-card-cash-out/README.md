@@ -1,5 +1,33 @@
 # Epic: YOM-1051 — ZLTO Payout (Treasury, Reward Pools and Youth Cash-Out)
 
+## Login webhook recovery — 2026-10-06
+
+Release hardening requested by Adrian after failed registration webhooks left Keycloak accounts
+without a Yoma user. This is an API identity-flow fix travelling with the cash-out release, not a
+change to payout processing or an SRE configuration task.
+
+- [x] Let LOGIN recover a genuinely missing Yoma user through the existing registration mapping and
+  validated user upsert, after ExternalId and username lookups both fail.
+- [x] Remove LOGIN's missing-user lookup wait inside the per-user lock; REGISTER cannot acquire
+  that same lock while LOGIN waits. Keep UPDATE_PROFILE's existing retry and no-create behaviour.
+- [x] Preserve provisioned-user linking, event replay protection, ordinary login side effects and
+  the separate profile-completion/YoID-onboarding transition.
+- [x] Clarify that missing-user recovery initialises the entity-level request using REGISTER's
+  mapping, then joins the same LOGIN processing as an existing user; no separate profile flow.
+- [x] Build and run focused webhook/Core regression tests and live local API checks.
+- [x] Repair the existing referral test fixtures and stale message assertions, as requested by
+  Adrian; all 43 referral cases and the complete 261-case suite now pass. No referral-domain change.
+- [x] Final concurrency pass: both forced REGISTER/LOGIN lock orders, 60 repeated race checks,
+  992 live webhook requests in 41 stress batches, including two API instances sharing Redis/SQL.
+- [x] Adrian's code review and acceptance of the final test evidence and first-session caveat.
+- [ ] Commit and normal release validation.
+
+No endpoint, payload, migration, financial webhook, authentication configuration or web change.
+Recovery ensures only the normal `User` role. A token issued before that role is restored can
+require a fresh sign-in; accepted for this fix, with automatic UI refresh/retry deferred.
+The API does not rewrite issued tokens or bypass authorization.
+Detailed scope, test evidence and limitations: [API handoff](./handoffs/2026-10-06-a.md).
+
 ## Cancellation contract — 2026-09-21
 
 Cancellation is now implemented locally too; see the [cancellation handover](./YOM-1057-api-payout-domain-and-rewards-integration/handoffs/2026-09-21-b.md).
