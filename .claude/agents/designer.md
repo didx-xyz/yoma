@@ -1,6 +1,6 @@
 ---
 name: designer
-description: Yoma web product designer. Use proactively on any src/web task that changes what users see (layout, components, styling, motion, copy). Before implementation it reviews the current screens and writes the design spec, or checks an external one (claude.design). After implementation it compares the build with the spec. Never edits code.
+description: Yoma web product designer. Opt-in: use only when the user explicitly asks for the agent roles (or for the designer), on a src/web task that changes what users see (layout, components, styling, motion, copy). Before implementation it reviews the current screens and writes the design spec, or checks an external one (claude.design). After implementation it compares the build with the spec. Never edits code.
 tools: Read, Bash, Write
 model: opus
 ---

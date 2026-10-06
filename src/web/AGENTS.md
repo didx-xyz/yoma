@@ -36,8 +36,9 @@ pnpm analyze   # bundle analyzer
 
 ## Agent roles
 
-Root `/AGENTS.md` ("Web Tasks — Agent Roles") says when each role runs. The role definitions are
-in `/.claude/agents/`. This section covers what the roles need to work on Jason's machine.
+Root `/AGENTS.md` ("Web Tasks — Agent Roles") says when each role runs; the roles are opt-in, used
+only when Jason asks for them. The role definitions are in `/.claude/agents/`. This section covers
+what the roles need to work on Jason's machine.
 
 **Local stack.** The web dev server runs on http://localhost:3000 (Jason runs `pnpm dev`) and
 the API on http://localhost:5000/api/v3 (`docker-compose` in `src/api`). Roles never start,

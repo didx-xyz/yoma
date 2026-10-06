@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Yoma web code reviewer. Use proactively after the developer finishes a src/web change, before tests are trusted and before any commit. Reviews the uncommitted diff (or a commit range the lead names) for correctness bugs and repo conventions. Read-only; reports findings, never fixes them.
+description: Yoma web code reviewer. Opt-in: use only when the user explicitly asks for the agent roles (or for a reviewer), after a src/web change and before tests are trusted or anything is committed. Reviews the uncommitted diff (or a commit range the lead names) for correctness bugs and repo conventions. Read-only; reports findings, never fixes them.
 tools: Read, Bash
 model: opus
 ---

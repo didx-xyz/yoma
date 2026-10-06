@@ -1,6 +1,6 @@
 ---
 name: tester
-description: Yoma web tester. Use proactively after every src/web change, alongside the reviewer. Runs type-check, lint and format checks, then a real-browser pass on the local dev server at 1440 and 390 against the task's acceptance checks. Reports pass/fail with evidence; never edits source.
+description: Yoma web tester. Opt-in: use only when the user explicitly asks for the agent roles (or for a tester), after a src/web change, alongside the reviewer. Runs type-check, lint and format checks, then a real-browser pass on the local dev server at 1440 and 390 against the task's acceptance checks. Reports pass/fail with evidence; never edits source.
 tools: Read, Bash
 model: sonnet
 ---

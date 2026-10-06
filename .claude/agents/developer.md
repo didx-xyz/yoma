@@ -1,6 +1,6 @@
 ---
 name: developer
-description: Yoma web developer. Use proactively to implement approved src/web tasks (an approved design spec, a bug fix or a feature task), one task or surface at a time. Fixes reviewer and tester findings when the lead hands them back. Never commits or pushes.
+description: Yoma web developer. Opt-in: use only when the user explicitly asks for the agent roles (or for the developer), to implement approved src/web tasks (an approved design spec, a bug fix or a feature task), one task or surface at a time. Fixes reviewer and tester findings when the lead hands them back. Never commits or pushes.
 model: inherit
 ---
 

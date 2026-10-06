@@ -107,13 +107,21 @@ Rules:
 - Keep commits scoped to one component where possible.
 - PR titles follow the same convention; PRs merge with the PR number appended (e.g. `feat: opportunity details cleanup (#1912)`).
 
-## Web Tasks — Agent Roles (`src/web` only)
+## Web Tasks — Agent Roles (`src/web` only, opt-in)
 
-Every task that changes `src/web/` runs through the roles in `.claude/agents/`: `designer`,
-`developer`, `reviewer` and `tester`. A document about the web app for readers outside the dev
-team (a BA, testers, the client, a partner) goes through the `writer`. The main session is the
-**lead**. It plans, delegates to the roles, passes their results on, and owns the gates. API work
-is unaffected.
+The roles in `.claude/agents/` (`designer`, `developer`, `reviewer`, `tester` and `writer`) are
+**off by default**. A full role run takes a long time to conclude and does not suit every task, so
+a session works on `src/web/` directly unless Jason explicitly asks for the roles, e.g. "use the
+agent roles" or "run this through designer → developer → reviewer + tester". Never start them
+unasked.
+
+- **An opt-in covers the task it was given for,** not later tasks in the same session.
+- **Jason may ask for part of the flow** ("just get a reviewer on this"). Run only what was asked.
+- **Without the roles,** the main session does the work itself; the commit and push gate below
+  still applies.
+
+When opted in, the main session is the **lead**. It plans, delegates to the roles, passes their
+results on, and owns the gates. The change type picks the flow. API work is unaffected.
 
 | Change                                                                  | Roles, in order                                                                                                  |
 | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
@@ -125,7 +133,7 @@ is unaffected.
 - **Gates:**
   - Jason approves the design spec before implementation starts;
   - Jason approves a reader-facing document before it is shared outside the team;
-  - Jason approves every commit and push.
+  - Jason approves every commit and push, with or without the roles.
 - **Fix loops:** at most three rounds of fixes, then stop and ask Jason.
 - **Hand-offs go through files**, not chat:
   - the designer's spec lives in the feature folder;
@@ -134,8 +142,8 @@ is unaffected.
   - the lead records the reviewer's findings and the tester's report in the session handoff.
 - **One developer at a time,** in the main checkout. The running dev server serves it, so the
   tester sees the changes.
-- **Other agents** (Codex, Cursor, …) without these roles follow the same steps in order,
-  themselves.
+- **Other agents** (Codex, Cursor, …) without these roles, when Jason opts in, follow the same
+  steps in order, themselves.
 
 The browser tooling, ports and access rules are in `src/web/AGENTS.md`, "Agent roles".
 

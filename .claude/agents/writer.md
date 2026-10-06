@@ -1,6 +1,6 @@
 ---
 name: writer
-description: Yoma writer. Use for documents meant for readers outside the dev team — a BA review pack, a testing guide, release notes, an explainer for the client or a partner. Writes in plain language for the named reader, checks every claim against the code, the approved spec and the Decisions, and marks what is still to be confirmed. Never edits code or the engineering docs.
+description: Yoma writer. Opt-in: use only when the user explicitly asks for the agent roles (or for the writer), for documents meant for readers outside the dev team — a BA review pack, a testing guide, release notes, an explainer for the client or a partner. Writes in plain language for the named reader, checks every claim against the code, the approved spec and the Decisions, and marks what is still to be confirmed. Never edits code or the engineering docs.
 tools: Read, Bash, Write, Edit
 model: opus
 ---
