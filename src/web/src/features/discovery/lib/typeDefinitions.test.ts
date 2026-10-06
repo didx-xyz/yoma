@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import type { CustomFieldDefinition } from "~/api/models/opportunity";
-import { splitTypeDefinitions } from "./typeDefinitions";
+import { splitTypeDefinitions, typeOwnKeys } from "./typeDefinitions";
 
 const definition = (
   key: string,
@@ -55,5 +55,58 @@ describe("splitTypeDefinitions — by entityContext (rule 6)", () => {
     const split = splitTypeDefinitions(["Job", "Event"], [[], EVENT]);
     assert.deepEqual(keys(split.shared), ["difficulty"]);
     assert.deepEqual(split.perType[0]?.definitions, []);
+  });
+});
+
+describe("typeOwnKeys — one type's own keys, from what is already loaded", () => {
+  test("from its own list: the definitions with its context, never the generic ones", () => {
+    assert.deepEqual(
+      typeOwnKeys("Job", [{ types: ["Job"], definitions: JOB }]),
+      ["jobSalaryMinimum"],
+    );
+  });
+
+  test("from a combined list (the chips'), by context", () => {
+    assert.deepEqual(
+      typeOwnKeys("Event", [
+        { types: ["Job", "Event"], definitions: [...JOB, ...EVENT] },
+      ]),
+      ["eventRole"],
+    );
+  });
+
+  test("a type with no definitions of its own owns no keys", () => {
+    assert.deepEqual(
+      typeOwnKeys("Learning", [
+        { types: ["Learning"], definitions: [GENERIC] },
+      ]),
+      [],
+    );
+  });
+
+  test("unknown when no loaded list asked for it, or the list has no data", () => {
+    assert.equal(
+      typeOwnKeys("Event", [{ types: ["Job"], definitions: JOB }]),
+      undefined,
+    );
+    assert.equal(
+      typeOwnKeys("Event", [{ types: ["Event"], definitions: undefined }]),
+      undefined,
+    );
+    // A list asked for no type at all doesn't say whose its definitions are.
+    assert.equal(
+      typeOwnKeys("Event", [{ types: [], definitions: EVENT }]),
+      undefined,
+    );
+  });
+
+  test("a list without data is passed over for one with it", () => {
+    assert.deepEqual(
+      typeOwnKeys("Event", [
+        { types: ["Event"], definitions: undefined },
+        { types: ["Job", "Event"], definitions: [...JOB, ...EVENT] },
+      ]),
+      ["eventRole"],
+    );
   });
 });

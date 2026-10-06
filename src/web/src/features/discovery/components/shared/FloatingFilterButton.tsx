@@ -13,7 +13,7 @@ const SHOW_AFTER_SCROLL_Y = 300;
 export const FloatingFilterButton: React.FC<{ onOpen: () => void }> = ({
   onOpen,
 }) => {
-  const { chips } = useDiscovery();
+  const { filterCount } = useDiscovery();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -41,9 +41,9 @@ export const FloatingFilterButton: React.FC<{ onOpen: () => void }> = ({
     >
       <IoOptionsOutline className="h-4 w-4" />
       Filters
-      {chips.length > 0 && (
-        <span className="text-green flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs">
-          {chips.length}
+      {filterCount > 0 && (
+        <span className="text-green flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-xs">
+          {filterCount}
         </span>
       )}
     </button>

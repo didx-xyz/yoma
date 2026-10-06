@@ -26,6 +26,17 @@ import { hasSettled } from "../lib/apiStatus";
  */
 const SEEN_KEY = "yoma.discovery.personalizationSeen";
 
+/** The preferences saved, but the place (a profile field) didn't: the save rejects with this. */
+export class PlaceNotSavedError extends Error {
+  /** What was saved — the preset the search now inherits from. */
+  readonly preferences: UserPreferences;
+
+  constructor(message: string, preferences: UserPreferences) {
+    super(message);
+    this.preferences = preferences;
+  }
+}
+
 const seenStorage = (): Storage | null =>
   typeof window === "undefined" ? null : window.localStorage;
 
@@ -65,7 +76,8 @@ export function usePreferences(): {
       queryClient.setQueryData(queryKey, saved.preferences);
       // The place is a profile field: keep the cached session profile in step with it.
       if (saved.profile) setUserProfile(saved.profile);
-      if (saved.locationError) throw new Error(saved.locationError);
+      if (saved.locationError)
+        throw new PlaceNotSavedError(saved.locationError, saved.preferences);
       return saved.preferences;
     },
   });

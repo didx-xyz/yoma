@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import React, {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -15,7 +16,13 @@ import { userProfileAtom } from "~/lib/store";
 import type { ChipLabelResolver, DiscoveryChip } from "../lib/chipModel";
 import { buildChips } from "../lib/chipModel";
 import { ageInYears } from "../lib/dates";
-import type { DiscoveryAction } from "../lib/discoveryReducer";
+import type {
+  ClauseAttribution,
+  DiscoveryAction,
+  PreferenceSaveFollowUp,
+  SettlingSave,
+} from "../lib/discoveryReducer";
+import { presetToShow } from "../lib/discoveryReducer";
 import { homeCountryId as resolveHomeCountryId } from "../lib/location";
 import type {
   DiscoverySearch,
@@ -39,8 +46,9 @@ import {
 } from "./useDiscoveryLookups";
 import { useAnonymousMigration } from "./useAnonymousMigration";
 import { useDiscoveryQuery } from "./useDiscoveryQuery";
-import { usePreferences } from "./usePreferences";
+import { PlaceNotSavedError, usePreferences } from "./usePreferences";
 import { useResultCount } from "./useResultCount";
+import { useLoadedTypeKeys } from "./useTypeDefinitions";
 import { useVerifiedSkillIds } from "./useVerifiedSkillIds";
 import { useViewMode } from "./useViewMode";
 
@@ -66,7 +74,14 @@ export interface DiscoveryContextValue {
    * inherited country and the country the stored region / city must belong to.
    */
   homeCountryId: string | null;
-  savePreferences: (preferences: UserPreferences) => Promise<UserPreferences>;
+  /**
+   * Saves a new preset, then dispatches `then` (the caller's follow-up) together with what the
+   * save did to the inherited types, as ONE action (`preferencesSaved`).
+   */
+  savePreferences: (
+    preferences: UserPreferences,
+    then?: PreferenceSaveFollowUp,
+  ) => Promise<UserPreferences>;
   /** The sign-in "keep your answers" offer — see `useAnonymousMigration`. */
   migration: ReturnType<typeof useAnonymousMigration>;
   /**
@@ -100,6 +115,11 @@ export interface DiscoveryContextValue {
   /** What the search actually runs with: manual state + surviving inherited fragments. */
   effectiveFilters: DiscoveryFilters;
   chips: DiscoveryChip[];
+  /**
+   * The Filters badge: one per chip on screen. That is the chip model's chips plus one per
+   * custom-field clause, which `AppliedChips` renders beside them, outside the chip model.
+   */
+  filterCount: number;
   resolveLabel: ChipLabelResolver;
   /**
    * Clear this search's filters. The preference layer is NOT part of them: it survives, chips
@@ -138,23 +158,45 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const router = useRouter();
-  const { state, dispatch, ready, resetEpoch } = useDiscoveryQuery();
+  // What the reducer's clause rule needs beyond the URL (`ClauseAttribution`): the inherited
+  // types and which type owns which key. Read at each dispatch; set below, once the fragments
+  // are known.
+  const attribution = useRef<ClauseAttribution>({
+    fragments: {},
+    typeKeys: () => undefined,
+  });
+  const { state, dispatch, ready, rendered, resetEpoch } =
+    useDiscoveryQuery(attribution);
   const lookups = useDiscoveryLookups();
   const profile = useAtomValue(userProfileAtom);
   const {
     scope,
-    preferences,
+    preferences: storedPreferences,
     settled: preferencesSettled,
-    save: savePreferences,
+    save: savePreset,
     readPersonalizationSeen,
     markPersonalizationSeen,
   } = usePreferences();
-  const migration = useAnonymousMigration(
-    scope,
-    preferences,
-    savePreferences,
-    profile?.countryId ?? null,
+
+  // A save in flight (`presetToShow`): without the hold, Undo showed the Goal's type in effect
+  // for a moment and searched for it (2026-10-06).
+  const settling = useRef<SettlingSave<
+    UserPreferences | null | undefined
+  > | null>(null);
+  const [, setSettleTick] = useState(0);
+  const preferences = presetToShow(
+    storedPreferences,
+    settling.current,
+    rendered,
   );
+  useEffect(() => {
+    const current = settling.current;
+    if (current === null || current.until === null) return;
+    // The save's push rendered, or the search was replaced before it could: the hold is over.
+    settling.current = null;
+    if (current.until !== rendered) setSettleTick((tick) => tick + 1);
+  }, [rendered]);
+
   const homeCountryId = resolveHomeCountryId(
     scope,
     profile?.countryId ?? null,
@@ -182,6 +224,69 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
           })
         : {},
     [preferences, homeCountryId, age, verifiedSkillIds, otherAccommodationId],
+  );
+  const typeKeys = useLoadedTypeKeys();
+  attribution.current = { fragments, typeKeys };
+
+  // Every save goes through here, so the search learns what the new preset does to its
+  // inherited types (`preferencesSaved`): a type only the old preset supplied leaves, and takes
+  // its clauses with it. `from` is the preset as rendered when the save began; `to` is mapped
+  // under the same profile context as `fragments`.
+  const savePreferences = async (
+    next: UserPreferences,
+    then?: PreferenceSaveFollowUp,
+  ): Promise<UserPreferences> => {
+    const from = fragments;
+    const fragmentsOf = (saved: UserPreferences): InheritedFragments =>
+      mapPreferencesToFilters(saved, {
+        countryId: resolveHomeCountryId(
+          scope,
+          profile?.countryId ?? null,
+          saved,
+        ),
+        age,
+        verifiedSkillIds,
+        otherAccommodationId,
+      });
+    const release = (): void => {
+      settling.current = null;
+      setSettleTick((tick) => tick + 1);
+    };
+    const land = (
+      saved: UserPreferences,
+      follow?: PreferenceSaveFollowUp,
+    ): void => {
+      const until = dispatch({
+        kind: "preferencesSaved",
+        from,
+        to: fragmentsOf(saved),
+        then: follow,
+      });
+      // Nothing pushed (the URL doesn't change): the stored preset can show at once.
+      if (until === null) release();
+      else if (settling.current)
+        settling.current = { ...settling.current, until };
+    };
+    settling.current = { preferences, until: null };
+    let saved: UserPreferences;
+    try {
+      saved = await savePreset(next);
+    } catch (error) {
+      // Only the place failed: the preset itself saved, so the search follows it, without the
+      // caller's follow-up (a failed save skips it). Any other failure saved nothing.
+      if (error instanceof PlaceNotSavedError) land(error.preferences);
+      else release();
+      throw error;
+    }
+    land(saved, then);
+    return saved;
+  };
+  const migration = useAnonymousMigration(
+    scope,
+    // The stored preset, not the held one: keeping the answers merges into what is saved.
+    storedPreferences,
+    savePreferences,
+    profile?.countryId ?? null,
   );
 
   const search = composeSearch(
@@ -250,10 +355,13 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
     lookups,
   );
 
-  const clearFilters = (): void => dispatch({ kind: "clearFilters" });
+  const clearFilters = (): void => {
+    dispatch({ kind: "clearFilters" });
+  };
 
-  const skipPreference = (key: PreferenceKey): void =>
+  const skipPreference = (key: PreferenceKey): void => {
     dispatch({ kind: "skipPreference", key, fragment: fragments[key] ?? {} });
+  };
 
   const resultsAnchorRef = useRef<HTMLDivElement | null>(null);
   const scrollToResults = (): void => {
@@ -306,6 +414,7 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
     verifiedSkillIds,
     effectiveFilters,
     chips,
+    filterCount: chips.length + state.filters.customFields.length,
     resolveLabel,
     clearFilters,
     hasFilters: hasActiveFilters(state.filters),

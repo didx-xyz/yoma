@@ -45,6 +45,7 @@ export const DiscoverySurface: React.FC = () => {
     migration,
     readPersonalizationSeen,
     chips,
+    filterCount,
     search,
     lookups,
     effectiveFilters,
@@ -254,12 +255,12 @@ export const DiscoverySurface: React.FC = () => {
               type="button"
               onClick={() => setFiltersOpen(true)}
               aria-label={
-                chips.length > 0 ? `Filters (${chips.length})` : "Filters"
+                filterCount > 0 ? `Filters (${filterCount})` : "Filters"
               }
               className="bg-green hover:bg-green-dark flex min-h-12 shrink-0 items-center justify-center gap-1 rounded-full px-3.5 text-sm font-semibold text-white"
             >
               <IoOptionsOutline className="h-5 w-5" />
-              {chips.length > 0 && <span>{chips.length}</span>}
+              {filterCount > 0 && <span>{filterCount}</span>}
             </button>
             <MyOpportunitiesLink />
           </div>

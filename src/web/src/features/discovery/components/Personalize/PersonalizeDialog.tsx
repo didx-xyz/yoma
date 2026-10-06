@@ -26,10 +26,10 @@ import { WelcomeStep } from "./WelcomeStep";
 
 /**
  * The personalization wizard (YOM-1261) — six registry-driven steps beside the live-count panel.
- * Every step is optional and skippable; answers save only on finish. Signed in they go to
- * `/user/preferences` — except the place, which is a profile field, so a changed region / city is
- * the one thing the wizard writes to the profile (country is never written here). A failed save
- * keeps the dialog open with the draft intact and says what failed.
+ * Every step is optional (Continue moves on without an answer); answers save only on finish.
+ * Signed in they go to `/user/preferences` — except the place, which is a profile field, so a
+ * changed region / city is the one thing the wizard writes to the profile (country is never
+ * written here). A failed save keeps the dialog open with the draft intact and says what failed.
  *
  * Step 0 (round 7, 2026-09-30): until the wizard has been completed once — no preferences saved,
  * or none in the anonymous session — the dialog opens on the welcome (`WelcomeStep`), purple
@@ -49,7 +49,6 @@ export const PersonalizeDialog: React.FC<{
     savePreferences,
     markPersonalizationSeen,
     lookups,
-    dispatch,
     scrollToResults,
     scope,
     preferenceSearchReady,
@@ -168,7 +167,10 @@ export const PersonalizeDialog: React.FC<{
     setSaving(true);
     setSaveError(null);
     try {
-      await savePreferences(draft);
+      // The preset just saved IS the new default — per-preference skips and the master-off
+      // switch referred to the old one, and keeping them would strike out what was just chosen.
+      // Dispatched with the save, so a type only the old Goal supplied takes its clauses with it.
+      await savePreferences(draft, { kind: "resetPreferenceOverrides" });
     } catch (error) {
       // Nothing is lost: the draft stays on screen. A failed place (a profile field) is reported
       // after the preferences themselves saved — the message says which.
@@ -181,9 +183,6 @@ export const PersonalizeDialog: React.FC<{
       return;
     }
     setSaving(false);
-    // The preset just saved IS the new default — per-preference skips and the master-off switch
-    // referred to the old one, and keeping them would strike out what was just chosen.
-    dispatch({ kind: "resetPreferenceOverrides" });
     markPersonalizationSeen();
     onClose();
     scrollToResults();
@@ -316,8 +315,10 @@ export const PersonalizeDialog: React.FC<{
                   <Message kind="error">{saveError}</Message>
                 </div>
               )}
-              {/* One scrollable action row — button text never wraps at 390px; below 360px Back
-              is icon-only (its name stays "Back"), so the row fits without scrolling (2026-10-05).
+              {/* One scrollable action row: Back on the left, Continue / Finish on the right. There
+              is no "Skip this" (removed 2026-10-06): it did exactly what Continue does, and every
+              step is optional anyway. Button text never wraps at 390px; below 360px Back is
+              icon-only (its name stays "Back"), so the row fits without scrolling (2026-10-05).
               containerClassName="" drops the wrapper's default h-full, which would stretch this
               row to fill the fixed-height wizard column. */}
               <ScrollableContainer
@@ -336,15 +337,8 @@ export const PersonalizeDialog: React.FC<{
                 <button
                   type="button"
                   onClick={advance}
-                  className="text-gray-dark ml-auto min-h-11 shrink-0 cursor-pointer text-sm font-semibold whitespace-nowrap"
-                >
-                  Skip this
-                </button>
-                <button
-                  type="button"
-                  onClick={advance}
                   disabled={saving}
-                  className="btn bg-green hover:bg-green-dark min-h-11 shrink-0 rounded-full border-none px-6 whitespace-nowrap text-white disabled:opacity-60"
+                  className="btn bg-green hover:bg-green-dark ml-auto min-h-11 shrink-0 rounded-full border-none px-6 whitespace-nowrap text-white disabled:opacity-60"
                 >
                   {last ? (saving ? "Saving…" : "Finish") : "Continue"}{" "}
                   <IoArrowForward className="h-4 w-4" />

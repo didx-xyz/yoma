@@ -7,7 +7,7 @@
 - **Ticket**: [YOM-1262](https://linear.app/didx/issue/YOM-1262)
 - **Owner**: Jason
 - **Areas**: web
-- **Status**: in-progress — Jason's 2026-10-05 feedback round built and tested locally, on top of the revised search contract (2026-10-03); DEV pass outstanding
+- **Status**: in-progress — Jason's 2026-10-06 round built and tested locally (2026-10-05 round committed as `6cdf18d8`); DEV pass outstanding
 - **Started**: 2026-08-27 (design); 2026-08-27 (implementation, behind the mock façade)
 
 > Folder created 2026-08-27 to hold the design. Implementation started the same day **behind the
@@ -330,6 +330,18 @@ commitment set; **accessibility excludes** those that have not described their a
     round);
   - the legacy `/opportunities` filter form overflows by 29 px at 320 (not custom fields);
   - add 320 px to `src/web/AGENTS.md` and the tester role's standard widths.
+- [x] **Jason's 2026-10-06 round** ([`handoffs/2026-10-06-a.md`](handoffs/2026-10-06-a.md)):
+  - [x] type-specific filters leave only with their own type, on every path, preference saves
+        included;
+  - [x] the Filters badge counts type-specific filters;
+  - [x] "Skip this" removed from the wizard;
+  - [x] the detail header on phones, built to the approved spec
+        [`design/2026-10-06-detail-header-mobile.md`](design/2026-10-06-detail-header-mobile.md).
+- [ ] Follow-ups from the 2026-10-06 round:
+  - the testing guide (`../testing/2026-10-03-discovery-testing-guide.md`) still says that
+    removing any type clears every type-specific pick (line 806, D-71), and asks about
+    "Skip this" (Q-W14). Correct it through the writer;
+  - "Keep answers" and any signed-in save are untested (they would save a preset to `testuser`).
 
 ## Decisions
 
@@ -1187,6 +1199,48 @@ commitment set; **accessibility excludes** those that have not described their a
     - Static rows show a one-line note, and Accessibility No, Not specified and On request each
       have their own. The repeated "Support:" line is gone.
     - **Time needed is a static row.** "Most people finish in…" is gone; no data backs it.
+- 2026-10-06 (Jason's second round; handoff [`handoffs/2026-10-06-a.md`](handoffs/2026-10-06-a.md)):
+  - **A type's filters leave with that type; filters on types still in effect stay** (Jason).
+    This supersedes the clear-all of 2026-09-03 and 2026-09-05 on every path where types
+    shrink:
+    - the type row, a chip ×, a quick search, the type popover's reset;
+    - skipping the Goal, and the preferences switch ("Search without my preferences");
+    - a preference save that changes the Goal: the wizard, "Make this my default" and its undo,
+      and "Keep answers" on sign-in.
+
+    In the example Jason chose: Job comes from the Goal and has a salary filter, then the youth
+    searches without preferences. Job and the salary filter go; a hand-picked Event keeps its
+    filters.
+  - **How a filter is matched to its type.** Each definition's `entityContext`, read from the
+    definition lists React Query already holds (`useLoadedTypeKeys`, `typeOwnKeys`); no new
+    request.
+    - Generic definitions stay while any type remains.
+    - If a departing type's definitions aren't loaded, everything clears, as before.
+    - The type popover's reset no longer forces every filter off.
+  - **A preference save is one action** (`preferencesSaved { from, to, then }`), so the old
+    Goal's filters and the save's own follow-up land in one push.
+    - The provider holds the old preferences until that push renders. Before this, one render
+      paired the new preferences with the old URL, which sent a search for the wrong types and
+      flashed a chip.
+    - A dispatch that changes nothing pushes nothing, and a dispatch after the provider has
+      unmounted is ignored.
+  - **The Filters badge counts every chip on screen,** including type-specific filters, at all
+    five places. Round badges widen for two digits.
+  - **The wizard has no "Skip this".** It called the same action as Continue.
+  - **The detail header on phones** (Jason approved
+    [`design/2026-10-06-detail-header-mobile.md`](design/2026-10-06-detail-header-mobile.md)
+    with every recommendation). Below 768 the logo moves into the type-chip row, rather than the
+    title wrapping around it: a literal wrap can't be combined with a line limit, and the longest
+    real title ran to 8 lines.
+    - The title spans the card: 24 px below 390, 30 px to 767.
+    - It is clamped at 4 lines, with "Show full title" / "Show less" only when text is hidden
+      (a half-line tolerance, `lineClamp.ts`). From 768 it stays at 2 lines and is
+      pixel-identical, apart from the toggle.
+    - The organisation line is 16 px, up to 2 lines, with no 60% cap.
+    - The grid uses `md:grid-rows-[auto_min-content_1fr]`. With `auto`, a clamped title counts
+      as 0 high and every md+ card grew by 40–44 px.
+    - The measurement runs before paint, so only hydration shifts the page.
+    - When the toggle disappears while focused, focus moves to the title.
 
 ## BA sign-off summary (2026-09-22)
 

@@ -112,17 +112,15 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
     };
     void savePreferences(
       applySkipsToPreferences(preferences, state.preferencesSkipped),
+      // The persisted skips no longer exist as preferences; only the identity-derived
+      // (unsavable) ones stay switched off for this search — and skills, while verified skills
+      // would bring the chip straight back (`skipsAfterSave`). Dispatched with the save.
+      {
+        kind: "setSkippedPreferences",
+        keys: skipsAfterSave(state.preferencesSkipped, verifiedSkillIds),
+      },
     )
-      .then(() => {
-        setUndoTo(previous);
-        // The persisted skips no longer exist as preferences; only the identity-derived
-        // (unsavable) ones stay switched off for this search — and skills, while verified
-        // skills would bring the chip straight back (`skipsAfterSave`).
-        dispatch({
-          kind: "setSkippedPreferences",
-          keys: skipsAfterSave(state.preferencesSkipped, verifiedSkillIds),
-        });
-      })
+      .then(() => setUndoTo(previous))
       .catch(() => setSaveFailed(true))
       .finally(() => setSaving(false));
   };
@@ -131,11 +129,11 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
     if (!undoTo) return;
     setSaving(true);
     setSaveFailed(false);
-    void savePreferences(undoTo.preferences)
-      .then(() => {
-        dispatch({ kind: "setSkippedPreferences", keys: undoTo.skipped });
-        setUndoTo(null);
-      })
+    void savePreferences(undoTo.preferences, {
+      kind: "setSkippedPreferences",
+      keys: undoTo.skipped,
+    })
+      .then(() => setUndoTo(null))
       .catch(() => setSaveFailed(true))
       .finally(() => setSaving(false));
   };

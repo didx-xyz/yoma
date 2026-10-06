@@ -49,3 +49,31 @@ export function splitTypeDefinitions(
     })),
   };
 }
+
+/** A definitions list already loaded, and the types it was asked for. */
+export interface LoadedDefinitions {
+  types: readonly unknown[];
+  definitions: CustomFieldDefinition[] | undefined;
+}
+
+/**
+ * One type's OWN custom-field keys (its definitions whose `entityContext` names it), from any
+ * loaded list that was asked for that type: the filter panel's per-type lists or the chips'
+ * combined one. The context makes either exact. `undefined` when no loaded list asked for it
+ * (never loaded, failed, or this API has none). Generic definitions belong to no one type, so
+ * they are never in it.
+ */
+export function typeOwnKeys(
+  typeName: string,
+  loaded: LoadedDefinitions[],
+): string[] | undefined {
+  const definitions = loaded.find(
+    (list) => list.definitions !== undefined && list.types.includes(typeName),
+  )?.definitions;
+  return definitions
+    ?.filter(
+      (definition) =>
+        definition.entityContext?.toLowerCase() === typeName.toLowerCase(),
+    )
+    .map((definition) => definition.key);
+}

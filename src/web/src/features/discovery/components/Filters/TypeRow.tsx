@@ -20,11 +20,11 @@ import { SectionHeader } from "./SectionHeader";
  * "What type of opportunity?" while its neighbours said "Where" and "How long" was the only one
  * speaking a different grammar; the question still titles the popover, where it is the only
  * label on screen.) Multi-select, and it drives block 6: every selected type reveals its own
- * filters, and deselecting one clears the type-scoped clauses (handled in the reducer, not
- * here). Provenance-aware like every other control: selection shows the EFFECTIVE types, and
- * deselecting the inherited one skips the Goal preference for this search — the same semantics
- * as removing its chip. State carries the enum `name`; the label shows `displayName`. Order
- * comes from the lookup, already sorted Job · Learning · ImpactAction · Event · Entrepreneurship
+ * filters, and deselecting one takes its own clauses with it (`clearDepartedClauses`, in the
+ * reducer, not here). Provenance-aware like every other control: selection shows the EFFECTIVE
+ * types, and deselecting the inherited one skips the Goal preference for this search — the same
+ * semantics as removing its chip. State carries the enum `name`; the label shows `displayName`.
+ * Order comes from the lookup, already sorted Job · Learning · ImpactAction · Event · Entrepreneurship
  * · Other by `lib/typeOrder` (a seventh type lands after these; the row wraps). "Impact Action" is the
  * lookup's displayName — reference data — so there is no display map here.
  */

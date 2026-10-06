@@ -28,6 +28,10 @@ export function useAnonymousMigration(
   scope: UserPreferenceScope,
   /** The signed-in youth's stored preset — `undefined` while loading. */
   stored: UserPreferences | null | undefined,
+  /**
+   * The provider's save. The session's goal can replace the stored one, and the provider then
+   * drops the clauses of a type only the old goal supplied (`preferencesSaved`).
+   */
   saveStored: (preferences: UserPreferences) => Promise<UserPreferences>,
   /** The profile's global country — it wins over the session's; see `mergeUserPreferences`. */
   profileCountryId: string | null,

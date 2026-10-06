@@ -1,10 +1,11 @@
-import { useQueries } from "@tanstack/react-query";
+import { useQueries, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
 import type { CustomFieldDefinition } from "~/api/models/opportunity";
 import { getOpportunityCustomFieldDefinitions } from "~/api/services/opportunities";
 import { OPPORTUNITY_QUERY_KEYS } from "~/hooks/useOpportunityMutations";
 import { CUSTOM_FIELDS_ENABLED } from "~/lib/constants";
 import { isNotFoundError } from "../lib/apiStatus";
-import { splitTypeDefinitions } from "../lib/typeDefinitions";
+import { splitTypeDefinitions, typeOwnKeys } from "../lib/typeDefinitions";
 
 /**
  * Custom-field definitions for the selected Opportunity types, split into what they SHARE and
@@ -60,4 +61,27 @@ export function useTypeDefinitions(typeNames: string[]): TypeDefinitions {
       for (const query of queries) if (query.isError) void query.refetch();
     },
   };
+}
+
+/**
+ * Reads one type's own custom-field keys (`typeOwnKeys`) from the definitions already in the
+ * query cache, never through a request. For the reducer's clause rule (`ClauseAttribution`),
+ * called at dispatch, so it sees whatever has loaded since the last render.
+ */
+export function useLoadedTypeKeys(): (
+  typeName: string,
+) => string[] | undefined {
+  const queryClient = useQueryClient();
+  return useCallback(
+    (typeName: string) =>
+      typeOwnKeys(
+        typeName,
+        queryClient
+          .getQueriesData<CustomFieldDefinition[]>({
+            queryKey: OPPORTUNITY_QUERY_KEYS.customFieldDefinitions(),
+          })
+          .map(([key, definitions]) => ({ types: key.slice(1), definitions })),
+      ),
+    [queryClient],
+  );
 }

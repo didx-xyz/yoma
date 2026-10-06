@@ -80,7 +80,7 @@ export interface DiscoveryFilters {
   skills: string[];
   /**
    * Custom-field clauses (YOM-1260 shape). The API scopes each to its definition's type, so a Job
-   * clause never narrows an Event. Cleared when a type is deselected.
+   * clause never narrows an Event. A type's clauses leave with it (`reduceDiscovery`).
    */
   customFields: CustomFieldFilter[];
 }

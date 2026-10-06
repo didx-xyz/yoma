@@ -39,7 +39,7 @@ const SEGMENTS: { id: SegmentId; label: string }[] = [
 export const SegmentedSearchBar: React.FC<{ onOpenFilters: () => void }> = ({
   onOpenFilters,
 }) => {
-  const { state, effectiveFilters, chips, resolveLabel } = useDiscovery();
+  const { state, effectiveFilters, filterCount, resolveLabel } = useDiscovery();
   const [openSection, setOpenSection] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -162,9 +162,9 @@ export const SegmentedSearchBar: React.FC<{ onOpenFilters: () => void }> = ({
         >
           <IoOptionsOutline className="h-4 w-4" />
           Filters
-          {chips.length > 0 && (
-            <span className="text-green flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs">
-              {chips.length}
+          {filterCount > 0 && (
+            <span className="text-green flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-xs">
+              {filterCount}
             </span>
           )}
         </button>

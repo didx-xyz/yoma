@@ -41,11 +41,10 @@ export const SectionPopover: React.FC<{
   const section = FILTER_SECTIONS.find((s) => s.id === sectionId);
 
   const reset = (): void => {
+    // The reducer's clause rule decides which custom-field clauses leave with the cleared types:
+    // an inherited type stays in effect, and so do its clauses.
     if (sectionId === "type")
-      dispatch({
-        kind: "patchFilters",
-        patch: { types: [], customFields: [] },
-      });
+      dispatch({ kind: "patchFilters", patch: { types: [] } });
     else if (sectionId === "search")
       dispatch({ kind: "patchFilters", patch: { q: null } });
     else if (section?.binding)
