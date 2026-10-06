@@ -125,16 +125,31 @@ results on, and owns the gates. The change type picks the flow. API work is unaf
 
 | Change                                                                  | Roles, in order                                                                                                  |
 | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Visible to users: layout, styling, components, motion, copy             | designer (spec) → **Jason approves** → developer → reviewer + tester in parallel → developer fixes → designer (compare with the spec) |
-| Web logic with no visible change                                        | developer → reviewer + tester → developer fixes                                                                  |
+| Visible to users: layout, styling, components, motion, copy             | designer (spec) → **Jason approves** → developer (whole batch) → reviewer + tester in parallel → developer fixes once → reviewer (fix diff) + tester (failed checks) → designer (compare once, at the end) |
+| Web logic with no visible change                                        | developer (whole batch) → reviewer + tester → developer fixes once → reviewer (fix diff) + tester (failed checks) |
 | Trivial: a typo, a comment, a one-line copy fix                         | developer → tester (static checks only)                                                                          |
 | A document for readers outside the team: testing guide, BA review pack, release notes | writer → reviewer (fact check against the code) → writer fixes → **Jason approves** before it is shared |
 
+Keep the cycle count low. Each pass through the flow has a fixed cost, and repeated browser passes
+were the main reason early role sessions took 9–10 hours.
+
+- **Batch the work.** Build the whole request as one batch, or two at most (logic first, then the
+  visible changes). Never run the cycle per surface or per task: one review and one test cover
+  the whole batch.
+- **Settle decisions up front.** Ask Jason for spec approval and the roles' product calls together,
+  in batches of at most four. While Jason reviews the spec, a developer can build the logic batch.
 - **Gates:**
   - Jason approves the design spec before implementation starts;
   - Jason approves a reader-facing document before it is shared outside the team;
   - Jason approves every commit and push, with or without the roles.
-- **Fix loops:** at most three rounds of fixes, then stop and ask Jason.
+- **Fix rounds:**
+  - Wait for both the reviewer and the tester, then hand the developer every finding at once.
+  - The re-check is narrow. The reviewer reads only the fix diff. The tester runs static checks
+    and repeats only the checks that failed or that the fix touched.
+  - One round is the default. Run a second only for what the re-check still fails, then stop and
+    ask Jason. Nits left over go into the handoff, not into another round.
+- **Browser checks belong to the tester.** The developer runs static checks and at most a quick
+  look; the designer compares once, at the end, from a fresh agent.
 - **Hand-offs go through files**, not chat:
   - the designer's spec lives in the feature folder;
   - the writer's document lives where the lead names it. A guide that spans tickets goes in the
