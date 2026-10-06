@@ -1,4 +1,6 @@
 import Image from "next/image";
+import Link from "next/link";
+import iconZlto from "public/images/icon-zlto.svg";
 import React, {
   useCallback,
   useEffect,
@@ -22,22 +24,16 @@ import {
 } from "react-icons/io5";
 import {
   AccessibilitySupport,
-  RewardType,
   type OpportunityInfo,
 } from "~/api/models/opportunity";
 import {
-  finiteOrNull,
   formatAccessibilitySupport,
-  formatIncentivized,
-  formatPartnerIncentive,
-  formatRewardType,
   formatSustainableDevelopmentGoal,
 } from "~/components/Opportunity/Admin/opportunityCoreFields";
 import { CustomFieldsView } from "~/components/Opportunity/CustomFieldsView";
 import { getCommitmentDisplay } from "~/components/Opportunity/opportunityTypeTheme";
 import { MoneyBadge } from "~/features/discovery/components/Results/MoneyBadge";
 import { closingInfo } from "~/features/discovery/lib/dates";
-import { formatNumber } from "~/features/discovery/lib/format";
 import { moneyFactsOf } from "~/features/discovery/lib/money";
 import {
   useCurrenciesQuery,
@@ -47,6 +43,14 @@ import { OPPORTUNITY_TYPE_NANE_JOB } from "~/lib/constants";
 import { ClampedDescription } from "./ClampedDescription";
 import { ChipList, DetailDisclosure } from "./DetailDisclosure";
 import { effortLabel } from "./detailFacts";
+import {
+  accessibilityClosing,
+  accessibilityNote,
+  ageRangeLabel,
+  ageRangeNote,
+  cashOutLine,
+  incentiveCopy,
+} from "./detailSectionCopy";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // OpportunityDetailSections — the TABBED detail body (round 7, artboards
@@ -101,11 +105,14 @@ interface SectionDef {
   count?: number | null;
   valueHint?: string | null;
   preview?: string | null;
-  /** The open card's one line on what its chips mean for the youth (chip sections only). */
+  /**
+   * The open card's one line on what its content means for the youth; a static row shows it
+   * always, under its title (2026-10-05).
+   */
   note?: string | null;
   content: React.ReactNode;
   defaultOpen?: boolean;
-  /** A value row with nothing to open (Age range). */
+  /** A value row with nothing to open (Age range, Time needed, Incentive · None). */
   static?: boolean;
 }
 
@@ -125,23 +132,6 @@ const previewOf = (labels: string[], max = 2): string =>
   labels.length > max
     ? `${labels.slice(0, max).join(", ")} +${labels.length - max}`
     : labels.join(", ");
-
-/**
- * "18–35 years" · "18 and over" · "Up to 35 years" — the tabbed age row's own wording. Null
- * exactly when `formatAgeRange` is (neither bound set), which classic still uses.
- */
-const ageRangeLabel = (
-  ageFrom: number | null | undefined,
-  ageTo: number | null | undefined,
-): string | null => {
-  const from = finiteOrNull(ageFrom);
-  const to = finiteOrNull(ageTo);
-  if (from !== null && to !== null)
-    return from === to ? `${from} years` : `${from}–${to} years`;
-  if (from !== null) return `${from} and over`;
-  if (to !== null) return `Up to ${to} years`;
-  return null;
-};
 
 /** The fixed navbar the sticky panels hang from. */
 const NAVBAR_PX = 80;
@@ -293,6 +283,12 @@ export const OpportunityDetailSections: React.FC<{
   /** Admin: keep Incentive when it is still unanswered ("Not specified"), as the info page does. */
   showUnspecifiedIncentive?: boolean;
   /**
+   * The signed-in youth's Cash Out is closed (`isCashOutClosed`): a ZLTO incentive's cash-out
+   * line keeps only its marketplace half. Off (the hedged full line) signed out, and for hosts
+   * without a youth.
+   */
+  cashOutClosed?: boolean;
+  /**
    * Host groups appended after Details, each with its own tab (admin: Rewards, `tone: "reward"`
    * for its gold pill).
    */
@@ -314,6 +310,7 @@ export const OpportunityDetailSections: React.FC<{
   barActions,
   preview = false,
   showUnspecifiedIncentive = false,
+  cashOutClosed = false,
   extraGroups = [],
   stickyMode = "split",
 }) => {
@@ -324,54 +321,92 @@ export const OpportunityDetailSections: React.FC<{
     { enabled: !!opportunity.type },
   );
 
+  // The money facts, worked out once: Incentive words its pay line from them, and the sticky
+  // bar's badge shows them. Its ZLTO pill reads the raw `zltoReward`, while Incentive and the
+  // header's Reward tile read the estimate, so the two ZLTO figures can differ.
+  const money = useMemo(
+    () => moneyFactsOf(opportunity, currencies ?? []),
+    [opportunity, currencies],
+  );
+
   // ── the sections: exactly the existing public page's set and conditions ──
   const sections = useMemo((): SectionDef[] => {
     const list: SectionDef[] = [];
     const isJob = opportunity.type === OPPORTUNITY_TYPE_NANE_JOB;
 
-    // Incentive — as `OpportunityCoreDetails` shows it (public: only once answered)
-    if (showUnspecifiedIncentive || opportunity.incentivized != null) {
-      const labels = [
-        formatIncentivized(opportunity.incentivized),
-        opportunity.rewardType !== RewardType.None
-          ? formatRewardType(opportunity.rewardType)
-          : null,
-        opportunity.rewardType === RewardType.PartnerIncentive
-          ? formatPartnerIncentive(
-              opportunity.partnerIncentiveAmount,
-              opportunity.partnerIncentiveCurrency,
-            )
-          : null,
-      ].filter((l): l is string => !!l);
-      // A ZLTO reward reads as what you earn (round 10): "Earn 293 ZLTO", or "Earn ZLTO" when
-      // there is no estimate. A depleted reward (0), other reward types and "Not specified"
-      // keep their labels — the strip already says "Depleted".
-      const estimate = opportunity.zltoRewardEstimate;
-      let incentivePreview = labels.join(" · ");
-      if (
-        opportunity.incentivized === true &&
-        opportunity.rewardType === RewardType.ZLTO
-      ) {
-        if (estimate == null) incentivePreview = "Earn ZLTO";
-        else if (estimate > 0)
-          incentivePreview = `Earn ${formatNumber(estimate)} ZLTO`;
-      }
+    // Incentive — public once answered or once a reward is stored, the admin pages also "Not
+    // specified". It says what you get, per state (2026-10-05, `incentiveCopy`): "None" is a
+    // static row; a ZLTO reward reads as what you earn, then where you can spend it.
+    const incentive = incentiveCopy(opportunity, {
+      isJob,
+      facts: money,
+      showUnspecified: showUnspecifiedIncentive,
+    });
+    if (incentive?.kind === "static")
       list.push({
         id: "incentive",
         group: "about",
         icon: <IoGiftOutline className={ICON} />,
         toneClass: TONE.gold,
         title: "Incentive",
-        preview: incentivePreview,
+        valueHint: incentive.value,
+        note: incentive.note,
+        content: null,
+        static: true,
+      });
+    else if (incentive) {
+      const cashOut = cashOutLine(cashOutClosed);
+      list.push({
+        id: "incentive",
+        group: "about",
+        icon: <IoGiftOutline className={ICON} />,
+        toneClass: TONE.gold,
+        title: "Incentive",
+        preview: incentive.preview,
         note: "What you could get for taking part.",
         content: (
-          <ChipList items={labels.map((label) => ({ id: label, label }))} />
+          <div className="flex flex-col gap-1.5">
+            {incentive.amount && (
+              <p className="flex items-center gap-2 text-base font-extrabold">
+                {incentive.amount.zlto && (
+                  <Image
+                    src={iconZlto}
+                    alt=""
+                    width={20}
+                    height={20}
+                    className="h-5 w-5"
+                  />
+                )}
+                {incentive.amount.text}
+              </p>
+            )}
+            <p className="text-sm">{incentive.body}</p>
+            {incentive.cashOut && (
+              <p className="text-gray-dark mt-2 text-sm">
+                {cashOut.before}
+                {preview ? (
+                  // the editor's preview: a link out would lose the unsaved draft
+                  <span className="text-green font-semibold underline">
+                    {cashOut.link}
+                  </span>
+                ) : (
+                  <Link
+                    href="/marketplace"
+                    className="text-green font-semibold underline"
+                  >
+                    {cashOut.link}
+                  </Link>
+                )}
+                {cashOut.after}
+              </p>
+            )}
+          </div>
         ),
       });
     }
 
-    // Time needed — the interval ("4 minutes"), else the total hours; an interval given only
-    // as a description is shown as it is, without "About"
+    // Time needed — one static row (2026-10-05): the interval ("4 minutes"), else the total
+    // hours; an interval given only as a description is shown as it is, without "About"
     const commitment = getCommitmentDisplay(opportunity);
     const effort = effortLabel(opportunity);
     const time = effort ?? commitment?.label ?? null;
@@ -382,15 +417,10 @@ export const OpportunityDetailSections: React.FC<{
         icon: <IoTimeOutline className={ICON} />,
         toneClass: TONE.blue,
         title: "Time needed",
-        preview: effort ? `About ${effort}` : time,
-        content: (
-          <div className="text-sm">
-            {`Most people finish in ${time} or less.`}
-            <p className="text-gray-dark mt-2">
-              It&apos;s only a guide — go at your own pace.
-            </p>
-          </div>
-        ),
+        valueHint: effort ? `About ${effort}` : time,
+        note: "Roughly how long it takes. It's a guide, not a deadline.",
+        content: null,
+        static: true,
       });
 
     // Skills — a Job's are its requirements (open by default); anyone else's are awarded
@@ -441,6 +471,7 @@ export const OpportunityDetailSections: React.FC<{
         toneClass: TONE.lilac,
         title: "Age range",
         valueHint: ageRange,
+        note: ageRangeNote(opportunity.ageFrom, opportunity.ageTo),
         content: null,
         static: true,
       });
@@ -454,10 +485,12 @@ export const OpportunityDetailSections: React.FC<{
     }));
     // Always a row (2026-10-03): a youth whose feed keeps opportunities that haven't said must be
     // able to tell them from the suitable ones. With nothing to open — no list — it is a static
-    // row like Age range: "Available on request", "No" or "Not specified".
+    // row like Age range: "Available on request", "No" or "Not specified", each with a note
+    // that says what it means (2026-10-05).
     const onRequest =
       opportunity.accessibilitySupport ===
       AccessibilitySupport.AvailableOnRequest;
+    const closing = accessibilityClosing(opportunity.accessibilitySupport);
     if (accommodations.length === 0)
       list.push({
         id: "accessibility",
@@ -466,6 +499,7 @@ export const OpportunityDetailSections: React.FC<{
         toneClass: TONE.lilac,
         title: "Accessibility",
         valueHint: support ?? "Not specified",
+        note: accessibilityNote(opportunity.accessibilitySupport),
         content: null,
         static: true,
       });
@@ -484,15 +518,16 @@ export const OpportunityDetailSections: React.FC<{
         note: onRequest
           ? "What the provider can arrange if you ask."
           : "What this opportunity offers people with disabilities.",
+        // No "Support: …" line: the preview and the note already say it (2026-10-05)
         content: (
           <div className="flex flex-col gap-2">
-            {support && <div className="text-sm">{`Support: ${support}`}</div>}
             <ChipList items={accommodations} />
             {!!opportunity.accommodationOtherDescription && (
               <div className="text-gray-dark text-sm">
                 {opportunity.accommodationOtherDescription}
               </div>
             )}
+            {closing && <p className="text-gray-dark text-sm">{closing}</p>}
           </div>
         ),
       });
@@ -587,6 +622,7 @@ export const OpportunityDetailSections: React.FC<{
         title: "Additional details",
         count: valued.length,
         preview: previewOf(valued),
+        note: "More details for this type of opportunity.",
         content: (
           <CustomFieldsView
             definitions={definitions}
@@ -598,7 +634,14 @@ export const OpportunityDetailSections: React.FC<{
       });
 
     return list;
-  }, [opportunity, definitions, showUnspecifiedIncentive]);
+  }, [
+    opportunity,
+    definitions,
+    money,
+    showUnspecifiedIncentive,
+    cashOutClosed,
+    preview,
+  ]);
 
   const provider = opportunity.provider?.trim() ? opportunity.provider : null;
   const visibleGroups = [
@@ -721,7 +764,6 @@ export const OpportunityDetailSections: React.FC<{
     <DetailTabs groups={visibleGroups} active={active} onSelect={goTo} />
   );
 
-  const money = moneyFactsOf(opportunity, currencies ?? []);
   const deadline = closingInfo(opportunity.dateEnd, now).label;
   const showBars = !preview && !headerVisible;
   // The bars slide 8px and fade (round 10); under reduced motion they simply switch. Tailwind

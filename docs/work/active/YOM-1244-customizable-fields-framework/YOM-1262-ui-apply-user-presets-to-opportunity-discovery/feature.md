@@ -7,7 +7,7 @@
 - **Ticket**: [YOM-1262](https://linear.app/didx/issue/YOM-1262)
 - **Owner**: Jason
 - **Areas**: web
-- **Status**: in-progress — on the revised search contract (built and tested locally 2026-10-03); DEV pass outstanding
+- **Status**: in-progress — Jason's 2026-10-05 feedback round built and tested locally, on top of the revised search contract (2026-10-03); DEV pass outstanding
 - **Started**: 2026-08-27 (design); 2026-08-27 (implementation, behind the mock façade)
 
 > Folder created 2026-08-27 to hold the design. Implementation started the same day **behind the
@@ -308,6 +308,28 @@ commitment set; **accessibility excludes** those that have not described their a
     (`state/useResultCount.ts`);
   - the breakpoint-parity test (2026-08-27), now possible with `pnpm test`;
   - the legacy `OpportunitiesGrid.tsx` duplicate-key warning.
+- [x] **Jason's 2026-10-05 feedback round**, built through the agent roles in two waves, each
+      reviewed and tested at 1440, 390 and 320. Spec:
+      [`design/2026-10-05-feedback-round.md`](design/2026-10-05-feedback-round.md), with Jason's
+      answers at its head. Handoff: [`handoffs/2026-10-05-a.md`](handoffs/2026-10-05-a.md).
+  - [x] W1, the type-specific filters (F1–F5): typed values commit on blur or Enter, no operator
+        select, one operator per data type, cleared fields remove their clause, the multi-select
+        overflow fixed for every caller.
+  - [x] W2: the 320 px fixes (G1–G6), the wizard's count panel and step-5 title (P1–P2), and the
+        tabbed detail page's Incentive, Accessibility, Age range, Time needed and Additional
+        details copy (D1–D6).
+  - [x] Several goals in step 1: **not built.** Goal stays single-select (Jason and Adrian; see
+        Decisions).
+- [ ] Follow-ups from the 2026-10-05 round (detail in the handoff):
+  - Date and DateTime custom-field ranges are unit-tested only; no local definition exists;
+  - the admin filters, the editor Preview and the admin Incentive row need an admin sign-in pass;
+  - the detail sticky bar's ZLTO pill reads `zltoReward` while the header and Incentive read
+    `zltoRewardEstimate`, so they can differ (predates this round);
+  - a paid Job's detail header shows no pay tile;
+  - Back with the filters dialog open can leave the router on the newer filters (predates this
+    round);
+  - the legacy `/opportunities` filter form overflows by 29 px at 320 (not custom fields);
+  - add 320 px to `src/web/AGENTS.md` and the tester role's standard widths.
 
 ## Decisions
 
@@ -1104,6 +1126,67 @@ commitment set; **accessibility excludes** those that have not described their a
     time spent." instead.
   - **The import help** says rows, column order, case-sensitive `CF:` headers and the Automatic
     verification requirement.
+- 2026-10-05 (Jason's feedback round; he approved the spec
+  [`design/2026-10-05-feedback-round.md`](design/2026-10-05-feedback-round.md) with every
+  recommendation; handoff [`handoffs/2026-10-05-a.md`](handoffs/2026-10-05-a.md)):
+  - **Goal stays single-select** (Jason and Adrian). The feedback asked for several goals, but the
+    API stores one `GoalId`, and they kept it. This reconfirms YOM-1261's 2026-08-27 decision.
+  - **320 px is the minimum supported mobile width.**
+    - At 320 a button may wrap to two lines, never three, and nothing may overflow.
+    - The fixes sit behind `max-[359px]:`, so 360 px and up render as before.
+    - The exceptions: "Search without my preferences" and the mobile list row also change at 390,
+      because they overlapped there too.
+  - **Discovery's type-specific filters have no operator select.** Each data type has one
+    control:
+    - Option and lookup fields (currency included): Any of;
+    - text: Contains;
+    - numbers and dates: a From–To pair where either end works alone (≥, ≤ or Between). A
+      DateTime "To" covers the whole day;
+    - Yes/No: Any / Yes / No.
+
+    Chips add the operator word where the value alone misleads ("From 5000", "Contains “dri”").
+    Admin and the legacy page opt out (`fixedOperators` / `commitOnBlur`), and keep their
+    operators.
+  - **Typed values commit on blur or Enter**, like the free-text search, not per keystroke.
+    - A From–To pair commits when focus leaves the pair.
+    - A value that fails validation is never sent. It keeps its error until this field's own
+      clause changes, or Clear filters, back/forward, a replayed search or a link replaces the
+      search (`resetEpoch`).
+  - **A cleared field removes its clause.** It used to send `value: null`, and the search failed
+    with a 400.
+    - The URL parser drops incomplete clauses and unknown operators.
+    - An old link whose operator the control can't show still searches as sent. The field shows
+      "From a shared link: …", and editing the field replaces the clause.
+  - **Discovery dispatches compose.**
+    - Two actions in one task (e.g. a blur commit and the tap that caused it) used to overwrite
+      each other, because each reduced from the last-rendered `router.query`.
+    - `reduceFromLatest` builds on the last push until a new query renders.
+    - Each block's custom-field clauses are replaced by key (`setCustomFieldClauses`).
+  - **The multi-select overflow is fixed for every caller** of `CustomFieldFilters` (`h-fit`,
+    `min-w-0`). An empty multi-select matches its neighbours' height (40 px, or 44 px touch below
+    `md`).
+  - **The wizard count panel always shows the count.**
+    - 0 is a warning: yellow, with a warning icon.
+    - 1–4 is the normal number with the narrow-feed sentence beneath, which takes 2 lines at
+      390 and was accepted.
+    - Step 5 is "Your area and languages?".
+  - **The tabbed detail page says what each section means.**
+    - **Incentive** reads by state:
+      - ZLTO: the amount (`zltoRewardEstimate`), an estimate caveat, and "Spend your Zlto in the
+        marketplace, or cash it out for real money in supported countries." Signed in with
+        Cash Out closed, only the marketplace half. "Offline" doesn't count as closed. The
+        editor Preview renders "marketplace" without a link;
+      - the other states: depleted, partner incentive, a Job's disclosed salary or "Paid",
+        "Paid or rewarded", or None as a static row.
+    - **A stored ZLTO or partner reward counts as rewarded** (Jason), even with `incentivized`
+      unanswered. The custom-fields migration set the reward type without the flag, so these
+      opportunities used to have no public Incentive section.
+      - The lead extended the rule to a Job's disclosed salary, for the same reason: the cards
+        and the sticky bar already show that pay.
+      - "Not specified" (admin only) now means nothing is stored at all.
+    - Static rows show a one-line note, and Accessibility No, Not specified and On request each
+      have their own. The repeated "Support:" line is gone.
+    - **Time needed is a static row.** "Most people finish in…" is gone; no data backs it.
 
 ## BA sign-off summary (2026-09-22)
 

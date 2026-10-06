@@ -55,6 +55,8 @@ export interface DiscoveryContextValue {
   state: DiscoveryState;
   dispatch: (action: DiscoveryAction) => void;
   ready: boolean;
+  /** Bumped when the search is replaced rather than edited; see `useDiscoveryQuery`. */
+  resetEpoch: number;
   lookups: DiscoveryLookups;
   preferences: UserPreferences | null | undefined;
   /** Signed-in (`user`) or not — decides who owns the country (profile vs session answer). */
@@ -136,7 +138,7 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const router = useRouter();
-  const { state, dispatch, ready } = useDiscoveryQuery();
+  const { state, dispatch, ready, resetEpoch } = useDiscoveryQuery();
   const lookups = useDiscoveryLookups();
   const profile = useAtomValue(userProfileAtom);
   const {
@@ -288,6 +290,7 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
     state,
     dispatch,
     ready,
+    resetEpoch,
     lookups,
     preferences,
     scope,

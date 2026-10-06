@@ -265,6 +265,11 @@ Anonymous visitors get it too — answers held in session, with an offer to keep
     stored interest with no published opportunity stays visible.
   - The save path finally reports failure — Finish shows the error and keeps the draft;
     "Make this my default" shows a one-line error.
+- 2026-10-05 (Jason and Adrian): **goal stays single-select**, which reconfirms 2026-08-27.
+  Jason's 2026-10-05 feedback asked for several goals in step 1. The API stores a single
+  `GoalId`, and the two decided together to keep it. The same round changed the wizard's count
+  panel and step 5's title; see YOM-1262's
+  [2026-10-05 handoff](../YOM-1262-ui-apply-user-presets-to-opportunity-discovery/handoffs/2026-10-05-a.md).
 
 ## Links
 

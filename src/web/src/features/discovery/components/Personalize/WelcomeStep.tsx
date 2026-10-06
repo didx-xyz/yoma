@@ -299,7 +299,7 @@ export const WelcomeStep: React.FC<{
                       key={type.id}
                       type="button"
                       onClick={() => pickType(type.name)}
-                      className={`hover:border-orange focus-visible:border-orange flex h-[66px] flex-col items-center justify-center gap-1.5 rounded-xl border border-white/[0.12] bg-white/[0.08] px-1 transition-[background-color,border-color,scale] duration-120 hover:bg-white/[0.14] focus-visible:bg-white/[0.14] active:scale-[0.98] active:duration-80 motion-reduce:transition-none motion-reduce:active:scale-100 lg:h-[76px] lg:[@media(max-height:600px)]:h-[66px] ${RISE_IN}`}
+                      className={`hover:border-orange focus-visible:border-orange flex h-[66px] flex-col items-center justify-center gap-1.5 rounded-xl border border-white/[0.12] bg-white/[0.08] px-1 transition-[background-color,border-color,scale] duration-120 hover:bg-white/[0.14] focus-visible:bg-white/[0.14] active:scale-[0.98] active:duration-80 motion-reduce:transition-none motion-reduce:active:scale-100 max-[359px]:px-0.5 lg:h-[76px] lg:[@media(max-height:600px)]:h-[66px] ${RISE_IN}`}
                       style={rightDelay(i)}
                     >
                       {/* The inset ring keeps Job's purple square visible on the purple dialog */}
@@ -308,7 +308,8 @@ export const WelcomeStep: React.FC<{
                       >
                         <Icon className="h-4 w-4" />
                       </span>
-                      <span className="font-nunito text-[11px] leading-tight font-bold whitespace-nowrap lg:text-[13px]">
+                      {/* Below 360px a smaller, tighter label: "Entrepreneurship" fits its tile */}
+                      <span className="font-nunito text-[11px] leading-tight font-bold whitespace-nowrap max-[359px]:text-[10px] max-[359px]:tracking-tight lg:text-[13px]">
                         {type.displayName || type.name}
                       </span>
                     </button>

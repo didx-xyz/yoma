@@ -23,8 +23,9 @@ import { typeBadgeClass, typeLabel, typeOutlineClass } from "./typeBadge";
  * `lib/money.ts`, `lib/cardFacts.ts`, `lib/cardStatus.ts`.
  *
  * Mobile is a two-part row — the title (up to two lines since round 10; the row grows to fit),
- * then type chip · money · place — with the status and a compact arrow button on the right; the
- * summary and facts stay on the card and the detail page.
+ * then type chip · money · place, wrapping to another line when they don't fit (2026-10-05) —
+ * with the status and a compact arrow button on the right; below 360px the status is the text
+ * column's last line instead. The summary and facts stay on the card and the detail page.
  *
  * The button is the row's ONLY link to the detail page (Jason, 2026-10-01 — as on the grid card);
  * the row itself is not clickable.
@@ -141,17 +142,22 @@ export const OpportunityRow: React.FC<{
         </span>
       </div>
 
-      {/* Mobile: title, then type chip · money · place; the status on the right */}
+      {/* Mobile: title, then type chip · money · place; the status on the right — below 360px
+          it moves under the meta line, so the text column has the room (2026-10-05) */}
       <div className="flex items-center gap-3 md:hidden">
         {tile}
         <span className="flex min-w-0 grow flex-col gap-0.5">
-          <span className="line-clamp-2 text-sm font-semibold">
+          <span className="line-clamp-2 text-sm font-semibold wrap-break-word">
             {opportunity.title}
           </span>
-          <span className="flex min-w-0 items-center gap-2 text-xs">
+          {/* wraps rather than running under the status and the arrow */}
+          <span className="flex min-w-0 flex-wrap items-center gap-2 gap-y-1 text-xs">
             {chip}
             {hasMoney && (
-              <span className="shrink-0 whitespace-nowrap">
+              // Never wider than the column: a long pay line ("Paid — amount not disclosed")
+              // wraps inside it, and the badge's ZLTO pill takes the next line rather than
+              // being squeezed
+              <span className="max-w-full min-w-0 [&>span]:flex-wrap [&>span]:gap-y-1">
                 <MoneyBadge compact facts={money} />
               </span>
             )}
@@ -159,9 +165,12 @@ export const OpportunityRow: React.FC<{
               <span className="text-gray-dark truncate">{location}</span>
             )}
           </span>
+          <span className={`hidden text-xs max-[359px]:block ${closesClass}`}>
+            {closing.label}
+          </span>
         </span>
         <span
-          className={`shrink-0 text-right text-xs whitespace-nowrap ${closesClass}`}
+          className={`shrink-0 text-right text-xs whitespace-nowrap max-[359px]:hidden ${closesClass}`}
         >
           {closing.label}
         </span>

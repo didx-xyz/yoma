@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Select from "react-select";
 import Async from "react-select/async";
 import type { SelectOption, Skill } from "~/api/models/lookups";
@@ -18,15 +18,36 @@ import {
   useSkillsQuery,
 } from "~/hooks/useOpportunityMutations";
 import { CUSTOM_FIELDS_ENABLED, PAGE_SIZE_MEDIUM } from "~/lib/constants";
+import {
+  CUSTOM_FIELD_FILTER_OPERATOR_LABELS,
+  customFieldChipValue,
+  draftSyncOf,
+  fixedClauseFor,
+  fixedControlValues,
+  fixedFilterControlOf,
+  hasScalar,
+  hasUpperBound,
+  INVERTED_RANGE_ERROR,
+  isInvertedRange,
+  isMultiValueOperator,
+  isShownByFixedControl,
+  sanitizeCustomFieldFilters,
+} from "~/lib/customFields/customFieldFilterClauses";
 import { dateInputToUTC, debounce, utcToDateInput } from "~/lib/utils";
 import { getCustomFieldNumberError } from "./CustomFields";
+
+// The clause rules live in a pure module (the URL codec and the unit tests use them); these two
+// stay importable from here for the existing callers.
+export { CUSTOM_FIELD_FILTER_OPERATOR_LABELS, sanitizeCustomFieldFilters };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CustomFieldFilters (YOM-1244 / YOM-1260)
 //
 // Definition-driven custom-field filter UI, shared by the user-facing
-// (OpportunityFilterVertical) and admin (OpportunityAdminFilterVertical) filters.
-// Nothing here is hardcoded to a definition key, title, option or opportunity type.
+// (OpportunityFilterVertical) and admin (OpportunityAdminFilterVertical) filters, and
+// discovery's type-specific block (YOM-1262), which opts into `fixedOperators` and
+// `commitOnBlur`. Nothing here is hardcoded to a definition key, title, option or
+// opportunity type.
 //
 // Controlled component: the parent owns the CustomFieldFilter[] state and merges
 // it into its search-filter payload on submit.
@@ -100,28 +121,11 @@ export const CUSTOM_FIELD_FILTER_OPERATORS_BY_DATA_TYPE: Record<
   [CustomFieldDataType.Option]: [OP.AnyOf, OP.AllOf, OP.Equals, OP.Exists],
 };
 
-export const CUSTOM_FIELD_FILTER_OPERATOR_LABELS: Record<string, string> = {
-  [OP.Equals]: "Is",
-  [OP.Contains]: "Contains",
-  [OP.AnyOf]: "Any of",
-  [OP.AllOf]: "All of",
-  [OP.Exists]: "Has any value",
-  [OP.GreaterThan]: "Greater than",
-  [OP.GreaterThanOrEqual]: "From",
-  [OP.LessThan]: "Less than",
-  [OP.LessThanOrEqual]: "Up to",
-  [OP.Between]: "Between",
-};
-
 const dataTypeOf = (definition: CustomFieldDefinition) =>
   definition.dataType as string;
 
 const lookupTypeOf = (definition: CustomFieldDefinition) =>
   (definition.lookupType as string | null) ?? null;
-
-const isMultiValueOperator = (
-  operator: CustomFieldFilterOperator | undefined,
-) => operator === OP.AnyOf || operator === OP.AllOf;
 
 /** Operators offered for a definition (AllOf only where the API allows it). */
 export function getCustomFieldFilterOperators(
@@ -150,29 +154,6 @@ export function sortCustomFieldDefinitions(
       a.sortOrder - b.sortOrder ||
       a.title.localeCompare(b.title),
   );
-}
-
-const hasScalar = (filter: CustomFieldFilter) =>
-  filter.value != null && filter.value.trim() !== "";
-
-const hasUpperBound = (filter: CustomFieldFilter) =>
-  filter.valueTo != null && filter.valueTo.trim() !== "";
-
-/**
- * Drops clauses that are not yet usable (no value chosen), so a half-completed
- * control never reaches the API. Exists clauses are always complete.
- */
-export function sanitizeCustomFieldFilters(
-  filters: CustomFieldFilter[] | null | undefined,
-): CustomFieldFilter[] {
-  return (filters ?? []).filter((filter) => {
-    if (filter.operator === OP.Exists) return true;
-    if (isMultiValueOperator(filter.operator))
-      return (filter.values?.length ?? 0) > 0;
-    if (filter.operator === OP.Between)
-      return hasScalar(filter) && hasUpperBound(filter);
-    return hasScalar(filter);
-  });
 }
 
 /**
@@ -239,7 +220,7 @@ export function getCustomFieldFilterError(
       const inverted = numeric
         ? Number(filter.value) > Number(filter.valueTo)
         : filter.value! > filter.valueTo!;
-      if (inverted) return "The 'from' value must not be greater than 'to'.";
+      if (inverted) return INVERTED_RANGE_ERROR;
     }
   }
 
@@ -379,8 +360,13 @@ export function useCustomFieldFilterLabeler(
 // react-select renders its own control with a 38px min-height that can't be
 // overridden from here, so the native selects/inputs are sized to match it
 // (rather than using the shorter select-sm / input-sm variants).
+// `h-fit` lets a multi-select grow with its chips: daisyUI's `.input` otherwise holds the
+// control at its fixed height while the chips spill over the next field (2026-10-05). Empty, it
+// is then as tall as its content (36px) plus padding, so the padding goes and a min-height
+// matches the neighbouring controls instead: 40px, or 44px below md with `largeTouchTargets`.
+// The min-height needs `!` to beat react-select's own 38px.
 const REACT_SELECT_CONTROL_CLASSES =
-  "input w-full !border-gray pr-0 pl-2 py-1 text-sm";
+  "input w-full !border-gray pr-0 pl-2 h-fit py-0 text-sm";
 const NATIVE_CONTROL_CLASSES = "h-10 min-h-10 py-1 text-sm !border-gray";
 const NATIVE_SELECT_CLASSES = `select select-bordered w-full ${NATIVE_CONTROL_CLASSES}`;
 const NATIVE_INPUT_CLASSES = `input input-bordered w-full ${NATIVE_CONTROL_CLASSES}`;
@@ -414,6 +400,30 @@ export interface CustomFieldFiltersProps {
    * unchanged; the youth discovery sheet opts in.
    */
   largeTouchTargets?: boolean;
+  /**
+   * Typed values (the fixed text, number and date inputs) keep a local draft and commit on blur
+   * or Enter instead of on every keystroke; a From–To pair commits when focus leaves the pair.
+   * An invalid draft is never committed, and an emptied one removes its clause. Applies to the
+   * `fixedOperators` controls; the operator-select layout always commits as you type. Off by
+   * default; the youth discovery sheet opts in.
+   */
+  commitOnBlur?: boolean;
+  /**
+   * One fixed operator per data type and no operator select: Option Any of, String Contains,
+   * numbers and dates a From–To range (either end alone), Boolean Any / Yes / No. An emptied
+   * control removes its clause. A clause the control can't show (an older link) is kept as sent,
+   * with a note under the field, until the control is edited. Off by default, so the admin and
+   * legacy panels keep the full operator matrix; the youth discovery sheet opts in.
+   */
+  fixedOperators?: boolean;
+  /**
+   * With `commitOnBlur`: changes when the search is replaced rather than edited (discovery bumps
+   * it on Clear filters, back / forward and a replayed search). A typed field that isn't focused
+   * then shows its committed values again, so an uncommitted (invalid) draft doesn't outlive
+   * them. An unrelated change keeps such a draft, with its error. Without it, drafts follow only
+   * their own committed values.
+   */
+  resetKey?: string;
   className?: string;
 }
 
@@ -424,6 +434,9 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
   showErrors,
   menuPortalTarget,
   largeTouchTargets = false,
+  commitOnBlur = false,
+  fixedOperators = false,
+  resetKey,
   className = "",
 }) => {
   const selectClasses = largeTouchTargets
@@ -433,8 +446,8 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
     ? TOUCH_INPUT_CLASSES
     : NATIVE_INPUT_CLASSES;
   const reactSelectControlClasses = largeTouchTargets
-    ? `${REACT_SELECT_CONTROL_CLASSES} min-h-11 md:min-h-10`
-    : REACT_SELECT_CONTROL_CLASSES;
+    ? `${REACT_SELECT_CONTROL_CLASSES} !min-h-11 md:!min-h-10`
+    : `${REACT_SELECT_CONTROL_CLASSES} !min-h-10`;
 
   const ordered = useMemo(
     () => sortCustomFieldDefinitions(definitions ?? []),
@@ -447,23 +460,67 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
   const filterFor = (key: string) =>
     filters.find((f) => f.key === key) ?? undefined;
 
+  // The clauses last emitted, and the `value` they were built on. Until the parent passes the
+  // change back, `value` is stale: two changes in one task (a blur commit and the tap that caused
+  // it, such as a multi-select's clear) would each rebuild from it, and the second would undo
+  // the first. While `value` is still the one they were built on, changes build on them instead.
+  const emitted = useRef<{
+    from: CustomFieldFilter[];
+    filters: CustomFieldFilter[];
+  } | null>(null);
+  const latestFilters = (): CustomFieldFilter[] =>
+    value != null && emitted.current?.from === value
+      ? emitted.current.filters
+      : filters;
+
   // Replaces a clause wholesale. `patch === null` removes it. Operator changes
   // always reset the value shape, because each operator uses a different field.
   const setFilter = (key: string, patch: CustomFieldFilter | null) => {
     setTouched((prev) => (prev[key] ? prev : { ...prev, [key]: true }));
 
-    if (patch === null) {
-      onChange(filters.filter((f) => f.key !== key));
-      return;
-    }
-
-    const exists = filters.some((f) => f.key === key);
-    onChange(
-      exists
-        ? filters.map((f) => (f.key === key ? patch : f))
-        : [...filters, patch],
-    );
+    const current = latestFilters();
+    const next =
+      patch === null
+        ? current.filter((f) => f.key !== key)
+        : current.some((f) => f.key === key)
+          ? current.map((f) => (f.key === key ? patch : f))
+          : [...current, patch];
+    if (value != null) emitted.current = { from: value, filters: next };
+    onChange(next);
   };
+
+  // Fixed operators: a control's values become its clause, and an empty control removes it.
+  const commitFixed = (definition: CustomFieldDefinition, values: string[]) => {
+    const clause = fixedClauseFor(
+      dataTypeOf(definition),
+      definition.key,
+      values,
+    );
+    if (
+      clause === null &&
+      !latestFilters().some((f) => f.key === definition.key)
+    )
+      return;
+    setFilter(definition.key, clause);
+  };
+
+  // Clauses the fixed controls can't show (older links) are named under their field in the chip
+  // wording, so they're labelled here. Only their definitions are passed, so no lookup is fetched
+  // unless such a clause exists.
+  const unshownDefinitions = useMemo(
+    () =>
+      fixedOperators
+        ? ordered.filter((definition) => {
+            const filter = filters.find((f) => f.key === definition.key);
+            return (
+              filter !== undefined &&
+              !isShownByFixedControl(dataTypeOf(definition), filter)
+            );
+          })
+        : [],
+    [fixedOperators, ordered, filters],
+  );
+  const labelUnshown = useCustomFieldFilterLabeler(unshownDefinitions);
 
   //#region Lookups
   const needsCountry = ordered.some(
@@ -552,33 +609,39 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
   }, []);
   const portalTarget = menuPortalTarget ?? defaultPortalTarget;
 
+  // `fixed`: always the Any of multi-select (`fixedOperators`), whatever the clause's operator.
   function renderOptionControl(
     definition: CustomFieldDefinition,
     filter: CustomFieldFilter | undefined,
     operator: CustomFieldFilterOperator,
+    fixed = false,
   ) {
     const key = definition.key;
-    const isMulti = isMultiValueOperator(operator);
+    const isMulti = fixed || isMultiValueOperator(operator);
     const lookupType = lookupTypeOf(definition);
 
     // Equals uses the scalar `value`; AnyOf / AllOf use `values`.
-    const selected = isMulti
-      ? (filter?.values ?? [])
-      : filter?.value
-        ? [filter.value]
-        : [];
+    const selected = fixed
+      ? fixedControlValues(dataTypeOf(definition), filter)
+      : isMulti
+        ? (filter?.values ?? [])
+        : filter?.value
+          ? [filter.value]
+          : [];
 
     const emit = (selectedValues: string[]) =>
-      setFilter(
-        key,
-        isMulti
-          ? {
-              key,
-              operator,
-              values: selectedValues.length > 0 ? selectedValues : null,
-            }
-          : { key, operator, value: selectedValues[0] ?? null },
-      );
+      fixed
+        ? commitFixed(definition, selectedValues)
+        : setFilter(
+            key,
+            isMulti
+              ? {
+                  key,
+                  operator,
+                  values: selectedValues.length > 0 ? selectedValues : null,
+                }
+              : { key, operator, value: selectedValues[0] ?? null },
+          );
 
     // Skill: async search (submits lookup GUIDs)
     if (lookupType === CustomFieldLookupType.Skill) {
@@ -610,6 +673,7 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
           styles={SELECT_STYLES}
           placeholder="Search skills..."
           inputId={`input_customfieldfilter_${key}`}
+          aria-label={fixed ? definition.title : undefined}
         />
       );
     }
@@ -657,8 +721,110 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
         }
         menuPortalTarget={portalTarget}
         styles={SELECT_STYLES}
-        placeholder="Select..."
+        placeholder={fixed ? "Any" : "Select..."}
         inputId={`input_customfieldfilter_${key}`}
+        aria-label={fixed ? definition.title : undefined}
+      />
+    );
+  }
+
+  /** The one control a field gets with `fixedOperators`; see `fixedFilterControlOf`. */
+  function renderFixedControl(
+    definition: CustomFieldDefinition,
+    filter: CustomFieldFilter | undefined,
+  ) {
+    const dataType = dataTypeOf(definition);
+    const control = fixedFilterControlOf(dataType);
+    const values = fixedControlValues(dataType, filter);
+    const commit = (next: string[]) => commitFixed(definition, next);
+
+    if (control === "anyOf")
+      return renderOptionControl(definition, filter, OP.AnyOf, true);
+
+    if (control === "boolean")
+      return (
+        <select
+          className={selectClasses}
+          aria-label={definition.title}
+          value={values[0] ?? ""}
+          onChange={(e) => commit([e.target.value])}
+        >
+          <option value="">Any</option>
+          <option value="true">Yes</option>
+          <option value="false">No</option>
+        </select>
+      );
+
+    if (control === "contains")
+      return (
+        <DraftInputs
+          committed={values}
+          resetKey={resetKey ?? ""}
+          commitOnBlur={commitOnBlur}
+          showErrors={showErrors}
+          validate={() => undefined}
+          onCommit={commit}
+          inputs={[
+            {
+              type: "text",
+              placeholder: "Contains…",
+              "aria-label": definition.title,
+              className: inputClasses,
+            },
+          ]}
+        />
+      );
+
+    // range: numbers and dates, From–To side by side
+    const isNumber =
+      dataType === CustomFieldDataType.Integer ||
+      dataType === CustomFieldDataType.Decimal;
+    const endProps = (end: "from" | "to") => ({
+      type: isNumber ? "number" : "date",
+      step: isNumber
+        ? dataType === CustomFieldDataType.Integer
+          ? "1"
+          : "any"
+        : undefined,
+      inputMode: isNumber
+        ? dataType === CustomFieldDataType.Integer
+          ? ("numeric" as const)
+          : ("decimal" as const)
+        : undefined,
+      // date inputs show no placeholder; the aria-label names both
+      placeholder: isNumber ? (end === "from" ? "From" : "To") : undefined,
+      "aria-label": `${definition.title} ${end}`,
+      className: inputClasses,
+    });
+
+    return (
+      <DraftInputs
+        committed={values}
+        resetKey={resetKey ?? ""}
+        commitOnBlur={commitOnBlur}
+        showErrors={showErrors}
+        // The browser reports unparseable text as "", so it is named by the type alone: the
+        // number rules' own message for any non-number, or the date one.
+        badInputError={
+          isNumber
+            ? getCustomFieldNumberError(dataType, "?")
+            : "Please enter a valid date."
+        }
+        validate={([from = "", to = ""]) => {
+          if (isNumber)
+            for (const end of [from, to]) {
+              const error = end
+                ? getCustomFieldNumberError(dataType, end)
+                : undefined;
+              if (error) return error;
+            }
+          return isInvertedRange(dataType, from, to)
+            ? INVERTED_RANGE_ERROR
+            : undefined;
+        }}
+        onCommit={commit}
+        inputsClassName="grid grid-cols-2 gap-2"
+        inputs={[endProps("from"), endProps("to")]}
       />
     );
   }
@@ -798,6 +964,44 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
     >
       {ordered.map((definition) => {
         const filter = filterFor(definition.key);
+
+        // `min-w-0` on the fieldset and its rows: a fieldset (a grid in daisyUI) otherwise grows
+        // to its longest chip and widens the whole panel; the chips truncate inside instead.
+        if (fixedOperators)
+          return (
+            <fieldset
+              key={definition.key}
+              className="fieldset min-w-0 gap-1"
+              data-custom-field-key={definition.key}
+              data-custom-field-datatype={definition.dataType}
+            >
+              <label className="label">
+                <span className="label-text font-semibold">
+                  {definition.title}
+                </span>
+              </label>
+
+              {/* A clause from an older link that this control can't show: it still filters,
+                  and editing the control replaces it. */}
+              {filter &&
+                !isShownByFixedControl(dataTypeOf(definition), filter) && (
+                  <p className="text-gray-dark text-xs">
+                    From a shared link:{" "}
+                    {customFieldChipValue(
+                      filter,
+                      labelUnshown(filter),
+                      dataTypeOf(definition),
+                    )}
+                    .
+                  </p>
+                )}
+
+              <div className="min-w-0">
+                {renderFixedControl(definition, filter)}
+              </div>
+            </fieldset>
+          );
+
         const operators = getCustomFieldFilterOperators(definition);
         const operator =
           filter?.operator ?? operators[0] ?? CustomFieldFilterOperator.Equals;
@@ -806,7 +1010,7 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
         return (
           <fieldset
             key={definition.key}
-            className="fieldset gap-1"
+            className="fieldset min-w-0 gap-1"
             data-custom-field-key={definition.key}
             data-custom-field-datatype={definition.dataType}
           >
@@ -816,7 +1020,7 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
               </span>
             </label>
 
-            <div className="flex flex-col gap-1 sm:flex-row">
+            <div className="flex min-w-0 flex-col gap-1 sm:flex-row">
               <select
                 className={`${selectClasses} sm:w-40`}
                 aria-label={`${definition.title} filter operator`}
@@ -838,7 +1042,7 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
                 ))}
               </select>
 
-              <div className="w-full">
+              <div className="w-full min-w-0">
                 {renderValueControl(definition, filter, operator)}
               </div>
             </div>
@@ -863,6 +1067,165 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
           </fieldset>
         );
       })}
+    </div>
+  );
+};
+
+type DraftInputProps = Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "value" | "onChange" | "onInput" | "onBlur" | "onKeyDown"
+>;
+
+/**
+ * The typed inputs of one fixed-operator field: a text input, or a From–To pair.
+ *
+ * With `commitOnBlur` each input keeps a local draft and typing dispatches nothing. The field
+ * commits on Enter (focus stays put) or when focus leaves the FIELD, so tabbing From → To
+ * doesn't commit and one edit of both ends is one search. As in discovery's
+ * FreeTextSearchInput, the drafts are trimmed and nothing is committed when they match what is
+ * already committed. An invalid draft is never committed: the clause stays as it was, and the
+ * error shows from the first attempt. That includes text the browser can't parse ("5000e" in a
+ * number input), which it reports as "" (`validity.badInput`), so it never reads as a cleared
+ * field. Without `commitOnBlur` every change commits.
+ *
+ * The drafts follow the committed values, with FreeTextSearchInput's "adjust state on a prop
+ * change" pattern, when those change or `resetKey` says the search was replaced (Clear filters,
+ * back / forward, a replayed search). Otherwise a stale draft would commit back over the change on
+ * the next blur. A focused field is never overwritten, and a draft that failed validation
+ * survives an unrelated change with its error; see `draftSyncOf` for the rule.
+ */
+const DraftInputs: React.FC<{
+  /** The committed values as the inputs show them, one per input. */
+  committed: string[];
+  /** Changes when the search changes from outside; see above. */
+  resetKey: string;
+  /** Props per input (type, placeholder, aria-label, classes…). */
+  inputs: DraftInputProps[];
+  commitOnBlur: boolean;
+  showErrors?: boolean;
+  /** The error for a set of values, or undefined when they may be committed. */
+  validate: (values: string[]) => string | undefined;
+  /** The error while an input holds text the browser can't parse. */
+  badInputError?: string;
+  onCommit: (values: string[]) => void;
+  inputsClassName?: string;
+}> = ({
+  committed,
+  resetKey,
+  inputs,
+  commitOnBlur,
+  showErrors,
+  validate,
+  badInputError = "Please enter a valid value.",
+  onCommit,
+  inputsClassName,
+}) => {
+  const [drafts, setDrafts] = useState(committed);
+  // Per input: the browser can't parse what is typed, so it reports "".
+  const [bad, setBad] = useState<boolean[]>([]);
+  const [attempted, setAttempted] = useState(false);
+  const [focused, setFocused] = useState(false);
+  // Bumped to remount the inputs on a reset: an input holding unparseable text already reports
+  // "", so setting "" again would leave that text on screen.
+  const [generation, setGeneration] = useState(0);
+  // The values this field last committed: after Enter, the drafts take the committed values only
+  // while they still equal these, so typing on before the commit renders isn't overwritten.
+  const [sent, setSent] = useState<string[] | null>(null);
+
+  const committedKey = JSON.stringify(committed);
+  const [syncedCommitted, setSyncedCommitted] = useState(committedKey);
+  const [syncedReset, setSyncedReset] = useState(resetKey);
+  if (committedKey !== syncedCommitted || resetKey !== syncedReset) {
+    setSyncedCommitted(committedKey);
+    setSyncedReset(resetKey);
+    const sync = draftSyncOf({ focused, committed, sent, drafts });
+    if (sync === "reset") {
+      setDrafts(committed);
+      setBad([]);
+      setAttempted(false);
+      setGeneration((g) => g + 1);
+    } else if (sync === "adopt") {
+      setDrafts(committed);
+      setAttempted(false);
+    }
+  }
+
+  const errorFor = (values: string[], badInputs: boolean[]) =>
+    badInputs.some(Boolean) ? badInputError : validate(values);
+
+  const commit = (values: string[], badInputs: boolean[]): void => {
+    setAttempted(true);
+    if (errorFor(values, badInputs) !== undefined) return;
+    if (values.every((value, i) => value === (committed[i] ?? ""))) return;
+    setSent(values);
+    onCommit(values);
+  };
+  const commitDrafts = (): void =>
+    commit(
+      drafts.map((draft) => draft.trim()),
+      bad,
+    );
+
+  const badWith = (index: number, isBad: boolean): boolean[] =>
+    inputs.map((_, i) => (i === index ? isBad : (bad[i] ?? false)));
+
+  const change = (index: number, value: string, isBad: boolean): void => {
+    const next = drafts.map((draft, i) => (i === index ? value : draft));
+    const nextBad = badWith(index, isBad);
+    setDrafts(next);
+    setBad(nextBad);
+    if (!commitOnBlur) commit(next, nextBad);
+  };
+
+  const error =
+    attempted || showErrors
+      ? errorFor(
+          commitOnBlur ? drafts.map((draft) => draft.trim()) : drafts,
+          bad,
+        )
+      : undefined;
+
+  return (
+    <div
+      className="flex min-w-0 flex-col gap-1"
+      onFocus={() => setFocused(true)}
+      onBlur={(e) => {
+        // Moving between this field's own inputs is not leaving it.
+        const next = e.relatedTarget;
+        if (next instanceof Node && e.currentTarget.contains(next)) return;
+        setFocused(false);
+        if (commitOnBlur) commitDrafts();
+      }}
+    >
+      <div className={inputsClassName}>
+        {inputs.map((props, index) => (
+          <input
+            key={`${generation}:${index}`}
+            {...props}
+            value={drafts[index] ?? ""}
+            onChange={(e) =>
+              change(index, e.target.value, e.target.validity.badInput)
+            }
+            // `change` misses some of these: the value stays "" while unparseable text is
+            // typed or deleted, so React reports no change.
+            onInput={(e) => {
+              const isBad = e.currentTarget.validity.badInput;
+              if (isBad !== (bad[index] ?? false))
+                setBad(badWith(index, isBad));
+            }}
+            onKeyDown={(e) =>
+              commitOnBlur && e.key === "Enter" && commitDrafts()
+            }
+          />
+        ))}
+      </div>
+
+      {/* Discovery's error token; the text is the shared one. */}
+      {error && (
+        <label className="label font-bold">
+          <span className="label-text-alt text-pink italic">{error}</span>
+        </label>
+      )}
     </div>
   );
 };

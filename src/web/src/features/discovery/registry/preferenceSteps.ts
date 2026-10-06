@@ -180,7 +180,7 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
   },
   {
     id: "language",
-    title: "Where are you, and what languages work for you?",
+    title: "Your area and languages?",
     subheading:
       "Where you're based, and the languages you're comfortable working in.",
     infoNote: null,

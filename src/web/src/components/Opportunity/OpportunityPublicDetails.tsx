@@ -51,6 +51,7 @@ import { OpportunityCompletionEdit } from "~/components/Opportunity/OpportunityC
 import { OpportunityCoreDetails } from "~/components/Opportunity/OpportunityCoreDetails";
 import { DetailHeaderCard } from "~/components/Opportunity/TabbedDetails/DetailHeaderCard";
 import { OpportunityDetailSections } from "~/components/Opportunity/TabbedDetails/OpportunityDetailSections";
+import { isCashOutClosed } from "~/components/Opportunity/TabbedDetails/detailSectionCopy";
 import { OpportunityCustomFieldsSection } from "~/components/Opportunity/OpportunityCustomFieldsSection";
 import Share from "~/components/Opportunity/Share";
 import { SignInButton } from "~/components/SignInButton";
@@ -609,7 +610,8 @@ const OpportunityPublicDetails: React.FC<{
         type="button"
         className={
           tabbed
-            ? "btn btn-sm bg-green hover:bg-green-dark disabled:bg-green h-12 w-full rounded-full px-6 text-sm text-white normal-case md:w-auto md:whitespace-nowrap"
+            ? // below 360px, less padding and tight lines: the longest labels take 2 lines in 48px
+              "btn btn-sm bg-green hover:bg-green-dark disabled:bg-green h-12 w-full rounded-full px-6 text-sm leading-tight text-white normal-case max-[359px]:px-2 md:w-auto md:whitespace-nowrap"
             : `btn btn-sm bg-green hover:bg-green-dark disabled:bg-green h-10 w-full rounded-full text-sm text-white normal-case md:w-[250px]`
         }
         title="Clicking this button will take you to an external site to continue this opportunity. Remember to return to this page to upload your completion certificate and earn your achievement!"
@@ -1276,6 +1278,9 @@ const OpportunityPublicDetails: React.FC<{
               headerRef={headerCardRef}
               barActions={barActions}
               preview={preview}
+              // signed in, a ZLTO incentive's cash-out line follows the youth's own Cash Out;
+              // the editor preview shows what any youth sees
+              cashOutClosed={!preview && isCashOutClosed(userProfile?.payout)}
             />
           ) : (
             <div className="flex flex-col gap-4 md:flex-row">

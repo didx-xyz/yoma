@@ -3,8 +3,15 @@ import { IoClose, IoPersonOutline, IoSearchOutline } from "react-icons/io5";
 import { hasActiveFilters } from "../../lib/types";
 import { useDiscovery } from "../../state/DiscoveryContext";
 
-const SOLID_GREEN =
-  "btn bg-green hover:bg-green-dark min-h-12 rounded-full border-none px-6 text-base font-semibold text-white";
+/**
+ * The buttons wrap inside the card rather than overflow it (320px is the minimum width,
+ * 2026-10-05): daisyUI's `.btn` is a fixed-height, non-shrinking, nowrap box, so this undoes
+ * that, and each label is a `min-w-0` span that wraps beside the icon. `min-h-12` keeps the size.
+ */
+const WRAPS =
+  "h-auto max-w-full shrink whitespace-normal py-2.5 leading-tight max-md:px-4";
+
+const SOLID_GREEN = `btn bg-green hover:bg-green-dark min-h-12 rounded-full border-none px-6 text-base font-semibold text-white ${WRAPS}`;
 
 /**
  * The zero-results state (2026-10-01, Jason): a friendly card with a large way out instead of a
@@ -50,13 +57,13 @@ export const NoMatches: React.FC = () => {
   const clearFiltersButton = (
     <button type="button" onClick={clearFilters} className={SOLID_GREEN}>
       <IoClose className="h-5 w-5" />
-      Clear filters
+      <span className="min-w-0">Clear filters</span>
     </button>
   );
   const clearSearchButton = (
     <button type="button" onClick={clearSearch} className={SOLID_GREEN}>
       <IoClose className="h-5 w-5" />
-      Clear search
+      <span className="min-w-0">Clear search</span>
     </button>
   );
 
@@ -67,10 +74,10 @@ export const NoMatches: React.FC = () => {
         <button
           type="button"
           onClick={() => dispatch({ kind: "setPreferencesOff", off: true })}
-          className="btn border-purple text-purple hover:bg-purple-tint min-h-12 rounded-full bg-white px-6 text-base font-semibold"
+          className={`btn border-purple text-purple hover:bg-purple-tint min-h-12 rounded-full bg-white px-6 text-base font-semibold ${WRAPS}`}
         >
           <IoPersonOutline className="h-5 w-5" />
-          Search without my preferences
+          <span className="min-w-0">Search without my preferences</span>
         </button>
         {manualFilters ? clearFiltersButton : word && clearSearchButton}
       </>

@@ -1,9 +1,6 @@
 import React, { useState } from "react";
 import { IoChevronDown, IoOptionsOutline } from "react-icons/io5";
-import type {
-  CustomFieldDefinition,
-  CustomFieldFilter,
-} from "~/api/models/opportunity";
+import type { CustomFieldDefinition } from "~/api/models/opportunity";
 import {
   CustomFieldFilters,
   sortCustomFieldDefinitions,
@@ -24,7 +21,8 @@ import { SectionHeader } from "./SectionHeader";
  *
  * Inside each section, one nested disclosure per definition GROUP (the "More filters" pattern),
  * from the endpoint's own grouping in the order returned — nothing keyed to a specific field.
- * Clause editing reuses YOM-1260's `CustomFieldFilters`; the operator matrix lives there.
+ * Clause editing reuses YOM-1260's `CustomFieldFilters` with its fixed operators: one per data
+ * type, so the youth never picks one (the rules are in `customFieldFilterClauses`).
  */
 export const TypeSpecificFilters: React.FC = () => {
   const { effectiveFilters, lookups } = useDiscovery();
@@ -169,24 +167,12 @@ const GroupDisclosure: React.FC<{
   label: string;
   definitions: CustomFieldDefinition[];
 }> = ({ label, definitions }) => {
-  const { state, dispatch } = useDiscovery();
+  const { state, dispatch, resetEpoch } = useDiscovery();
   const compact = useIsCompact();
 
   const keys = new Set(definitions.map((d) => d.key));
   const ownClauses = state.filters.customFields.filter((c) => keys.has(c.key));
   const [open, setOpen] = useState(() => ownClauses.length > 0);
-
-  const onChange = (next: CustomFieldFilter[]): void =>
-    // Replace this group's clauses; clauses owned elsewhere pass through untouched.
-    dispatch({
-      kind: "patchFilters",
-      patch: {
-        customFields: [
-          ...state.filters.customFields.filter((c) => !keys.has(c.key)),
-          ...next,
-        ],
-      },
-    });
 
   const subGroups = orderedUnique(definitions.map((d) => d.subGroup)).map(
     (subGroup) => {
@@ -223,7 +209,9 @@ const GroupDisclosure: React.FC<{
       </button>
       {open && (
         // Touch targets: the shared filter controls size themselves for the pointer by default;
-        // discovery opts into the 44px variant (`largeTouchTargets`) for the sheet.
+        // discovery opts into the 44px variant (`largeTouchTargets`) for the sheet. It also fixes
+        // one operator per data type (`fixedOperators`) and commits typed values on blur or Enter
+        // (`commitOnBlur`), so a search runs per edit, not per keystroke (2026-10-05).
         <div className="flex flex-col gap-3 pb-3 pl-3 md:pl-7">
           {subGroups.map(
             ({ subGroup, heading, definitions: subDefinitions }) => (
@@ -236,16 +224,22 @@ const GroupDisclosure: React.FC<{
                 <CustomFieldFilters
                   definitions={subDefinitions}
                   largeTouchTargets
+                  fixedOperators
+                  commitOnBlur
+                  // Clear filters or a replaced search drops an uncommitted (invalid) draft;
+                  // an unrelated change keeps it, with its error.
+                  resetKey={String(resetEpoch)}
                   value={state.filters.customFields.filter((c) =>
                     subDefinitions.some((d) => d.key === c.key),
                   )}
+                  // Replaces this block's own clauses in the reducer, so a change in another
+                  // block in the same task (a blur commit, then the tap) isn't undone.
                   onChange={(next) =>
-                    onChange([
-                      ...ownClauses.filter(
-                        (c) => !subDefinitions.some((d) => d.key === c.key),
-                      ),
-                      ...next,
-                    ])
+                    dispatch({
+                      kind: "setCustomFieldClauses",
+                      keys: subDefinitions.map((d) => d.key),
+                      clauses: next,
+                    })
                   }
                 />
               </div>

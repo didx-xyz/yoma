@@ -1,8 +1,8 @@
 import React from "react";
-import { CustomFieldFilterOperator } from "~/api/models/opportunity";
 import ScrollableContainer from "~/components/Carousel/ScrollableContainer";
 import { useCustomFieldFilterLabeler } from "~/components/Opportunity/CustomFieldFilters";
 import { useOpportunityCustomFieldDefinitionsQuery } from "~/hooks/useOpportunityMutations";
+import { customFieldChipValue } from "~/lib/customFields/customFieldFilterClauses";
 import { useDiscovery } from "../../state/DiscoveryContext";
 import { Chip } from "../shared/Chip";
 
@@ -12,8 +12,10 @@ import { Chip } from "../shared/Chip";
  *   inherited — the preference layer (inherited, switched-off and inapplicable chips). Rendered
  *               inside the preference banner, so everything purple sits together.
  *   manual    — this search's own filters, plus the type-scoped custom-field clauses labelled
- *               through YOM-1260's labeler (values only; Exists shows the title). Rendered by
- *               the filters panel, which owns "Clear filters".
+ *               through YOM-1260's labeler. The operator isn't on screen in discovery, so the
+ *               value carries it where the value alone would mislead ("From 5000", "Contains
+ *               “dri”"; `customFieldChipValue`). Rendered by the filters panel, which owns
+ *               "Clear filters".
  *
  * Mobile: one drag-scrollable line (`ScrollableContainer`); desktop: the chips wrap. Removing an
  * inherited chip skips its preference for this search; removing a manual one edits the filter.
@@ -69,42 +71,45 @@ export const AppliedChips: React.FC<{
           }
         />
       ))}
-      {clauses.map((clause) => (
-        <Chip
-          key={`cf:${clause.key}:${clause.operator}`}
-          chip={{
-            id: `cf:${clause.key}:${clause.operator}`,
-            // The chip is labelled by the FIELD, never its group/sub-group: the definition
-            // title is what the youth chose under, and the labeler supplies the value.
-            group:
-              definitions?.find(
-                (d) => d.key.toLowerCase() === clause.key.toLowerCase(),
-              )?.title ?? "Details",
-            value:
-              clause.operator === CustomFieldFilterOperator.Exists
-                ? "Has any value"
-                : labelFor(clause),
-            provenance: "manual",
-            prefKey: null,
-            facet: "customFields",
-            raw: null,
-            pending: false,
-            note: null,
-            private: false,
-          }}
-          onRemove={() =>
-            dispatch({
-              kind: "patchFilters",
-              patch: {
-                customFields: state.filters.customFields.filter(
-                  (c) => c !== clause,
-                ),
-              },
-            })
-          }
-          onUndo={() => undefined}
-        />
-      ))}
+      {clauses.map((clause) => {
+        const definition = definitions?.find(
+          (d) => d.key.toLowerCase() === clause.key.toLowerCase(),
+        );
+        return (
+          <Chip
+            key={`cf:${clause.key}:${clause.operator}`}
+            chip={{
+              id: `cf:${clause.key}:${clause.operator}`,
+              // The chip is labelled by the FIELD, never its group/sub-group: the definition
+              // title is what the youth chose under, and the labeler supplies the value.
+              group: definition?.title ?? "Details",
+              value: customFieldChipValue(
+                clause,
+                labelFor(clause),
+                definition?.dataType ?? null,
+              ),
+              provenance: "manual",
+              prefKey: null,
+              facet: "customFields",
+              raw: null,
+              pending: false,
+              note: null,
+              private: false,
+            }}
+            onRemove={() =>
+              dispatch({
+                kind: "patchFilters",
+                patch: {
+                  customFields: state.filters.customFields.filter(
+                    (c) => c !== clause,
+                  ),
+                },
+              })
+            }
+            onUndo={() => undefined}
+          />
+        );
+      })}
     </ScrollableContainer>
   );
 };

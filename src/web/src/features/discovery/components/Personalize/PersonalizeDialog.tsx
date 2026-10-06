@@ -316,9 +316,10 @@ export const PersonalizeDialog: React.FC<{
                   <Message kind="error">{saveError}</Message>
                 </div>
               )}
-              {/* One scrollable action row — button text never wraps at 390px. containerClassName=""
-              drops the wrapper's default h-full, which would stretch this row to fill the
-              fixed-height wizard column. */}
+              {/* One scrollable action row — button text never wraps at 390px; below 360px Back
+              is icon-only (its name stays "Back"), so the row fits without scrolling (2026-10-05).
+              containerClassName="" drops the wrapper's default h-full, which would stretch this
+              row to fill the fixed-height wizard column. */}
               <ScrollableContainer
                 containerClassName=""
                 className="flex shrink-0 items-center gap-3 overflow-x-auto pt-4 md:pt-6"
@@ -327,9 +328,10 @@ export const PersonalizeDialog: React.FC<{
                   type="button"
                   disabled={step === 0}
                   onClick={() => setStep(step - 1)}
-                  className="btn border-gray min-h-11 shrink-0 rounded-full bg-white whitespace-nowrap disabled:opacity-40"
+                  className="btn border-gray min-h-11 shrink-0 rounded-full bg-white whitespace-nowrap disabled:opacity-40 max-[359px]:w-11 max-[359px]:px-0"
                 >
-                  <IoArrowBack className="h-4 w-4" /> Back
+                  <IoArrowBack className="h-4 w-4" />
+                  <span className="max-[359px]:sr-only">Back</span>
                 </button>
                 <button
                   type="button"

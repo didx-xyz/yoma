@@ -1,3 +1,4 @@
+import type { CustomFieldFilter } from "~/api/models/opportunity";
 import type {
   DiscoveryFilters,
   DiscoverySort,
@@ -24,6 +25,17 @@ export type DiscoveryAction =
        */
       skip?: PreferenceKey[];
     }
+  /**
+   * Replace the custom-field clauses for these definition keys and leave every other clause as
+   * it is. Each block of controls owns only its own keys, so two blocks changing in one task (a
+   * blur commit and the tap that caused it) both land, where a whole-list `patchFilters` built
+   * from one render would undo the other.
+   */
+  | {
+      kind: "setCustomFieldClauses";
+      keys: string[];
+      clauses: CustomFieldFilter[];
+    }
   | { kind: "toggleType"; name: string }
   | { kind: "toggleQuickSearch"; criteria: Partial<DiscoveryFilters> }
   | { kind: "removeManual"; facet: keyof DiscoveryFilters; raw: string }
@@ -36,7 +48,8 @@ export type DiscoveryAction =
    * the manual filters. Without the strip, a value that is both inherited and manually set
    * (via a quick search, or picked before preferences resolved) would survive the skip as a
    * hidden manual duplicate and resurface as a green chip, still filtering. One action, not
-   * two dispatches, because the second would race the router. Undo is `setPreferenceSkipped`.
+   * two dispatches: dispatches in one task compose (`reduceFromLatest`), but each is its own
+   * history entry, and Back would land between the two. Undo is `setPreferenceSkipped`.
    */
   | {
       kind: "skipPreference";
@@ -203,6 +216,46 @@ export function reduceDiscovery(
   return next;
 }
 
+/** The state a dispatch pushed, and the router query it was reduced from. */
+export interface PushedDiscoveryState<Query> {
+  from: Query;
+  state: DiscoveryState;
+}
+
+/**
+ * Reduces an action from the freshest state there is. The router renders a push only after the
+ * current task, so until then `query` still shows the state before it. A blur commit and the tap
+ * that caused it dispatch in the same task, and reducing both from `query` let the second undo
+ * the first (2026-10-05). So while the router still shows the query the last push was reduced
+ * from, the next action reduces from that push. Once the query changes (the push landing, back /
+ * forward, a link) the URL is the state again.
+ */
+export function reduceFromLatest<Query>(
+  pushed: PushedDiscoveryState<Query> | null,
+  query: Query,
+  parse: (query: Query) => DiscoveryState,
+  action: DiscoveryAction,
+): PushedDiscoveryState<Query> {
+  const base =
+    pushed !== null && pushed.from === query ? pushed.state : parse(query);
+  return { from: query, state: reduceDiscovery(base, action) };
+}
+
+/**
+ * Settles a rendered query string against the ones pushed here and not yet rendered, in order.
+ * Rendering one of them means the search was edited here (any earlier ones were passed over).
+ * Anything else means it was replaced: back / forward, a replayed recent search, a link.
+ */
+export function settlePushes(
+  pending: string[],
+  rendered: string,
+): { replaced: boolean; pending: string[] } {
+  const index = pending.indexOf(rendered);
+  return index === -1
+    ? { replaced: true, pending: [] }
+    : { replaced: false, pending: pending.slice(index + 1) };
+}
+
 function reduceAction(
   state: DiscoveryState,
   action: DiscoveryAction,
@@ -220,6 +273,20 @@ function reduceAction(
               ...action.skip,
             ]
           : state.preferencesSkipped,
+        page: 1,
+      };
+    case "setCustomFieldClauses":
+      return {
+        ...state,
+        filters: {
+          ...state.filters,
+          customFields: [
+            ...state.filters.customFields.filter(
+              (c) => !action.keys.includes(c.key),
+            ),
+            ...action.clauses,
+          ],
+        },
         page: 1,
       };
     case "toggleType":

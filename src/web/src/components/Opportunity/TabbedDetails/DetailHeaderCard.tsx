@@ -58,18 +58,21 @@ const STRIP_COLUMNS: Record<number, string> = {
   4: "grid-cols-2 lg:grid-cols-4",
 };
 
-// The tile metrics, shared with the admin header's stat strip so the two strips match.
+// The tile metrics, shared with the admin header's stat strip so the two strips match. Below
+// 360px three tiles leave ~52px for a value: less padding and a 14px value make room for
+// "months", "minutes" or "Ongoing", and a word that still can't fit breaks rather than
+// overflowing its tile (320 is the minimum width, 2026-10-05).
 /** The grid columns for a strip of `count` tiles. */
 export const stripColumns = (count: number): string =>
   STRIP_COLUMNS[count] ?? "";
-export const TILE = "rounded-[14px] px-3.5 py-3";
+export const TILE = "rounded-[14px] px-3.5 py-3 max-[359px]:px-2";
 export const TILE_LABEL = "text-gray-dark block text-xs";
 export const TILE_VALUE =
-  "font-nunito block text-[15px] leading-tight font-black text-black md:text-[17px]";
+  "font-nunito block text-[15px] leading-tight font-black text-black max-[359px]:text-[14px] max-[359px]:wrap-break-word md:text-[17px]";
 
 const FactTile: React.FC<{ fact: DetailFact }> = ({ fact }) => (
   <div
-    className={`flex min-w-0 items-center gap-3 ${TILE} ${FACT_TONE[fact.id].tile}`}
+    className={`flex min-w-0 items-center gap-3 max-[359px]:items-start ${TILE} ${FACT_TONE[fact.id].tile}`}
   >
     {/* icons from `md` only: three tiles across 390 leave no room for them */}
     <span

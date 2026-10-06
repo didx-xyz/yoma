@@ -35,7 +35,7 @@ export const SortControl: React.FC<{
           onClick={() => {
             if (sort !== option.id) onChange(option.id);
           }}
-          className={`min-h-11 flex-auto rounded-full px-3 text-xs whitespace-nowrap transition-colors duration-150 motion-reduce:transition-none md:min-h-0 md:flex-none md:py-1.5 ${
+          className={`min-h-11 flex-auto rounded-full px-3 text-xs whitespace-nowrap transition-colors duration-150 motion-reduce:transition-none max-[359px]:px-2 md:min-h-0 md:flex-none md:py-1.5 ${
             sort === option.id
               ? "bg-purple font-semibold text-white"
               : "text-gray-dark"

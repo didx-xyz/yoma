@@ -1,11 +1,13 @@
 import React from "react";
+import { IoWarningOutline } from "react-icons/io5";
 import { formatNumber } from "../../lib/format";
 
 /**
  * The purple live-count panel. Fixed 340px on md+ (`flex: 0 0 340px` — load-bearing: sized to
  * content it resizes as the youth moves between steps); a compact row above the wizard below md.
- * The count is floored: below the threshold it swaps to a "widen your feed" state rather than
- * rendering a dead 0.
+ * The count always shows (Jason, 2026-10-05 — it was floored, and 0 could not be told from 4):
+ * 0 is a warning, yellow with a warning icon; below the threshold the "narrow feed" sentence sits
+ * under the label, and blurs with the number while recounting.
  */
 const FLOOR = 5;
 
@@ -17,8 +19,6 @@ export const LiveCountPanel: React.FC<{
   /** Extra classes on the purple root (the welcome → step 1 text fade, round 10). */
   className?: string;
 }> = ({ count, counting, failed = false, className = "" }) => {
-  const floored = count !== null && count < FLOOR;
-
   let body: React.ReactNode;
   if (failed && count === null)
     body = (
@@ -34,12 +34,6 @@ export const LiveCountPanel: React.FC<{
         Counting…
       </p>
     );
-  else if (floored && !counting)
-    body = (
-      <p className="text-lg leading-snug font-bold md:text-xl">
-        That&apos;s a narrow feed — consider widening a choice or two.
-      </p>
-    );
   else
     // While recounting, the previous number stays and only the white TEXT blurs — never the
     // purple panel behind it (browser feedback, 2026-09-03).
@@ -49,10 +43,26 @@ export const LiveCountPanel: React.FC<{
           counting ? "opacity-70 blur-[3px]" : ""
         }`}
       >
-        <p className="text-2xl font-bold md:text-5xl">{formatNumber(count)}</p>
-        <p className="text-purple-soft text-sm">
-          opportunities match your answers so far
+        <p
+          className={`flex items-center gap-2 text-2xl font-bold transition-colors duration-300 motion-reduce:transition-none md:text-5xl ${
+            count === 0 ? "text-yellow-light" : ""
+          }`}
+        >
+          {count === 0 && (
+            <IoWarningOutline aria-hidden className="h-6 w-6 md:h-10 md:w-10" />
+          )}
+          {formatNumber(count)}
         </p>
+        <p className="text-purple-soft text-sm">
+          {count === 1
+            ? "opportunity matches your answers so far"
+            : "opportunities match your answers so far"}
+        </p>
+        {count < FLOOR && (
+          <p className="mt-2 text-[13px] leading-snug font-semibold text-balance text-white motion-safe:animate-[fade-in_200ms_ease-out_both] md:text-sm">
+            That&apos;s a narrow feed — consider widening a choice or two.
+          </p>
+        )}
       </div>
     );
 

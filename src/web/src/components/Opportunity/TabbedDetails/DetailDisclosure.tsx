@@ -7,7 +7,8 @@ import { IoChevronForward } from "react-icons/io5";
 // default: a tinted icon square, the title, a count and a one-line preview. OPEN,
 // it shows chips (first 6 on desktop, 4 on mobile, then "Show all N") or a short
 // note; a chip section's preview slot then says what the list means. A static
-// section (Age range) is the row alone, with nothing to open.
+// section (Age range) is the row alone, with nothing to open, and its note under
+// the title (2026-10-05).
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const DetailDisclosure: React.FC<{
@@ -24,7 +25,8 @@ export const DetailDisclosure: React.FC<{
   preview?: string | null;
   /**
    * The open row's line in the same slot: what the chips mean for the youth (round 10
-   * follow-ups). It wraps, never truncates, and fades in with the body.
+   * follow-ups). It wraps, never truncates, and fades in with the body. A static row shows it
+   * always, under the title and without the fade (2026-10-05).
    */
   note?: string | null;
   /** A value row with nothing to open: no button, no chevron, no body. */
@@ -83,8 +85,15 @@ export const DetailDisclosure: React.FC<{
             {preview}
           </span>
         )}
-        {open && note && (
-          <span className="text-gray-dark mt-0.5 block text-[13px] leading-snug motion-safe:animate-[fade-in_220ms_ease-out_both]">
+        {(open || isStatic) && note && (
+          <span
+            className={`text-gray-dark mt-0.5 block text-[13px] leading-snug ${
+              // a static row's note is always there, so it has nothing to fade in with
+              isStatic
+                ? ""
+                : "motion-safe:animate-[fade-in_220ms_ease-out_both]"
+            }`}
+          >
             {note}
           </span>
         )}

@@ -1,4 +1,8 @@
-import type { CustomFieldFilter } from "~/api/models/opportunity";
+import {
+  CustomFieldFilterOperator,
+  type CustomFieldFilter,
+} from "~/api/models/opportunity";
+import { sanitizeCustomFieldFilters } from "~/lib/customFields/customFieldFilterClauses";
 import { RADIUS_OPTIONS_KM } from "./location";
 import type {
   DiscoveryFilters,
@@ -37,6 +41,12 @@ import {
  *
  * 2026-10-02 (round 10): `featured=1`, the landing's Featured rail. Only `1` is read: the API
  * filters on `featured == true` alone, so a `0` would be a filter that filters nothing.
+ *
+ * 2026-10-05: `cf` clauses without the value their operator needs are dropped on read. A cleared
+ * field used to leave `{ operator, value: null }` in the URL, which the API rejects (400), and old
+ * links and recent searches still carry it. A clause whose operator the API doesn't know goes
+ * too, for the same reason. Complete clauses are kept exactly as sent, whatever their operator:
+ * a shared link searches what it says.
  */
 
 type Query = Record<string, string | string[] | undefined>;
@@ -63,18 +73,35 @@ const parsePoint = (raw: string | null): DiscoveryFilters["point"] => {
 
 const round2 = (n: number): string => (Math.round(n * 100) / 100).toString();
 
+const isOptionalText = (value: unknown): boolean =>
+  value == null || typeof value === "string";
+
+const OPERATORS: readonly string[] = Object.values(CustomFieldFilterOperator);
+
+const isClause = (clause: unknown): clause is CustomFieldFilter => {
+  if (typeof clause !== "object" || clause === null) return false;
+  const { key, operator, value, valueTo, values } = clause as Record<
+    string,
+    unknown
+  >;
+  return (
+    typeof key === "string" &&
+    typeof operator === "string" &&
+    OPERATORS.includes(operator) &&
+    // A malformed value drops its own clause rather than failing the whole param.
+    isOptionalText(value) &&
+    isOptionalText(valueTo) &&
+    (values == null ||
+      (Array.isArray(values) && values.every((v) => typeof v === "string")))
+  );
+};
+
 const parseCustomFields = (raw: string | null): CustomFieldFilter[] => {
   if (!raw) return [];
   try {
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (clause): clause is CustomFieldFilter =>
-        typeof clause === "object" &&
-        clause !== null &&
-        typeof (clause as CustomFieldFilter).key === "string" &&
-        typeof (clause as CustomFieldFilter).operator === "string",
-    );
+    return sanitizeCustomFieldFilters(parsed.filter(isClause));
   } catch {
     return [];
   }
