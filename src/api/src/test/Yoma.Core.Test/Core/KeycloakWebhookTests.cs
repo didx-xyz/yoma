@@ -3,7 +3,7 @@ using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Newtonsoft.Json.Linq;
@@ -75,6 +75,41 @@ namespace Yoma.Core.Test.Core
       fixture.VerifyNoOnboardingOrPayoutCalls();
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task LoginWarnsBeforeRecoveryRegardlessOfInformationLogging(bool informationEnabled)
+    {
+      using var fixture = new Fixture();
+      var eventId = Guid.NewGuid().ToString();
+      var warning = $"Login: Possible lost REGISTER event; no Yoma user found for Keycloak user '{fixture.KeycloakUser.Id}' (event '{eventId}'); attempting recovery";
+      fixture.Logger.Setup(o => o.IsEnabled(LogLevel.Information)).Returns(informationEnabled);
+      fixture.Repository.Setup(o => o.Create(It.IsAny<User>())).ReturnsAsync((User user) =>
+      {
+        fixture.VerifyLog(LogLevel.Warning, warning, Times.Once());
+        fixture.VerifyLog(LogLevel.Information, "Login: Recovered the missing Yoma user", Times.Never());
+        Assert.Empty(fixture.Users);
+
+        fixture.Users.Add(user);
+        return user;
+      });
+
+      await fixture.Deliver("LOGIN", eventId);
+
+      var user = Assert.Single(fixture.Users);
+      fixture.VerifyLog(LogLevel.Warning, warning, Times.Once());
+      fixture.VerifyLog(LogLevel.Information,
+        $"Login: Recovered the missing Yoma user '{user.Id}' from Keycloak user '{fixture.KeycloakUser.Id}'",
+        informationEnabled ? Times.Once() : Times.Never());
+
+      // Neither a replay nor a later ordinary login should report another recovery attempt.
+      await fixture.Deliver("LOGIN", eventId);
+      await fixture.Deliver("LOGIN");
+
+      fixture.VerifyLog(LogLevel.Warning, "Login: Possible lost REGISTER event", Times.Once());
+      fixture.Repository.Verify(o => o.Create(It.IsAny<User>()), Times.Once);
+    }
+
     [Fact]
     public async Task ExistingLoginUsesExternalIdAndPreservesProfileSettingsAndOnboarding()
     {
@@ -102,6 +137,7 @@ namespace Yoma.Core.Test.Core
       fixture.VerifyReferralEvents(user.Id, 1);
       fixture.VerifyLoginEffects(user.Id, 1);
       fixture.VerifyNoOnboardingOrPayoutCalls();
+      fixture.VerifyLog(LogLevel.Warning, "Login: Possible lost REGISTER event", Times.Never());
     }
 
     [Theory]
@@ -124,6 +160,7 @@ namespace Yoma.Core.Test.Core
       fixture.Repository.Verify(o => o.Create(It.IsAny<User>()), Times.Never);
       fixture.VerifyRoleAssignment(type == "REGISTER" ? Times.Once() : Times.Never());
       fixture.VerifyNoOnboardingOrPayoutCalls();
+      fixture.VerifyLog(LogLevel.Warning, "Login: Possible lost REGISTER event", Times.Never());
     }
 
     [Fact]
@@ -151,6 +188,7 @@ namespace Yoma.Core.Test.Core
       Assert.Empty(fixture.History);
       Assert.Empty(fixture.Wallet.Invocations);
       fixture.VerifyNoOnboardingOrPayoutCalls();
+      fixture.VerifyLog(LogLevel.Warning, "Login: Possible lost REGISTER event", Times.Never());
     }
     #endregion
 
@@ -524,12 +562,19 @@ namespace Yoma.Core.Test.Core
       Assert.Empty(fixture.Users);
       Assert.Empty(fixture.Wallet.Invocations);
       fixture.Repository.Verify(o => o.Create(It.IsAny<User>()), Times.Once);
+      fixture.VerifyLog(LogLevel.Warning,
+        $"Login: Possible lost REGISTER event; no Yoma user found for Keycloak user '{fixture.KeycloakUser.Id}' (event '{failedId}'); attempting recovery",
+        Times.Once());
+      fixture.VerifyLog(LogLevel.Information, "Login: Recovered the missing Yoma user", Times.Never());
 
       fixture.ConfigureCreate();
       await fixture.Deliver("LOGIN");
       var user = Assert.Single(fixture.Users);
       fixture.Wallet.Verify(o => o.ScheduleWalletCreation(user.Id), Times.Once);
       Assert.Equal(user.Id, Assert.Single(fixture.History).UserId);
+      fixture.VerifyLog(LogLevel.Warning, "Login: Possible lost REGISTER event", Times.Exactly(2));
+      fixture.VerifyLog(LogLevel.Information, "Login: Recovered the missing Yoma user", Times.Once());
+
       // Cleanup is intentionally attempted before persistence, including the failed attempt.
       fixture.Identity.Verify(o => o.EnsureVerifyEmailActionRemovedIfNoEmail(fixture.KeycloakUser.Id), Times.Exactly(2));
     }
@@ -627,6 +672,7 @@ namespace Yoma.Core.Test.Core
       public readonly Guid GenderId = Guid.NewGuid();
       public readonly List<User> Users = [];
       public readonly List<UserLoginHistory> History = [];
+      public readonly Mock<ILogger<WebhookController>> Logger = new();
       public readonly Mock<IIdentityProviderClient> Identity = new();
       public readonly Mock<IUserService> UserService = new();
       public readonly Mock<IRepositoryValueContainsWithNavigation<User>> Repository = new();
@@ -662,6 +708,8 @@ namespace Yoma.Core.Test.Core
 
       public Fixture()
       {
+        Logger.Setup(o => o.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
+
         Identity.Setup(o => o.AuthenticateWebhook(It.IsAny<HttpContext>())).Returns(true);
         Identity.Setup(o => o.GetUserById(It.IsAny<Guid>())).ReturnsAsync(() => KeycloakUser);
         Identity.Setup(o => o.EnsureRoles(It.IsAny<Guid>(), It.IsAny<List<string>>())).Returns(Task.CompletedTask);
@@ -847,6 +895,17 @@ namespace Yoma.Core.Test.Core
         UserService.Verify(o => o.YoIDOnboard(It.IsAny<string>()), Times.Never);
       }
 
+      public void VerifyLog(LogLevel level, string message, Times times)
+      {
+        Logger.Verify(o => o.Log(
+          level,
+          It.IsAny<EventId>(),
+          It.Is<It.IsAnyType>((state, _) => state != null && state.ToString() != null
+            && state.ToString()!.StartsWith(message, StringComparison.Ordinal)),
+          It.IsAny<Exception?>(),
+          It.IsAny<Func<It.IsAnyType, Exception?, string>>()), times);
+      }
+
       public async Task Deliver(string type, string? eventId = null, string? userId = null,
         int expectedStatus = StatusCodes.Status200OK, string? identityProvider = null)
       {
@@ -856,7 +915,7 @@ namespace Yoma.Core.Test.Core
         var factory = new Mock<IIdentityProviderClientFactory>();
         factory.Setup(o => o.CreateClient()).Returns(Identity.Object);
         var controller = new WebhookController(
-          NullLogger<WebhookController>.Instance,
+          Logger.Object,
           Options.Create(new AppSettings { DistributedLockKeycloakEventDurationInSeconds = 60 }),
           Idempotency.Object,
           Lock.Object,

@@ -385,6 +385,11 @@ namespace Yoma.Core.Api.Controllers
             var recoveringUser = userRequest == null;
             if (userRequest == null)
             {
+              if (_logger.IsEnabled(LogLevel.Warning))
+                _logger.LogWarning(
+                  "Login: Possible lost REGISTER event; no Yoma user found for Keycloak user '{externalId}' (event '{eventId}'); attempting recovery",
+                  kcUser.Id, payload.Id.SanitizeLogValue());
+
               // Initialise the missing user's request using the REGISTER mapping and default role.
               // The shared LOGIN upsert below creates the entity; existing users follow the same path.
               userRequest = new UserRequest();

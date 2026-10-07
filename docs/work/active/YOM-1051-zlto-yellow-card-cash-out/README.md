@@ -20,7 +20,12 @@ change to payout processing or an SRE configuration task.
 - [x] Final concurrency pass: both forced REGISTER/LOGIN lock orders, 60 repeated race checks,
   992 live webhook requests in 41 stress batches, including two API instances sharing Redis/SQL.
 - [x] Adrian's code review and acceptance of the final test evidence and first-session caveat.
-- [ ] Commit and normal release validation.
+- [x] Original implementation committed and pushed by Adrian on 2026-10-06.
+- [x] Robbie's 2026-10-07 logging follow-up: Warning before missing-user LOGIN recovery, with
+  searchable `Possible lost REGISTER event` wording and Keycloak user/event IDs; retain the
+  successful-recovery Info log. All 49 webhook cases and the complete 263-case suite pass;
+  solution build has zero warnings/errors. No login-flow change.
+- [ ] Adrian reviews and commits the warning follow-up; normal release validation remains pending.
 
 No endpoint, payload, migration, financial webhook, authentication configuration or web change.
 Recovery ensures only the normal `User` role. A token issued before that role is restored can
