@@ -342,10 +342,10 @@ namespace Yoma.Core.Api.Controllers
             },
             exitCondition: result =>
             {
-              // only attempt lookup once during registration.
-              // retries are reserved for UpdateProfile and Login to handle race conditions
-              // where those webhooks may fire before the registration transaction completes
-              return type == IdentityActionType.Register || result != null;
+              // Registration and login can create a missing user while holding this per-user lock.
+              // Login must not wait for a registration webhook that needs the same lock to proceed.
+              // Preserve the existing update-profile retry for users provisioned outside this webhook.
+              return type == IdentityActionType.Register || type == IdentityActionType.Login || result != null;
             },
             timeout: TimeSpan.FromSeconds(10),
             retryOnException: false,
@@ -371,78 +371,10 @@ namespace Yoma.Core.Api.Controllers
               userRequest = new UserRequest();
             }
 
-            userRequest.Username = kcUser.Username.Trim();
-            userRequest.Email = kcUser.Email?.Trim().ToLower();
-            userRequest.FirstName = kcUser.FirstName?.Trim().TitleCase();
-            userRequest.Surname = kcUser.LastName?.Trim().TitleCase();
-            userRequest.EmailConfirmed = kcUser.EmailVerified;
-            userRequest.PhoneNumber = kcUser.PhoneNumber?.Trim();
-            userRequest.PhoneNumberConfirmed = kcUser.PhoneNumberVerified;
-
-            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("{type}: Updating user with username '{username}' - EmailConfirmed {emailConfirmed}", type, userRequest.Username, userRequest.EmailConfirmed);
-            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("{type}: Updating user with username '{username}' - PhoneNumberConfirmed {phoneNumberConfirmed}", type, userRequest.Username, userRequest.PhoneNumberConfirmed);
-
-            if (!string.IsNullOrEmpty(kcUser.Country))
-            {
-              var country = _countryService.GetByNameOrNull(kcUser.Country);
-
-              if (country == null)
-              {
-                if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("Failed to parse Keycloak '{customAttribute}' with value '{country}'", CustomAttributes.Country, kcUser.Country);
-              }
-              else
-                userRequest.CountryId = country.Id;
-            }
-
-            if (!string.IsNullOrEmpty(kcUser.Education))
-            {
-              var education = _educationService.GetByNameOrNull(kcUser.Education);
-
-              if (education == null)
-              {
-                if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("Failed to parse Keycloak '{customAttributes}' with value '{education}'", CustomAttributes.Education, kcUser.Education);
-              }
-              else
-                userRequest.EducationId = education.Id;
-            }
-
-            if (!string.IsNullOrEmpty(kcUser.Gender))
-            {
-              var gender = _genderService.GetByNameOrNull(kcUser.Gender);
-
-              if (gender == null)
-              {
-                if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("Failed to parse Keycloak '{customAttribute}' with value '{gender}'", CustomAttributes.Gender, kcUser.Gender);
-              }
-              else
-                userRequest.GenderId = gender.Id;
-            }
-
-            if (!string.IsNullOrEmpty(kcUser.DateOfBirth))
-            {
-              if (!DateTime.TryParse(kcUser.DateOfBirth, out var dateOfBirth))
-              {
-                if (_logger.IsEnabled(LogLevel.Error))
-                  _logger.LogError("Failed to parse Keycloak '{customAttributes}' with value '{dateOfBirth}'", CustomAttributes.DateOfBirth, kcUser.DateOfBirth);
-              }
-              else
-              {
-                userRequest.DateOfBirth = dateOfBirth;
-              }
-            }
+            PopulateUserRequestFromKeycloak(userRequest, kcUser, type);
 
             if (type == IdentityActionType.Register)
-            {
-              try
-              {
-                //add newly registered user to the default "User" role
-                await _identityProviderClient.EnsureRoles(kcUser.Id, [Domain.Core.Constants.Role_User]);
-              }
-              catch (Exception ex)
-              {
-                if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "{type} - Failed to assign the default 'User' role to the newly registered user with username '{username}': {errorMessage};", type, userRequest.Username, ex.Message);
-              }
-            }
+              await EnsureDefaultUserRole(kcUser, type);
 
             userRequest.ExternalId = kcUser.Id;
             await _userService.Upsert(userRequest, false, true);
@@ -450,12 +382,22 @@ namespace Yoma.Core.Api.Controllers
             break;
 
           case IdentityActionType.Login:
+            var recoveringUser = userRequest == null;
             if (userRequest == null)
             {
-              if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("{type}: Failed to retrieve the Yoma user with username '{username}'", type, kcUser.Username);
-              return;
+              if (_logger.IsEnabled(LogLevel.Warning))
+                _logger.LogWarning(
+                  "Login: Possible lost REGISTER event; no Yoma user found for Keycloak user '{externalId}' (event '{eventId}'); attempting recovery",
+                  kcUser.Id, payload.Id.SanitizeLogValue());
+
+              // Initialise the missing user's request using the REGISTER mapping and default role.
+              // The shared LOGIN upsert below creates the entity; existing users follow the same path.
+              userRequest = new UserRequest();
+              PopulateUserRequestFromKeycloak(userRequest, kcUser, type);
+              await EnsureDefaultUserRole(kcUser, type);
             }
 
+            // Normal LOGIN processing for both existing and recovered users.
             // after email verification, the login event is raised.
             // an admin may have reverted an email update request, so ensure the email matches Keycloak — the source of truth.
             // the phone number is synced for eventual consistency and to handle changes made outside of the standard flow.
@@ -481,6 +423,9 @@ namespace Yoma.Core.Api.Controllers
             userRequest.ExternalId = kcUser.Id;
             var user = await _userService.Upsert(userRequest, false, true);
 
+            if (recoveringUser && _logger.IsEnabled(LogLevel.Information))
+              _logger.LogInformation("Login: Recovered the missing Yoma user '{userId}' from Keycloak user '{externalId}'", user.Id, kcUser.Id);
+
             await ScheduleWalletCreation(user);
             await TrackLogin(payload, user);
 
@@ -491,6 +436,91 @@ namespace Yoma.Core.Api.Controllers
             return;
         }
       });
+    }
+
+    /// <summary>
+    /// Maps the current Keycloak user onto the UserRequest persisted through UserService.Upsert.
+    /// Shared by REGISTER, UPDATE_PROFILE and missing-user LOGIN initialisation; this is not
+    /// the augmented UserProfile model or the dedicated UserProfileService update flow.
+    /// Existing-user logins retain their narrower contact/verification synchronization.
+    /// </summary>
+    private void PopulateUserRequestFromKeycloak(UserRequest userRequest, Domain.IdentityProvider.Models.User kcUser, IdentityActionType type)
+    {
+      userRequest.Username = kcUser.Username.Trim();
+      userRequest.Email = kcUser.Email?.Trim().ToLower();
+      userRequest.FirstName = kcUser.FirstName?.Trim().TitleCase();
+      userRequest.Surname = kcUser.LastName?.Trim().TitleCase();
+      userRequest.EmailConfirmed = kcUser.EmailVerified;
+      userRequest.PhoneNumber = kcUser.PhoneNumber?.Trim();
+      userRequest.PhoneNumberConfirmed = kcUser.PhoneNumberVerified;
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("{type}: Updating user with username '{username}' - EmailConfirmed {emailConfirmed}", type, userRequest.Username, userRequest.EmailConfirmed);
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("{type}: Updating user with username '{username}' - PhoneNumberConfirmed {phoneNumberConfirmed}", type, userRequest.Username, userRequest.PhoneNumberConfirmed);
+
+      if (!string.IsNullOrEmpty(kcUser.Country))
+      {
+        var country = _countryService.GetByNameOrNull(kcUser.Country);
+
+        if (country == null)
+        {
+          if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("Failed to parse Keycloak '{customAttribute}' with value '{country}'", CustomAttributes.Country, kcUser.Country);
+        }
+        else
+          userRequest.CountryId = country.Id;
+      }
+
+      if (!string.IsNullOrEmpty(kcUser.Education))
+      {
+        var education = _educationService.GetByNameOrNull(kcUser.Education);
+
+        if (education == null)
+        {
+          if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("Failed to parse Keycloak '{customAttributes}' with value '{education}'", CustomAttributes.Education, kcUser.Education);
+        }
+        else
+          userRequest.EducationId = education.Id;
+      }
+
+      if (!string.IsNullOrEmpty(kcUser.Gender))
+      {
+        var gender = _genderService.GetByNameOrNull(kcUser.Gender);
+
+        if (gender == null)
+        {
+          if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("Failed to parse Keycloak '{customAttribute}' with value '{gender}'", CustomAttributes.Gender, kcUser.Gender);
+        }
+        else
+          userRequest.GenderId = gender.Id;
+      }
+
+      if (!string.IsNullOrEmpty(kcUser.DateOfBirth))
+      {
+        if (!DateTime.TryParse(kcUser.DateOfBirth, out var dateOfBirth))
+        {
+          if (_logger.IsEnabled(LogLevel.Error))
+            _logger.LogError("Failed to parse Keycloak '{customAttributes}' with value '{dateOfBirth}'", CustomAttributes.DateOfBirth, kcUser.DateOfBirth);
+        }
+        else
+        {
+          userRequest.DateOfBirth = dateOfBirth;
+        }
+      }
+    }
+
+    /// <summary>
+    /// Ensures the normal user role for registration or a missing-user login recovery.
+    /// Role-assignment failures remain non-fatal and logged, matching the registration flow.
+    /// </summary>
+    private async Task EnsureDefaultUserRole(Domain.IdentityProvider.Models.User kcUser, IdentityActionType type)
+    {
+      try
+      {
+        await _identityProviderClient.EnsureRoles(kcUser.Id, [Domain.Core.Constants.Role_User]);
+      }
+      catch (Exception ex)
+      {
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "{type} - Failed to assign the default 'User' role to the newly registered user with username '{username}': {errorMessage};", type, kcUser.Username.Trim(), ex.Message);
+      }
     }
 
     private async Task TrackLogin(KeycloakWebhookEvent payload, User user)

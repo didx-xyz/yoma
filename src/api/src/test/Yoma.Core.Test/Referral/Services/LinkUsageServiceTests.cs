@@ -168,7 +168,7 @@ namespace Yoma.Core.Test.Referral.Services
 
       // Act & Assert
       var ex = await Assert.ThrowsAsync<ValidationException>(() => sut.ClaimAsReferee(linkId));
-      Assert.Contains("cannot claim your own referral link", ex.Message);
+      Assert.Equal("You cannot use your own referral link", ex.Message);
     }
 
     [Trait("Category", "Referral")]
@@ -265,7 +265,7 @@ namespace Yoma.Core.Test.Referral.Services
 
       // Act & Assert
       var ex = await Assert.ThrowsAsync<ValidationException>(() => sut.ClaimAsReferee(linkId));
-      Assert.Contains("pending", ex.Message, StringComparison.OrdinalIgnoreCase);
+      Assert.Equal("You have already claimed this referral link", ex.Message);
     }
 
     [Trait("Category", "Referral")]
@@ -365,7 +365,7 @@ namespace Yoma.Core.Test.Referral.Services
 
       // Act & Assert
       var ex = await Assert.ThrowsAsync<ValidationException>(() => sut.ClaimAsReferee(linkId));
-      Assert.Contains("status is 'Inactive'", ex.Message);
+      Assert.Equal("This referral programme is no longer available", ex.Message);
     }
 
     [Trait("Category", "Referral")]
@@ -412,7 +412,7 @@ namespace Yoma.Core.Test.Referral.Services
 
       // Act & Assert
       var ex = await Assert.ThrowsAsync<ValidationException>(() => sut.ClaimAsReferee(linkId));
-      Assert.Contains("completion limit", ex.Message, StringComparison.OrdinalIgnoreCase);
+      Assert.Equal("This referral programme has reached its limit", ex.Message);
     }
 
     [Trait("Category", "Referral")]
@@ -456,7 +456,7 @@ namespace Yoma.Core.Test.Referral.Services
 
       // Act & Assert
       var ex = await Assert.ThrowsAsync<ValidationException>(() => sut.ClaimAsReferee(linkId));
-      Assert.Contains("status is 'Cancelled'", ex.Message);
+      Assert.Equal("This referral link is no longer available", ex.Message);
     }
 
     [Trait("Category", "Referral")]
@@ -504,7 +504,7 @@ namespace Yoma.Core.Test.Referral.Services
 
       // Act & Assert
       var ex = await Assert.ThrowsAsync<ValidationException>(() => sut.ClaimAsReferee(linkId));
-      Assert.Contains("completion limit", ex.Message, StringComparison.OrdinalIgnoreCase);
+      Assert.Equal("This referral programme has reached its limit", ex.Message);
     }
 
     #endregion
