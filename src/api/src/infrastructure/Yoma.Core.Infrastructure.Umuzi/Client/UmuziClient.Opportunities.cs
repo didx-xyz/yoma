@@ -4,7 +4,6 @@ using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Services;
 using Yoma.Core.Domain.PartnerSync.Models;
-using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Helpers;
 using Yoma.Core.Infrastructure.Umuzi.Models;
 
@@ -72,7 +71,7 @@ namespace Yoma.Core.Infrastructure.Umuzi.Client
         ZltoReward = null,
         ZltoRewardPool = null,
         CredentialIssuanceEnabled = true,
-        SSISchemaName = SSISSchemaHelper.ToFullName(SchemaType.Opportunity, "Default"),
+        SSISchemaName = SSISSchemaHelper.ToDefaultFullName(type),
         Skills = skills?.Select(o => o.Id).ToList(),
         ShareWithPartners = false,
         Hidden = false,

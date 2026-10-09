@@ -230,7 +230,9 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
         Group = definition.Group,
         SubGroup = definition.SubGroup,
         SortOrder = definition.SortOrder,
-        Required = definition.IsRequired,
+        // IsRequired governs manual capture, not issuance. Imports, partner outcomes and action links
+        // legitimately omit these values; JWS omits them and ACR supplies its existing placeholder.
+        Required = false,
         IsActive = definition.IsActive,
         IsSystem = definition.IsSystem,
         IsSchemaMapped = definition.IsSchemaMapped

@@ -17,13 +17,41 @@ namespace Yoma.Core.Test.Referral.Builders
     #endregion
 
     #region Link Usage Status
+    public static readonly Guid UsageStatusInitiatedId = Guid.Parse("b0000000-0000-0000-0000-000000000004");
     public static readonly Guid UsageStatusPendingId = Guid.Parse("b0000000-0000-0000-0000-000000000001");
     public static readonly Guid UsageStatusCompletedId = Guid.Parse("b0000000-0000-0000-0000-000000000002");
     public static readonly Guid UsageStatusExpiredId = Guid.Parse("b0000000-0000-0000-0000-000000000003");
+    public static readonly Guid UsageStatusAbandonedId = Guid.Parse("b0000000-0000-0000-0000-000000000005");
 
-    public static LinkUsageStatus UsageStatusPending => new() { Id = UsageStatusPendingId, Name = "Pending" };
-    public static LinkUsageStatus UsageStatusCompleted => new() { Id = UsageStatusCompletedId, Name = "Completed" };
-    public static LinkUsageStatus UsageStatusExpired => new() { Id = UsageStatusExpiredId, Name = "Expired" };
+    public static LinkUsageStatus UsageStatusInitiated => new()
+    {
+      Id = UsageStatusInitiatedId,
+      Name = Domain.Referral.ReferralLinkUsageStatus.Initiated.ToString()
+    };
+
+    public static LinkUsageStatus UsageStatusPending => new()
+    {
+      Id = UsageStatusPendingId,
+      Name = Domain.Referral.ReferralLinkUsageStatus.Pending.ToString()
+    };
+
+    public static LinkUsageStatus UsageStatusCompleted => new()
+    {
+      Id = UsageStatusCompletedId,
+      Name = Domain.Referral.ReferralLinkUsageStatus.Completed.ToString()
+    };
+
+    public static LinkUsageStatus UsageStatusExpired => new()
+    {
+      Id = UsageStatusExpiredId,
+      Name = Domain.Referral.ReferralLinkUsageStatus.Expired.ToString()
+    };
+
+    public static LinkUsageStatus UsageStatusAbandoned => new()
+    {
+      Id = UsageStatusAbandonedId,
+      Name = Domain.Referral.ReferralLinkUsageStatus.Abandoned.ToString()
+    };
     #endregion
 
     #region Program Status

@@ -207,7 +207,26 @@ namespace Yoma.Core.Test.Core
       Assert.Contains(migration.UpOperations.OfType<CreateIndexOperation>(), item =>
         item.Table == "UserPreferenceCategories" && item.IsUnique &&
         item.Columns.SequenceEqual(["UserId", "CategoryId"]));
-      Assert.Equal(12, migration.UpOperations.OfType<UpdateDataOperation>().Count());
+      var updates = migration.UpOperations.OfType<UpdateDataOperation>().ToList();
+      Assert.Equal(12, updates.Count(item => item.Schema != "SSI"));
+
+      var systemType = Assert.Single(updates, item =>
+        item.Schema == "SSI" && item.Table == "SchemaEntityProperty" && item.Columns.Contains("SystemType"));
+      Assert.Equal("Id", Assert.Single(systemType.KeyColumns));
+      Assert.Equal(Guid.Parse("755B1F54-1365-4D2F-AF29-8AEC57CC7B4C"),
+        Guid.Parse(systemType.KeyValues[0, 0]!.ToString()!));
+      Assert.Equal("SystemType", Assert.Single(systemType.Columns));
+      Assert.Equal(Domain.SSI.SchemaEntityPropertySystemType.OpportunityType.ToString(), systemType.Values[0, 0]);
+
+      var legacyDifficulty = Assert.Single(updates, item =>
+        item.Schema == "SSI" && item.Table == "SchemaEntityProperty" && item.Columns.Contains("Required"));
+      Assert.Equal("Id", Assert.Single(legacyDifficulty.KeyColumns));
+      Assert.Equal(Guid.Parse("FF423D0C-2E91-48A6-9245-28EEF6E96B01"),
+        Guid.Parse(legacyDifficulty.KeyValues[0, 0]!.ToString()!));
+      Assert.Equal("Required", Assert.Single(legacyDifficulty.Columns));
+      Assert.Equal(false, legacyDifficulty.Values[0, 0]);
+      Assert.Equal(2, updates.Count(item => item.Schema == "SSI"));
+
       var engagementRenames = migration.UpOperations.OfType<UpdateDataOperation>()
         .Where(item => item.Table == "EngagementType" && item.Schema == "Lookup").ToList();
       Assert.Equal(3, engagementRenames.Count);
@@ -558,7 +577,8 @@ namespace Yoma.Core.Test.Core
           "CommitmentIntervalId" uuid NULL, "CommitmentIntervalCount" smallint NULL,
           "StatusId" uuid NULL, "Keywords" text NULL,
           "DateStart" timestamptz NULL, "DateEnd" timestamptz NULL,
-          "CredentialIssuanceEnabled" boolean NULL, "Featured" boolean NULL,
+          "CredentialIssuanceEnabled" boolean NULL, "SSISchemaName" varchar(255) NULL,
+          "Featured" boolean NULL,
           "EngagementTypeId" uuid NULL, "ShareWithPartners" boolean NULL, "Hidden" boolean NULL,
           "DateCreated" timestamptz NULL, "CreatedByUserId" uuid NULL,
           "DateModified" timestamptz NULL, "ModifiedByUserId" uuid NULL);
@@ -602,6 +622,26 @@ namespace Yoma.Core.Test.Core
         ALTER TABLE "Core"."CustomFieldDefinition"
           ADD COLUMN "IsSchemaMapped" boolean NOT NULL DEFAULT false;
         """);
+
+      // SSI metadata is now part of CF configuration too. Build its existing catalogue from the
+      // real migrations so the fixture tests the Type update and four additions against real rows.
+      var initialOperations = new ApplicationDb_Initial().UpOperations;
+      var schemaCatalogue = initialOperations.OfType<CreateTableOperation>()
+        .Where(operation => operation.Schema == "SSI"
+          && operation.Name is "SchemaEntity" or "SchemaEntityProperty")
+        .Cast<MigrationOperation>()
+        .Concat(initialOperations.OfType<InsertDataOperation>()
+          .Where(operation => operation.Schema == "SSI"
+            && operation.Table is "SchemaEntity" or "SchemaEntityProperty"))
+        .Concat(new ApplicationDb_Custom_Fields_Treasury_Payout_SSI().UpOperations
+          .OfType<AddColumnOperation>()
+          .Where(operation => operation.Schema == "SSI" && operation.Table == "SchemaEntityProperty"))
+        .ToList();
+      await Execute(connection, transaction, "CREATE SCHEMA \"SSI\";");
+      var catalogueCommands = context.GetService<IMigrationsSqlGenerator>()
+        .Generate(schemaCatalogue, context.GetService<IDesignTimeModel>().Model);
+      foreach (var command in catalogueCommands)
+        await Execute(connection, transaction, command.CommandText);
 
       foreach (var (id, name) in LegacyCategories)
       {

@@ -402,17 +402,19 @@ BEGIN
     END LOOP;
 END $$ LANGUAGE plpgsql;
 
--- SSI schema definitions
-WITH CTE AS (
-    SELECT "SSISchemaName", "Id"
-    FROM "Opportunity"."Opportunity"
-    WHERE "CredentialIssuanceEnabled" = true
-)
--- Update statement
+-- Local/Dev only: assign canonical seeded schemas before creating issuance schedules below.
+-- Learning/Other share the generic claim set; all other current types have scoped defaults.
+-- Keep this list aligned with SSISSchemaHelper.ToDefaultFullName; unknown types fail the seed.
 UPDATE "Opportunity"."Opportunity" AS O
-SET "SSISchemaName" = 'Opportunity|Default'
-FROM CTE
-WHERE O."Id" = CTE."Id";
+SET "SSISchemaName" = CASE
+    WHEN T."Name" IN ('Other', 'Learning') THEN 'Opportunity|Default'
+    WHEN T."Name" IN ('Event', 'Job', 'ImpactAction', 'Entrepreneurship')
+        THEN 'Opportunity|' || T."Name" || '|Default'
+    ELSE 'ERROR'
+END
+FROM "Opportunity"."OpportunityType" T
+WHERE O."TypeId" = T."Id"
+    AND O."CredentialIssuanceEnabled" = true;
 
 -- Check for unsupported SSISchemaName
 DO $$
@@ -539,6 +541,8 @@ WHERE L."OpportunityId" = F."Id" AND MOD(F."Number", 6) = 0;
 DELETE FROM "Opportunity"."OpportunitySkills" S USING "SearchFixtures" F
 WHERE S."OpportunityId" = F."Id" AND MOD(F."Number", 6) = 0;
 
+-- Match the API's UTC date boundaries. Pending verification seeding removes the
+-- start time, so a fixture start later than midnight would fail normal validation.
 UPDATE "Opportunity"."Opportunity" O
 SET "Title" = 'Search fixture ' || LPAD(F."Number"::TEXT, 2, '0') || ' - ' || T."Name" ||
         CASE WHEN MOD(F."Number", 3) = 0 OR F."Number" = 11 THEN ' (incomplete partner-like)' ELSE '' END,
@@ -547,12 +551,22 @@ SET "Title" = 'Search fixture ' || LPAD(F."Number"::TEXT, 2, '0') || ' - ' || T.
         WHERE "StatusId" = (SELECT "Id" FROM "Entity"."OrganizationStatus" WHERE "Name" = 'Active')
         ORDER BY "Id" LIMIT 1),
     "StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" = 'Active'),
-    "DateStart" = CASE WHEN F."Number" = 8 THEN CURRENT_TIMESTAMP + INTERVAL '30 days'
-        ELSE CURRENT_TIMESTAMP - INTERVAL '2 days' END,
-    "DateEnd" = CASE WHEN F."Number" = 7 THEN CURRENT_TIMESTAMP - INTERVAL '1 hour'
-        WHEN F."Number" = 8 THEN CURRENT_TIMESTAMP + INTERVAL '90 days'
-        WHEN F."Number" = 9 THEN NULL
-        ELSE CURRENT_TIMESTAMP + INTERVAL '30 days' + F."Number" * INTERVAL '1 hour' END,
+    "DateStart" = date_trunc('day',
+        CASE
+            WHEN F."Number" = 8 THEN CURRENT_TIMESTAMP + INTERVAL '30 days'
+            ELSE CURRENT_TIMESTAMP - INTERVAL '2 days'
+        END AT TIME ZONE 'UTC'
+    ) AT TIME ZONE 'UTC',
+    "DateEnd" = (
+        date_trunc('day',
+            CASE
+                WHEN F."Number" = 7 THEN CURRENT_TIMESTAMP - INTERVAL '1 day'
+                WHEN F."Number" = 8 THEN CURRENT_TIMESTAMP + INTERVAL '90 days'
+                WHEN F."Number" = 9 THEN NULL
+                ELSE CURRENT_TIMESTAMP + INTERVAL '30 days' + F."Number" * INTERVAL '1 hour'
+            END AT TIME ZONE 'UTC'
+        ) + INTERVAL '1 day' - INTERVAL '1 millisecond'
+    ) AT TIME ZONE 'UTC',
     "EngagementTypeId" = CASE WHEN MOD(F."Number", 3) = 0 THEN NULL
         ELSE (SELECT "Id" FROM "Lookup"."EngagementType"
             WHERE "Name" = CASE WHEN MOD(F."Number", 2) = 0 THEN 'Remote' ELSE 'OnSite' END) END,

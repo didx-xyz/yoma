@@ -29,6 +29,32 @@ definitions to the BA-approved set (YOM-1264) without a code change.
 
 ## Child Features
 
+**Final credential phase, stage 1 (2026-10-07):** following the assessment, Adrian authorized
+uncommitted schema-configuration work for review. The [YOM-1277 implementation and attribute
+map](./YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/feature.md#stage-1--schema-configuration-implemented-for-review)
+records the revised generic Default, four scoped Defaults, retained YoID ACR attributes, core
+projections and optional issuance policy. The 2026-10-08 review reserves requiredness for six
+essential core claims; other core/CF values use JWS omission or ACR placeholders when absent.
+The retained legacy Difficulty mapping is optional now that capture is CF. Manual capture
+requirements are unchanged. Wallet list/detail expose generic nullable `typeContext` alongside
+`schemaType` for card styling; context is normalized only from the signed system claim, never
+inferred from the schema context/name. YoID context remains null. Schema
+assignment is now implemented in **stage 2 (2026-10-08)**: CSV/Alison/IXO/Umuzi use shared
+canonical default naming while preserving custom selections; manual selection stays explicit.
+Existing credential-enabled generic Defaults move by type in the undeployed CF migration;
+the existing startup job seeds provider schemas afterwards. No repository extension or startup
+reassignment loop is added. Queued names and issued credentials are untouched; queue processing
+still resolves the latest version of its stored name, not a pinned old version. Local/Dev seeds
+assign canonical names before scheduling. **Stage 3 (2026-10-09)** pins the provider schema ID for
+each attempt and records the actual historical version when recovering provider success after a
+local failure. No DB column or scheduling/retry policy changes. The 2026-10-09 authenticated Local
+provider-backed pass issued all six Opportunity types and verified wallet list/detail with 377
+independent assertions across 46 returned attributes. All 546 selected automated cases also passed.
+YoID live issuance failed and its cause is unconfirmed; history/retry fault-injection and Jason's
+visual review are separate checks. See the [consolidated credential handoff](./YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/handoffs/2026-10-07-a.md).
+The didx:me adapter/cutover follows ACA-Py validation. No production-provider write or replay
+was performed; all stage-1/2/3 changes remain uncommitted pending Adrian's commit review.
+
 **Current search/preference contract (2026-10-01):** the [consolidated API handoff](./handoffs/2026-10-01-c.md) records the agreed decisions for asks 1–24, exact request shapes/defaults and test evidence. It supersedes the historical search/preference-cardinality notes below. The API implementation was committed as `77646a74`; Web has moved to the same breaking shapes. Deploy API and Web together. Web continues to own preference composition and skips.
 
 **Web moved onto this contract on 2026-10-03** (on top of `77646a74`): every search caller, discovery's composition with provenance, and the visible changes. See the [YOM-1262 handoff](./YOM-1262-ui-apply-user-presets-to-opportunity-discovery/handoffs/2026-10-03-a.md). The branch now works only against an API on `77646a74` or later. For the BA and testers, the [testing guide](./testing/2026-10-03-discovery-testing-guide.md) explains the search, preferences, filters, details and admin changes in plain words. It has 68 tests and lists the decisions awaiting BA confirmation (TBC).
@@ -42,7 +68,7 @@ The shared Engagement Type lookup now has enum-compatible keys `Remote`, `OnSite
 
 The User preference formerly proposed as `PaidWorkPreference` is nullable `UserPreferences.Incentivized` and applies to every Opportunity type. This means a preference for any incentive, not only wages or cash. Opportunity now uses `Incentivized`, with Reward Type describing the incentive. Web supplies the effective criterion; an inclusive root incentive criterion ranks explicit matches before unknowns. Preferences are a one-to-one User-owned table, with category, accessibility, engagement and language selections in preference-owned link tables; skills remain in UserSkills. The self-service API uses `categories` and `languages` under UserPreferences, not User or UserProfile fields.
 
-Entrepreneurship is now a Yoma Opportunity type, based on Mpho's later confirmation rather than the credential deck's earlier partner-direct draft. Its programme metadata and individual venture outcomes use separate Opportunity/MyOpportunity CF definitions. Core incentive and commitment are optional for this type. It selects `Opportunity|Default` until the type-specific credential/schema phase; see the [API handoff](YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/handoffs/2026-09-29-b.md) before Web integration or credential mapping. Web integrated it on 2026-10-01 ([handoff](handoffs/2026-10-01-b.md)): the editor mirrors the optional effort and the unanswered incentive, the programme Other ↔ description rule is in `customFieldRules.ts`, and the "Start a business" goal now maps to this type.
+Entrepreneurship is now a Yoma Opportunity type, based on Mpho's later confirmation rather than the credential deck's earlier partner-direct draft. Its programme metadata and individual venture outcomes use separate Opportunity/MyOpportunity CF definitions. Core incentive and commitment are optional for this type. The credential phase now configures and assigns `Opportunity|Entrepreneurship|Default` for managed defaults; see the [credential plan](YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/feature.md#stage-2--canonical-default-assignment-implemented-for-review-2026-10-08) and the [capture handoff](YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/handoffs/2026-09-29-b.md). Web integrated it on 2026-10-01 ([handoff](handoffs/2026-10-01-b.md)): the editor mirrors the optional effort and the unanswered incentive, the programme Other ↔ description rule is in `customFieldRules.ts`, and the "Start a business" goal now maps to this type.
 
 | Folder                                                                                                                                                           | Ticket                                             | Area | Status                                                                                |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ---- | ------------------------------------------------------------------------------------- |
@@ -55,7 +81,7 @@ Entrepreneurship is now a Yoma Opportunity type, based on Mpho's later confirmat
 | [`YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/`](./YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/feature.md)           | [YOM-1277](https://linear.app/didx/issue/YOM-1277) | both | in-progress                                                                           |
 | [`YOM-1278-api-admin-credential-schema-management-by-type/`](./YOM-1278-api-admin-credential-schema-management-by-type/feature.md)                               | [YOM-1278](https://linear.app/didx/issue/YOM-1278) | api  | in-progress                                                                           |
 | [`YOM-1279-api-opportunity-management-credential-schema-selection/`](./YOM-1279-api-opportunity-management-credential-schema-selection/feature.md)               | [YOM-1279](https://linear.app/didx/issue/YOM-1279) | api  | review                                                                                |
-| [`YOM-1280-api-opportunity-credential-issuance-with-custom-fields/`](./YOM-1280-api-opportunity-credential-issuance-with-custom-fields/feature.md)               | [YOM-1280](https://linear.app/didx/issue/YOM-1280) | api  | in-progress — issuance and core wallet display verified; custom-field runtime pending |
+| [`YOM-1280-api-opportunity-credential-issuance-with-custom-fields/`](./YOM-1280-api-opportunity-credential-issuance-with-custom-fields/feature.md)               | [YOM-1280](https://linear.app/didx/issue/YOM-1280) | api  | review — six-type Opportunity/CF smoke passed; live history/retry follow-up remains |
 | [`YOM-1281-ui-admin-credential-schema-management-by-type/`](./YOM-1281-ui-admin-credential-schema-management-by-type/feature.md)                                 | [YOM-1281](https://linear.app/didx/issue/YOM-1281) | web  | review — pending live API create/edit                                                 |
 | [`YOM-1282-ui-opportunity-credential-schema-selection/`](./YOM-1282-ui-opportunity-credential-schema-selection/feature.md)                                       | [YOM-1282](https://linear.app/didx/issue/YOM-1282) | web  | review — pending live API create/edit                                                 |
 | [`YOM-1283-ui-youth-opportunity-credential-display/`](./YOM-1283-ui-youth-opportunity-credential-display/feature.md)                                             | [YOM-1283](https://linear.app/didx/issue/YOM-1283) | web  | review — tested against live API                                                      |

@@ -52,8 +52,9 @@ namespace Yoma.Core.Domain.SSI.Interfaces.Provider
     Task<string> EnsureTenant(TenantRequest request);
 
     /// <summary>
-    /// Issue credential for the specified request
+    /// Issues against the request's exact schema identity, or reuses a credential already issued
+    /// for its client referent. Returns the credential's actual identity and schema, including on retry.
     /// </summary>
-    Task<string?> IssueCredential(CredentialIssuanceRequest request);
+    Task<Credential> IssueCredential(CredentialIssuanceRequest request);
   }
 }

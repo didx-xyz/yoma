@@ -19,7 +19,6 @@ using Yoma.Core.Domain.PartnerSync;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Provider;
 using Yoma.Core.Domain.PartnerSync.Models;
 using Yoma.Core.Domain.PartnerSync.Validators;
-using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Helpers;
 using Yoma.Core.Infrastructure.Alison.Extensions;
 using Yoma.Core.Infrastructure.Alison.Interfaces;
@@ -522,9 +521,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
           ZltoRewardPool = null,
 
           CredentialIssuanceEnabled = true,
-          // TODO [YOM-1264/YOM-1280]: Review and assign the approved generic or type-specific
-          // credential schema once the final custom fields and schema flavours are agreed.
-          SSISchemaName = SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default"),
+          SSISchemaName = SSISSchemaHelper.ToDefaultFullName(Domain.Opportunity.Type.Learning),
 
           CommitmentIntervalId = interval.Id,
           CommitmentIntervalCount = count,

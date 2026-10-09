@@ -1,4 +1,5 @@
 using Moq;
+using Yoma.Core.Domain.Referral;
 using Yoma.Core.Domain.Referral.Interfaces.Lookups;
 using Yoma.Core.Test.Referral.Builders;
 
@@ -19,9 +20,27 @@ namespace Yoma.Core.Test.Referral.Fixtures
     public static Mock<ILinkUsageStatusService> CreateLinkUsageStatusService()
     {
       var mock = new Mock<ILinkUsageStatusService>();
-      mock.Setup(x => x.GetByName("Pending")).Returns(LookupBuilder.UsageStatusPending);
-      mock.Setup(x => x.GetByName("Completed")).Returns(LookupBuilder.UsageStatusCompleted);
-      mock.Setup(x => x.GetByName("Expired")).Returns(LookupBuilder.UsageStatusExpired);
+
+      mock
+        .Setup(x => x.GetByName(ReferralLinkUsageStatus.Initiated.ToString()))
+        .Returns(LookupBuilder.UsageStatusInitiated);
+
+      mock
+        .Setup(x => x.GetByName(ReferralLinkUsageStatus.Pending.ToString()))
+        .Returns(LookupBuilder.UsageStatusPending);
+
+      mock
+        .Setup(x => x.GetByName(ReferralLinkUsageStatus.Completed.ToString()))
+        .Returns(LookupBuilder.UsageStatusCompleted);
+
+      mock
+        .Setup(x => x.GetByName(ReferralLinkUsageStatus.Expired.ToString()))
+        .Returns(LookupBuilder.UsageStatusExpired);
+
+      mock
+        .Setup(x => x.GetByName(ReferralLinkUsageStatus.Abandoned.ToString()))
+        .Returns(LookupBuilder.UsageStatusAbandoned);
+
       return mock;
     }
 

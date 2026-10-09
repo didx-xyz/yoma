@@ -299,13 +299,17 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
       return tenant.Wallet_id;
     }
 
-    public async Task<string?> IssueCredential(CredentialIssuanceRequest request)
+    public async Task<Domain.SSI.Models.Provider.Credential> IssueCredential(CredentialIssuanceRequest request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
       request.ClientReferent = new KeyValuePair<string, string>(request.ClientReferent.Key?.Trim() ?? string.Empty, request.ClientReferent.Value?.Trim() ?? string.Empty);
       if (string.IsNullOrEmpty(request.ClientReferent.Key) && string.IsNullOrEmpty(request.ClientReferent.Value))
         throw new ArgumentException($"'{nameof(request.ClientReferent)}' is required", nameof(request));
+
+      if (string.IsNullOrWhiteSpace(request.SchemaId))
+        throw new ArgumentException($"'{nameof(request.SchemaId)}' is required", nameof(request));
+      request.SchemaId = request.SchemaId.Trim();
 
       if (string.IsNullOrWhiteSpace(request.SchemaName))
         throw new ArgumentException($"'{nameof(request.SchemaName)}' is required", nameof(request));
@@ -328,21 +332,26 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
       if (request.Attributes == null || request.Attributes.Count == 0)
         throw new ArgumentException($"'{nameof(request.Attributes)}' is required", nameof(request));
 
-      var schema = await GetSchemaByName(request.SchemaName);
-
-      //validate specified attributes against schema
-      var undefinedAttributes = request.Attributes.Keys.Except(schema.AttributeNames);
-      if (undefinedAttributes.Any())
-        throw new ArgumentException($"'{nameof(request.Attributes)}' contains attribute(s) not defined on the associated schema ('{request.SchemaName}'): '{string.Join(",", undefinedAttributes)}'");
-
       var clientTenantAdmin = _clientFactory.CreateTenantAdminClient();
 
       var tenantHolder = await clientTenantAdmin.GetTenantByIdAsync(wallet_id: request.TenantIdHolder);
       var clientHolder = _clientFactory.CreateTenantClient(tenantHolder.Wallet_id);
 
-      //check if credential was issued based on clientReferent
-      var result = await GetCredentialReferentByClientReferentOrNull(clientHolder, request.ArtifactType, request.ClientReferent, false);
-      if (!string.IsNullOrEmpty(result)) return result;
+      // Recover provider success before validating this attempt's attributes. A later schema version
+      // or changed source values must not turn an already-issued credential into a second issuance.
+      var result = await GetCredentialByClientReferentOrNull(clientHolder, request.ArtifactType, request.ClientReferent, false);
+      if (result != null) return result;
+
+      // Claims were mapped against this immutable identity by the domain. Never resolve latest again.
+      var schema = await GetSchemaById(request.SchemaId);
+      if (!string.Equals(schema.Name, request.SchemaName, StringComparison.OrdinalIgnoreCase))
+        throw new ArgumentException($"Schema '{request.SchemaId}' does not match requested name '{request.SchemaName}'", nameof(request));
+      if (schema.ArtifactType != request.ArtifactType)
+        throw new ArgumentException($"Schema '{request.SchemaId}' does not match requested artifact type '{request.ArtifactType}'", nameof(request));
+
+      var undefinedAttributes = request.Attributes.Keys.Except(schema.AttributeNames);
+      if (undefinedAttributes.Any())
+        throw new ArgumentException($"'{nameof(request.Attributes)}' contains attribute(s) not defined on the associated schema ('{request.SchemaName}'): '{string.Join(",", undefinedAttributes)}'");
 
       var tenantIssuer = await clientTenantAdmin.GetTenantByIdAsync(wallet_id: request.TenantIdIssuer);
       var clientIssuer = _clientFactory.CreateTenantClient(tenantIssuer.Wallet_id);
@@ -401,8 +410,8 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
           throw new InvalidOperationException($"Artifact type of '{request.ArtifactType}' not supported");
       }
 
-      result = await GetCredentialReferentByClientReferentOrNull(clientHolder, request.ArtifactType, request.ClientReferent, true);
-      return result;
+      return await GetCredentialByClientReferentOrNull(clientHolder, request.ArtifactType, request.ClientReferent, true)
+        ?? throw new InvalidOperationException($"Credential expected but not found for client referent '{request.ClientReferent}'");
     }
     #endregion
 
@@ -635,7 +644,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
       });
     }
 
-    private async Task<string?> GetCredentialReferentByClientReferentOrNull(ITenantClient clientHolder, ArtifactType artifactType,
+    private async Task<Domain.SSI.Models.Provider.Credential?> GetCredentialByClientReferentOrNull(ITenantClient clientHolder, ArtifactType artifactType,
         KeyValuePair<string, string> clientReferent, bool throwNotFound)
     {
       switch (artifactType)
@@ -657,10 +666,9 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             return null;
           }
 
-          var resultAnon = credAnon?.Credential_id?.Trim();
-          if (string.IsNullOrEmpty(resultAnon))
+          if (string.IsNullOrWhiteSpace(credAnon.Credential_id))
             throw new InvalidOperationException($"Credential id expected but is null / empty client referent '{clientReferent}'");
-          return resultAnon;
+          return credAnon.ToCredential();
 
         case ArtifactType.JWS:
           var credJWS = _credentialRepository.Query().SingleOrDefault(o => o.ClientReferent == clientReferent.Value);
@@ -671,7 +679,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             return null;
           }
 
-          return credJWS.Id.ToString();
+          return credJWS.ToCredential();
 
         default:
           throw new InvalidOperationException($"Artifact type of '{artifactType}' not supported");

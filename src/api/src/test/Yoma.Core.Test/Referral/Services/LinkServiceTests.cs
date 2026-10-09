@@ -42,7 +42,7 @@ namespace Yoma.Core.Test.Referral.Services
 
     /// <summary>
     /// Sets up all common mocks required for a Create call:
-    /// ProgramService, UserService, CountryService, execution strategy, and repository query.
+    /// ProgramService, UserService, CountryService, and repository query.
     /// </summary>
     private static void SetupCreateMocks(
       LinkServiceFixture fixture,
@@ -50,10 +50,6 @@ namespace Yoma.Core.Test.Referral.Services
       User user,
       List<ReferralLink>? existingLinks = null)
     {
-      fixture.ExecutionStrategyService
-        .Setup(x => x.ExecuteInExecutionStrategyAsync(It.IsAny<Func<Task>>()))
-        .Returns((Func<Task> action) => action());
-
       fixture.ProgramService
         .Setup(x => x.GetById(program.Id, It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<Domain.Core.LockMode>()))
         .Returns(program);
@@ -135,10 +131,6 @@ namespace Yoma.Core.Test.Referral.Services
         .WithDateStart(DateTimeOffset.UtcNow.AddDays(-7))
         .Build();
 
-      fixture.ExecutionStrategyService
-        .Setup(x => x.ExecuteInExecutionStrategyAsync(It.IsAny<Func<Task>>()))
-        .Returns((Func<Task> action) => action());
-
       fixture.ProgramService
         .Setup(x => x.GetById(program.Id, It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<Domain.Core.LockMode>()))
         .Returns(program);
@@ -152,7 +144,7 @@ namespace Yoma.Core.Test.Referral.Services
 
       // Act & Assert
       var ex = await Assert.ThrowsAsync<ValidationException>(() => service.Create(request));
-      Assert.Contains("not active", ex.Message);
+      Assert.Equal("This referral programme is not available yet", ex.Message);
     }
 
     [Fact]
@@ -166,10 +158,6 @@ namespace Yoma.Core.Test.Referral.Services
         .WithDateStart(DateTimeOffset.UtcNow.AddDays(7))
         .Build();
 
-      fixture.ExecutionStrategyService
-        .Setup(x => x.ExecuteInExecutionStrategyAsync(It.IsAny<Func<Task>>()))
-        .Returns((Func<Task> action) => action());
-
       fixture.ProgramService
         .Setup(x => x.GetById(program.Id, It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<Domain.Core.LockMode>()))
         .Returns(program);
@@ -183,7 +171,7 @@ namespace Yoma.Core.Test.Referral.Services
 
       // Act & Assert
       var ex = await Assert.ThrowsAsync<ValidationException>(() => service.Create(request));
-      Assert.Contains("not active or has not started", ex.Message);
+      Assert.Equal("This referral programme is not available yet", ex.Message);
     }
 
     [Fact]
@@ -198,10 +186,6 @@ namespace Yoma.Core.Test.Referral.Services
         .WithDateEnd(DateTimeOffset.UtcNow.AddDays(-1))
         .Build();
 
-      fixture.ExecutionStrategyService
-        .Setup(x => x.ExecuteInExecutionStrategyAsync(It.IsAny<Func<Task>>()))
-        .Returns((Func<Task> action) => action());
-
       fixture.ProgramService
         .Setup(x => x.GetById(program.Id, It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<Domain.Core.LockMode>()))
         .Returns(program);
@@ -215,7 +199,7 @@ namespace Yoma.Core.Test.Referral.Services
 
       // Act & Assert
       var ex = await Assert.ThrowsAsync<ValidationException>(() => service.Create(request));
-      Assert.Contains("expired", ex.Message);
+      Assert.Equal("This referral programme is no longer available", ex.Message);
     }
 
     [Fact]
@@ -231,10 +215,6 @@ namespace Yoma.Core.Test.Referral.Services
         .WithCompletionTotal(10)
         .Build();
 
-      fixture.ExecutionStrategyService
-        .Setup(x => x.ExecuteInExecutionStrategyAsync(It.IsAny<Func<Task>>()))
-        .Returns((Func<Task> action) => action());
-
       fixture.ProgramService
         .Setup(x => x.GetById(program.Id, It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<Domain.Core.LockMode>()))
         .Returns(program);
@@ -248,7 +228,7 @@ namespace Yoma.Core.Test.Referral.Services
 
       // Act & Assert
       var ex = await Assert.ThrowsAsync<ValidationException>(() => service.Create(request));
-      Assert.Contains("completion limit", ex.Message);
+      Assert.Equal("This referral programme has reached its limit", ex.Message);
     }
 
     [Fact]
@@ -277,10 +257,6 @@ namespace Yoma.Core.Test.Referral.Services
         .WithUsername(DefaultUsername)
         .WithCountryId(UserCountryId)
         .Build();
-
-      fixture.ExecutionStrategyService
-        .Setup(x => x.ExecuteInExecutionStrategyAsync(It.IsAny<Func<Task>>()))
-        .Returns((Func<Task> action) => action());
 
       fixture.ProgramService
         .Setup(x => x.GetById(program.Id, It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<Domain.Core.LockMode>()))
@@ -345,7 +321,7 @@ namespace Yoma.Core.Test.Referral.Services
 
       // Act & Assert
       var ex = await Assert.ThrowsAsync<ValidationException>(() => service.Create(request));
-      Assert.Contains("Multiple active referral links are not allowed", ex.Message);
+      Assert.Equal("You already have an active referral link for this programme", ex.Message);
 
       fixture.ProgramService.Verify(x => x.ReferrerLinkCreated(It.IsAny<Program>(), It.IsAny<bool>()), Times.Never);
     }

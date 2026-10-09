@@ -40,6 +40,7 @@ namespace Yoma.Core.Domain.SSI
   {
     Issuer,
     IssuerLogoURL,
-    Title
+    Title,
+    OpportunityType
   }
 }

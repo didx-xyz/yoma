@@ -122,6 +122,15 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public short? CommitmentIntervalCount { get; set; }
 
+    /// <summary>
+    /// Recorded participation commitment with its unit, not the opportunity's advertised effort.
+    /// This does not independently verify the time spent; missing or incomplete values stay unspecified.
+    /// </summary>
+    [JsonIgnore]
+    public string? CommitmentIntervalDescription => !CommitmentInterval.HasValue || !CommitmentIntervalCount.HasValue
+      ? null
+      : $"{CommitmentIntervalCount.Value} {CommitmentInterval.Value}{(CommitmentIntervalCount.Value > 1 ? "s" : string.Empty)}";
+
     public DateTimeOffset? DateStart { get; set; }
 
     public DateTimeOffset? DateEnd { get; set; }

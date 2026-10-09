@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Xunit;
 using Yoma.Core.Domain.Opportunity;
+using Yoma.Core.Domain.SSI.Helpers;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Opportunity.Repositories;
 
@@ -57,6 +58,23 @@ namespace Yoma.Core.Test.Core
         await context.Database.ExecuteSqlRawAsync(script, cancellationToken);
 
         var repository = new OpportunityRepository(context);
+        var credentialOpportunities = await repository.Query()
+          .Where(opportunity => opportunity.CredentialIssuanceEnabled)
+          .ToListAsync(cancellationToken);
+        Assert.NotEmpty(credentialOpportunities);
+        Assert.All(credentialOpportunities, opportunity =>
+          Assert.Equal(SSISSchemaHelper.ToDefaultFullName(opportunity.Type), opportunity.SSISchemaName));
+
+        var queuedSchemas = await context.SSICredentialIssuance
+          .Where(issuance => issuance.MyOpportunityId != null)
+          .Join(context.MyOpportunity, issuance => issuance.MyOpportunityId, participation => participation.Id,
+            (issuance, participation) => new { issuance.SchemaName, participation.OpportunityId })
+          .Join(context.Opportunity, issuance => issuance.OpportunityId, opportunity => opportunity.Id,
+            (issuance, opportunity) => new { issuance.SchemaName, opportunity.SSISchemaName })
+          .ToListAsync(cancellationToken);
+        Assert.NotEmpty(queuedSchemas);
+        Assert.All(queuedSchemas, item => Assert.Equal(item.SSISchemaName, item.SchemaName));
+
         var fixtures = await repository.Query(true)
           .Where(opportunity => opportunity.Title.StartsWith("Search fixture "))
           .ToListAsync(cancellationToken);

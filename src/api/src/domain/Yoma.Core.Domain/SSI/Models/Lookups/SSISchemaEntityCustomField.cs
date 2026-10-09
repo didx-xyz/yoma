@@ -34,6 +34,10 @@ namespace Yoma.Core.Domain.SSI.Models.Lookups
 
     public int SortOrder { get; set; }
 
+    /// <summary>
+    /// Credential issuance requiredness, not the definition's manual-capture IsRequired rule.
+    /// Custom-field claims are optional because import, partner and action-link paths can omit them.
+    /// </summary>
     public bool Required { get; set; }
 
     public bool IsActive { get; set; }

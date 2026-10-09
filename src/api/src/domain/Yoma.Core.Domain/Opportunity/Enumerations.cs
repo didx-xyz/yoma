@@ -52,9 +52,11 @@ namespace Yoma.Core.Domain.Opportunity
 
   public enum VerificationType
   {
+    [Description("File Upload")]
     FileUpload,
     Picture,
     Location,
+    [Description("Voice Note")]
     VoiceNote,
     Video
   }

@@ -4,7 +4,6 @@ using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Services;
 using Yoma.Core.Domain.PartnerSync.Models;
-using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Helpers;
 using Yoma.Core.Infrastructure.IXO.PartnerSync.Models;
 using IXOOpportunity = Yoma.Core.Infrastructure.IXO.PartnerSync.Models.OpportunityResponse;
@@ -68,9 +67,7 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
         ZltoRewardPool = null,
 
         CredentialIssuanceEnabled = true,
-        // TODO [YOM-1264/YOM-1280]: Review and assign the approved generic or type-specific credential
-        // schema per Opportunity type once the final custom fields and schema flavours are agreed.
-        SSISchemaName = SSISSchemaHelper.ToFullName(SchemaType.Opportunity, "Default"),
+        SSISchemaName = SSISSchemaHelper.ToDefaultFullName(type),
         Skills = skills?.Select(o => o.Id).ToList(),
         ShareWithPartners = false,
         Hidden = false,

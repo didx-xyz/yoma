@@ -1358,6 +1358,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       AssertUpdatable(result);
 
+      // Pull mappings supply the canonical default, not an administrator's schema choice.
+      // Preserve custom selections and let the existing validation reject incompatible type changes.
+      if (options.SyncTypeActionedBy == SyncType.Pull && request.CredentialIssuanceEnabled)
+      {
+        var type = Enum.Parse<Type>(_opportunityTypeService.GetById(request.TypeId).Name, true);
+        if (string.Equals(request.SSISchemaName, SSISSchemaHelper.ToDefaultFullName(type), StringComparison.OrdinalIgnoreCase))
+          request.SSISchemaName = SSISSchemaHelper.ResolveOpportunitySchemaName(type, result.SSISchemaName);
+      }
+
       await AssertSSISchemaApplicable(request);
 
       //[2024.11.25] backdated opportunities now allowed
@@ -2105,9 +2114,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var dateEnd = item.DateEnd?.ToDateTimeOffset();
 
-      // TODO [YOM-1264/YOM-1280]: Resolve the approved import schema from the Opportunity type
-      // instead of defaulting new/schema-less imports to Opportunity|Default. Preserve an existing
-      // schema only while it remains compatible with the imported type.
+      // CSV has no schema column: defaults follow the imported type, while explicit custom
+      // selections are preserved and checked by the normal create/update applicability validation.
+      var schemaName = SSISSchemaHelper.ResolveOpportunitySchemaName(
+        Enum.Parse<Type>(type.Name, true), existingByExternalId?.SSISchemaName);
+
       OpportunityRequestBase? request = null;
       var isNew = false;
       if (existingByExternalId == null)
@@ -2117,7 +2128,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
           PostAsActive = !dateEnd.HasValue || dateEnd.Value > DateTimeOffset.UtcNow,
           VerificationMethod = VerificationMethod.Automatic,
-          SSISchemaName = SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default")
+          SSISchemaName = schemaName
         };
       }
       else
@@ -2126,7 +2137,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
           Id = existingByExternalId.Id,
           VerificationMethod = existingByExternalId.VerificationMethod ?? VerificationMethod.Automatic, //preserve existing method if set
-          SSISchemaName = string.IsNullOrEmpty(existingByExternalId.SSISchemaName) ? SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default") : existingByExternalId.SSISchemaName //preserve existing schema if set
+          SSISchemaName = schemaName
         };
       }
 
