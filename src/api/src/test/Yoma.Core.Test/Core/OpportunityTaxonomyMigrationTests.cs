@@ -53,7 +53,7 @@ namespace Yoma.Core.Test.Core
       Assert.False(column.IsNullable);
       Assert.Equal("varchar(10)", column.OldColumn.ColumnType);
       Assert.Contains(operations.OfType<CreateIndexOperation>(), item =>
-        item.Schema == "Payout" && item.Table == "Transaction" && item.Columns.SequenceEqual(new[] { "Currency" }));
+        item.Schema == "Payout" && item.Table == "Transaction" && item.Columns.SequenceEqual(["Currency"]));
     }
 
     private static readonly (Guid Id, string Name)[] LegacyCategories =
@@ -225,7 +225,8 @@ namespace Yoma.Core.Test.Core
         Guid.Parse(legacyDifficulty.KeyValues[0, 0]!.ToString()!));
       Assert.Equal("Required", Assert.Single(legacyDifficulty.Columns));
       Assert.Equal(false, legacyDifficulty.Values[0, 0]);
-      Assert.Equal(2, updates.Count(item => item.Schema == "SSI"));
+      Assert.Equal(3, updates.Count(item => item.Schema == "SSI" && !item.Columns.Contains("SortOrder")));
+      Assert.Equal(13, updates.Count(item => item.Schema == "SSI" && item.Columns.Contains("SortOrder")));
 
       var engagementRenames = migration.UpOperations.OfType<UpdateDataOperation>()
         .Where(item => item.Table == "EngagementType" && item.Schema == "Lookup").ToList();
@@ -513,9 +514,9 @@ namespace Yoma.Core.Test.Core
         SELECT
           COUNT(*),
           COUNT(*) FILTER (WHERE "SubGroup" IS NOT NULL),
-          COUNT(*) FILTER (WHERE "Group" ILIKE '%details%'),
+          COUNT(*) FILTER (WHERE "Group" ILIKE '%details%' AND "Group" <> 'Completion Details'),
           COUNT(*) FILTER (WHERE "EntityContext" = 'Job' AND "Group" = 'Compensation'),
-          COUNT(*) FILTER (WHERE "EntityContext" = 'Entrepreneurship' AND "Group" = 'Outcomes')
+          COUNT(*) FILTER (WHERE "EntityContext" = 'Entrepreneurship' AND "EntityType" = 'MyOpportunity' AND "Group" = 'Completion Details')
         FROM "Core"."CustomFieldDefinition";
         """, connection, transaction);
       await using var reader = await command.ExecuteReaderAsync(TestContext.Current.CancellationToken);
@@ -525,7 +526,7 @@ namespace Yoma.Core.Test.Core
       Assert.Equal(0L, reader.GetInt64(1));
       Assert.Equal(0L, reader.GetInt64(2));
       Assert.Equal(5L, reader.GetInt64(3));
-      Assert.Equal(7L, reader.GetInt64(4));
+      Assert.Equal(12L, reader.GetInt64(4));
     }
 
     private static async Task<NpgsqlConnection> OpenTestConnection()

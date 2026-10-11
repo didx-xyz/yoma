@@ -108,39 +108,45 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         throw new ArgumentNullException(nameof(id));
       id = id.Trim();
 
-      var client = _clientFactory.CreateGovernanceClient();
-
       var schemaLocal = _credentialSchemaRepository.Query().Where(o => o.Id == id).SingleOrDefault();
       if (schemaLocal != null) return schemaLocal.ToSchema();
 
-      ICollection<CredentialSchema>? schemasAries = null;
+      var client = _clientFactory.CreateGovernanceClient();
+
+      CredentialSchema? schemaAries = null;
       try
       {
-        schemasAries = await client.GetSchemasAsync(id);
+        // The list endpoint filters by issuer DID; resolve the exact schema resource ID instead.
+        schemaAries = await client.GetSchemaByIdAsync(schema_id: id);
       }
       catch (Aries.CloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
       {
-        if (ex.StatusCode == System.Net.HttpStatusCode.UnprocessableEntity) return null;
+        if (ex.StatusCode is System.Net.HttpStatusCode.NotFound or System.Net.HttpStatusCode.UnprocessableEntity) return null;
         throw;
       }
 
-      var results = (schemasAries.ToSchema(false) ?? Enumerable.Empty<Domain.SSI.Models.Provider.Schema>()).ToList();
-      if (results == null || results.Count == 0) return null;
-
-      if (results.Count > 1)
-        throw new DataInconsistencyException($"More than one schema found with id '{id}' (specific version): {string.Join(", ", results.Select(o => $"{o.Name}:{o.ArtifactType.ToDescription()}"))}");
-
-      return results.SingleOrDefault();
+      return schemaAries?.ToSchema();
     }
 
     public async Task<Domain.SSI.Models.Provider.Credential> GetCredentialById(string tenantId, string id)
     {
+      if (string.IsNullOrWhiteSpace(tenantId))
+        throw new ArgumentNullException(nameof(tenantId));
+      tenantId = tenantId.Trim();
+
       if (string.IsNullOrWhiteSpace(id))
         throw new ArgumentNullException(nameof(id));
       id = id.Trim();
 
       var resultLocal = _credentialRepository.Query().SingleOrDefault(o => o.Id == Guid.Parse(id));
-      if (resultLocal != null) return resultLocal.ToCredential();
+      if (resultLocal != null)
+      {
+        // Local JWS credentials must belong to this wallet, just like tenant-scoped provider credentials.
+        if (!string.Equals(resultLocal.TargetTenantId, tenantId, StringComparison.Ordinal))
+          throw new EntityNotFoundException($"{nameof(Domain.SSI.Models.Provider.Credential)} with id '{id}' does not exist");
+
+        return resultLocal.ToCredential();
+      }
 
       var client = _clientFactory.CreateTenantClient(tenantId);
       CredInfo? resultAries = null;

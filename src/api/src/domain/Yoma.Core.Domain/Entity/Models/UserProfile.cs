@@ -20,6 +20,11 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public bool? PhoneNumberConfirmed { get; set; }
 
+    /// <summary>
+    /// Confirmed account access methods, not KYC or verification of self-declared profile details.
+    /// </summary>
+    public AccountVerificationMethod AccountVerificationMethods { get; set; }
+
     public Guid? CountryId { get; set; }
 
     public string? Region { get; set; }

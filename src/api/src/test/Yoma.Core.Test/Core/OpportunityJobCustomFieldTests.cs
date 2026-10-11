@@ -20,6 +20,10 @@ namespace Yoma.Core.Test.Core
 {
   public class OpportunityJobCustomFieldTests
   {
+    #region Class Variables
+    private static readonly string[] JobGroups = ["Compensation", "Employment", "Requirements", "Classification"];
+    #endregion Class Variables
+
     #region Tests
     [Fact]
     public void SeedsJobMetadataAndOfficialClassificationsWithoutDuplicatingCoreFields()
@@ -29,24 +33,24 @@ namespace Yoma.Core.Test.Core
       Assert.All(definitions, o =>
       {
         Assert.Equal("Job", o.EntityContext);
-        Assert.Contains(o.Group, new[] { "Compensation", "Employment", "Requirements", "Classification" });
+        Assert.Contains(o.Group, JobGroups);
         Assert.Null(o.SubGroup);
         Assert.True(o.IsActive);
       });
 
       Assert.Equal(22, definitions.Single(o => o.Key == CustomFieldConstants.Job.Industry).Options!.Count);
-      var categories = definitions.Single(o => o.Key == "jobCategory").Options!;
+      var categories = definitions.Single(o => o.Key == "JobCategory").Options!;
       Assert.Equal(43, categories.Count);
       Assert.Contains(categories, o => o.Key == "01");
       Assert.All(categories, o => Assert.Equal(2, o.Key.Length));
-      Assert.Equal(CustomFieldLookupType.Education, definitions.Single(o => o.Key == "jobMinimumQualification").LookupType);
-      Assert.Equal(CustomFieldLookupType.Skill, definitions.Single(o => o.Key == "jobPreferredSkills").LookupType);
+      Assert.Equal(CustomFieldLookupType.Education, definitions.Single(o => o.Key == "JobMinimumQualification").LookupType);
+      Assert.Equal(CustomFieldLookupType.Skill, definitions.Single(o => o.Key == "JobPreferredSkills").LookupType);
       Assert.Equal(CustomFieldLookupType.Currency, definitions.Single(o => o.Key == CustomFieldConstants.Job.Salary.Currency).LookupType);
-      Assert.DoesNotContain(definitions, o => o.Key.Contains("Deadline") || o.Key.Contains("Language") || o.Key == "jobExperienceLevel");
+      Assert.DoesNotContain(definitions, o => o.Key.Contains("Deadline") || o.Key.Contains("Language") || o.Key == "JobExperienceLevel");
     }
 
     [Theory]
-    [InlineData("jobEmploymentType", typeof(EmploymentType))]
+    [InlineData("JobEmploymentType", typeof(EmploymentType))]
     public void CodeInterpretedOptionsAgreeWithProtectedMetadata(string key, System.Type type)
     {
       var definition = Definitions().Single(o => o.Key == key);
@@ -144,10 +148,10 @@ namespace Yoma.Core.Test.Core
 
       var fields = service.ParseCSVValues(CustomFieldEntityType.Opportunity, "Job", new Dictionary<string, string?>
       {
-        { "jobMinimumQualification", "Tertiary - Diploma" },
+        { "JobMinimumQualification", "Tertiary - Diploma" },
         { CustomFieldConstants.Job.Salary.Currency, "ZAR" }
       });
-      Assert.Equal(educationId.ToString(), Assert.Single(fields!.Single(o => o.Key == "jobMinimumQualification").Values!));
+      Assert.Equal(educationId.ToString(), Assert.Single(fields!.Single(o => o.Key == "JobMinimumQualification").Values!));
       Assert.Equal(currencyId.ToString(), Assert.Single(fields!.Single(o => o.Key == CustomFieldConstants.Job.Salary.Currency).Values!));
       service.Validate(CustomFieldEntityType.Opportunity, "Job", fields, CustomFieldUpsertMode.PatchAllowMissingRequired);
       Assert.Throws<ValidationException>(() => service.Validate(CustomFieldEntityType.Opportunity, "Job",
@@ -210,9 +214,9 @@ namespace Yoma.Core.Test.Core
     }
 
     [Theory]
-    [InlineData("jobSalaryMinimum", CustomFieldDataType.Decimal)]
-    [InlineData("jobSalaryMaximum", CustomFieldDataType.Decimal)]
-    [InlineData("jobEmploymentDuration", CustomFieldDataType.Integer)]
+    [InlineData("JobSalaryMinimum", CustomFieldDataType.Decimal)]
+    [InlineData("JobSalaryMaximum", CustomFieldDataType.Decimal)]
+    [InlineData("JobEmploymentDuration", CustomFieldDataType.Integer)]
     public void NonPositiveValuesAreRejected(string key, CustomFieldDataType type)
     {
       Assert.Throws<ValidationException>(() => Validate([Scalar(key, "0", type)], false));

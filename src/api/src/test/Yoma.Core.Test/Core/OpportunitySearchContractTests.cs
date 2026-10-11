@@ -70,9 +70,9 @@ namespace Yoma.Core.Test.Core
     [InlineData("{\"ordering\":[{\"field\":\"DateEnd\",\"direction\":\"Ascending\"}]}", true)]
     [InlineData("{\"ordering\":[{\"field\":99,\"direction\":\"Ascending\"}]}", false)]
     [InlineData("{\"ordering\":[{\"field\":\"DateEnd\"},{\"field\":\"DateEnd\"}]}", false)]
-    [InlineData("{\"customFields\":[{\"key\":\"jobSalaryMinimum\",\"unspecified\":\"Only\"}]}", true)]
-    [InlineData("{\"customFields\":[{\"key\":\"jobSalaryMinimum\",\"operator\":99,\"value\":\"1\"}]}", false)]
-    [InlineData("{\"customFields\":[{\"key\":\"jobSalaryMinimum\",\"operator\":\"Exists\",\"unspecified\":\"Include\"}]}", false)]
+    [InlineData("{\"customFields\":[{\"key\":\"JobSalaryMinimum\",\"unspecified\":\"Only\"}]}", true)]
+    [InlineData("{\"customFields\":[{\"key\":\"JobSalaryMinimum\",\"operator\":99,\"value\":\"1\"}]}", false)]
+    [InlineData("{\"customFields\":[{\"key\":\"JobSalaryMinimum\",\"operator\":\"Exists\",\"unspecified\":\"Include\"}]}", false)]
     public void WireContractValidatesRootAndBranches(string json, bool valid)
     {
       var filter = JsonConvert.DeserializeObject<OpportunitySearchFilterAdmin>(json)!;
@@ -188,7 +188,7 @@ namespace Yoma.Core.Test.Core
           new() { AnyOf = [new() { Provider = new() { Value = "A" } }, new() { Provider = new() { Value = "B" } }] },
           new() { AnyOf = [new() { Age = 18 }] }
         ],
-        CustomFields = [new() { Key = "jobSalaryMinimum", Unspecified = UnspecifiedMatch.Only }]
+        CustomFields = [new() { Key = "JobSalaryMinimum", Unspecified = UnspecifiedMatch.Only }]
       };
       var second = new OpportunitySearchFilterAdmin
       {
@@ -197,7 +197,7 @@ namespace Yoma.Core.Test.Core
           new() { AnyOf = [new() { Age = 18 }] },
           new() { AnyOf = [new() { Provider = new() { Value = "B" } }, new() { Provider = new() { Value = "A" } }] }
         ],
-        CustomFields = [new() { Key = "jobSalaryMinimum", Unspecified = UnspecifiedMatch.Only }]
+        CustomFields = [new() { Key = "JobSalaryMinimum", Unspecified = UnspecifiedMatch.Only }]
       };
 
       first.NormalizeForHashing();
@@ -211,7 +211,7 @@ namespace Yoma.Core.Test.Core
     [InlineData("{\"groups\":[{\"anyOf\":[{\"age\":18}]}]}", "{\"groups\":[{\"anyOf\":[{\"age\":19}]}]}")]
     [InlineData("{\"ordering\":[{\"field\":\"DateEnd\",\"direction\":\"Ascending\"}]}", "{\"ordering\":[{\"field\":\"DateEnd\",\"direction\":\"Descending\"}]}")]
     [InlineData("{\"totalCountOnly\":false}", "{\"totalCountOnly\":true}")]
-    [InlineData("{\"customFields\":[{\"key\":\"jobSalaryMinimum\",\"operator\":\"Equals\",\"value\":\"1\"}]}", "{\"customFields\":[{\"key\":\"jobSalaryMinimum\",\"operator\":\"Equals\",\"value\":\"2\"}]}")]
+    [InlineData("{\"customFields\":[{\"key\":\"JobSalaryMinimum\",\"operator\":\"Equals\",\"value\":\"1\"}]}", "{\"customFields\":[{\"key\":\"JobSalaryMinimum\",\"operator\":\"Equals\",\"value\":\"2\"}]}")]
     public void DifferentSearchSemanticsRemainDistinctForHashing(string firstJson, string secondJson)
     {
       var first = JsonConvert.DeserializeObject<OpportunitySearchFilterAdmin>(firstJson)!;
@@ -230,7 +230,7 @@ namespace Yoma.Core.Test.Core
       var repository = new OpportunityRepository(context);
       var filter = new CustomFieldFilter
       {
-        Key = "jobSalaryMinimum",
+        Key = "JobSalaryMinimum",
         CustomFieldDefinitionId = Guid.NewGuid(),
         AppliesToTypeId = Guid.NewGuid(),
         Unspecified = UnspecifiedMatch.Only

@@ -186,7 +186,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
           continue;
 
         entity.CustomFields = SSIAttributePresentationHelper.OrderCustomFields(
-          listDefinitions(entityType).Select(ToCustomField));
+          listDefinitions(entityType).Select(ToCustomField).ToList());
       }
     }
 
@@ -318,8 +318,19 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
               else
                 propTypeDisplayName = propInfo.PropertyType.Name;
 
-              prop.TypeName = string.IsNullOrEmpty(prop.TypeName) ? propTypeDisplayName : string.Format(prop.TypeName, propTypeDisplayName);
-              prop.DotNetType = string.IsNullOrEmpty(prop.DotNetType) ? propInfo.PropertyType.FullName : string.Format(prop.DotNetType, propInfo.PropertyType.FullName);
+              var propertyType = Nullable.GetUnderlyingType(propInfo.PropertyType) ?? propInfo.PropertyType;
+              if (propertyType.IsEnum && propertyType.IsDefined(typeof(FlagsAttribute), false))
+              {
+                // Flags remain a combined value on the domain model; credentials expose selected
+                // descriptions through the same list metadata as other multi-value attributes.
+                prop.TypeName = $"List<{nameof(String)}>";
+                prop.DotNetType = typeof(List<string>).FullName;
+              }
+              else
+              {
+                prop.TypeName = string.IsNullOrEmpty(prop.TypeName) ? propTypeDisplayName : string.Format(prop.TypeName, propTypeDisplayName);
+                prop.DotNetType = string.IsNullOrEmpty(prop.DotNetType) ? propInfo.PropertyType.FullName : string.Format(prop.DotNetType, propInfo.PropertyType.FullName);
+              }
             }
 
             if (string.IsNullOrEmpty(prop.AttributeName)) prop.AttributeName += $"{propInfo.DeclaringType.Name}_{propInfo.Name}";

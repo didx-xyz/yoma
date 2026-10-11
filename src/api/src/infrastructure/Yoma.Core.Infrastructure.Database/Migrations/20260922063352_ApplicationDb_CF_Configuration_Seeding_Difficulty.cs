@@ -66,7 +66,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           },
           {
             new Guid("d1ff1c01-9b29-4cf0-a100-000000000005"), CustomFieldEntityType.Opportunity.ToString(), Domain.Opportunity.Type.Job.ToString(),
-            "jobExperienceLevel", "Experience level", "Requirements", null!,
+            "JobExperienceLevel", "Experience Level", "Requirements", null!,
             CustomFieldDataType.Option.ToString(), true, false, 10,
             true, false, false, created, created
           }

@@ -38,67 +38,67 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
         {
           {
             new Guid("cf0b0001-0929-4cf0-a100-000000000001"), CustomFieldEntityType.Opportunity.ToString(), Domain.Opportunity.Type.Job.ToString(),
-            CustomFieldConstants.Job.Salary.Disclosed, "Salary disclosed", "Select Yes only when at least one salary amount is disclosed. No excludes all salary details.",
+            CustomFieldConstants.Job.Salary.Disclosed, "Salary Disclosed", "Select Yes only when at least one salary amount is disclosed. No excludes all salary details.",
             "Compensation", null!, CustomFieldDataType.Boolean.ToString(), null!,
             true, null!, 10, true, true, false, created, created
           },
           {
             new Guid("cf0b0001-0929-4cf0-a100-000000000002"), CustomFieldEntityType.Opportunity.ToString(), Domain.Opportunity.Type.Job.ToString(),
-            CustomFieldConstants.Job.Salary.Minimum, "Minimum salary", "Optional lower amount, greater than zero. Requires salary disclosure, currency and pay interval on manual capture.",
+            CustomFieldConstants.Job.Salary.Minimum, "Minimum Salary", "Optional lower amount, greater than zero. Requires salary disclosure, currency and pay interval on manual capture.",
             "Compensation", null!, CustomFieldDataType.Decimal.ToString(), null!,
             false, null!, 20, true, true, false, created, created
           },
           {
             new Guid("cf0b0001-0929-4cf0-a100-000000000003"), CustomFieldEntityType.Opportunity.ToString(), Domain.Opportunity.Type.Job.ToString(),
-            CustomFieldConstants.Job.Salary.Maximum, "Maximum salary", "Optional upper amount, greater than zero and not below minimum salary.",
+            CustomFieldConstants.Job.Salary.Maximum, "Maximum Salary", "Optional upper amount, greater than zero and not below minimum salary.",
             "Compensation", null!, CustomFieldDataType.Decimal.ToString(), null!,
             false, null!, 30, true, true, false, created, created
           },
           {
             new Guid("cf0b0001-0929-4cf0-a100-000000000004"), CustomFieldEntityType.Opportunity.ToString(), Domain.Opportunity.Type.Job.ToString(),
-            CustomFieldConstants.Job.Salary.Currency, "Salary currency", "Currency for the salary amounts. Select from the shared ISO currency lookup; no conversion is performed.",
+            CustomFieldConstants.Job.Salary.Currency, "Salary Currency", "Currency for the salary amounts. Select from the shared ISO currency lookup; no conversion is performed.",
             "Compensation", null!, CustomFieldDataType.Option.ToString(), CustomFieldLookupType.Currency.ToString(),
             false, false, 40, true, true, false, created, created
           },
           {
             new Guid("cf0b0001-0929-4cf0-a100-000000000005"), CustomFieldEntityType.Opportunity.ToString(), Domain.Opportunity.Type.Job.ToString(),
-            CustomFieldConstants.Job.Salary.PayInterval, "Pay interval", "Required when salary is disclosed on manual capture. Amounts refer to this interval, not necessarily a month.",
+            CustomFieldConstants.Job.Salary.PayInterval, "Pay Interval", "Required when salary is disclosed on manual capture. Amounts refer to this interval, not necessarily a month.",
             "Compensation", null!, CustomFieldDataType.Option.ToString(), null!,
             false, false, 50, true, true, false, created, created
           },
           {
             new Guid("cf0b0001-0929-4cf0-a100-000000000006"), CustomFieldEntityType.Opportunity.ToString(), Domain.Opportunity.Type.Job.ToString(),
-            CustomFieldConstants.Job.Employment.Type, "Employment type", "Select compatible types. Permanent and Fixed-term cannot be combined. Permanent excludes duration.",
+            CustomFieldConstants.Job.Employment.Type, "Employment Type", "Select compatible types. Permanent and Fixed-term cannot be combined. Permanent excludes duration.",
             "Employment", null!, CustomFieldDataType.Option.ToString(), null!,
             true, true, 10, true, true, false, created, created
           },
           {
             new Guid("cf0b0001-0929-4cf0-a100-000000000007"), CustomFieldEntityType.Opportunity.ToString(), Domain.Opportunity.Type.Job.ToString(),
-            CustomFieldConstants.Job.Employment.Schedule, "Work schedule", "Select Full-time or Part-time; this is separate from employment type.",
+            CustomFieldConstants.Job.Employment.Schedule, "Work Schedule", "Select Full-time or Part-time; this is separate from employment type.",
             "Employment", null!, CustomFieldDataType.Option.ToString(), null!,
             true, false, 20, true, true, false, created, created
           },
           {
             new Guid("cf0b0001-0929-4cf0-a100-000000000008"), CustomFieldEntityType.Opportunity.ToString(), Domain.Opportunity.Type.Job.ToString(),
-            CustomFieldConstants.Job.Employment.Duration, "Employment duration", "Positive whole number. Required with a unit on manual capture when employment is not permanent.",
+            CustomFieldConstants.Job.Employment.Duration, "Employment Duration", "Positive whole number. Required with a unit on manual capture when employment is not permanent.",
             "Employment", null!, CustomFieldDataType.Integer.ToString(), null!,
             false, null!, 30, true, true, false, created, created
           },
           {
             new Guid("cf0b0001-0929-4cf0-a100-000000000009"), CustomFieldEntityType.Opportunity.ToString(), Domain.Opportunity.Type.Job.ToString(),
-            CustomFieldConstants.Job.Employment.DurationUnit, "Employment duration unit", "Months or Years, paired with employment duration. Leave empty for permanent employment.",
+            CustomFieldConstants.Job.Employment.DurationUnit, "Employment Duration Unit", "Months or Years, paired with employment duration. Leave empty for permanent employment.",
             "Employment", null!, CustomFieldDataType.Option.ToString(), null!,
             false, false, 40, true, true, false, created, created
           },
           {
             new Guid("cf0b0001-0929-4cf0-a100-000000000010"), CustomFieldEntityType.Opportunity.ToString(), Domain.Opportunity.Type.Job.ToString(),
-            "jobMinimumQualification", "Minimum qualification", "Minimum formal qualification; informational and searchable, not an automatic eligibility gate.",
+            "JobMinimumQualification", "Minimum Qualification", "Minimum formal qualification; informational and searchable, not an automatic eligibility gate.",
             "Requirements", null!, CustomFieldDataType.Option.ToString(), CustomFieldLookupType.Education.ToString(),
             true, false, 20, true, false, false, created, created
           },
           {
             new Guid("cf0b0001-0929-4cf0-a100-000000000011"), CustomFieldEntityType.Opportunity.ToString(), Domain.Opportunity.Type.Job.ToString(),
-            "jobPreferredSkills", "Preferred skills", "Optional bonus skills; distinct from core required skills and never awarded on completion.",
+            "JobPreferredSkills", "Preferred Skills", "Optional bonus skills; distinct from core required skills and never awarded on completion.",
             "Requirements", null!, CustomFieldDataType.Option.ToString(), CustomFieldLookupType.Skill.ToString(),
             false, true, 30, true, false, false, created, created
           },
@@ -110,7 +110,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           },
           {
             new Guid("cf0b0001-0929-4cf0-a100-000000000013"), CustomFieldEntityType.Opportunity.ToString(), Domain.Opportunity.Type.Job.ToString(),
-            "jobCategory", "Job category", "Occupation/function: ISCO-08 two-digit Sub-major Group. Distinct from employer industry and opportunity categories.",
+            "JobCategory", "Job Category", "Occupation/function: ISCO-08 two-digit Sub-major Group. Distinct from employer industry and opportunity categories.",
             "Classification", null!, CustomFieldDataType.Option.ToString(), null!,
             true, false, 20, true, false, false, created, created
           }

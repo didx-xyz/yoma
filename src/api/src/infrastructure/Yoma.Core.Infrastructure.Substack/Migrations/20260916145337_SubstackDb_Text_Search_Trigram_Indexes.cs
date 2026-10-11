@@ -23,21 +23,21 @@ namespace Yoma.Core.Infrastructure.Substack.Migrations
       migrationBuilder.AlterDatabase()
         .Annotation("Npgsql:PostgresExtension:pg_trgm", ",,");
 
-      foreach (var index in Indexes)
+      foreach (var (schema, table, column, name) in Indexes)
       {
         // Concurrent builds commit independently. Retry rebuilds only this migration's
         // new indexes, including any invalid indexes left by an interrupted build.
-        DropIndex(migrationBuilder, index.Schema, index.Name);
+        DropIndex(migrationBuilder, schema, name);
         migrationBuilder.Sql(
-          $"CREATE INDEX CONCURRENTLY \"{index.Name}\" ON \"{index.Schema}\".\"{index.Table}\" USING gin (\"{index.Column}\" gin_trgm_ops);",
+          $"CREATE INDEX CONCURRENTLY \"{name}\" ON \"{schema}\".\"{table}\" USING gin (\"{column}\" gin_trgm_ops);",
           suppressTransaction: true);
       }
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)
     {
-      foreach (var index in Indexes)
-        DropIndex(migrationBuilder, index.Schema, index.Name);
+      foreach (var (schema, _, _, name) in Indexes)
+        DropIndex(migrationBuilder, schema, name);
 
       // Retain the shared extension; other contexts/indexes may still use it.
     }

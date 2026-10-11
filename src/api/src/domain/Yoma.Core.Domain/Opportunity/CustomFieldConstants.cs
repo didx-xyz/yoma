@@ -12,8 +12,8 @@ namespace Yoma.Core.Domain.Opportunity
     {
       public static class Tools
       {
-        public const string Required = "impactActionToolsRequired";
-        public const string OtherDescription = "impactActionToolsOtherDescription";
+        public const string Required = "ImpactActionToolsRequired";
+        public const string OtherDescription = "ImpactActionToolsOtherDescription";
       }
     }
     #endregion
@@ -23,11 +23,11 @@ namespace Yoma.Core.Domain.Opportunity
     {
       public static class Salary
       {
-        public const string Disclosed = "jobSalaryDisclosed";
-        public const string Minimum = "jobSalaryMinimum";
-        public const string Maximum = "jobSalaryMaximum";
-        public const string Currency = "jobSalaryCurrency";
-        public const string PayInterval = "jobPayInterval";
+        public const string Disclosed = "JobSalaryDisclosed";
+        public const string Minimum = "JobSalaryMinimum";
+        public const string Maximum = "JobSalaryMaximum";
+        public const string Currency = "JobSalaryCurrency";
+        public const string PayInterval = "JobPayInterval";
 
         public static class PayIntervalOptions
         {
@@ -40,10 +40,10 @@ namespace Yoma.Core.Domain.Opportunity
 
       public static class Employment
       {
-        public const string Type = "jobEmploymentType";
-        public const string Schedule = "jobWorkSchedule";
-        public const string Duration = "jobEmploymentDuration";
-        public const string DurationUnit = "jobEmploymentDurationUnit";
+        public const string Type = "JobEmploymentType";
+        public const string Schedule = "JobWorkSchedule";
+        public const string Duration = "JobEmploymentDuration";
+        public const string DurationUnit = "JobEmploymentDurationUnit";
 
         public static class ScheduleOptions
         {
@@ -52,7 +52,7 @@ namespace Yoma.Core.Domain.Opportunity
         }
       }
 
-      public const string Industry = "jobIndustry";
+      public const string Industry = "JobIndustry";
 
       public static class IndustryOptions
       {
@@ -70,8 +70,8 @@ namespace Yoma.Core.Domain.Opportunity
     {
       public static class Programme
       {
-        public const string Type = "entrepreneurshipProgrammeType";
-        public const string OtherDescription = "entrepreneurshipProgrammeOtherDescription";
+        public const string Type = "EntrepreneurshipProgrammeType";
+        public const string OtherDescription = "EntrepreneurshipProgrammeOtherDescription";
       }
     }
     #endregion
@@ -81,10 +81,10 @@ namespace Yoma.Core.Domain.Opportunity
     {
       public static class Keys
       {
-        public const string Learning = "learningDifficulty";
-        public const string Other = "otherDifficulty";
-        public const string ImpactAction = "impactActionDifficulty";
-        public const string Event = "eventDifficulty";
+        public const string Learning = "LearningDifficulty";
+        public const string Other = "OtherDifficulty";
+        public const string ImpactAction = "ImpactActionDifficulty";
+        public const string Event = "EventDifficulty";
       }
 
       /// <summary>

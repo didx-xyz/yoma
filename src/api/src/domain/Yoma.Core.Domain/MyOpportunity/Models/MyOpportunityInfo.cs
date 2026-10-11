@@ -114,6 +114,25 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     [Name("Date Completed")]
     public DateTimeOffset? DateCompleted { get; set; }
 
+    /// <summary>
+    /// Captured participation or Entrepreneurship business location, not current Student Country or opportunity availability.
+    /// Raw components support UI editing; CSV exports contain only Country Completed. Historical submissions are not backfilled.
+    /// </summary>
+    [Ignore]
+    public Guid? CountryId { get; set; }
+
+    [Name("Country Completed")]
+    public string? Country { get; set; }
+
+    [Ignore]
+    public string? Region { get; set; }
+
+    [Ignore]
+    public string? City { get; set; }
+
+    [Ignore]
+    public string? Location { get; set; }
+
     [Name("Zlto Reward")]
     public decimal? ZltoReward { get; set; }
 

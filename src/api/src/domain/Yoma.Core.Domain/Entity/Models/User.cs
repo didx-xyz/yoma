@@ -23,6 +23,12 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public bool? PhoneNumberConfirmed { get; set; }
 
+    /// <summary>
+    /// Account verification methods, resolved from confirmed contacts and recorded social login.
+    /// This is not KYC, proof of identity or verification of the user's self-declared profile.
+    /// </summary>
+    public AccountVerificationMethod AccountVerificationMethods { get; internal set; }
+
     public Guid? CountryId { get; set; }
 
     public string? Country { get; set; }

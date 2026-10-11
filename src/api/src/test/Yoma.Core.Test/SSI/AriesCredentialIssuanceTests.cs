@@ -9,7 +9,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Newtonsoft.Json;
+using System.Net;
 using Xunit;
+using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Models.Provider;
@@ -20,7 +22,105 @@ namespace Yoma.Core.Test.SSI
 {
   public class AriesCredentialIssuanceTests
   {
+    #region Class Variables
+    private const string AnonCredsSchemaId = "did:cheqd:testnet:11111111-1111-1111-1111-111111111111/resources/22222222-2222-2222-2222-222222222222";
+    private static readonly string[] AnonCredsAttributeNames = ["User_DisplayName", "_Referent_Client"];
+    #endregion Class Variables
+
     #region Tests
+    [Fact]
+    public async Task AnonCredsSchemaLookupUsesTheExactIdEndpointAndPreservesItsVersion()
+    {
+      using var fixture = new Fixture();
+      fixture.Http.ForCallsTo("*definitions/schemas?*").RespondWithJson(Array.Empty<object>());
+      fixture.Http.ForCallsTo("*definitions/schemas/*").RespondWithJson(new
+      {
+        id = AnonCredsSchemaId,
+        name = "YoID|Default",
+        version = "1.0",
+        attribute_names = AnonCredsAttributeNames
+      });
+
+      var result = await fixture.Client.GetSchemaByIdOrNull($" {AnonCredsSchemaId} ");
+
+      Assert.NotNull(result);
+      Assert.Equal(AnonCredsSchemaId, result.Id);
+      Assert.Equal("YoID|Default", result.Name);
+      Assert.Equal(new Version(1, 0), result.Version);
+      Assert.Equal(ArtifactType.ACR, result.ArtifactType);
+      Assert.Equal(AnonCredsAttributeNames, result.AttributeNames);
+
+      var call = Assert.Single(fixture.Http.CallLog, call => call.Request.Url.Path.Contains("definitions/schemas"));
+      Assert.Equal(HttpMethod.Get, call.Request.Verb);
+      Assert.EndsWith($"/definitions/schemas/{AnonCredsSchemaId}", Uri.UnescapeDataString(call.Request.Url.ToString()));
+      Assert.DoesNotContain("schema_issuer_did", call.Request.Url.ToString());
+    }
+
+    [Fact]
+    public async Task LocalJwtSchemaLookupDoesNotCallTheProvider()
+    {
+      using var fixture = new Fixture();
+
+      var result = await fixture.Client.GetSchemaByIdOrNull(" schema-1.0 ");
+
+      Assert.NotNull(result);
+      Assert.Equal("schema-1.0", result.Id);
+      Assert.Equal(new Version(1, 0), result.Version);
+      Assert.Equal(ArtifactType.JWS, result.ArtifactType);
+      Assert.Empty(fixture.Http.CallLog);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.NotFound)]
+    [InlineData(HttpStatusCode.UnprocessableEntity)]
+    public async Task MissingProviderSchemaReturnsNull(HttpStatusCode status)
+    {
+      using var fixture = new Fixture();
+      fixture.Http.ForCallsTo("*definitions/schemas/*").RespondWithJson(new { detail = "Schema not found" }, (int)status);
+
+      var result = await fixture.Client.GetSchemaByIdOrNull(AnonCredsSchemaId);
+
+      Assert.Null(result);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.Unauthorized)]
+    [InlineData(HttpStatusCode.Forbidden)]
+    [InlineData(HttpStatusCode.InternalServerError)]
+    [InlineData(HttpStatusCode.ServiceUnavailable)]
+    public async Task ProviderSchemaLookupDoesNotHideAuthenticationOrServerFailures(HttpStatusCode status)
+    {
+      using var fixture = new Fixture();
+      fixture.Http.ForCallsTo("*definitions/schemas/*").RespondWithJson(new { detail = "Provider failure" }, (int)status);
+
+      var error = await Assert.ThrowsAsync<Aries.CloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException>(
+        () => fixture.Client.GetSchemaByIdOrNull(AnonCredsSchemaId));
+
+      Assert.Equal(status, error.StatusCode);
+    }
+
+    [Fact]
+    public async Task RequiredProviderSchemaLookupStillThrowsWhenTheSchemaIsMissing()
+    {
+      using var fixture = new Fixture();
+      fixture.Http.ForCallsTo("*definitions/schemas/*").RespondWithJson(new { detail = "Schema not found" }, (int)HttpStatusCode.NotFound);
+
+      await Assert.ThrowsAsync<EntityNotFoundException>(() => fixture.Client.GetSchemaById(AnonCredsSchemaId));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    public async Task SchemaLookupRejectsMissingIdsWithoutProviderCalls(string? id)
+    {
+      using var fixture = new Fixture();
+
+      await Assert.ThrowsAsync<ArgumentNullException>(() => fixture.Client.GetSchemaByIdOrNull(id!));
+
+      Assert.Empty(fixture.Http.CallLog);
+    }
+
     [Fact]
     public async Task NewJwtUsesTheExactRequestedSchemaAndNotTheLatestNameVersion()
     {
@@ -44,6 +144,52 @@ namespace Yoma.Core.Test.SSI
       Assert.DoesNotContain("NewAttribute", recovered.Attributes.Keys);
       Assert.Single(fixture.Credentials);
       fixture.Repository.Verify(repository => repository.Create(It.IsAny<Infrastructure.AriesCloud.Models.Credential>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task LocalJwtDetailReturnsOnlyTheHoldersCredentialWithoutProviderCalls()
+    {
+      using var fixture = new Fixture();
+      var credential = fixture.AddCredential();
+
+      var result = await fixture.Client.GetCredentialById(" tenant ", $" {credential.Id} ");
+
+      Assert.Equal(credential.Id.ToString(), result.Id);
+      Assert.Equal(credential.SchemaId, result.SchemaId);
+      Assert.Equal("old value", result.Attributes["OldAttribute"]);
+      Assert.Empty(fixture.Http.CallLog);
+    }
+
+    [Theory]
+    [InlineData("other-holder")]
+    [InlineData("issuer")]
+    [InlineData("TENANT")]
+    public async Task LocalJwtDetailCannotBeReadByAnotherHolderOrItsIssuer(string tenantId)
+    {
+      using var fixture = new Fixture();
+      var credential = fixture.AddCredential();
+      credential.SourceTenantId = "issuer";
+
+      await Assert.ThrowsAsync<EntityNotFoundException>(
+        () => fixture.Client.GetCredentialById(tenantId, credential.Id.ToString()));
+
+      Assert.Empty(fixture.Http.CallLog);
+      Assert.Single(fixture.Credentials);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    public async Task CredentialDetailRejectsMissingWalletIdsWithoutProviderCalls(string? tenantId)
+    {
+      using var fixture = new Fixture();
+      var credential = fixture.AddCredential();
+
+      await Assert.ThrowsAsync<ArgumentNullException>(
+        () => fixture.Client.GetCredentialById(tenantId!, credential.Id.ToString()));
+
+      Assert.Empty(fixture.Http.CallLog);
     }
 
     [Fact]

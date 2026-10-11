@@ -51,6 +51,7 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
         TypeId = opportunityType.Id,
 
         Provider = item.Provider.HtmlDecode()?.RemoveHtmlTags()?.NormalizeNullableValue(),
+        ProviderLogoURL = item.ProviderLogoURL?.NormalizeNullableValue(),
         Summary = summary,
         URL = GetRequiredValue(item.URL, "url", item.ExternalId),
         OrganizationId = GetOrganizationId(),

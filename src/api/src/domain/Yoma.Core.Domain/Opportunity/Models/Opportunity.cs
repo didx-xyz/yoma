@@ -53,8 +53,25 @@ namespace Yoma.Core.Domain.Opportunity.Models
     /// <summary>
     /// Informational provider; does not change the owning organisation or its permissions.
     /// </summary>
-    // TODO: Consider a separate ProviderURL when time permits; keep it distinct from the opportunity URL.
     public string? Provider { get; set; }
+
+    /// <summary>
+    /// Optional provider website, distinct from the opportunity's action link.
+    /// </summary>
+    public string? ProviderURL { get; set; }
+
+    /// <summary>
+    /// Optional provider logo image URL, distinct from the provider's website and owning organisation's logo.
+    /// </summary>
+    public string? ProviderLogoURL { get; set; }
+
+    /// <summary>
+    /// Optional provider origin for discovery, never availability or the youth's participation/business location.
+    /// Must be a specific country; Worldwide is not a provider origin.
+    /// </summary>
+    public Guid? ProviderCountryId { get; set; }
+
+    public string? ProviderCountry { get; set; }
 
     /// <summary>
     /// Whether any incentive is offered. Null means not specified, not unpaid.

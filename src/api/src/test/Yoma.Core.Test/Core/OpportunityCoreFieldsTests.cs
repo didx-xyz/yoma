@@ -26,6 +26,83 @@ namespace Yoma.Core.Test.Core
     private static readonly Guid AccommodationId = Guid.NewGuid();
     private static readonly Guid OtherId = Guid.NewGuid();
     private static readonly Guid OpenToAllId = Guid.NewGuid();
+    private static readonly Guid SpecificCountryId = Guid.NewGuid();
+    private static readonly Guid WorldwideId = Guid.NewGuid();
+
+    [Theory]
+    [InlineData(null, true)]
+    [InlineData("https://example.com/provider", true)]
+    [InlineData("not a URL", false)]
+    [InlineData("/provider", false)]
+    public void ProviderUrlUsesTheExistingOpportunityUrlRules(string? value, bool valid)
+    {
+      var validator = CreateValidator();
+      var request = new OpportunityRequestCreate { ProviderURL = value, ProviderLogoURL = value };
+      Assert.Equal(valid, !validator.Validate(request).Errors.Any(error => error.PropertyName == nameof(request.ProviderURL)));
+      Assert.Equal(valid, !validator.Validate(request).Errors.Any(error => error.PropertyName == nameof(request.ProviderLogoURL)));
+      request.ProviderURL = "https://example.com/" + new string('x', 2048);
+      request.ProviderLogoURL = request.ProviderURL;
+      Assert.Contains(validator.Validate(request).Errors, error => error.PropertyName == nameof(request.ProviderURL));
+      Assert.Contains(validator.Validate(request).Errors, error => error.PropertyName == nameof(request.ProviderLogoURL));
+    }
+
+    [Fact]
+    public void ProviderCountryIsOptionalSpecificAndIndependentOfAvailability()
+    {
+      var validator = CreateValidator();
+      var request = new OpportunityRequestCreate { Countries = [new() { CountryId = WorldwideId }] };
+      Assert.DoesNotContain(validator.Validate(request).Errors, error => error.PropertyName == nameof(request.ProviderCountryId));
+      request.ProviderCountryId = SpecificCountryId;
+      Assert.DoesNotContain(validator.Validate(request).Errors, error => error.PropertyName == nameof(request.ProviderCountryId));
+
+      foreach (var invalid in new[] { WorldwideId, Guid.Empty, Guid.NewGuid() })
+      {
+        request.ProviderCountryId = invalid;
+        Assert.Contains(validator.Validate(request).Errors, error => error.PropertyName == nameof(request.ProviderCountryId));
+      }
+    }
+
+    [Fact]
+    public void WorldwideAvailabilityIsExclusiveAcrossCaptureModes()
+    {
+      var validator = CreateValidator();
+      var request = new OpportunityRequestCreate { Countries = [new() { CountryId = WorldwideId }] };
+      Assert.DoesNotContain(validator.Validate(request).Errors, error => error.ErrorMessage == "Worldwide cannot be combined with specific countries.");
+      request.Countries.Add(new() { CountryId = SpecificCountryId });
+      Assert.Contains(validator.Validate(request).Errors, error => error.ErrorMessage == "Worldwide cannot be combined with specific countries.");
+      Assert.Contains(validator.Validate(request, options => options.IncludeRuleSets("default", "Manual")).Errors,
+        error => error.ErrorMessage == "Worldwide cannot be combined with specific countries.");
+    }
+
+    [Fact]
+    public void ProviderMetadataIsPreservedByPublicMappings()
+    {
+      var opportunity = new Opportunity
+      {
+        Provider = "Publisher",
+        ProviderURL = "https://example.com/provider",
+        ProviderLogoURL = "https://example.com/provider-logo.png",
+        ProviderCountryId = SpecificCountryId,
+        ProviderCountry = "South Africa"
+      };
+      var info = opportunity.ToOpportunityInfo(null, "https://example.com");
+      Assert.Equal(opportunity.ProviderURL, info.ProviderURL);
+      Assert.Equal(opportunity.ProviderLogoURL, info.ProviderLogoURL);
+      Assert.Equal(opportunity.ProviderCountryId, info.ProviderCountryId);
+      Assert.Equal(opportunity.ProviderCountry, info.ProviderCountry);
+      var request = new OpportunityRequestCreate
+      {
+        ProviderURL = opportunity.ProviderURL,
+        ProviderLogoURL = opportunity.ProviderLogoURL,
+        ProviderCountryId = opportunity.ProviderCountryId,
+        Categories = [],
+        Countries = [],
+        Languages = []
+      }.ToRequestUpdate(Guid.NewGuid());
+      Assert.Equal(opportunity.ProviderURL, request.ProviderURL);
+      Assert.Equal(opportunity.ProviderLogoURL, request.ProviderLogoURL);
+      Assert.Equal(opportunity.ProviderCountryId, request.ProviderCountryId);
+    }
 
     [Fact]
     public void PublicOpportunitySearchSupportsCountOnlyWithoutPresetFlag()
@@ -312,6 +389,10 @@ namespace Yoma.Core.Test.Core
       goals.Setup(o => o.List()).Returns([]);
 
       var countries = new Mock<ICountryService>();
+      countries.Setup(service => service.GetByIdOrNull(SpecificCountryId))
+        .Returns(new Domain.Lookups.Models.Country { Id = SpecificCountryId, CodeAlpha2 = "ZA", Name = "South Africa" });
+      countries.Setup(service => service.GetByIdOrNull(WorldwideId))
+        .Returns(new Domain.Lookups.Models.Country { Id = WorldwideId, CodeAlpha2 = "WW", Name = "Worldwide" });
       return new OpportunityRequestValidatorCreate(types.Object, Mock.Of<IOrganizationService>(),
         Mock.Of<IEngagementTypeService>(), Mock.Of<ITimeIntervalService>(),
         Mock.Of<IOpportunityCategoryService>(), countries.Object, Mock.Of<ILanguageService>(), Mock.Of<ISkillService>(),

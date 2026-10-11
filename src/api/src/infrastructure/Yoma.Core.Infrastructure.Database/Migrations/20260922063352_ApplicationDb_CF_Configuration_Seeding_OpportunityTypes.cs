@@ -20,11 +20,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
         schema: "Opportunity",
         table: "OpportunityType",
         columns: ["Id", "Name", "DisplayName", "DateCreated"],
-        values: new object[]
-        {
+        values:
+        [
           new Guid("d74da423-7779-4f49-9d6b-92ce5f61f4a1"), Domain.Opportunity.Type.Entrepreneurship.ToString(), "Entrepreneurship",
           DateTimeOffset.UtcNow
-        });
+        ]);
       #endregion Opportunity
     }
   }

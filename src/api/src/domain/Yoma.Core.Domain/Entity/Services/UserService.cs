@@ -144,6 +144,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       if (includeComputed)
       {
+        result.SetAccountVerificationMethods(QuerySocialIdentityProviders().Any(item => item.UserId == result.Id));
         result.PhotoURL = GetBlobObjectURL(result.PhotoStorageType, result.PhotoKey);
         result.Skills?.ForEach(o => o.Organizations?.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey)));
         result.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), result.SettingsRaw);
@@ -165,6 +166,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       if (includeComputed)
       {
+        result.SetAccountVerificationMethods(QuerySocialIdentityProviders().Any(item => item.UserId == result.Id));
         result.PhotoURL = GetBlobObjectURL(result.PhotoStorageType, result.PhotoKey);
         result.Skills?.ForEach(o => o.Organizations?.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey)));
         result.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), result.SettingsRaw);
@@ -183,6 +185,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       if (includeComputed)
       {
+        result.SetAccountVerificationMethods(QuerySocialIdentityProviders().Any(item => item.UserId == result.Id));
         result.PhotoURL = GetBlobObjectURL(result.PhotoStorageType, result.PhotoKey);
         result.Skills?.ForEach(o => o.Organizations?.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey)));
         result.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), result.SettingsRaw);
@@ -209,6 +212,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       if (includeComputed)
       {
+        result.SetAccountVerificationMethods(QuerySocialIdentityProviders().Any(item => item.UserId == result.Id));
         result.PhotoURL = GetBlobObjectURL(result.PhotoStorageType, result.PhotoKey);
         result.Skills?.ForEach(o => o.Organizations?.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey)));
         result.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), result.SettingsRaw);
@@ -250,6 +254,13 @@ namespace Yoma.Core.Domain.Entity.Services
 
       if (includeComputed)
       {
+        // Resolve social login once for the returned users, not once per item.
+        var userIds = results.Select(user => user.Id).ToList();
+        var socialUserIds = userIds.Count == 0
+          ? new HashSet<Guid>()
+          : [.. QuerySocialIdentityProviders().Where(item => userIds.Contains(item.UserId)).Select(item => item.UserId)];
+        results.ForEach(user => user.SetAccountVerificationMethods(socialUserIds.Contains(user.Id)));
+
         results.ForEach(o => o.PhotoURL = GetBlobObjectURL(o.PhotoStorageType, o.PhotoKey));
         results.ForEach(o => o.Skills?.ForEach(o => o.Organizations?.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey))));
         results.ForEach(o => o.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), o.SettingsRaw));
@@ -814,19 +825,26 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public bool HasSocialIdentityProviders(Guid id)
     {
-      var user = GetById(id, false, false);
+      GetById(id, false, false);
 
-      var providerIds = Enum.GetValues<ExternalIdpProvider>()
-        .Select(p => p.ToDescription().ToLower())
-        .ToList();
-
-      return _userLoginHistoryRepository.Query()
-        .Any(o => o.UserId == id && !string.IsNullOrEmpty(o.IdentityProvider) && providerIds.Contains(o.IdentityProvider.ToLower()));
+      return QuerySocialIdentityProviders().Any(item => item.UserId == id);
     }
 
     #endregion
 
     #region Private Members
+    private IQueryable<UserLoginHistory> QuerySocialIdentityProviders()
+    {
+      // Use the same recognised provider contracts for referrals and account verification.
+      var providerIds = Enum.GetValues<ExternalIdpProvider>()
+        .Select(provider => provider.ToDescription().ToLower())
+        .ToList();
+
+      return _userLoginHistoryRepository.Query()
+        .Where(item => !string.IsNullOrEmpty(item.IdentityProvider)
+          && providerIds.Contains(item.IdentityProvider.ToLower()));
+    }
+
     // Raises a referral event of type 'IdentityAction'. Invoked by:
     // - Upsert (above): syncs the user using the IdP as the source of truth, triggered by Keycloak events or opportunity verification imports (which act as a virtual IdP).
     // - YoIDOnboard (below): raises another event of the same type, as it is a precondition for claiming and serves as a fallback to progress referrals.

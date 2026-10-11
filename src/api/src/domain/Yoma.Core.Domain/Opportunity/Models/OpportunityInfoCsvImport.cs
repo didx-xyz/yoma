@@ -63,6 +63,22 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public string? Provider { get; set; }
 
+    /// <summary>
+    /// Optional provider website, distinct from the opportunity's action link.
+    /// </summary>
+    public string? ProviderURL { get; set; }
+
+    /// <summary>
+    /// Optional provider logo image URL, distinct from the provider's website and owning organisation's logo.
+    /// </summary>
+    public string? ProviderLogoURL { get; set; }
+
+    /// <summary>
+    /// Optional provider origin for discovery, never availability or the youth's participation/business location.
+    /// Must be a specific country; Worldwide is not a provider origin.
+    /// </summary>
+    public string? ProviderCountry { get; set; }
+
     [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
     [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
     public bool? Incentivized { get; set; }

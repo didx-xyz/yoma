@@ -21,7 +21,7 @@ render credentials from the schema identity committed at scheduling and exact ve
 - A cross-framework skill identifier; structured Skills carry names only for now.
 - Implementing the didx:me adapter, federation, wallet provisioning or production cutover in this phase.
 - Production credential replay before the combined schema/provider migration plan is agreed.
-- New venture-location capture, actual placement terms, sustained-employment follow-up or KYC.
+- Exact street addresses/coordinates for venture outcomes, actual placement terms, sustained-employment follow-up or KYC.
 - Later attestations, enrichment or follow-up outcomes attached to already-issued credentials; these belong to a future phase, not completion issuance in this delivery.
 
 ## Plan
@@ -32,13 +32,251 @@ is split across admin schema management (YOM-1278), Opportunity selection (YOM-1
 proposed implementation sequence are below. Adrian subsequently authorized **stage 1: schema
 configuration**, followed on 2026-10-08 by **stage 2: canonical default assignment**, and on
 2026-10-09 by **stage 3: exact-attempt schema identity and successful retry recovery**. All changes
-remain uncommitted for his review. This authorizes implementation and isolated testing, not live
+were committed by Adrian as `8ea6a62e9`. This authorizes implementation and isolated testing, not live
 provider publication, shared-environment data changes or replay by itself. Adrian subsequently
 authorized the non-production Local provider-backed smoke pass on 2026-10-09: all six Opportunity
-types and their wallet attributes passed. YoID live issuance failed and its cause remains unconfirmed.
-Manual explicit selection remains. Detailed results are in the existing consolidated handoff.
+types and their wallet attributes passed. YoID live issuance failed; on 2026-10-11 the exact-schema
+lookup was confirmed to call the SDK's issuer-DID list filter incorrectly. The corrective adapter
+lookup and tests remain uncommitted for review; Adrian subsequently confirmed successful Local YoID issuance. Manual explicit
+selection remains. Detailed results are in the existing consolidated handoff.
 
 ## Stage 1 — Schema Configuration Implemented for Review
+
+### Current Review Additions — 2026-10-11
+
+The later display review labels non-Job skills **Skills Earned** and seeds Title Case directly in
+SchemaEntityProperty.NameDisplay, preserving uppercase URL/ZLTO acronyms and signed names/values.
+Adrian's follow-up removed runtime label casing: core labels are returned exactly as configured in
+the DB, and CF labels use the definition's Title unchanged. No formatter rewrites either source.
+All six Opportunity types now use **Completion Details** for the completion-related body rows.
+**Opportunity Details renders first, then Completion Details**. This section priority is SSI-only:
+SchemaPresentationGroup and SSIAttributePresentationHelper apply it to catalogue and wallet reads,
+then retain alphabetical order for other configured groups and put ungrouped fields last. No new
+migration, seed edit, DB reset, provider schema version or reissuance is needed for section priority.
+Within Completion Details: **User → Skills Earned (except Job) → type-specific completion fields → Location → Duration →
+Verification Method → Verification Evidence**. User, Engagement and Duration are friendly display
+labels only; their signed attribute names and reflected values are unchanged. Duration remains the
+recorded MyOpportunity commitment/count, not an independently measured time-spent claim.
+Impact Action's activity/impact, Event Role, Job Employment Start Date and all twelve Entrepreneurship
+venture/outcome CFs sit in this shared section. Advertised Job classification/employment/compensation
+and Entrepreneurship programme metadata retain their own groups. The completion-CF group/order
+changes also affect capture screens because definition metadata is shared. CF titles use seeded
+Title Case; option labels, keys, requiredness and system flags are unchanged.
+Core User/Skills occupy positions 1–2; type-specific fields occupy 3–14 (the twelve Entrepreneurship
+fields in their existing venture-then-outcomes sequence). Location/Duration/Method/Evidence occupy
+15–18. Unselected/missing slots produce no UI rows. Catalogue-only completion date/reward/DOB,
+submitted evidence types and individual location components follow at 19–25. This gives every
+default the same relative order without a runtime type-specific sorting rule.
+These metadata-only changes do not create schema versions or rewrite signed artifacts. The exact
+sequence is tested for all six contexts, including optional omissions and Job's absent Skills.
+Participation-location capture is now implemented below, uncommitted
+for review. Revised defaults read the persisted snapshot; historical wallet retrieval continues to
+use signed values.
+
+
+### CF Key and Label Naming — 2026-10-11, Implemented for Review
+
+Adrian approved **PascalCase definition keys** and **Title Case field labels** across all 39
+configured Opportunity/MyOpportunity CFs. Option keys, option names, official classification
+codes, IDs, ordering, data types, requiredness, system flags and stored-value semantics are unchanged.
+Labels come directly from the seeded definition Title; there is no runtime casing formatter.
+JSON property names remain camelCase under the existing serializer.
+
+The misleading `entrepreneurshipClientLocation` is now `EntrepreneurshipCustomerReach`, labelled
+**Customer Reach**. It retains definition ID `cf0e0001-0929-4cf0-a100-000000000022`, optional
+single-select configuration and the same five options. It represents customers' broad geography,
+not free text, physical venture location or the new core participation-location snapshot.
+
+All other configured definition keys change only their first letter to uppercase, for example
+`jobSalaryMinimum` → `JobSalaryMinimum` and `impactActionImpactAchieved` →
+`ImpactActionImpactAchieved`. The new signed attribute is the entity plus exact key, for example
+`MyOpportunity_EntrepreneurshipCustomerReach`. API constants, default-schema selections, CSV sample
+headers, Local/Dev post.sql references and tests are aligned. The original undeployed migration
+seeds this configuration; already-migrated Local/Dev databases require reset/recreation.
+
+The undeployed CF naming aliases were removed at Adrian's request: no HistoricalCustomFieldAttributes
+or MatchCustomField bridge remains. Reset Local and issue fresh disposable credentials using canonical
+keys. Existing released core/type compatibility is retained; this is not a production replay.
+Startup default comparison is ordinal so signed-name changes publish a new version once;
+label/order changes alone do not. A local DB reset does not delete old test-provider schemas: if that
+shared registry still contains a disposable schema with the removed semantic ClientLocation key,
+coordinate clean test-provider configuration rather than adding a runtime alias or deleting shared data.
+
+**Jason — action on pull:** align hardcoded CF key constants in `customFieldRules.ts` and
+`cardFacts.ts`, import help and the three Web CSV samples, plus related tests/persisted CF
+filter composition. Bind to definition `key`, display `title`; for options bind to option
+`key` and display `name`, and for lookup-backed fields retain lookup IDs. Do not recase options.
+Existing saved case-only keys still benefit from API case-insensitive resolution, but Web should
+use the returned canonical keys. The semantic ClientLocation rename has no new-input alias.
+No Web files were edited by the API session. Pull API/Web changes together, down/up and recreate
+Local, run post.sql, then allow schema seeding before reissuing disposable test credentials.
+Do not delete historical provider schemas just to apply the naming change.
+
+Validation: build passed with zero warnings/errors. Focused schema/naming/Entrepreneurship run:
+111 passed, zero skipped/failed. Broad regression: 643 cases, 631 passed, 12 guarded DB skips,
+zero failed; live WhatsApp integration excluded. The separate fresh PostgreSQL migration/post.sql
+test passed, including all 39 names/labels, stable Customer Reach ID and Job fixture/scheduling.
+All 153 inline option rows were compared before/after and are byte-for-byte unchanged. Provider
+publication/reissuance was mocked for naming/history tests; no live provider write or user DB
+mutation was performed. All changes remain uncommitted for Adrian's review.
+
+### Participation Location — 2026-10-11, Implemented for Review
+
+This final contract supersedes the earlier no-CSV-input and deferred-business-location proposals.
+
+One nullable core snapshot is stored on MyOpportunity: CountryId, Country (resolved lookup name),
+Region and City. One calculated **Location** joins City, Region and Country, excluding empty or
+duplicate parts. There is no Completion prefix, DisplayName suffix or separate BusinessLocation
+property. All six Opportunity types use the same optional **MyOpportunity_Location** default claim,
+labelled Location in Completion Details. Country/Region/City remain optional schema-admin selections.
+Historical Opportunity_Countries remains available; issued availability values are never reconstructed.
+
+| Route | Learning / Other / ImpactAction / Event / Job | Entrepreneurship |
+| --- | --- | --- |
+| Manual youth submission | OnSite/Hybrid: profile country/region/city. No location input/selector. Remote/unknown engagement: null. | Optional explicit business CountryId/Region/City, independent of engagement and Worldwide; never inferred. |
+| Completion CSV | Optional CountryCompleted (ISO alpha-2). Without Worldwide, OnSite/Hybrid uses it when supplied, without borrowing profile region/city; omitted uses profile. | Optional CountryCompleted only; omitted stays null. |
+| Partner completion | Without Worldwide, OnSite/Hybrid uses explicit participant CountryId/Region/City, even if different from profile; omitted defaults to profile. Partial input stays partial. | Optional explicit business CountryId/Region/City; missing stays null. |
+| Action link | OnSite/Hybrid uses profile; no extra screen. Remote/unknown: null. | Null; an action link does not know the business location. |
+
+For participation, any Worldwide entry wins, including unchanged legacy mixed lists: ignore an explicit
+CSV/partner location and use profile location only for OnSite/Hybrid. Entrepreneurship's explicitly
+supplied business base is independent of programme availability and this participation rule.
+Existing profile-country eligibility gates remain unchanged for manual/CSV/action links; partner
+completions remain exempt. Captured partner country is not an additional availability gate.
+An unknown profile country leaves all participation details null; never choose an arbitrary opportunity
+country. Optional data is not claimed as independently verified physical attendance.
+
+Capture at new submission or rejected resubmission. Pending updates/finalization/issuance/retries
+preserve the original snapshot, including historical nulls. No backfill. Credentials use only stored
+data; they do not reapply today's engagement/profile. Missing JWS Location is omitted.
+
+Validators check existing specific country, country-required-with-region/city, and existing length
+limits. The manual type/route rule is in MyOpportunityService, not a contextual validator rule.
+The shared partner contract forwards optional location before payload hashing; no partner mapper
+fabricates participant/business data absent from its source.
+
+CSV import **Country remains the user's profile country**. The new column is **CountryCompleted**;
+neither model gains region/city CSV columns. Opportunity imports remain country-only too.
+MyOpportunityInfo CSV exports contain Student Country and Country Completed, not a combined location
+or region/city. Its raw location components remain JSON-readable; the calculated issuance projection
+on MyOpportunity is JsonIgnore and is not an extra public capture property.
+Update the completion sample/header help: core CSV headers must match the current model, even when
+their cell values are optional.
+
+Jason: only Entrepreneurship's manual completion UI needs optional business place selection,
+reusing Google Maps country/region/city selection from the existing profile/Opportunity screens.
+Specific country only, no Worldwide selection, street address or new stored coordinates. Other
+manual types need no new selector. The same Location claim renders from schema metadata for all types.
+
+The original undeployed CF migration adds nullable country/region/city, a country FK/index and optional
+schema metadata. Region/city need no indexes because they are not queried. Local/Dev already migrated
+must reset/recreate, run post.sql and let schema seeding finish before reissuing. A restart cannot
+apply edits to an already-recorded migration. Stage/Prod receive no historical-location UPDATE.
+
+### Provider and Worldwide Availability — 2026-10-11, Implemented for Review
+
+Optional Opportunity ProviderURL, ProviderLogoURL and ProviderCountryId are carried through request/read/CSV models,
+domain create/update, ToRequestUpdate, single/batch repository persistence and projection.
+ProviderURL is the provider website; ProviderLogoURL is its logo image, not the owning organisation's logo.
+Both URLs use the existing absolute-URL validation and varchar(2048) storage. ProviderCountry is the
+resolved lookup name in read responses. ProviderCountryId references Lookup.Country with the normal
+FK/index and must be a specific country, never Worldwide. It is informational provider origin for
+discoverability, not availability, issuer, youth participation or business location.
+Provider, Provider URL, Provider Logo URL and Provider Country are optional schema-admin attributes in the
+Provider group, ordered 1-4; defaults do not sign them. Opportunity CSV samples add ProviderURL,
+ProviderLogoURL and ProviderCountry
+(ISO alpha-2); there are no new Opportunity region/city CSV columns.
+
+New create/update/import/sync payloads cannot save Worldwide together with specific availability
+countries. AssignCountries checks the combined existing/requested IDs so the collection route cannot
+bypass the rule. Existing mixed data is not bulk-repaired and remains readable; saving a mixed list
+requires correcting it. Later Alison sync replaces its availability with Worldwide alone.
+
+| Partner | Source mapping / boundary |
+| --- | --- |
+| Alison | Worldwide-only availability. Use the first supplied publisher for Provider, ProviderLogoURL (publisher.image) and ProviderCountryId (publisher.location); publishers have no timestamp to determine the latest. Missing/unknown fields remain null and are not borrowed from another publisher. publisher.country_id is not an ISO/Yoma ID. No verified website field is exposed, so ProviderURL remains null. The embedded sample has 20 courses, all with one publisher. |
+| IXO | Only known provider and providerLogoUrl payload fields are modeled and mapped to Provider/ProviderLogoURL. ProviderURL and ProviderCountryId stay unmapped; there are no speculative website/country fields or parsing in the external model. Worldwide mixed availability normalizes to Worldwide only. |
+| Umuzi | Worldwide mixed availability normalizes to Worldwide only. No verified distinct provider website/origin fields in the current contract; do not guess from availability. |
+| JobJack | Existing company name remains Provider. No verified distinct provider URL/origin fields are mapped; job location remains availability. |
+| Jobberman | Existing country/feed location remains availability, not provider origin. No fabricated provider fields or new completion/credential scope. |
+
+Country-only Opportunity search matches **available in X OR (Worldwide AND provider based in X)**.
+The provider branch applies only if no selected country is Worldwide, and only to a country entry
+without Region/City/Radius criteria. It cannot bypass actual-location criteria or outer visibility,
+date/status/authorization restrictions. Root/group selections, youth/admin search and count-only use
+the same selector. Search-criteria reference endpoints are unchanged. This does not alter completion
+eligibility, snapshot rules or force remote opportunities to claim attendance location.
+General ValueContains searches Title, Summary, Keywords and Description, now also Provider name;
+it retains the existing related Organisation Name, Opportunity Type, Category and Skill Name matches.
+Provider website/logo URLs and origin, numeric fields and arbitrary CF values are not added as text targets: keep these
+on their structured filters. This avoids unrelated matches and additional lookup/CF search queries.
+The dedicated Provider criterion remains: Jason's active Discovery filter, payload, URL and chip code uses
+it for provider-only matching. General text matching is broader and does not replace that criterion.
+The existing IX_Opportunity_Provider GIN/trigram index supports both paths; no extra lookup query or
+client-side scan was added. PostgreSQL EXPLAIN checks index eligibility, not production latency.
+
+Jason: add separate optional Provider URL (website) and Provider Logo URL inputs, plus the Provider Country
+country lookup alongside Provider in Opportunity management; exclude Worldwide from provider origin.
+Do not treat the provider logo as the owning organisation's logo. Enforce exclusive Worldwide
+availability in the editor and update Opportunity CSV samples/help. No Web files were changed here.
+
+Validation: clean build (zero warnings/errors). Broad regression: 680 cases, 668 passed, 12 guarded DB
+skips, zero failed; live WhatsApp integration excluded. The separate fresh PostgreSQL migration/post.sql
+test passed in its own uniquely created disposable database, checking exact labels/model agreement,
+no historical backfill, Job completion/scheduling and single/batch Location and Provider CRUD/read/clear.
+The production shared search predicate is tested for country/provider matches, detailed criteria,
+outer restrictions and PostgreSQL translation. Partner tests cover first-publisher selection without
+cross-publisher mixing, known IXO name/logo fields and ignored unsupported website/country fields.
+Credential tests cover all-type Location mappings, optional omission, rendering and one-version
+seeding; their provider HTTP is intercepted. The subsequent authorized Docker pass exercised actual
+test-provider issuance and wallet reads: 20 credentials/170 body attributes, 1,297 assertions and
+125 API calls, zero failures. All six new manual completions passed 78 assertions/84 API calls;
+two optional-CF CSV completions passed 13 assertions/13 API calls. In total the three completed
+API runs contain 1,388 assertions/222 counted API calls. YoID country-only identity, all twelve
+Entrepreneurship completion CFs/business location, no-effort Job, source values/order/omissions,
+schema create/update/protection and cross-wallet 404 are verified. Three unrelated random seed
+queues await issuer tenants after test-provider lock/funding errors; tested issuers/outcomes are
+Issued. No Stage/Production changes or replay. See the consolidated handoff's final Docker evidence,
+including existing HTTP 500 rejection behavior for invalid schema context/attribute selections.
+All changes remain uncommitted for Adrian's review; Web implementation/visual review remains open.
+
+These approved additions supersede the earlier baseline's ten-attribute YoID and evidence-only
+statements below. All changes remain uncommitted; no production publication or replay was performed.
+
+- YoID now selects ten attributes: **Account verification methods** replaces Email in the default.
+  Confirmed email, confirmed mobile OTP and recorded social sign-in can coexist. This is not KYC,
+  identity assurance or a claim that DOB/profile details were verified. Unknown remains ACR `n/a`.
+  User/UserProfile expose the general flags enum (None = 0, EmailVerified = 1, MobileVerified = 2,
+  SocialLogin = 4), populated on normal computed reads rather than only during issuance. The
+  common credential mapper signs selected descriptions as list items; the wallet supplies
+  ItemsDisplay plus comma-separated ValueDisplay. No user column or capture input was added.
+- `User_DisplayName` remains the protected Title attribute and supplies the wallet title above
+  the body. It is not duplicated as a visible row. The seed now documents this explicitly.
+- Identity body ordering: First Name, Surname, DOB, Country, Gender, Education, Account verification
+  methods. Email, Phone, Region and City remain admin-selectable for custom/historical schemas,
+  but are not default claims. Historical signed email values remain readable without a replay.
+  Core SortOrder uses consecutive increments of one. The consolidated handoff includes the
+  exact attribute/label/sample-value table for review; system title/issuer/logo remain outside
+  the body and technical metadata is retained.
+- Every Opportunity default selects two independent attributes: **Verification Method** from the
+  Opportunity's configured method, and **Verification Evidence** from submitted evidence types,
+  falling back to the recorded completion comment only when evidence is absent. Approval comments
+  do not replace uploaded evidence. Private file URLs and geometry are never included.
+- The configured method is not historical actual-route provenance. Action-link completions can
+  bypass a Manual configuration; the evidence comment explains this. Current CSV/partner routes
+  require Automatic. This pass does not change those validation rules or infer/backfill an actual method.
+- Default new action-link/CSV comments name their route. Existing/supplied comments remain unchanged.
+  The old submitted-evidence collection mapping remains available to custom/historical schemas.
+- The reflection catalogue now exposes relevant optional core fields for schema administration:
+  provider, description, categories, languages, programme dates/effort, incentives, accessibility,
+  accommodations, audience ages/targeted groups and SDGs, plus YoID region/city. Defaults stay explicit;
+  adding a selectable field does not automatically add it to every credential.
+- The Local/Dev script guarantees credential-enabled Job fixture 01 before assigning canonical
+  schema names and creating queues. It has a Completed placement, optional employment-start CF and
+  one Job-default JWS issuance schedule. No API-based seed or shared-environment test data was added.
+- Automated reflection-to-claims-to-wallet tests cover all six types and applicable selected CFs,
+  missing optional values, historical YoID, ordering/system fields and verification evidence fallback.
+  The existing handoff records exact regression totals and the fresh PostgreSQL seed result.
 
 This stage implements the attribute catalogue and startup configuration on ACA-Py, not the full
 credential rollout. Provider writes were mocked in tests; no live schemas or credentials were
@@ -56,17 +294,18 @@ created. All changes remain uncommitted pending Adrian's review.
   the existing CF services, not hardcoded domain option lists.
 - Job excludes both Opportunity and MyOpportunity skill selections: advertised requirements
   must not be signed as skills earned. Job remains Job in type codes and credential presentation.
-- YoID retains its existing ten attributes and ACR format. No presets, coordinates, mobile,
-  region/city or invented trust/KYC claim is added. Its existing optional-value `n/a` handling stays.
+- YoID uses ten selected attributes and ACR format: account verification methods replaces Email
+  in the default. Names lead the body; the protected display title stays above it. No presets,
+  coordinates, mobile body row, region/city or invented KYC claim is added. Optional n/a handling stays.
 
 ### Core Projections and Presentation
 
 | Schema attribute | Source and meaning | Presentation |
 | --- | --- | --- |
-| `Opportunity_Countries` | `Countries.LocationDisplayName`: city, region and country together per mapping; coordinates excluded. | Structured items, Opportunity Details, order 10. |
-| `Opportunity_EngagementType` | Existing core engagement enum; separate from location. | Opportunity Details, order 20; enum descriptions supply labels such as On-site. |
-| `MyOpportunity_CommitmentIntervalDescription` | Recorded MyOpportunity count/unit, not advertised Opportunity effort or independently verified time spent. | Participation commitment, Participation, order 20. |
-| `MyOpportunity_Verifications` | Actual submitted verification item types; duplicate types collapse. No file URL, geometry or unused configured evidence is included. | Structured items, Evidence types submitted, Verification, order 10. |
+| `Opportunity_Countries` | `Countries.LocationDisplayName`: city, region and country together per availability mapping; coordinates excluded. Catalogue-only, not the default completion location. | Structured items, Opportunity Location, Opportunity Details, order 5. |
+| `Opportunity_EngagementType` | Existing core engagement enum; separate from location. | Engagement, Opportunity Details, order 6; enum descriptions supply labels such as On-site. |
+| `MyOpportunity_CommitmentIntervalDescription` | Recorded MyOpportunity count/unit, not advertised Opportunity effort or independently verified time spent. | Duration, Completion Details, order 16. |
+| `MyOpportunity_Verifications` | Actual submitted verification item types; duplicate types collapse. No file URL, geometry or unused configured evidence is included. Catalogue-only; defaults use Verification Evidence. | Structured items, Evidence Types Submitted, Completion Details, order 22. |
 
 The computed projections are JSON-ignored. They add no request/response property or database
 column. The existing generic wallet formatter now reads enum descriptions for display while
@@ -383,22 +622,22 @@ Only mapped definitions acquire schema-mapped protection. No mapping uses a disp
 
 | Type | Entity / key | Credential treatment |
 | --- | --- | --- |
-| Impact Action | MyOpportunity `impactActionImpactAchieved` | Actual outcome text; never substituted with planned Opportunity summary. |
-| Impact Action | Opportunity `impactActionVerifiedActivityType` | Optional activity classification/context; does not choose a separate schema or itself prove completion. |
-| Event | MyOpportunity `eventRole` | Optional selected role, resolved through its configured options. Blank stays absent. |
-| Job | Opportunity `jobIndustry`, `jobCategory` | ISIC/ISCO labels for the advertised role, keeping the classification identity clear. |
-| Job | Opportunity `jobEmploymentType`, `jobWorkSchedule` | Separate advertised terms; Employment type is structured multi-select. Do not claim different actual placement terms were captured. |
-| Job | Opportunity `jobEmploymentDuration`, `jobEmploymentDurationUnit` | Advertised contract duration/unit, separate from actual participation duration. Permanent does not imply a fabricated numeric duration. |
-| Job | Opportunity `jobSalaryDisclosed`, `jobSalaryMinimum`, `jobSalaryMaximum`, `jobSalaryCurrency`, `jobPayInterval` | Advertised-compensation context, not salary earned/paid. The original proposal to suppress incomplete tuples was not implemented: the agreed generic optional-claim policy includes populated selected claims and omits absent JWS claims. Manual capture validates the tuple; permitted partial external data remains partial. |
-| Job | MyOpportunity `jobEmploymentStartDate` | Actual optional placement start, date-only. Not application deadline or generic participation start. |
-| Entrepreneurship | Opportunity `entrepreneurshipProgrammeType`, `entrepreneurshipProgrammeOtherDescription` | Optional programme context, using the approved Other relationship. |
-| Entrepreneurship | MyOpportunity `entrepreneurshipBusinessName`, `entrepreneurshipBusinessSummary` | Youth's venture/trading name and summary. Keep the programme title/summary distinct; do not replace one with the other. |
-| Entrepreneurship | MyOpportunity `entrepreneurshipBusinessRegistered`, `entrepreneurshipRegistrationReference` | Reported registered status and optional reference. False is valid; do not invent a registration number or claim registry verification. |
-| Entrepreneurship | MyOpportunity `entrepreneurshipSector` | Venture sector, resolved through the ISIC options; not programme category. |
-| Entrepreneurship | MyOpportunity `entrepreneurshipJobsCreated` | Count excluding founder. Zero differs from missing. |
-| Entrepreneurship | MyOpportunity `entrepreneurshipRevenueBand`, `entrepreneurshipRevenueCurrency` | Monthly USD-equivalent band plus separately labelled reported revenue currency. Currency does not redefine the band's USD thresholds. |
-| Entrepreneurship | MyOpportunity `entrepreneurshipFundingTypes`, `entrepreneurshipFundingAmountBand`, `entrepreneurshipFunder` | Funding actually reported as secured: structured types, aggregate band and optional funder. Not repeatable transactions. |
-| Entrepreneurship | MyOpportunity `entrepreneurshipClientLocation` | Customer reach; not physical venture location. |
+| Impact Action | MyOpportunity `ImpactActionImpactAchieved` | Actual outcome text; never substituted with planned Opportunity summary. |
+| Impact Action | Opportunity `ImpactActionVerifiedActivityType` | Optional activity classification/context; does not choose a separate schema or itself prove completion. |
+| Event | MyOpportunity `EventRole` | Optional selected role, resolved through its configured options. Blank stays absent. |
+| Job | Opportunity `JobIndustry`, `JobCategory` | ISIC/ISCO labels for the advertised role, keeping the classification identity clear. |
+| Job | Opportunity `JobEmploymentType`, `JobWorkSchedule` | Separate advertised terms; Employment type is structured multi-select. Do not claim different actual placement terms were captured. |
+| Job | Opportunity `JobEmploymentDuration`, `JobEmploymentDurationUnit` | Advertised contract duration/unit, separate from actual participation duration. Permanent does not imply a fabricated numeric duration. |
+| Job | Opportunity `JobSalaryDisclosed`, `JobSalaryMinimum`, `JobSalaryMaximum`, `JobSalaryCurrency`, `JobPayInterval` | Advertised-compensation context, not salary earned/paid. The original proposal to suppress incomplete tuples was not implemented: the agreed generic optional-claim policy includes populated selected claims and omits absent JWS claims. Manual capture validates the tuple; permitted partial external data remains partial. |
+| Job | MyOpportunity `JobEmploymentStartDate` | Actual optional placement start, date-only. Not application deadline or generic participation start. |
+| Entrepreneurship | Opportunity `EntrepreneurshipProgrammeType`, `EntrepreneurshipProgrammeOtherDescription` | Optional programme context, using the approved Other relationship. |
+| Entrepreneurship | MyOpportunity `EntrepreneurshipBusinessName`, `EntrepreneurshipBusinessSummary` | Youth's venture/trading name and summary. Keep the programme title/summary distinct; do not replace one with the other. |
+| Entrepreneurship | MyOpportunity `EntrepreneurshipBusinessRegistered`, `EntrepreneurshipRegistrationReference` | Reported registered status and optional reference. False is valid; do not invent a registration number or claim registry verification. |
+| Entrepreneurship | MyOpportunity `EntrepreneurshipSector` | Venture sector, resolved through the ISIC options; not programme category. |
+| Entrepreneurship | MyOpportunity `EntrepreneurshipJobsCreated` | Count excluding founder. Zero differs from missing. |
+| Entrepreneurship | MyOpportunity `EntrepreneurshipRevenueBand`, `EntrepreneurshipRevenueCurrency` | Monthly USD-equivalent band plus separately labelled reported revenue currency. Currency does not redefine the band's USD thresholds. |
+| Entrepreneurship | MyOpportunity `EntrepreneurshipFundingTypes`, `EntrepreneurshipFundingAmountBand`, `EntrepreneurshipFunder` | Funding actually reported as secured: structured types, aggregate band and optional funder. Not repeatable transactions. |
+| Entrepreneurship | MyOpportunity `EntrepreneurshipCustomerReach` | Customer reach; not physical venture location. |
 
 Explicit exclusions: Learning/Other/Impact/Event Difficulty, Job experience level/minimum
 qualification/preferred skills, Impact tools/Other tool description, and Entrepreneurship venture
@@ -424,7 +663,7 @@ self-attested skills from credentials, and treats accessibility preferences as p
 | Coordinates / LocationSource | Exclude by default: search/provenance mechanics, not needed for a portable identity claim. No precise device fix exists in this model. |
 | Gender | Retain existing declared value. Required in today's profile form does not make old credentials or historical users suddenly corrupt. |
 | Education | Retain optional value; use the expanded lookup label on new issuance, never rewrite old signed values or turn it into proof of qualification. |
-| Email / mobile | Recommend preserve the existing optional Email claim for compatibility; do not add mobile by default. Both are contact details and may change. Phone-only users must still issue successfully. |
+| Email / mobile | Final 2026-10-11 decision: omit Email/mobile from the default. Preserve their catalogue mappings and historical signed values for compatibility. Phone-only users still issue successfully. |
 | ID verification level | Not added, confirmed by Adrian. No Yoma-wide KYC level exists; do not substitute an invented Self-declared level. Contact OTP and payout KYC remain separate flows, not YoID identity-verification claims. |
 | Date of Issuance | Existing system issuance metadata, displayed once. Not onboarding date. |
 | User presets | Exclude goal, category preferences, engagement preferences, maximum commitment, incentive preference, languages, accessibility needs/Other text and self-attested skills. |
@@ -439,9 +678,9 @@ strategy is part of the later migration, not an extra credential on every profil
 
 - Preserve the existing API-owned `group`, `subGroup`, `sortOrder`, `nameDisplay`, `valueDisplay` and `itemsDisplay` response. Jason renders it verbatim, without resolving keys/IDs or resorting it.
 - Use one configured group level, consistent with the 39 final CF definitions; configured `SubGroup` stays null. The framework's optional subgroup capability is not removed.
-- Retain each mapped CF's configured group/order: Classification, Compensation, Employment, Placement, Activity, Impact, Participation, Programme, Venture and Outcomes as applicable.
-- Configure new core claims into coherent shared groups such as Opportunity Details, Participation, Verification and Youth Details, with collision-free within-group order. Fixed issuer/title/date headers stay outside detail groups.
-- The existing helper sorts group names before within-group sort order. Do not claim that a numeric field order also orders the groups. Keep that default unless a deliberate group-order requirement is agreed; no new grouping engine is proposed.
+- Retain each mapped CF's current configured group/order. Classification, Compensation, Employment and Programme remain advertised Opportunity sections; completion CFs use Completion Details in the approved sequence above.
+- Completion Details consolidates the former Participation, Verification, Youth Details, Location, Placement and Entrepreneurship Venture/Outcomes body sections. Opportunity Details remains separate. Fixed issuer/title/date headers stay outside detail groups.
+- The shared SSI helper gives Opportunity Details first priority and Completion Details second; remaining configured groups stay alphabetical and ungrouped attributes stay last. Within-group sortOrder, subgroup and label/name fallbacks are unchanged. This is read-side presentation only, not a migration or signed-schema change.
 - Complex lists remain structured `itemsDisplay`; labels containing commas, slashes or punctuation must not be split. Locations need a defined projection, not `.ToString()` on country objects or several unassociated lists.
 - Layout is unsigned application metadata and can change how old credentials are arranged without altering signed claims. Old signed values remain authoritative; historical schema mappings must remain resolvable.
 
@@ -495,7 +734,8 @@ This is the full-phase test target, not a claim that every scenario has run. Sta
 recorded separately in the consolidated handoff, including isolated PostgreSQL migration/seed
 and default-assignment tests. No live provider publication or end-to-end issuance smoke test had
 run at that stage. Subsequent 2026-10-09 Local provider-backed Opportunity issuance and wallet
-readback are recorded in the consolidated handoff; YoID live issuance remains failed/unverified.
+readback are recorded in the consolidated handoff. Adrian confirmed YoID issuance after the 2026-10-11
+lookup fix; the later revised defaults still need controlled reissuance/readback.
 
 ### Review Outcome — Configured Scope
 
@@ -504,7 +744,7 @@ readback are recorded in the consolidated handoff; YoID live issuance remains fa
 | Scope of CF inclusion | Use the explicit map above, not every configured CF. Learning/Other reuse Default because Difficulty is marked non-credential in the sheet. |
 | Job terms and salary | Included as advertised context; actual start stays optional. Generic optionality applies per claim; no inferred actual placement terms or salary-tuple suppression. |
 | Core Provider | Not selected by the defaults. The earlier informational-provider suggestion was not implemented; it never replaces issuer. |
-| YoID privacy/content | Keep the existing ten-attribute ACR set, including optional Email/Education. No region/city, coordinates/source, mobile, presets or invented KYC level is added. |
+| YoID privacy/content | Ten ACR attributes: genuine account verification methods replaces Email in the default, approved 2026-10-11. Names lead the ordered body. Email/phone/region/city remain catalogue-only. No coordinates/source, presets or invented KYC level. DisplayName remains title, not a repeated row. |
 
 The original BA Mandatory cells are not proposed as new completion/issuance gates. In particular,
 Job start/location/engagement and Entrepreneurship registration-reference/location cannot become
@@ -512,6 +752,20 @@ mandatory when the final capture implementation permits them to be absent or did
 
 ## Tasks
 
+- [x] Make Opportunity Details precede Completion Details in the SSI-only shared presentation helper; preserve other-group/ungrouped/system and field ordering, with all-six-context wallet assertions and catalogue/CF regression checks. No migration change.
+- [x] Apply Completion Details and friendly User/Engagement/Duration labels to all six defaults; order User, optional Skills Earned, type-specific completion fields, Location, Duration, Method/Evidence through existing seed metadata. Verify exact populated/omitted wallet order, metadata-only reseed stability and persisted fresh-DB layout.
+- [x] Resolve repeated constant-array arguments in PartnerProviderLocationTests using static readonly class fields; clean build and all eleven focused tests pass.
+- [x] Expand Jason's consolidated handoff with exact new core-field capture/read boundaries, unchanged search usage and outstanding credential rendering/schema-management work.
+- [x] Scope local JWS credential detail to the requesting holder tenant; verify holder success and other-holder denial live and in seven focused cases, without changing provider ACR reads or issuance.
+- [x] Populate location/provider examples in the existing post.sql and verify them in a fresh disposable database. All six types have completed outcomes and issuance schedules; revised-default live issuance/readback is also verified in the final Docker pass below.
+- [x] Implement the agreed participation-location snapshot and credential mapping, covering all
+  routes, engagement modes, Worldwide mixed lists, missing/partial partner data, later changes
+  and historical preservation in automated tests and the fresh PostgreSQL seed/repository pass.
+- [x] Align all 39 configured CF keys to PascalCase and labels to Title Case; preserve options and stable IDs; remove undeployed local-only alias helpers. Update CSV/default/Local seed contracts and regression tests.
+- [x] Implement ProviderURL/ProviderLogoURL/ProviderCountryId, Alison first-publisher metadata and origin separation, exclusive Worldwide saves
+  and country-only discovery fallback; no bulk historical data repair.
+- [x] Add optional explicit Entrepreneurship business location using the shared country/region/city
+  snapshot and Location claim; manual UI place selection is handed off to Jason.
 - [x] Establish type-context naming, parsing and validation groundwork.
 - [x] Add Opportunity Type stable names and separate display names.
 - [x] Expose type-aware static and custom-field schema attributes.
@@ -538,13 +792,37 @@ mandatory when the final capture implementation permits them to be absent or did
 - [x] Prepare and API-confirm Completed Local test-user records covering all six Opportunity types, using normal issuance scheduling; Adrian runs Hangfire jobs.
 - [x] Retrieve provider-issued Local wallet list/details for all six selected types; verify basic metadata, supplied CF labels, structured items and optional omissions.
 - [x] Complete the independent live schema/source attribute comparison for all six issued Opportunity types: 377 assertions passed across 46 returned attributes.
-- [ ] Capture and assess the YoID live issuance error separately; do not mark ACR issuance passed or infer an environment cause.
+- [x] Capture and assess the YoID live issuance error: the new exact-attempt issuance path exposed an existing incorrect SDK call in the provider schema-ID helper.
+- [x] Correct the ACR provider lookup to use the exact-ID endpoint, preserve local JWS lookup, and cover endpoint/encoding/version/not-found/error behaviour with focused regression tests.
+- [x] Adrian confirmed Local YoID issuance succeeded after the corrected lookup; the revised ten-attribute default and seven ordered body rows subsequently passed authenticated Docker readback.
 - [ ] Verify complete historical metadata/queued-work compatibility through authenticated provider issuance and wallet checks.
-- [ ] Execute the complete credential-phase test matrix and record actual evidence.
+- [x] Execute the agreed automated/Local API credential-phase matrix and record observed Docker evidence; do not mislabel automated historical/provider retry scenarios as live fault injection.
 - [ ] Prepare the later didx:me cutover/replay plan without executing a production replay in this phase.
 
 ## Decisions
 
+- 2026-10-11 (final Docker tests/security): after the paired layout review Adrian stopped the debugger, brought Docker down and authorized Codex to rebuild/run Local unattended, tenant creation before issuance. All revised defaults, six complete manual examples, two optional-CF CSV imports, schema management and wallet source comparisons passed. Adrian explicitly approved the surgical local-JWS holder-tenant guard after a cross-wallet read was found; seven focused tests and real-holder/other-holder API checks pass. ACR scoping, issuer/admin permissions, schedules and response contracts are unchanged. No commit/push or Stage/Production changes were made.
+
+- 2026-10-11 (section priority): Opportunity Details must precede Completion Details. Implemented only in SSI via the enum-backed shared presentation helper; other configured groups retain alphabetical order afterwards and ungrouped fields remain last. No migration/seed or signed-claim/version change for this follow-up.
+
+- 2026-10-11 (final credential presentation): Adrian approved Completion Details with User → Skills Earned (if selected) → type-specific completion fields → Location → Duration → Verification Method → Verification Evidence. User/Engagement/Duration are display labels only. Completion CFs use the same one-level grouping, including Entrepreneurship venture/outcome fields; advertised Job terms and Programme metadata remain separate. No runtime formatting/sorting special case or new schema version for metadata-only edits.
+
+- 2026-10-11 (final review sequence): Adrian resets Local, creates tenants and triggers issuance. Review YoID and all six Opportunity credential types together against the BA sheet and agreed decisions before remaining live API/schema-management testing. No agent-triggered issuance or replay before that paired review. Jason's earlier Web review is not proof that this new core-field/context/design pass is done; his exact remaining work is recorded in the existing consolidated handoff. Search changes are API-internal, not new Web search contract work.
+
+- 2026-10-11 (partner provider review): external DTOs model only verified payload fields. IXO maps provider and providerLogoUrl only; website/country fields and speculative parsing are removed. Yoma retains separate optional provider website/logo URLs and origin. Alison uses the first supplied publisher for name/logo/country together because no publisher timestamp is provided; never borrow missing fields from other publishers or infer origin from availability. The 20-course embedded sample has one publisher per course.
+
+- 2026-10-11 (final follow-up): retain CSV Country for the youth; add CountryCompleted for outcome country only. MyOpportunityInfo exports Country Completed only. Use one calculated Location property/claim for all types, no DisplayName/BusinessLocation split. Type/route logic stays in the service; shape/reference rules stay in validators. Optional explicit business capture and Provider/Worldwide changes are implemented as above, with no backfill or live provider mutation. The earlier participation-only/pending and naming-alias statements are superseded.
+
+- 2026-10-11 (naming review): use PascalCase for all configured CF definition keys and Title Case for field labels; options remain unchanged. Rename ClientLocation to CustomerReach, retaining its ID and single-select meaning. Local reset/reissue replaces undeployed CF names; no read-only semantic Customer Reach alias remains. Version new signed-name casing once. See the naming contract above.
+
+- 2026-10-11: Adrian agreed the completion-location design above: server-captured nullable core
+  MyOpportunity country/region/city snapshot for all types, no manual/CSV selector/override or
+  backfill, profile default, partner explicit-location precedence only without Worldwide, unchanged
+  youth-country gate and partner exemption, engagement applied at capture, credentials reading only
+  persisted data. Implementation is pending. Alison's Worldwide/publisher-origin mapping is a separate
+  assessment; no mapping or Prod data change was made.
+- 2026-10-11: Adrian approved removing Email from the YoID default and moving First Name/Surname to body positions 1–2. Remaining body order is DOB, Country, Gender, Education and Account verification methods. Historical/custom email claims remain supported; neither signed history nor the protected display-name title is rewritten. Solution-wide informational analyzer/style diagnostics were fixed without suppressions; the new default and historical email readback tests pass.
+- 2026-10-11: Adrian supplied the YoID issuance stack trace and authorized a surgical `AriesCloudClient.GetSchemaByIdOrNull` repair. SDK 1.4.0 and the test provider's OpenAPI both identify the first `GetSchemasAsync` argument as `schema_issuer_did`; `GetSchemaByIdAsync(schema_id: id)` is the exact-ID operation. The reported schema is present in the public test registry as YoID Default 1.0. The helper now uses the single-schema operation, retains local JWS precedence and maps 404/422 to null while propagating authentication/server failures. Twelve new cases and the selected 112-case SSI regression pass; build has zero warnings/errors. No tenant deletion, schema publication, DB reset, issuance trigger or commit was performed. Live ACR retry is still required.
 - 2026-10-09: Adrian authorized authenticated Local API completion/scheduling against his recreated DB, followed by him triggering tenant/issuance jobs and read-only DB checks. Six-type Completed coverage and successful provider-backed wallet list/detail readback are confirmed. After an API restart, all 377 independent schema/source attribute assertions passed across 46 returned attributes. Reused seeded submissions omit completion CF values, so this live pass must not be described as full populated-CF coverage. YoID issuance failed according to Adrian and its cause is not confirmed. Exact disposable Local IDs, issued IDs and observed results are recorded in the consolidated handoff. No direct DB writes, replay, agent-triggered jobs or commits.
 - 2026-10-09: Adrian requested a script-only correction for Local pending-verification seeding: new search fixtures had retained start times while normal verification removes them. `post.sql` now uses UTC midnight starts and end-of-day ends, preserving expired/future/open-ended scenarios. No current database repair or further test execution was requested; prior test evidence predates this correction.
 - 2026-08-06: Opportunity Type `Name` is a fixed technical code; `DisplayName` may change.

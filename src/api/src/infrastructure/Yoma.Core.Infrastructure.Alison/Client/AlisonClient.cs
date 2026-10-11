@@ -420,11 +420,19 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       var categories = GetCategories(course);
 
       // Countries:
-      // Always include Worldwide because Alison courses appear globally accessible.
-      // If publisher.location contains a specific resolvable country, also include it for publisher-country discoverability.
-      // Skip "Global" / "Worldwide" because those are already represented by WW.
-      // Ignore Alison publisher.country_id because it is Alison-specific and not mapped to Yoma/ISO country ids.
-      var countries = GetCountries(course);
+      // Course availability is Worldwide only; publisher origin is separate discoverability metadata.
+      // Alison-specific publisher.country_id is not a Yoma/ISO country reference.
+      var countries = new List<Domain.Lookups.Models.Country>
+      {
+        _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription())
+      };
+
+      // Provider:
+      // Publishers have no timestamp to identify the latest, so use the first supplied publisher.
+      // Keep name, logo and origin together; missing data must not be borrowed from another publisher.
+      var publisher = course.Publishers.FirstOrDefault();
+      var publisherName = publisher?.Name.HtmlDecode()?.RemoveHtmlTags()?.NormalizeNullableValue();
+      var providerCountry = GetProviderCountry(publisher);
 
       // Languages:
       // Store Alison opportunity content in English where available, but map all course-level supported languages.
@@ -440,7 +448,6 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       // Summary is plain text only.
       // Description is converted from Alison HTML to Yoma markdown-style formatting.
       // Description retains course type and certificate guidance; publisher is exposed as Provider.
-      var publisherName = GetPublisherName(course);
       var title = GetTitle(course);
       var summary = GetSummary(course, title);
       var description = GetDescription(course, title);
@@ -502,6 +509,8 @@ namespace Yoma.Core.Infrastructure.Alison.Client
           Summary = summary,
           URL = course.ToCourseUrl(_options.WebBaseUrl),
           Provider = publisherName,
+          ProviderLogoURL = publisher?.ImageUrl?.NormalizeNullableValue(),
+          ProviderCountryId = providerCountry?.Id,
 
           OrganizationId = _options.OrganizationIdYoma,
 
@@ -606,27 +615,12 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return false;
     }
 
-    private List<Domain.Lookups.Models.Country> GetCountries(Course course)
+    private Domain.Lookups.Models.Country? GetProviderCountry(Publisher? publisher)
     {
-      ArgumentNullException.ThrowIfNull(course);
+      var countryName = ResolvePublisherCountryName(publisher?.Location);
+      if (string.IsNullOrEmpty(countryName)) return null;
 
-      var result = new List<Domain.Lookups.Models.Country>
-      {
-        _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription())
-      };
-
-      foreach (var publisher in course.Publishers)
-      {
-        var countryName = ResolvePublisherCountryName(publisher.Location);
-        if (string.IsNullOrEmpty(countryName)) continue;
-
-        var country = _countryService.GetByNameOrNull(countryName);
-        if (country == null) continue;
-
-        result.Add(country);
-      }
-
-      return [.. result.DistinctBy(item => item.Id)];
+      return _countryService.GetByNameOrNull(countryName);
     }
 
     private static string? ResolvePublisherCountryName(string? location)
@@ -771,15 +765,6 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       description = $"{description}{StringExtensions.MarkdownParagraphBreak}{certificateNotice}";
 
       return description.NormalizeTrimMultiline();
-    }
-
-    private static string? GetPublisherName(Course course)
-    {
-      ArgumentNullException.ThrowIfNull(course);
-
-      return course.Publishers
-        .Select(item => item.Name.HtmlDecode()?.RemoveHtmlTags())
-        .FirstOrDefault(item => !string.IsNullOrWhiteSpace(item));
     }
 
     private static CourseTranslation? GetPreferredTranslation(Course course)

@@ -16,6 +16,10 @@ namespace Yoma.Core.Test.Core
 {
   public class OpportunityImpactActionCustomFieldTests
   {
+    #region Class Variables
+    private static readonly string[] ImpactActionGroups = ["Requirements", "Completion Details"];
+    #endregion Class Variables
+
     #region Tests
     [Fact]
     public void SeedsOptionalImpactActionFieldsWithoutDuplicatingCoreOrCompletionFields()
@@ -25,7 +29,7 @@ namespace Yoma.Core.Test.Core
       Assert.All(definitions, o =>
       {
         Assert.Equal("ImpactAction", o.EntityContext);
-        Assert.Contains(o.Group, new[] { "Requirements", "Activity" });
+        Assert.Contains(o.Group, ImpactActionGroups);
         Assert.Null(o.SubGroup);
         Assert.False(o.IsRequired);
         Assert.True(o.IsActive);
@@ -39,7 +43,7 @@ namespace Yoma.Core.Test.Core
       Assert.Equal(13, tools.Options!.Count);
       Assert.Equal(ImpactActionTool.Other.ToString(), tools.Options.Last().Key);
 
-      var activity = Assert.Single(definitions, o => o.Key == "impactActionVerifiedActivityType");
+      var activity = Assert.Single(definitions, o => o.Key == "ImpactActionVerifiedActivityType");
       Assert.False(activity.SupportsMultiple);
       Assert.False(activity.IsSystem);
       Assert.Equal(3, activity.Options!.Count);
@@ -98,7 +102,7 @@ namespace Yoma.Core.Test.Core
         [new CustomFieldValueRequest { Key = CustomFieldConstants.ImpactAction.Tools.Required, Values = ["NotATool"] }],
         CustomFieldUpsertMode.PutEnforceRequired));
       Assert.Throws<ValidationException>(() => service.Validate(CustomFieldEntityType.Opportunity, "ImpactAction",
-        [new CustomFieldValueRequest { Key = "impactActionVerifiedActivityType", Values = ["VerifiedFacilitationSession", "WaterQualityMonitoringSession"] }],
+        [new CustomFieldValueRequest { Key = "ImpactActionVerifiedActivityType", Values = ["VerifiedFacilitationSession", "WaterQualityMonitoringSession"] }],
         CustomFieldUpsertMode.PutEnforceRequired));
     }
 
@@ -109,12 +113,12 @@ namespace Yoma.Core.Test.Core
       {
         { CustomFieldConstants.ImpactAction.Tools.Required, "GPS device|Other" },
         { CustomFieldConstants.ImpactAction.Tools.OtherDescription, "Water sampling kit" },
-        { "impactActionVerifiedActivityType", "Water quality monitoring session" }
+        { "ImpactActionVerifiedActivityType", "Water quality monitoring session" }
       });
 
       var tools = Assert.Single(values!, o => o.Key == CustomFieldConstants.ImpactAction.Tools.Required);
       Assert.Equal(["GpsDevice", ImpactActionTool.Other.ToString()], tools.Values);
-      var activity = Assert.Single(values!, o => o.Key == "impactActionVerifiedActivityType");
+      var activity = Assert.Single(values!, o => o.Key == "ImpactActionVerifiedActivityType");
       Assert.Equal("WaterQualityMonitoringSession", Assert.Single(activity.Values!));
     }
     #endregion

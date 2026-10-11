@@ -52,7 +52,9 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
       if (result.Count == 0)
         throw new InvalidOperationException("IXO opportunity must contain at least one supported country");
 
-      return result;
+      // Worldwide is exclusive availability. Do not repurpose other availability entries as provider origin.
+      var worldwide = result.SingleOrDefault(country => country.CodeAlpha2 == Country.Worldwide.ToDescription());
+      return worldwide == null ? result : [worldwide];
     }
 
     private static Domain.Lookups.Models.Country? ResolveCountry(

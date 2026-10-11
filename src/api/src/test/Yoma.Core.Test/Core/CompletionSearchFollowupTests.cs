@@ -28,7 +28,7 @@ namespace Yoma.Core.Test.Core
     public void PlacementMayOmitTimingButLearningAndEventsStillRequireIt(Domain.Opportunity.Type type, bool required)
     {
       var request = new MyOpportunityRequestVerify { DateEnd = DateTimeOffset.UtcNow };
-      var validator = new MyOpportunityRequestValidatorVerify(Mock.Of<ITimeIntervalService>());
+      var validator = new MyOpportunityRequestValidatorVerify(Mock.Of<ITimeIntervalService>(), Mock.Of<ICountryService>());
       var context = new ValidationContext<MyOpportunityRequestVerify>(request);
       context.RootContextData[nameof(Domain.Opportunity.Models.Opportunity.Type)] = type;
 
@@ -80,7 +80,7 @@ namespace Yoma.Core.Test.Core
       {
         Assert.Empty(errors);
         Assert.Equal(15, headers!.Count);
-        Assert.Equal(12, headers.Count(o => o.StartsWith("CF:entrepreneurship", StringComparison.Ordinal)));
+        Assert.Equal(12, headers.Count(o => o.StartsWith("CF:Entrepreneurship", StringComparison.Ordinal)));
       }
       else Assert.Contains(errors.SelectMany(o => o.Items), o => o.Type == CSVImportErrorType.HeaderUnexpectedColumn);
     }

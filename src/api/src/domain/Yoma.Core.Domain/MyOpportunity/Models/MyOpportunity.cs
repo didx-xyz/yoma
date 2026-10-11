@@ -116,6 +116,28 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public string? CommentVerification { get; set; }
 
+    /// <summary>
+    /// Types of evidence actually submitted, or the recorded verification comment when none was submitted.
+    /// Automatic action-link, import and partner completions use their recorded comment.
+    /// Action links can also complete manually configured opportunities. File URLs and geometry are not disclosed.
+    /// With uploaded evidence, the approval comment is not a substitute for the evidence types.
+    /// </summary>
+    [JsonIgnore]
+    public string? VerificationEvidence
+    {
+      get
+      {
+        var evidenceTypes = Verifications?
+          .Select(item => item.VerificationTypeDisplayName)
+          .Distinct(StringComparer.OrdinalIgnoreCase)
+          .ToList();
+
+        if (evidenceTypes?.Count > 0) return string.Join(", ", evidenceTypes);
+
+        return string.IsNullOrEmpty(CommentVerification) ? null : CommentVerification;
+      }
+    }
+
     public Guid? CommitmentIntervalId { get; set; }
 
     public Core.TimeIntervalOption? CommitmentInterval { get; set; }
@@ -139,6 +161,43 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public DateTimeOffset? DateCompleted { get; set; }
 
+    /// <summary>
+    /// Participation country captured for On-site/Hybrid submissions, or an explicitly supplied Entrepreneurship business country.
+    /// Participation defaults to the youth profile; CSV/partner input takes precedence only without Worldwide.
+    /// Business location is optional explicit data only, independent of engagement or Worldwide; it never defaults to the profile.
+    /// Historical submissions are not backfilled; pending updates and finalization preserve the snapshot.
+    /// </summary>
+    public Guid? CountryId { get; set; }
+
+    /// <summary>
+    /// Name resolved from the captured CountryId, not the youth's current country or opportunity availability.
+    /// </summary>
+    public string? Country { get; set; }
+
+    /// <summary>
+    /// Optional region captured with the country; partial business/participant input is not supplemented from the profile.
+    /// </summary>
+    public string? Region { get; set; }
+
+    /// <summary>
+    /// Optional city captured with the country; coordinates and exact attendance verification are excluded.
+    /// </summary>
+    public string? City { get; set; }
+
+    /// <summary>
+    /// Persisted named location for display/credentials; never reconstructed from today's profile or engagement type.
+    /// Coordinates and opportunity availability countries are deliberately excluded.
+    /// </summary>
+    [JsonIgnore]
+    public string? Location => !CountryId.HasValue || string.IsNullOrEmpty(Country)
+      ? null
+      : string.Join(", ", new[] { City, Region, Country }
+        .Where(value => !string.IsNullOrEmpty(value))
+        .Distinct(StringComparer.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// Reward awarded for this completion, not the opportunity's advertised reward.
+    /// </summary>
     public decimal? ZltoReward { get; set; }
 
     public bool? Recommendable { get; set; }

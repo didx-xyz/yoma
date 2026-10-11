@@ -160,7 +160,7 @@ namespace Yoma.Core.Domain.Core.Extensions
 
       filters.ForEach(o =>
       {
-        if (o != null) o.Values = o.Values?.OrderBy(value => value, StringComparer.OrdinalIgnoreCase).ToList();
+        o?.Values = o.Values?.OrderBy(value => value, StringComparer.OrdinalIgnoreCase).ToList();
       });
 
       return [.. filters

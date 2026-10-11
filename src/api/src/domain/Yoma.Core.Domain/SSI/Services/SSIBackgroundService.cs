@@ -99,12 +99,13 @@ namespace Yoma.Core.Domain.SSI.Services
             "Opportunity_Title",
             "Opportunity_Summary",
             "Opportunity_Type",
-            "Opportunity_Countries",
+            "MyOpportunity_Location",
             "Opportunity_EngagementType",
             "Opportunity_Skills",
             "MyOpportunity_UserDisplayName",
             "MyOpportunity_CommitmentIntervalDescription",
-            "MyOpportunity_Verifications"
+            "Opportunity_VerificationMethod",
+            "MyOpportunity_VerificationEvidence"
           ]);
 
         await SeedSchema(ArtifactType.JWS,
@@ -115,14 +116,15 @@ namespace Yoma.Core.Domain.SSI.Services
             "Opportunity_Title",
             "Opportunity_Summary",
             "Opportunity_Type",
-            "Opportunity_Countries",
+            "MyOpportunity_Location",
             "Opportunity_EngagementType",
             "Opportunity_Skills",
             "MyOpportunity_UserDisplayName",
             "MyOpportunity_CommitmentIntervalDescription",
-            "MyOpportunity_Verifications",
-            "Opportunity_impactActionVerifiedActivityType",
-            "MyOpportunity_impactActionImpactAchieved"
+            "Opportunity_VerificationMethod",
+            "MyOpportunity_VerificationEvidence",
+            "Opportunity_ImpactActionVerifiedActivityType",
+            "MyOpportunity_ImpactActionImpactAchieved"
           ]);
 
         await SeedSchema(ArtifactType.JWS,
@@ -133,13 +135,14 @@ namespace Yoma.Core.Domain.SSI.Services
             "Opportunity_Title",
             "Opportunity_Summary",
             "Opportunity_Type",
-            "Opportunity_Countries",
+            "MyOpportunity_Location",
             "Opportunity_EngagementType",
             "Opportunity_Skills",
             "MyOpportunity_UserDisplayName",
             "MyOpportunity_CommitmentIntervalDescription",
-            "MyOpportunity_Verifications",
-            "MyOpportunity_eventRole"
+            "Opportunity_VerificationMethod",
+            "MyOpportunity_VerificationEvidence",
+            "MyOpportunity_EventRole"
           ]);
 
         await SeedSchema(ArtifactType.JWS,
@@ -150,23 +153,24 @@ namespace Yoma.Core.Domain.SSI.Services
             "Opportunity_Title",
             "Opportunity_Summary",
             "Opportunity_Type",
-            "Opportunity_Countries",
+            "MyOpportunity_Location",
             "Opportunity_EngagementType",
             "MyOpportunity_UserDisplayName",
             "MyOpportunity_CommitmentIntervalDescription",
-            "MyOpportunity_Verifications",
-            "Opportunity_jobIndustry",
-            "Opportunity_jobCategory",
-            "Opportunity_jobEmploymentType",
-            "Opportunity_jobWorkSchedule",
-            "Opportunity_jobEmploymentDuration",
-            "Opportunity_jobEmploymentDurationUnit",
-            "Opportunity_jobSalaryDisclosed",
-            "Opportunity_jobSalaryMinimum",
-            "Opportunity_jobSalaryMaximum",
-            "Opportunity_jobSalaryCurrency",
-            "Opportunity_jobPayInterval",
-            "MyOpportunity_jobEmploymentStartDate"
+            "Opportunity_VerificationMethod",
+            "MyOpportunity_VerificationEvidence",
+            "Opportunity_JobIndustry",
+            "Opportunity_JobCategory",
+            "Opportunity_JobEmploymentType",
+            "Opportunity_JobWorkSchedule",
+            "Opportunity_JobEmploymentDuration",
+            "Opportunity_JobEmploymentDurationUnit",
+            "Opportunity_JobSalaryDisclosed",
+            "Opportunity_JobSalaryMinimum",
+            "Opportunity_JobSalaryMaximum",
+            "Opportunity_JobSalaryCurrency",
+            "Opportunity_JobPayInterval",
+            "MyOpportunity_JobEmploymentStartDate"
           ]);
 
         await SeedSchema(ArtifactType.JWS,
@@ -177,30 +181,34 @@ namespace Yoma.Core.Domain.SSI.Services
             "Opportunity_Title",
             "Opportunity_Summary",
             "Opportunity_Type",
-            "Opportunity_Countries",
             "Opportunity_EngagementType",
             "Opportunity_Skills",
             "MyOpportunity_UserDisplayName",
             "MyOpportunity_CommitmentIntervalDescription",
-            "MyOpportunity_Verifications",
-            "Opportunity_entrepreneurshipProgrammeType",
-            "Opportunity_entrepreneurshipProgrammeOtherDescription",
-            "MyOpportunity_entrepreneurshipBusinessName",
-            "MyOpportunity_entrepreneurshipBusinessSummary",
-            "MyOpportunity_entrepreneurshipBusinessRegistered",
-            "MyOpportunity_entrepreneurshipRegistrationReference",
-            "MyOpportunity_entrepreneurshipSector",
-            "MyOpportunity_entrepreneurshipJobsCreated",
-            "MyOpportunity_entrepreneurshipRevenueBand",
-            "MyOpportunity_entrepreneurshipRevenueCurrency",
-            "MyOpportunity_entrepreneurshipFundingTypes",
-            "MyOpportunity_entrepreneurshipFundingAmountBand",
-            "MyOpportunity_entrepreneurshipFunder",
-            "MyOpportunity_entrepreneurshipClientLocation"
+            "Opportunity_VerificationMethod",
+            "MyOpportunity_VerificationEvidence",
+            "Opportunity_EntrepreneurshipProgrammeType",
+            "Opportunity_EntrepreneurshipProgrammeOtherDescription",
+            "MyOpportunity_EntrepreneurshipBusinessName",
+            "MyOpportunity_EntrepreneurshipBusinessSummary",
+            "MyOpportunity_Location",
+            "MyOpportunity_EntrepreneurshipBusinessRegistered",
+            "MyOpportunity_EntrepreneurshipRegistrationReference",
+            "MyOpportunity_EntrepreneurshipSector",
+            "MyOpportunity_EntrepreneurshipJobsCreated",
+            "MyOpportunity_EntrepreneurshipRevenueBand",
+            "MyOpportunity_EntrepreneurshipRevenueCurrency",
+            "MyOpportunity_EntrepreneurshipFundingTypes",
+            "MyOpportunity_EntrepreneurshipFundingAmountBand",
+            "MyOpportunity_EntrepreneurshipFunder",
+            "MyOpportunity_EntrepreneurshipCustomerReach"
           ]);
 
         // YoID remains AnonCreds. Missing optional source values retain the established n/a handling;
         // user discovery preferences and precise coordinates are deliberately not identity claims.
+        // User_DisplayName is the protected Title attribute, rendered above the credential body.
+        // Do not duplicate it as another body attribute merely to match the BA mock-up's row.
+        // Email remains available to historical/custom schemas, but is not a default identity claim.
         await SeedSchema(ArtifactType.ACR,
           _appSettings.SSISchemaFullNameYoID,
           [
@@ -210,10 +218,10 @@ namespace Yoma.Core.Domain.SSI.Services
             "User_FirstName",
             "User_Surname",
             "User_DateOfBirth",
-            "User_Email",
             "User_Gender",
             "User_Education",
-            "User_Country"
+            "User_Country",
+            "User_AccountVerificationMethods"
           ]);
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed SSI default schema seeding");
@@ -655,18 +663,19 @@ namespace Yoma.Core.Domain.SSI.Services
       // Create/Update always adds compatible system properties. Include these in the expected set,
       // but compare only public entity attributes: internal attributes are not returned in Entities.
       // Full-set comparison detects removals as well as additions; ordering alone never creates a version.
+      // Signed names are case-sensitive contracts: the CF PascalCase change must create a version.
       var expectedAttributes = attributes
         .Concat(_ssiSchemaEntityService.List(schema.Type, schema.TypeContext)
           .SelectMany(entity => entity.Properties?.Where(property => property.System) ?? [])
           .Select(property => property.AttributeName))
         .Select(attribute => attribute.Trim())
-        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        .ToHashSet(StringComparer.Ordinal);
 
       var existingAttributes = schema.Entities
         .SelectMany(entity => (entity.Properties?.Select(property => property.AttributeName) ?? [])
           .Concat(entity.CustomFields?.Select(customField => customField.AttributeName) ?? []))
         .Select(attribute => attribute.Trim())
-        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        .ToHashSet(StringComparer.Ordinal);
 
       if (expectedAttributes.SetEquals(existingAttributes)) return;
 
@@ -744,6 +753,24 @@ namespace Yoma.Core.Domain.SSI.Services
 
           // Complex properties are stored as JSON within the provider's string attribute contract. Wallet rendering
           // normalizes both this representation and historical comma-delimited values into the same display contract.
+          propValue = JsonConvert.SerializeObject(items);
+        }
+        else if (propValueObject is Enum flags && flags.GetType().IsDefined(typeof(FlagsAttribute), false))
+        {
+          // Keep the domain's combined flags value, but use the existing signed list contract
+          // for credential presentation. None has no selected items and follows optionality.
+          var items = flags.GetFlags()
+            .Select(flag => new SSICredentialAttributeItem { Name = flag.ToDescription() })
+            .ToList();
+
+          if (items.Count == 0)
+          {
+            if (prop.Required)
+              throw new InvalidOperationException($"Entity property '{prop.Name}' marked as required but has no selected flags");
+            MapOptionalCredentialAttributeWithoutValue(request, prop.AttributeName);
+            continue;
+          }
+
           propValue = JsonConvert.SerializeObject(items);
         }
         else

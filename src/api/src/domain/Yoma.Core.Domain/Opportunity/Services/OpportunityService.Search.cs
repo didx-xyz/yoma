@@ -145,6 +145,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
       // Location: OR countries, AND each country's optional details on one mapping.
       if (selection.Countries != null)
       {
+        // Provider origin is discoverability, never availability. Do not use it for Worldwide
+        // selections or region/city/radius searches, which must match an actual opportunity location.
+        var worldwideId = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
+        var includeProviderOrigin = selection.Countries.All(country => country.CountryId != worldwideId);
+        var worldwideOpportunities = _opportunityCountryRepository.Query()
+          .Where(location => location.CountryId == worldwideId)
+          .Select(location => location.OpportunityId);
         var predicate = PredicateBuilder.False<Models.Opportunity>();
         foreach (var country in selection.Countries)
         {
@@ -175,6 +182,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
           }
 
           predicate = predicate.Or(o => locations.Any(location => location.OpportunityId == o.Id));
+          if (includeProviderOrigin && country.Region == null && country.City == null && country.Radius == null)
+            predicate = predicate.Or(o => o.ProviderCountryId == country.CountryId && worldwideOpportunities.Contains(o.Id));
         }
         query = query.Where(predicate);
       }

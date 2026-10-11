@@ -308,7 +308,7 @@ namespace Yoma.Core.Domain.SSI.Services
       {
         // Signed values retain their technical codes. Presentation uses the shared enum descriptions;
         // historical values unknown to the current enum remain readable without inventing a label.
-        return Enum.TryParse(type, result, true, out var value) && Enum.IsDefined(type, value)
+        return Enum.TryParse(type, result, true, out var value) && ((Enum)value).IsDefinedOrValidFlags()
           ? ((Enum)value).ToDescription()
           : result;
       }

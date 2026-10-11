@@ -199,9 +199,8 @@ namespace Yoma.Core.Domain.SSI.Services
       if (nameParts.Length is < 2 or > 3 || nameParts.Any(string.IsNullOrWhiteSpace))
         throw new ArgumentException($"Schema name of '{schemaFullName}' is invalid. Expecting [type]|[name] or [type]|[typeContext]|[name]", nameof(schemaFullName));
 
-      var schemaType = _ssiSchemaTypeService.GetByNameOrNull(nameParts.First());
-      if (schemaType == null)
-        throw new ArgumentException($"Schema full name of '{schemaFullName}' is invalid. Specified type '{nameParts.First()}' does not exist", nameof(schemaFullName));
+      var schemaType = _ssiSchemaTypeService.GetByNameOrNull(nameParts.First())
+        ?? throw new ArgumentException($"Schema full name of '{schemaFullName}' is invalid. Specified type '{nameParts.First()}' does not exist", nameof(schemaFullName));
 
       var typeContext = nameParts.Length == 3
         ? nameParts[1].Trim()

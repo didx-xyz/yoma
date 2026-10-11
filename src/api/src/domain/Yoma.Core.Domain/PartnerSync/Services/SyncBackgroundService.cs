@@ -1021,6 +1021,9 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                 Completed = item.Status == SyncItemVerificationStatus.Completed,
                 PercentComplete = item.PercentComplete,
                 DateCompleted = item.DateCompleted,
+                CountryId = item.CountryId,
+                Region = item.Region,
+                City = item.City,
                 CustomFields = item.CustomFields
               };
 

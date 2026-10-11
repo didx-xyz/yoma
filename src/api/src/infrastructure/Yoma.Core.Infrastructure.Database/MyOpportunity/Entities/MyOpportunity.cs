@@ -50,6 +50,20 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Entities
 
     public DateTimeOffset? DateCompleted { get; set; }
 
+    /// <summary>
+    /// Optional submission-time participation/business snapshot; no historical backfill or cascading profile-location updates.
+    /// Domain capture rules determine applicability and source; the country name is resolved from the lookup.
+    /// </summary>
+    [ForeignKey("CountryId")]
+    public Guid? CountryId { get; set; }
+    public Country? Country { get; set; }
+
+    [Column(TypeName = "varchar(255)")]
+    public string? Region { get; set; }
+
+    [Column(TypeName = "varchar(255)")]
+    public string? City { get; set; }
+
     [Column(TypeName = "decimal(8,2)")]
     public decimal? ZltoReward { get; set; }
 

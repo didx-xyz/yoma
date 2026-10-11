@@ -374,7 +374,7 @@ BEGIN
             FROM "Core"."CustomFieldOption"
             WHERE "CustomFieldDefinitionId" = V_Definition."Id"
               AND "IsActive" = TRUE AND "Key" <> 'Other'
-              AND (V_Definition."Key" <> 'jobEmploymentType' OR "Key" = 'Permanent');
+              AND (V_Definition."Key" <> 'JobEmploymentType' OR "Key" = 'Permanent');
         END IF;
 
         IF V_Value IS NULL AND COALESCE(CARDINALITY(V_OptionKeys), 0) = 0 THEN
@@ -401,32 +401,6 @@ BEGIN
           );
     END LOOP;
 END $$ LANGUAGE plpgsql;
-
--- Local/Dev only: assign canonical seeded schemas before creating issuance schedules below.
--- Learning/Other share the generic claim set; all other current types have scoped defaults.
--- Keep this list aligned with SSISSchemaHelper.ToDefaultFullName; unknown types fail the seed.
-UPDATE "Opportunity"."Opportunity" AS O
-SET "SSISchemaName" = CASE
-    WHEN T."Name" IN ('Other', 'Learning') THEN 'Opportunity|Default'
-    WHEN T."Name" IN ('Event', 'Job', 'ImpactAction', 'Entrepreneurship')
-        THEN 'Opportunity|' || T."Name" || '|Default'
-    ELSE 'ERROR'
-END
-FROM "Opportunity"."OpportunityType" T
-WHERE O."TypeId" = T."Id"
-    AND O."CredentialIssuanceEnabled" = true;
-
--- Check for unsupported SSISchemaName
-DO $$
-BEGIN
-    IF EXISTS (
-        SELECT 1
-        FROM "Opportunity"."Opportunity"
-        WHERE "CredentialIssuanceEnabled" = true AND "SSISchemaName" = 'ERROR'
-    ) THEN
-        RAISE EXCEPTION 'Unsupported SSISchemaName: ERROR';
-    END IF;
-END $$;
 
 -- Categories: one to three real selections, not every category on every row.
 INSERT INTO "Opportunity"."OpportunityCategories"("Id", "OpportunityId", "CategoryId", "DateCreated")
@@ -502,8 +476,8 @@ CROSS JOIN LATERAL GENERATE_SERIES(0, MOD(ABS(HASHTEXT(O."Id"::TEXT)::BIGINT), 4
 JOIN "Choices" S ON S."Index" = 1 + MOD(ABS(HASHTEXT(O."Id"::TEXT)::BIGINT) + N."Offset", C."Count");
 
 -- Search fixtures (local/dev only): complete selections and deliberately unknown
--- partner-like metadata stay distinguishable. Location remains a country mapping;
--- no user location/preferences are seeded.
+-- partner-like metadata stay distinguishable. Opportunity availability and provider
+-- origin are separate; no user location/preferences are seeded.
 CREATE TEMP TABLE "SearchFixtures" ON COMMIT PRESERVE ROWS AS
 WITH "Requested"("Number", "Type") AS (
     VALUES
@@ -544,9 +518,14 @@ WHERE S."OpportunityId" = F."Id" AND MOD(F."Number", 6) = 0;
 -- Match the API's UTC date boundaries. Pending verification seeding removes the
 -- start time, so a fixture start later than midnight would fail normal validation.
 UPDATE "Opportunity"."Opportunity" O
-SET "Title" = 'Search fixture ' || LPAD(F."Number"::TEXT, 2, '0') || ' - ' || T."Name" ||
+SET "Title" = LPAD(F."Number"::TEXT, 2, '0') || ' - ' || T."Name" ||
         CASE WHEN MOD(F."Number", 3) = 0 OR F."Number" = 11 THEN ' (incomplete partner-like)' ELSE '' END,
-    "Provider" = CASE WHEN MOD(F."Number", 3) = 0 THEN NULL ELSE 'Fixture provider' END,
+    "Provider" = CASE WHEN MOD(F."Number", 3) = 0 THEN NULL ELSE 'Community Learning Centre' END,
+    "ProviderURL" = CASE WHEN MOD(F."Number", 3) = 0 THEN NULL ELSE 'https://example.com/provider' END,
+    "ProviderLogoURL" = CASE WHEN MOD(F."Number", 3) = 0 THEN NULL ELSE 'https://yoma.world/yoma-icon-192.png' END,
+    "ProviderCountryId" = CASE WHEN MOD(F."Number", 3) = 0 THEN NULL
+        ELSE (SELECT "Id" FROM "Lookup"."Country"
+            WHERE "CodeAlpha2" = CASE WHEN F."Number" = 23 THEN 'IE' ELSE 'ZA' END) END,
     "OrganizationId" = (SELECT "Id" FROM "Entity"."Organization"
         WHERE "StatusId" = (SELECT "Id" FROM "Entity"."OrganizationStatus" WHERE "Name" = 'Active')
         ORDER BY "Id" LIMIT 1),
@@ -567,7 +546,9 @@ SET "Title" = 'Search fixture ' || LPAD(F."Number"::TEXT, 2, '0') || ' - ' || T.
             END AT TIME ZONE 'UTC'
         ) + INTERVAL '1 day' - INTERVAL '1 millisecond'
     ) AT TIME ZONE 'UTC',
-    "EngagementTypeId" = CASE WHEN MOD(F."Number", 3) = 0 THEN NULL
+    "EngagementTypeId" = CASE WHEN F."Number" = 14
+        THEN (SELECT "Id" FROM "Lookup"."EngagementType" WHERE "Name" = 'Hybrid')
+        WHEN MOD(F."Number", 3) = 0 THEN NULL
         ELSE (SELECT "Id" FROM "Lookup"."EngagementType"
             WHERE "Name" = CASE WHEN MOD(F."Number", 2) = 0 THEN 'Remote' ELSE 'OnSite' END) END,
     "Incentivized" = CASE WHEN MOD(F."Number", 3) = 0 THEN NULL
@@ -610,9 +591,8 @@ SELECT gen_random_uuid(), F."Id", C."Id",
     CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM "SearchFixtures" F
 JOIN "Lookup"."Country" C ON
-    (F."Number" = 23 AND C."CodeAlpha2" = 'WW') OR
-    (F."Number" <> 23 AND C."CodeAlpha2" = 'ZA') OR
-    (F."Number" = 24 AND C."CodeAlpha2" = 'WW');
+    (F."Number" IN (23, 24) AND C."CodeAlpha2" = 'WW') OR
+    (F."Number" NOT IN (23, 24) AND C."CodeAlpha2" = 'ZA');
 
 INSERT INTO "Opportunity"."OpportunityAccommodations"(
     "Id", "OpportunityId", "AccommodationId", "DateCreated"
@@ -649,19 +629,55 @@ INSERT INTO "Core"."CustomFieldValue"(
 )
 SELECT gen_random_uuid(), D."Id", O."Id", V."Value", V."Numeric", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM (SELECT "Id" FROM "SearchFixtures" WHERE "Number" = 1) O
-JOIN (VALUES ('jobSalaryMinimum', '1000', 1000::NUMERIC),
-             ('jobSalaryCurrency', (SELECT "Id"::TEXT FROM "Lookup"."Currency" WHERE "Code" = 'USD'), NULL::NUMERIC),
-             ('jobPayInterval', 'PerMonth', NULL::NUMERIC)) V("Key", "Value", "Numeric") ON TRUE
+JOIN (VALUES ('JobSalaryMinimum', '1000', 1000::NUMERIC),
+             ('JobSalaryCurrency', (SELECT "Id"::TEXT FROM "Lookup"."Currency" WHERE "Code" = 'USD'), NULL::NUMERIC),
+             ('JobPayInterval', 'PerMonth', NULL::NUMERIC)) V("Key", "Value", "Numeric") ON TRUE
 JOIN "Core"."CustomFieldDefinition" D ON D."Key" = V."Key" AND D."IsActive" = TRUE;
 
 UPDATE "Core"."CustomFieldValue" V SET "Value" = 'true'
 FROM "Core"."CustomFieldDefinition" D, "SearchFixtures" F
-WHERE V."CustomFieldDefinitionId" = D."Id" AND D."Key" = 'jobSalaryDisclosed'
+WHERE V."CustomFieldDefinitionId" = D."Id" AND D."Key" = 'JobSalaryDisclosed'
   AND V."OpportunityId" = F."Id" AND F."Number" = 1;
 
 -- Salary is an incentive, but not a Yoma ZLTO reward for Jobs.
 UPDATE "Opportunity"."Opportunity" O SET "Incentivized" = TRUE
 FROM "SearchFixtures" F WHERE O."Id" = F."Id" AND F."Number" = 1;
+
+-- Completion examples below must always exercise all six credential types.
+-- Other rows retain their varied settings; no Job ZLTO reward is introduced.
+UPDATE "Opportunity"."Opportunity" O
+SET "VerificationEnabled" = TRUE,
+    "VerificationMethod" = 'Manual',
+    "CredentialIssuanceEnabled" = TRUE
+FROM "SearchFixtures" F
+WHERE O."Id" = F."Id" AND F."Number" IN (1, 4, 5, 10, 13, 14, 19, 20, 23);
+
+-- Local/Dev only: assign canonical seeded schemas after the fixture overrides
+-- and before creating issuance schedules below. Learning/Other share the generic
+-- claim set; all other current types have scoped defaults.
+-- Keep this list aligned with SSISSchemaHelper.ToDefaultFullName; unknown types fail the seed.
+UPDATE "Opportunity"."Opportunity" AS O
+SET "SSISchemaName" = CASE
+    WHEN T."Name" IN ('Other', 'Learning') THEN 'Opportunity|Default'
+    WHEN T."Name" IN ('Event', 'Job', 'ImpactAction', 'Entrepreneurship')
+        THEN 'Opportunity|' || T."Name" || '|Default'
+    ELSE 'ERROR'
+END
+FROM "Opportunity"."OpportunityType" T
+WHERE O."TypeId" = T."Id"
+    AND O."CredentialIssuanceEnabled" = true;
+
+-- Check for unsupported SSISchemaName
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM "Opportunity"."Opportunity"
+        WHERE "CredentialIssuanceEnabled" = true AND "SSISchemaName" = 'ERROR'
+    ) THEN
+        RAISE EXCEPTION 'Unsupported SSISchemaName: ERROR';
+    END IF;
+END $$;
 
 -- Representative optional filters use active definition/option metadata. Leave
 -- some rows empty so missing-value policies remain testable; never choose Other
@@ -676,8 +692,8 @@ FROM "Opportunity"."Opportunity" O
 JOIN "Opportunity"."OpportunityType" T ON T."Id" = O."TypeId"
 JOIN "Core"."CustomFieldDefinition" D ON D."EntityType" = 'Opportunity'
     AND D."EntityContext" = T."Name" AND D."IsActive" = TRUE
-    AND D."Key" IN ('impactActionToolsRequired', 'impactActionVerifiedActivityType',
-        'entrepreneurshipProgrammeType', 'entrepreneurshipVentureStageTargeted')
+    AND D."Key" IN ('ImpactActionToolsRequired', 'ImpactActionVerifiedActivityType',
+        'EntrepreneurshipProgrammeType', 'EntrepreneurshipVentureStageTargeted')
 CROSS JOIN LATERAL (
     SELECT STRING_AGG(X."Key", '|' ORDER BY X."SortOrder", X."Key") AS "Value"
     FROM (
@@ -853,24 +869,48 @@ ORDER BY "DateCreated"
 OFFSET 90 ROWS
 FETCH NEXT 30 ROWS ONLY;
 
--- Two controlled completion examples complement the varied generic rows:
--- an Event awaiting review and a completed Job placement with an actual start date.
+-- All six types are completed and scheduled below.
+-- Job 05 and remote Event 04 remain pending for the verification-seeding job.
+-- Specific OnSite/Hybrid snapshots illustrate supplied participation location;
+-- Entrepreneurship uses explicit business location even when Remote. Worldwide
+-- Other uses only the user's known profile location. Remote Learning stays empty.
+-- Existing generic/history examples retain their unknown locations.
+-- Provider logo above reuses a public Yoma image as a placeholder.
 INSERT INTO "Opportunity"."MyOpportunity"(
     "Id", "UserId", "OpportunityId", "ActionId", "VerificationStatusId", "CommentVerification",
-    "DateStart", "DateEnd", "DateCompleted", "ZltoReward", "DateCreated", "DateModified"
+    "DateStart", "DateEnd", "DateCompleted", "CountryId", "Region", "City", "ZltoReward", "DateCreated", "DateModified"
 )
-SELECT gen_random_uuid(), (SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testuser@gmail.com'),
+SELECT gen_random_uuid(), U."Id",
     O."Id", (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification'),
     (SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus"
-        WHERE "Name" = CASE WHEN F."Number" = 1 THEN 'Completed' ELSE 'Pending' END),
-    CASE WHEN F."Number" = 1 THEN 'Local fixture: confirmed placement' ELSE NULL END,
-    CASE WHEN F."Number" = 4 THEN O."DateStart" ELSE NULL END,
-    CASE WHEN F."Number" = 4 THEN CURRENT_TIMESTAMP ELSE NULL END,
-    CASE WHEN F."Number" = 1 THEN CURRENT_TIMESTAMP ELSE NULL END,
-    NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+        WHERE "Name" = CASE WHEN F."Number" IN (4, 5) THEN 'Pending' ELSE 'Completed' END),
+    CASE
+        WHEN F."Number" IN (4, 5) THEN NULL
+        WHEN F."Number" = 1 THEN 'Placement confirmed'
+        WHEN F."Number" = 10 THEN 'Remote activity completed'
+        WHEN F."Number" = 20 THEN 'Business location recorded'
+        ELSE 'Participation confirmed'
+    END,
+    CASE WHEN T."Name" IN ('Job', 'Entrepreneurship') THEN NULL ELSE O."DateStart" END,
+    CASE WHEN T."Name" IN ('Job', 'Entrepreneurship') THEN NULL ELSE CURRENT_TIMESTAMP END,
+    CASE WHEN F."Number" IN (4, 5) THEN NULL ELSE CURRENT_TIMESTAMP END,
+    CASE WHEN F."Number" IN (4, 10) THEN NULL
+        WHEN F."Number" = 23 THEN U."CountryId"
+        ELSE (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2" = 'ZA') END,
+    CASE WHEN F."Number" IN (4, 10) THEN NULL
+        WHEN F."Number" = 23 THEN U."Region"
+        WHEN F."Number" IN (5, 20) THEN 'Gauteng' ELSE 'Western Cape' END,
+    CASE WHEN F."Number" IN (4, 10) THEN NULL
+        WHEN F."Number" = 23 THEN U."City"
+        WHEN F."Number" IN (5, 20) THEN 'Johannesburg' ELSE 'Cape Town' END,
+    CASE WHEN F."Number" IN (4, 5) THEN NULL ELSE O."ZltoReward" END,
+    CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM "SearchFixtures" F
 JOIN "Opportunity"."Opportunity" O ON O."Id" = F."Id"
-WHERE F."Number" IN (1, 4);
+JOIN "Opportunity"."OpportunityType" T ON T."Id" = O."TypeId"
+CROSS JOIN "Entity"."User" U
+WHERE F."Number" IN (1, 4, 5, 10, 13, 14, 19, 20, 23)
+    AND U."Email" = 'testuser@gmail.com';
 
 -- This one explicit test outcome is not an inferred value or a historical backfill.
 -- Other completion CFs remain absent so optional/missing-value handling is testable.
@@ -883,7 +923,7 @@ FROM "SearchFixtures" F
 JOIN "Opportunity"."MyOpportunity" M ON M."OpportunityId" = F."Id"
     AND M."ActionId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification')
 JOIN "Core"."CustomFieldDefinition" D ON D."EntityType" = 'MyOpportunity'
-    AND D."EntityContext" = 'Job' AND D."Key" = 'jobEmploymentStartDate' AND D."IsActive" = TRUE
+    AND D."EntityContext" = 'Job' AND D."Key" = 'JobEmploymentStartDate' AND D."IsActive" = TRUE
 WHERE F."Number" = 1;
 
 DROP TABLE "SearchFixtures";

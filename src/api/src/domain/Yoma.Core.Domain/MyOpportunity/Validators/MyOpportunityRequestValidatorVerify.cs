@@ -1,4 +1,6 @@
 using FluentValidation;
+using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
@@ -12,9 +14,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
     #endregion
 
     #region Constructor
-    public MyOpportunityRequestValidatorVerify(ITimeIntervalService timeIntervalService)
+    public MyOpportunityRequestValidatorVerify(ITimeIntervalService timeIntervalService,
+      ICountryService countryService)
     {
       _timeIntervalService = timeIntervalService ?? throw new ArgumentNullException(nameof(timeIntervalService));
+      ArgumentNullException.ThrowIfNull(countryService);
 
       RuleFor(x => x.Certificate).Must(file => file == null || file.Length > 0).WithMessage("{PropertyName} is optional, but if specified, cannot be empty.");
       RuleFor(x => x.VoiceNote).Must(file => file == null || file.Length > 0).WithMessage("{PropertyName} is optional, but if specified, cannot be empty.");
@@ -63,6 +67,24 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
         .GreaterThanOrEqualTo(x => x.DateStart)
         .When(x => x.DateStart.HasValue)
         .WithMessage("End date (when did you finish) is earlier than the start date");
+
+      // Named location is optional, but incomplete or non-specific references are never valid.
+      RuleFor(x => x.CountryId)
+        .NotEmpty()
+        .When(x => x.Region != null || x.City != null)
+        .WithMessage("'Country' is required when location details are specified.");
+
+      RuleFor(x => x.CountryId)
+        .Must(id => id.HasValue && countryService.GetByIdOrNull(id.Value) is { } country &&
+          country.CodeAlpha2 != Country.Worldwide.ToDescription())
+        .When(x => x.CountryId.HasValue)
+        .WithMessage("Location country must be a specific country that exists.");
+
+      RuleFor(x => x.Region)
+        .MaximumLength(Constants.Region_MaxLength);
+
+      RuleFor(x => x.City)
+        .MaximumLength(Constants.City_MaxLength);
 
       RuleFor(x => x.PercentComplete)
         .InclusiveBetween(0m, 100m)

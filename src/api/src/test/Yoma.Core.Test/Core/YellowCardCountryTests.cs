@@ -16,6 +16,10 @@ namespace Yoma.Core.Test.Core
 {
   public class YellowCardCountryTests
   {
+    #region Class Variables
+    private static readonly string[] SupportedCountryCodes = ["ZA"];
+    #endregion Class Variables
+
     [Theory]
     [InlineData("29376.34", "29376.34")]
     [InlineData("null", null)]
@@ -62,7 +66,7 @@ namespace Yoma.Core.Test.Core
     public async Task NegativeMinimumIsRejected()
     {
       using var http = new HttpTest();
-      http.RespondWithJson(new { success = true, count = 1, countries = new[] { "ZA" }, limits = new { ZA = new { lowestMinUsd = -1 } } });
+      http.RespondWithJson(new { success = true, count = 1, countries = SupportedCountryCodes, limits = new { ZA = new { lowestMinUsd = -1 } } });
       await Assert.ThrowsAsync<DataInconsistencyException>(() => CreateClient().ListCountriesSupported());
     }
 
@@ -70,7 +74,7 @@ namespace Yoma.Core.Test.Core
     public async Task CacheHasOneHourAbsoluteCap()
     {
       using var http = new HttpTest();
-      http.RespondWithJson(new { success = true, count = 1, countries = new[] { "ZA" }, limits = new { ZA = new { lowestMinUsd = 6.48m } } });
+      http.RespondWithJson(new { success = true, count = 1, countries = SupportedCountryCodes, limits = new { ZA = new { lowestMinUsd = 6.48m } } });
       var entry = new Mock<ICacheEntry>();
       entry.SetupAllProperties();
       var cache = new Mock<IMemoryCache>();

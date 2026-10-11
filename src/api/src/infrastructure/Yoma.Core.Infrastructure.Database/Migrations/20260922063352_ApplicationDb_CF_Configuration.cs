@@ -447,6 +447,42 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           nullable: true);
 
       migrationBuilder.AddColumn<string>(
+          name: "ProviderURL",
+          schema: "Opportunity",
+          table: "Opportunity",
+          type: "varchar(2048)",
+          nullable: true);
+
+      migrationBuilder.AddColumn<string>(
+          name: "ProviderLogoURL",
+          schema: "Opportunity",
+          table: "Opportunity",
+          type: "varchar(2048)",
+          nullable: true);
+
+      migrationBuilder.AddColumn<Guid>(
+          name: "ProviderCountryId",
+          schema: "Opportunity",
+          table: "Opportunity",
+          type: "uuid",
+          nullable: true);
+
+      migrationBuilder.CreateIndex(
+          name: "IX_Opportunity_ProviderCountryId",
+          schema: "Opportunity",
+          table: "Opportunity",
+          column: "ProviderCountryId");
+
+      migrationBuilder.AddForeignKey(
+          name: "FK_Opportunity_Country_ProviderCountryId",
+          schema: "Opportunity",
+          table: "Opportunity",
+          column: "ProviderCountryId",
+          principalSchema: "Lookup",
+          principalTable: "Country",
+          principalColumn: "Id");
+
+      migrationBuilder.AddColumn<string>(
           name: "RewardType",
           schema: "Opportunity",
           table: "Opportunity",
@@ -718,6 +754,45 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
         UPDATE "Opportunity"."Opportunity"
         SET "RewardType" = CASE WHEN "ZltoReward" IS NOT NULL THEN 'ZLTO' ELSE 'None' END;
         """);
+
+      #region MyOpportunity
+      // Capture future participation locations only; existing submissions deliberately remain null.
+      migrationBuilder.AddColumn<Guid>(
+        name: "CountryId",
+        schema: "Opportunity",
+        table: "MyOpportunity",
+        type: "uuid",
+        nullable: true);
+
+      migrationBuilder.AddColumn<string>(
+        name: "Region",
+        schema: "Opportunity",
+        table: "MyOpportunity",
+        type: "varchar(255)",
+        nullable: true);
+
+      migrationBuilder.AddColumn<string>(
+        name: "City",
+        schema: "Opportunity",
+        table: "MyOpportunity",
+        type: "varchar(255)",
+        nullable: true);
+
+      migrationBuilder.CreateIndex(
+        name: "IX_MyOpportunity_CountryId",
+        schema: "Opportunity",
+        table: "MyOpportunity",
+        column: "CountryId");
+
+      migrationBuilder.AddForeignKey(
+        name: "FK_MyOpportunity_Country_CountryId",
+        schema: "Opportunity",
+        table: "MyOpportunity",
+        column: "CountryId",
+        principalSchema: "Lookup",
+        principalTable: "Country",
+        principalColumn: "Id");
+      #endregion MyOpportunity
 
       #region Custom Fields
       #region Difficulty

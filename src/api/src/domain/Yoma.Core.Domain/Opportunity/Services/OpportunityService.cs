@@ -958,7 +958,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       // Keep custom-field constraints on both page selection and hydration.
       var hydrationQuery = query;
 
-      //valueContains (includes organizations, types, categories, opportunities and skills)
+      //valueContains (includes opportunity text/provider, organizations, types, categories and skills)
       if (!string.IsNullOrEmpty(filter.ValueContains))
       {
         //Keep text and related-entity matches in separate ID queries so cross-table OR branches
@@ -1219,6 +1219,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
         Instructions = request.Instructions,
         URL = request.URL,
         Provider = request.Provider,
+        ProviderURL = request.ProviderURL,
+        ProviderLogoURL = request.ProviderLogoURL,
+        ProviderCountryId = request.ProviderCountryId,
+        ProviderCountry = request.ProviderCountryId.HasValue ? _countryService.GetById(request.ProviderCountryId.Value).Name : null,
         Incentivized = request.Incentivized,
         RewardType = request.RewardType,
         PartnerIncentiveAmount = request.PartnerIncentiveAmount,
@@ -1416,6 +1420,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
       result.Instructions = request.Instructions;
       result.URL = request.URL;
       result.Provider = request.Provider;
+      result.ProviderURL = request.ProviderURL;
+      result.ProviderLogoURL = request.ProviderLogoURL;
+      result.ProviderCountryId = request.ProviderCountryId;
+      result.ProviderCountry = request.ProviderCountryId.HasValue ? _countryService.GetById(request.ProviderCountryId.Value).Name : null;
       result.Incentivized = request.Incentivized;
       result.RewardType = request.RewardType;
       result.PartnerIncentiveAmount = request.PartnerIncentiveAmount;
@@ -2173,6 +2181,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
       request.Provider = existingByExternalId == null || item.FieldsPresent.Contains(nameof(item.Provider))
         ? item.Provider
         : existingByExternalId.Provider;
+      request.ProviderURL = existingByExternalId == null || item.FieldsPresent.Contains(nameof(item.ProviderURL))
+        ? item.ProviderURL
+        : existingByExternalId.ProviderURL;
+      request.ProviderLogoURL = existingByExternalId == null || item.FieldsPresent.Contains(nameof(item.ProviderLogoURL))
+        ? item.ProviderLogoURL
+        : existingByExternalId.ProviderLogoURL;
+      request.ProviderCountryId = existingByExternalId == null || item.FieldsPresent.Contains(nameof(item.ProviderCountry))
+        ? string.IsNullOrEmpty(item.ProviderCountry) ? null : _countryService.GetByCodeAlpha2(item.ProviderCountry).Id
+        : existingByExternalId.ProviderCountryId;
       request.Incentivized = existingByExternalId == null || item.FieldsPresent.Contains(nameof(item.Incentivized))
         ? item.Incentivized
         : existingByExternalId.Incentivized;
@@ -2757,6 +2774,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
         throw new ArgumentNullException(nameof(countries));
       if (countries.Any(o => o == null) || countries.Select(o => o.CountryId).Distinct().Count() != countries.Count)
         throw new ValidationException("Countries must contain one non-empty entry per country.");
+
+      // This path also serves the collection endpoint, which can add to existing availability.
+      var countryIds = (opportunity.Countries?.Select(country => country.Id) ?? [])
+        .Union(countries.Select(country => country.CountryId))
+        .ToList();
+      if (countryIds.Count > 1 && countryIds.Any(id => _countryService.GetById(id).CodeAlpha2 == Country.Worldwide.ToDescription()))
+        throw new ValidationException("Worldwide cannot be combined with specific countries.");
+
       foreach (var location in countries)
         await _opportunityRequestCountryValidator.ValidateAndThrowAsync(location);
 

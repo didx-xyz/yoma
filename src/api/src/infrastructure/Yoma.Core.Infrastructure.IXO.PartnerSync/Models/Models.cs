@@ -84,6 +84,9 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Models
     [JsonProperty("provider")]
     public string? Provider { get; set; }
 
+    [JsonProperty("providerLogoUrl")]
+    public string? ProviderLogoURL { get; set; }
+
     [JsonProperty("categories")]
     public List<string> Categories { get; set; } = [];
 

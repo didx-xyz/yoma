@@ -50,6 +50,16 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
     [Column(TypeName = "varchar(255)")]
     public string? Provider { get; set; }
 
+    [Column(TypeName = "varchar(2048)")]
+    public string? ProviderURL { get; set; }
+
+    [Column(TypeName = "varchar(2048)")]
+    public string? ProviderLogoURL { get; set; }
+
+    [ForeignKey("ProviderCountryId")]
+    public Guid? ProviderCountryId { get; set; }
+    public Country? ProviderCountry { get; set; }
+
     public bool? Incentivized { get; set; }
 
     public RewardType RewardType { get; set; }

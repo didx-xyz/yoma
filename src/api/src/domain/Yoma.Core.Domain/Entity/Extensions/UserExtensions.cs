@@ -4,6 +4,28 @@ namespace Yoma.Core.Domain.Entity.Extensions
 {
   public static class UserExtensions
   {
+    /// <summary>
+    /// Resolves genuine account verification methods from confirmed contacts and social login.
+    /// Social login uses the same recorded-provider check as referrals. Absence is unknown,
+    /// not a failed KYC check or verification of the user's self-declared profile.
+    /// </summary>
+    public static void SetAccountVerificationMethods(this User user, bool hasSocialIdentityProviders)
+    {
+      ArgumentNullException.ThrowIfNull(user);
+
+      var methods = AccountVerificationMethod.None;
+      if (user.EmailConfirmed == true && !string.IsNullOrEmpty(user.Email))
+        methods |= AccountVerificationMethod.EmailVerified;
+
+      if (user.PhoneNumberConfirmed == true && !string.IsNullOrEmpty(user.PhoneNumber))
+        methods |= AccountVerificationMethod.MobileVerified;
+
+      if (hasSocialIdentityProviders)
+        methods |= AccountVerificationMethod.SocialLogin;
+
+      user.AccountVerificationMethods = methods;
+    }
+
     public static void SetDisplayName(this User user)
     {
       ArgumentNullException.ThrowIfNull(user, nameof(user));
@@ -88,6 +110,7 @@ namespace Yoma.Core.Domain.Entity.Extensions
         DisplayName = value.DisplayName, //cannot default; model returned on api for editing as authenticated user (similar to user returned on api as admin)
         PhoneNumber = value.PhoneNumber,
         PhoneNumberConfirmed = value.PhoneNumberConfirmed,
+        AccountVerificationMethods = value.AccountVerificationMethods,
         CountryId = value.CountryId,
         EducationId = value.EducationId,
         Region = value.Region,

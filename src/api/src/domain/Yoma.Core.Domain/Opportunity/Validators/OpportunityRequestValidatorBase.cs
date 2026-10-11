@@ -89,6 +89,24 @@ namespace Yoma.Core.Domain.Opportunity.Validators
       RuleFor(x => x.Provider)
           .MaximumLength(OpportunityService.Provider_MaxLength);
 
+      RuleFor(x => x.ProviderURL)
+          .Length(1, 2048)
+          .Must(ValidURL)
+          .When(x => !string.IsNullOrEmpty(x.ProviderURL))
+          .WithMessage("Provider URL must be between 1 and 2048 characters long and be a valid URL if specified.");
+
+      RuleFor(x => x.ProviderLogoURL)
+          .Length(1, 2048)
+          .Must(ValidURL)
+          .When(x => !string.IsNullOrEmpty(x.ProviderLogoURL))
+          .WithMessage("Provider logo URL must be between 1 and 2048 characters long and be a valid URL if specified.");
+
+      RuleFor(x => x.ProviderCountryId)
+          .Must(id => id.HasValue && id.Value != Guid.Empty && _countryService.GetByIdOrNull(id.Value) is { } country &&
+            country.CodeAlpha2 != Country.Worldwide.ToDescription())
+          .When(x => x.ProviderCountryId.HasValue)
+          .WithMessage("Provider country must be a specific country that exists.");
+
       // Manual capture must make an explicit selection. Import and sync may preserve unknown values.
       RuleSet("Manual", () =>
       {
@@ -310,6 +328,12 @@ namespace Yoma.Core.Domain.Opportunity.Validators
 
       RuleForEach(x => x.Countries)
           .SetValidator(opportunityRequestCountryValidator);
+
+      RuleFor(x => x.Countries)
+          .Must(countries => countries == null || countries.Count <= 1 ||
+            !countries.Any(country => country != null &&
+              _countryService.GetByIdOrNull(country.CountryId)?.CodeAlpha2 == Country.Worldwide.ToDescription()))
+          .WithMessage("Worldwide cannot be combined with specific countries.");
 
       RuleFor(x => x.Languages)
           .Must(languages => languages != null && languages.Count != 0 && languages.All(id => id != Guid.Empty && LanguageExists(id)))

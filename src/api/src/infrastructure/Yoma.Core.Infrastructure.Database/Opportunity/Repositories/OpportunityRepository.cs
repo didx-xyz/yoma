@@ -61,6 +61,10 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         Instructions = entity.Instructions,
         URL = entity.URL,
         Provider = entity.Provider,
+        ProviderURL = entity.ProviderURL,
+        ProviderLogoURL = entity.ProviderLogoURL,
+        ProviderCountryId = entity.ProviderCountryId,
+        ProviderCountry = entity.ProviderCountry == null ? null : entity.ProviderCountry.Name,
         Incentivized = entity.Incentivized,
         RewardType = entity.RewardType,
         PartnerIncentiveAmount = entity.PartnerIncentiveAmount,
@@ -182,6 +186,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
       //MS SQL: Contains
       return predicate.Or(o => EF.Functions.ILike(o.Title, $"%{value}%")
           || (!string.IsNullOrEmpty(o.Summary) && EF.Functions.ILike(o.Summary, $"%{value}%"))
+          || (!string.IsNullOrEmpty(o.Provider) && EF.Functions.ILike(o.Provider, $"%{value}%"))
           || (!string.IsNullOrEmpty(o.KeywordsFlattened) && EF.Functions.ILike(o.KeywordsFlattened, $"%{value}%"))
           || EF.Functions.ToTsVector("english", o.Description).Matches(value));
     }
@@ -246,6 +251,9 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         Instructions = item.Instructions,
         URL = item.URL,
         Provider = item.Provider,
+        ProviderURL = item.ProviderURL,
+        ProviderLogoURL = item.ProviderLogoURL,
+        ProviderCountryId = item.ProviderCountryId,
         Incentivized = item.Incentivized,
         RewardType = item.RewardType,
         PartnerIncentiveAmount = item.PartnerIncentiveAmount,
@@ -305,6 +313,9 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
           Instructions = item.Instructions,
           URL = item.URL,
           Provider = item.Provider,
+          ProviderURL = item.ProviderURL,
+          ProviderLogoURL = item.ProviderLogoURL,
+          ProviderCountryId = item.ProviderCountryId,
           Incentivized = item.Incentivized,
           RewardType = item.RewardType,
           PartnerIncentiveAmount = item.PartnerIncentiveAmount,
@@ -368,6 +379,9 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
       entity.Instructions = item.Instructions;
       entity.URL = item.URL;
       entity.Provider = item.Provider;
+      entity.ProviderURL = item.ProviderURL;
+      entity.ProviderLogoURL = item.ProviderLogoURL;
+      entity.ProviderCountryId = item.ProviderCountryId;
       entity.Incentivized = item.Incentivized;
       entity.RewardType = item.RewardType;
       entity.PartnerIncentiveAmount = item.PartnerIncentiveAmount;
@@ -428,6 +442,9 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         entity.Instructions = item.Instructions;
         entity.URL = item.URL;
         entity.Provider = item.Provider;
+        entity.ProviderURL = item.ProviderURL;
+        entity.ProviderLogoURL = item.ProviderLogoURL;
+        entity.ProviderCountryId = item.ProviderCountryId;
         entity.Incentivized = item.Incentivized;
         entity.RewardType = item.RewardType;
         entity.PartnerIncentiveAmount = item.PartnerIncentiveAmount;

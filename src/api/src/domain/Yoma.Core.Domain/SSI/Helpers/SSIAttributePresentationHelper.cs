@@ -1,3 +1,4 @@
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Domain.SSI.Models.Lookups;
 
@@ -5,11 +6,17 @@ namespace Yoma.Core.Domain.SSI.Helpers
 {
   /// <summary>
   /// Owns the shared presentation order for static schema properties, dynamic custom fields and rendered
-  /// credential attributes. Configured groups render first, followed by ungrouped attributes. Each level
-  /// falls back to the display label and stable attribute name to keep results deterministic.
+  /// credential attributes. Opportunity Details precedes Completion Details, then other configured
+  /// groups alphabetically and ungrouped attributes last. Within each group the existing metadata
+  /// order and label/name fallbacks keep results deterministic.
   /// </summary>
   public static class SSIAttributePresentationHelper
   {
+    #region Class Variables
+    private static readonly Dictionary<string, int> GroupOrder = Enum.GetValues<SchemaPresentationGroup>()
+      .ToDictionary(group => group.ToDescription(), group => (int)group, StringComparer.OrdinalIgnoreCase);
+    #endregion Class Variables
+
     /// <summary>
     /// Orders static schema properties for administration, keeping fixed system properties first.
     /// </summary>
@@ -83,6 +90,7 @@ namespace Yoma.Core.Domain.SSI.Helpers
         })
         .OrderBy(item => item.System ? 0 : 1)
         .ThenBy(item => string.IsNullOrEmpty(item.Group) ? 1 : 0)
+        .ThenBy(item => GroupOrder.GetValueOrDefault(item.Group ?? string.Empty, int.MaxValue))
         .ThenBy(item => item.Group)
         .ThenBy(item => item.SubGroup)
         .ThenBy(item => item.SortOrder ?? int.MaxValue)

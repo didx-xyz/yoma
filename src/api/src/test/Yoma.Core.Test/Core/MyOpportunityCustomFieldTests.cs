@@ -23,7 +23,7 @@ namespace Yoma.Core.Test.Core
       Assert.All(definitions, definition =>
       {
         Assert.Equal(CustomFieldEntityType.MyOpportunity.ToString(), definition.EntityType);
-        Assert.Contains(definition.Group, new[] { "Placement", "Impact", "Participation" });
+        Assert.Equal("Completion Details", definition.Group);
         Assert.Null(definition.SubGroup);
         Assert.False(definition.IsRequired);
         Assert.False(definition.IsSchemaMapped);
@@ -46,16 +46,16 @@ namespace Yoma.Core.Test.Core
       var service = ValueService("Job");
       service.Validate(CustomFieldEntityType.MyOpportunity, "Job", null, CustomFieldUpsertMode.PutEnforceRequired);
       service.Validate(CustomFieldEntityType.MyOpportunity, "Job",
-        [new CustomFieldValueRequest { Key = "jobEmploymentStartDate", Value = "2026-09-29" }],
+        [new CustomFieldValueRequest { Key = "JobEmploymentStartDate", Value = "2026-09-29" }],
         CustomFieldUpsertMode.PutEnforceRequired);
 
       foreach (var invalid in new[] { "2026-02-30", "29/09/2026", "2026-09-29T00:00:00Z" })
         Assert.Throws<ValidationException>(() => service.Validate(CustomFieldEntityType.MyOpportunity, "Job",
-          [new CustomFieldValueRequest { Key = "jobEmploymentStartDate", Value = invalid }],
+          [new CustomFieldValueRequest { Key = "JobEmploymentStartDate", Value = invalid }],
           CustomFieldUpsertMode.PutEnforceRequired));
 
       var parsed = service.ParseCSVValues(CustomFieldEntityType.MyOpportunity, "Job",
-        new Dictionary<string, string?> { ["jobEmploymentStartDate"] = "2026-09-29" });
+        new Dictionary<string, string?> { ["JobEmploymentStartDate"] = "2026-09-29" });
       Assert.Equal("2026-09-29", Assert.Single(parsed!).Value);
     }
 
@@ -65,16 +65,16 @@ namespace Yoma.Core.Test.Core
       var eventService = ValueService("Event");
       eventService.Validate(CustomFieldEntityType.MyOpportunity, "Event", null, CustomFieldUpsertMode.PutEnforceRequired);
       eventService.Validate(CustomFieldEntityType.MyOpportunity, "Event",
-        [new CustomFieldValueRequest { Key = "eventRole", Values = ["Speaker"] }],
+        [new CustomFieldValueRequest { Key = "EventRole", Values = ["Speaker"] }],
         CustomFieldUpsertMode.PutEnforceRequired);
       Assert.Throws<ValidationException>(() => eventService.Validate(CustomFieldEntityType.MyOpportunity, "Event",
-        [new CustomFieldValueRequest { Key = "eventRole", Values = ["Unknown"] }],
+        [new CustomFieldValueRequest { Key = "EventRole", Values = ["Unknown"] }],
         CustomFieldUpsertMode.PutEnforceRequired));
 
       var impactService = ValueService("ImpactAction");
       impactService.Validate(CustomFieldEntityType.MyOpportunity, "ImpactAction", null, CustomFieldUpsertMode.PutEnforceRequired);
       Assert.Throws<ValidationException>(() => impactService.Validate(CustomFieldEntityType.MyOpportunity, "ImpactAction",
-        [new CustomFieldValueRequest { Key = "impactActionImpactAchieved", Value = new string('x', 1001) }],
+        [new CustomFieldValueRequest { Key = "ImpactActionImpactAchieved", Value = new string('x', 1001) }],
         CustomFieldUpsertMode.PutEnforceRequired));
     }
 

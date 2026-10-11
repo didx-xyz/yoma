@@ -24,6 +24,10 @@ namespace Yoma.Core.Test.Lookups
 {
   public class SkillServiceTests
   {
+    #region Class Variables
+    private static readonly string[] ExpectedNameSearchResults = ["Python", "Python Imaging"];
+    #endregion Class Variables
+
     [Fact]
     public async Task HttpLookupBindsIdArrayAndReturnsOnlySelectedSkillsWithoutPagination()
     {
@@ -42,7 +46,7 @@ namespace Yoma.Core.Test.Lookups
         await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
       Assert.NotNull(result);
       Assert.Equal(2, result.Count);
-      Assert.Equal(new[] { python.Id, imaging.Id }, result.Select(item => item.Id));
+      Assert.Equal([python.Id, imaging.Id], result.Select(item => item.Id));
     }
 
     [Theory]
@@ -156,7 +160,7 @@ namespace Yoma.Core.Test.Lookups
       var result = fixture.Service.ListByIds([selected.Id, first.Id, selected.Id, Guid.NewGuid()]);
 
       Assert.Equal(2, result.Count);
-      Assert.Equal(new[] { first.Id, selected.Id }, result.Select(item => item.Id));
+      Assert.Equal([first.Id, selected.Id], result.Select(item => item.Id));
     }
 
     [Fact]
@@ -196,7 +200,7 @@ namespace Yoma.Core.Test.Lookups
       });
 
       Assert.Equal(2, result.TotalCount);
-      Assert.Equal(new[] { "Python", "Python Imaging" }, result.Items.Select(item => item.Name));
+      Assert.Equal(ExpectedNameSearchResults, result.Items.Select(item => item.Name));
     }
 
     [Fact]

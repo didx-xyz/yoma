@@ -10,6 +10,7 @@ using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.SSI;
+using Yoma.Core.Domain.SSI.Helpers;
 using Yoma.Core.Domain.SSI.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces.Provider;
 using Yoma.Core.Domain.SSI.Models;
@@ -22,6 +23,45 @@ namespace Yoma.Core.Test.SSI
   public class WalletCredentialTests
   {
     #region Tests
+    [Fact]
+    public void SharedPresentationOrdersCommonSectionsBeforeCustomGroupsWithoutChangingFieldOrder()
+    {
+      List<SSICredentialAttribute> attributes =
+      [
+        new() { Name = "duration", NameDisplay = "Duration", Group = "Completion Details", SortOrder = 16 },
+        new() { Name = "customZ", NameDisplay = "Custom Z", Group = "Z Custom", SortOrder = 1 },
+        new() { Name = "summary", NameDisplay = "Summary", Group = "Opportunity Details", SortOrder = 3 },
+        new() { Name = "user", NameDisplay = "User", Group = "Completion Details", SortOrder = 1 },
+        new() { Name = "customA", NameDisplay = "Custom A", Group = "A Custom", SortOrder = 1 },
+        new() { Name = "ungrouped", NameDisplay = "Ungrouped" },
+        new() { Name = "engagement", NameDisplay = "Engagement", Group = "Opportunity Details", SortOrder = 6 }
+      ];
+      string[] expected = ["summary", "engagement", "user", "duration", "customA", "customZ", "ungrouped"];
+      Assert.Equal(expected, SSIAttributePresentationHelper.OrderCredentialAttributes(attributes)
+        .Select(attribute => attribute.Name));
+
+      var properties = attributes.Select(attribute => new SSISchemaEntityProperty
+      {
+        AttributeName = attribute.Name,
+        NameDisplay = attribute.NameDisplay,
+        Group = attribute.Group,
+        SortOrder = attribute.SortOrder
+      }).ToList();
+      properties.Add(new() { AttributeName = "issuer", NameDisplay = "Issuer", System = true });
+      Assert.Equal(new[] { "issuer" }.Concat(expected),
+        SSIAttributePresentationHelper.OrderProperties(properties)!.Select(property => property.AttributeName));
+
+      var fields = attributes.Where(attribute => attribute.Group != null).Select(attribute => new SSISchemaEntityCustomField
+      {
+        AttributeName = attribute.Name,
+        NameDisplay = attribute.NameDisplay,
+        Group = attribute.Group!,
+        SortOrder = attribute.SortOrder!.Value
+      });
+      Assert.Equal(expected.Where(name => name != "ungrouped"),
+        SSIAttributePresentationHelper.OrderCustomFields(fields).Select(field => field.AttributeName));
+    }
+
     [Theory]
     [InlineData("Learning", null, Domain.Opportunity.Type.Learning)]
     [InlineData("Other", null, Domain.Opportunity.Type.Other)]

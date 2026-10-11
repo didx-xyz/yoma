@@ -50,10 +50,60 @@ each attempt and records the actual historical version when recovering provider 
 local failure. No DB column or scheduling/retry policy changes. The 2026-10-09 authenticated Local
 provider-backed pass issued all six Opportunity types and verified wallet list/detail with 377
 independent assertions across 46 returned attributes. All 546 selected automated cases also passed.
-YoID live issuance failed and its cause is unconfirmed; history/retry fault-injection and Jason's
-visual review are separate checks. See the [consolidated credential handoff](./YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/handoffs/2026-10-07-a.md).
+YoID live issuance failed. On 2026-10-11 its schema-lookup regression was traced to the adapter
+passing a complete schema ID to the SDK's issuer-DID list filter. The corrective exact-ID lookup
+and twelve new adapter cases passed. Adrian confirmed Local YoID issuance subsequently succeeded.
+The 2026-10-11 review adds genuine account confirmation methods and ordered identity metadata,
+separate configured Verification Method and Verification Evidence claims, an expanded optional
+core catalogue, and deterministic Local/Dev Job completion/issuance seeding. Account-method flags
+are exposed on computed User/UserProfile reads and signed through common list mapping. The final
+YoID default omits Email and puts First Name/Surname first; historical email claims remain readable.
+The final 2026-10-11 review implements one nullable core MyOpportunity CountryId/Country/Region/City
+snapshot and one calculated Location/credential claim, without DisplayName or separate BusinessLocation.
+Five types capture OnSite/Hybrid participation; Entrepreneurship optionally captures explicit business
+location independently of engagement/Worldwide, never profile-inferred. CountryCompleted is the new
+optional completion CSV column; existing Country remains the user country. Exports are country-only.
+Type/route decisions remain in the service; validators check shape/references. Pending snapshots are
+preserved, rejected attempts recapture, historical data is not backfilled. See the
+[final location contract](./YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/feature.md#participation-location--2026-10-11-implemented-for-review).
+All 39 CF keys are PascalCase and labels Title Case; options/IDs unchanged. ClientLocation is renamed
+EntrepreneurshipCustomerReach; undeployed local CF alias hacks are removed. Reset/reissue disposable
+Local data; released core/type compatibility is retained.
+ProviderURL/ProviderLogoURL/ProviderCountryId are implemented. Website/logo URLs are distinct and follow
+existing validation/storage; origin must be
+specific. New Worldwide-plus-specific availability saves are rejected; existing data is not repaired.
+Alison maps Worldwide availability and the first supplied publisher's name/logo/origin together
+(no publisher timestamp). IXO models/maps only known provider and providerLogoUrl, with no speculative
+website/country fields. IXO/Umuzi Worldwide normalization is covered. Country-only search matches availability OR
+(Worldwide AND provider origin), without widening detailed-location or Worldwide selections.
+Reference criteria endpoints and completion eligibility gates are unchanged. General ValueContains
+also includes Provider name while preserving all existing text/related-name targets; its dedicated
+criterion remains. The existing provider trigram index is reused; no additional lookup query.
+Jason must align place capture, provider fields, CF keys and CSV help/samples; no Web edits here.
+Opportunity Details renders first, then Completion Details; the shared SSI presentation helper
+applies this priority without a migration/seed edit or signed-schema change. Other configured
+groups remain alphabetical afterwards and ungrouped fields remain last.
+Final credential layout uses Completion Details across all six types: User → Skills Earned (except
+Job) → type-specific completion fields → Location → Duration → Verification Method → Verification
+Evidence. Advertised Job terms and Entrepreneurship Programme remain separate. User, Engagement
+and Duration are display-label changes only. Shared completion-CF grouping also affects capture
+screens; keys/options/requiredness/system flags and signed names/values are unchanged. Layout-only
+reseeding does not create new schema versions. Jason must preserve the returned metadata order.
+Build is clean; 680-case regression has 668 passes/12 guarded DB skips/zero failures, plus a separate
+fresh PostgreSQL migration/post.sql and Location/Provider persistence pass.
+These remain uncommitted
+for review; rebuilt metadata requires Local/Dev reset. The authorized final Docker pass completed
+revised-default issuance/readback for all six Opportunity types and YoID: 20 credentials/170 body
+attributes, 1,297 assertions/125 API calls with zero failures. All six new manual completions and
+two optional-CF CSV imports also passed; the completed API runs total 1,388 assertions/222 calls.
+Adrian approved a surgical holder-tenant guard for local JWS detail; holder success/other-holder
+404 and seven focused cases pass, without changing ACR provider scoping or the UI response shape.
+Three unrelated random seed queues await issuer tenants after test-provider lock/funding errors;
+tested issuers and outcomes are Issued. History/retry live fault injection and Jason's visual
+review remain separate checks. See the [consolidated credential handoff](./YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/handoffs/2026-10-07-a.md).
 The didx:me adapter/cutover follows ACA-Py validation. No production-provider write or replay
-was performed; all stage-1/2/3 changes remain uncommitted pending Adrian's commit review.
+was performed. Stages 1–3 were committed by Adrian as `8ea6a62e9`; the 2026-10-11 corrective
+adapter/test/documentation changes remain uncommitted for his review.
 
 **Current search/preference contract (2026-10-01):** the [consolidated API handoff](./handoffs/2026-10-01-c.md) records the agreed decisions for asks 1–24, exact request shapes/defaults and test evidence. It supersedes the historical search/preference-cardinality notes below. The API implementation was committed as `77646a74`; Web has moved to the same breaking shapes. Deploy API and Web together. Web continues to own preference composition and skips.
 

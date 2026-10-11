@@ -1716,6 +1716,15 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.Property<Guid?>("CommitmentIntervalId")
             .HasColumnType("uuid");
 
+          b.Property<string>("City")
+            .HasColumnType("varchar(255)");
+
+          b.Property<Guid?>("CountryId")
+            .HasColumnType("uuid");
+
+          b.Property<string>("Region")
+            .HasColumnType("varchar(255)");
+
           b.Property<DateTimeOffset?>("DateCompleted")
             .HasColumnType("timestamp with time zone");
 
@@ -1760,6 +1769,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.HasIndex("CommitmentIntervalId");
 
           b.HasIndex("OpportunityId");
+
+          b.HasIndex("CountryId");
 
           b.HasIndex("UserId", "OpportunityId", "ActionId")
             .IsUnique();
@@ -1996,6 +2007,15 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.Property<string>("Provider")
             .HasColumnType("varchar(255)");
 
+          b.Property<Guid?>("ProviderCountryId")
+            .HasColumnType("uuid");
+
+          b.Property<string>("ProviderLogoURL")
+            .HasColumnType("varchar(2048)");
+
+          b.Property<string>("ProviderURL")
+            .HasColumnType("varchar(2048)");
+
           b.Property<string>("RewardType")
             .IsRequired()
             .HasColumnType("varchar(30)");
@@ -2060,6 +2080,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.HasIndex("PartnerIncentiveCurrency");
 
           b.HasIndex("Provider");
+
+          b.HasIndex("ProviderCountryId");
 
           NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Provider"), "gin");
           NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Provider"), new[] { "gin_trgm_ops" });
@@ -4172,6 +4194,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             .WithMany()
             .HasForeignKey("CommitmentIntervalId");
 
+          b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Country", "Country")
+            .WithMany()
+            .HasForeignKey("CountryId");
+
           b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", "Opportunity")
             .WithMany()
             .HasForeignKey("OpportunityId")
@@ -4193,6 +4219,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.Navigation("CommitmentInterval");
 
           b.Navigation("Opportunity");
+
+          b.Navigation("Country");
 
           b.Navigation("User");
 
@@ -4258,6 +4286,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             .HasPrincipalKey("Code")
             .OnDelete(DeleteBehavior.NoAction);
 
+          b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Country", "ProviderCountry")
+            .WithMany()
+            .HasForeignKey("ProviderCountryId");
+
           b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityStatus", "Status")
             .WithMany()
             .HasForeignKey("StatusId")
@@ -4279,6 +4311,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.Navigation("ModifiedByUser");
 
           b.Navigation("Organization");
+
+          b.Navigation("ProviderCountry");
 
           b.Navigation("Status");
 

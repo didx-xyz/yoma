@@ -45,11 +45,17 @@ namespace Yoma.Core.Test.Core
         .Select(row => (string)Value(completion, row, "Key"))
         .ToList();
       Assert.Equal(
-        ["entrepreneurshipBusinessName", "entrepreneurshipBusinessSummary", "entrepreneurshipBusinessRegistered"],
+        ["EntrepreneurshipBusinessName", "EntrepreneurshipBusinessSummary", "EntrepreneurshipBusinessRegistered"],
         required);
       Assert.DoesNotContain(Enumerable.Range(0, completion.Values.GetLength(0)), row =>
-        ((string)Value(completion, row, "Key")).Contains("Location", StringComparison.OrdinalIgnoreCase) &&
-        (string)Value(completion, row, "Key") != "entrepreneurshipClientLocation");
+        ((string)Value(completion, row, "Key")).Contains("Location", StringComparison.OrdinalIgnoreCase));
+
+      var reachRow = Assert.Single(Enumerable.Range(0, completion.Values.GetLength(0)), row =>
+        (string)Value(completion, row, "Key") == "EntrepreneurshipCustomerReach");
+      Assert.Equal("Customer Reach", Value(completion, reachRow, "Title"));
+      Assert.Equal(CustomFieldDataType.Option.ToString(), Value(completion, reachRow, "DataType"));
+      Assert.False((bool)Value(completion, reachRow, "SupportsMultiple"));
+      Assert.False((bool)Value(completion, reachRow, "IsRequired"));
 
       Assert.Contains(operations.OfType<SqlOperation>(), o => o.Sql.Contains("cf0b0001-0929-4cf0-a100-000000000012") &&
         o.Sql.Contains("cf0e0001-0929-4cf0-a100-000000000015"));
@@ -126,7 +132,7 @@ namespace Yoma.Core.Test.Core
     [Fact]
     public void ManualVentureOutcomeMayOmitParticipationPeriod()
     {
-      var validator = new MyOpportunityRequestValidatorVerify(Mock.Of<ITimeIntervalService>());
+      var validator = new MyOpportunityRequestValidatorVerify(Mock.Of<ITimeIntervalService>(), Mock.Of<ICountryService>());
       var request = new MyOpportunityRequestVerify { DateEnd = DateTimeOffset.UtcNow };
       var context = new ValidationContext<MyOpportunityRequestVerify>(request);
       context.RootContextData[nameof(Domain.Opportunity.Models.Opportunity.Type)] = Domain.Opportunity.Type.Entrepreneurship;

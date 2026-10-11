@@ -10,9 +10,11 @@ using System.Reflection;
 using System.Security.Claims;
 using Xunit;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Interfaces;
+using Yoma.Core.Domain.Entity.Extensions;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Helpers;
@@ -31,7 +33,160 @@ namespace Yoma.Core.Test.SSI
 {
   public class DefaultSchemaTests
   {
+    #region Class Variables
+    private static readonly string[] RequiredCoreAttributes =
+    [
+      "User_DisplayName", "Organization_Name", "Opportunity_Title", "Opportunity_Type",
+      "Opportunity_OrganizationName", "MyOpportunity_UserDisplayName"
+    ];
+    private static readonly string[] YoIDBodyAttributes =
+    [
+      "User_FirstName", "User_Surname", "User_DateOfBirth", "User_Country",
+      "User_Gender", "User_Education", "User_AccountVerificationMethods"
+    ];
+    private static readonly string[] EmailAndSocialVerificationMethods = ["Email Verified", "Social Login"];
+    private static readonly string[] FundingDisplayValues = ["Grants, donations", "Bootstrapping"];
+    private static readonly string[] MultiValueDisplayValues = ["First label, with a comma", "Second label — café"];
+    #endregion Class Variables
+
     #region Tests
+    [Fact]
+    public async Task AddingBusinessLocationPublishesOneNewDefaultVersion()
+    {
+      using var fixture = new Fixture();
+      await fixture.Background.SeedSchemas();
+      fixture.AssertNoErrors();
+
+      var original = fixture.Schemas.Single(schema => schema.Name == "Opportunity|Entrepreneurship|Default");
+      original.AttributeNames.Remove("MyOpportunity_Location");
+
+      await fixture.Background.SeedSchemas();
+      fixture.AssertNoErrors();
+      var current = await fixture.Service.GetByFullName(original.Name);
+      Assert.NotEqual(original.Id, current.Id);
+      Assert.Equal(new Version(original.Version.Major, original.Version.Minor + 1), current.Version);
+      Assert.Contains("MyOpportunity_Location", Attributes(current));
+      Assert.Contains("MyOpportunity_EntrepreneurshipCustomerReach", Attributes(current));
+      Assert.DoesNotContain(Attributes(current), attribute => attribute.Contains("ClientLocation"));
+      Assert.DoesNotContain("MyOpportunity_Location", Attributes(await fixture.Service.GetById(original.Id)));
+
+      var schemaCount = fixture.Schemas.Count;
+      await fixture.Background.SeedSchemas();
+      fixture.AssertNoErrors();
+      Assert.Equal(schemaCount, fixture.Schemas.Count);
+    }
+
+    [Fact]
+    public async Task PresentationOnlyChangesDoNotPublishAnotherSchemaVersion()
+    {
+      using var fixture = new Fixture();
+      await fixture.Background.SeedSchemas();
+      fixture.AssertNoErrors();
+      var identities = fixture.Schemas.Select(schema => (schema.Id, schema.Name, schema.Version)).ToList();
+
+      var user = fixture.Entities.Single(entity => entity.Name == "MyOpportunity").Properties!
+        .Single(property => property.Name == "UserDisplayName");
+      user.NameDisplay = "Configured User Label";
+      user.Group = "Configured Completion Group";
+      user.SortOrder = 100;
+      var role = fixture.Definitions.Single(definition => definition.Key == "EventRole");
+      role.Title = "Configured Role Label";
+      role.Group = "Configured Completion Group";
+      role.SortOrder = 101;
+
+      await fixture.Background.SeedSchemas();
+      fixture.AssertNoErrors();
+      Assert.Equal(identities, fixture.Schemas.Select(schema => (schema.Id, schema.Name, schema.Version)));
+      var schema = await fixture.Service.GetByFullName("Opportunity|Event|Default");
+      Assert.Contains(schema.Entities.SelectMany(entity => entity.Properties ?? []),
+        property => property.AttributeName == "MyOpportunity_UserDisplayName" && property.NameDisplay == user.NameDisplay);
+      Assert.Contains(schema.Entities.SelectMany(entity => entity.CustomFields ?? []),
+        field => field.Key == "EventRole" && field.Group == role.Group && field.SortOrder == role.SortOrder);
+    }
+
+    [Fact]
+    public void CoreLabelsAreSeededWithTheirExactDisplayCasing()
+    {
+      using var fixture = new Fixture();
+      var properties = fixture.Entities.SelectMany(entity => entity.Properties!).ToList();
+      Assert.All(properties, property => Assert.All(property.NameDisplay.Split(' '), word =>
+        Assert.True(!char.IsLetter(word[0]) || char.IsUpper(word[0]), $"Seed label '{property.NameDisplay}' is not Title Case.")));
+
+      Assert.Equal("Date Of Birth", fixture.EntityService.GetByAttributeName("User_DateOfBirth").NameDisplay);
+      Assert.Equal("Logo URL", fixture.EntityService.GetByAttributeName("Organization_LogoURL").NameDisplay);
+      Assert.Equal("Organization Logo URL", fixture.EntityService.GetByAttributeName("Opportunity_OrganizationLogoURL").NameDisplay);
+      Assert.Equal("ZLTO Reward", fixture.EntityService.GetByAttributeName("MyOpportunity_ZltoReward").NameDisplay);
+      Assert.Equal("Account Verification Methods", fixture.EntityService.GetByAttributeName("User_AccountVerificationMethods").NameDisplay);
+      Assert.Equal("Advertised ZLTO Reward", fixture.EntityService.GetByAttributeName("Opportunity_ZltoReward").NameDisplay);
+      Assert.Equal("User", fixture.EntityService.GetByAttributeName("MyOpportunity_UserDisplayName").NameDisplay);
+      Assert.Equal("Engagement", fixture.EntityService.GetByAttributeName("Opportunity_EngagementType").NameDisplay);
+      Assert.Equal("Duration", fixture.EntityService.GetByAttributeName("MyOpportunity_CommitmentIntervalDescription").NameDisplay);
+    }
+
+    [Fact]
+    public async Task ConfiguredCoreLabelsAndCustomFieldTitlesArePreservedThroughWalletDisplay()
+    {
+      using var fixture = new Fixture();
+      fixture.Entities.Single(entity => entity.Name == "MyOpportunity").Properties!
+        .Single(property => property.Name == "CommitmentIntervalDescription").NameDisplay = "iDX participation label";
+      fixture.Definitions.Single(definition => definition.Key == "ImpactActionImpactAchieved").Title = "Reported IMPACT (custom)";
+
+      await fixture.Background.SeedSchemas();
+      fixture.AssertNoErrors();
+      var schema = await fixture.Service.GetByFullName("Opportunity|ImpactAction|Default");
+      var source = new Domain.MyOpportunity.Models.MyOpportunity
+      {
+        UserDisplayName = "Test Youth",
+        CommitmentInterval = TimeIntervalOption.Hour,
+        CommitmentIntervalCount = 1,
+        CustomFields = [new() { Key = "ImpactActionImpactAchieved", DataType = CustomFieldDataType.String, ValueRaw = "Trees planted" }]
+      };
+      var request = new CredentialIssuanceRequest
+      {
+        SchemaId = schema.Id,
+        SchemaName = schema.Name,
+        ArtifactType = ArtifactType.JWS,
+        Attributes = []
+      };
+      fixture.Map(request, schema, new Domain.Opportunity.Models.Opportunity
+      {
+        Title = "Completed action",
+        Type = Domain.Opportunity.Type.ImpactAction,
+        OrganizationName = "Issuer"
+      });
+      fixture.Map(request, schema, source);
+      request.Attributes.Add(SSISchemaService.SchemaAttribute_Internal_DateIssued, "2026-10-11T10:00:00Z");
+      var detail = await fixture.ReadWalletDetail(request, schema);
+      Assert.Equal("iDX participation label", Assert.Single(detail.Attributes!, attribute => attribute.Name == "MyOpportunity_CommitmentIntervalDescription").NameDisplay);
+      Assert.Equal("Reported IMPACT (custom)", Assert.Single(detail.Attributes!, attribute => attribute.Name == "MyOpportunity_ImpactActionImpactAchieved").NameDisplay);
+    }
+
+    [Fact]
+    public async Task ImpactActionCompletionDetailsGroupsCoreAndBothCustomFieldsInOrder()
+    {
+      using var fixture = new Fixture();
+      await fixture.Background.SeedSchemas();
+      fixture.AssertNoErrors();
+
+      var schema = await fixture.Service.GetByFullName("Opportunity|ImpactAction|Default");
+      var fields = schema.Entities.SelectMany(entity => entity.CustomFields ?? []).ToList();
+      var activity = Assert.Single(fields, field => field.Key == "ImpactActionVerifiedActivityType");
+      var impact = Assert.Single(fields, field => field.Key == "ImpactActionImpactAchieved");
+      Assert.Equal("Completion Details", activity.Group);
+      Assert.Equal("Completion Details", impact.Group);
+      Assert.Equal(3, activity.SortOrder);
+      Assert.Equal(4, impact.SortOrder);
+      Assert.Equal(fixture.Definitions.Single(definition => definition.Key == activity.Key).Title, activity.NameDisplay);
+      Assert.Equal(fixture.Definitions.Single(definition => definition.Key == impact.Key).Title, impact.NameDisplay);
+
+      var properties = schema.Entities.SelectMany(entity => entity.Properties ?? []).ToList();
+      var commitment = Assert.Single(properties, property => property.AttributeName == "MyOpportunity_CommitmentIntervalDescription");
+      Assert.Equal("Completion Details", commitment.Group);
+      Assert.Equal(16, commitment.SortOrder);
+      Assert.Equal("Duration", commitment.NameDisplay);
+      Assert.Equal("Skills Earned", Assert.Single(properties, property => property.AttributeName == "Opportunity_Skills").NameDisplay);
+    }
+
     [Theory]
     [InlineData(Domain.Opportunity.Type.Other, "Opportunity|Default")]
     [InlineData(Domain.Opportunity.Type.Learning, "Opportunity|Default")]
@@ -202,6 +357,8 @@ namespace Yoma.Core.Test.SSI
       var yoID = Assert.Single(schemas, schema => schema.Type == SchemaType.YoID);
       Assert.Equal(ArtifactType.ACR, yoID.ArtifactType);
       Assert.Equal(10, Attributes(yoID).Count);
+      Assert.Contains("User_AccountVerificationMethods", Attributes(yoID));
+      Assert.DoesNotContain("User_Email", Attributes(yoID));
       Assert.Empty(yoID.Entities.SelectMany(entity => entity.CustomFields ?? []));
       Assert.DoesNotContain(Attributes(yoID), attribute =>
         attribute.Contains("Coordinates") || attribute.Contains("Preferences") || attribute.Contains("VerificationLevel"));
@@ -222,10 +379,14 @@ namespace Yoma.Core.Test.SSI
       foreach (var schema in schemas)
       {
         var attributes = Attributes(schema);
-        Assert.Contains("Opportunity_Countries", attributes);
+        Assert.Contains("MyOpportunity_Location", attributes);
+        Assert.DoesNotContain("MyOpportunity_BusinessLocation", attributes);
+        Assert.DoesNotContain("Opportunity_Countries", attributes);
         Assert.Contains("Opportunity_EngagementType", attributes);
         Assert.Contains("MyOpportunity_CommitmentIntervalDescription", attributes);
-        Assert.Contains("MyOpportunity_Verifications", attributes);
+        Assert.Contains("Opportunity_VerificationMethod", attributes);
+        Assert.Contains("MyOpportunity_VerificationEvidence", attributes);
+        Assert.DoesNotContain("MyOpportunity_Verifications", attributes);
         Assert.DoesNotContain("MyOpportunity_UserDateOfBirth", attributes);
         Assert.DoesNotContain("MyOpportunity_DateCompleted", attributes);
         Assert.DoesNotContain("Opportunity_Difficulty", attributes);
@@ -259,7 +420,7 @@ namespace Yoma.Core.Test.SSI
       using var fixture = new Fixture();
       await fixture.Background.SeedSchemas();
       fixture.AssertNoErrors();
-      fixture.Schemas.ForEach(schema => schema.AttributeNames = schema.AttributeNames.Reverse().ToList());
+      fixture.Schemas.ForEach(schema => schema.AttributeNames = [.. schema.AttributeNames.Reverse()]);
 
       await fixture.Background.SeedSchemas();
       await fixture.Background.SeedSchemas();
@@ -405,15 +566,7 @@ namespace Yoma.Core.Test.SSI
         .Order()
         .ToList();
 
-      Assert.Equal(new[]
-      {
-        "User_DisplayName",
-        "Organization_Name",
-        "Opportunity_Title",
-        "Opportunity_Type",
-        "Opportunity_OrganizationName",
-        "MyOpportunity_UserDisplayName"
-      }.Order(), required);
+      Assert.Equal(RequiredCoreAttributes.Order(), required);
       Assert.All(entities.SelectMany(entity => entity.CustomFields ?? []), field => Assert.False(field.Required));
 
       var opportunity = Assert.Single(entities, entity => entity.Name == "Opportunity");
@@ -421,6 +574,292 @@ namespace Yoma.Core.Test.SSI
       Assert.Equal(Guid.Parse("FF423D0C-2E91-48A6-9245-28EEF6E96B01"), difficulty.Id);
       Assert.False(difficulty.Required);
       Assert.False(difficulty.System);
+    }
+
+    [Theory]
+    [InlineData(0, null)]
+    [InlineData(1, "Email Verified")]
+    [InlineData(2, "Mobile Verified (OTP)")]
+    [InlineData(3, "Email Verified, Mobile Verified (OTP)")]
+    [InlineData(4, "Social Login")]
+    [InlineData(5, "Email Verified, Social Login")]
+    [InlineData(6, "Mobile Verified (OTP), Social Login")]
+    [InlineData(7, "Email Verified, Mobile Verified (OTP), Social Login")]
+    public void AccountVerificationUsesConfirmedMethodsWithoutInventingIdentityAssurance(int methods, string? expected)
+    {
+      var user = new Domain.Entity.Models.User
+      {
+        Email = "youth@example.invalid",
+        EmailConfirmed = (methods & 1) != 0,
+        PhoneNumber = "+27123456789",
+        PhoneNumberConfirmed = (methods & 2) != 0
+      };
+
+      user.SetAccountVerificationMethods((methods & 4) != 0);
+
+      Assert.Equal((Domain.Entity.AccountVerificationMethod)methods, user.AccountVerificationMethods);
+      Assert.Equal(methods, Newtonsoft.Json.Linq.JObject.Parse(JsonConvert.SerializeObject(user))
+        .Value<int>(nameof(Domain.Entity.Models.User.AccountVerificationMethods)));
+      var labels = user.AccountVerificationMethods.GetFlags().Select(method => method.ToDescription()).ToList();
+      Assert.Equal(expected, labels.Count == 0 ? null : string.Join(", ", labels));
+      Assert.Equal(expected ?? "None", user.AccountVerificationMethods.ToDescription());
+      Assert.DoesNotContain("KYC", string.Join(", ", labels));
+    }
+
+    [Theory]
+    [InlineData(0, "n/a")]
+    [InlineData(1, "Email Verified")]
+    [InlineData(2, "Mobile Verified (OTP)")]
+    [InlineData(3, "Email Verified, Mobile Verified (OTP)")]
+    [InlineData(4, "Social Login")]
+    [InlineData(5, "Email Verified, Social Login")]
+    [InlineData(6, "Mobile Verified (OTP), Social Login")]
+    [InlineData(7, "Email Verified, Mobile Verified (OTP), Social Login")]
+    public async Task AccountVerificationFlagsRoundTripThroughCredentialLists(int methods, string expected)
+    {
+      using var fixture = new Fixture();
+      await fixture.Background.SeedSchemas();
+      fixture.AssertNoErrors();
+
+      var schema = await fixture.Service.GetByFullName("YoID|Default");
+      var user = new Domain.Entity.Models.User
+      {
+        DisplayName = "Naledi Dlamini",
+        Email = "youth@example.invalid",
+        EmailConfirmed = (methods & 1) != 0,
+        PhoneNumber = "+27123456789",
+        PhoneNumberConfirmed = (methods & 2) != 0
+      };
+      user.SetAccountVerificationMethods((methods & 4) != 0);
+      var request = new CredentialIssuanceRequest { ArtifactType = ArtifactType.ACR, Attributes = [] };
+      fixture.Map(request, schema, new Domain.Entity.Models.Organization { Name = "Yoma" });
+      fixture.Map(request, schema, user);
+
+      var detail = await fixture.ReadWalletDetail(request, schema);
+      var attribute = Assert.Single(detail.Attributes, item => item.Name == "User_AccountVerificationMethods");
+      Assert.Equal(expected, attribute.ValueDisplay);
+      Assert.Equal("Identity", attribute.Group);
+      Assert.Equal(7, attribute.SortOrder);
+
+      var labels = user.AccountVerificationMethods.GetFlags().Select(method => method.ToDescription()).ToList();
+      Assert.Equal(labels, attribute.ItemsDisplay!.Select(item => item.Name));
+      if (methods == 0)
+        Assert.Equal("n/a", request.Attributes[attribute.Name]);
+      else
+        Assert.Equal(labels, JsonConvert.DeserializeObject<List<SSICredentialAttributeItem>>(
+          request.Attributes[attribute.Name])!.Select(item => item.Name));
+    }
+
+    [Fact]
+    public void ConfirmationWithoutAContactDoesNotCreateACredentialClaimAndRecomputationClearsOldMethods()
+    {
+      var user = new Domain.Entity.Models.User { EmailConfirmed = true, PhoneNumberConfirmed = true };
+      user.SetAccountVerificationMethods(false);
+      Assert.Equal(Domain.Entity.AccountVerificationMethod.None, user.AccountVerificationMethods);
+
+      user.SetAccountVerificationMethods(true);
+      Assert.Equal(Domain.Entity.AccountVerificationMethod.SocialLogin, user.AccountVerificationMethods);
+
+      user.SetAccountVerificationMethods(false);
+      Assert.Equal(Domain.Entity.AccountVerificationMethod.None, user.AccountVerificationMethods);
+    }
+
+    [Fact]
+    public async Task YoIDTitleAndIdentityOrderFollowTheCatalogueAndHistoricalClaimsRemainReadable()
+    {
+      using var fixture = new Fixture();
+      await fixture.Background.SeedSchemas();
+      fixture.AssertNoErrors();
+
+      var schema = await fixture.Service.GetByFullName("YoID|Default");
+      var userEntity = Assert.Single(schema.Entities, entity => entity.Name == "User");
+      var title = Assert.Single(userEntity.Properties!, property => property.Name == "DisplayName");
+      Assert.True(title.System);
+      Assert.True(title.Required);
+      Assert.Equal(SchemaEntityPropertySystemType.Title, title.SystemType);
+
+      var user = new Domain.Entity.Models.User
+      {
+        Email = "youth@example.invalid",
+        EmailConfirmed = true,
+        FirstName = "Naledi",
+        Surname = "Dlamini",
+        DisplayName = "Naledi Dlamini",
+        Country = "South Africa",
+        Education = "Secondary",
+        Gender = "Female",
+        DateOfBirth = new DateTimeOffset(2003, 7, 12, 0, 0, 0, TimeSpan.Zero)
+      };
+      user.SetAccountVerificationMethods(true);
+      var request = new CredentialIssuanceRequest { ArtifactType = ArtifactType.ACR, Attributes = [] };
+      fixture.Map(request, schema, new Domain.Entity.Models.Organization { Name = "Yoma" });
+      fixture.Map(request, schema, user);
+      request.Attributes.Add(SSISchemaService.SchemaAttribute_Internal_DateIssued, "2026-10-11T10:00:00Z");
+
+      var detail = await fixture.ReadWalletDetail(request, schema);
+      Assert.Equal("Naledi Dlamini", detail.Title);
+      Assert.Equal("Yoma", detail.Issuer);
+      Assert.Null(detail.TypeContext);
+      Assert.DoesNotContain(detail.Attributes, attribute => attribute.Name == "User_DisplayName");
+      Assert.Equal(YoIDBodyAttributes, detail.Attributes.Select(attribute => attribute.Name));
+      Assert.Equal("2003-07-12", Assert.Single(detail.Attributes, item => item.Name == "User_DateOfBirth").ValueDisplay);
+      Assert.DoesNotContain("User_Email", request.Attributes.Keys);
+      Assert.DoesNotContain(detail.Attributes, item => item.Name == "User_Email");
+      var methods = Assert.Single(detail.Attributes, attribute => attribute.Name == "User_AccountVerificationMethods");
+      Assert.Equal(EmailAndSocialVerificationMethods, methods.ItemsDisplay!.Select(item => item.Name));
+      Assert.Equal("Email Verified, Social Login", methods.ValueDisplay);
+      Assert.All(detail.Attributes, attribute =>
+      {
+        Assert.Equal("Identity", attribute.Group);
+        Assert.Null(attribute.SubGroup);
+      });
+
+      // Old versions never declared the new claim. They must still parse without a replay.
+      fixture.Schemas.Single(item => item.Id == schema.Id).AttributeNames.Remove("User_AccountVerificationMethods");
+      request.Attributes.Remove("User_AccountVerificationMethods");
+      fixture.Schemas.Single(item => item.Id == schema.Id).AttributeNames.Add("User_Email");
+      request.Attributes.Add("User_Email", "historical@example.invalid");
+      var historical = await fixture.ReadWalletDetail(request, schema);
+      Assert.Equal("Naledi Dlamini", historical.Title);
+      Assert.DoesNotContain(historical.Attributes, attribute => attribute.Name == "User_AccountVerificationMethods");
+      Assert.Equal("historical@example.invalid",
+        Assert.Single(historical.Attributes, item => item.Name == "User_Email").ValueDisplay);
+    }
+
+    [Fact]
+    public void RevisedCatalogueUsesConsecutivePositionsIncludingReservedTypeSpecificCompletionSlots()
+    {
+      using var fixture = new Fixture();
+      var groups = fixture.Entities
+        .SelectMany(entity => entity.Properties ?? [])
+        .Where(property => property.Group is "Identity" or "Opportunity Details" or "Completion Details"
+          or "Incentives" or "Accessibility" or "Audience" or "Impact" or "Provider")
+        .GroupBy(property => property.Group)
+        .ToList();
+
+      Assert.Equal(8, groups.Count);
+      Assert.All(groups.Where(group => group.Key != "Completion Details"), group => Assert.Equal(
+        Enumerable.Range(1, group.Count()).Select(position => (int?)position),
+        group.Select(property => property.SortOrder).Order()));
+
+      var completionOrders = groups.Single(group => group.Key == "Completion Details")
+        .Select(property => property.SortOrder).ToList();
+      var ventureOrders = fixture.Definitions
+        .Where(definition => definition.EntityType == CustomFieldEntityType.MyOpportunity.ToString()
+          && definition.EntityContext == "Entrepreneurship")
+        .Select(definition => (int?)definition.SortOrder).ToList();
+      Assert.Equal(Enumerable.Range(3, 12).Select(position => (int?)position), ventureOrders.Order());
+      Assert.Equal(Enumerable.Range(1, 25).Select(position => (int?)position),
+        completionOrders.Concat(ventureOrders).Order());
+
+      foreach (var type in Enum.GetValues<Domain.Opportunity.Type>())
+      {
+        var orders = completionOrders.Concat(fixture.Definitions
+          .Where(definition => definition.EntityContext == type.ToString() && definition.Group == "Completion Details")
+          .Select(definition => (int?)definition.SortOrder)).ToList();
+        Assert.Equal(orders.Count, orders.Distinct().Count());
+      }
+    }
+
+    [Theory]
+    [InlineData(Domain.Opportunity.Type.Learning)]
+    [InlineData(Domain.Opportunity.Type.Other)]
+    [InlineData(Domain.Opportunity.Type.ImpactAction)]
+    [InlineData(Domain.Opportunity.Type.Event)]
+    [InlineData(Domain.Opportunity.Type.Job)]
+    [InlineData(Domain.Opportunity.Type.Entrepreneurship)]
+    public void SchemaAdministrationExposesBusinessCoreFieldsAndEveryApplicableCF(Domain.Opportunity.Type type)
+    {
+      using var fixture = new Fixture();
+      var entities = fixture.EntityService.List(SchemaType.Opportunity, type.ToString());
+      var opportunity = Assert.Single(entities, entity => entity.Name == "Opportunity");
+      var attributes = opportunity.Properties!.Select(property => property.AttributeName).ToHashSet();
+      Assert.Subset(attributes, new HashSet<string>
+      {
+        "Opportunity_Description", "Opportunity_Provider", "Opportunity_ProviderURL", "Opportunity_ProviderLogoURL",
+        "Opportunity_ProviderCountry", "Opportunity_Categories", "Opportunity_Languages",
+        "Opportunity_Countries", "Opportunity_EngagementType", "Opportunity_VerificationMethod",
+        "Opportunity_Incentivized", "Opportunity_RewardType", "Opportunity_PartnerIncentiveAmount",
+        "Opportunity_PartnerIncentiveCurrency", "Opportunity_ZltoReward", "Opportunity_AccessibilitySupport",
+        "Opportunity_Accommodations", "Opportunity_AccommodationOtherDescription", "Opportunity_AgeFrom",
+        "Opportunity_AgeTo", "Opportunity_TargetedGroups", "Opportunity_SustainableDevelopmentGoals",
+        "Opportunity_DateStart", "Opportunity_DateEnd", "Opportunity_CommitmentIntervalDescription"
+      });
+      Assert.DoesNotContain(attributes, attribute => attribute.Contains("Coordinates") || attribute.Contains("RewardPool"));
+
+      var fields = entities.SelectMany(entity => entity.CustomFields ?? []).ToList();
+      var expected = fixture.Definitions.Where(definition => definition.IsActive
+        && (definition.EntityContext == null || definition.EntityContext == type.ToString())).ToList();
+      Assert.Equal(expected.Select(definition => definition.Id).Order(), fields.Select(field => field.Id).Order());
+      Assert.All(fields, field =>
+      {
+        Assert.False(field.Required);
+        Assert.Null(field.SubGroup);
+      });
+    }
+
+    [Fact]
+    public async Task NewlySelectableCoreFieldsUseTheExistingReflectionAndWalletMapping()
+    {
+      using var fixture = new Fixture();
+      var entity = Assert.Single(fixture.EntityService.List(SchemaType.Opportunity), item => item.Name == "Opportunity");
+      var schema = await fixture.Service.Create(new SSISchemaRequestCreate
+      {
+        TypeId = entity.Types!.Single(type => type.Type == SchemaType.Opportunity).Id,
+        Name = "Core catalogue audit",
+        ArtifactType = ArtifactType.JWS,
+        Attributes = [.. entity.Properties!.Select(property => property.AttributeName)]
+      });
+      var request = new CredentialIssuanceRequest { ArtifactType = ArtifactType.JWS, Attributes = [] };
+      fixture.Map(request, schema, new Domain.Opportunity.Models.Opportunity
+      {
+        Title = "Programme",
+        Description = "Programme description",
+        Type = Domain.Opportunity.Type.Event,
+        OrganizationName = "Issuer",
+        Provider = "Informational provider",
+        ProviderURL = "https://example.com/provider",
+        ProviderLogoURL = "https://example.com/provider-logo.png",
+        ProviderCountry = "South Africa",
+        Incentivized = false,
+        RewardType = Domain.Opportunity.RewardType.None,
+        PartnerIncentiveAmount = 10m,
+        PartnerIncentiveCurrency = "USD",
+        AccessibilitySupport = Domain.Opportunity.AccessibilitySupport.AvailableOnRequest,
+        AccommodationOtherDescription = "Large-print material",
+        AgeFrom = 18,
+        AgeTo = 30,
+        Accommodations = [new() { Name = "Other" }],
+        TargetedGroups = [new() { Name = "Open to all" }],
+        SustainableDevelopmentGoals = [new() { Name = "Quality education" }],
+        ZltoReward = 20m,
+        VerificationMethod = Domain.Opportunity.VerificationMethod.Manual,
+        CommitmentIntervalDescription = "2 Hours",
+        DateStart = new DateTimeOffset(2026, 10, 1, 0, 0, 0, TimeSpan.Zero),
+        DateEnd = new DateTimeOffset(2026, 10, 31, 0, 0, 0, TimeSpan.Zero),
+        Categories = [new() { Name = "Education" }],
+        Languages = [new() { Name = "English" }]
+      });
+      request.Attributes.Add(SSISchemaService.SchemaAttribute_Internal_DateIssued, "2026-10-11T10:00:00Z");
+
+      var detail = await fixture.ReadWalletDetail(request, schema);
+      Assert.Equal("Programme", detail.Title);
+      Assert.Equal("Issuer", detail.Issuer);
+      Assert.Equal("Event", detail.TypeContext);
+      Assert.Equal("No", Assert.Single(detail.Attributes, attribute => attribute.Name == "Opportunity_Incentivized").ValueDisplay);
+      Assert.Equal("Informational provider", Assert.Single(detail.Attributes, attribute => attribute.Name == "Opportunity_Provider").ValueDisplay);
+      Assert.Equal("https://example.com/provider", Assert.Single(detail.Attributes, attribute => attribute.Name == "Opportunity_ProviderURL").ValueDisplay);
+      Assert.Equal("https://example.com/provider-logo.png", Assert.Single(detail.Attributes, attribute => attribute.Name == "Opportunity_ProviderLogoURL").ValueDisplay);
+      Assert.Equal("South Africa", Assert.Single(detail.Attributes, attribute => attribute.Name == "Opportunity_ProviderCountry").ValueDisplay);
+      Assert.Equal("2026-10-31", Assert.Single(detail.Attributes, attribute => attribute.Name == "Opportunity_DateEnd").ValueDisplay);
+      Assert.Equal("Manual", Assert.Single(detail.Attributes, attribute => attribute.Name == "Opportunity_VerificationMethod").ValueDisplay);
+
+      foreach (var name in new[] { "Categories", "Languages", "Accommodations", "TargetedGroups", "SustainableDevelopmentGoals" })
+      {
+        var attribute = Assert.Single(detail.Attributes, item => item.Name == $"Opportunity_{name}");
+        Assert.Single(attribute.ItemsDisplay!);
+        Assert.False(string.IsNullOrWhiteSpace(attribute.ValueDisplay));
+      }
     }
 
     [Theory]
@@ -547,8 +986,9 @@ namespace Yoma.Core.Test.SSI
       fixture.Map(request, schema, new Domain.Entity.Models.User { DisplayName = "Youth", PhoneNumber = "+27123456789" });
 
       Assert.Equal(Attributes(schema).Order(), request.Attributes.Keys.Order());
-      Assert.Equal("n/a", request.Attributes["User_Email"]);
+      Assert.DoesNotContain("User_Email", request.Attributes.Keys);
       Assert.Equal("n/a", request.Attributes["User_Education"]);
+      Assert.Equal("n/a", request.Attributes["User_AccountVerificationMethods"]);
       Assert.DoesNotContain("User_PhoneNumber", request.Attributes.Keys);
     }
 
@@ -567,6 +1007,7 @@ namespace Yoma.Core.Test.SSI
         Type = Domain.Opportunity.Type.Event,
         CommitmentInterval = TimeIntervalOption.Day,
         CommitmentIntervalCount = 9,
+        VerificationMethod = Domain.Opportunity.VerificationMethod.Manual,
         Countries =
         [
           new() { Name = "South Africa", Region = "Western Cape", City = "Cape Town", Coordinates = [18.4, -33.9] },
@@ -578,6 +1019,11 @@ namespace Yoma.Core.Test.SSI
         UserDisplayName = "Youth",
         CommitmentInterval = TimeIntervalOption.Hour,
         CommitmentIntervalCount = 2,
+        CommentVerification = "Approved after reviewing the uploads",
+        CountryId = Guid.NewGuid(),
+        Country = "South Africa",
+        Region = "Western Cape",
+        City = "Cape Town",
         Verifications =
         [
           new() { VerificationType = Domain.Opportunity.VerificationType.Picture, FileURL = "https://private.example/photo" },
@@ -586,14 +1032,132 @@ namespace Yoma.Core.Test.SSI
         ]
       });
 
-      var locations = JsonConvert.DeserializeObject<List<SSICredentialAttributeItem>>(request.Attributes["Opportunity_Countries"])!;
-      Assert.Equal(new[] { "Cape Town, Western Cape, South Africa", "Worldwide" }, locations.Select(item => item.Name));
+      Assert.Equal("Cape Town, Western Cape, South Africa", request.Attributes["MyOpportunity_Location"]);
+      Assert.DoesNotContain("Opportunity_Countries", request.Attributes.Keys);
       Assert.Equal("2 Hours", request.Attributes["MyOpportunity_CommitmentIntervalDescription"]);
-      var evidence = JsonConvert.DeserializeObject<List<SSICredentialAttributeItem>>(request.Attributes["MyOpportunity_Verifications"])!;
-      Assert.Equal(new[] { "Picture", "File Upload" }, evidence.Select(item => item.Name));
+      Assert.Equal("Manual", request.Attributes["Opportunity_VerificationMethod"]);
+      Assert.Equal("Picture, File Upload", request.Attributes["MyOpportunity_VerificationEvidence"]);
+      Assert.DoesNotContain("Approved after reviewing the uploads", request.Attributes.Values);
       Assert.DoesNotContain("private.example", JsonConvert.SerializeObject(request.Attributes));
       Assert.DoesNotContain("18.4", JsonConvert.SerializeObject(request.Attributes));
       Assert.DoesNotContain("LocationDisplayName", JsonConvert.SerializeObject(new Domain.Opportunity.Models.OpportunityCountryInfo()));
+    }
+
+    [Theory]
+    [InlineData(Domain.Opportunity.Type.Learning)]
+    [InlineData(Domain.Opportunity.Type.Other)]
+    [InlineData(Domain.Opportunity.Type.Event)]
+    [InlineData(Domain.Opportunity.Type.ImpactAction)]
+    [InlineData(Domain.Opportunity.Type.Job)]
+    public async Task MissingParticipationSnapshotOmitsLocationWithoutFallingBackToOpportunity(Domain.Opportunity.Type type)
+    {
+      using var fixture = new Fixture();
+      await fixture.Background.SeedSchemas();
+      fixture.AssertNoErrors();
+      var schema = await fixture.Service.GetByFullName(SSISSchemaHelper.ToDefaultFullName(type));
+      var request = new CredentialIssuanceRequest { ArtifactType = ArtifactType.JWS, Attributes = [] };
+      fixture.Map(request, schema, new Domain.Opportunity.Models.Opportunity
+      {
+        Title = "Historical completion",
+        OrganizationName = "Issuer",
+        Type = type,
+        EngagementType = EngagementTypeOption.OnSite,
+        Countries = [new() { Name = "South Africa", City = "Advertised City" }]
+      });
+      fixture.Map(request, schema, new Domain.MyOpportunity.Models.MyOpportunity
+      {
+        UserDisplayName = "Youth",
+        UserCountry = "South Africa"
+      });
+      Assert.DoesNotContain("MyOpportunity_Location", request.Attributes.Keys);
+      Assert.DoesNotContain("Opportunity_Countries", request.Attributes.Keys);
+      Assert.DoesNotContain("Advertised City", JsonConvert.SerializeObject(request.Attributes));
+    }
+
+    [Fact]
+    public async Task HistoricalAvailabilityLocationRemainsSelectableAndReadable()
+    {
+      using var fixture = new Fixture();
+      var schema = await fixture.Service.Create(new SSISchemaRequestCreate
+      {
+        TypeId = fixture.Entities.Single(entity => entity.Name == "Opportunity").Types!.Single().Id,
+        Name = "Historical availability location",
+        ArtifactType = ArtifactType.JWS,
+        Attributes = ["Opportunity_Countries"]
+      });
+      var request = new CredentialIssuanceRequest { ArtifactType = ArtifactType.JWS, Attributes = [] };
+      fixture.Map(request, schema, new Domain.Opportunity.Models.Opportunity
+      {
+        Title = "Historical credential",
+        OrganizationName = "Issuer",
+        Type = Domain.Opportunity.Type.Learning,
+        Countries = [new() { Name = "South Africa" }, new() { Name = "Worldwide" }]
+      });
+      request.Attributes.Add(SSISchemaService.SchemaAttribute_Internal_DateIssued, "2026-10-11T10:00:00Z");
+      var detail = await fixture.ReadWalletDetail(request, schema);
+      var location = Assert.Single(detail.Attributes, attribute => attribute.Name == "Opportunity_Countries");
+      Assert.Equal(2, location.ItemsDisplay!.Count);
+      Assert.Contains(location.ItemsDisplay, item => item.Name == "Worldwide");
+    }
+
+    [Theory]
+    [InlineData(Domain.Opportunity.Type.Learning, "Auto-verification: Action Link")]
+    [InlineData(Domain.Opportunity.Type.Other, "Auto-verification: CSV Import")]
+    [InlineData(Domain.Opportunity.Type.Event, "Auto-verification: Partner Sync")]
+    [InlineData(Domain.Opportunity.Type.ImpactAction, "Auto-verification: Action Link")]
+    [InlineData(Domain.Opportunity.Type.Job, "Imported placement confirmed by partner")]
+    [InlineData(Domain.Opportunity.Type.Entrepreneurship, "Auto-verification: CSV Import")]
+    public async Task VerificationEvidenceFallsBackToRecordedCommentWithoutInferringConfiguredMethod(
+      Domain.Opportunity.Type type, string comment)
+    {
+      using var fixture = new Fixture();
+      await fixture.Background.SeedSchemas();
+      fixture.AssertNoErrors();
+      var schema = await fixture.Service.GetByFullName(SSISSchemaHelper.ToDefaultFullName(type));
+
+      foreach (var method in Enum.GetValues<Domain.Opportunity.VerificationMethod>())
+      {
+        var request = new CredentialIssuanceRequest { ArtifactType = ArtifactType.JWS, Attributes = [] };
+        fixture.Map(request, schema, new Domain.Opportunity.Models.Opportunity
+        {
+          Title = "Completed opportunity",
+          OrganizationName = "Issuer",
+          Type = type,
+          VerificationMethod = method
+        });
+        fixture.Map(request, schema, new Domain.MyOpportunity.Models.MyOpportunity
+        {
+          UserDisplayName = "Youth",
+          CommentVerification = comment,
+          Verifications = []
+        });
+
+        Assert.Equal(method.ToString(), request.Attributes["Opportunity_VerificationMethod"]);
+        Assert.Equal(comment, request.Attributes["MyOpportunity_VerificationEvidence"]);
+        var detail = await fixture.ReadWalletDetail(request, schema);
+        var methodAttribute = Assert.Single(detail.Attributes, item => item.Name == "Opportunity_VerificationMethod");
+        var evidenceAttribute = Assert.Single(detail.Attributes, item => item.Name == "MyOpportunity_VerificationEvidence");
+        Assert.Equal("Verification Method", methodAttribute.NameDisplay);
+        Assert.Equal("Verification Evidence", evidenceAttribute.NameDisplay);
+        Assert.Equal(comment, evidenceAttribute.ValueDisplay);
+        Assert.True(methodAttribute.SortOrder < evidenceAttribute.SortOrder);
+        Assert.Equal(new[] { "User", "Verification Method", "Verification Evidence" },
+          detail.Attributes.Where(attribute => attribute.Group == "Completion Details")
+            .Select(attribute => attribute.NameDisplay));
+      }
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    public void MissingVerificationEvidenceIsNotInvented(string? comment)
+    {
+      var item = new Domain.MyOpportunity.Models.MyOpportunity { CommentVerification = comment };
+
+      Assert.Null(item.VerificationEvidence);
+      item.Verifications = [];
+      Assert.Null(item.VerificationEvidence);
+      Assert.DoesNotContain("VerificationEvidence", JsonConvert.SerializeObject(item));
     }
 
     [Fact]
@@ -640,23 +1204,23 @@ namespace Yoma.Core.Test.SSI
       fixture.AssertNoErrors();
       var schema = await fixture.Service.GetByFullName("Opportunity|Entrepreneurship|Default");
       var request = new CredentialIssuanceRequest { ArtifactType = ArtifactType.JWS, Attributes = [] };
-      fixture.SetDisplayValues("entrepreneurshipFundingTypes", ["Grants, donations", "Bootstrapping"]);
+      fixture.SetDisplayValues("EntrepreneurshipFundingTypes", ["Grants, donations", "Bootstrapping"]);
       fixture.Map(request, schema, new Domain.MyOpportunity.Models.MyOpportunity
       {
         UserDisplayName = "Youth",
         CustomFields =
         [
-          new() { Key = "entrepreneurshipBusinessRegistered", ValueRaw = "False" },
-          new() { Key = "entrepreneurshipJobsCreated", ValueRaw = "0" },
-          new() { Key = "entrepreneurshipFundingTypes", ValueRaw = "Grant,Bootstrapping" }
+          new() { Key = "EntrepreneurshipBusinessRegistered", ValueRaw = "False" },
+          new() { Key = "EntrepreneurshipJobsCreated", ValueRaw = "0" },
+          new() { Key = "EntrepreneurshipFundingTypes", ValueRaw = "Grant,Bootstrapping" }
         ]
       });
 
-      Assert.Equal("False", request.Attributes["MyOpportunity_entrepreneurshipBusinessRegistered"]);
-      Assert.Equal("0", request.Attributes["MyOpportunity_entrepreneurshipJobsCreated"]);
+      Assert.Equal("False", request.Attributes["MyOpportunity_EntrepreneurshipBusinessRegistered"]);
+      Assert.Equal("0", request.Attributes["MyOpportunity_EntrepreneurshipJobsCreated"]);
       var funding = JsonConvert.DeserializeObject<List<SSICredentialAttributeItem>>(
-        request.Attributes["MyOpportunity_entrepreneurshipFundingTypes"])!;
-      Assert.Equal(new[] { "Grants, donations", "Bootstrapping" }, funding.Select(item => item.Name));
+        request.Attributes["MyOpportunity_EntrepreneurshipFundingTypes"])!;
+      Assert.Equal(FundingDisplayValues, funding.Select(item => item.Name));
     }
 
     [Theory]
@@ -707,6 +1271,7 @@ namespace Yoma.Core.Test.SSI
         Type = type,
         OrganizationName = "Issuer",
         OrganizationLogoURL = "https://example.invalid/issuer.png",
+        VerificationMethod = Domain.Opportunity.VerificationMethod.Manual,
         EngagementType = EngagementTypeOption.OnSite,
         Countries = [new() { Name = "South Africa", Region = "Western Cape", City = "Cape Town" }],
         Skills = [new() { Name = "Skill, with a comma" }],
@@ -719,6 +1284,11 @@ namespace Yoma.Core.Test.SSI
         CommitmentInterval = TimeIntervalOption.Hour,
         CommitmentIntervalCount = 2,
         Verifications = [new() { VerificationType = Domain.Opportunity.VerificationType.Picture }],
+        OpportunityType = type,
+        CountryId = Guid.NewGuid(),
+        Country = "South Africa",
+        Region = "Western Cape",
+        City = "Cape Town",
         CustomFields = schema.Entities.Single(entity => entity.Name == "MyOpportunity").CustomFields?
           .Select(field => new CustomFieldValueItem { Key = field.Key, ValueRaw = "supplied" }).ToList()
       });
@@ -737,10 +1307,45 @@ namespace Yoma.Core.Test.SSI
         .Select(property => property.AttributeName).Concat(fields.Select(field => field.AttributeName)).Order(),
         detail.Attributes.Select(attribute => attribute.Name).Order());
 
-      var location = Assert.Single(detail.Attributes, attribute => attribute.Name == "Opportunity_Countries");
-      Assert.Equal("Cape Town, Western Cape, South Africa", Assert.Single(location.ItemsDisplay!).Name);
+      var location = Assert.Single(detail.Attributes, attribute => attribute.Name == "MyOpportunity_Location");
+      Assert.Equal("Location", location.NameDisplay);
+      Assert.Equal("Completion Details", location.Group);
+      Assert.Equal("Cape Town, Western Cape, South Africa", location.ValueDisplay);
       var engagement = Assert.Single(detail.Attributes, attribute => attribute.Name == "Opportunity_EngagementType");
+      Assert.Equal("Engagement", engagement.NameDisplay);
       Assert.Equal("On-site", engagement.ValueDisplay);
+
+      // Assert the approved displayed sequence independently of the seeded sort metadata.
+      var completionNames = new List<string> { "MyOpportunity_UserDisplayName" };
+      if (type != Domain.Opportunity.Type.Job) completionNames.Add("Opportunity_Skills");
+      string[] typeSpecificNames = type switch
+      {
+        Domain.Opportunity.Type.Learning or Domain.Opportunity.Type.Other => [],
+        Domain.Opportunity.Type.ImpactAction =>
+          ["Opportunity_ImpactActionVerifiedActivityType", "MyOpportunity_ImpactActionImpactAchieved"],
+        Domain.Opportunity.Type.Event => ["MyOpportunity_EventRole"],
+        Domain.Opportunity.Type.Job => ["MyOpportunity_JobEmploymentStartDate"],
+        Domain.Opportunity.Type.Entrepreneurship =>
+        [
+          "MyOpportunity_EntrepreneurshipBusinessName", "MyOpportunity_EntrepreneurshipBusinessSummary",
+          "MyOpportunity_EntrepreneurshipBusinessRegistered", "MyOpportunity_EntrepreneurshipRegistrationReference",
+          "MyOpportunity_EntrepreneurshipSector", "MyOpportunity_EntrepreneurshipJobsCreated",
+          "MyOpportunity_EntrepreneurshipRevenueBand", "MyOpportunity_EntrepreneurshipRevenueCurrency",
+          "MyOpportunity_EntrepreneurshipFundingTypes", "MyOpportunity_EntrepreneurshipFundingAmountBand",
+          "MyOpportunity_EntrepreneurshipFunder", "MyOpportunity_EntrepreneurshipCustomerReach"
+        ],
+        _ => throw new NotSupportedException($"Opportunity type '{type}' is not supported")
+      };
+      completionNames.AddRange(typeSpecificNames);
+      completionNames.AddRange(
+      [
+        "MyOpportunity_Location", "MyOpportunity_CommitmentIntervalDescription",
+        "Opportunity_VerificationMethod", "MyOpportunity_VerificationEvidence"
+      ]);
+      Assert.Equal(completionNames, detail.Attributes
+        .Where(attribute => attribute.Group == "Completion Details").Select(attribute => attribute.Name));
+      Assert.Equal("User", Assert.Single(detail.Attributes, attribute => attribute.Name == "MyOpportunity_UserDisplayName").NameDisplay);
+      Assert.Equal("Duration", Assert.Single(detail.Attributes, attribute => attribute.Name == "MyOpportunity_CommitmentIntervalDescription").NameDisplay);
 
       foreach (var field in fields)
       {
@@ -749,7 +1354,7 @@ namespace Yoma.Core.Test.SSI
         Assert.Equal(field.Group, attribute.Group);
         Assert.Equal(field.SortOrder, attribute.SortOrder);
         if (field.SupportsMultiple == true)
-          Assert.Equal(new[] { "First label, with a comma", "Second label — café" }, attribute.ItemsDisplay!.Select(item => item.Name));
+          Assert.Equal(MultiValueDisplayValues, attribute.ItemsDisplay!.Select(item => item.Name));
         else if (field.DataType == CustomFieldDataType.Boolean)
           Assert.Equal("No", attribute.ValueDisplay);
         else if (field.DataType == CustomFieldDataType.Integer)
@@ -767,9 +1372,11 @@ namespace Yoma.Core.Test.SSI
       }
 
       var groups = detail.Attributes.GroupBy(attribute => attribute.Group).ToList();
-      Assert.Equal(groups.Select(group => group.Key)
+      Assert.Equal("Opportunity Details", groups[0].Key);
+      Assert.Equal("Completion Details", groups[1].Key);
+      Assert.Equal(groups.Skip(2).Select(group => group.Key)
         .OrderBy(group => string.IsNullOrEmpty(group) ? 1 : 0)
-        .ThenBy(group => group), groups.Select(group => group.Key));
+        .ThenBy(group => group), groups.Skip(2).Select(group => group.Key));
       Assert.Equal(groups.SelectMany(group => group.Select(attribute => attribute.Name)),
         detail.Attributes.Select(attribute => attribute.Name));
       Assert.All(groups, group => Assert.Equal(group.Select(attribute => attribute.SortOrder)
@@ -781,10 +1388,9 @@ namespace Yoma.Core.Test.SSI
     #region Private Members
     private static HashSet<string> Attributes(SSISchema schema)
     {
-      return schema.Entities
+      return [.. schema.Entities
         .SelectMany(entity => (entity.Properties?.Select(property => property.AttributeName) ?? [])
-          .Concat(entity.CustomFields?.Select(field => field.AttributeName) ?? []))
-        .ToHashSet();
+          .Concat(entity.CustomFields?.Select(field => field.AttributeName) ?? []))];
     }
 
     private sealed class Fixture : IDisposable
@@ -810,9 +1416,7 @@ namespace Yoma.Core.Test.SSI
       public SSISchemaService Service { get; }
       public SSIBackgroundService Background { get; }
 
-      public List<Moq.IInvocation> Errors => _logger.Invocations
-        .Where(invocation => invocation.Method.Name == "Log" && invocation.Arguments[0] is LogLevel.Error)
-        .ToList();
+      public List<Moq.IInvocation> Errors => [.. _logger.Invocations.Where(invocation => invocation.Method.Name == "Log" && invocation.Arguments[0] is LogLevel.Error)];
 
       public Fixture()
       {
@@ -839,24 +1443,23 @@ namespace Yoma.Core.Test.SSI
           .Returns((string name) => Enum.TryParse<Domain.Opportunity.Type>(name, out _)
             ? new Domain.Opportunity.Models.Lookups.OpportunityType { Name = name } : null);
         _definitionService.Setup(service => service.List(It.IsAny<CustomFieldEntityType>(), false, true, It.IsAny<string?>()))
-          .Returns((CustomFieldEntityType entity, bool _, bool _, string? context) => Definitions
+          .Returns((CustomFieldEntityType entity, bool _, bool _, string? context) => [.. Definitions
             .Where(definition => definition.EntityType == entity.ToString() && definition.IsActive &&
-              (definition.EntityContext == null || definition.EntityContext == context)).ToList());
+              (definition.EntityContext == null || definition.EntityContext == context))]);
         _definitionService.Setup(service => service.ListAll(It.IsAny<CustomFieldEntityType>(), false, It.IsAny<bool>()))
-          .Returns((CustomFieldEntityType entity, bool _, bool active) => Definitions
-            .Where(definition => definition.EntityType == entity.ToString() && (!active || definition.IsActive)).ToList());
+          .Returns((CustomFieldEntityType entity, bool _, bool active) => [.. Definitions.Where(definition => definition.EntityType == entity.ToString() && (!active || definition.IsActive))]);
         _definitionService.Setup(service => service.GetByKey(It.IsAny<CustomFieldEntityType>(), It.IsAny<string>(), true, false))
           .Returns((CustomFieldEntityType entity, string key, bool _, bool _) => Definitions
             .Single(definition => definition.EntityType == entity.ToString() && definition.Key == key));
         _definitionService.Setup(service => service.MarkSchemaMapped(It.IsAny<List<Guid>>())).Returns(Task.CompletedTask);
         _valueService.Setup(service => service.ResolveDisplayValues(It.IsAny<CustomFieldDefinition>(), It.IsAny<CustomFieldValueItem>()))
-          .Returns((CustomFieldDefinition _, CustomFieldValueItem value) => value.ValueRaw == null ? [] : new List<string> { value.ValueRaw });
+          .Returns((CustomFieldDefinition _, CustomFieldValueItem value) => value.ValueRaw == null ? [] : [value.ValueRaw]);
 
         EntityService = new SSISchemaEntityService(Options.Create(Settings), _cache, typeService.Object,
           repository.Object, _definitionService.Object, opportunityTypes.Object);
         var factory = new Mock<ISSIProviderClientFactory>();
         factory.Setup(provider => provider.CreateClient()).Returns(Provider.Object);
-        Provider.Setup(provider => provider.ListSchemas(It.IsAny<bool>())).ReturnsAsync(() => Schemas.ToList());
+        Provider.Setup(provider => provider.ListSchemas(It.IsAny<bool>())).ReturnsAsync(() => [.. Schemas]);
         RestoreProviderWrites();
         Service = new SSISchemaService(Options.Create(Settings), _cache, factory.Object, EntityService,
           _definitionService.Object, typeService.Object, new SchemaRequestValidatorCreate(EntityService, typeService.Object),
@@ -905,7 +1508,7 @@ namespace Yoma.Core.Test.SSI
               Name = request.Name,
               Version = version,
               ArtifactType = request.ArtifactType,
-              AttributeNames = request.Attributes.ToList()
+              AttributeNames = [.. request.Attributes]
             };
             Schemas.Add(schema);
             return schema;
@@ -1066,6 +1669,7 @@ namespace Yoma.Core.Test.SSI
           var idColumn = Array.IndexOf(operation.KeyColumns, "Id");
           var systemTypeColumn = Array.IndexOf(operation.Columns, "SystemType");
           var requiredColumn = Array.IndexOf(operation.Columns, "Required");
+          var nameDisplayColumn = Array.IndexOf(operation.Columns, "NameDisplay");
           var groupColumn = Array.IndexOf(operation.Columns, "Group");
           var subGroupColumn = Array.IndexOf(operation.Columns, "SubGroup");
           var sortOrderColumn = Array.IndexOf(operation.Columns, "SortOrder");
@@ -1081,6 +1685,8 @@ namespace Yoma.Core.Test.SSI
             }
             if (requiredColumn >= 0)
               property.Required = (bool)operation.Values[row, requiredColumn]!;
+            if (nameDisplayColumn >= 0)
+              property.NameDisplay = (string)operation.Values[row, nameDisplayColumn]!;
             if (groupColumn >= 0)
               property.Group = (string?)operation.Values[row, groupColumn];
             if (subGroupColumn >= 0)
