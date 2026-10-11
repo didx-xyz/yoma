@@ -237,8 +237,14 @@ Entrepreneurship completion CFs/business location, no-effort Job, source values/
 schema create/update/protection and cross-wallet 404 are verified. Three unrelated random seed
 queues await issuer tenants after test-provider lock/funding errors; tested issuers/outcomes are
 Issued. No Stage/Production changes or replay. See the consolidated handoff's final Docker evidence,
-including existing HTTP 500 rejection behavior for invalid schema context/attribute selections.
-All changes remain uncommitted for Adrian's review; Web implementation/visual review remains open.
+The original Docker pass recorded HTTP 500 rejection for invalid schema context/attribute selections.
+Adrian subsequently approved changing those three request-validation throws to FluentValidation
+ValidationException: existing middleware now returns HTTP 400, with no rule or provider-write change.
+Four new regression cases cover create/update cross-type attributes and both context-list paths,
+including the real response middleware. All 99 schema tests pass; the full selected regression has
+672 passed/12 guarded DB skips/zero failures, with a zero-warning/error build. This follow-up was
+tested in process, not through a restarted Docker API. The earlier batch is committed as `1c16bebee`;
+only the validation follow-up is uncommitted for review. Web implementation/visual review remains open.
 
 These approved additions supersede the earlier baseline's ten-attribute YoID and evidence-only
 statements below. All changes remain uncommitted; no production publication or replay was performed.
@@ -800,6 +806,8 @@ mandatory when the final capture implementation permits them to be absent or did
 - [ ] Prepare the later didx:me cutover/replay plan without executing a production replay in this phase.
 
 ## Decisions
+
+- 2026-10-11 (schema validation follow-up): Adrian approved replacing ArgumentException with the existing FluentValidation ValidationException for incompatible schema attributes and invalid list type contexts. Existing middleware produces HTTP 400; no global exception remapping, attribute-rule, schema-write, tenant-timeout or provider change. Four focused service/middleware cases and the 684-case regression pass; this follow-up remains uncommitted.
 
 - 2026-10-11 (final Docker tests/security): after the paired layout review Adrian stopped the debugger, brought Docker down and authorized Codex to rebuild/run Local unattended, tenant creation before issuance. All revised defaults, six complete manual examples, two optional-CF CSV imports, schema management and wallet source comparisons passed. Adrian explicitly approved the surgical local-JWS holder-tenant guard after a cross-wallet read was found; seven focused tests and real-holder/other-holder API checks pass. ACR scoping, issuer/admin permissions, schedules and response contracts are unchanged. No commit/push or Stage/Production changes were made.
 

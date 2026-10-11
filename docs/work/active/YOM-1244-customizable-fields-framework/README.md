@@ -91,8 +91,8 @@ screens; keys/options/requiredness/system flags and signed names/values are unch
 reseeding does not create new schema versions. Jason must preserve the returned metadata order.
 Build is clean; 680-case regression has 668 passes/12 guarded DB skips/zero failures, plus a separate
 fresh PostgreSQL migration/post.sql and Location/Provider persistence pass.
-These remain uncommitted
-for review; rebuilt metadata requires Local/Dev reset. The authorized final Docker pass completed
+Adrian committed this batch as `1c16bebee`; rebuilt metadata requires Local/Dev reset.
+The authorized final Docker pass completed
 revised-default issuance/readback for all six Opportunity types and YoID: 20 credentials/170 body
 attributes, 1,297 assertions/125 API calls with zero failures. All six new manual completions and
 two optional-CF CSV imports also passed; the completed API runs total 1,388 assertions/222 calls.
@@ -102,8 +102,11 @@ Three unrelated random seed queues await issuer tenants after test-provider lock
 tested issuers and outcomes are Issued. History/retry live fault injection and Jason's visual
 review remain separate checks. See the [consolidated credential handoff](./YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/handoffs/2026-10-07-a.md).
 The didx:me adapter/cutover follows ACA-Py validation. No production-provider write or replay
-was performed. Stages 1–3 were committed by Adrian as `8ea6a62e9`; the 2026-10-11 corrective
-adapter/test/documentation changes remain uncommitted for his review.
+was performed. Stages 1–3 were committed by Adrian as `8ea6a62e9`. The subsequent surgical
+schema-validation follow-up changes only invalid attribute/context exceptions to ValidationException,
+so existing middleware returns HTTP 400 instead of 500. Four new cases verify rejection without
+provider writes; 99 schema tests and the 684-case regression pass (672 passed/12 guarded DB skips).
+This follow-up remains uncommitted for review; no middleware or provider behavior was changed.
 
 **Current search/preference contract (2026-10-01):** the [consolidated API handoff](./handoffs/2026-10-01-c.md) records the agreed decisions for asks 1–24, exact request shapes/defaults and test evidence. It supersedes the historical search/preference-cardinality notes below. The API implementation was committed as `77646a74`; Web has moved to the same breaking shapes. Deploy API and Web together. Web continues to own preference composition and skips.
 

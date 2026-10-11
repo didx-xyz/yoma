@@ -89,7 +89,7 @@ namespace Yoma.Core.Domain.SSI.Services
       if (string.IsNullOrEmpty(typeContext)) return results;
 
       if (!type.HasValue || !_ssiSchemaEntityService.TypeContextValid(type.Value, typeContext))
-        throw new ArgumentException($"Type context '{typeContext}' is invalid or unsupported for schema type '{type}'", nameof(typeContext));
+        throw new ValidationException($"Type context '{typeContext}' is invalid or unsupported for schema type '{type}'");
 
       // Opportunity management may select any generic schema or one scoped to the selected Opportunity type.
       // Schemas scoped to another type are excluded; no schema is selected or substituted by this operation.
@@ -380,9 +380,8 @@ namespace Yoma.Core.Domain.SSI.Services
         .ToList();
 
       if (attributesInvalid.Count != 0)
-        throw new ArgumentException(
-          $"Request contains attributes that are not available for the specified schema type and context: '{string.Join(",", attributesInvalid)}'",
-          nameof(request));
+        throw new ValidationException(
+          $"Request contains attributes that are not available for the specified schema type and context: '{string.Join(",", attributesInvalid)}'");
     }
 
     /// <summary>

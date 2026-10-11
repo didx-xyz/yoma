@@ -1,3 +1,4 @@
+using FluentValidation;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core;
@@ -124,7 +125,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
       if (string.IsNullOrEmpty(typeContext)) typeContext = null;
 
       if (type.HasValue && !TypeContextValid(type.Value, typeContext))
-        throw new ArgumentException($"Type context '{typeContext}' is invalid or unsupported for schema type '{type}'", nameof(typeContext));
+        throw new ValidationException($"Type context '{typeContext}' is invalid or unsupported for schema type '{type}'");
 
       var results = ListInternal(type);
       AddCustomFields(results, entityType => _customFieldDefinitionService.List(entityType, false, true, typeContext));

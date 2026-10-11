@@ -1,3 +1,4 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.Extensions.Caching.Memory;
@@ -9,6 +10,7 @@ using Newtonsoft.Json;
 using System.Reflection;
 using System.Security.Claims;
 using Xunit;
+using Yoma.Core.Api.Middleware;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -50,6 +52,62 @@ namespace Yoma.Core.Test.SSI
     #endregion Class Variables
 
     #region Tests
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task CrossTypeSchemaAttributesReturnBadRequestWithoutProviderWrites(bool update)
+    {
+      using var fixture = new Fixture();
+      await fixture.Background.SeedSchemas();
+      fixture.AssertNoErrors();
+      fixture.Provider.Invocations.Clear();
+
+      Func<Task> action = update
+        ? () => fixture.Service.Update(new SSISchemaRequestUpdate
+        {
+          Name = "Opportunity|Event|Default",
+          Attributes = ["Opportunity_JobIndustry"]
+        })
+        : () => fixture.Service.Create(new SSISchemaRequestCreate
+        {
+          TypeId = fixture.Entities.Single(entity => entity.Name == "Opportunity").Types!.Single().Id,
+          TypeContext = "Event",
+          Name = "Invalid Event Selection",
+          ArtifactType = ArtifactType.JWS,
+          Attributes = ["Opportunity_JobIndustry"]
+        });
+
+      var exception = await Assert.ThrowsAsync<ValidationException>(action);
+      Assert.Contains("Opportunity_JobIndustry", exception.Message);
+      var context = new DefaultHttpContext();
+      using var response = new MemoryStream();
+      context.Response.Body = response;
+      await new ExceptionResponseMiddleware(_ => Task.FromException(exception)).InvokeAsync(context);
+      Assert.Equal(StatusCodes.Status400BadRequest, context.Response.StatusCode);
+      fixture.Provider.Verify(client => client.UpsertSchema(It.IsAny<SchemaRequest>()), Times.Never);
+      Assert.Equal(6, fixture.Schemas.Count);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task InvalidSchemaContextReturnsBadRequest(bool entityLookup)
+    {
+      using var fixture = new Fixture();
+      Func<Task> action = entityLookup
+        ? () => Task.FromResult(fixture.EntityService.List(SchemaType.Opportunity, "UnsupportedType"))
+        : () => fixture.Service.List(SchemaType.Opportunity, "UnsupportedType");
+
+      var exception = await Assert.ThrowsAsync<ValidationException>(action);
+      Assert.Contains("UnsupportedType", exception.Message);
+      var context = new DefaultHttpContext();
+      using var response = new MemoryStream();
+      context.Response.Body = response;
+      await new ExceptionResponseMiddleware(_ => Task.FromException(exception)).InvokeAsync(context);
+      Assert.Equal(StatusCodes.Status400BadRequest, context.Response.StatusCode);
+      fixture.Provider.Verify(client => client.UpsertSchema(It.IsAny<SchemaRequest>()), Times.Never);
+    }
+
     [Fact]
     public async Task AddingBusinessLocationPublishesOneNewDefaultVersion()
     {
