@@ -1,26 +1,14 @@
 import Image from "next/image";
-import iconZlto from "public/images/icon-zlto.svg";
 import React, { useId, useLayoutEffect, useRef, useState } from "react";
 import { IoMdPerson } from "react-icons/io";
-import {
-  IoCalendarOutline,
-  IoChevronDown,
-  IoChevronUp,
-  IoTimeOutline,
-  IoWifiOutline,
-} from "react-icons/io5";
+import { IoChevronDown, IoChevronUp } from "react-icons/io5";
 import type { OpportunityInfo } from "~/api/models/opportunity";
 import {
   getTypeConfig,
   OpportunityOrgCountriesRow,
   OpportunityTypeBadge,
 } from "~/components/Opportunity/opportunityTypeTheme";
-import {
-  detailFacts,
-  spotsLeftLabel,
-  type DetailFact,
-  type DetailFactId,
-} from "./detailFacts";
+import { DetailFactBadges } from "./DetailFactBadges";
 import { clampHidesText, lineHeightPx } from "./lineClamp";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -34,22 +22,6 @@ import { clampHidesText, lineHeightPx } from "./lineClamp";
 // Below `md` (2026-10-06) the logo joins the type chip's row, so the title and
 // the organisation line take the card's full width.
 // ─────────────────────────────────────────────────────────────────────────────
-
-const FACT_TONE: Record<DetailFactId, { tile: string; icon: string }> = {
-  reward: { tile: "bg-orange-light", icon: "text-yellow" },
-  effort: { tile: "bg-blue-light", icon: "text-blue-dark" },
-  date: { tile: "bg-pink/10", icon: "text-pink" },
-  engagement: { tile: "bg-green-light", icon: "text-green" },
-};
-
-const FACT_ICON: Record<DetailFactId, React.ReactNode> = {
-  reward: (
-    <Image src={iconZlto} alt="" width={20} height={20} className="h-5 w-5" />
-  ),
-  effort: <IoTimeOutline className="h-5 w-5" />,
-  date: <IoCalendarOutline className="h-5 w-5" />,
-  engagement: <IoWifiOutline className="h-5 w-5" />,
-};
 
 /**
  * Columns per tile count. Four are 2 × 2 below `lg` — four with icons are too narrow for "How
@@ -68,65 +40,16 @@ const STRIP_COLUMNS: Record<number, string> = {
 // 360px three tiles leave ~52px for a value: less padding and a 14px value make room for
 // "months", "minutes" or "Ongoing", and a word that still can't fit breaks rather than
 // overflowing its tile (320 is the minimum width, 2026-10-05).
-/** The grid columns for a strip of `count` tiles. */
+/**
+ * The grid columns for a strip of `count` tiles: the admin stat strip's. The public header's
+ * facts are badges since 2026-10-09 (`DetailFactBadges`), with their own layout.
+ */
 export const stripColumns = (count: number): string =>
   STRIP_COLUMNS[count] ?? "";
 export const TILE = "rounded-[14px] px-3.5 py-3 max-[359px]:px-2";
 export const TILE_LABEL = "text-gray-dark block text-xs";
 export const TILE_VALUE =
   "font-nunito block text-[15px] leading-tight font-black text-black max-[359px]:text-[14px] max-[359px]:wrap-break-word md:text-[17px]";
-
-const FactTile: React.FC<{ fact: DetailFact }> = ({ fact }) => (
-  <div
-    className={`flex min-w-0 items-center gap-3 max-[359px]:items-start ${TILE} ${FACT_TONE[fact.id].tile}`}
-  >
-    {/* icons from `md` only: three tiles across 390 leave no room for them */}
-    <span
-      aria-hidden
-      className={`hidden h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[10px] bg-white md:flex ${FACT_TONE[fact.id].icon}`}
-    >
-      {FACT_ICON[fact.id]}
-    </span>
-    <span className="min-w-0">
-      <span className={TILE_LABEL}>
-        {fact.shortLabel ? (
-          <>
-            <span className="md:hidden">{fact.shortLabel}</span>
-            <span className="hidden md:inline">{fact.label}</span>
-          </>
-        ) : (
-          fact.label
-        )}
-      </span>
-      <span className={TILE_VALUE}>{fact.value}</span>
-    </span>
-  </div>
-);
-
-/**
- * Reward · Effort · Ends / Starts · How you take part, as tinted tiles, and the spots left as a
- * caption. A fact the opportunity lacks drops out and the row reflows; nothing at all, no strip.
- */
-const DetailFactStrip: React.FC<{ opportunity: OpportunityInfo }> = ({
-  opportunity,
-}) => {
-  const facts = detailFacts(opportunity);
-  const spotsLeft = spotsLeftLabel(opportunity);
-  if (facts.length === 0 && !spotsLeft) return null;
-
-  return (
-    <div className="mt-5">
-      {facts.length > 0 && (
-        <div className={`grid gap-3 ${stripColumns(facts.length)}`}>
-          {facts.map((fact) => (
-            <FactTile key={fact.id} fact={fact} />
-          ))}
-        </div>
-      )}
-      {spotsLeft && <p className="text-gray-dark pt-2 text-xs">{spotsLeft}</p>}
-    </div>
-  );
-};
 
 /**
  * The organisation's logo in a rounded square; the person placeholder without one. 48px beside
@@ -179,8 +102,9 @@ const DetailTitle: React.FC<{ title: string }> = ({ title }) => {
         lineHeightPx(style.lineHeight, style.fontSize),
       );
       // The toggle is about to go (closed after a wider window, or the window widened) while
-      // focused: hand focus to the title rather than losing it to the page
-      if (!hides && document.activeElement === toggleRef.current) el.focus();
+      // focused: hand focus to the title rather than losing it to the page, without scrolling it
+      if (!hides && document.activeElement === toggleRef.current)
+        el.focus({ preventScroll: true });
       setClipped(hides);
     };
     measure();
@@ -200,12 +124,14 @@ const DetailTitle: React.FC<{ title: string }> = ({ title }) => {
     <>
       {/* 24px below 390 (30px would break "Entrepreneurship" mid-word at 320), 30px to `md`,
           32px from it; a word wider than the line breaks rather than being clipped. Focusable
-          from script only, for when the toggle goes while focused */}
+          from script only, for when the toggle goes while focused. The outline shows only when
+          that focus came from the keyboard (script focus inherits the toggle's `:focus-visible`);
+          `outline-solid` because `outline-none` sets Tailwind v4's outline style to none */}
       <h4
         id={id}
         ref={titleRef}
         tabIndex={-1}
-        className={`font-nunito col-span-2 mt-3 text-xl leading-tight font-black wrap-break-word text-black focus:outline-none min-[390px]:text-2xl md:col-span-1 md:mt-2 md:text-[32px] ${
+        className={`font-nunito focus-visible:outline-green col-span-2 mt-3 rounded-lg text-xl leading-tight font-black wrap-break-word text-black outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-solid min-[390px]:text-2xl md:col-span-1 md:mt-2 md:text-[32px] ${
           expanded ? "" : "line-clamp-4 md:line-clamp-2"
         }`}
       >
@@ -242,7 +168,19 @@ export const DetailHeaderCard: React.FC<{
   trailingChips?: React.ReactNode;
   /** The host's actions, under the fact strip. */
   children?: React.ReactNode;
-}> = ({ opportunity, ref, leadingChips, trailingChips, children }) => {
+  /** For the Reward badge's cash-out line (`DetailFactBadges`). */
+  cashOutClosed?: boolean;
+  /** The editor's preview: the Reward badge's marketplace link isn't a link. */
+  preview?: boolean;
+}> = ({
+  opportunity,
+  ref,
+  leadingChips,
+  trailingChips,
+  children,
+  cashOutClosed = false,
+  preview = false,
+}) => {
   const typeConfig = getTypeConfig(opportunity.type);
   // With host chips the row may not fit one line: it wraps, and org · location keeps at least
   // 12rem beside the chips or takes the next line. The public row (type chip only) is as it was.
@@ -308,7 +246,13 @@ export const DetailHeaderCard: React.FC<{
         </p>
       </div>
 
-      <DetailFactStrip opportunity={opportunity} />
+      {/* The fact badges (2026-10-09), reset per opportunity */}
+      <DetailFactBadges
+        key={opportunity.id}
+        opportunity={opportunity}
+        cashOutClosed={cashOutClosed}
+        preview={preview}
+      />
 
       {children}
     </div>

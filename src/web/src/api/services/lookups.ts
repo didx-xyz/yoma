@@ -7,6 +7,7 @@ import type {
   EngagementType,
   Gender,
   Language,
+  Skill,
   SkillSearchFilter,
   SkillSearchResults,
   SustainableDevelopmentGoal,
@@ -75,6 +76,20 @@ export const getSkills = async (
   const { data } = await instance.get<SkillSearchResults>(
     `/lookup/skill?${params.toString()}`,
   );
+  return data;
+};
+
+/**
+ * Skills by id — the names behind selected skill values, unpaged. The body is the bare id array;
+ * unknown ids are simply absent from the result. The API rejects an empty array (and any
+ * malformed or empty id), so callers skip the request when there is nothing to resolve.
+ */
+export const getSkillsByIds = async (
+  ids: string[],
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<Skill[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.post<Skill[]>("/lookup/skill/ids", ids);
   return data;
 };
 

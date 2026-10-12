@@ -82,7 +82,7 @@ export const incentiveCopy = (
       ? {
           kind: "static",
           value: "Not specified",
-          note: "The provider hasn't said whether this pays or rewards.",
+          note: "The provider hasn't said if this pays or gives a reward.",
         }
       : null;
 
@@ -93,7 +93,7 @@ export const incentiveCopy = (
         kind: "disclosure",
         preview: "Earn ZLTO",
         amount: { text: "ZLTO reward", zlto: true },
-        body: "You earn Zlto once your completion is verified. The amount isn't shown for this opportunity.",
+        body: "You get Zlto once your completion is verified. The amount isn't shown.",
         cashOut: true,
       };
     if (estimate > 0)
@@ -101,7 +101,7 @@ export const incentiveCopy = (
         kind: "disclosure",
         preview: `Earn ${formatNumber(estimate)} ZLTO`,
         amount: { text: `${formatNumber(estimate)} ZLTO`, zlto: true },
-        body: "An estimate. You earn it once your completion is verified, and you may get less if the reward pool runs low.",
+        body: "This is an estimate. You get it once your completion is verified. You may get less if the reward runs low.",
         cashOut: true,
       };
     // 0: the pool is depleted (the header's Reward tile says "Depleted")
@@ -109,7 +109,7 @@ export const incentiveCopy = (
       kind: "disclosure",
       preview: "ZLTO rewards have run out",
       amount: null,
-      body: "This opportunity's ZLTO reward pool has run out, so completing it now earns no Zlto.",
+      body: "The ZLTO for this opportunity has run out, so finishing it now earns no Zlto.",
       cashOut: false,
     };
   }
@@ -124,14 +124,14 @@ export const incentiveCopy = (
         kind: "disclosure",
         preview: `${payLine} from the partner`,
         amount: { text: payLine, zlto: false },
-        body: "Offered and paid by the partner that runs this opportunity, not by Yoma. Ask them how and when it's paid.",
+        body: "The partner running this pays it, not Yoma. Ask them how and when you'll get it.",
         cashOut: false,
       };
     return {
       kind: "disclosure",
       preview: "Partner incentive",
       amount: null,
-      body: "The partner that runs this opportunity offers an incentive. Ask them for the details — Yoma doesn't pay or process it.",
+      body: "The partner running this offers a reward. Ask them for details. Yoma doesn't pay it.",
       cashOut: false,
     };
   }
@@ -192,9 +192,7 @@ export const cashOutLine = (
 ): { before: string; link: string; after: string } => ({
   before: "Spend your Zlto in the ",
   link: "marketplace",
-  after: cashOutClosed
-    ? "."
-    : ", or cash it out for real money in supported countries.",
+  after: cashOutClosed ? "." : ", or swap it for money in some countries.",
 });
 
 /**
@@ -244,13 +242,13 @@ export const accessibilityNote = (
 ): string => {
   switch (support) {
     case AccessibilitySupport.No:
-      return "The provider says it offers no accessibility accommodations.";
+      return "The provider says it can't offer support for people with disabilities.";
     case AccessibilitySupport.AvailableOnRequest:
       return "The provider can arrange support if you ask. Ask them what's possible before you start.";
     case AccessibilitySupport.Yes:
       return "The provider says it's accessible but hasn't listed how. Ask them before you start.";
     default:
-      return "The provider hasn't said whether it offers accessibility accommodations.";
+      return "The provider hasn't said if it offers support for people with disabilities.";
   }
 };
 

@@ -13,8 +13,8 @@ import {
 } from "~/api/services/userPreferences";
 
 /**
- * The anonymous → signed-in hand-over (YOM-1261). Anonymous answers live in `sessionStorage` and
- * die with the session; when a youth signs in while such answers exist, we offer ONCE to keep
+ * The anonymous → signed-in hand-over (YOM-1261). Anonymous answers live in `localStorage` (per
+ * device, since 2026-10-07); when a youth signs in while such answers exist, we offer ONCE to keep
  * them. Keeping merges them into the stored preset through the façade — an existing preset is
  * never overwritten silently (multi-selects union, engagement included since the wizard step
  * picks several; the session's answers win where both set a single value). Declining discards

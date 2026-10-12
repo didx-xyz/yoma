@@ -16,7 +16,9 @@ export const LIST_COLUMNS = {
   money: "w-[140px] shrink-0",
   where: "hidden w-[130px] shrink-0 lg:block",
   fact: "hidden w-[130px] shrink-0 xl:block",
-  status: "w-[100px] shrink-0",
+  // "Ends tomorrow" (semibold, 108px) whole at xl, where the key fact joins and the row has room;
+  // below it the title keeps the room, and the label truncates with its tooltip.
+  status: "w-[100px] shrink-0 xl:w-[116px]",
   places: "hidden w-[90px] shrink-0 lg:block",
   action: "w-[130px] shrink-0",
 } as const;

@@ -3259,6 +3259,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                           onChange={onChange}
                           showErrors={formStateStep2.isSubmitted}
                           rules={customFieldRules}
+                          intro="Details for this type of opportunity. They're shown to people and are searchable."
                         />
                       )}
                     />

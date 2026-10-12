@@ -7,7 +7,7 @@ import {
   segmentTone,
   type SegmentId,
 } from "../../lib/segmentTone";
-import { FILTER_SECTIONS } from "../../registry/filterSections";
+import { FILTER_SECTIONS, iconForSegment } from "../../registry/filterSections";
 import { useDiscovery } from "../../state/DiscoveryContext";
 import { SectionPopover } from "./SectionPopover";
 
@@ -20,9 +20,10 @@ import { SectionPopover } from "./SectionPopover";
  * Popovers anchor left under their segment, except the LAST segment's, which anchors right —
  * its left edge would otherwise push the 560px panel off the right of the viewport.
  *
- * SEARCH · WHAT · WHERE · HOW LONG · ENGAGEMENT (2026-09-22): Engagement replaced Pay, which
- * moved under "More filters". Registry-backed segments use the SECTION id, so the popover reuses
- * the Engagement section definition — one definition, two homes.
+ * SEARCH · WHAT · WHERE · HOW · REQUIREMENTS (2026-10-09, Jason): How is How long and
+ * Engagement, Requirements is Language and Accessibility, each one combined section
+ * (`FILTER_GROUPS`), as in the Filters dialog. The segment id is the group's, so the popover
+ * reuses the group definition — one definition, two homes.
  *
  * Round 7 colour rule (2026-09-30): a segment's value is green with a dot when this search set
  * it, purple when the preferences supply it, grey when empty (`lib/segmentTone.ts`); the Filters
@@ -32,14 +33,24 @@ const SEGMENTS: { id: SegmentId; label: string }[] = [
   { id: "search", label: "Search" },
   { id: "type", label: "What" },
   { id: "where", label: "Where" },
-  { id: "time", label: "How long" },
-  { id: "engagement", label: "Engagement" },
+  { id: "how", label: "How" },
+  { id: "requirements", label: "Requirements" },
 ];
 
 export const SegmentedSearchBar: React.FC<{ onOpenFilters: () => void }> = ({
   onOpenFilters,
 }) => {
   const { state, effectiveFilters, filterCount, resolveLabel } = useDiscovery();
+
+  /** "English" · "English +1" — the first value's name, then a count. */
+  const firstPlus = (
+    facet: "engagementTypes" | "languages",
+    values: string[],
+  ): string | null => {
+    if (values.length === 0) return null;
+    const first = resolveLabel(facet, values[0]!);
+    return values.length > 1 ? `${first} +${values.length - 1}` : first;
+  };
   const [openSection, setOpenSection] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -47,7 +58,11 @@ export const SegmentedSearchBar: React.FC<{ onOpenFilters: () => void }> = ({
   useEffect(() => {
     if (!openSection) return;
     const onPointerDown = (e: MouseEvent): void => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpenSection(null);
+      const target = e.target as Element;
+      // A react-select menu is portalled to <body> (the type-specific filters in WHAT): picking
+      // from it is still inside the popover. Its list and options carry `react-select-…` ids.
+      if (target.closest?.('[id^="react-select-"]')) return;
+      if (!rootRef.current?.contains(target)) setOpenSection(null);
     };
     const onKey = (e: KeyboardEvent): void => {
       if (e.key === "Escape") setOpenSection(null);
@@ -70,7 +85,12 @@ export const SegmentedSearchBar: React.FC<{ onOpenFilters: () => void }> = ({
         if (filters.types.length === 0) return "Any type";
         const first = resolveLabel("types", filters.types[0]!);
         const more = filters.types.length - 1;
-        return more > 0 ? `${first} +${more}` : first;
+        const typesText = more > 0 ? `${first} +${more}` : first;
+        // Its type-specific filters set from WHAT since 2026-10-09: "Job · 2 filters".
+        const clauses = new Set(filters.customFields.map((c) => c.key)).size;
+        return clauses > 0
+          ? `${typesText} · ${clauses} ${clauses === 1 ? "filter" : "filters"}`
+          : typesText;
       }
       case "where":
         // Most specific first — "25 km of Cape Town", "Cape Town", "Western Cape", "South Africa +1".
@@ -92,6 +112,32 @@ export const SegmentedSearchBar: React.FC<{ onOpenFilters: () => void }> = ({
         );
         const more = filters.engagementTypes.length - 1;
         return more > 0 ? `${first} +${more}` : first;
+      }
+      case "how": {
+        const parts = [
+          filters.commitment ? summaryFor("time") : null,
+          firstPlus("engagementTypes", filters.engagementTypes),
+        ].filter(Boolean);
+        return parts.length > 0 ? parts.join(" · ") : "Any";
+      }
+      case "requirements": {
+        // The inherited needs are private (2026-10-03): never named, never counted on their own.
+        const own = state.filters.accommodations.length;
+        const inherited = filters.accommodations.filter(
+          (id) => !state.filters.accommodations.includes(id),
+        ).length;
+        const needs =
+          inherited > 0
+            ? own > 0
+              ? `Your needs +${own}`
+              : "Your needs"
+            : own > 0
+              ? `${own} ${own === 1 ? "need" : "needs"}`
+              : null;
+        const parts = [firstPlus("languages", filters.languages), needs].filter(
+          Boolean,
+        );
+        return parts.length > 0 ? parts.join(" · ") : "Any";
       }
       default:
         return FILTER_SECTIONS.find((s) => s.id === id)?.label ?? id;
@@ -118,7 +164,12 @@ export const SegmentedSearchBar: React.FC<{ onOpenFilters: () => void }> = ({
                   openSection === segment.id ? "bg-gray-light" : ""
                 }`}
               >
-                <span className="text-gray-dark text-[10px] font-bold tracking-wide uppercase">
+                {/* The section's own icon, as in the Filters dialog (2026-10-09). */}
+                <span className="text-gray-dark flex items-center gap-1.5 text-[10px] font-bold tracking-wide uppercase">
+                  {React.createElement(iconForSegment(segment.id), {
+                    className: "h-3.5 w-3.5 shrink-0",
+                    "aria-hidden": true,
+                  })}
                   {segment.label}
                 </span>
                 {(() => {

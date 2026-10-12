@@ -52,6 +52,9 @@ export const OpportunityCustomFieldsSection: React.FC<
       className={className}
       columns={1}
       hideGrouping={true}
+      // one section per page (the classic public page, the admin info page), so one request
+      // names its skills
+      resolveSkillsById
     />
   );
 };

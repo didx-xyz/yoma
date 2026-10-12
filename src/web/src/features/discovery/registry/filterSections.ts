@@ -6,6 +6,8 @@ import {
   IoGridOutline,
   IoLanguageOutline,
   IoLocationOutline,
+  IoSearchOutline,
+  IoShapesOutline,
   IoShieldCheckmarkOutline,
   IoSparklesOutline,
   IoTimeOutline,
@@ -102,7 +104,7 @@ export interface FilterSectionDef {
   group: "primary" | "more";
 }
 
-const skillsPendingNote = "Coming soon — you can't pick skills here yet.";
+const skillsPendingNote = "Coming soon. You can't pick skills here yet.";
 
 /**
  * The type row is not a registry section (it binds `types`, which no `FilterSectionBinding`
@@ -117,7 +119,7 @@ export const TYPE_ROW_HINT =
  * 2026-10-03): the row shows only the goal's type, yet that category's other types appear too.
  */
 export const typeRowGoalLine = (categoryName: string): string =>
-  `Your goal also brings in ${categoryName} opportunities of any type.`;
+  `Your goal also shows all ${categoryName} opportunities, of every type.`;
 
 export const FILTER_SECTIONS: FilterSectionDef[] = [
   {
@@ -147,7 +149,7 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     // country also sends Worldwide, except with a radius on (2026-10-03). The radius search's own
     // rule (no coordinates, left out) is `DISTANCE_NOTE`, shown beside the distance control.
     nullRule:
-      "Ones that don't name a region or city stay in. Your country from your preferences also brings in worldwide ones, except in a distance search.",
+      "Opportunities that don't give a region or city still show. If your country comes from your preferences, worldwide ones show too, but not in a distance search.",
     pendingNote: null,
     group: "primary",
   },
@@ -156,14 +158,14 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
   // type (the BA rule); inherited only, they stay in, since the partner job feeds set none.
   {
     id: "engagement",
-    label: "Engagement",
+    label: "Online or in person",
     question: "How do you want to take part?",
     icon: IoWifiOutline,
     control: "chips",
     binding: "engagementTypes",
     hint: null,
     nullRule:
-      "Picked here, opportunities that don't say how you take part are left out. From your preferences, they stay in.",
+      "If you pick here, we hide opportunities that don't say. If it comes from your preferences, they still show.",
     pendingNote: null,
     group: "primary",
   },
@@ -171,14 +173,13 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
   // contract applies (2026-10-03).
   {
     id: "time",
-    label: "How long",
+    label: "Time you have",
     question: "How much time do you have?",
     icon: IoTimeOutline,
     control: "range",
     binding: "commitment",
     hint: null,
-    nullRule:
-      "Opportunities that don't state a time commitment stay in your results.",
+    nullRule: "Opportunities that don't say how long they take still show.",
     pendingNote: null,
     group: "primary",
   },
@@ -189,13 +190,13 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
   {
     id: "accessibility",
     label: "Accessibility",
-    question: "Need accommodations?",
+    question: "Do you need support to take part?",
     icon: IoShieldCheckmarkOutline,
     control: "chips",
     binding: "accommodations",
     hint: null,
     nullRule:
-      "Needs every accommodation you pick; ones that say No are left out. Picked here, so are ones with no list; from your preferences, they stay in.",
+      "Shows only opportunities that offer everything you pick, and hides ones that say No. If you pick here, ones that don't say are hidden too. From your preferences, they still show.",
     pendingNote: null,
     group: "primary",
   },
@@ -210,7 +211,7 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     binding: "languages",
     hint: null,
     nullRule:
-      "Shows opportunities in any language you pick. Ones that don't list a language are left out.",
+      "Shows opportunities in any language you pick. We hide ones that don't list a language.",
     pendingNote: null,
     group: "primary",
   },
@@ -221,14 +222,14 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
   // divider marks the change.
   {
     id: "pay",
-    label: "Paid and rewards",
-    question: "Should it pay or reward you?",
+    label: "Pay and rewards",
+    question: "Do you want pay or a reward?",
     icon: IoCashOutline,
     control: "rewards",
     binding: "zlto",
     hint: null,
     nullRule:
-      "Opportunities that haven't specified an incentive stay in, listed after the ones that match.",
+      "Opportunities that don't say if they pay still show, after the ones that match.",
     pendingNote: null,
     group: "more",
   },
@@ -241,20 +242,20 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     icon: IoSparklesOutline,
     control: "lookupSearch",
     binding: null,
-    hint: "The skills in your preferences already narrow jobs; jobs that list no skills stay in.",
+    hint: "Your saved skills already affect jobs. Jobs that don't list skills still show.",
     nullRule: null,
     pendingNote: skillsPendingNote,
     group: "more",
   },
   {
     id: "sdgs",
-    label: "SDGs",
+    label: "Global goals",
     question: "Which global goals matter to you?",
     icon: IoGlobeOutline,
     control: "chips",
     binding: "sdgs",
     hint: null,
-    nullRule: "Opportunities that don't name a goal stay in your results.",
+    nullRule: "Opportunities that don't name a goal still show.",
     pendingNote: null,
     group: "more",
   },
@@ -268,9 +269,66 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     icon: IoBusinessOutline,
     control: "text",
     binding: "provider",
-    hint: "The provider named on the opportunity — type part of it, e.g. KFC.",
-    nullRule: "Opportunities that don't name a provider are left out.",
+    hint: "Type part of the provider's name, for example KFC.",
+    nullRule: "We hide opportunities that don't name a provider.",
     pendingNote: null,
     group: "more",
   },
 ];
+
+/**
+ * Two sections shown as ONE (2026-10-09, Jason), in the Filters dialog, the mobile sheet and the
+ * search bar: "How" is How long and Engagement, "Requirements" is Language and Accessibility
+ * (named as the details page groups them). Each part keeps its own control, rules and badge;
+ * the combined section adds a header, a question and a short description
+ * (`FilterSectionGroup`). Its id is also its search-bar segment's.
+ */
+export interface FilterGroupDef {
+  id: "how" | "requirements";
+  label: string;
+  /** The popover's title. */
+  question: string;
+  /** One line under the header (open) or the popover title: what the section covers. */
+  description: string;
+  icon: IconType;
+  /** The sections it holds, in order: registry ids. */
+  parts: [string, string];
+}
+
+export const FILTER_GROUPS: FilterGroupDef[] = [
+  {
+    id: "how",
+    label: "How",
+    // Not the Engagement part's own question, which sits just beneath it.
+    question: "How would you like to do it?",
+    description:
+      "How much time you have, and if you want to join online or in person.",
+    icon: IoTimeOutline,
+    parts: ["time", "engagement"],
+  },
+  {
+    id: "requirements",
+    label: "Requirements",
+    question: "Any language or support needs?",
+    description: "Languages you understand, and any support you need.",
+    icon: IoShieldCheckmarkOutline,
+    parts: ["language", "accessibility"],
+  },
+];
+
+/** The combined section a registry section belongs to, if any. */
+export const groupOfSection = (sectionId: string): FilterGroupDef | undefined =>
+  FILTER_GROUPS.find((group) => group.parts.includes(sectionId));
+
+/**
+ * The icon a search-bar segment and its popover show — the same as its home in the Filters
+ * dialog (2026-10-09, Jason): the search box, the Type section, a combined section, a section.
+ */
+export const iconForSegment = (id: string): IconType =>
+  id === "search"
+    ? IoSearchOutline
+    : id === "type"
+      ? IoShapesOutline
+      : (FILTER_GROUPS.find((group) => group.id === id)?.icon ??
+        FILTER_SECTIONS.find((section) => section.id === id)?.icon ??
+        IoSearchOutline);

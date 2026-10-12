@@ -13,8 +13,14 @@ import { Chip } from "../shared/Chip";
 export const PreferencesBlock: React.FC<{ onEdit: () => void }> = ({
   onEdit,
 }) => {
-  const { state, dispatch, chips, preferences, skipPreference } =
-    useDiscovery();
+  const {
+    state,
+    dispatch,
+    chips,
+    preferences,
+    skipPreference,
+    restorePreference,
+  } = useDiscovery();
   const inherited = chips.filter((chip) => chip.prefKey !== null);
 
   // Still loading — render nothing rather than flashing the empty state.
@@ -28,7 +34,8 @@ export const PreferencesBlock: React.FC<{ onEdit: () => void }> = ({
           <IoPersonOutline className="text-purple h-4 w-4" />
         </span>
         <span className="text-gray-dark grow text-xs">
-          No preferences yet. Set them once and every search uses them.
+          No preferences yet. Set them once and we&apos;ll use them on every
+          search.
         </span>
         <button
           type="button"
@@ -69,32 +76,32 @@ export const PreferencesBlock: React.FC<{ onEdit: () => void }> = ({
       {!state.preferencesOff && inherited.length > 0 && (
         <>
           {/* 8px between chips, the same gap the results row uses — one chip rhythm. */}
-          <ScrollableContainer className="mt-2 flex gap-2 overflow-x-auto">
+          <ScrollableContainer
+            className="mt-2 flex gap-2 overflow-x-auto"
+            fadeEdges
+          >
             {inherited.map((chip) => (
               <Chip
                 key={chip.id}
                 chip={chip}
-                onRemove={() => chip.prefKey && skipPreference(chip.prefKey)}
+                onRemove={() =>
+                  chip.prefKey && skipPreference(chip.prefKey, chip.interest)
+                }
                 onUndo={() =>
-                  chip.prefKey &&
-                  dispatch({
-                    kind: "setPreferenceSkipped",
-                    key: chip.prefKey,
-                    skipped: false,
-                  })
+                  chip.prefKey && restorePreference(chip.prefKey, chip.interest)
                 }
               />
             ))}
           </ScrollableContainer>
           <p className="text-purple-shade pt-2 text-[11px]">
-            Removing one here does not change your profile. Tap the arrow to put
-            it back.
+            Removing one here doesn&apos;t change your profile. Tap the arrow to
+            bring it back.
           </p>
         </>
       )}
       {state.preferencesOff && (
         <p className="text-purple-shade pt-2 text-[11px]">
-          Switched off for this search. Your profile has not changed.
+          Off for this search. Your profile hasn&apos;t changed.
         </p>
       )}
     </section>

@@ -51,8 +51,8 @@ export const KeepAnswersPrompt: React.FC = () => {
         </span>{" "}
         <span className="text-gray-dark">
           {preferences === null
-            ? "They become your saved preferences and shape every search."
-            : "They will be added to your saved preferences — nothing you saved is removed."}
+            ? "We'll save them and use them on every search."
+            : "We'll add them to your saved preferences. Nothing you saved is removed."}
           {droppedPlace &&
             ` ${droppedPlace} isn't in your profile country, so it won't be kept.`}
         </span>

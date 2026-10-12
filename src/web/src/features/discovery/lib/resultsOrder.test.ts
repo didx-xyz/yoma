@@ -44,7 +44,7 @@ describe("Sort options — Most ZLTO on a Jobs-only search (Q1)", () => {
     ]);
     assert.equal(
       sortNote(["Job"], "mostZlto"),
-      "Jobs don't carry ZLTO, so they're shown newest first.",
+      "Jobs don't give ZLTO, so they're sorted newest first.",
     );
     assert.equal(sortNote(["Job", "Learning"], "mostZlto"), null);
   });

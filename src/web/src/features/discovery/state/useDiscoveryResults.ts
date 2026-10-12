@@ -1,12 +1,25 @@
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  queryOptions,
+  useQuery,
+} from "@tanstack/react-query";
 import type { OpportunitySearchResultsInfo } from "~/api/models/opportunity";
 import { searchOpportunities } from "~/api/services/opportunities";
 import type { DiscoverySearch } from "../lib/preferenceMapping";
 import type { SearchLookups } from "../lib/searchRequest";
-import { buildSearchFilter } from "../lib/searchRequest";
+import { buildSearchFilter, DISCOVERY_PAGE_SIZE } from "../lib/searchRequest";
 import type { DiscoverySort } from "../lib/types";
 
-export const DISCOVERY_PAGE_SIZE = 20;
+export { DISCOVERY_PAGE_SIZE };
+
+/**
+ * How long a results page (and a count) is reused before it is fetched again. Five minutes, so a
+ * youth who browses a rail sideways, then opens its See all and pages on, gets those pages from
+ * the cache (2026-10-08: at one minute, a rail's pages were stale by the time they were opened).
+ * Kept twice as long, so a page from the landing outlives the trip to the results page.
+ */
+export const DISCOVERY_STALE_MS = 5 * 60 * 1000;
+const DISCOVERY_CACHE_MS = 2 * DISCOVERY_STALE_MS;
 
 /**
  * One page of results, with the Paid filter it was fetched under. The page on screen may be the
@@ -15,6 +28,36 @@ export const DISCOVERY_PAGE_SIZE = 20;
  */
 export interface DiscoveryResultsPage extends OpportunitySearchResultsInfo {
   paidFilter: boolean | null;
+}
+
+/**
+ * One results page as a query — keyed on the request itself, so two surfaces that build the same
+ * request (a landing rail and its See all) share one cache entry. The ONE definition of the key
+ * and the fetch: `useDiscoveryResults` runs it, and a rail's sideways paging fetches further
+ * pages through it (`useRailResults`).
+ */
+export function discoveryResultsQuery(
+  search: DiscoverySearch,
+  sort: DiscoverySort,
+  page: number,
+  lookups: SearchLookups,
+) {
+  const request = buildSearchFilter(
+    search,
+    sort,
+    page,
+    DISCOVERY_PAGE_SIZE,
+    lookups,
+  );
+  return queryOptions({
+    queryKey: ["discovery", "results", JSON.stringify(request)],
+    queryFn: async (): Promise<DiscoveryResultsPage> => ({
+      ...(await searchOpportunities(request)),
+      paidFilter: request.incentivized?.value ?? null,
+    }),
+    staleTime: DISCOVERY_STALE_MS,
+    gcTime: DISCOVERY_CACHE_MS,
+  });
 }
 
 /**
@@ -37,23 +80,10 @@ export function useDiscoveryResults(
   failed: boolean;
   retry: () => void;
 } {
-  const request = buildSearchFilter(
-    search,
-    sort,
-    page,
-    DISCOVERY_PAGE_SIZE,
-    lookups,
-  );
-
   const { data, isFetching, isError, isPlaceholderData, refetch } = useQuery({
-    queryKey: ["discovery", "results", JSON.stringify(request)],
-    queryFn: async (): Promise<DiscoveryResultsPage> => ({
-      ...(await searchOpportunities(request)),
-      paidFilter: request.incentivized?.value ?? null,
-    }),
+    ...discoveryResultsQuery(search, sort, page, lookups),
     enabled,
     placeholderData: keepPreviousData,
-    staleTime: 60 * 1000,
   });
 
   return {

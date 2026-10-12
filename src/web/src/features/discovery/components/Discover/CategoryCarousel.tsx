@@ -16,8 +16,9 @@ const FIRST_SHOWN = 6;
  * and centre on desktop and run as one sideways row on mobile.
  * Order, counts (the category lookup's, zero included) and the toggle below are unchanged.
  *
- * Colour follows the surface rule — GREEN = filters, PURPLE = preferences: a category this
- * search picked is filled green, one the preference layer supplies is filled purple-tint.
+ * Colour follows the surface rule — GREEN = filters, PURPLE = preferences: on a white pill (since
+ * 2026-10-08), a category this search picked is outlined green, one the preference layer
+ * supplies is outlined purple.
  * The lookup carries full names only, so there are no short names here.
  */
 export const CategoryCarousel: React.FC<{
@@ -55,7 +56,9 @@ export const CategoryCarousel: React.FC<{
     const prefKey = effectiveFilters.categories.includes(id)
       ? owningPreference(fragments, "categories", id)
       : null;
-    if (prefKey) skipPreference(prefKey);
+    // A saved interest goes on its own (2026-10-08); the goal's category takes the goal with it.
+    if (prefKey === "targetCategories") skipPreference(prefKey, id);
+    else if (prefKey) skipPreference(prefKey);
     else
       dispatch({
         kind: "patchFilters",
@@ -70,14 +73,23 @@ export const CategoryCarousel: React.FC<{
       : lookups.categories.slice(0, FIRST_SHOWN);
 
   const pills = [
-    ...shown.map((category) => {
+    ...shown.map((category, index) => {
+      // Revealed by "Show all" (2026-10-09): rise in one after another, a fade alone under
+      // reduced motion. The first ones were already there.
+      const revealed = expanded && index >= FIRST_SHOWN;
       const manual = state.filters.categories.includes(category.id);
       const inherited =
         !manual && effectiveFilters.categories.includes(category.id);
-      let tone = "border-white/20 bg-white/10 text-white hover:bg-white/20";
-      if (manual) tone = "border-green bg-green text-white";
+      // White, like the quick searches and the search bar (2026-10-08): the icons bring their own
+      // colours, which no tint or fill can be trusted to sit behind. Picked, a pill keeps its
+      // white and is outlined — green for this search, purple from preferences — with the
+      // outline INSIDE its edge (`inset-ring`), so it reads on the purple hero.
+      let tone = "border-gray hover:border-green bg-white text-black";
+      if (manual)
+        tone = "border-green inset-ring inset-ring-green bg-white text-green";
       else if (inherited)
-        tone = "border-purple-tint bg-purple-tint text-purple";
+        tone =
+          "border-purple inset-ring inset-ring-purple bg-white text-purple";
       return (
         <button
           key={category.id}
@@ -87,7 +99,16 @@ export const CategoryCarousel: React.FC<{
             toggleCategory(category.id);
             onPick?.();
           }}
-          className={`inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold whitespace-nowrap ${tone}`}
+          style={
+            revealed
+              ? { animationDelay: `${(index - FIRST_SHOWN) * 30}ms` }
+              : undefined
+          }
+          className={`inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold whitespace-nowrap ${tone} ${
+            revealed
+              ? "motion-safe:animate-[rise-in_220ms_ease-out_both] motion-reduce:animate-[fade-in_150ms_ease-out_both]"
+              : ""
+          }`}
         >
           {category.imageURL && (
             <Image
@@ -114,7 +135,7 @@ export const CategoryCarousel: React.FC<{
             type="button"
             aria-expanded={expanded}
             onClick={() => setExpanded((e) => !e)}
-            className="inline-flex min-h-8 shrink-0 items-center gap-1 rounded-full border border-white/40 bg-white/20 px-3 text-xs font-semibold whitespace-nowrap text-white hover:bg-white/30"
+            className="border-gray hover:border-green text-gray-dark inline-flex min-h-8 shrink-0 items-center gap-1 rounded-full border bg-white px-3 text-xs font-semibold whitespace-nowrap"
           >
             {expanded ? (
               <>

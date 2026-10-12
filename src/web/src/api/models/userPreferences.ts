@@ -10,7 +10,7 @@ import {
  * (epic rule: presets must not be built through the custom-field models or components).
  *
  * Stored by `GET` / `PATCH /user/preferences` for a signed-in youth (YOM-1257, 2026-09-28) and in
- * `sessionStorage` for an anonymous one. This is the WIZARD's shape; `userPreferencesLive.ts` is
+ * `localStorage` for an anonymous one. This is the WIZARD's shape; `userPreferencesLive.ts` is
  * the one adapter to the API's (`UserPreferencesResponse` / `UserPreferencesRequest`). Location is
  * the exception to "preferences": the API keeps region / city / centroid on the PROFILE, so the
  * adapter reads and writes it through `/user`.
@@ -159,7 +159,7 @@ const normalizeAccessibility = (raw: unknown): UserPreferenceAccessibility => {
 };
 
 /**
- * Repairs a client-held preset of unknown vintage into the current shape. `sessionStorage`
+ * Repairs a client-held preset of unknown vintage into the current shape. `localStorage`
  * outlives shape changes, so the anonymous read path runs parsed JSON through here. Legacy
  * bare-id skills (pre-`{id, name}`) are dropped rather than kept as unresolvable GUID chips, and
  * keys the model no longer has are not carried over.

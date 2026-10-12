@@ -39,19 +39,19 @@ export const NoMatches: React.FC = () => {
     dispatch({ kind: "patchFilters", patch: { q: null } });
 
   // Nothing narrows the search at all (an empty catalogue): no title names a cause, no button.
-  let title = "No matches — yet";
+  let title = "Nothing here yet";
   let body = "Nothing matches this search.";
   if (preferencesNarrowing) {
     title = "No matches in your feed";
     body =
-      "Your preferences may be too narrow for this search. Try it without them — nothing is changed in your profile.";
+      "Your preferences may be hiding results. Try searching without them. Your profile won't change.";
   } else if (manualFilters) {
     title = "No matches with these filters";
     body =
-      "Remove a filter or two, or clear them all — your preferences stay as they are.";
+      "Remove a filter or two, or clear them all. Your preferences stay the same.";
   } else if (word) {
     title = `No matches for “${word}”`;
-    body = "Check the spelling, or try a shorter or broader word.";
+    body = "Check the spelling, or try a shorter or more general word.";
   }
 
   const clearFiltersButton = (

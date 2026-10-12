@@ -155,7 +155,7 @@ export const WelcomeStep: React.FC<{
 
   const actions = (getStartedRef: React.Ref<HTMLButtonElement>) => (
     <div
-      className={`flex flex-wrap items-center gap-x-6 gap-y-3 ${RISE_IN}`}
+      className={`flex items-center gap-x-6 gap-y-3 ${RISE_IN}`}
       style={leftDelay(5)}
     >
       <button
@@ -231,7 +231,7 @@ export const WelcomeStep: React.FC<{
               </span>
               <span className="text-orange">Yoma search</span>
             </span>
-            <div className="flex grow flex-col justify-center gap-4 lg:[@media(max-height:680px)]:gap-3">
+            <div className="flex grow flex-col justify-center gap-4 lg:[@media(max-height:680px)]:gap-6">
               <div
                 className={`transition duration-300 motion-reduce:transition-none ${
                   counting ? "opacity-70 blur-[3px]" : ""
@@ -270,8 +270,8 @@ export const WelcomeStep: React.FC<{
                 <IoSparklesOutline className="text-orange mt-0.5 h-5 w-5 shrink-0" />
                 <p>
                   <span className="font-bold">Don&apos;t be overwhelmed!</span>{" "}
-                  Tap &quot;Get started&quot; to choose your preferences and
-                  narrow down your feed. Every step is optional.
+                  Tap &quot;Get started&quot; and tell us what you want.
+                  We&apos;ll show you what fits. Every step is optional.
                 </p>
               </div>
               <div className="hidden lg:block">{actions(columnGetStarted)}</div>

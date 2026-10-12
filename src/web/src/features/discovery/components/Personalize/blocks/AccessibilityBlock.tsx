@@ -70,7 +70,7 @@ export const AccessibilityBlock: React.FC<{
             }
             rows={2}
             className="textarea border-gray focus:border-gray w-full focus:outline-none"
-            placeholder="Describe the accommodation you need"
+            placeholder="Describe the support you need"
           />
           {!otherDescription?.trim() && (
             <span className="text-gray-dark text-xs">

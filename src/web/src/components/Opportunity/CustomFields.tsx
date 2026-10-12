@@ -17,8 +17,10 @@ import {
   useEducationsQuery,
   useOpportunityCountriesQuery,
   useOpportunityLanguagesQuery,
+  useSkillLabeler,
 } from "~/hooks/useOpportunityMutations";
 import { PAGE_SIZE_MEDIUM } from "~/lib/constants";
+import { skillIdsInValues } from "~/lib/customFields/skillLabels";
 import { dateInputToUTC, debounce, utcToDateInput } from "~/lib/utils";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -67,6 +69,17 @@ export interface CustomFieldsProps {
   /** Hide group and subgroup section headers. Defaults to false. */
   hideGrouping?: boolean;
   /**
+   * The line under the "Additional details" title, in the host's own voice (the editor's says
+   * the details are shown and searchable). Omitted → no line: the title and group headings are
+   * enough, as on the youth completion form.
+   */
+  intro?: string;
+  /**
+   * Hide each definition's `description` under its field. Descriptions are written for admins,
+   * so the youth completion form hides them; the editor keeps them. Defaults to false.
+   */
+  hideDescriptions?: boolean;
+  /**
    * Optional cross-field rules, applied on every change (their `values` replace the edited
    * collection, so dependents can be cleared) and on render (`disabledKeys`, `errors`).
    * Must be referentially stable (memoize it). Omitted → purely definition-driven.
@@ -99,6 +112,10 @@ const dataTypeOf = (definition: CustomFieldDefinition) =>
 
 const lookupTypeOf = (definition: CustomFieldDefinition) =>
   (definition.lookupType as string | null) ?? null;
+
+/** "1 field" · "5 fields" — a group heading's count. */
+const fieldCountLabel = (count: number): string =>
+  `${count} ${count === 1 ? "field" : "fields"}`;
 
 // Group definitions by Group → SubGroup, ordering by SortOrder then Title within
 // each subgroup. Groups and subgroups preserve first-seen order after sorting.
@@ -319,6 +336,8 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
   showErrors,
   menuPortalTarget,
   hideGrouping = false,
+  intro,
+  hideDescriptions = false,
   rules,
 }) => {
   const groups = useMemo(
@@ -498,6 +517,13 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
       ),
     [],
   );
+  // saved and picked skills are named by id (one request for all of them), so a saved skill shows
+  // its name without a search that happens to return it; a picked one is named from the cache
+  const skillIds = useMemo(
+    () => skillIdsInValues(definitions, Object.values(valueMap)),
+    [definitions, valueMap],
+  );
+  const skillLabel = useSkillLabeler(skillIds, skillCache);
   //#endregion Lookups
 
   const [defaultPortalTarget, setDefaultPortalTarget] =
@@ -702,7 +728,7 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
           }
           value={selected.map((id) => ({
             value: id,
-            label: skillCache.find((s) => s.id === id)?.name ?? id,
+            label: skillLabel(id),
           }))}
           menuPortalTarget={portalTarget}
           styles={SELECT_STYLES}
@@ -775,14 +801,15 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
   // no applicable custom fields for the selected type — render nothing
   if (groups.length === 0) return null;
 
+  // the admin-facing description under a field, unless this host hides them
+  const subLabelOf = (definition: CustomFieldDefinition): string | undefined =>
+    hideDescriptions ? undefined : (definition.description ?? undefined);
+
   return (
     <>
       <div className="mb-4 flex flex-col gap-2">
         <h5 className="font-bold tracking-wider">Additional details</h5>
-        <p className="-mt-2 text-sm">
-          Extra structured fields for this opportunity type, defined centrally
-          and rendered here automatically.
-        </p>
+        {intro && <p className="-mt-2 text-sm">{intro}</p>}
       </div>
 
       <div
@@ -800,7 +827,7 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
                     <FormField
                       key={definition.key}
                       label={definition.title}
-                      subLabel={definition.description ?? undefined}
+                      subLabel={subLabelOf(definition)}
                       showWarningIcon={!!error}
                       showError={!!(touched[definition.key] || showErrors)}
                       error={error}
@@ -827,11 +854,13 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
                   </span>
                   <span className="border-gray-light h-px flex-1 border-t"></span>
                   <span className="text-gray-dark shrink-0 text-sm font-medium">
-                    {group.subGroups.reduce(
-                      (count, subGroup) => count + subGroup.definitions.length,
-                      0,
-                    )}{" "}
-                    fields
+                    {fieldCountLabel(
+                      group.subGroups.reduce(
+                        (count, subGroup) =>
+                          count + subGroup.definitions.length,
+                        0,
+                      ),
+                    )}
                   </span>
                 </div>
 
@@ -848,7 +877,7 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
                         <FormField
                           key={definition.key}
                           label={definition.title}
-                          subLabel={definition.description ?? undefined}
+                          subLabel={subLabelOf(definition)}
                           badge={
                             badge ? (
                               <div className="badge bg-green-light text-green-dark">

@@ -31,6 +31,7 @@ import type {
 import {
   composeSearch,
   mapPreferencesToFilters,
+  withoutSkippedInterests,
 } from "../lib/preferenceMapping";
 import type {
   DiscoveryFilters,
@@ -56,6 +57,7 @@ import { useViewMode } from "./useViewMode";
 export interface PreferenceSnapshot {
   preferences: UserPreferences;
   skipped: PreferenceKey[];
+  interestsSkipped: string[];
 }
 
 /** One context per surface — wiring only; every rule lives in the pure modules it composes. */
@@ -86,9 +88,10 @@ export interface DiscoveryContextValue {
   migration: ReturnType<typeof useAnonymousMigration>;
   /**
    * The preset and skip list as they were before the banner's last "Make this my default" —
-   * what its inline Undo restores. It lives HERE rather than in the banner because saving the
-   * last override can empty the query, which flips the surface from results to landing and
-   * remounts the banner; the offer of an undo must not depend on which of the two is mounted.
+   * what its inline Undo restores. It lives HERE rather than in the banner because a save can
+   * drop the search's last filter (the clauses of a type only the old goal supplied), which flips
+   * the surface from results to landing and remounts the banner; the offer of an undo must not
+   * depend on which of the two is mounted.
    */
   preferenceUndo: PreferenceSnapshot | null;
   setPreferenceUndo: (snapshot: PreferenceSnapshot | null) => void;
@@ -116,8 +119,9 @@ export interface DiscoveryContextValue {
   effectiveFilters: DiscoveryFilters;
   chips: DiscoveryChip[];
   /**
-   * The Filters badge: one per chip on screen. That is the chip model's chips plus one per
-   * custom-field clause, which `AppliedChips` renders beside them, outside the chip model.
+   * The Filters badge: one per filter of THIS search's own, the green chips. That is the chip
+   * model's manual chips plus one per custom-field clause, which `AppliedChips` renders beside
+   * them, outside the chip model. The preferences are not counted (2026-10-08).
    */
   filterCount: number;
   resolveLabel: ChipLabelResolver;
@@ -132,9 +136,15 @@ export interface DiscoveryContextValue {
    * Switch one preference off for this search — the ONE deselect path for inherited values
    * (chip ×, section control, type row, category tile). Also strips the fragment's values from
    * the manual filters so a manual duplicate cannot survive the skip. Undo via
-   * `setPreferenceSkipped(key, false)`.
+   * `setPreferenceSkipped(key, false)`. With `interest`, only that saved interest (a category
+   * id) is switched off — the interests' own chips, Browse by category, the Categories section.
    */
-  skipPreference: (key: PreferenceKey) => void;
+  skipPreference: (key: PreferenceKey, interest?: string) => void;
+  /**
+   * A skipped chip's undo. An interest's chip restores that interest, unless the whole
+   * interests preference is what switched it off: then the preference comes back.
+   */
+  restorePreference: (key: PreferenceKey, interest?: string) => void;
   /** The results count row registers here; `scrollToResults` brings it into view. */
   resultsAnchorRef: React.RefObject<HTMLDivElement | null>;
   /**
@@ -213,7 +223,8 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
     useVerifiedSkillIds();
   const { otherAccommodationId } = lookups;
 
-  const fragments = useMemo(
+  // The preference layer as saved, which the chips show...
+  const savedFragments = useMemo(
     () =>
       preferences
         ? mapPreferencesToFilters(preferences, {
@@ -224,6 +235,12 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
           })
         : {},
     [preferences, homeCountryId, age, verifiedSkillIds, otherAccommodationId],
+  );
+  // ...and as this search uses it: without the interests switched off one by one (2026-10-08).
+  // Everything that composes a search reads this one.
+  const fragments = useMemo(
+    () => withoutSkippedInterests(savedFragments, state.interestsSkipped),
+    [savedFragments, state.interestsSkipped],
   );
   const typeKeys = useLoadedTypeKeys();
   attribution.current = { fragments, typeKeys };
@@ -348,19 +365,37 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const chips = buildChips(
     state.filters,
-    fragments,
+    savedFragments,
     state.preferencesOff,
     state.preferencesSkipped,
     resolveLabel,
     lookups,
+    state.interestsSkipped,
   );
 
   const clearFilters = (): void => {
     dispatch({ kind: "clearFilters" });
   };
 
-  const skipPreference = (key: PreferenceKey): void => {
-    dispatch({ kind: "skipPreference", key, fragment: fragments[key] ?? {} });
+  const skipPreference = (key: PreferenceKey, interest?: string): void => {
+    dispatch(
+      interest !== undefined
+        ? {
+            kind: "skipPreference",
+            key,
+            fragment: { categories: [interest] },
+            interest,
+          }
+        : { kind: "skipPreference", key, fragment: fragments[key] ?? {} },
+    );
+  };
+
+  const restorePreference = (key: PreferenceKey, interest?: string): void => {
+    dispatch(
+      interest !== undefined && !state.preferencesSkipped.includes(key)
+        ? { kind: "setPreferenceSkipped", key, skipped: false, interest }
+        : { kind: "setPreferenceSkipped", key, skipped: false },
+    );
   };
 
   const resultsAnchorRef = useRef<HTMLDivElement | null>(null);
@@ -414,11 +449,17 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
     verifiedSkillIds,
     effectiveFilters,
     chips,
-    filterCount: chips.length + state.filters.customFields.length,
+    // This search's own filters only (2026-10-08): the preferences have their own panel and
+    // switch, so they never inflate the badge. "All opportunities" filters nothing.
+    filterCount:
+      chips.filter(
+        (chip) => chip.provenance === "manual" && chip.facet !== "all",
+      ).length + state.filters.customFields.length,
     resolveLabel,
     clearFilters,
     hasFilters: hasActiveFilters(state.filters),
     skipPreference,
+    restorePreference,
     resultsAnchorRef,
     scrollToResults,
     count,

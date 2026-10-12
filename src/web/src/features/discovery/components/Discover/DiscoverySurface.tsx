@@ -1,6 +1,6 @@
 import { useRouter } from "next/router";
 import React, { useEffect, useMemo, useState } from "react";
-import { IoOptionsOutline, IoSearchOutline } from "react-icons/io5";
+import { IoArrowUp, IoOptionsOutline, IoSearchOutline } from "react-icons/io5";
 import AnimatedText from "~/components/Opportunity/AnimatedText";
 import { formatNumber } from "../../lib/format";
 import { whereSummary } from "../../lib/location";
@@ -10,7 +10,6 @@ import {
   segmentTone,
   type SegmentTone,
 } from "../../lib/segmentTone";
-import { isDefaultDiscoveryState } from "../../lib/urlCodec";
 import { useDiscovery } from "../../state/DiscoveryContext";
 import { FiltersDialog } from "../Filters/FiltersDialog";
 import { FiltersSheet } from "../Filters/FiltersSheet";
@@ -46,6 +45,7 @@ export const DiscoverySurface: React.FC = () => {
     readPersonalizationSeen,
     chips,
     filterCount,
+    hasFilters,
     search,
     lookups,
     effectiveFilters,
@@ -58,7 +58,8 @@ export const DiscoverySurface: React.FC = () => {
   // COMPLETE replacement: opened before they load, it would edit an empty draft and wipe them.
   // So it waits for them, however it was opened (`undefined` = not loaded, or the read failed).
   const wizardShown = personalizeOpen && preferences !== undefined;
-  const landing = isDefaultDiscoveryState(state);
+  // Results only once the search has a filter of its own (`hasActiveFilters`).
+  const landing = !hasFilters;
   // One clock per render pass, so every card row shares identical urgency math.
   const now = useMemo(() => new Date(), []);
 
@@ -106,7 +107,7 @@ export const DiscoverySurface: React.FC = () => {
 
   // The hero's rotating line. On results, the two preference sentences only while a preference
   // actually applies (round 10): signed out with no answers they would describe nothing.
-  const refine = "Refine your search with the filters";
+  const refine = "Use the filters to narrow your search";
   // "1 matches your search" / "2 530 match your search" — the verb agrees with the count.
   const matching =
     count !== null
@@ -117,8 +118,8 @@ export const DiscoverySurface: React.FC = () => {
         matching ?? refine,
         // The chips sit BELOW the hero, so "above the results" pointed the wrong way (browser
         // feedback, 2026-09-05).
-        "Your preferences shape these results — adjust any chip below",
-        "Switch your preferences off any time — this search only",
+        "These results use your preferences. Change them below",
+        "You can switch your preferences off for this search",
       ]
     : matching !== null
       ? [matching, refine]
@@ -128,7 +129,7 @@ export const DiscoverySurface: React.FC = () => {
         count !== null
           ? `${formatNumber(count)} open right now`
           : "Opportunities across jobs, learning, events and more",
-        "Set your preferences once — every search uses them",
+        "Set your preferences once. Every search uses them",
         "Earn ZLTO while you build your future",
       ]
     : resultsSentences;
@@ -275,12 +276,31 @@ export const DiscoverySurface: React.FC = () => {
       <main className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-4">
         <KeepAnswersPrompt />
         <PreferenceBanner onEdit={editPreferences} />
-        <CurrentFilters />
+        <CurrentFilters onOpenFilters={() => setFiltersOpen(true)} />
         {landing ? (
           <DiscoveryLanding now={now} />
         ) : (
           <DiscoveryResults now={now} />
         )}
+        {/* Under the rails or the pager: both run long, more so on a phone (2026-10-08). */}
+        <div className="flex justify-center pt-2">
+          <button
+            type="button"
+            onClick={() =>
+              window.scrollTo({
+                top: 0,
+                behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
+                  .matches
+                  ? "auto"
+                  : "smooth",
+              })
+            }
+            className="text-green inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm font-semibold hover:underline"
+          >
+            <IoArrowUp className="h-4 w-4" aria-hidden />
+            Jump to top
+          </button>
+        </div>
       </main>
 
       {/* Same filter state, two containers — the breakpoint picks the chrome, never the content. */}

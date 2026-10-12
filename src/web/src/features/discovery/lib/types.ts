@@ -67,6 +67,14 @@ export interface DiscoveryFilters {
    */
   featured: boolean | null;
   /**
+   * "All opportunities" — `all`. It filters nothing and never reaches the API: it is what makes
+   * an unfiltered search a search, so the surface shows results rather than the landing
+   * (`hasActiveFilters`). The "Latest opportunities" rail's See all sets it when no place applies
+   * (2026-10-08); its chip, Clear filters or any other route back to no filters returns the
+   * landing.
+   */
+  all: true | null;
+  /**
    * The youth's age in whole years. Inherited only (from the profile's date of birth, as a
    * skippable chip) — no control sets it. Opportunities with no age bounds stay in.
    */
@@ -110,6 +118,11 @@ export interface DiscoveryState {
   preferencesOff: boolean;
   /** Individual inherited chips switched off for this search (stay on screen, struck through). */
   preferencesSkipped: PreferenceKey[];
+  /**
+   * Saved interests (category ids) switched off ONE BY ONE for this search (2026-10-08): each
+   * interest has its own chip. Skipping the `targetCategories` key still switches them all off.
+   */
+  interestsSkipped: string[];
   sort: DiscoverySort;
   /** A rendering choice over an unchanged result set — never part of the query itself. */
   view: DiscoveryViewMode;
@@ -135,6 +148,7 @@ export const EMPTY_DISCOVERY_FILTERS: DiscoveryFilters = {
   sdgs: [],
   provider: null,
   featured: null,
+  all: null,
   age: null,
   skills: [],
   customFields: [],
@@ -148,6 +162,10 @@ const FILTER_KEYS = Object.keys(
  * Whether this search carries any filter of its own — exactly what "Clear filters" would remove,
  * which is why the button hides when this is false. The inherited preference layer is NOT part
  * of it: `clearFilters` never touches it, so it must never be the reason the button appears.
+ *
+ * It is also what puts the surface on results rather than the landing (2026-10-07): a search runs
+ * once it has a filter of its own. Switching preferences off, skipping one, the sort, the page
+ * and the view run nothing, so `?prefsOff=1` is the landing with preferences off.
  *
  * Compared facet by facet, so the order in which a parser or a patch writes the keys can never
  * make an empty search look filtered (per-key `JSON.stringify` keeps array and object equality).
@@ -163,6 +181,7 @@ export const DEFAULT_DISCOVERY_STATE: DiscoveryState = {
   filters: EMPTY_DISCOVERY_FILTERS,
   preferencesOff: false,
   preferencesSkipped: [],
+  interestsSkipped: [],
   sort: "newest",
   view: "grid",
   page: 1,

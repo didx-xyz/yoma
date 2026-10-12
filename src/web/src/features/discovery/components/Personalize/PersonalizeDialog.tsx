@@ -160,7 +160,7 @@ export const PersonalizeDialog: React.FC<{
       !draft.accessibility.otherDescription?.trim()
     ) {
       setSaveError(
-        "Tell us what you need under Other, or deselect it, before finishing.",
+        "Tell us what you need under Other, or untick it, before you finish.",
       );
       return;
     }
@@ -280,9 +280,11 @@ export const PersonalizeDialog: React.FC<{
                   <IoClose className="h-5 w-5" />
                 </button>
               </div>
+              {/* Inner padding all round, so a selected pill's outline ring isn't clipped by the
+                  scroller; the negative left margin keeps the content where it was (2026-10-08). */}
               <div
                 ref={contentRef}
-                className="min-h-0 grow overflow-y-auto pr-2"
+                className="-ml-1 min-h-0 grow overflow-y-auto pr-2 pb-1 pl-1"
               >
                 <p className="text-green pt-2 text-xs font-bold tracking-widest uppercase">
                   Step {step + 1} of {PREFERENCE_STEPS.length}
@@ -325,15 +327,29 @@ export const PersonalizeDialog: React.FC<{
                 containerClassName=""
                 className="flex shrink-0 items-center gap-3 overflow-x-auto pt-4 md:pt-6"
               >
-                <button
-                  type="button"
-                  disabled={step === 0}
-                  onClick={() => setStep(step - 1)}
-                  className="btn border-gray min-h-11 shrink-0 rounded-full bg-white whitespace-nowrap disabled:opacity-40 max-[359px]:w-11 max-[359px]:px-0"
-                >
-                  <IoArrowBack className="h-4 w-4" />
-                  <span className="max-[359px]:sr-only">Back</span>
-                </button>
+                {/* Back from step 1 returns to the welcome it came from; with nowhere to go back
+                    to (opened on step 1, to edit), there is no Back at all, rather than a faded,
+                    disabled one that read as missing on phones (2026-10-09, Jason). */}
+                {(step > 0 || cameFromWelcome) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (step > 0) setStep(step - 1);
+                      else {
+                        // Undo Get started's hand-over, so the welcome comes back whole.
+                        setCameFromWelcome(false);
+                        setLeaving(false);
+                        setMorphing(false);
+                        setHeldHeight(null);
+                        setWelcome(true);
+                      }
+                    }}
+                    className="btn border-gray min-h-11 shrink-0 rounded-full bg-white whitespace-nowrap max-[359px]:w-11 max-[359px]:px-0"
+                  >
+                    <IoArrowBack className="h-4 w-4" />
+                    <span className="max-[359px]:sr-only">Back</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={advance}

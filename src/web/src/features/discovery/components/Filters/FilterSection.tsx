@@ -6,7 +6,63 @@ import { Badge } from "../shared/Badge";
 import { Message } from "../shared/Message";
 import { FilterControl } from "./FilterControl";
 import { SectionHeader } from "./SectionHeader";
+import type { SectionModel } from "./useSectionModel";
 import { useSectionModel } from "./useSectionModel";
+
+/**
+ * Whether this section is ACTUALLY receiving an inherited value right now — what its
+ * "FROM PREFERENCES" badge states. A permanent badge on an empty section would be a false claim.
+ */
+export function useInheritedActive(section: FilterSectionDef): boolean {
+  const { state, fragments } = useDiscovery();
+  const facet = section.binding ? FACET_FOR_BINDING[section.binding] : null;
+  return (
+    facet !== null &&
+    !state.preferencesOff &&
+    Object.entries(fragments).some(
+      ([key, fragment]) =>
+        !state.preferencesSkipped.includes(
+          key as (typeof state.preferencesSkipped)[number],
+        ) && fragment[facet] !== undefined,
+    )
+  );
+}
+
+/**
+ * A section's open body: the hint (where there is no header to carry it), the control and the
+ * missing-data rule. Shared by the single section and the combined one (`FilterSectionGroup`).
+ */
+export const FilterSectionBody: React.FC<{
+  section: FilterSectionDef;
+  model: SectionModel;
+  /** No header above it (a popover, or a part of a combined section): the hint goes here. */
+  showHint: boolean;
+  largeSearch: boolean;
+}> = ({ section, model, showHint, largeSearch }) => {
+  const { lookups } = useDiscovery();
+  return (
+    <>
+      {showHint && section.hint && (
+        <p className="text-gray-dark text-[13px] leading-snug">
+          {section.hint}
+        </p>
+      )}
+      <FilterControl
+        section={section}
+        model={model}
+        largeSearch={largeSearch}
+        onRetry={lookups.retry}
+      />
+      {/* The null rule describes what the filter DOES; it has nothing to say when the options
+          never arrived. A section with no API facet yet still states its rule — the BA asked for
+          one line per section, and the line is what the youth will get. */}
+      {section.nullRule &&
+        (section.binding === null || model.status === "ok") && (
+          <Message>{section.nullRule}</Message>
+        )}
+    </>
+  );
+};
 
 /**
  * One universal section — header row (icon, label, live summary, badges, chevron) expanding in
@@ -22,7 +78,7 @@ export const FilterSection: React.FC<{
   alwaysOpen?: boolean;
 }> = ({ section, alwaysOpen = false }) => {
   const model = useSectionModel(section);
-  const { state, fragments, lookups } = useDiscovery();
+  const inheritedActive = useInheritedActive(section);
   const [open, setOpen] = useState(
     () => model.selected.length > 0 && !model.startCollapsed,
   );
@@ -44,19 +100,6 @@ export const FilterSection: React.FC<{
       );
   };
 
-  // The badge states provenance, so it shows only when this section is ACTUALLY receiving an
-  // inherited value right now — a permanent badge on an empty section would be a false claim.
-  const facet = section.binding ? FACET_FOR_BINDING[section.binding] : null;
-  const inheritedActive =
-    facet !== null &&
-    !state.preferencesOff &&
-    Object.entries(fragments).some(
-      ([key, fragment]) =>
-        !state.preferencesSkipped.includes(
-          key as (typeof state.preferencesSkipped)[number],
-        ) && fragment[facet] !== undefined,
-    );
-
   return (
     <section className="border-gray border-b py-1">
       {!alwaysOpen && (
@@ -72,7 +115,7 @@ export const FilterSection: React.FC<{
             inheritedActive && (
               <Badge
                 intent="provenance"
-                title="This search inherits a value here from your preferences"
+                title="This comes from your preferences"
               >
                 FROM PREFERENCES
               </Badge>
@@ -84,24 +127,12 @@ export const FilterSection: React.FC<{
       {expanded && (
         <div ref={contentRef} className="flex flex-col gap-2 pt-1 pb-3">
           {/* The popover has no header row, so the hint goes above the control there. */}
-          {alwaysOpen && section.hint && (
-            <p className="text-gray-dark text-[13px] leading-snug">
-              {section.hint}
-            </p>
-          )}
-          <FilterControl
+          <FilterSectionBody
             section={section}
             model={model}
+            showHint={alwaysOpen}
             largeSearch={alwaysOpen}
-            onRetry={lookups.retry}
           />
-          {/* The null rule describes what the filter DOES; it has nothing to say when the
-              options never arrived. A section with no API facet yet still states its rule — the
-              BA asked for one line per section, and the line is what the youth will get. */}
-          {section.nullRule &&
-            (section.binding === null || model.status === "ok") && (
-              <Message>{section.nullRule}</Message>
-            )}
         </div>
       )}
     </section>

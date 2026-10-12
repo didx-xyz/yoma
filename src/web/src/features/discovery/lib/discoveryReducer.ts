@@ -57,10 +57,29 @@ export type DiscoveryAction =
       kind: "skipPreference";
       key: PreferenceKey;
       fragment: Partial<DiscoveryFilters>;
+      /**
+       * One saved interest (a category id) rather than the whole preference (2026-10-08): it
+       * joins `interestsSkipped`, and only it is stripped from the manual categories
+       * (`fragment` is then `{ categories: [interest] }`).
+       */
+      interest?: string;
     }
-  | { kind: "setPreferenceSkipped"; key: PreferenceKey; skipped: boolean }
-  /** Replace the whole skip list — used after "Save to profile" persists the savable skips. */
-  | { kind: "setSkippedPreferences"; keys: PreferenceKey[] }
+  | {
+      kind: "setPreferenceSkipped";
+      key: PreferenceKey;
+      skipped: boolean;
+      /** One saved interest, as for `skipPreference`. */
+      interest?: string;
+    }
+  /**
+   * Replace the whole skip list — used after "Save to profile" persists the savable skips, and by
+   * its undo. `interests` replaces `interestsSkipped` (omitted: none).
+   */
+  | {
+      kind: "setSkippedPreferences";
+      keys: PreferenceKey[];
+      interests?: string[];
+    }
   /** The wizard just saved new defaults — stale per-preference skips no longer mean anything. */
   | { kind: "resetPreferenceOverrides" }
   /**
@@ -488,6 +507,16 @@ function reduceAction(
         )
           filters = { ...filters, [key]: scalarDefault(key) };
       }
+      if (action.interest !== undefined)
+        return {
+          ...state,
+          filters,
+          interestsSkipped: [
+            ...state.interestsSkipped.filter((id) => id !== action.interest),
+            action.interest,
+          ],
+          page: 1,
+        };
       return {
         ...state,
         filters,
@@ -499,6 +528,18 @@ function reduceAction(
       };
     }
     case "setPreferenceSkipped": {
+      if (action.interest !== undefined) {
+        const others = state.interestsSkipped.filter(
+          (id) => id !== action.interest,
+        );
+        return {
+          ...state,
+          interestsSkipped: action.skipped
+            ? [...others, action.interest]
+            : others,
+          page: 1,
+        };
+      }
       const without = state.preferencesSkipped.filter((k) => k !== action.key);
       return {
         ...state,
@@ -507,16 +548,22 @@ function reduceAction(
       };
     }
     case "setSkippedPreferences":
-      return { ...state, preferencesSkipped: action.keys, page: 1 };
+      return {
+        ...state,
+        preferencesSkipped: action.keys,
+        interestsSkipped: action.interests ?? [],
+        page: 1,
+      };
     case "resetPreferenceOverrides":
       return {
         ...state,
         preferencesOff: false,
         preferencesSkipped: [],
+        interestsSkipped: [],
         page: 1,
       };
     case "clearFilters":
-      // `preferencesOff` and `preferencesSkipped` are deliberately untouched.
+      // `preferencesOff` and the skips are deliberately untouched.
       return { ...state, filters: EMPTY_DISCOVERY_FILTERS, page: 1 };
   }
 }

@@ -11,6 +11,8 @@ import {
 } from "../../registry/filterSections";
 import { useDiscovery } from "../../state/DiscoveryContext";
 import { Message } from "../shared/Message";
+import type { OptionTone } from "./FilterControl";
+import { OPTION_TONE_CLASS } from "./FilterControl";
 import { SectionHeader } from "./SectionHeader";
 
 /**
@@ -31,7 +33,12 @@ import { SectionHeader } from "./SectionHeader";
 export const TypeRow: React.FC<{
   /** The popover supplies its own question title — skip the section header and divider. */
   hideHeader?: boolean;
-}> = ({ hideHeader = false }) => {
+  /**
+   * Inside the Filters dialog's combined Type section (`TypeSection`, 2026-10-09): the section
+   * header carries the question and the hint, so the row is the pills alone.
+   */
+  bare?: boolean;
+}> = ({ hideHeader = false, bare = false }) => {
   const {
     state,
     dispatch,
@@ -67,8 +74,8 @@ export const TypeRow: React.FC<{
     lookups.categories.find((c) => c.id === goalCategoryId)?.name ?? null;
 
   return (
-    <section className={hideHeader ? "" : "border-gray border-b py-1"}>
-      {!hideHeader && (
+    <section className={hideHeader || bare ? "" : "border-gray border-b py-1"}>
+      {!hideHeader && !bare && (
         <SectionHeader
           icon={IoShapesOutline}
           label="Type"
@@ -79,7 +86,7 @@ export const TypeRow: React.FC<{
       )}
       <div className="flex flex-col gap-2 pb-3">
         {/* In the popover the question IS the title, so only the hint is left to say. */}
-        {hideHeader && (
+        {hideHeader && !bare && (
           <p className="text-gray-dark text-[13px] leading-snug">
             {TYPE_ROW_HINT}
           </p>
@@ -98,17 +105,19 @@ export const TypeRow: React.FC<{
         ) : (
           <div className="flex flex-wrap gap-2">
             {lookups.types.map((type) => {
-              const active = effectiveFilters.types.includes(type.name);
+              // The colour rule, as in every chip section (2026-10-07): this search's pick is
+              // green, the goal's inherited type a white pill with a purple outline.
+              const tone: OptionTone = state.filters.types.includes(type.name)
+                ? "manual"
+                : effectiveFilters.types.includes(type.name)
+                  ? "inherited"
+                  : "off";
               return (
                 <button
                   key={type.id}
                   type="button"
                   onClick={() => toggle(type.name)}
-                  className={`flex min-h-11 items-center rounded-full border px-3 text-xs font-semibold md:min-h-9 ${
-                    active
-                      ? "border-purple bg-purple text-white"
-                      : "border-gray hover:border-purple bg-white text-black"
-                  }`}
+                  className={`flex min-h-11 items-center rounded-full border px-3 text-xs font-semibold md:min-h-9 ${OPTION_TONE_CLASS[tone].pill}`}
                 >
                   {type.displayName}
                 </button>

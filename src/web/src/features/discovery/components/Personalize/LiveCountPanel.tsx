@@ -23,7 +23,7 @@ export const LiveCountPanel: React.FC<{
   if (failed && count === null)
     body = (
       <p className="text-lg leading-snug font-bold md:text-xl">
-        Couldn&apos;t count matches right now — your answers still save.
+        We can&apos;t count matches right now. Your answers will still be saved.
       </p>
     );
   else if (count === null)
@@ -60,7 +60,7 @@ export const LiveCountPanel: React.FC<{
         </p>
         {count < FLOOR && (
           <p className="mt-2 text-[13px] leading-snug font-semibold text-balance text-white motion-safe:animate-[fade-in_200ms_ease-out_both] md:text-sm">
-            That&apos;s a narrow feed — consider widening a choice or two.
+            Only a few match. Try changing a choice or two.
           </p>
         )}
       </div>
@@ -72,16 +72,15 @@ export const LiveCountPanel: React.FC<{
     >
       <div className="md:flex md:flex-col md:gap-2">
         <p className="text-purple-soft text-[10px] font-bold tracking-widest uppercase">
-          Tuning your feed
+          Your feed
         </p>
         {body}
       </div>
       {/* Signed in, the place IS written to the profile (the API keeps region / city there), so
           "your profile is untouched" would be false — the line names the one exception. */}
       <p className="text-purple-soft hidden text-sm md:block">
-        Every step is optional and nothing is locked. These are saved as search
-        preferences — your YoID is untouched, and only the place you pick is
-        added to your profile.
+        You can skip any step and change your answers later. They don&apos;t
+        change your YoID. Only the place you pick is saved to your profile.
       </p>
     </div>
   );

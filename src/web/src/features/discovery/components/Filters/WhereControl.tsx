@@ -65,7 +65,8 @@ export const WhereControl: React.FC = () => {
     if (countries.length === 0)
       hint = "Pick one country to narrow by region, city or distance.";
     else if (countries.length === 1)
-      hint = "Region, city and distance need a country — not Worldwide.";
+      hint =
+        "Region, city and distance need a country. Worldwide doesn't count.";
     return <Message>{hint}</Message>;
   }
 

@@ -7,7 +7,7 @@
 - **Ticket**: [YOM-1262](https://linear.app/didx/issue/YOM-1262)
 - **Owner**: Jason
 - **Areas**: web
-- **Status**: in-progress — Jason's 2026-10-06 round built and tested locally (2026-10-05 round committed as `6cdf18d8`); DEV pass outstanding
+- **Status**: in-progress — the 2026-10-07 rounds and the 2026-10-08 fixes built and checked locally, uncommitted on top of 2026-10-06 (b); DEV pass outstanding
 - **Started**: 2026-08-27 (design); 2026-08-27 (implementation, behind the mock façade)
 
 > Folder created 2026-08-27 to hold the design. Implementation started the same day **behind the
@@ -283,7 +283,8 @@ commitment set; **accessibility excludes** those that have not described their a
       fix; the gap predates round 10 on the public page.
 - [ ] Round-10 items the seed cannot show: the Age row, Global goals (SDGs), Provider card,
       Starts / Ongoing / Depleted facts, Pending / Completed buttons, the five-pill welcome grid.
-- [ ] `next build --webpack` without a dev server on `.next` (still outstanding from round 7).
+- [x] `next build --webpack` without a dev server on `.next` (outstanding from round 7). Jason
+      ran the lint and build scripts on the session-2026-10-06 (b) tree: no issues.
 - [ ] Point the remaining legacy `/opportunities` entry points at discovery (search boxes,
       category links, banners, referral pages, the detail back link). Each needs its query
       params mapped.
@@ -325,7 +326,7 @@ commitment set; **accessibility excludes** those that have not described their a
   - the admin filters, the editor Preview and the admin Incentive row need an admin sign-in pass;
   - the detail sticky bar's ZLTO pill reads `zltoReward` while the header and Incentive read
     `zltoRewardEstimate`, so they can differ (predates this round);
-  - a paid Job's detail header shows no pay tile;
+  - ~~a paid Job's detail header shows no pay tile~~ — the Pay tile, session 2026-10-06 (b);
   - Back with the filters dialog open can leave the router on the newer filters (predates this
     round);
   - the legacy `/opportunities` filter form overflows by 29 px at 320 (not custom fields);
@@ -338,10 +339,99 @@ commitment set; **accessibility excludes** those that have not described their a
   - [x] the detail header on phones, built to the approved spec
         [`design/2026-10-06-detail-header-mobile.md`](design/2026-10-06-detail-header-mobile.md).
 - [ ] Follow-ups from the 2026-10-06 round:
-  - the testing guide (`../testing/2026-10-03-discovery-testing-guide.md`) still says that
-    removing any type clears every type-specific pick (line 806, D-71), and asks about
-    "Skip this" (Q-W14). Correct it through the writer;
+  - [x] ~~the testing guide still says that removing any type clears every type-specific pick
+        (line 806, D-71), and asks about "Skip this" (Q-W14)~~ — corrected through the writer in
+        session 2026-10-06 (b), with the rest of the guide brought up to date;
   - "Keep answers" and any signed-in save are untested (they would save a preset to `testuser`).
+- [x] **Adrian's `5378337c` follow-ups, and Jason's additions** (session 2026-10-06 (b), built
+      through the agent roles; handoff [`handoffs/2026-10-06-b.md`](handoffs/2026-10-06-b.md)).
+      Spec: [`design/2026-10-06-api-followups.md`](design/2026-10-06-api-followups.md), with
+      Jason's answers and later changes at its head.
+  - [x] Selected Skill custom-field labels resolve by ID (`POST /lookup/skill/ids`), never from
+        the catalogue's first 500.
+  - [x] One-level groups: a type-specific section with one group shows its fields directly;
+        "1 filter" / "1 field"; the editor's intro line; the youth completion form without the
+        admin descriptions.
+  - [x] The guidance notes: discovery's type-specific sections, and the detail page's
+        "Additional details", whose values now wrap on phones.
+  - [x] "Latest opportunities", still ordered by start date.
+  - [x] The Pay tile in the detail header, for any type whose card shows a pay line.
+  - [x] The title's keyboard focus outline, and `preventScroll`.
+  - [x] The inherited skills chip reworded ("Skills: 57 of yours").
+  - [x] YoID "Completed" values readable on phones.
+  - [x] The testing guide brought up to date through the writer (above).
+  - [x] `src/web/AGENTS.md` "Local data" brought up to `5378337c`.
+- [ ] Follow-ups from session 2026-10-06 (b) (detail in its handoff):
+  - Jason reviews and approves the corrected testing guide before it is shared;
+  - API ask 25 (epic README): a retired skill in a shared link makes the whole search fail with
+    a 400;
+  - Adrian's 2026-10-05 handoff says the default youth order is by date created; the code orders
+    by start date. Tell Adrian.
+- [x] **Jason's 2026-10-07 round** (handoff [`handoffs/2026-10-07-a.md`](handoffs/2026-10-07-a.md)):
+  - [x] wizard step 2: each category pill shows its icon, the one Browse by category uses;
+  - [x] anonymous answers last in every tab (`localStorage`);
+  - [x] results only once the search has a filter of its own; switching preferences off or
+        skipping one leaves the landing in place;
+  - [x] second batch: selected wizard pills with an icon are outlined, not filled; the card shows
+        up to four self-describing facts in two columns, each with a tap/hover tooltip; "160
+        places left"; the ZLTO pill uses the ZLTO icon on orange;
+  - [x] third batch, built through the agent roles (spec
+        [`design/2026-10-07-cards-rails.md`](design/2026-10-07-cards-rails.md), Jason's answers
+        at its head; handoff [`handoffs/2026-10-07-b.md`](handoffs/2026-10-07-b.md)):
+    - [x] landing rails generated from the preferences (`lib/landingRails.ts`), each loaded
+          as it nears the viewport, on `CustomCarouselV3`, sharing the results page's query
+          keys;
+    - [x] card facts: "Permanent", relative start dates, relevance rules, "Ends today /
+          tomorrow"; the two-line tooltip;
+    - [x] Filters: category icons, and purple outline for preference values in every chip
+          section and the Type row.
+- [ ] Follow-ups from 2026-10-07:
+  - the testing guide's SR-03, SR-06, SR-07, SR-11, PR-07 and PR-10 still describe the old
+    behaviour (detail in [`handoffs/2026-10-07-a.md`](handoffs/2026-10-07-a.md)), and the guide
+    has no tests yet for the rails, the card facts or the Filters tones;
+  - the nits left from the third batch (in [`handoffs/2026-10-07-b.md`](handoffs/2026-10-07-b.md));
+    two went on 2026-10-08 (Escape closes a tooltip, the stale prop comment).
+- [x] **Jason's 2026-10-08 round** (handoff [`handoffs/2026-10-08-a.md`](handoffs/2026-10-08-a.md)):
+  - [x] a rail's pages are reused by its See all and the paging after it, past the first
+        minute, and the count comes from a cached page 1;
+  - [x] "Latest opportunities" has a See all without a place (`all=1`);
+  - [x] card facts: an equal 2 × 2 grid with room around it, topped up by languages and skills;
+        the desktop card 6px shorter;
+  - [x] `CustomCarouselV3` draws no scrollbar; the edge fades sit at the screen edge and fade
+        rather than flicker;
+  - [x] the wizard's selected pills are no longer clipped;
+  - [x] second pass: one "+N others" in the "tuned to" line (banner and Picked for you); the
+        Pay divider's copy; rails load on demand again (a regression from the fade fix); phone
+        cards no longer clip a 2-line title or summary;
+  - [x] third pass: tooltips on the list view's truncated cells; a landing rail for every saved
+        interest; a chip per interest in the preferences section, each skipped on its own;
+        singular chip prefixes ("Interest:", "Category:"); the Filters count leaves the
+        preferences out; Browse by category's pills are white; the chip rows fade at their edges on
+        phones; "Jump to top" under the rails or the pager.
+- [x] **Jason's 2026-10-09 round** (handoff [`handoffs/2026-10-09-a.md`](handoffs/2026-10-09-a.md)):
+  - [x] the type-specific filters as rows: one grouped field dropdown, its value control beside
+        it, rows added and removed (the admin/schemas pattern), in the Filters dialog and sheet;
+  - [x] the same rows in the search bar's WHAT popover, under the type pills;
+  - [x] second pass: type-specific filters with no type selected (picking one selects its type);
+        Type and its filters as one collapsible section; WHAT's "Any type" link is "Reset"; the
+        field and value line up;
+  - [x] third pass: "How" (How long + Engagement) and "Requirements" (Language + Accessibility)
+        as combined sections in the search bar, the Filters dialog and sheet; the details page's
+        Effort and "How you take part" badges as one "How" badge.
+- [x] **Jason's 2026-10-09 (b) round** (handoff [`handoffs/2026-10-09-b.md`](handoffs/2026-10-09-b.md);
+      spec [`design/2026-10-09-detail-badges-copy.md`](design/2026-10-09-detail-badges-copy.md)):
+  - [x] search: "Open filters" beside "Clear filters"; card and row skeletons while searching;
+        a rail's See all scrolls to the results; Browse by category's "Show all" animates;
+  - [x] wizard: a description and a coloured icon on each goal; Back on phones; step titles
+        revised;
+  - [x] search bar: the Filters dialog's icons on the segments; popovers with an icon header,
+        dividers and an entry animation;
+  - [x] details page: the header's fact strip replaced by expandable fact badges (Pay, Reward,
+        How, Dates, Places), with "N days left" and the places count;
+  - [x] a plain-language copy pass across discovery and the details page, with the renames.
+- [ ] Follow-ups from 2026-10-09 (b): the unchecked badge states (handoff); `detailFacts()` and
+      `spotsLeftLabel` in `detailFacts.ts` are now unused; the testing guide predates the renames
+      and the badges.
 
 ## Decisions
 
@@ -1241,6 +1331,354 @@ commitment set; **accessibility excludes** those that have not described their a
       as 0 high and every md+ card grew by 40–44 px.
     - The measurement runs before paint, so only hydration shifts the page.
     - When the toggle disappears while focused, focus moves to the title.
+- 2026-10-06 (session b — Adrian's `5378337c` follow-ups; Jason approved
+  [`design/2026-10-06-api-followups.md`](design/2026-10-06-api-followups.md) with every
+  recommendation; handoff [`handoffs/2026-10-06-b.md`](handoffs/2026-10-06-b.md)):
+  - **Selected skills are named by ID** (`POST /lookup/skill/ids`), in the detail page's
+    "Additional details", the discovery and admin chips, and the Skill selects in the filters, the
+    editor and the completion form. Values and filter payloads stay IDs.
+    - A label reads the name, "…" while the lookup runs, "Skill no longer listed" when a
+      successful lookup leaves the ID out, or "Skill name unavailable" when the lookup failed.
+      Names already shown are kept. Malformed IDs are never sent: one makes the API reject the
+      whole request.
+    - **Per surface, never per card.** `CustomFieldsView` resolves by ID only on single-instance
+      hosts. The YoID list and the bulk verification modal render one per item, so they keep the
+      shared first-500 query (no Skill-backed completion field exists today).
+    - The legacy `/opportunities` page is unchanged and keeps the first-500 lookup (Out of Scope).
+  - **One level of groups; web owns the type heading** (Adrian's grouping decision).
+    - Discovery: the "«Type» filters" section is the type heading. A section whose definitions
+      carry ONE distinct `group` shows its fields directly, with no group row. Two or more keep
+      a row per group, even a one-field group. This extends 2026-09-05's "a sub-group heading has
+      to earn its level" to groups. The rule counts groups and never reads their text.
+    - The editor and the youth completion form keep "Additional details" (Jason), with the
+      groups as headings and "1 field". The editor's intro reads "Details for this type of
+      opportunity. They're shown to people and are searchable."
+    - The detail page's "Additional details" stays flat. The page already has a Requirements
+      tab, and a "Requirements" heading there would read as an entry rule.
+  - **Guidance, never eligibility, said once per section, not per field** (Jason).
+    - Experience level, Minimum qualification and Preferred skills are not system keys, so
+      nothing may be keyed to them (the One Rule).
+    - The definitions' `description`s are written for admins, so youth never see them: the
+      completion form hides them and its intro (Jason). The editor keeps them.
+    - Discovery's open type-specific sections say "What providers describe, not entry
+      requirements. Each provider decides who is suitable."; "Additional details" says "What the
+      provider describes, not entry requirements. They decide who is suitable."
+  - **"Latest opportunities" is still ordered by start date.** Adrian's handoff says the default
+    order is by date created; the code (`OpportunityInfoService.cs` ~170) orders by `DateStart`
+    descending. So the subtitle stays "Latest start dates first" (Jason), and the spec's
+    "Most recently added first" was dropped.
+  - **The detail header shows Pay** for any type whose card shows a pay line (Jason): the cards'
+    own `resolveMoneyBadge` line, first, in the reward gold. With three tiles below 768 it takes
+    its own row, because a long pay value broke mid-word in an 80 px tile.
+  - **The inherited skills chip says whose skills they are** (Jason, after "Skills: 57 job
+    skills" puzzled him). It reads "Skills: {n} of yours", with the note "Skills you added or
+    earned by completing opportunities. …". Summaries that drop the group say "{n} of your
+    skills". Behaviour is unchanged: verified skills are still inherited without saved
+    preferences (2026-10-03).
+  - **A retired skill in a shared link fails the whole search** (a 400 from the API). Web drops
+    nothing, because a chip for a filter the search ignores would mislead. The fix is API ask 25.
+- 2026-10-07 (Jason's round; handoff [`handoffs/2026-10-07-a.md`](handoffs/2026-10-07-a.md)):
+  - **Results show only once the search has a filter of its own** (`hasActiveFilters`). Until
+    now any non-empty query string meant results, so `?prefsOff=1` (preferences switched off on
+    the landing, or Clear filters after a rail's See all) showed an unfiltered results page.
+    `prefsOff`, `prefsSkip`, the sort, the page and the view no longer count. On the landing the
+    master switch and the chip skips just change the rails: "Picked for you" shows while a
+    preference applies. That is the rail swap 2026-10-02 called impossible.
+    `isDefaultDiscoveryState` is gone.
+  - **"Latest opportunities" has no See all.** Its set is every opportunity with preferences off,
+    which no longer has a URL apart from the landing. Jason chose against a new `all=` parameter.
+    A See all with no filter is not drawn (`seeAllOf` in `DiscoveryLanding`), so the same holds
+    for "Picked for you" when the only preferences that apply have no URL parameter (skills,
+    accessibility needs).
+  - **Clear filters still leaves the preference layer alone** (2026-09-05, confirmed by Jason).
+    After Featured → See all → Clear filters the youth is on the landing with preferences off,
+    and the switch turns them back on.
+  - **Anonymous answers live in `localStorage`** (Jason). In `sessionStorage` they stayed in the
+    tab that saved them, while the "seen" marker (`localStorage` since 2026-09-05) kept the
+    wizard shut. So a new tab had no answers and asked for them again through the banner. They
+    now last on the device, accessibility needs included, until the sign-in offer keeps or
+    discards them. This revises YOM-1261's 2026-08-27 "die with the session".
+  - **The wizard's category pills show the category's icon**, the lookup's `imageURL`, as Browse
+    by category does. It is an optional `imageURL` on `PreferenceOption` and on `Pill`. Languages
+    and the other pills are unchanged. Selected, a pill with an icon stays white with a green
+    outline and green text, because the green fill hid the icons (Jason). Pills without an icon
+    still fill.
+  - **Card facts: up to four, self-describing, two columns** (Jason chose four over six). The
+    wording, dates and tooltip were revised the same day in the third batch (below); this
+    entry's "Permanent employment", "Started 5 Oct" and one-string tooltip are gone.
+    `cardFacts` takes `now` and returns `text` plus a `tip` ("Start date: Mon 5 Oct"). Each type
+    lists its own facts, then the start date and the time commitment. The wording:
+    - "Permanent employment": the word is added only for the `Permanent`, `FixedTerm` and
+      `TemporarySeasonal` keys, because "Internship" and the like name themselves;
+    - "1 week effort", "Beginner level", "Tools: …", "Programme: …" (the options are programme
+      names), "Accessibility: …" / "On request: …";
+    - "Starts Fri 6 Nov" for a start still to come; "Started 5 Oct" for a past one, without the
+      weekday, to save room.
+
+    The columns size to their content (`minmax(0, max-content)` twice), so "Permanent
+    employment" fits beside "Started 5 Oct" at 1440. Long values truncate. The whole fact is a
+    button: tap toggles the tooltip, and a tap elsewhere, hover or keyboard focus open or close
+    it. The list is no longer `overflow-hidden`, so the tooltip can rise out of it.
+  - **"160 places left"**, not "160 of 160 places left"; "1 place left" in the singular.
+  - **The ZLTO pill shows the ZLTO icon on orange** (`icon-zlto.svg`, `bg-orange-light
+    text-orange`, as `ZltoRewardBadge` does) instead of "Z" on green. It is `MoneyBadge`, so the
+    list row and the detail page change too.
+- 2026-10-07 (third batch, through the agent roles; spec
+  [`design/2026-10-07-cards-rails.md`](design/2026-10-07-cards-rails.md), which Jason approved
+  with every recommendation; handoff [`handoffs/2026-10-07-b.md`](handoffs/2026-10-07-b.md)).
+  The spec holds the detail; these are the decisions:
+  - **Landing rails come from the preferences** (`landingRails`). This supersedes 2026-10-02's
+    cap of four rails and its rule that "every rail but Picked for you ignores preferences".
+    - **Order:** Picked for you · near {place} · {goal} for you · one rail per interest · Fits
+      in {commitment} (else Done in under an hour) · Paid · Featured · Latest.
+    - **Category rails:** at most three (`MAX_CATEGORY_RAILS`), in the order picked. There is
+      no total cap. (Superseded 2026-10-08: a rail for every saved interest.)
+    - **The place applies to every rail** except Picked for you, as a plain filter. So those
+      rails leave out Worldwide (Jason). A rail whose page-1 request repeats an earlier rail's
+      is dropped; with a place, Latest folds into "near".
+    - **Nothing in play** (preferences off, none saved, or all skipped): Featured · Latest ·
+      Done in under an hour, with no place.
+  - **Each rail's See all reuses its query.** A place rail is `manualSearch(place + its
+    filter)`, and its See all carries the same filters with `prefsOff=1`, so the destination
+    builds the identical page-1 request and query key (`discoveryResultsQuery`, 20 per page).
+    Picked for you carries the skips, and the needs never reach a URL. The exception is Start a
+    business: a URL can't express its type-OR-category group, so its See all opens a subset
+    and is drawn without the number. `landingRails.test.ts` asserts the reuse for every kind.
+  - **Rails load lazily.** A rail requests page 1 when it comes within 400 px of the viewport
+    (`useInView`, a callback ref). Sideways scrolling loads 20 more through `loadData`.
+    - Before loading, the rail keeps its space, scrollbar row included, and shows "Searching…".
+    - An empty rail collapses to a zero-height sentinel, so it can still load later.
+    - A failed rail says "Couldn't load these. Retry"; a failed later page says "Couldn't load
+      more. Retry" (V3's new optional `renderLoadFailed`).
+  - **Discovery keeps its own rail header** on `CustomCarouselV3`. V3's header clips long titles
+    at 320. V3 gained only additive options (`scrollerClassName`, `shadowFromClassName`,
+    `renderLoadFailed`, no header block without header props) and a reduced-motion snap.
+  - **Card facts:**
+    - The status row owns the end date: "Ends today" / "Ends tomorrow" / "N days left" /
+      "Apply by …". "Closed" means the deadline instant has passed; the day labels count
+      calendar days.
+    - A past start date is never a fact. A start to come reads "Starts today / tomorrow / Fri /
+      14 Nov".
+    - Employment shows the type name only ("Permanent").
+    - Difficulty fills spare slots on Impact Action, Event and Other. It shows the level's own
+      name ("Beginner", "Open to all"). The options already read as levels, so the first
+      batch's "level" suffix gave "Any level level".
+    - The accessibility fact shows on Events, and on other types only while accessibility is
+      part of the search.
+  - **The detail page's sticky deadline** uses the same `closingInfo`, pink when urgent. It
+    renders only after mount, so the server's UTC clock can't disagree with the youth's.
+  - **The fact tooltip** is anchored to the fact grid, so it never leaves the card. It shows two
+    lines (an uppercase name over a 14 px value), one at a time. The button's accessible name
+    leads with its visible text.
+  - **Filters tones** (Jason's Q3): in every chip section and the Type row, a preference value is
+    a white pill with a purple outline and this search's pick is green. Category pills carry
+    their icons and are outlined, not filled. Behaviour is unchanged.
+  - **Picked for you's subtitle** joins its parts with " · ", as the preference banner does.
+- 2026-10-08 (Jason's round on the third batch; handoff
+  [`handoffs/2026-10-08-a.md`](handoffs/2026-10-08-a.md)):
+  - **Results stay fresh for 5 minutes** (`DISCOVERY_STALE_MS`; kept 10). At one minute, a
+    youth who browsed a rail sideways and then opened its See all had those pages fetched again.
+    The key was always shared; the pages had simply gone stale. The live count takes its total
+    from a cached newest page 1 of the same search, so a See all sends no count request either.
+  - **"All opportunities" (`all=1`)** gives "Latest opportunities" a See all when no place
+    applies (Jason; he chose it over an explicit sort counting as a search). It is a facet
+    (`DiscoveryFilters.all`), so `hasActiveFilters`, its chip ("Showing: All opportunities"),
+    Clear filters and recent searches handle it as they handle `featured`. It never reaches the
+    API, so the destination's request is the rail's. The Filters badge doesn't count it.
+  - **Card facts:**
+    - The grid is two EQUAL columns and two rows, 6px apart, with 4px above and below. With
+      "Permanent" short, content-sized columns only made the second column wander from card to
+      card.
+    - Every type ends with two fillers (Jason): the opportunity's languages ("English, French
+      +1") and, while verification is on, the skills a verified completion adds ("2 skills to
+      earn"). They take only the slots the type's own facts leave.
+    - The desktop card is 354px (was 360) and the rail placeholder with it, so there is no slack
+      under the facts: 10px to the footer at every width.
+  - **`CustomCarouselV3` draws no scrollbar** (Jason). The peek, the fades and drag are the
+    affordance. The rail placeholder no longer reserves a scrollbar row.
+  - **Edge fades:**
+    - **On a bled scroller they sat 16px in** and slid over the cards as a band. The phone
+      bleed now sits on the carousel's wrapper (`BLEED_CLASS` in `DiscoveryRail`), so the
+      fades are at the screen edge.
+    - **They flickered while dragging.** `ScrollableContainer` mounted and unmounted them on
+      each scroll update; it now keeps them mounted and fades their opacity (150ms; none under
+      reduced motion). This is shared, so every scroller with fades benefits.
+  - **The wizard's scroll body has inner padding** (`-ml-1 pl-1 pb-1`), so a selected pill's ring
+    isn't clipped at the left edge or on the last row.
+  - Second pass (Jason, the same day):
+    - **"Tuned to" names two values, then "+N others"** ("Job · Technology, AI & Data +7
+      others"), in the preference banner and the Picked for you subtitle (`tunedToText` in
+      `chipModel`). The old line nested a multi-value chip's own "+3" beside the rest's "+4".
+      A multi-value inherited chip now carries `summaryFirst` / `summaryMore`, so the line
+      names its first value and counts the others with everything else. The chip itself still
+      reads "Technology, AI & Data +3".
+    - **The Pay divider** reads "These opportunities don't match your pay filter." (Jason's
+      wording), under "Incentive not specified".
+    - **Rails load on demand again.** The fade fix mounted the fades BEFORE the scroller, and
+      `CustomCarouselV3` finds its scroller as `> div > div`. It got the left fade instead, so
+      its sideways-load observer, drag snap and style block all missed. The fades now come
+      after the scroller, and V3's selectors are pinned to `:first-child`.
+    - **Phone cards are 296px** (`h-74`; was 284) and the rail placeholder with them. The
+      content needs 296 since the fact grid gained its spacing. In a fixed-height flex column a
+      `line-clamp` row may shrink, so the title and summary gave way first and clipped. Every
+      row is now `shrink-0`, and the type/money row is a fixed 20px.
+  - Third pass (Jason, the same day):
+    - **List view tooltips.** Every truncating cell of a list row carries its whole text as a
+      native `title`: the title, the organisation and summary, the place, places left, and the
+      mobile location. The fact and status cells already did.
+    - **A landing rail for every saved interest** (Jason; the cap of 3 from 2026-10-07 is gone,
+      along with `MAX_CATEGORY_RAILS`). Each loads only as it nears the viewport.
+    - **A chip per interest, each skipped on its own** (Jason chose a per-interest skip over
+      striking them all):
+      - The interests preference draws one chip per saved category (`pref:targetCategories:<id>`,
+        `DiscoveryChip.interest`), in the banner, the Filters dialog's preferences block and the
+        "tuned to" line's count.
+      - A chip's × skips that interest alone: `DiscoveryState.interestsSkipped`, in the URL as
+        `prefsSkipCat=`, beside `prefsSkip`'s whole preferences. Skipping the whole
+        `targetCategories` key (an older link) still strikes them all; the undo then restores
+        the preference. That rule lives in `restorePreference`.
+      - The context composes everything from `withoutSkippedInterests(savedFragments, …)`: the
+        search, the count, the rails (the skipped interest's rail goes) and Browse by category.
+        The chips are built from the saved layer, so a skipped interest keeps its
+        struck-through chip.
+      - Deselecting an inherited interest in Browse by category or the Categories section skips
+        that interest only. The Start a business goal's category still takes the goal with it.
+      - "Make this my default" counts each skipped interest as a preference, removes only those
+        from the saved interests (`removeInterests`), and its Undo restores them and their skips.
+      - Picked for you's See all carries `prefsSkipCat`, so the destination composes the same
+        search (tested).
+    - **Singular prefixes** (Jason): a chip holds one value, so the interests read "Interest: …"
+      and a picked category "Category: …" (`PREF_GROUPS`, `FACET_GROUPS`). The Filters section
+      keeps its "Categories" heading.
+    - **The Filters count is this search's own filters only** (Jason): the green chips plus the
+      custom-field clauses. The preferences have their own panel and switch, and no longer
+      inflate it. This replaces the 2026-10-06 rule that the badge equalled every chip on screen.
+    - **Browse by category's pills are white** (Jason), like the quick searches and the search
+      bar: each category's icon has its own colours, which no tint or fill can be trusted to sit
+      behind. Picked, a pill stays white and is outlined: green for this search, purple from
+      preferences. The outline is drawn INSIDE the pill (`inset-ring`), because an outer ring
+      vanishes on the purple hero. This supersedes round 7's translucent pills with green /
+      purple-tint fills. "Show all" is white too.
+    - **The chip rows fade at their edges on phones** (Jason), like the carousels: the preference
+      banner's, the filters panel's and the Filters sheet's preferences block. The panels behind
+      are translucent tints no overlay colour can match, so `ScrollableContainer` gained
+      `fadeEdges`: a CSS mask on the content, applied only while there is more to scroll that
+      way (a mask clips what lies outside the box, so a row that fits or wraps is never masked).
+    - **"Jump to top"** sits under the rails or the pager, on the landing and the results. It
+      scrolls smoothly, and jumps under reduced motion.
+- 2026-10-09 (Jason; handoff [`handoffs/2026-10-09-a.md`](handoffs/2026-10-09-a.md)):
+  - **The type-specific filters are rows** (`TypeSpecificFilterRows`), the pattern of the admin
+    schemas page (`SchemaAttributesEdit`: a grouped react-select per row, × to remove, "Add" below).
+    This supersedes 2026-10-06's disclosure per type and per group with every field listed.
+    - **Each row** picks ONE field from a single grouped dropdown. With one type, the groups are
+      the endpoint's own; with two or more, "All types · {group}" and "{Type} · {group}".
+      A field's sub-group prefixes its name. Fields already in another row drop out of the list.
+    - **The value control appears beside the field once it is picked:** the same fixed-operator
+      control the field had before (Option any of, Yes / No, Contains, From–To), with
+      `CustomFieldFilters`' new `hideLabels` (additive, off by default), since the dropdown names
+      the field. It commits as before (`commitOnBlur`).
+    - **The block is one section**, "{Type} filters" (or "Type-specific filters" for several),
+      with the guidance note. It starts with one empty row when nothing is set.
+    - **Rows are local while edited** and keep their identity through the first commit, so the
+      value control isn't remounted mid-edit. A clause from elsewhere (a link, a chip, a replayed
+      search) gets a row of its own, first. A row whose value is cleared keeps its field.
+      Changing a row's field drops its old clause. Clear filters or a replaced search drops the
+      local rows.
+  - **WHAT shows them too** (Jason): the search bar's WHAT popover renders the same rows under the
+    type pills, with the heading and note, once a type applies. Its summary counts them ("Job ·
+    1 filter"). React-select menus are portalled to `<body>`, so the bar's outside-click check
+    ignores `react-select-…` ids: picking from a menu doesn't close the popover.
+  - Second pass (Jason):
+    - **Type-specific filters with no type selected.** The dropdown offers every type's fields,
+      grouped "{Type} · {group}" (and "All types · {group}" for shared ones). They come from ONE
+      request (`useAllTypeDefinitions`, `?types=` for each), made only while the block is on
+      screen. **Picking a type's field selects that type**, because the API lets every other type
+      through a type's clause (`OpportunityRepository` ~224), so "Minimum salary" with no type
+      would narrow only the Jobs. A shared field selects nothing. While the new type's own list
+      loads, the cached all-types list stands in, so the row just picked isn't dropped.
+    - **Type and its filters are one collapsible section** (`TypeSection`, open by default): the
+      header says "Type", its value "Job · 1 filter", its subtitle the question and hint. Inside
+      are the pills (`TypeRow bare`), then the rows (`TypeFiltersBlock`). WHAT renders the same
+      two.
+    - **WHAT's "Any type" link is "Reset"**, like the other popovers. It clears the types AND
+      every clause, including shared ones that can now be set with no type.
+    - **The field and value line up** (the value's fieldset had 4px of top padding).
+  - Third pass (Jason):
+    - **Combined sections** (`FILTER_GROUPS`, `FilterSectionGroup`). "How" holds How long and
+      Engagement; "Requirements" holds Language and Accessibility, named as the details page
+      groups them (Jason).
+      - Each part keeps its own control, rules and badge, under its own question.
+      - The combined header lists the parts' values side by side ("Up to a week · Remote"; the
+        first pick by name, then a count) and shows FROM PREFERENCES while either part
+        inherits. When open, its subtitle is the group's short description (Jason: "add short
+        descriptive text").
+      - The inherited accessibility needs still read "Your needs" and are never named.
+    - **The search bar** is SEARCH · WHAT · WHERE · HOW · REQUIREMENTS.
+      - Requirements is new: language and accessibility were in the Filters dialog only.
+      - Each popover is titled by the group's question, with the description under it, then
+        both parts. Reset clears both. How's title is "How would you like to do it?", so it
+        doesn't repeat Engagement's question beneath it.
+      - `segmentTone` gained `how` and `requirements`.
+    - **The details page's "How" badge** replaces "Effort" and "How you take part": "10 minutes ·
+      Remote", either half alone when the other isn't known, with the description as its
+      tooltip.
+      - Each half sits on its own line.
+      - With three tiles and no Pay, How takes its own row below `md`, as Pay does, because
+        three across at 390 left it three lines tall.
+      - The "Time needed" row in the About section is unchanged.
+
+- **2026-10-09 (b) — search polish, wizard goals, segment popovers, detail fact badges, copy
+  pass** (Jason). The badges and the copy follow the designer's spec,
+  [`design/2026-10-09-detail-badges-copy.md`](design/2026-10-09-detail-badges-copy.md), which
+  Jason approved with every recommendation. Only the designer role ran (Jason asked for it on
+  the badges); the main session built the rest.
+  - **Search:**
+    - **"Open filters"** sits beside "Clear filters" in the current-filters row
+      (`CurrentFilters`' `onOpenFilters`).
+    - **Skeletons while searching** (`Results/ResultSkeletons.tsx`): card and row shapes in the
+      result's own sizes, in place of the old "Searching…" text, which stays for screen readers.
+      The heading's count is a bar. The rails' placeholders use the same card. The bones are
+      `bg-gray`: `bg-gray-light` barely showed on white.
+    - **A rail's See all jumps to the results.** It navigates without Next's scroll and scrolls
+      to the results once the route change completes.
+    - **"Show all" categories rise in**, 30ms apart, under `motion-safe`.
+  - **Wizard:**
+    - **Each goal has a one-line description** and an icon tile in the colour of the type it
+      leads to (`StepBlockEntry.description` / `toneType`).
+    - **Back shows on phones.** It shows from step 1, or on step 0 when the welcome came first,
+      and step 0's Back returns to the welcome.
+    - **Step titles** say what is asked: step 4 is "What works for you?" (time, online or in
+      person, pay); "Time you have" replaces the wrong "How much time…".
+  - **Search bar segments** carry the Filters dialog's icons (`iconForSegment`). The popovers
+    open with an icon tile, the title and a subtitle (Type's hint, or the group's description),
+    with hairlines between the header, body and footer. They rise in on open and when switching
+    segments (fade only under reduced motion). The combined sections draw a hairline between
+    their parts.
+  - **Detail fact badges** (`TabbedDetails/detailBadges.ts`, pure and tested, rendered by
+    `DetailFactBadges.tsx`) replace the header's fact strip.
+    - **Order:** Pay · Reward · How · Dates · Places, each only when it has something to say.
+    - **Each badge** has an icon, an eyebrow, a value and one informative line. A tap opens a
+      panel in place with the detail (one open at a time, Escape closes). Reward's panel links
+      to the marketplace, unless the cash-out is closed.
+    - **Dates:** "N days left" up to 30 days, pink within 7 (with a gentle pulse), "Ends today /
+      tomorrow", "Closed" once the instant has passed. Before mount it shows the absolute date,
+      so server and client agree.
+    - **Places** follows the card's rule: "Be one of the first", "X of Y taken", "Almost full"
+      (10 or fewer left, or 90% taken), "No places left". A bar shows the share taken.
+    - **Phones** get a bordered list, one badge per row; from `md`, cards in a grid whose
+      columns follow the badge count; the open panel spans the row below.
+    - **Tone classes are literal per tone** (no `md:${…}`): Tailwind only generates what it
+      can see.
+    - The preview page renders the badges with the marketplace link as plain text.
+  - **Copy pass** (spec Part B): shorter, plainer sentences across discovery and the details
+    page. The renames:
+    - Engagement → **"Online or in person"** as a section, **"How"** as a chip prefix;
+    - Incentive → **"Pay and rewards"**; "Incentive not specified" → "Pay or reward not stated";
+    - SDGs → **"Global goals"** (chip "Global goal");
+    - Targeted groups → **"Who it's aimed at"**;
+    - the gender caption → "Not used to filter", because gender isn't used to filter;
+    - "Make this my default" → "Save as my default";
+    - "Verified" stays.
 
 ## BA sign-off summary (2026-09-22)
 

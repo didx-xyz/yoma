@@ -130,7 +130,7 @@ Entrepreneurship is now a Yoma Opportunity type, based on Mpho's later confirmat
 | [`YOM-1255-ui-dynamic-custom-fields-for-opportunities-and-completions/`](./YOM-1255-ui-dynamic-custom-fields-for-opportunities-and-completions/feature.md)       | [YOM-1255](https://linear.app/didx/issue/YOM-1255) | web  | in-progress                                                                           |
 | [`YOM-1260-ui-custom-field-filtering-for-opportunities-and-completions/`](./YOM-1260-ui-custom-field-filtering-for-opportunities-and-completions/feature.md)     | [YOM-1260](https://linear.app/didx/issue/YOM-1260) | web  | in-progress                                                                           |
 | [`YOM-1261-ui-manage-user-presets/`](./YOM-1261-ui-manage-user-presets/feature.md)                                                                               | [YOM-1261](https://linear.app/didx/issue/YOM-1261) | web  | in-progress — live on the preferences API (2026-09-29)                                |
-| [`YOM-1262-ui-apply-user-presets-to-opportunity-discovery/`](./YOM-1262-ui-apply-user-presets-to-opportunity-discovery/feature.md)                               | [YOM-1262](https://linear.app/didx/issue/YOM-1262) | web  | in-progress — 2026-10-06 round built locally; DEV pass outstanding                   |
+| [`YOM-1262-ui-apply-user-presets-to-opportunity-discovery/`](./YOM-1262-ui-apply-user-presets-to-opportunity-discovery/feature.md)                               | [YOM-1262](https://linear.app/didx/issue/YOM-1262) | web  | in-progress — 2026-10-07 round built locally; DEV pass outstanding                   |
 | [`YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/`](./YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/feature.md)           | [YOM-1277](https://linear.app/didx/issue/YOM-1277) | both | in-progress                                                                           |
 | [`YOM-1278-api-admin-credential-schema-management-by-type/`](./YOM-1278-api-admin-credential-schema-management-by-type/feature.md)                               | [YOM-1278](https://linear.app/didx/issue/YOM-1278) | api  | in-progress                                                                           |
 | [`YOM-1279-api-opportunity-management-credential-schema-selection/`](./YOM-1279-api-opportunity-management-credential-schema-selection/feature.md)               | [YOM-1279](https://linear.app/didx/issue/YOM-1279) | api  | review                                                                                |
@@ -356,6 +356,7 @@ Both child features build on the same components — extend these rather than ad
 | Read-only      | `components/Opportunity/CustomFieldsView.tsx`                                                                                                          |
 | Filtering      | `components/Opportunity/CustomFieldFilters.tsx`                                                                                                        |
 | CF rules       | `lib/customFields/customFieldRules.ts` — mirrors the API's `AssertCrossFieldRules` (Job salary / employment, Impact Action tools, Entrepreneurship programme) on its SYSTEM keys only; inert without them |
+| Skill labels   | `useSkillLabeler` / `useSkillsByIdsQuery` (`hooks/useOpportunityMutations.tsx`) over `getSkillsByIds` (`POST /lookup/skill/ids`) and `lib/customFields/skillLabels.ts` (2026-10-06). Resolve exactly the selected Skill CF ids, once per surface; never per card (`CustomFieldsView`'s `resolveSkillsById` is opt-in for that reason) |
 | Places         | `components/Location/LocationInput.tsx` (youth + admin), `components/Opportunity/Admin/OpportunityCountryPlaces.tsx`; wire forms in `api/models/location.ts` |
 | Search payload | `toSearchFilterPayload(input, endpoint)` (`api/services/opportunitySearchPayload.ts`, 2026-10-03): wraps flat legacy and admin filters with no mode, and passes discovery's typed request through untouched. Discovery builds its request in `features/discovery/lib/searchRequest.ts` |
 
@@ -671,6 +672,24 @@ The web side is built to an ASSUMED contract; please confirm or correct:
     fail with "Start date is required when the commitment interval…". Either exempt Jobs too, or
     tell web to collect a start date for them. Not reproduced: the session had no signed-in API
     access.
+
+**Added 2026-10-06** (web absorbed `5378337c` —
+[`YOM-1262 …/handoffs/2026-10-06-b.md`](./YOM-1262-ui-apply-user-presets-to-opportunity-discovery/handoffs/2026-10-06-b.md)):
+
+25. **A retired skill in a search filter fails the whole search.** A custom-field clause whose
+    lookup value the catalogue no longer knows (e.g. a shared link with a retired skill in
+    `jobPreferredSkills`) returns 400 "Custom field 'Preferred skills' contains an invalid
+    lookup value". Discovery then shows "Couldn't load these results" with no way to tell which
+    chip caused it. The web labels the chip "Skill no longer listed" and keeps it removable; it
+    does not drop the value, because the chip would then claim a filter the search ignores. Ask:
+    treat an unknown lookup value in a search filter as matching nothing (200, no matches for
+    that clause). Validation on save is unaffected.
+
+Also for Adrian, a correction to the 2026-10-05 handoff rather than an ask: decision 1 says the
+latest rail uses a "latest-by-created-date" query. With no `ordering`, youth search orders by
+`DateStart` descending (`OpportunityInfoService.cs` ~170), so the rail is latest by **start**
+date. Web kept that behaviour and the subtitle "Latest start dates first" under the agreed title
+"Latest opportunities". If created date was the intent, say so; web would send an `ordering`.
 
 **Adrian, one API-side conflict resolution on this branch (2026-09-05)** — flagged because it is
 your area and web did not author either side. Merging `master` into

@@ -8,7 +8,16 @@ import type { DiscoveryFilters } from "./types";
  */
 export type SegmentTone = "manual" | "inherited" | "empty";
 
-export type SegmentId = "search" | "type" | "where" | "time" | "engagement";
+export type SegmentId =
+  | "search"
+  | "type"
+  | "where"
+  | "time"
+  | "engagement"
+  /** How long and Engagement, one segment since 2026-10-09. */
+  | "how"
+  /** Language and Accessibility, one segment since 2026-10-09. */
+  | "requirements";
 
 const isSet = (filters: DiscoveryFilters, segment: SegmentId): boolean => {
   switch (segment) {
@@ -27,6 +36,10 @@ const isSet = (filters: DiscoveryFilters, segment: SegmentId): boolean => {
       return filters.commitment !== null;
     case "engagement":
       return filters.engagementTypes.length > 0;
+    case "how":
+      return isSet(filters, "time") || isSet(filters, "engagement");
+    case "requirements":
+      return filters.languages.length > 0 || filters.accommodations.length > 0;
   }
 };
 

@@ -83,4 +83,15 @@ up through the API (`snapshot.mjs` does) rather than reusing old ones. Since `77
     from Cape Town;
   - Worldwide on fixture 23 (alone) and 24 (with South Africa);
   - a past end date (07), a future start (08) and no end date (09).
+- Since `5378337c`, each fixture keeps its type by number. Fixture dates are relative to the seed
+  run, not to the day you test:
+  - 01 is a Job with a disclosed salary (USD 1 000 a month), on-site about 5 km from Cape Town;
+    `testuser` has a completed placement on it;
+  - 04 is an Event with "Available on request" accommodations and a Pending verification for
+    `testuser`;
+  - 08 starts 30 days and ends 90 days after the seed;
+  - 11, and every third fixture, are incomplete partner-like rows with no type-specific values.
+- `testuser` has many seeded completions and the verified skills they award (57 on the
+  2026-10-06 seed), so discovery shows an inherited skills chip for that account.
+- Custom-field groups are one level (`group`; `subGroup` is null) since `5378337c`.
 - No user preferences or user location are seeded.

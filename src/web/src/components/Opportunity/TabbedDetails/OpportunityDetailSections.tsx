@@ -314,7 +314,10 @@ export const OpportunityDetailSections: React.FC<{
   extraGroups = [],
   stickyMode = "split",
 }) => {
-  const now = useMemo(() => new Date(), []);
+  // The youth's own clock, set after mount: the deadline counts calendar days in local time, so
+  // the server (UTC) and the browser can disagree around midnight. Nothing is drawn until then.
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => setNow(new Date()), []);
   const { data: currencies } = useCurrenciesQuery();
   const { data: definitions } = useOpportunityCustomFieldDefinitionsQuery(
     opportunity.type ? [opportunity.type] : null,
@@ -348,7 +351,7 @@ export const OpportunityDetailSections: React.FC<{
         group: "about",
         icon: <IoGiftOutline className={ICON} />,
         toneClass: TONE.gold,
-        title: "Incentive",
+        title: "Pay and rewards",
         valueHint: incentive.value,
         note: incentive.note,
         content: null,
@@ -361,7 +364,7 @@ export const OpportunityDetailSections: React.FC<{
         group: "about",
         icon: <IoGiftOutline className={ICON} />,
         toneClass: TONE.gold,
-        title: "Incentive",
+        title: "Pay and rewards",
         preview: incentive.preview,
         note: "What you could get for taking part.",
         content: (
@@ -439,7 +442,7 @@ export const OpportunityDetailSections: React.FC<{
         preview: previewOf(skills.map((s) => s.label)),
         note: isJob
           ? "Skills this job asks for. Mention the ones you have when you apply."
-          : "Skills you'll build by completing this. They're added to your YoID.",
+          : "Skills you'll gain by finishing this. They're added to your YoID once it's verified.",
         content: <ChipList items={skills} />,
         defaultOpen: isJob,
       });
@@ -517,7 +520,7 @@ export const OpportunityDetailSections: React.FC<{
         )}`,
         note: onRequest
           ? "What the provider can arrange if you ask."
-          : "What this opportunity offers people with disabilities.",
+          : "Support this opportunity offers people with disabilities.",
         // No "Support: …" line: the preview and the note already say it (2026-10-05)
         content: (
           <div className="flex flex-col gap-2">
@@ -542,10 +545,10 @@ export const OpportunityDetailSections: React.FC<{
         group: "who",
         icon: <IoPeopleCircleOutline className={ICON} />,
         toneClass: TONE.green,
-        title: "Targeted groups",
+        title: "Who it's aimed at",
         count: groups.length,
         preview: previewOf(groups.map((g) => g.label)),
-        note: "Who this is aimed at. It doesn't limit who can take part.",
+        note: "It's aimed at these groups, but others can take part too.",
         content: <ChipList items={groups} />,
       });
 
@@ -583,7 +586,7 @@ export const OpportunityDetailSections: React.FC<{
         title: "Global goals (SDGs)",
         count: goals.length,
         preview: previewOf(goals.map((g) => g.label)),
-        note: "The UN global goals that taking part helps towards.",
+        note: "The UN global goals this helps with.",
         content: <ChipList items={goals} />,
       });
 
@@ -622,13 +625,18 @@ export const OpportunityDetailSections: React.FC<{
         title: "Additional details",
         count: valued.length,
         preview: previewOf(valued),
-        note: "More details for this type of opportunity.",
+        // A generic section note, never keyed to a field: the values describe the opportunity,
+        // they aren't a verdict on the youth (2026-10-06)
+        note: "Details from the provider. They are not entry rules. The provider decides who can join.",
         content: (
           <CustomFieldsView
             definitions={definitions}
             values={opportunity.customFields}
             columns={1}
             hideGrouping={true}
+            wrapValues
+            // one view on the page, so one request names its skills
+            resolveSkillsById
           />
         ),
       });
@@ -764,7 +772,7 @@ export const OpportunityDetailSections: React.FC<{
     <DetailTabs groups={visibleGroups} active={active} onSelect={goTo} />
   );
 
-  const deadline = closingInfo(opportunity.dateEnd, now).label;
+  const deadline = now ? closingInfo(opportunity.dateEnd, now) : null;
   const showBars = !preview && !headerVisible;
   // The bars slide 8px and fade (round 10); under reduced motion they simply switch. Tailwind
   // v4's `translate-y-*` sets the `translate` property, not `transform`, so that is what eases.
@@ -881,7 +889,16 @@ export const OpportunityDetailSections: React.FC<{
               </p>
               <p className="text-gray-dark flex items-center gap-2 text-xs">
                 <MoneyBadge compact facts={money} />
-                <span>{deadline}</span>
+                {deadline && (
+                  // The card's urgency colour (`OpportunityCard`), one rule everywhere.
+                  <span
+                    className={
+                      deadline.urgent ? "text-pink font-semibold" : undefined
+                    }
+                  >
+                    {deadline.label}
+                  </span>
+                )}
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-2">{barActions}</div>

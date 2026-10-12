@@ -2,6 +2,16 @@
 
 **Status:** Draft for BA review. Decisions marked **TBC** need confirmation.
 
+**Updated 2026-10-06.** This version covers Jason's 5 and 6 October rounds, Adrian's API update of 5 October, the 6 October follow-ups and the data reseeded on 6 October. What changed in the guide:
+
+- **Type-specific filters:** one control per field, the API's new groups, and filters that now leave only with their own type.
+- **Wizard:** no "Skip this", a new count panel and a new step 5 title.
+- **Details page:** new section wording, a "Pay" tile, the header on phones and a guidance note.
+- **Landing and chips:** the "Latest opportunities" rail and the skills chip's wording.
+- **Phones:** 320 px is now the smallest supported width.
+- **Test data:** the fixtures now keep their type by number, so most counts changed.
+- **Tests and questions:** DP-06 to DP-08 are new; FI-09 step 1 is retired. Decisions D-74 to D-87 and question Q-A10 are new. Q-W02, Q-W14, Q-W25 (raised and settled on 6 October), Q-A02 and Q-A05 are resolved.
+
 This guide is for the Business Analyst (BA) and the testers. It explains, in plain words, how Yoma's new opportunity search works. It covers the youth's saved preferences, the filters, the opportunity details page and the admin pages that changed. Use it in three ways:
 
 - **To review:** read sections 1, 4, 7 and 8. Section 7 lists every decision we made and says where it differs from the BA sheet. Section 8 lists open questions.
@@ -9,9 +19,9 @@ This guide is for the Business Analyst (BA) and the testers. It explains, in pla
 - **To test:** run the quick start (section 5), then the numbered tests in section 6. Tick a box on each "Result" line.
 - **To give answers or results:** see 2.8.
 
-**Planning a test pass.** There are 68 tests plus the smoke test, most of them at two widths. A full pass has not been timed yet, so plan three sessions and adjust after the first: **Session 1** sections 5, 6.1, 6.2 and 6.3; **Session 2** 6.4 and 6.5; **Session 3** 6.6 and 6.8, then 6.7 (the editor tests always run last, because they add opportunities that change counts). Signed-in tests need testuser to yourself (2.2). Check fixture 08's date first (2.5).
+**Planning a test pass.** There are 71 tests plus the smoke test, most of them at two widths. A full pass has not been timed yet, so plan three sessions and adjust after the first: **Session 1** sections 5, 6.1, 6.2 and 6.3; **Session 2** 6.4 and 6.5; **Session 3** 6.6 and 6.8, then 6.7 (the editor tests always run last, because they add opportunities that change counts). Signed-in tests need testuser to yourself (2.2).
 
-The guide describes the app as it is on Jason's computer on 3 October 2026. That includes changes made that day that are not yet committed or deployed (see 2.1). Every fact has a source the dev team can check: next to the fact, or in Appendix B.
+The guide describes the app as it is on Jason's computer on 6 October 2026. That includes the 6 October follow-ups, which are not yet committed or deployed (see 2.1). Every fact has a source the dev team can check: next to the fact, or in Appendix B.
 
 ---
 
@@ -61,8 +71,18 @@ Yoma has a new opportunity search page, called the **discovery page**, at `/oppo
    - Reviewing a Job completion no longer shows start and finish times.
    - The completion import help and sample file were updated.
    - The old search and the admin lists now follow the API's default rules. For example, picking "Remote" on the old page now leaves out opportunities that don't say.
+7. **New on 5 and 6 October 2026:**
+   - **Type-specific filters** ("Job filters" and so on) no longer ask how to compare. Each field has one control: a pick list, a text box, a "From"–"To" pair, or "Any / Yes / No". A typed value searches when you press Enter or leave the field (for a From–To pair, both boxes). Emptying a field removes its filter.
+   - They follow the API's new **groups**. Job and Impact Action show a row per group ("Classification", "Compensation", …); a type with one group shows its fields directly. An open section carries a **guidance line**: these details are what providers describe, not entry requirements.
+   - **A type's filters leave with that type.** Removing a type clears only its own type-specific filters. Filters on types still in the search stay (4.4).
+   - The number on the green "Filters" button now counts type-specific filters too.
+   - **Wizard:** "Skip this" is gone. The count panel always shows the number (0 in yellow, with a warning sign). Step 5 is titled "Your area and languages?".
+   - **Details page:** each section now says what its value means. The header shows a "Pay" tile whenever the card shows pay. On phones the title spans the card, and a long title folds after 4 lines behind "Show full title". "Additional details" carries a guidance note, and its values wrap on phones.
+   - The second landing rail is now "Latest opportunities". The saved-skills chip reads "Skills: {n} of yours".
+   - 320 px is now the smallest supported phone width (2.4).
+   - The test fixtures keep their type by number, and fixture 08 now starts a month after seeding (2.5).
 
-Sources: YOM-1262 `feature.md` Decisions 2026-09-22 to 2026-10-03; handoff `2026-10-03-a.md`; design spec `2026-10-03-search-contract.md`.
+Sources: the YOM-1262 decisions log (22 September to 6 October), the session notes of 3, 5 and 6 October, the design specs of 3 and 6 October, and Adrian's notes of 5 October (Appendix B).
 
 ---
 
@@ -71,17 +91,17 @@ Sources: YOM-1262 `feature.md` Decisions 2026-09-22 to 2026-10-03; handoff `2026
 ### 2.1 Where to test
 
 - **The local stack runs on Jason's computer.** The local stack is the full app: the website at http://localhost:3000 and the API at http://localhost:5000. Test at that computer, or over a screen-share with Jason. http://localhost:3000 will not open on your own laptop. If you need your own copy, the dev team sets it up (a seeded database, plus a "keycloak" entry in the computer's hosts file so "Login" works). Don't start, stop or restart the servers yourself.
-- **Not on DEV yet.** DEV (https://dev.yoma.world) is a shared test site. Whoever deploys last wins there, so its website and API can be from different branches. Today's changes are not committed or deployed, and they need a matching API on DEV. The dev team will say when it's ready. Until then, any error or empty result on DEV is an environment problem, not a bug.
+- **Not on DEV yet.** DEV (https://dev.yoma.world) is a shared test site. Whoever deploys last wins there, so its website and API can be from different branches. The 3, 5 and 6 October work is committed on the branch; the 6 October follow-ups are not yet. None of it is on DEV, and it needs a matching API and Adrian's refreshed data there. The dev team will say when it's ready. Until then, any error or empty result on DEV is an environment problem, not a bug.
 - **When the dev team says DEV is ready:**
   - use https://dev.yoma.world in place of http://localhost:3000;
   - ask the dev team which accounts to use on DEV;
   - fixture dates come from DEV's own seed time, so check which fixtures have ended before trusting counts;
-  - totals marked *(seed)*, such as "1 426 opportunities", will differ;
+  - totals marked *(seed)*, such as "1 402 opportunities", will differ;
   - skip the distance tests until Q-A08 is closed.
 - **First loads are slow locally.** The first time you open any page, it can take 10 to 45 seconds. That is not a bug.
 - **A monitoring box may pop up** on your first visit ("Not Now" / "Allow Monitoring"). Click "Not Now".
 
-Sources: handoff 2026-10-03-a "Next Steps"; epic README "DEV environment skew"; `src/web/AGENTS.md` "Local stack".
+Sources: the session notes of 3 and 6 October, the epic's notes on DEV, and the web team's local-stack notes (Appendix B).
 
 ### 2.2 Test accounts
 
@@ -96,10 +116,12 @@ Sources: handoff 2026-10-03-a "Next Steps"; epic README "DEV environment skew"; 
 - **These accounts are shared.** Pressing "Finish" in the wizard, "Keep my answers" or "Make this my default" while signed in changes the account for everyone.
 - **Set testuser up before any signed-in test.** testuser's saved "Remote" is **not** part of the seed: it was set by hand, so a reseed (2.5) leaves testuser with nothing saved (and the welcome may then open on its own). On DEV, don't assume it is there either. Before signed-in tests: sign in, open the avatar menu, "My preferences", make sure step 4 has only "Remote" and nothing else is picked on any step, then press "Finish". Put it back the same way when you finish.
 - **One tester at a time on testuser.** Tests that read or change its preferences (SR-01, PR-01, PR-03, PR-05, PR-07, PR-08 and PV-11) give wrong results if someone else is using it at the same time (Q-W23).
-- **Signed in as testuser you also see** "Where: South Africa" (profile country), "Age: 20 years" (from the date of birth) and a Skills chip for earned skills. These come from the profile, not the wizard.
+- **Signed in as testuser you also see** "Where: South Africa" (profile country), "Age: 20 years" (from the date of birth) and a skills chip for earned skills, for example "Skills: 57 of yours" (the number changes at each reseed). These come from the profile, not the wizard.
+- **testuser's seeded completions:** a completed Job placement on fixture 01, with an employment start date, and a Pending completion on fixture 04 (used in DP-08 and AD-08).
+- **Opening a details page while signed in** adds a "Viewed" entry to that account. Only DP-08 does this, and it is expected.
 - **Don't change shared data** unless a test tells you to. Never press "Approve", "Decline" or "Submit" on seeded records. Make your own test opportunities instead (6.7).
 
-Sources: `src/web/AGENTS.md` "Local data"; handoff 2026-10-03-a "Current State"; `post.sql` (testuser profile and verified skills; the fixture block says "no user location/preferences are seeded").
+Sources: the web team's local-data notes, the 3 October session notes, and the local seed script, which seeds testuser's profile, earned skills and two fixture completions, but no preferences or location (Appendix B).
 
 ### 2.3 Starting fresh
 
@@ -113,25 +135,37 @@ Sources: `src/web/AGENTS.md` "Local data"; handoff 2026-10-03-a "Current State";
 
 Check every test on a **desktop** width (1440 × 900) and on a **phone** width (390 × 844). Use the browser's device toolbar (F12, then the phone icon). Some tests also ask for 360, 768 or 1024 pixels wide (px), where the layout changes. Each test says which widths it needs.
 
+**320 × 640 is the smallest supported phone** (since 5 October). Spot-check it on any test that asks for 390. At 320 a button may wrap to two lines, never three, and nothing may make the page scroll sideways.
+
 ### 2.5 The test opportunities ("Search fixtures")
 
-The local database has 24 made-up opportunities built for testing search, titled "Search fixture 01 - Event" to "Search fixture 24 - Other". We call them **fixtures**.
+The local database has 24 made-up opportunities built for testing search, titled "Search fixture 01 - Job" to "Search fixture 24 - Learning". We call them **fixtures**. Titles spell Impact Action as one word ("ImpactAction").
 
-- Type **Search fixture** into the search box to see only them. On 3 October 2026, **23** show: fixture 07 has already ended, so youth search hides it.
-- **Every third fixture** (03, 06, 09, 12, 15, 18, 21, 24) copies messy partner data. Its title ends "(incomplete partner-like)". It has no provider, no engagement type and no incentive answer.
-- **Fixed by the fixture number** (they stay the same after the database is refilled, a **reseed**): provider, engagement, accessibility, ages, locations and dates.
-- **Random at every reseed:** the type, categories, languages, skills, effort and "Featured". Incentive and ZLTO follow the type (no Job has ZLTO, and a Job that isn't partner-like always answers "No" for incentive). Counts that depend on these are marked *(seed)*, and **any count involving Pay, ZLTO or a type is *(seed)*, marked or not.** Read the type from the title, not from this guide.
+- Type **Search fixture** into the search box to see only them. On 6 October 2026, **23** show: fixture 07 has already ended, so youth search hides it.
+- **Every third fixture** (03, 06, 09, 12, 15, 18, 21, 24) copies messy partner data. Its title ends "(incomplete partner-like)". It has no provider, engagement type, incentive answer, targeted groups, SDGs or type-specific details. **Fixture 11** carries the same label on purpose: it has a provider and the rest, but no type-specific details, and its "Other" accommodation has no description.
+- **Fixed by the fixture number** (they stay the same after the database is refilled, a **reseed**): the **type**, provider, engagement, incentive and ZLTO, accessibility, ages, locations, dates, and fixture 01's salary. The type is fixed only since the 6 October reseed (Adrian's 5 October update).
+- **Random at every reseed:** categories, languages, skills, effort (Jobs and Entrepreneurship never state one), "Featured", participant limits, whether completion uploads are on, and the type-specific details other than fixture 01's salary. Counts that depend on these are marked *(seed)*.
 - **Opportunity IDs change at every reseed.** Find fixtures by title, not by saved links.
 - Fixtures exist only on local and DEV, never on Stage or Production.
 - The full table is in [Appendix A](#appendix-a-fixture-cheat-sheet).
 
-> **Warning: fixture 08 ends on 6 Oct 2026 at 05:11 UTC.** Before a test session after that date, ask the dev team to reseed (or, better, to fix Q-A05 first). Without a reseed, every count that includes fixture 08 is one lower, and "Newest" and "Ending soonest" start with a different fixture. All other fixtures end on 2–3 Nov 2026.
+> **After a reseed, every date in this guide moves.** This guide uses the seed of 6 Oct 2026 at about 09:55 UTC. After a reseed, ask the dev team for the seed day and time (call it S), then read each date relative to it:
 >
-> **After a reseed, every date in this guide moves.** Ask the dev team for the seed day and time (call it S), then read each date relative to it: "Thu 1 Oct" (every start date) = S − 2 days; fixture 08 "Starts 5 Oct" = S + 2 days and "ends 6 Oct" = S + 3 days; "Apply by 2 Nov", "Apply by 3 Nov" and "Ends 3 Nov" = S + 30 days (plus up to a day). Counts not marked *(seed)* stay the same after any reseed. testuser must be set up again (2.2).
+> - "Sun 4 Oct" (every start date) = S − 2 days.
+> - Fixture 08 starts at S + 30 days ("Starts 5 Nov") and ends at S + 90 days ("Apply by 4 Jan").
+> - "Apply by 5 Nov", "Apply by 6 Nov" and "Ends 5 Nov" = S + 30 days (plus up to a day).
+>
+> Counts not marked *(seed)* stay the same after any reseed. testuser must be set up again (2.2).
 
 ### 2.6 What not to report
 
-Section 9 lists everything already known. The ones you will meet first: today's changes failing on DEV (2.1); the "counting" blur on the match count flickering off for about 0.3 seconds; "Search fixture 06 - Job" showing a salary but sitting below "Incentive not specified" under a Pay filter (Q-A01); "Jobs near me" returning 0 locally (no seeded Job is near Cape Town); no "Copy link" button and no counts on badges or welcome tiles (on purpose); and some old links still opening the old `/opportunities` page (SR-01).
+Section 9 lists everything already known. The ones you will meet first:
+
+- this work failing on DEV (2.1);
+- the "counting" blur on the match count flickering off for about 0.3 seconds;
+- the results heading counting filters differently from the "Filters" button (9.3);
+- no "Copy link" button and no counts on badges or welcome tiles (on purpose);
+- some old links still opening the old `/opportunities` page (SR-01).
 
 ### 2.7 How to record results
 
@@ -144,7 +178,7 @@ Each test ends with **Result: ☐ Pass ☐ Fail — notes:**. Tick one box.
 ### 2.8 How to give feedback
 
 1. **BA and client answers.** In a copy of sections 7 and 8, write "Agree" or "Change: …" against each **TBC** decision (in the "BA answer" column of "Where we differ", otherwise beside "TBC" in the Status cell), and "Answer: …" in the "BA answer" column of each Q-B and Q-C question. Add your name and the date.
-2. **Send it to Jason** (web owner), and copy Adrian (API owner) for any Q-A question or any decision that names him. Jason records each answer in the YOM-1262 `feature.md` Decisions log, then marks the row here "Agreed by BA" or "Changed".
+2. **Send it to Jason** (web owner), and copy Adrian (API owner) for any Q-A question or any decision that names him. Jason records each answer in the YOM-1262 decisions log, then marks the row here "Agreed by BA" or "Changed".
 3. **Testers:** after each session, send Jason the ticked guide plus a screenshot of each Fail, in one message. Name the test ID (for example "PV-02 Fail") in each screenshot's file name.
 
 ---
@@ -168,16 +202,18 @@ Each test ends with **Result: ☐ Pass ☐ Fail — notes:**. Tick one box.
 | Completion | A youth's proof that they finished an opportunity. Admins review it under "Submissions". |
 | Count-only request | A search that asks the server only "how many match?", without loading the opportunities. Used for the admin tab numbers. |
 | CSV | A spreadsheet file (opens in Excel). |
-| Custom field | An extra field that belongs to one opportunity type, for example a Job's salary or a Learning "Difficulty". Shown as "Additional details". Filters built from them are called **type-specific filters** ("Job filters" and so on). |
+| Custom field | An extra field that belongs to one opportunity type, for example a Job's salary or a Learning "Difficulty". Shown as "Additional details". Filters built from them are called **type-specific filters** ("Job filters" and so on). The API sorts them into **groups**. |
 | DEV | The shared test website dev.yoma.world. Whoever deploys last wins. |
 | Discovery page | The new search page at `/opportunities/discover`. |
 | Divider | The line "Incentive not specified" in the results under a Pay filter. Opportunities below it don't say whether they pay. |
 | Effort | How much time an opportunity takes, for example "4 minutes" or "1 month". Shown as "How long" in filters. |
 | Engagement | How you take part: "Remote", "On-site" or "Hybrid". |
-| Fact strip | The row of tiles under a details page's title: "Reward", "Effort", "Ends" and so on. |
+| Fact strip | The row of tiles under a details page's title: "Pay", "Reward", "Effort", "Ends" and so on. |
 | Faded chip ("Not applied") | A preference chip that can't change this search. It is faded, with an ⓘ icon and no × button. Its tooltip says why. |
 | Fixture | One of the 24 seeded "Search fixture NN - {type}" test opportunities. |
 | From preferences (inherited) | A value that comes from the youth's saved preferences. Shown as a purple chip and a purple search-bar value, with a "FROM PREFERENCES" tag on its Filters section. Inside the panel the option itself is green (purple on the Type row). |
+| Group (type-specific) | A named set of a type's fields, set by the API: Job has "Classification", "Compensation", "Employment" and "Requirements"; Impact Action has "Activity" and "Requirements"; every other type has one group. |
+| Guidance line / note | The grey sentence saying that type-specific details are what providers describe, not entry requirements. It sits in each open type-specific filter section and in "Additional details". |
 | Hotjar | A feedback tool; its tab sits at the edge of the screen. |
 | Incentive | Whether taking part brings anything: pay, ZLTO or another reward. Shown as "Paid or rewarded" or "Unpaid". It is broader than the BA sheet's "Is Paid". |
 | Info page | The admin's page for one opportunity, with the "Manage opportunity" button. |
@@ -189,7 +225,7 @@ Each test ends with **Result: ☐ Pass ☐ Fail — notes:**. Tick one box.
 | Map point | The exact spot saved when a city is picked from the suggestions (a "mapped city"). Distance search needs it; a typed city has none. |
 | Master switch | The on/off switch next to "Edit my preferences" (screen readers call it "Using my preferences"). Off means no preference applies to this search. |
 | Not specified (opportunities that don't say) | The opportunity left that field empty. This is not the same as "No". |
-| Operator | The drop-down in front of a type-specific value that says how to compare, for example "Any of" or "Between". |
+| Operator | How a type-specific value is compared, for example "Any of" or "Between". The admin filters and the old page show it as a drop-down. Discovery has none since 5 October: each field has one control (4.4). |
 | Option | A pill you can tap inside a Filters section or a search-bar pop-up. |
 | Org admin | An organisation administrator. Sees only their own organisations. |
 | Partner (feed) | An outside job board, for example Jobberman or JobJack, whose opportunities are copied into Yoma, often with fields missing. |
@@ -238,13 +274,13 @@ Every search on the discovery page is built from two layers:
 The web app joins the two layers and sends the final search to the server. The server never reads preferences itself. Gender and education are shown in the wizard but never used to filter.
 
 ![The results page: purple preference strip on top, green "this search" panel below it, then the heading, Sort and Grid/List](2026-10-03/02-results-header-chip-panels-1440.png)
-*A signed-out youth with saved preferences (purple strip) who picked "Event" for this search only (green panel).*
+*A signed-out youth with saved preferences (purple strip) who picked "Event" for this search only (green panel). Screenshot predates 2026-10-06: the skills chip now reads "Skills: 1 of yours", and the fixture types have changed.*
 
 ### 4.2 Joining and replacing
 
 | When both layers set the same filter… | What happens | Example |
 |---|---|---|
-| A list filter: types, categories, countries, engagement, languages | The values are **joined**: any of them can match. If any value is picked here, the whole filter follows the "picked here" rule (4.3). | Saved "Remote" + picked "On-site" = Remote or On-site, and "don't say" is left out (15 results). |
+| A list filter: types, categories, countries, engagement, languages | The values are **joined**: any of them can match. If any value is picked here, the whole filter follows the "picked here" rule (4.3), except that a saved country still brings in Worldwide. | Saved "Remote" + picked "On-site" = Remote or On-site, and "don't say" is left out (15 results). |
 | Accessibility | The needs are combined, but an opportunity must list **every** one of them (all, not any). | Saved "Wheelchair accessible" + picked "Quiet workspace" = must list both (5 results). |
 | A single value (time, pay) or a place (region, city) | The value picked here **replaces** the saved one, for this search. | Saved "Up to a week" + the "Under an hour" badge = up to 1 hour. |
 | You want to swap a saved list value for another | **Skip** the saved one (its ×), then pick the new one. | — |
@@ -276,7 +312,7 @@ The web app joins the two layers and sends the final search to the server. The s
 ![Filters dialog: Engagement, How long and Accessibility, each tagged FROM PREFERENCES, with their grey rule lines](2026-10-03/04-filters-from-preferences-sections-1440.png)
 *Three Filters sections fed by preferences. The grey line under each is its rule. The saved options show green: inside the panel, only the tag shows the source.*
 
-Sources: `filterSections.ts` rule lines; `preferenceMapping.ts`; contract handoff 2026-10-01-c "Typed criteria and defaults"; YOM-1262 Decisions 2026-10-03; anonymous searches on the local data.
+Sources: the web code's rule lines and preference mapping, the API's search contract of 1 October, the 3 October decisions, and anonymous searches on the local data (Appendix B).
 
 ### 4.4 Special cases
 
@@ -289,7 +325,13 @@ Sources: `filterSections.ts` rule lines; `preferenceMapping.ts`; contract handof
 
   ![WHAT pop-up with Entrepreneurship selected and the goal line underneath](2026-10-03/06-what-popover-goal-line-1440.png)
   *The WHAT pop-up while "Start a business" is saved.*
-- **Skills narrow Jobs only.** Saved skills hide only Jobs that ask for none of your skills. Jobs that list no skills stay in, and other types are not affected. On a search with no Jobs, the skills chip fades with "Not applied — this search has no jobs."
+- **Skills narrow Jobs only.** Saved skills hide only Jobs that ask for none of your skills. Jobs that list no skills stay in, and other types are not affected. The chip reads "Skills: {n} of yours" ("{n} of your skills" where chips are summed up in one line); its hover text adds "Skills you added or earned by completing opportunities. Jobs that ask for none of these are left out; jobs that list no skills stay in. Other types aren't affected." On a search with no Jobs, the chip fades with "Not applied — this search has no jobs."
+- **Type-specific filters** ("Job filters" and so on; changed 5 and 6 October).
+  - **Each narrows only its own type.** A Job field never hides Events.
+  - **Each field has one control.** Choices: a pick list reading "Any" ("Any of"); "Preferred skills" reads "Search skills..." instead. Numbers and dates: a "From"–"To" pair, where either end works alone. Text: a box reading "Contains…". Yes/no: "Any", "Yes" or "No".
+  - **Typed values search when you press Enter or leave the field** (for a From–To pair, both boxes: moving from "From" to "To" doesn't search), never while you type. Emptying a field removes its filter.
+  - **Chips name the comparison** where the value alone would mislead, for example "Minimum salary: From 500".
+  - **A type's filters leave with that type.** A type can stop applying because you untap it, press × on its chip, use a quick search or the WHAT "Any type", skip the goal, press "Search without my preferences", turn off the switch next to "Edit my preferences", or save a different goal. Only that type's filters are then cleared; filters on types still in the search stay.
 - **Worldwide.** A saved home country also brings in Worldwide opportunities, except in a distance search. A country picked here does not. Worldwide is never shown as selected.
 - **Saved place.** A saved region or city applies only while the search is for exactly your home country and names no place of its own. Otherwise its chip fades with a reason. A distance is never saved.
 - **Accessibility privacy.** Saved needs are never named outside the wizard and the opened Accessibility section. The chip reads "Accessibility: your needs". They don't appear in the heading, the "tuned to" line, the rail subtitle, recent searches or the address. A need picked here is named, because it is this search's own choice.
@@ -304,13 +346,13 @@ Sources: `filterSections.ts` rule lines; `preferenceMapping.ts`; contract handof
 | Master switch off | Every preference stops applying, including country, age and earned skills. | This search | No |
 | "Clear filters" | Removes this search's own filters and the search word. Preferences, skips and the switch stay as they are. | — | No |
 | "Make this my default" (offered after a skip) | Clears that preference from the saved set, with "Saved. Undo". Not offered for country or age, nor for Skills when all your skills are earned (testuser's case). | From now on | **Yes** |
-| "Finish" in the wizard | Saves all answers and turns every skipped chip back on. It does **not** remove this search's own picks. | From now on | **Yes** |
+| "Finish" in the wizard | Saves all answers and turns every skipped chip back on. It does **not** remove this search's own picks, except the type-specific filters of a goal's type that the save removes (4.4). | From now on | **Yes** |
 
 Skips and the master switch are stored in the address: `prefsSkip=` lists skipped preferences, and `prefsOff=1` means all of them are off.
 
 ### 4.6 Worked examples at a glance
 
-All signed out, with the search word **Search fixture** (23 opportunities with no preferences). Each row starts from a clean slate: see "Before each test" in 6.4. Counts are from the 3 October 2026 local data. *(seed)* = may change after a reseed.
+All signed out, with the search word **Search fixture** (23 opportunities with no preferences). Each row starts from a clean slate: see "Before each test" in 6.4. Counts are from the 6 October 2026 local data. *(seed)* = may change after a reseed.
 
 | # | Set up | Result | Why | Test |
 |---|---|---|---|---|
@@ -320,18 +362,18 @@ All signed out, with the search word **Search fixture** (23 opportunities with n
 | 2 | Saved "Remote" + "On-site" picked in Filters | 15 | A pick here makes the whole filter strict | PV-01 |
 | 3 | Save need "Wheelchair accessible" | 11 | Keeps ones listing wheelchair access and ones that list no accommodations; leaves out "No" and lists without wheelchair access | PV-02 |
 | 3b | …plus "Quiet workspace" picked here | 5 | Both needs must be listed; strict | PV-02 |
-| 4 | Save goal "Start a business" | 4 *(seed)* | Entrepreneurship OR Business category | PV-03 |
+| 4 | Save goal "Start a business" | 6 *(seed)* | The 4 Entrepreneurship fixtures OR the Business category | PV-03 |
 | 4b | …plus type Event | 9 *(seed)* | Event is another alternative | PV-03 |
 | 5 | Goal + "Climate action" badge | 1 *(seed)* | A category is an extra condition | PV-03 |
-| 6 | Save one skill that Job 23 doesn't ask for | 22 *(seed)* | Only Job 23 is hidden | PV-04 |
+| 6 | Save one skill that no fixture Job asks for | 18 *(seed)* | The 5 Jobs that list skills are hidden; Job 06 lists none and stays | PV-04 |
 | 7 | Save country South Africa | 23 | Includes fixture 23 (Worldwide only) | PV-05 |
 | 7b | Preferences off, South Africa picked here | 22 | No automatic Worldwide | PV-05 |
 | 8 | Save South Africa + region Gauteng | 8 | Gauteng + South Africa-only + Worldwide | PV-06 |
 | 9 | Saved South Africa + city Cape Town picked here + 25 km | 7 | Distance leaves out unmapped places and Worldwide | PV-06 |
-| 10 | Save "Up to a week" | 12 *(seed)* | 8 short ones + 4 with no time stated | PV-07 |
-| 11 | "Paid or rewarded" | 16 *(seed)* | 8 matches, divider, 8 that don't say | PV-07 |
-| 12 | Save language English | 1 *(seed)* | No-language fixtures are left out | PV-08 |
-| 13 | Types Job + Event, then Job field "Experience level" = Mid | 8 → 6 *(seed)* | A Job field narrows only Jobs | PV-09 |
+| 10 | Save "Up to a week" | 18 *(seed)* | 8 short ones + 10 with no time stated (every Job and Entrepreneurship fixture) | PV-07 |
+| 11 | "Paid or rewarded" | 15 | 7 matches, divider, 8 that don't say | PV-07 |
+| 12 | Save language Czech | 2 *(seed)* | No-language fixtures are left out | PV-08 |
+| 13 | Types Job + Event, then Job field "Experience level" = "Entry / Junior (1–3 years)" | 10 → 6 *(seed)* | A Job field narrows only Jobs | PV-09 |
 
 ---
 
@@ -345,13 +387,13 @@ All signed out, with the search word **Search fixture** (23 opportunities with n
 2. Press "Browse on my own".
    - The title "Find opportunities to unlock your future." shows.
    - Exactly four badges: "Under an hour", "Climate action", "Remote", "Paid & remote". "BROWSE BY CATEGORY" pills.
-   - Three rails: "Featured", "Newest on Yoma", "Done in under an hour". No "Picked for you".
+   - Three rails: "Featured", "Latest opportunities", "Done in under an hour". No "Picked for you".
 3. Click the SEARCH segment, type **Search fixture** and press Enter.
    - Heading "23 matches for “Search fixture”", "Sort" with "Newest" selected, 20 cards, then "Page 1 of 2".
 4. Click "Ending soonest".
-   - The address gains `sort=endingSoonest`. The first card is fixture 08 (closes 6 October 2026; see the warning in 2.5).
-5. Click "Filters", open "More filters", then "Paid and rewards", tap "Unpaid", and press "Show 15 matches" *(seed)*. Then click "List".
-   - 15 results *(seed)*, and a line "Incentive not specified" / "These come after the ones that match your Pay filter."
+   - The address gains `sort=endingSoonest`. The first card is fixture 01 (closes 5 November 2026).
+5. Click "Filters", open "More filters", then "Paid and rewards", tap "Unpaid", and press "Show 16 matches". Then click "List".
+   - 16 results, and a line "Incentive not specified" / "These come after the ones that match your Pay filter."
 6. Click "Clear filters". Click "Personalize my feed", then "Get started". Press "Continue" until "STEP 4 OF 6". Under "How you take part" tap "Remote". Press "Continue" to the end, then "Finish". Search **Search fixture** again.
    - A purple chip "Engagement: Remote", and 16 matches.
 7. Tap the "Remote" badge.
@@ -365,10 +407,11 @@ All signed out, with the search word **Search fixture** (23 opportunities with n
    - Press the undo arrow: 16 again.
 10. Turn the switch next to "Edit my preferences" off, then on.
     - Off: "Preferences switched off for this search. Your profile has not changed." and 23 matches. On: 16 again.
-11. Find "Search fixture 04", press its button, and open the "Requirements" tab.
-    - The page has a tab bar ("About", "Requirements", …). The "Accessibility" card reads "On request: Quiet workspace".
+11. Find "Search fixture 04", press its button, and open the "Requirements" tab. Then go back and open "Search fixture 01" the same way.
+    - The page has a tab bar ("About", "Requirements", …). Fixture 04's "Accessibility" card reads "On request: Quiet workspace".
+    - Fixture 01's first header tile reads "Pay" and "USD 1 000 / mo".
 12. Set the width to 390 px. On fixture 04's details page, scroll down. Then press Back to the results.
-    - Details page: the tabs pin to the top, and a bar with the main button sits at the bottom.
+    - Details page: the logo sits beside the type label and the title spans the card. Scrolled, the tabs pin to the top, and a bar with the main button sits at the bottom.
     - Results: one white search pill and a round green Filters button.
 13. *(Optional, admin)* Close all private windows. Open a new one, sign in as testadminuser and open http://localhost:3000/admin/opportunities. Search **Search fixture**.
     - The tabs read "All 24" and "Active 24".
@@ -384,7 +427,7 @@ How to read the tests:
 - Each test lists **Who**, **Screens**, **Set up**, the numbered **Steps**, what **You should see**, and a **Result** line.
 - **Addresses:** an address that starts with / goes after http://localhost:3000. For example, `/opportunities/discover?prefsOff=1` means http://localhost:3000/opportunities/discover?prefsOff=1. `prefsOff=1` switches preferences off, so saved answers don't change the counts.
 - **Fresh private window:** close all private windows (2.3), open a new one, go to `/opportunities/discover`, and press "Browse on my own" when the welcome opens. **Run the wizard:** see section 3.
-- Counts are from the 3 October 2026 local data. *(seed)* marks counts that may change after a reseed (2.5). A bullet marked *(not testable on local data)* can be skipped (2.7).
+- Counts are from the 6 October 2026 local data. *(seed)* marks counts that may change after a reseed (2.5). A bullet marked *(not testable on local data)* can be skipped (2.7).
 
 ### 6.1 Search and results (SR)
 
@@ -412,12 +455,12 @@ How to read the tests:
 6. Repeat step 1 at 390 px.
 
 **You should see:**
-- **Left side:** "NEW" and "YOMA SEARCH"; a big number counting up to the total (about 1 426 locally) with a green "LIVE" dot; "opportunities are waiting for you." and "Jobs, learning, impact actions, events and programmes to start a business — all in one place."; a tip starting "Don't be overwhelmed!"; the buttons "Get started →" and "Browse on my own".
+- **Left side:** "NEW" and "YOMA SEARCH"; a big number counting up to the total (about 1 402 locally) with a green "LIVE" dot; "opportunities are waiting for you." and "Jobs, learning, impact actions, events and programmes to start a business — all in one place."; a tip starting "Don't be overwhelmed!"; the buttons "Get started →" and "Browse on my own".
 - **Right side:** "OR JUMP STRAIGHT IN", then "PICK A TYPE" with six tiles, without counts, in this order: Job · Learning · Impact Action · Event · Entrepreneurship · Other. "QUICK SEARCHES": "Under an hour", "Climate action", "Remote" and "Paid & remote". No category pills.
 - Step 2: the welcome does **not** open again. Step 3 opens it again, because nothing is saved yet.
 - Step 4: the dialog closes and results show, for example "N matches for Job". The address has `type=Job`.
 - Step 5: "STEP 1 OF 6", "What brings you to Yoma?".
-- 390: one column, × in the top-right corner, and "Get started" and "Browse on my own" pinned to the bottom.
+- 390: one column, × in the top-right corner, and "Get started" and "Browse on my own" pinned to the bottom. At 320 the "Entrepreneurship" tile's name fits inside its tile.
 
 **Result:** ☐ Pass ☐ Fail — notes:
 #### SR-03 · Landing: rotating line, rails and "See all"
@@ -429,10 +472,10 @@ How to read the tests:
 5. At 390, swipe a rail sideways.
 
 **You should see:**
-- The line rotates: "{N} open right now" (for example "1 426 open right now"), "Set your preferences once — every search uses them" and "Earn ZLTO while you build your future". On results it becomes "{N} match your search" and "Refine your search with the filters". Numbers use a space between thousands.
+- The line rotates: "{N} open right now" (for example "1 402 open right now"), "Set your preferences once — every search uses them" and "Earn ZLTO while you build your future". On results it becomes "{N} match your search" and "Refine your search with the filters". Numbers use a space between thousands.
 - `view=list` on its own still shows the landing. `sort=endingSoonest` shows results.
-- Three rails, no "Picked for you" and no Sort control: "Featured" ("Hand-picked by the Yoma team"), "Newest on Yoma" ("Latest start dates first"), "Done in under an hour" ("Quick wins that fit into your day").
-- "See all": Featured adds `featured=1&prefsOff=1`, heading "688 matches for Featured" *(seed)*, green chip "Picks: Featured". Newest adds `prefsOff=1`, heading "1 426 opportunities" *(seed)*. Under an hour: "9 matches for Up to 1 hour" *(seed; also changes if new opportunities are added)*. Each "See all N" equals the heading on the page it opens.
+- Three rails, no "Picked for you" and no Sort control: "Featured" ("Hand-picked by the Yoma team"), "Latest opportunities" ("Latest start dates first"; renamed 6 October), "Done in under an hour" ("Quick wins that fit into your day"). At 320, "Latest opportunities" and its "See all N →" share one line.
+- "See all": Featured adds `featured=1&prefsOff=1`, heading "696 matches for Featured" *(seed)*, green chip "Picks: Featured". Latest adds `prefsOff=1`, heading "1 402 opportunities" *(seed)*. Under an hour: "14 matches for Up to 1 hour" *(seed; also changes if new opportunities are added)*. Each "See all N" equals the heading on the page it opens.
 - After the wizard, "Picked for you" comes first, subtitled "Because your feed is tuned to job". Its "See all" opens `type=Job` with the same count.
 - 390: each rail scrolls sideways, with the next card peeking. 640: two columns. 1024 and wider: four.
 
@@ -451,7 +494,7 @@ How to read the tests:
 - Empty values in grey: SEARCH "Anything", WHAT "Any type", WHERE "Anywhere", HOW LONG "Any time", ENGAGEMENT "Any".
 - Pop-up titles: "What are you looking for?", "What type of opportunity?", "Where should it be?", "How much time do you have?", "How do you want to take part?". WHAT's footer has "Any type" and "Show N matches"; the others have "Reset" and "Show N matches". The ENGAGEMENT pop-up lines up with the bar's right edge.
 - A value picked here is green with a green dot. A value from preferences is purple with a purple dot. Several values read "first +N", for example "Remote +1". After "Get a job", WHAT reads "Job" in purple.
-- Clicking outside, or Escape, closes the pop-up. The green "Filters" button shows a white number: the count of chips.
+- Clicking outside, or Escape, closes the pop-up. The green "Filters" button shows a number: the count of chips on screen, type-specific filters included (since 6 October; struck-through and faded chips count too, Q-C06). On the desktop bar's button and the floating "Filters" tab it is a green number in a white circle; in the Filters dialog's and sheet's titles, a white number in a green circle; on the round phone button, a plain white number. From 10 a circle widens to a pill.
 - Signed in: a heart link "My opportunities", with a count, beside the bar.
 - 390 pill: line 1 reads "Search opportunities" when there is no word. Line 2 appears once something is set: type · where · engagement, then "+K" for other filters, green for picks and purple for preferences. Accessibility needs are only ever counted inside "+K".
 - The pill and the green button open the same full-screen sheet titled "Filters". After scrolling, a green "Filters" tab with a count hangs under the top menu, on phone and desktop.
@@ -468,12 +511,12 @@ How to read the tests:
 
 **You should see:**
 - Six pills show first, then "Show all 16". A tapped pill turns green, adds the chip "Categories: Technology, AI & Data" and switches the page to results. Tapping again removes it. The number beside each name is the catalogue total and doesn't change when you filter. 390: the pills are one row that scrolls sideways.
-- Exactly four badges, without counts. "Under an hour" turns green, adds "Time: Up to 1 hour", and HOW LONG reads "Up to 1 hour" in green. Its results include fixtures that state no time (05, 06, 12, 23 *(seed)*).
+- Exactly four badges, without counts. "Under an hour" turns green, adds "Time: Up to 1 hour", and HOW LONG reads "Up to 1 hour" in green. Its results include fixtures that state no time (every Job and Entrepreneurship fixture, for example 01 and 09).
 - "Climate action" adds "Categories: Agriculture, Food, Environment and Climate". The second tap on "Remote" removes only Remote.
-- "Paid & remote" with "Search fixture": 8 matches *(seed)*, with the chips "Engagement: Remote" and "Pay: Paid or rewarded".
+- "Paid & remote" with "Search fixture": 6 matches (04, 08, 10, 14, 16, 20), with the chips "Engagement: Remote" and "Pay: Paid or rewarded".
 - Pills from your interests are purple; tapping one switches that preference off (chip struck through, with undo). With a country known, a fifth badge appears: "Jobs in South Africa".
 - The Business pill is **not** shown as selected because of the goal (4.4).
-- "Jobs near me" appears only when a city with a map point is known, and returns 0 locally (seed gap). Never shown: "No experience needed", "With accommodations", "Climate action + SDG 13" (parked).
+- "Jobs near me" appears only when a city with a map point is known. With Cape Town it returns fixtures 01 and 02, the two Jobs within 25 km. Never shown: "No experience needed", "With accommodations", "Climate action + SDG 13" (parked).
 
 **Result:** ☐ Pass ☐ Fail — notes:
 #### SR-06 · Green "this search" panel and "Clear filters"
@@ -498,7 +541,7 @@ How to read the tests:
 
 **You should see:**
 - "Searching…" on the very first load.
-- Step 1, in order: "1 426 opportunities" *(seed)*; "23 matches for “Search fixture”"; "3 matches for “Search fixture” + 1 filter" *(seed)*; "688 matches for Featured" *(seed)*.
+- Step 1, in order: "1 402 opportunities" *(seed)*; "23 matches for “Search fixture”"; "6 matches for “Search fixture” + 1 filter"; "696 matches for Featured" *(seed)*.
 - Step 2: "N matches for Starting a business + K filters". The need is counted in K, never named.
 - Step 3: the skipped chip is no longer counted in K.
 - If the only filter were a saved need, the heading would read "N matches for your preferences".
@@ -506,7 +549,7 @@ How to read the tests:
 
 **Result:** ☐ Pass ☐ Fail — notes:
 #### SR-08 · Sort and the "Incentive not specified" divider
-**Who:** signed out · **Screens:** 1440, 1024, 768, 390 and 360 · **Set up:** fresh private window; open `/opportunities/discover?q=Search%20fixture&prefsOff=1`. **Steps:**
+**Who:** signed out · **Screens:** 1440, 1024, 768, 390, 360 and 320 · **Set up:** fresh private window; open `/opportunities/discover?q=Search%20fixture&prefsOff=1`. **Steps:**
 1. Click "Ending soonest", then "Most ZLTO", then "Newest". Check the address and the first cards each time. Scroll down a little and change the sort again.
 2. Add `&type=Job` to the address, then also `&sort=mostZlto`, then change `type=Job` to `type=Job,Learning`.
 3. Open `/opportunities/discover?q=Search%20fixture&paid=0&prefsOff=1&view=list&sort=endingSoonest`. Switch to Grid. Then remove `paid=0`.
@@ -514,20 +557,20 @@ How to read the tests:
 5. Check the Sort control, and step 3's address without `view=list`, at each width.
 
 **You should see:**
-- "Newest" is the default, with no `sort=` in the address; fixture 08 (latest start) is first. "Ending soonest" (`sort=endingSoonest`): fixture 08 (ends 6 Oct) first, fixture 09 ("No deadline") last, on page 2. "Most ZLTO" (`sort=mostZlto`): fixture 22 (Z 550), then 20 (Z 500) and 16 (Z 400) *(seed)*.
+- "Newest" is the default, with no `sort=` in the address; fixture 08 (latest start) is first. "Ending soonest" (`sort=endingSoonest`): fixture 01 (ends 5 Nov) first; fixture 08 (ends 4 Jan) and fixture 09 ("No deadline") last, on page 2. "Most ZLTO" (`sort=mostZlto`): fixture 20 (Z 500), then 16 (Z 400) and 14 (Z 350).
 - A sort change returns to page 1, and the page does not jump.
 - `type=Job`: only "Newest" and "Ending soonest". With `sort=mostZlto`: all three, "Most ZLTO" selected, and the note "Jobs don't carry ZLTO, so they're shown newest first." With `type=Job,Learning`: all three.
-- Step 3: 15 matches *(seed)*. The divider "Incentive not specified" / "These come after the ones that match your Pay filter." sits between "Search fixture 23 - Job" and "Search fixture 03 - Learning (incomplete partner-like)". Dates rise to "Apply by 3 Nov" above it and restart at "Apply by 2 Nov" below it; fixture 09 is last. In Grid it spans the whole row. Without `paid=` there is no divider.
-- Step 4: 16 matches, with the divider after the eighth card (fixture 22) *(seed)*. Fixture 06 shows "USD 1 000 / mo" but sits below the line (known, Q-A01).
-- From 1024 px, Sort sits beside Grid/List; below 1024 it has its own row; below 640 it is full width, with 44 px options. Nothing is cut off at 360. At 390 the divider is centred text with no side lines.
+- Step 3: 16 matches. The divider "Incentive not specified" / "These come after the ones that match your Pay filter." sits between "Search fixture 23 - Other" and "Search fixture 03 - ImpactAction (incomplete partner-like)". Dates rise to "Apply by 6 Nov" above it and restart at "Apply by 5 Nov" below it; fixture 09 is last. In Grid it spans the whole row. Without `paid=` there is no divider.
+- Step 4: 15 matches, with the divider after the seventh card (fixture 20). Fixture 01 shows "USD 1 000 / mo" and sits above the line.
+- From 1024 px, Sort sits beside Grid/List; below 1024 it has its own row; below 640 it is full width, with 44 px options. Nothing is cut off at 360 or 320. At 390 the divider is centred text with no side lines.
 
 ![List view with the "Incentive not specified" divider between two groups of rows](2026-10-03/03-incentive-not-specified-divider-1440.png)
-*Pay: Unpaid, sorted by "Ending soonest". Fixture 06 shows a salary but sits below the line (known issue, Q-A01).*
+*Pay: Unpaid, sorted by "Ending soonest". Screenshot predates 2026-10-06: the fixture types, dates and salaried fixture shown have changed; the divider looks the same.*
 
 **Result:** ☐ Pass ☐ Fail — notes:
 #### SR-09 · Cards, list rows and Grid/List
 **Who:** signed out · **Screens:** desktop and 390 · **Set up:** fresh private window; open `/opportunities/discover?q=Search%20fixture&prefsOff=1`. **Steps:**
-1. Find fixtures 01, 09 and 18 (Events), 06 and 23 (Jobs), and 08 (Learning), and read each card. *(Types and participant limits are from the 3 Oct seed.)*
+1. Find fixtures 01 (Job), 04 and 08 (Events), 09 (Entrepreneurship), 10 (Learning) and 23 (Other), and read each card. *(Effort, difficulty, participant limits and the Job's employment type are from the 6 Oct seed.)*
 2. Click a card's title or an empty part of the card. Then click its button.
 3. Click "List" and read the column headers. Open `/opportunities/discover` in the same window, then click "Grid".
 4. At 390, look at the toggle and at a list row.
@@ -535,11 +578,11 @@ How to read the tests:
 **You should see:**
 - **Type labels:** Job purple, Learning green, Event orange, Impact Action light purple, Entrepreneurship dark blue, Other grey. **Buttons:** "Apply now →" (Job), "Start learning →" (Learning), "View event →" (Event), "View impact action →" (Impact Action), "View programme →" (Entrepreneurship), "View opportunity →" (Other).
 - The card body does nothing. Only the button opens the details page.
-- **01:** "Thu 1 Oct" (its start date) and "Other, Quiet workspace +1". **09:** "Accessibility: Available on request" and "No deadline". **18** (says "No"): no accessibility fact. **06:** "USD 1 000 / mo", "South Africa" and "284 of 284 places left". **23:** "Worldwide · On-site", the "Featured" badge and "641 of 641 places left". **08:** "Z 200"; within 7 days of its end, a pink "N days left" and an "Ending soon" badge.
-- **Status texts:** "Apply by 2 Nov", "N days left", "No deadline". *(Not testable on local data, see 9.2: "Closes today", "Closed", "No places left".)* **Pay line**, in priority order: salary > "{currency} {amount} partner-paid" (create one with ED-08) > "Paid — amount not disclosed" *(not testable on local data)* > nothing. ZLTO is always its own green "Z n" pill.
+- **01:** "USD 1 000 / mo" and "Permanent" (its employment type). **04:** "Sun 4 Oct" (its start date), "On request: Quiet workspace" and "Z 100". **08** (says "No"): "Thu 5 Nov" (it starts then), no accessibility fact, "Z 200" and "309 of 309 places left". **09:** "No deadline". **10:** "8 Days", "Any level", "Z 250" and "233 of 233 places left". **23:** "Worldwide · On-site" and "725 of 725 places left".
+- **Status texts:** "Apply by 5 Nov", "No deadline". Within 7 days of an end date, a pink "N days left" and an "Ending soon" badge *(not testable on local data before about 29 October)*. *(Not testable on local data, see 9.2: "Closes today", "Closed", "No places left".)* **Pay line**, in priority order: salary > "{currency} {amount} partner-paid" (create one with ED-08) > "Paid — amount not disclosed" *(not testable on local data)* > nothing. ZLTO is always its own green "Z n" pill.
 - "List" adds `view=list`; the count doesn't change. Desktop columns: Type · Opportunity · Money · Where · Key fact · Status · Places, then a button. Empty cells show "—".
 - The browser remembers List: the landing opens with `view=list` and is still the landing. Grid: one column on phones, two from 640 px, four from 1024 px.
-- 390: the toggle shows icons only. A list row shows the logo, the title, type · money · location, the closing label and a round arrow button.
+- 390 and 320: the toggle shows icons only. A list row shows the logo, the title, type · money · location, the closing label and a round arrow button, with nothing overlapping.
 
 **Result:** ☐ Pass ☐ Fail — notes:
 #### SR-10 · No matches, load errors and pages
@@ -552,9 +595,9 @@ How to read the tests:
 **You should see:**
 - Step 1: "No matches for “zzqxv”", "Check the spelling, or try a shorter or broader word.", and a "Clear search" button.
 - Step 2: "No matches with these filters", "Remove a filter or two, or clear them all — your preferences stay as they are.", and "Clear filters".
-- Step 3: "No matches in your feed", "Your preferences may be too narrow for this search. Try it without them — nothing is changed in your profile.", and a purple "Search without my preferences" button that adds `prefsOff=1`.
+- Step 3: "No matches in your feed", "Your preferences may be too narrow for this search. Try it without them — nothing is changed in your profile.", and a purple "Search without my preferences" button that adds `prefsOff=1`. At 320 the button's text wraps inside the card.
 - Step 4: "Page 1 of 2", 20 per page. "Next" adds `page=2` and scrolls to the heading.
-- If loading fails: "Couldn't load these results. Retry". *(Not testable on local data except through the FI-09 check for Q-W02.)*
+- If loading fails: "Couldn't load these results. Retry". *(Locally, only FI-03 step 7 produces it.)*
 
 **Result:** ☐ Pass ☐ Fail — notes:
 #### SR-11 · Recent searches, and the address holds the whole search
@@ -598,14 +641,14 @@ How to read the tests:
 - Subheading: "One choice only — it sets the shape of your feed, and you can change it any time."
 - Cards: "Get a job", "Learn new skills", "Attend events", "Volunteer & give back", "Start a business". Only one can be selected; tapping it again clears it.
 - The chips are "Type: Job", "Type: Learning", "Type: Event", "Type: Impact Action", and for the last goal "Goal: Starting a business". Its hover text ends "Entrepreneurship, plus Business, Finance & Marketing opportunities of any type."
-- 4 results *(seed)*: fixtures 05, 11, 16 and 23 (why: PV-03).
+- 6 results *(seed)*: fixtures 09, 12, 15, 16, 20 and 24 (why: PV-03).
 - In Filters, "Entrepreneurship" is selected, with the line "Your goal also brings in Business, Finance & Marketing opportunities of any type." "Categories" reads "Any".
 
 **Result:** ☐ Pass ☐ Fail — notes:
 #### PR-03 · Steps 2 and 3: interests and skills
-**Who:** signed out; testuser to compare (step 4) · **Screens:** desktop and 390 · **Set up:** fresh private window. Open fixture 23's details page and note its required skill ("Foreign Exchange Markets" on the 3 Oct seed). **Steps:**
+**Who:** signed out; testuser to compare (step 4) · **Screens:** desktop and 390 · **Set up:** fresh private window. You need a skill that no fixture Job asks for: "Accredited Business Communicator" works on the 6 Oct seed. After a reseed, check "Skills required" on Jobs 01, 02, 05, 21 and 22 first. **Steps:**
 1. On step 2, tap two or three category pills, then tap one again. Finish, and hover the "Interests" chip.
-2. Reopen the wizard and untick every interest. On step 3, type 2 letters in "Search skills (3+ letters)…", then a third. Add one skill that is **not** fixture 23's (for example "Accredited Business Communicator"). Tap its green pill to remove it, add it again, and finish.
+2. Reopen the wizard and untick every interest. On step 3, type 2 letters in "Search skills (3+ letters)…", then a third. Add that skill. Tap its green pill to remove it, add it again, and finish.
 3. Search "Search fixture", then pick "Learning" only in WHAT.
 4. Signed in as testuser, compare step 2's pills with the signed-out list, and type the name of a skill you have earned on step 3. Close with ×.
 
@@ -613,12 +656,12 @@ How to read the tests:
 - Step 2's subheading: "Pick as many as you like — these shape which categories lead your feed." (wording: Q-W12). Pills turn on and off, and are at least 44 px tall on phones.
 - The chip reads "Interests: {first} +N", and its hover text lists them all. The results show only opportunities in at least one picked category.
 - Step 3's subheading: "Search and add skills — verified skills from your YoID count automatically." Its note: "Your skills narrow jobs only: a job that asks for none of them is hidden, and one that lists no skills stays in." Nothing appears until 3 letters are typed; then up to 20 matches.
-- The chip reads "Skills: 1 job skill". With Learning only, it fades with "Not applied — this search has no jobs." (Counts: PV-04.)
+- The chip reads "Skills: 1 of yours"; its hover text is in 4.4. With Learning only, it fades with "Not applied — this search has no jobs." (Counts: PV-04.)
 - Signed in, the full category list shows; signed out, only categories that published opportunities use. A skill you already earned shows as "{name} · Already verified" and can't be picked.
 
 **Result:** ☐ Pass ☐ Fail — notes:
 #### PR-04 · Step 4: time, how you take part, pay
-**Who:** signed out · **Screens:** desktop and 390 × 844 · **Set up:** fresh private window. **Steps:**
+**Who:** signed out · **Screens:** desktop, 390 × 844 and 320 · **Set up:** fresh private window. **Steps:**
 1. Under "How long", tap "Up to a week", then "Up to a day", then "Up to a day" again.
 2. Under "How you take part", tap "Remote" and "On-site".
 3. Under "Pay or rewards", tap "Paid or rewarded", then "Unpaid".
@@ -630,9 +673,10 @@ How to read the tests:
 - "Pay or rewards" offers "Paid or rewarded" and "Unpaid", one at a time. Note: "Leave both off if it doesn't matter. Ones with no incentive specified stay in, after the ones that match."
 - Two engagements read "Engagement: Remote +1". (Counts: PV-01 and PV-07.)
 - At 390 × 844 the whole step fits without scrolling, and every pill is 44 px tall.
+- The footer, on every step, has only "Back" and "Continue" ("Finish" on step 6). There is no "Skip this" (removed 6 October). Below 360 px "Back" shows only its arrow, and the footer never scrolls sideways.
 
 ![Mobile wizard step 4 with "Up to a week", "On-site" and "Remote" selected](2026-10-03/05-wizard-step4-engagement-390.png)
-*Wizard step 4 at 390 px. The live count at the top uses the answers on screen.*
+*Wizard step 4 at 390 px. The live count at the top uses the answers on screen. Screenshot predates 2026-10-06: it still shows "Skip this".*
 
 **Result:** ☐ Pass ☐ Fail — notes:
 #### PR-05 · Step 5: where you are and languages
@@ -646,6 +690,7 @@ How to read the tests:
 7. Sign in as testuser and open step 5. Close it with ×.
 
 **You should see:**
+- The step's title is "Your area and languages?" (since 5 October).
 - Signed out, the country list starts on "Choose your country" and has no Worldwide. Region and city are disabled, with "Choose your country first." At 390, region and city stack.
 - Picking a city fills in its region, and "Location may not be accurate — we use your nearest place or city, never your exact position." shows. Changing the country empties region and city.
 - Chips "Where: South Africa" and "Where: Cape Town, Western Cape". The first one's hover text ends "Also includes opportunities open worldwide, except in a distance search."
@@ -671,14 +716,14 @@ How to read the tests:
 **Result:** ☐ Pass ☐ Fail — notes:
 #### PR-07 · Live count, finishing and saving
 **Who:** signed out; then testuser (this changes the shared account, so reset it afterwards) · **Screens:** desktop and 390 · **Set up:** testuser set up as in 2.2; then a fresh private window. **Steps:**
-1. Open the wizard. Pick and unpick answers on different steps while watching the number. Then pick a narrow set: a goal, one interest, "Up to a minute" and a language.
+1. Open the wizard. Pick and unpick answers on different steps while watching the number. Then narrow it with a goal, one interest, "Up to a minute" and a language, adding answers until the number drops below 5, then to 0.
 2. Finish with one answer. Close the tab and open the page in a new tab.
 3. Signed in as testuser, add "On-site" on step 4 and finish. Reload, then reopen the wizard.
 4. Untick "On-site", finish, and reopen the wizard.
 5. Switch a chip off and turn the master switch off. Then edit preferences and finish.
 
 **You should see:**
-- "TUNING YOUR FEED", the number and "opportunities match your answers so far". On desktop it sits in a purple column; at 390 it is a row above the wizard. The old number blurs while it recounts. Below 5: "That's a narrow feed — consider widening a choice or two." On desktop only, a paragraph starting "Every step is optional and nothing is locked."
+- "TUNING YOUR FEED", the number and "opportunities match your answers so far" ("opportunity matches…" for 1). On desktop it sits in a purple column; at 390 it is a row above the wizard. The old number blurs while it recounts. The number always shows (since 5 October). From 1 to 4 the line "That's a narrow feed — consider widening a choice or two." appears under it. At 0 the number turns yellow, with a warning sign, and the same line shows. On desktop only, a paragraph starting "Every step is optional and nothing is locked."
 - The count uses every wizard answer, with nothing switched off. It ignores this search's own filters, so it can differ from the results count.
 - While saving, the button reads "Saving…". Then the dialog closes and the page scrolls to the results.
 - Signed out: in a new tab the answer is gone. Answers last only for that tab.
@@ -713,12 +758,12 @@ How to read the tests:
 **You should see:**
 - Before: "Tune your feed. Tell us what you're looking for — set once, used on every search. Your YoID is never touched." and "Personalize my feed". The block reads "No preferences yet. Set them once and every search uses them."; "Set my preferences" opens the welcome.
 - After: "Your feed is tuned to Starting a business · South Africa · +4", "Set once, used on every search. Your YoID is never touched.", "Edit my preferences" and the switch.
-- Chips, in order: "Goal: Starting a business", "Where: South Africa", "Time: Up to 1 week", "Engagement: Remote +1", "Skills: 1 job skill", "Accessibility: your needs". Hover text adds a note after "—", for example "Engagement: Remote +1 — Remote, On-site". On desktop the chips wrap; at 390 they scroll sideways, and long labels wrap to two lines.
+- Chips, in order: "Goal: Starting a business", "Where: South Africa", "Time: Up to 1 week", "Engagement: Remote +1", "Skills: 1 of yours", "Accessibility: your needs". Hover text adds a note after "—", for example "Engagement: Remote +1 — Remote, On-site". On desktop the chips wrap; at 390 they scroll sideways, and long labels wrap to two lines.
 - Rail subtitle: "Because your feed is tuned to starting a business, south africa" (lower case: Q-W07).
 - Block: "Using my preferences", "Edit", the switch, the chips, and "Removing one here does not change your profile. Tap the arrow to put it back." Switched off: "Switched off for this search. Your profile has not changed." The block and the strip always match.
 
 ![Purple preference strip with six chips above the "Picked for you" rail](2026-10-03/01-landing-preference-banner-1440.png)
-*The strip after the wizard above (signed out). The need is never named.*
+*The strip after the wizard above (signed out). The need is never named. Screenshot predates 2026-10-06: the skills chip now reads "Skills: 1 of yours", and the fixture types have changed.*
 
 **Result:** ☐ Pass ☐ Fail — notes:
 #### PR-10 · Switching preferences off, and "Make this my default"
@@ -791,20 +836,27 @@ Unless a test says otherwise: signed out, in a fresh private window, open `/oppo
 - Step 4: "FROM PREFERENCES" shows on "Where", "Engagement" and "How long", and those sections open by themselves. It never shows on SDGs, Provider, Skills or the Type row. The saved options inside are green (normal). Switch off: every tag disappears, and the block reads "Switched off for this search. Your profile has not changed." Untapping Remote strikes through the Engagement chip, and its tag disappears.
 
 **Result:** ☐ Pass ☐ Fail — notes:
-#### FI-03 · Type row and type-specific filters
-**Who:** signed out · **Screens:** 1440 and 390 · **Set up:** as 6.3. **Steps:**
+#### FI-03 · Type row and type-specific filters *(changed 5 and 6 Oct)*
+**Who:** signed out · **Screens:** 1440, 390 and 320 · **Set up:** as 6.3. **Steps:**
 1. In "Type", tap "Job", then "Event", then "Job" again. Tap "Job" once more, so Job and Event are both selected.
-2. Open "Job filters", then "Job details". Under "Work schedule", keep "Any of" and choose "Full-time". Close the panel and check that Event cards are still there.
-3. Open the operator list on "Employment type", "Minimum salary" and "Salary disclosed".
-4. Reopen Filters and untap "Event". Reopen "Job filters". Repeat step 2's first sentence at 390.
-5. In a fresh window, save "Start a business", open Filters, and untap "Entrepreneurship".
+2. Open "Job filters" and read it. Open "Compensation". In "Minimum salary", type 500 in the "From" box and watch the purple button. Then press Enter. Close the panel and check that Event cards are still there.
+3. Reopen Filters. In "Job filters", look at each field's control under "Compensation" and "Employment". Open "Event filters" and pick "Open to all" under "Difficulty".
+4. Untap "Job" in the Type row. Then remove "Open to all" from "Difficulty" with its ×.
+5. Open `/opportunities/discover?q=Search%20fixture&type=Learning`, open Filters, then "Learning filters", at 1440, 390 and 320.
+6. In a fresh window, save "Start a business", open Filters, and untap "Entrepreneurship".
+7. Open `/opportunities/discover?type=Job&cf=%5B%7B%22key%22%3A%22jobPreferredSkills%22%2C%22operator%22%3A%22AnyOf%22%2C%22values%22%3A%5B%2201a0e88e-0000-7000-8000-000000000001%22%5D%7D%5D` (a link carrying a skill that no longer exists). Open Filters → "Job filters" → "Requirements".
 
 **You should see:**
 - The grey line reads "What type of opportunity? Pick one or more. Each type adds its own filters." Pills are always in this order: Job, Learning, Impact Action, Event, Entrepreneurship, Other. Selected pills are purple. With Job and Event: summary "Job · Event", with "Job filters" and "Event filters" below.
-- "Job filters" shows "14 filters" and a "FROM THIS TYPE" tag *(seed)*. At 1440 the sub-headings are "CLASSIFICATION", "COMPENSATION", "EMPLOYMENT" and "REQUIREMENTS". After "Full-time" the header reads "14 filters · 1 set". A Job field narrows only Jobs; Events stay.
-- **Operators:** choice fields "Any of", "Is", "Has any value", plus "All of" on multi-choice fields. Number fields "Is", "From", "Up to", "Greater than", "Less than", "Between", "Any of", "Has any value". Yes/no fields "Is", "Has any value".
-- Removing any type clears every type-specific pick. At 390 there are no sub-headings; names read like "Compensation · Salary disclosed". "Details (all types)" never appears locally (no seeded field is shared by all types).
-- Step 5: "Entrepreneurship" is selected and the goal line shows. Untapping it removes the line and strikes through the goal chip. The Type row never shows "FROM PREFERENCES".
+- **Job filters:** "14 filters" and a "FROM THIS TYPE" tag. Open, it shows the guidance line "What providers describe, not entry requirements. Each provider decides who is suitable.", then four closed group rows: "Classification 2", "Compensation 5", "Employment 4" and "Requirements 3". **Event filters:** "1 filter"; open, the same line, then "Difficulty" directly, with no group row. Closing a section hides its line.
+- **Step 2:** nothing is searched while you type; the count changes only after Enter, or when you leave the "From"–"To" pair (moving to "To" doesn't count). Then a green chip "Minimum salary: From 500", the header "14 filters · 1 set", and 5 results: Job 01 and the 4 Events (04, 08, 12, 14). A Job field narrows only Jobs.
+- **Controls (no operator list):** choices such as "Pay interval" or "Employment type" are a pick list reading "Any" ("Preferred skills" reads "Search skills..."); "Minimum salary", "Maximum salary" and "Employment duration" are a "From"–"To" pair, where either box works alone; "Salary disclosed" offers "Any", "Yes" and "No". (A text field would be a box reading "Contains…".)
+- **Step 3:** 3 results *(seed)*: Job 01 and the Events marked "Open to all" (04 and 08).
+- **Step 4:** untapping Job removes only the Job filter; "Difficulty: Open to all" stays, with 2 results *(seed)*. Removing it leaves the 4 Events. An emptied field removes its filter.
+- **Step 5:** "Learning filters · 1 filter"; open, the guidance line, then "Difficulty" directly. The line takes 1 line at 1440, 2 at 390 and 3 at 320, and nothing scrolls sideways. "Details (all types)" never appears locally (no seeded field is shared by all types).
+- **Step 6:** "Entrepreneurship" is selected and the goal line shows. Untapping it removes the line and strikes through the goal chip. The Type row never shows "FROM PREFERENCES".
+- **Step 7:** the chip reads "Preferred skills: Skill no longer listed" (2 lines at 320), and the field shows "Skill no longer listed ×". The skill's ID never shows. While the Job fields load, the chip can read "Details: jobPreferredSkills" (the field's internal name) for a moment: a known follow-up, not a failure. The results read "Couldn't load these results. Retry" (known: Q-A10).
+- If the skill-name lookup itself fails, a skill reads "Skill name unavailable" instead. "Skill no longer listed" means the lookup worked and doesn't know the skill. *(Not testable on local data unless the API is down.)*
 
 **Result:** ☐ Pass ☐ Fail — notes:
 #### FI-04 · Categories and Language
@@ -841,7 +893,7 @@ Unless a test says otherwise: signed out, in a fresh private window, open `/oppo
 
 **You should see:**
 - Engagement options, in order: "Hybrid", "On-site", "Remote". Rule line: "Picked here, opportunities that don't say how you take part are left out. From your preferences, they stay in." "Remote" picked here: 8 results. (Saved engagement: PV-01.)
-- How long: one choice at a time ("Up to a minute", "Up to an hour", "Up to a day", "Up to a week", "Up to a month"). Rule line: "Opportunities that don't state a time commitment stay in your results." 9 results, including 05, 06, 12 and 23, which state no time; fixture 04 (2 hours) is left out *(seed)*. The segment reads "Up to 1 hour", in green with a dot. Tapping again clears it.
+- How long: one choice at a time ("Up to a minute", "Up to an hour", "Up to a day", "Up to a week", "Up to a month"). Rule line: "Opportunities that don't state a time commitment stay in your results." 14 results *(seed)*, including the 10 Jobs and Entrepreneurship fixtures, which state no time; longer ones, such as fixture 08 (9 hours), are left out. The segment reads "Up to 1 hour", in green with a dot. Tapping again clears it.
 - Step 3: with all three picked, the count is exactly R + H. Remote and On-site never bring in Hybrid.
 
 **Result:** ☐ Pass ☐ Fail — notes:
@@ -866,21 +918,20 @@ Unless a test says otherwise: signed out, in a fresh private window, open `/oppo
 4. Open "Provider", type "fixture" and press Enter. Change it to "FIXTURE" and click outside. Then type "zzzz" and press Enter.
 
 **You should see:**
-- "PAID" heading: "Paid or rewarded" or "Unpaid", one at a time. "ZLTO REWARD" heading: "With ZLTO reward" and ranges such as "Z50 - Z100", then "Show all 11". Rule line: "Opportunities that haven't specified an incentive stay in, listed after the ones that match." Counts, all *(seed)*: "Paid or rewarded" 16, "Unpaid" 15, "With ZLTO reward" 8. With Job in Type, the ZLTO options are replaced by "Jobs do not carry ZLTO."; the Paid options stay.
+- "PAID" heading: "Paid or rewarded" or "Unpaid", one at a time. "ZLTO REWARD" heading: "With ZLTO reward" and ranges such as "Z50 - Z100", then "Show all 11". Rule line: "Opportunities that haven't specified an incentive stay in, listed after the ones that match." Counts: "Paid or rewarded" 15, "Unpaid" 16, "With ZLTO reward" 6. With Job in Type, the ZLTO options are replaced by "Jobs do not carry ZLTO."; the Paid options stay.
 - **Skills** is dimmed, with "Coming soon". It has no arrow and doesn't open. The line under it reads "The skills in your preferences already narrow jobs; jobs that list no skills stay in."
 - **SDGs** offers only "1. No poverty" and "2. Zero hunger" *(seed)*. Rule line: "Opportunities that don't name a goal stay in your results." All 23 stay.
 - **Provider** hint: "The provider named on the opportunity — type part of it, e.g. KFC." Rule line: "Opportunities that don't name a provider are left out." "fixture" and "FIXTURE" both give 15. Nothing searches until you press Enter or leave the box. "zzzz" gives "0 matches".
 
 **Result:** ☐ Pass ☐ Fail — notes:
-#### FI-09 · *(Optional)* Code-reading checks: Q-W02, Q-W09, Q-W10, Q-W11
-**Who:** signed out · **Screens:** desktop · **Set up:** a fresh private window for each step. These four come from reading the code and have not been seen in a browser: tick **Pass** if the screen matches the description below (the same as the question in section 8), and write what you saw either way. **Steps:**
-1. **Q-W02.** Search "Search fixture". In Filters, tap "Job" in Type, open "Job filters", then "Job details". Set "Minimum salary" to "Between", type 5000 in the first box only, and close the panel.
+#### FI-09 · *(Optional)* Code-reading checks: Q-W09, Q-W10, Q-W11
+**Who:** signed out · **Screens:** desktop · **Set up:** a fresh private window for each step. These three come from reading the code and have not been seen in a browser: tick **Pass** if the screen matches the description below (the same as the question in section 8), and write what you saw either way. **Steps:**
+1. *Retired 6 October:* Q-W02 is resolved. An unfinished type-specific value can no longer be sent (FI-03).
 2. **Q-W09.** Open the wizard, press "Continue" on every step without picking anything, then "Finish". Read the purple strip.
 3. **Q-W10.** Run the wizard with "Remote" and "Up to a week", and search. Press × on the Engagement chip, then "Make this my default". Run the wizard again, add "Paid or rewarded" and press "Finish". Press "Undo", then open the wizard.
 4. **Q-W11.** Run the wizard with "South Africa" and "Cape Town" (picked from the suggestions). Click "Opportunities" in the top menu, note "See all N" on "Picked for you", and press it.
 
 **You should see:**
-- Step 1: after a few seconds, the results read "Couldn't load these results. Retry" (the unfinished condition is sent as it is).
 - Step 2: the strip reads "Your feed is tuned to your preferences", although nothing applies.
 - Step 3: "Saved. Undo" is still there after the wizard. "Undo" brings back "Remote" and drops "Paid or rewarded".
 - Step 4: the saved place chip fades, and green place chips appear in the green panel. The count still equals N.
@@ -925,19 +976,19 @@ These tests prove the rules in section 4. **Who:** signed out (except PV-11) · 
 3. Press the undo arrow on the goal chip, and untap "Event". Tap "Climate action". Tap it again, then tap the "Business, Finance & Marketing" pill.
 
 **You should see:**
-- Step 1: "Goal: Starting a business" and 4 results *(seed)*: 05 (Entrepreneurship), plus 11 and 16 (Learning) and 23 (Job) from the Business category. Entrepreneurship is selected, with the goal line. "Categories" reads "Any", and the Business pill is not highlighted.
-- Step 2: with Event, 9 results *(seed)*: the 4, plus Events 01, 09, 17, 18 and 22. It does **not** narrow to "Events in the Business category". After untapping Entrepreneurship: the goal chip is struck through, the goal line disappears, and 5 remain *(seed)* (Events only).
-- Step 3: back to 4. "Climate action": 1 result (fixture 11) *(seed)*. The Business pill: 3 results (11, 16, 23) *(seed)*, and a green "Categories: Business, Finance & Marketing" chip.
+- Step 1: "Goal: Starting a business" and 6 results *(seed)*: the Entrepreneurship fixtures 09, 15, 16 and 20, plus 12 (Event) and 24 (Learning) from the Business category. Entrepreneurship is selected, with the goal line. "Categories" reads "Any", and the Business pill is not highlighted.
+- Step 2: with Event, 9 results *(seed)*: the 6, plus Events 04, 08 and 14. It does **not** narrow to "Events in the Business category". After untapping Entrepreneurship: the goal chip is struck through, the goal line disappears, and the 4 Events remain (04, 08, 12, 14).
+- Step 3: back to 6. "Climate action": 1 result (fixture 20) *(seed)*. The Business pill: 3 results (12, 15, 24) *(seed)*, and a green "Categories: Business, Finance & Marketing" chip.
 
 **Result:** ☐ Pass ☐ Fail — notes:
 #### PV-04 · Saved skills narrow Jobs only
-**Set up:** save one skill that fixture 23 doesn't ask for (see PR-03). **Steps:**
+**Set up:** save one skill that no fixture Job asks for (see PR-03). **Steps:**
 1. Search.
 2. In WHAT, pick "Job" only. Then switch to "Learning" only.
 
 **You should see:**
-- Step 1: "Skills: 1 job skill" and 22 results *(seed)*. Only Job 23 is gone.
-- Step 2: Job only: 2 results (06, 12) *(seed)*. Learning only: the chip fades with "Not applied — this search has no jobs.", and 7 Learning results *(seed)*.
+- Step 1: "Skills: 1 of yours" and 18 results *(seed)*. Jobs 01, 02, 05, 21 and 22 list skills, none of them yours, so they are gone. Job 06 lists no skills and stays.
+- Step 2: Job only: 1 result (06). Learning only: the chip fades with "Not applied — this search has no jobs.", and the 3 Learning results (10, 13, 24).
 - With "Start a business" also saved, the chip stays active on Learning only, because Business-category Jobs can still come in.
 
 **Result:** ☐ Pass ☐ Fail — notes:
@@ -950,7 +1001,7 @@ These tests prove the rules in section 4. **Who:** signed out (except PV-11) · 
 **You should see:**
 - Step 1: 23 results, including 23 (Worldwide only) and 24 (South Africa + Worldwide). The hover text ends "Also includes opportunities open worldwide, except in a distance search." WHERE reads "South Africa", never "+1".
 - Step 2: 23 with the switch off, then 22 once South Africa is picked (fixture 23 is gone). Back on: 23.
-- Step 3: 3 Jobs (06, 12, 23) with preferences on, 2 with them off *(seed)*. See Q-B17.
+- Step 3: the 6 Jobs (01, 02, 05, 06, 21, 22), with preferences on or off. No fixture Job is Worldwide, so the difference Q-B17 describes can't be seen locally.
 
 **Result:** ☐ Pass ☐ Fail — notes:
 #### PV-06 · A saved place applies to your home country only; distance is a deliberate "near me"
@@ -972,31 +1023,31 @@ These tests prove the rules in section 4. **Who:** signed out (except PV-11) · 
 3. Change to "Unpaid".
 
 **You should see:**
-- Step 1: "Time: Up to 1 week" and 12 results *(seed)*: 8 that take a week or less, plus 4 that state no time (05, 06, 12, 23). After the badge: it is green, and 9 results *(seed)*. Known gap (Q-W04): the purple "Time: Up to 1 week" chip still looks active, although the badge's 1 hour now applies. Tick Pass if you see this.
-- Step 2: 16 results *(seed)*: 8 that pay or reward (02, 04, 08, 10, 14, 16, 20, 22), the divider, then 8 with no incentive. Dates rise above the divider and restart below it; fixture 09 (no end date) is last.
-- Step 3: 15 results *(seed)*: 7 (01, 05, 11, 13, 17, 19, 23), the divider, then the same 8.
+- Step 1: "Time: Up to 1 week" and 18 results *(seed)*: 8 that take a week or less, plus the 10 that state no time (every Job and Entrepreneurship fixture: 01, 02, 05, 06, 09, 15, 16, 20, 21, 22). After the badge: it is green, and 14 results *(seed)*. Known gap (Q-W04): the purple "Time: Up to 1 week" chip still looks active, although the badge's 1 hour now applies. Tick Pass if you see this.
+- Step 2: 15 results: 7 that pay or reward (01, 04, 08, 10, 14, 16, 20), the divider, then 8 with no incentive. Dates rise above the divider and restart below it; fixture 09 (no end date) is last.
+- Step 3: 16 results: 8 (02, 05, 11, 13, 17, 19, 22, 23), the divider, then the same 8.
 
 **Result:** ☐ Pass ☐ Fail — notes:
 #### PV-08 · Languages and Provider leave out "don't say", even when saved
-**Set up:** save the language "English". **Steps:**
+**Set up:** save the first language listed on fixture 04's details page ("Czech" on the 6 Oct seed; no fixture lists English). **Steps:**
 1. Search.
 2. Turn preferences off. In Filters, "Provider", type "fixture" and press Enter.
 
 **You should see:**
-- Step 1: "Language: English" and 1 result (16) *(seed)*. The 4 fixtures with no language (06, 12, 18, 24) are left out, even though the language is saved. This differs from engagement and accessibility (D-21).
+- Step 1: "Language: Czech" and 2 results (04 and 13) *(seed)*. The 4 fixtures with no language (06, 12, 18, 24) are left out, even though the language is saved. This differs from engagement and accessibility (D-21).
 - Step 2: 15 results.
 
 **Result:** ☐ Pass ☐ Fail — notes:
 #### PV-09 · Type-specific filters narrow only their own type
 **Set up:** nothing saved. **Steps:**
 1. Pick "Job" and "Event" in WHAT.
-2. In Filters, "Job filters", "Job details", set "Experience level" to "Mid (4–6 years)".
+2. In Filters, open "Job filters", then "Requirements", and set "Experience level" to "Entry / Junior (1–3 years)".
 3. Untap "Job".
 
 **You should see:**
-- Step 1: 8 results (Jobs 06, 12, 23 and Events 01, 09, 17, 18, 22) *(seed)*.
-- Step 2: 6 results. All 5 Events stay; of the Jobs, only 12 remains.
-- Step 3: the Experience level filter is cleared, and 5 Events remain.
+- Step 1: 10 results (Jobs 01, 02, 05, 06, 21, 22 and Events 04, 08, 12, 14).
+- Step 2: 6 results *(seed)*. All 4 Events stay; of the Jobs, only 01 and 05 remain.
+- Step 3: the Experience level filter is cleared, and the 4 Events remain.
 
 **Result:** ☐ Pass ☐ Fail — notes:
 #### PV-10 · Counts agree, and links carry picks, not preferences
@@ -1012,85 +1063,126 @@ These tests prove the rules in section 4. **Who:** signed out (except PV-11) · 
 **Result:** ☐ Pass ☐ Fail — notes:
 #### PV-11 · Age (signed in)
 **Who:** testuser (20 years old on the local data) · **Screens:** desktop · **Set up (required):** fresh private window; sign in as testuser and set it up as in 2.2, so "Remote" is its only saved answer. Close all private windows afterwards. **Steps:**
-1. Search "Search fixture".
+1. Search "Search fixture". Press × on the skills chip ("Skills: N of yours"), so only age and "Remote" apply.
 2. Press × on the "Age: 20 years" chip.
 
 **You should see:**
 - Step 1: 14 results. 03 and 15 (ages 21–27) are missing. 11, 19 and 23 are also 21–27, but they stay hidden anyway, because testuser's saved "Remote" leaves out On-site ones. Fixtures with no age limit stay.
 - Step 2: 16 results, with 03 and 15 back. No "Keep it off" offer appears for age.
 - If "Remote" is missing (set-up skipped), you get 18, then 23, instead: the age chip alone hides 03, 11, 15, 19 and 23. Redo the set-up and repeat.
+- Why switch the skills off: since the 6 October reseed several fixture Jobs list skills, and testuser's earned skills are random, so the skills chip would hide some Jobs too *(not checked: it needs testuser's skills)*.
 
 **Result:** ☐ Pass ☐ Fail — notes:
 ### 6.5 Opportunity details page (DP)
 
-**How to open a fixture's details page:** open http://localhost:3000/opportunities/discover?prefsOff=1, type **Search fixture 20** in the search box (use the number you need, always two digits, for example 05) and press Enter, then press the card's button. IDs change at every reseed, so don't rely on saved links. Effort, participant limits ("N spots left"), languages and types are random at each reseed; the values below are from the 3 October seed. The details page never reads preferences: two visitors see the same page, and only the buttons depend on who is signed in. All DP tests are **signed out** unless they say otherwise.
+**How to open a fixture's details page:** open http://localhost:3000/opportunities/discover?prefsOff=1, type **Search fixture 10** in the search box (use the number you need, always two digits, for example 05) and press Enter, then press the card's button. IDs change at every reseed, so don't rely on saved links. Effort, participant limits ("N spots left"), languages and type-specific details are random at each reseed; the values below are from the 6 October seed. The details page never reads preferences: two visitors see the same page, and only the buttons depend on who is signed in. All DP tests are **signed out** unless they say otherwise.
 
 #### DP-01 · Layout, header card, fact strip and type labels
-**Screens:** 1440 and 390. **Steps:**
-1. Open fixture 20 at 1440, then at 390.
-2. Open fixtures 09, 08 and 23 and read the fact strip.
-3. Open fixture 05 from its card. Then open fixtures 15 and 09.
+**Screens:** 1440, 390 and 320. **Steps:**
+1. Open fixture 10 at 1440, then at 390 and 320.
+2. Open fixtures 09, 08 and 01 and read the fact strip.
+3. Open fixture 20 from its card. Then open fixtures 17 and 04.
 
 **You should see:**
-- A white header card: a type label ("LEARNING"), "Jobberman - Nigeria · South Africa", the title "Search fixture 20 - Learning", and a logo square at the top right. Under it, a white pill-shaped tab bar ("About", "Requirements", "Who it's for", "Impact", "Provider", "Details"), then one card per section. There is no two-column layout. At 390 the type label sits alone above the title, and the organisation line moves under the title.
-- Fact strip at 1440 (one row, with icons): **20** "Reward Z 500", "Effort 1 month", "Ends 3 Nov", "How you take part Remote", and "505 spots left" underneath. **09** only "Effort 4 minutes" and "Ends Ongoing" (no end date), plus "597 spots left". **08** "Starts 5 Oct" while its start is still ahead, and no "spots left" (no limit). **23** (Job) only "Ends 3 Nov" and "How you take part On-site", plus "641 spots left". A tile with no data is left out. "Reward" reads "Depleted" when the estimate is 0 (no fixture shows this locally).
+- A white header card: a type label ("LEARNING"), "Jobberman - Nigeria · South Africa", the title "Search fixture 10 - Learning", and a logo square at the top right. Under it, a white pill-shaped tab bar ("About", "Requirements", "Who it's for", "Impact", "Provider", "Details"), then one card per section. There is no two-column layout.
+- **Below 768** (changed 6 October): the logo sits on the type label's row, the title spans the whole card, and the organisation line follows the title, up to 2 lines. Nothing scrolls sideways at 320.
+- Fact strip at 1440 (one row, with icons): **10** "Reward Z 250", "Effort 8 days", "Ends 5 Nov", "How you take part Remote", and "233 spots left" underneath. **09** only "Ends Ongoing" (no end date). **08** "Starts 5 Nov" while its start is still ahead, plus "309 spots left". **01** (Job) "Pay USD 1 000 / mo", "Ends 5 Nov" and "How you take part On-site" (DP-06). A tile with no data is left out. "Reward" reads "Depleted" when the estimate is 0 (no fixture shows this locally).
 - At 390: the tiles sit 2 by 2 without icons, and "How you take part" is shortened to "Take part".
-- Fixture 05's card button reads "View programme →"; its page has a dark-blue "ENTREPRENEURSHIP" label and a green "Go to programme" button. 15: "OPPORTUNITY" and "Go to opportunity". 09: a blue "EVENT" label and "View event" (Event is orange on cards: Q-C05).
+- Fixture 20's card button reads "View programme →"; its page has a dark-blue "ENTREPRENEURSHIP" label and a green "Go to programme" button. 17: "OPPORTUNITY" and "Go to opportunity". 04: a blue "EVENT" label and "View event" (Event is orange on cards: Q-C05).
 
 **Result:** ☐ Pass ☐ Fail — notes:
 #### DP-02 · Header buttons when signed out
-**Screens:** 1440 and 390. **Steps:**
-1. Open fixture 20. Click "Start learning" and close the box. Then click "Save", and then "Upload your completion files".
-2. Click "Share". Look at the button row at 390.
+**Screens:** 1440, 390 and 320. **Steps:**
+1. Open fixture 10. Click "Start learning" and close the box. Then click "Save", and then "Upload your completion files".
+2. Click "Share". Look at the button row at 390 and 320.
 
 **You should see:**
 - Each of the first three opens "Login Required", with its own message. "Start learning": "Please login or register to continue to this opportunity. Your participation and rewards are linked to your Yoma account." "Save": "Please login or register to save this opportunity to your profile." "Upload your completion files": "Please login or register to upload your completion files for this opportunity."
 - "Share" opens the share box without signing in.
-- At 390: a wide "Start learning" button, two round icon buttons, and "Upload your completion files" full width below.
+- At 390: a wide "Start learning" button, two round icon buttons, and "Upload your completion files" full width below. At 320 no button text takes more than 2 lines.
 
 **Result:** ☐ Pass ☐ Fail — notes:
 #### DP-03 · Tabs, cards and sticky bars
 **Screens:** 1440, 1024, 1023 and 390. **Steps:**
-1. Open fixture 20 and click "Impact". Add `#who` to the address and reload. Scroll slowly to the bottom, watching the lit tab.
+1. Open fixture 10 and click "Impact". Add `#who` to the address and reload. Scroll slowly to the bottom, watching the lit tab.
 2. Open fixture 01. Click the "Accessibility" card, close it, then open it again.
-3. Open fixture 23 and look at "Skills required" before clicking anything. Open fixture 18 and look at the tabs.
+3. On fixture 01, look at "Skills required" before clicking anything. Open fixture 18 and look at the tabs.
 4. Resize the window to 1023 px wide, then to 1024 px.
-5. On fixture 20 at 1440, scroll past the header card. At 390, scroll down, tap "Details" in the pinned bar, then scroll to the very bottom.
+5. On fixture 10 at 1440, scroll past the header card. At 390, scroll down, tap "Details" in the pinned bar, then scroll to the very bottom.
 
 **You should see:**
 - Clicking a tab slides the purple fill, scrolls its heading just under the top bar, opens its first card with a green left edge, and adds `#impact` to the address. `#who` opens "Targeted groups" under "WHO IT'S FOR". The lit tab follows your scrolling; at the very bottom, the last tab lights up.
-- Fixture 01, closed: "Accessibility · 3" with the preview "Other, Quiet workspace +1". Open: the note "What this opportunity offers people with disabilities.", "Support: Yes", three chips, and "Large-print material".
-- Fixture 23: "Skills required · 1" is already open; every other card starts closed. Fixture 18 has no "Provider" tab, because it names no provider.
+- Fixture 01, closed: "Accessibility · 3" with the preview "Other, Quiet workspace +1". Open: the note "What this opportunity offers people with disabilities.", three chips, "Large-print material", and "Need something that isn't listed? Ask the provider before you start." There is no "Support:" line (removed 5 October).
+- Fixture 01: "Skills required · 2" is already open, with "Skills this job asks for. Mention the ones you have when you apply."; every other card starts closed. Fixture 18 has no "Provider" tab, because it names no provider.
 - One column at 1023 px, two at 1024 px. An odd card sits in the left column, leaving the right empty (on purpose).
-- 1440: a white panel slides down with the title, "Z 500", "Apply by 3 Nov", "Start learning", Save, Share and the tabs. 390: the tabs pin to the top, and a bottom bar holds "Start learning" and two round buttons; it never covers the last section. The lit tab is always visible in the pinned bar.
+- 1440: a white panel slides down with the title, "Z 250", "Apply by 5 Nov", "Start learning", Save, Share and the tabs. 390: the tabs pin to the top, and a bottom bar holds "Start learning" and two round buttons; it never covers the last section. The lit tab is always visible in the pinned bar.
 
 **Result:** ☐ Pass ☐ Fail — notes:
-#### DP-04 · What the sections show
+#### DP-04 · What the sections show (wording changed 5 Oct)
 **Screens:** desktop. **Steps:**
-1. Open fixture 20. Open "Incentive" and "Time needed". Click "Provider", then "Details", and open "Additional details".
-2. Open fixture 01. Read "Incentive" and "Age range", then open every card under "Who it's for" and "Impact".
-3. Open fixture 09. Then open 02 and 04 and look for "Age range". Then open 23 (Job) and open "Countries".
+1. Open fixture 10. Open "Incentive" and read "Time needed". Click "Provider", then "Details", and open "Additional details".
+2. Open fixture 01. Open "Incentive" and read "Age range", then open every card under "Who it's for" and "Impact".
+3. Open fixtures 13 and 18 and read "Incentive" and "Time needed". Then open 02 and 04 and look for "Age range". Then open 23 and open "Countries".
 
 **You should see:**
-- **20:** "Incentive" previews "Earn 500 ZLTO"; open, the chips "Yes" and "ZLTO" and the note "What you could get for taking part." "Time needed" previews "About 1 month"; open, "Most people finish in 1 month or less." and "It's only a guide — go at your own pace." A Provider card reading "Fixture provider", and "Additional details" with its difficulty row.
-- **01:** "Incentive" previews "No". "Age range · 18 and over". "Targeted groups · 1" (note "Who this is aimed at. It doesn't limit who can take part.") and "Countries · 1" with "South Africa — Cape Town, Western Cape". Under "Impact": "Skills you will learn", "Global goals (SDGs) · 2" and "Topics".
-- **09:** no Incentive card (unanswered); "Time needed" previews "About 4 minutes". **02:** "Age range · Up to 30 years". **04:** no "Age range" row.
-- **23:** "Skills required · 1" (open), "Languages · 3", "Age range · 21–27 years" and "Accessibility · No". The Countries chip reads "Worldwide". For non-Jobs, skills appear under "Impact" as "Skills you will learn".
+- **10:** "Incentive" previews "Earn 250 ZLTO". Open: the note "What you could get for taking part.", "250 ZLTO", "An estimate. You earn it once your completion is verified, and you may get less if the reward pool runs low." and "Spend your Zlto in the marketplace, or cash it out for real money in supported countries." ("marketplace" is a link). "Time needed · About 8 days", a row with nothing to open, and the note "Roughly how long it takes. It's a guide, not a deadline." A Provider card reading "Fixture provider", and "Additional details" with its difficulty row (DP-07).
+- **01** (Job): "Incentive" previews "USD 1 000 / mo"; open: "USD 1 000 / mo" and "The pay the employer has shared for this job." "Age range · 18 and over" with "For people aged 18 and over." "Targeted groups · 1" (note "Who this is aimed at. It doesn't limit who can take part.") and "Countries · 1" with "South Africa — Cape Town, Western Cape". Under "Impact": "Global goals (SDGs) · 2" and "Topics".
+- **13:** "Incentive · None" with "No pay, ZLTO or other reward." **18:** no Incentive card (unanswered, nothing stored); "Time needed · About 1 minute". **02:** "Age range · Up to 30 years" with "For people aged 30 and under." **04:** no "Age range" row.
+- **23** (Other): "Skills you will learn · 1" under "Impact", "Languages · 3", "Age range · 21–27 years" and "Accessibility · No". The Countries chip reads "Worldwide".
+- Known: a ZLTO opportunity or a Job's disclosed salary counts as "rewarded" here even when the incentive answer is blank, while search lists such opportunities after "Incentive not specified" (D-80, Q-A01). No fixture shows this locally.
 
 **Result:** ☐ Pass ☐ Fail — notes:
-#### DP-05 · Accessibility entry (changed 3 Oct)
+#### DP-05 · Accessibility entry (changed 3 and 5 Oct)
 **Who:** signed out; testadminuser for step 3 · **Screens:** 1440 and 390. **Steps:**
 1. Open fixture 04. Read the closed Accessibility card, then open it.
 2. Open fixtures 09, 18, 20 and 01.
 3. Signed in as testadminuser, open the admin info page for fixture 20 (AD-07).
 
 **You should see:**
-- **04:** "On request: Quiet workspace". Open, the note "What the provider can arrange if you ask." and "Support: Available on request".
-- **09:** a row with nothing to open, "Accessibility · Available on request". **18:** "Accessibility · No". **20:** "Accessibility · Not specified", beside "Languages". **01:** unchanged (DP-03).
+- **04:** "On request: Quiet workspace". Open: the note "What the provider can arrange if you ask.", the chip, and "These aren't in place by default. Ask the provider to arrange what you need before you start."
+- Rows with nothing to open, each with its own note: **09** "Accessibility · Available on request", "The provider can arrange support if you ask. Ask them what's possible before you start." **18** "Accessibility · No", "The provider says it offers no accessibility accommodations." **20** "Accessibility · Not specified", "The provider hasn't said whether it offers accessibility accommodations." **01:** as in DP-03.
 - The admin page shows the same rows.
 
 ![Two Accessibility cards: "Not specified" (fixture 20) and "On request: Quiet workspace" (fixture 04)](2026-10-03/07-details-accessibility-row-1440.png)
-*Two crops from two details pages, stacked. The small grey captions were added for this guide and are not part of the app.*
+*Two crops from two details pages, stacked. The small grey captions were added for this guide and are not part of the app. Screenshot predates 2026-10-06: the captions name the old types, and the "Not specified" row now has a note under it.*
+
+**Result:** ☐ Pass ☐ Fail — notes:
+#### DP-06 · The Pay tile, and long titles on phones *(new 6 Oct)*
+**Screens:** 1440, 768, 390 and 320. **Steps:**
+1. Open fixture 01 at 1440, then at 768, 390 and 320. Then open fixture 04.
+2. Open `/opportunities/discover?q=Route-to-Market&prefsOff=1&page=2` (page 1 holds only the short fixture titles). Open a result whose title is about 80 letters or more. View it at 390 and at 320. Press "Show full title", then "Show less".
+3. At 390, press Tab until "Show full title" is focused and press Enter. Widen the window to 1440, then press Enter on "Show less".
+
+**You should see:**
+- **01:** the first tile reads "Pay" and "USD 1 000 / mo" on one line, on the same gold tint as "Reward", with a cash icon from 768. Then "Ends 5 Nov" and "How you take part On-site". At 1440 and 768 the three tiles share one row. At 390 and 320 "Pay" spans the row, and "Ends" and "Take part" share the next. As the page loads, the value can read "1 000 / mo" for a moment before "USD" appears (known, 9.3).
+- **04** (no pay line): no Pay tile. "Reward Z 100", "Effort 2 weeks", "Ends 5 Nov" and "How you take part Remote", 2 by 2 below 1024.
+- The Pay tile shows for any type whose card shows a pay line: a Job's salary, a partner incentive ("ZAR 150 partner-paid", ED-08) or "Paid — amount not disclosed" *(the last not testable on local data)*.
+- **Long title:** below 768 it stops after 4 lines, and a green "Show full title" link appears under it; open, it reads "Show less". From 768 the title stops after 2 lines. A title that fits shows no link. No word is cut mid-letter (the "…" may still land inside a word, 9.3).
+- **Keyboard:** when "Show less" disappears at 1440, focus moves to the title, which shows a thin green outline. The page doesn't scroll. With the mouse, no outline shows.
+
+**Result:** ☐ Pass ☐ Fail — notes:
+#### DP-07 · "Additional details": the guidance note and values that wrap *(new 6 Oct)*
+**Screens:** 1440, 390 and 320. **Steps:**
+1. Open fixture 01 and click "Details". Read the closed "Additional details" row, then open it. Repeat at 390 and 320.
+2. Open "Additional details" on fixtures 19 (Impact Action) and 20 (Entrepreneurship) at 320.
+
+**You should see:**
+- **01** closed: "Additional details · 10" with the preview "Industry, Job category +8". Open: the note "What the provider describes, not entry requirements. They decide who is suitable.", then one row per value, with no group headings.
+- At 1440 the label is on the left and the value on the right. Below 640 px each label sits above its value. No value ends in "…": a long one, such as a job category, wraps to 2 lines. *(The values are random at each reseed, apart from the salary.)*
+- **19:** 3 rows; **20:** 2 rows. Nothing is cut off or scrolls sideways at 320.
+- "Minimum salary" reads "1000" here, while the header reads "USD 1 000 / mo" (known, 9.3).
+- A preferred skill the skills list no longer has would read "Skill no longer listed", and "Skill name unavailable" if the lookup itself failed *(not testable on local data: no Job has a Preferred skills value; FI-03 step 7 shows the first label in a filter)*.
+
+**Result:** ☐ Pass ☐ Fail — notes:
+#### DP-08 · Completion details: YoID on phones and the completion form *(new 6 Oct; signed in)*
+**Who:** testuser, looking only: press nothing that saves · **Screens:** 1440, 390 and 320 · **Set up:** fresh private window; sign in as testuser. **Steps:**
+1. Open `/yoid/opportunities/completed` and find "Search fixture 01 - Job". Read its completion details at 1440, 390 and 320.
+2. Open fixture 20's details page and press "Upload your completion files". Read the form at 1440 and 390, then close it **without** submitting.
+
+**You should see:**
+- **Step 1:** "Employment start date:" followed by its date (7 days before the seed day), readable at every width. Below 640 px the label sits above the value. (Before 6 October the value was hidden on phones.)
+- **Step 2:** the title "Additional details" with no line of text under it, then the green group headings "OUTCOMES" and "VENTURE", each with its field count. There is no grey help text under the field names: those descriptions are written for admins, and only the editor shows them (ED-02).
+- *(Whether fixture 20 offers "Upload your completion files" is random at each reseed. Any Entrepreneurship opportunity that offers it will do.)*
 
 **Result:** ☐ Pass ☐ Fail — notes:
 ### 6.6 Admin and organisation pages (AD)
@@ -1112,7 +1204,7 @@ Admin pages use a blue theme for admins and a green theme for org admins. Don't 
 **Screens:** desktop (table) and 390 (cards; the tab row scrolls sideways). **Steps:**
 1. Open `/admin/opportunities`. Note each tab's orange number. Click each tab and compare the list total with the number.
 2. Type "Se" in the search box and look at the search button. Then type "Search fixture", press Enter, and read the tab numbers again.
-3. Click "Search fixture 07 - Job", then "Opportunities" in the breadcrumb.
+3. Click "Search fixture 07 - Learning", then "Opportunities" in the breadcrumb.
 4. *(Optional)* In developer tools, Network, filter by "search/admin", reload, and look at the requests.
 
 **You should see:**
@@ -1123,7 +1215,7 @@ Admin pages use a blue theme for admins and a green theme for org admins. Don't 
 - *(Optional)* One list request plus five small count-only requests, one per tab. None fails.
 
 ![Admin opportunities list with status tabs and counts](2026-10-03/09-admin-opportunities-status-tabs-1440.png)
-*The admin list on the local data (no search). The rows are seeded fixtures.*
+*The admin list on the local data (no search). The rows are seeded fixtures. Screenshot predates 2026-10-06: the fixture types in the titles have changed.*
 
 **Result:** ☐ Pass ☐ Fail — notes:
 #### AD-03 · What "Expired" means on admin pages
@@ -1177,23 +1269,23 @@ Admin pages use a blue theme for admins and a green theme for org admins. Don't 
 **Result:** ☐ Pass ☐ Fail — notes:
 #### AD-07 · Admin opportunity info page
 **Screens:** 1440 and 390. **Steps:**
-1. On `/admin/opportunities`, search "Search fixture" and click fixture 20. Read the header.
+1. On `/admin/opportunities`, search "Search fixture" and click fixture 10. Read the header. Then open fixture 01's info page.
 2. Click "Manage opportunity" to look at the menu, then close it without choosing anything.
 3. Open fixture 09's info page and click the "Rewards" tab.
-4. At 390, scroll down.
+4. At 390 and 320, scroll down.
 
 **You should see:**
-- Chip row: "Active", "Visible", "Featured" (admins only) and "LEARNING". The same fact strip as the public page. A grey stat tile shows the limit (505), and a grey line reads "N view(s) · N participant(s)".
+- Chip row: "Active", "Visible", "Featured" (admins only, and only on a featured opportunity) and "LEARNING". The same fact strip as the public page. A grey stat tile shows the limit (233), and a grey line reads "N view(s) · N participant(s)". Fixture 01 shows the same "Pay" tile as its public page (DP-06).
 - Menu items such as "Edit Opportunity Details", "Make Inactive", "Make Hidden" and "Archive".
 - Fixture 09: "Incentive" reads "Not specified" (the public page has no Incentive card for it). "Rewards" is the last tab: gold until clicked, then purple.
 - At 390: the full sticky panel with "Manage opportunity" stays at the top. There is no bottom bar.
 
 **Result:** ☐ Pass ☐ Fail — notes:
 #### AD-08 · Reviewing a completion: Job and non-Job
-**Who:** admin (or org admin) · **Screens:** 1440 and 390 · **Set up:** on the 3 October data, these have a pending submission from Test User: search `/admin/opportunities` for **1890943085** (a Job, "STEM Skills Program Experience Creativity Management 1890943085") and **1876233022** (an Impact Action). Titles change at every reseed. If these are gone, open an organisation's "Submissions" page (Pending tab) and pick a Test User row, or ask the dev team which Job has a pending submission. **Steps:**
+**Who:** admin (or org admin) · **Screens:** 1440 and 390 · **Set up:** since the 6 October reseed (Adrian's 5 October update) the seed gives Test User a Pending completion on **fixture 04** (an Event: the non-Job case). The seed's other pending submissions are on random opportunities. For the Job case, pick a Test User row for a Job on an organisation's "Submissions" page (Pending tab), or ask the dev team which Job has one. **Steps:**
 1. Open the Job's info page. Its header shows an orange "pending" tile; click it.
 2. On "Submissions" (Pending), click "Pending" on Test User's row. Read the box, then click "Cancel". Do **not** approve or decline.
-3. Repeat steps 1–2 for the Impact Action.
+3. Repeat steps 1–2 for fixture 04.
 
 **You should see:**
 - Job: "1 Participant", "Test User", the account's email, "South Africa", then "Jobs record a placement, not time spent." No "Started on:", "Finished on:" or "Time to complete:" rows. Then "Enter comments below:" and "Cancel", "Decline", "Approve".
@@ -1256,7 +1348,8 @@ Most of what a youth can filter on comes from the 8-step opportunity editor: "Ge
 
 **You should see:**
 - The type list shows "Impact Action" and "Entrepreneurship", and never "Other".
-- Learning: "Additional details" with a required "Difficulty". Job: a "JOB DETAILS" group ("Salary disclosed", "Employment type", "Industry", "Job category" and more).
+- "Additional details" has the line "Details for this type of opportunity. They're shown to people and are searchable." Each field keeps its grey help text (the youth's completion form hides it: DP-08).
+- The API's groups are the green headings, each with its field count (changed 6 October). Learning: "REQUIREMENTS" with "1 field" and a required "Difficulty". Job: "CLASSIFICATION" (2 fields: "Industry", "Job category"), "COMPENSATION" (5, from "Salary disclosed"), "EMPLOYMENT" (4, from "Employment type") and "REQUIREMENTS" (3). There is no "JOB DETAILS" heading any more.
 - Job and Entrepreneurship: the Effort help starts "Optional for Jobs:" or "Optional for Entrepreneurship:". Only Entrepreneurship offers "Not specified" for Incentive.
 
 **Result:** ☐ Pass ☐ Fail — notes:
@@ -1308,7 +1401,7 @@ Most of what a youth can filter on comes from the 8-step opportunity editor: "Ge
 **You should see:**
 - "Select at least one accommodation." Then "Please describe the other accommodation." The description is limited to 500 characters.
 - "No" hides and empties the accommodations list.
-- The Event card reads "On request: Quiet workspace". This fills a local seed gap.
+- The Event card reads "On request: Quiet workspace", as fixtures 04 and 14 do since the 6 October reseed.
 
 **Result:** ☐ Pass ☐ Fail — notes:
 #### ED-07 · Job salary and employment rules, and "Other" descriptions
@@ -1362,7 +1455,7 @@ The old page's own screens did not change. It now follows the server's default r
 
 **You should see:**
 - Remote: "Results (8)", fixtures 02, 04, 08, 10, 14, 16, 20 and 22; no partner-like fixture. On-site: "Results (7)", fixtures 01, 05, 11, 13, 17, 19 and 23. This now matches the BA sheet ("hidden while a value is selected").
-- Time: "Results (12)" *(seed)*, including the fixtures that state no time (05, 06, 12, 23). This now matches the BA sheet ("stays in results").
+- Time: "Results (18)" *(seed)*, including the 10 fixtures that state no time (every Job and Entrepreneurship fixture). This now matches the BA sheet ("stays in results").
 
 **Result:** ☐ Pass ☐ Fail — notes:
 #### LG-03 · "Expired / Upload Only" includes opportunities past their end date
@@ -1372,7 +1465,7 @@ The old page's own screens did not change. It now follows the server's default r
 3. Sign out and open the status choices again.
 
 **You should see:**
-- Expired / Upload Only: fixture 07 only. Ongoing: 22 fixtures, everything except 07 and 08. Not started: fixture 08 only, until 5 Oct 2026 05:11 UTC on this seed (S + 2 days after a reseed, see 2.5).
+- Expired / Upload Only: fixture 07 only. Ongoing: 22 fixtures, everything except 07 and 08. Not started: fixture 08 only, until 5 Nov 2026 at about 09:55 UTC on this seed (S + 30 days after a reseed, see 2.5).
 - Signed out, "Expired / Upload Only" isn't offered.
 
 **Result:** ☐ Pass ☐ Fail — notes:
@@ -1380,12 +1473,12 @@ The old page's own screens did not change. It now follows the server's default r
 #### LG-04 · Type-specific fields on the old page narrow only their own type
 **Who:** signed out · **Screens:** desktop and 390. **Steps:**
 1. Open `/opportunities?query=Search%20fixture`. Click "Filter", pick "Job" and "Event" under "What type of opportunity are you looking for?", and press "Apply Filters". Note the result count.
-2. Click "Filter" again and scroll below "What status would you like to see?". Set "Experience level" to "Mid (4–6 years)" and press "Apply Filters".
+2. Click "Filter" again and scroll below "What status would you like to see?". Set "Experience level" to "Entry / Junior (1–3 years)" and press "Apply Filters".
 3. Reopen "Filter". Set "Minimum salary" to "Between" with 5000 and 1000, and press "Apply Filters". Then put the numbers the right way round, leave another field half-filled (an operator with no value, or only one box of a "Between"), and press "Apply Filters".
 
 **You should see:**
-- Step 1: "Results (8)" *(seed)*. With no type applied, no type-specific fields show (none is shared by every type locally).
-- Step 2: the Job and Event fields appear below the status section. After applying: "Results (6)" *(seed)*: every Event stays and only the Jobs narrow (the same rule as PV-09, D-71).
+- Step 1: "Results (10)". With no type applied, no type-specific fields show (none is shared by every type locally).
+- Step 2: the Job and Event fields appear below the status section, each with its operator drop-down (the old page keeps them; discovery's one-control fields are 4.4). After applying: "Results (6)" *(seed)*: every Event stays and only the Jobs narrow (the same rule as PV-09, D-71).
 - Step 3: the wrong-way range shows "The 'from' value must not be greater than 'to'." and nothing is applied. The half-filled field is dropped without a message.
 
 **Result:** ☐ Pass ☐ Fail — notes:
@@ -1407,12 +1500,13 @@ The old page's own screens did not change. It now follows the server's default r
 | D-19 | Age from the date of birth filters results; it can be switched off for one search. The canvas showed a chip that can't be removed, and an earlier BA instruction said age should guide, not filter. | |
 | D-21 | Languages **leave out** opportunities with no language, even saved languages. The sheet says they "remain visible if other fields match". | |
 | D-42 | The type the sheet calls "Impact Task" is shown as "Impact Action". | |
+| D-80 | On the details page, a stored ZLTO or partner reward, or a Job's disclosed salary, counts as "rewarded" even when the incentive answer is blank. The sheet says Is Paid is "explicit, not derived". | |
 
 ### 7.1 Preferences and how they mix with filters
 
 | # | Decision | Why | Decided by / date | Compared with the BA sheet | Status |
 |---|---|---|---|---|---|
-| D-01 | The goal is one choice only ("One choice only"). | Several goals give no signal; breadth belongs to Interests. | Jason, 2026-08-27 | User Goal is single-select | Matches BA sheet |
+| D-01 | The goal is one choice only ("One choice only"). | Several goals give no signal; breadth belongs to Interests. The API stores one goal. | Jason, 2026-08-27; reconfirmed by Jason and Adrian, 2026-10-05, after feedback asked for several | User Goal is single-select | Matches BA sheet |
 | D-02 | "Attend events" is a fifth goal, giving the Event type. | Without it, no goal leads to Events, so a personalised feed could hide every event. | Jason (design), 2026-08-27 | Not on the BA sheet | TBC |
 | D-03 | "Start a business" = the Entrepreneurship type **or** the Business, Finance & Marketing category. The chip reads "Goal: Starting a business"; the goal never shows the category as selected. | Keeps related Learning (business courses) in. The Entrepreneurship type was created after the sheet. | Adrian proposed, Jason accepted; 2026-10-01, built 2026-10-03 | **Differs from BA sheet** (category only) | TBC |
 | D-04 | A type you add while this goal is on becomes another alternative, not an extra condition. | Otherwise "Event + Start a business" would mean "Events in the Business category" (none). | Jason, 2026-10-03 | Not on the BA sheet | TBC |
@@ -1440,6 +1534,8 @@ The old page's own screens did not change. It now follows the server's default r
 | D-26 | "Make this my default" saves in one tap, with "Saved. Undo". "Not now" hides it until the set of skipped chips changes. Never offered for country or age. On Skills, it clears only self-added skills; earned skills stay. | A one-tap save needs a way back. Country and age come from the profile. Earned skills are never cleared. | Jason, 2026-09-03 / 09-05 / 10-03 | Not on the BA sheet | TBC |
 | D-27 | "Keep my answers" (after signing in) asks first, then joins lists. For single answers (goal, time, pay) the signed-out answer replaces the saved one. The profile country wins. | A saved set must never be lost without the youth choosing. | Jason, 2026-09-03 / 09-28 / 10-03 | Not on the BA sheet | TBC |
 | D-28 | No per-section "include not specified" switch. The rule is fixed by provenance, and each section states it. | Kept the change small; a possible follow-up. | Jason, 2026-10-03 | Not on the BA sheet | TBC |
+| D-74 | The wizard has no "Skip this". Every step is optional, and "Continue" moves on. | It did exactly what "Continue" does (Q-W14). | Jason, 2026-10-06 | Not on the BA sheet | For information |
+| D-75 | The saved-skills chip reads "Skills: {n} of yours", and its note says the skills are ones you added or earned. | "{n} job skills" read as the skills the jobs ask for. | Jason, 2026-10-06 | Not on the BA sheet | For information |
 
 ### 7.2 Search page and filters
 
@@ -1465,20 +1561,31 @@ The old page's own screens did not change. It now follows the server's default r
 | D-46 | Recent searches: 3 shown, per device. | Client feedback (cut from 5). | Client + Jason, 2026-09-22 / 10-02 | Not on the BA sheet | TBC |
 | D-47 | Category pills in the header: the first 6, then "Show all 16". None in the welcome. | Layout; expanding inside the welcome scrolled the whole box. | Jason, 2026-09-30 to 10-02 | The 16-category list | Matches BA sheet |
 | D-48 | Grid or List is the youth's choice, kept in the address and remembered. | A shared link opens the way it was sent. | Jason, 2026-08-27 | Not on the BA sheet | TBC |
-| D-49 | "Minimum qualification" and "Experience level" are guidance only, never a gate. | BA instruction. (The on-screen marker isn't built yet; see 9.5.) | Per BA | "GUIDE ONLY" | Matches BA sheet |
-| D-71 | A type-specific filter narrows only its own type: a Job field no longer removes every Event, on discovery and in the admin "Additional Filters". Removing any type clears every type-specific pick. | A mixed Job + Event search must still show Events (PV-09, AD-04). | Adrian (contract), Jason, 2026-10-03 | Not on the BA sheet | TBC |
+| D-49 | "Minimum qualification", "Experience level" and "Difficulty" are guidance only, never a gate. A generic guidance note says so (D-78); there is no marker on each field. | BA instruction; the API confirmed none is an entry check. | Per BA; Adrian, 2026-10-05 | "GUIDE ONLY" | Matches BA sheet |
+| D-71 | A type-specific filter narrows only its own type: a Job field no longer removes every Event, on discovery and in the admin "Additional Filters". On discovery, when a type leaves the search, only its own filters are cleared; filters on types still in effect stay, on every path (4.4). | A mixed Job + Event search must still show Events (PV-09, AD-04). Clearing an Event filter because Job left lost the youth's work. | Adrian (contract), Jason, 2026-10-03; "leave with their type" Jason, 2026-10-06 | Not on the BA sheet | TBC |
+| D-76 | Discovery's type-specific fields have one control each, with no operator choice (4.4). Typed values search on Enter or on leaving the field (for a From–To pair, both boxes); an emptied field removes its filter. The admin filters and the old page keep their operators. | Fewer choices for a youth, and a half-filled condition could break the search (Q-W02). | Jason, 2026-10-05 | Not on the BA sheet | For information |
+| D-77 | Type-specific sections follow the API's one-level groups: a row per group for Job and Impact Action, and the fields directly for a type with one group. | Adrian flattened the groups on 2026-10-05; a row that repeats its section only adds a tap. | Adrian (groups), Jason (layout), 2026-10-05 / 10-06 | Not on the BA sheet | For information |
+| D-78 | Guidance wording is a generic note, never per field. Filters: "What providers describe, not entry requirements. Each provider decides who is suitable." "Additional details": "What the provider describes, not entry requirements. They decide who is suitable." Field descriptions, written for admins, are not shown to youth, and nothing says "you qualify". | These fields are guidance, not entry checks, and a group named "Requirements" could read as one. | Adrian (guidance rule), Jason (wording), 2026-10-05 / 10-06 | The sheet marks the fields "GUIDE ONLY"; the wording is ours, not the BA's | TBC |
+| D-79 | The "Filters" button's number counts every chip on screen, type-specific filters included. | It didn't match the chips (Q-C06). | Jason, 2026-10-06 | Not on the BA sheet | For information |
+| D-81 | 320 px is the smallest supported phone width: a button may wrap to two lines, never three, and nothing scrolls sideways. | Jason's minimum. | Jason, 2026-10-05 | Not on the BA sheet | For information |
+| D-82 | The second landing rail is "Latest opportunities", subtitled "Latest start dates first". Its order did not change: the API's default, latest start date first. | A clearer title; the subtitle says the actual order (Q-W25). | Adrian and Jason, 2026-10-05 / 10-06 | Not on the BA sheet | For information |
 
 ### 7.3 Details page
 
 | # | Decision | Why | Decided by / date | Compared with the BA sheet | Status |
 |---|---|---|---|---|---|
 | D-50 | Accessibility always has an entry. An on-request list reads "On request: …" with "What the provider can arrange if you ask." A missing answer reads "Not specified". | The page must never claim a provider meets a need, and "not specified" must look different from "not relevant". | Jason, 2026-10-03 | Uses the sheet's values (Yes · No · Available on request) | Matches BA sheet |
-| D-51 | The Incentive card shows on the public page only once answered. The admin page shows "Not specified". | Nothing is labelled "pay" that isn't. | Jason, 2026-10-03 | See D-09 (Is Paid renamed and widened) | TBC |
+| D-51 | The Incentive card shows on the public page only once answered, or once a reward is stored (D-80). The admin page shows "Not specified" when nothing is stored. | Nothing is labelled "pay" that isn't. | Jason, 2026-10-03 / 10-05 | See D-09 (Is Paid renamed and widened) | TBC |
 | D-52 | A Job's skills read "Skills required"; other types' read "Skills you will learn". | A Job's skills are requirements, never awarded. | BA, 2026-09-22 | As the sheet says | Matches BA sheet |
 | D-53 | Effort shows as entered ("4 minutes"), not rounded to hours. | A 4-minute task used to read "1 hour". | Jason, 2026-10-02 | Uses the sheet's time units | Matches BA sheet |
 | D-54 | An open list section shows a one-line note on what it means, for example "It doesn't limit who can take part." | Chips with no explanation confused readers. | Jason, 2026-10-02 | Targeted groups "never restricts eligibility" | Matches BA sheet |
 | D-55 | Entrepreneurship is dark blue, with "View programme →" (card) and "Go to programme" (details). | The one colour left unused. | Jason, 2026-10-01 | Not on the BA sheet (type is newer) | TBC |
 | D-56 | Plainer labels: "Time needed", "Global goals (SDGs)", and an "Age range" row (absent when there are no limits). | Shorter copy. | Jason, 2026-10-02 | Both age limits empty = no restriction | Matches BA sheet |
+| D-80 | A stored ZLTO or partner reward, or a Job's disclosed salary, counts as "rewarded" on the details page (public and admin) even when the incentive answer is blank. Search still lists such opportunities after "Incentive not specified". | Older opportunities had a reward but no answer, so they showed no Incentive card. | Jason (rewards), 2026-10-05; the salary part was the lead's extension, which Jason may still undo | **Differs from BA sheet** ("explicit, not derived"), for display only | TBC |
+| D-83 | Each details section says what its value means: Incentive by state (for example "None", "No pay, ZLTO or other reward."), a note each for Accessibility "No", "Not specified" and "On request", "For people aged …" under Age range, and "Time needed" as a plain row. | Values with no explanation confused readers; nothing backed the old "Most people finish in…". | Jason, 2026-10-05 | Not on the BA sheet | TBC (copy review: Q-B22) |
+| D-84 | The header shows a "Pay" tile, first, for any type whose card shows a pay line. | The header was the one place that didn't show the pay. | Jason, 2026-10-06 | Not on the BA sheet | For information |
+| D-85 | Below 768 px the logo sits beside the type label and the title spans the card. A title folds after 4 lines (2 from 768) behind "Show full title" / "Show less". | Long titles were cut mid-word, and only about 2 words showed. | Jason, 2026-10-06 | Not on the BA sheet | For information |
+| D-86 | A skill the skills list no longer has reads "Skill no longer listed". If the name lookup fails, it reads "Skill name unavailable", which says nothing about the skill itself. | It says what happened; the raw code used to show. An admin shouldn't be told to remove a valid skill because a lookup failed. | Jason, 2026-10-06 | Not on the BA sheet | For information |
 
 ### 7.4 Admin and editor
 
@@ -1492,6 +1599,7 @@ The old page's own screens did not change. It now follows the server's default r
 | D-62 | Job salary and employment rules, and "Other" descriptions, are checked in the editor. Dependent fields grey out and empty. | Explains the server's rules before a rejected save. | Jason, 2026-09-29 / 10-01 | "No disables salary range…", "Permanent and Fixed-Term cannot be combined" | Matches BA sheet |
 | D-63 | Location is country, plus an optional region and city per country. Map points come only from a picked city. | The BA location model; distance needs a point. | Jason / server, 2026-09-28 | Country → Province/Region → City | Matches BA sheet |
 | D-64 | Engagement names are Remote, On-site and Hybrid, one per opportunity. | Server rename, IDs kept. | Adrian, 2026-09-28 | As the sheet says | Matches BA sheet |
+| D-87 | The youth's completion form shows no subtitle and no field descriptions. The editor keeps the descriptions, under "Details for this type of opportunity. They're shown to people and are searchable." Group headings count "1 field" or "N fields". | The descriptions are written for admins; some read "use yyyy-MM-dd". | Jason, 2026-10-06 | Not on the BA sheet | For information |
 
 ---
 
@@ -1518,17 +1626,17 @@ The old page's own screens did not change. It now follows the server's default r
 | Q-B13 | The goal card reads "Volunteer & give back". The sheet says "Volunteer / Make an Impact". | BA / Client | Confirm the on-screen label. | |
 | Q-B14 | Unticking one of several saved values switches off the whole preference for this search (D-24). Is that expected? | BA | Keep it, because the undo is clear. | |
 | Q-B15 | The details page shows "Targeted groups" under "Who it's for", as information only. OK? | BA | Keep it, with the note "It doesn't limit who can take part." | |
-| Q-B16 | How should "guide only" fields (Minimum qualification, Experience level) be marked on screen? Today they look like normal filters. | BA / API team | Add a marker to the field's definition, so nothing is hard-coded. | |
-| Q-B17 | "Jobs in South Africa" includes Worldwide jobs while preferences are on (3 results), but not when they are off (2). | BA / Web team | Drop Worldwide for this badge, or relabel it. | |
-| Q-B18 | "Under an hour" and the "Done in under an hour" rail ("Quick wins that fit into your day") include opportunities that state no time: 4 of the 9 locally. Does that overclaim? | BA / Web team | Make the badge and rail strict, or soften the subtitle. | |
+| Q-B16 | How should "guide only" fields (Minimum qualification, Experience level, Difficulty) be marked on screen? *Partly answered 6 October:* a generic guidance note now sits in each open type-specific section and in "Additional details" (D-78). Its wording is Jason's, on Adrian's guidance rule, not the BA's. | BA / API team | Confirm the wording, or ask for a marker on each field (an API change). | |
+| Q-B17 | "Jobs in South Africa" includes Worldwide jobs while preferences are on, but not when they are off. Not visible on local data since the 6 October reseed: no fixture Job is Worldwide. | BA / Web team | Drop Worldwide for this badge, or relabel it. | |
+| Q-B18 | "Under an hour" and the "Done in under an hour" rail ("Quick wins that fit into your day") include opportunities that state no time: 10 of the 14 locally (every Job and Entrepreneurship fixture). Does that overclaim? | BA / Web team | Make the badge and rail strict, or soften the subtitle. | |
 | Q-B19 | On the landing, "{N} open right now" counts only what matches the youth's preferences, not the whole catalogue. | BA / Web team | Say "for you" when preferences apply, or show the catalogue total. | |
-| Q-B20 | The admin "Expired" tab lists only opportunities **saved** as Expired. One past its end date stays under "Active" until the nightly job (up to a day). Youth search already hides it (AD-03). | BA, with the API team | Decide which meaning admins expect. Either use the date rule on admin tabs, or accept the lag and say so. | |
+| Q-B20 | The admin "Expired" tab lists only opportunities **saved** as Expired. One past its end date stays under "Active" until the nightly job (up to a day). Youth search already hides it (AD-03). Adrian and Jason chose to keep this (5 October). | BA, with the API team | Decide which meaning admins expect. Either use the date rule on admin tabs, or accept the lag and say so. | |
 | Q-B21 | The sheet lists "Permanent" as an Employment Duration option. The build has "Permanent" only as an employment type, which greys out the duration. | BA | Confirm the build. | |
-| Q-B22 | The new details-page wording has not had a copy review. For example, the Incentive note "What you could get for taking part." also shows when the answer is "No". | BA / Client | Review every quoted string in 6.5 in one pass. Drop the Incentive note for "No" and "Not specified". | |
+| Q-B22 | The details-page wording was rewritten on 5 October (D-83), and the guidance note added on 6 October (D-78), but neither has had a copy review. ("No" is now a plain row reading "None", with its own note.) | BA / Client | Review every quoted string in 6.5 in one pass. | |
 | Q-B23 | The "Paid and rewards" rule line covers only the Paid half. A ZLTO pick leaves out opportunities with no ZLTO. | BA | Decide whether the line should mention ZLTO. | |
 | Q-B24 | Which custom fields should be offered as admin filters? Today every active field for the chosen type is offered. | BA / Web team | Keep all for now. | |
 | Q-B25 | Should picking Remote and On-site also bring in Hybrid? | BA / Client | Keep it separate; revisit if youth report missing hybrid opportunities. | |
-| Q-B26 | Should "Available on request" count as meeting a need in search? Today an opportunity that lists the need as on request matches, even for a need picked here: picking "Quiet workspace" returns fixtures 04, 14 and 24. The details page says "On request: …" and never claims support. | BA | Confirm (it is what the provider can arrange), or ask the API for a "Yes only" option. | |
+| Q-B26 | Should "Available on request" count as meeting a need in search? Today an opportunity that lists the need as on request matches, even for a need picked here: picking "Quiet workspace" returns fixtures 04, 14 and 24. The details page says "On request: …" and never claims support. Adrian and Jason agreed to keep this (5 October). | BA | Confirm (it is what the provider can arrange), or ask the API for a "Yes only" option. | |
 
 ### 8.2 For the client
 
@@ -1539,28 +1647,29 @@ The old page's own screens did not change. It now follows the server's default r
 | Q-C03 | Per-type card layouts (canvas page 4): take them up or drop them? | Client | Decide; if taken up, make it its own ticket. | |
 | Q-C04 | With Job plus other types chosen, ZLTO choices are hidden. Hide, or grey with a note? | Client / Web team | Keep hidden unless testers find it confusing. | |
 | Q-C05 | Type colours differ between cards and details pages. Event is orange on cards but blue on details. Impact Action is light purple on cards but yellow on details. "Other" reads "OPPORTUNITY" on details. | Client / Web team | Use one palette everywhere. | |
-| Q-C06 | The number on the green "Filters" button counts struck-through and faded chips, but not custom-field chips. | Client / Web team | Count only chips that actually filter, plus custom-field chips. | |
+| Q-C06 | The number on the green "Filters" button counts struck-through and faded chips. *Partly answered 6 October:* it now counts type-specific filters too (D-79). | Client / Web team | Count only chips that actually filter. | |
 | Q-C07 | Add a per-section "include not specified" switch? | Client / Web team | Wait for user feedback. | |
 
 ### 8.3 For the API team
 
 | # | Question | Owner | Our suggestion |
 |---|---|---|---|
-| Q-A01 | Partner Jobs with a salary but no incentive answer (fixture 06, "USD 1 000 / mo") sit below "Incentive not specified" under a Pay filter, and show no Incentive card. Should sync set the incentive when a salary is disclosed? | API team + BA | Decide with the BA first. The sheet says Is Paid is "explicit, not derived", so setting it from a salary would depart from the sheet. Other options: ask the partners for the flag, or accept that salaried partner Jobs are listed after the divider. |
-| Q-A02 | The completion CSV notes say three Entrepreneurship columns are required, but the import doesn't enforce them. The web help says "All optional here". | API team | Update the server's CSV notes. |
-| Q-A04 | Local data can't show several cases: an Event "Available on request" with a list; a Job completion with an employment start date; a Job near Cape Town; a partner incentive; a list longer than 6 ("Show all N"); a "Depleted" reward; a long description ("Show more"); a full opportunity ("No places left"); a field shared by every type ("Details (all types)"). | API team | Add them at the next data refresh. |
-| Q-A05 | Fixture types are random at each reseed, so counts move. Fixture 08 is "Not started" for only 2 days and ends 3 days after seeding. Fixture 11 is labelled "partner-like" but isn't. | API team | Fix types by number. Start fixture 08 14 or more days out. Fix fixture 11's label or the docs. |
+| Q-A01 | An opportunity with a salary or a stored reward but no incentive answer sits below "Incentive not specified" under a Pay filter, while its details page now calls it rewarded (D-80). *Partly answered 5 October:* the JobJack sync sets the incentive when it sends a salary; Jobberman sends none. Opportunities migrated with a ZLTO reward still have no answer. No local fixture shows the case since the 6 October reseed. | API team + BA | Decide with the BA whether to fill in the answer where a reward is stored. The sheet says Is Paid is "explicit, not derived". |
+| Q-A02 | *Resolved 5 October:* the server's CSV notes now say every type-specific column is optional on import, as the web help does. | API team | — |
+| Q-A04 | Local data can't show several cases: a partner incentive; "Paid — amount not disclosed"; a saved Preferred skills value; a list longer than 6 ("Show all N"); a "Depleted" reward; a long description ("Show more"); a full opportunity ("No places left"); a field shared by every type ("Details (all types)"); a Date field. *Since the 6 October reseed (Adrian's 5 October update), the data has an Event "on request" with a list (04, 14), a Job completion with an employment start date (01) and Jobs near Cape Town (01, 02).* | API team | Add the rest at the next data refresh. |
+| Q-A05 | *Resolved 5 October:* fixture types are fixed by number, fixture 08 starts 30 days and ends 90 days after seeding, and fixture 11's "partner-like" label is deliberate (it has no type-specific details). | API team | — |
 | Q-A06 | When can DEV run this branch's server and website together, with refreshed data? | API team + Web team | Deploy both together, refresh the data, then announce a test window. |
 | Q-A07 | Per-badge live counts need a combined count request, which the server declined. | API team / Web team | Keep badges count-free unless counts become a product requirement. |
 | Q-A08 | Distance search on DEV needs a database add-on that was still outstanding on 2026-09-28. | API team / infra | Confirm before the DEV pass. |
 | Q-A09 | How many live opportunities have a mapped city? "Jobs near me" is shipped, but the API handoff asks for a read-only coverage check before the badge's behaviour is chosen. | API team + Client | Run the check before release. If coverage is low, park "Jobs near me" or reword it. |
+| Q-A10 | A link carrying a skill the skills list no longer has fails the whole search: the API rejects it, so the page reads "Couldn't load these results" (FI-03 step 7). | API team | Treat an unknown value in a search filter as matching nothing, so the "Skill no longer listed" chip can be removed like any other. |
 
 ### 8.4 For the web team
 
 | # | Question | Owner | Our suggestion |
 |---|---|---|---|
 | Q-W01 | In Filters, "Where", "Worldwide" is an ordinary option. Picking it **adds** Worldwide beside the saved country ("Worldwide +1") and locks region and city, although the search already includes Worldwide. | Web team | Hide the option while a saved country applies, or add a hint. |
-| Q-W02 | *(From code reading.)* On discovery, an unfinished type-specific condition (operator but no value, or half a "Between") is sent as is. The server rejects it, so the page shows "Couldn't load these results. Retry". | Web team | Drop unfinished conditions before searching, as the admin filters already do. |
+| Q-W02 | *Resolved 5 October:* discovery has no operator choice, an emptied field removes its filter, and an unfinished condition is never sent (D-76). | Web team | — |
 | Q-W03 | "More filters" always starts closed, even when Paid, SDGs or Provider is set. | Web team | Open it automatically, or add "· 1 set" to its header. |
 | Q-W04 | A time picked here replaces the saved one, but the purple "Time" chip still looks active, and "How long" keeps "FROM PREFERENCES" (PV-07). | Web team | Switch the saved time off in the same change, as the Paid section does. |
 | Q-W05 | In the WHAT pop-up, "Any type" clears only types picked here; a type from the goal stays. | Web team | Rename it "Reset", or also switch off the goal for this search. |
@@ -1572,15 +1681,16 @@ The old page's own screens did not change. It now follows the server's default r
 | Q-W11 | *(From code reading.)* "Picked for you", then "See all", with a saved place: the place chip fades and green place chips appear. The results are the same. | Web team | Leave the place out of the "See all" address, as is done for needs. |
 | Q-W12 | The Interests subheading says picks "shape which categories lead your feed", which sounds like ordering, but they filter. | Web team | For example: "Pick as many as you like — your feed shows opportunities in any of them." |
 | Q-W13 | "Keep my answers" says "nothing you saved is removed", but single answers (goal, time, pay) are replaced. | Web team | For example: "Lists are combined; where you answered twice, your newest answer wins." |
-| Q-W14 | "Skip this" keeps answers already picked on that step, and on step 6 it saves. | Web team | Clear the step's answers on skip, or rename the button "Next". |
+| Q-W14 | *Resolved 6 October:* "Skip this" is gone from the wizard (D-74). | Web team | — |
 | Q-W15 | Signed out, step 6 shows "From your profile — read, never changed here" with three "Not set" rows, and the count panel mentions "your profile". | Web team | Hide the profile box and reword the panel when signed out. |
-| Q-W16 | The details page uses two date wordings: the strip says "Ends 3 Nov" or "Ongoing", while the sticky bar says "Apply by 3 Nov" or "No deadline". An ended Active opportunity shows "Ends 3 Oct" beside "Closed". | Web team | Use one wording, and show "Closed" in the strip too. |
+| Q-W16 | The details page uses two date wordings: the strip says "Ends 5 Nov" or "Ongoing", while the sticky bar says "Apply by 5 Nov" or "No deadline". An ended Active opportunity (fixture 07) shows "Ends 6 Oct" beside "Closed". | Web team | Use one wording, and show "Closed" in the strip too. |
 | Q-W17 | The editor's preview "Search Results" shows the old small card, not the new discovery card. | Web team | Show the discovery card. |
 | Q-W18 | In the editor, "Use my location" fills the admin's own nearest city, and the wording speaks to a youth. | Web team | Hide it in the editor, or reword it. |
 | Q-W19 | On the organisation page at phone width, the admin's row menu lacks "Mark as Featured". | Web team | Add it, as on the admin list. |
 | Q-W21 | When do the remaining old links (home and YoID search boxes, About categories, details back link, cash-out and referral links) move to discovery? | Web team | Start with the home search box and the details back link. |
 | Q-W22 | The Grid/List toggle is 34 px tall at 390, under the 44 px touch size. | Web team | Raise it to 44 px. |
 | Q-W23 | Testers share testuser, so they can undo each other's preferences, and its saved "Remote" is not in the seed. | Web team (dev team) | For now: the set-up step and "one tester at a time" rule in 2.2. Later: one seeded account per tester, with its preferences in the seed. |
+| Q-W25 | *Resolved 6 October:* a draft subtitle said "Most recently added first", but the rail is ordered by latest **start** date (fixture 08, which starts in a month, leads it). Jason kept that order and the accurate subtitle "Latest start dates first" (D-82). | Web team | — |
 
 ---
 
@@ -1596,11 +1706,10 @@ Don't report these as new bugs. If you see one behave differently from what is w
 ### 9.2 Test data limits
 
 - **Fixture 07 has ended**, so youth search shows 23 fixtures, not 24.
-- **Fixture 08 changes state:** "Not started" until 5 Oct 2026 05:11 UTC, then "Ongoing" until 6 Oct 05:11 UTC, then ended. Counts change after that: see the warning in 2.5. The other fixtures end on 2–3 Nov 2026. Labels such as "3 days left" depend on today's date.
-- **Random fields change at every reseed:** types, categories, languages, skills, effort and "Featured", and with the type, incentive and ZLTO. Counts marked *(seed)* may move.
-- **Some cases can't be seen locally** (full list: Q-A04): an Event card reading "On request: …"; "Jobs near me" (always 0); a partner incentive; "Paid — amount not disclosed"; "Closes today", "Closed" and "No places left" on cards; "Depleted"; "Show more" and "Show all N" on the details page; "Details (all types)"; a Hybrid fixture; and the error states (results, place suggestions or saving failing), apart from FI-09 step 1. ED-06 and ED-08 show how to create some of these yourself.
-- **Fixture 06** shows "USD 1 000 / mo" but sits below "Incentive not specified" under a Pay filter (Q-A01).
-- **Fixture 01's language preview** reads "Divehi, Dhivehi, Maldivian, Korean" for 2 languages: one language name contains commas.
+- **Fixture 08 is "Not started"** until 5 Nov 2026 (about 09:55 UTC), then "Ongoing" until 4 Jan 2027. The other fixtures end on 5–6 Nov 2026. Labels such as "3 days left" depend on today's date: none shows before about 29 October.
+- **Random fields change at every reseed:** categories, languages, skills, effort, "Featured", participant limits, completion uploads and most type-specific details. Types, incentive and ZLTO are fixed since the 6 October reseed (Adrian's 5 October update). Counts marked *(seed)* may move.
+- **Some cases can't be seen locally** (full list: Q-A04): a partner incentive; "Paid — amount not disclosed"; a saved Preferred skills value (so "Skill no longer listed" on a details page or in the editor); "Closes today", "Closed" and "No places left" on cards; "Depleted"; "Show more" and "Show all N" on the details page; "Details (all types)"; a Hybrid fixture; a Worldwide Job (Q-B17); and the error states (place suggestions or saving failing). ED-06 and ED-08 show how to create some of these yourself.
+- **The language preview of fixtures 14 and 23** reads "Divehi, Dhivehi, Maldivian, Kikuyu, Gikuyu +1" *(seed)*: some language names contain commas.
 - **Distance search** finds only opportunities with a mapped city. Imports and partner data have none, so expect thin results (Q-A09).
 - **Short filter lists:** "SDGs" and "Accessibility" list only values that published opportunities use, so locally they are short.
 - **Engagement chip order:** signed in, after a reload, the chip may read "Engagement: On-site +1" even if you tapped Remote first. The server sorts names A–Z.
@@ -1616,25 +1725,33 @@ Don't report these as new bugs. If you see one behave differently from what is w
 - "Worldwide" is an ordinary option in "Where" (Q-W01).
 - Old page: a warning visible only in developer tools, and the search word showing as "Search%2520fixture" in the address. The details page's "Opportunities" back link opens the old page (Q-W21).
 - The editor's step drop-down below 768 px doesn't move along when you press "Next". The "Help us improve Yoma!" prompt swallows the first click, and the top menu is clipped at 768 px.
+- *Seen 5 and 6 October:*
+  - The results heading counts filters differently from the "Filters" button (for example "+ 3 filters" beside a 4).
+  - In "Additional details", "Minimum salary" reads "1000", while the header and Incentive read "USD 1 000 / mo".
+  - The Pay tile can read "1 000 / mo" for a moment before "USD" appears.
+  - A folded title's "…" can land inside a word; "Show full title" shows the rest.
+  - On desktop, a long type-specific chip is cut at a fixed width; its tooltip has the full text (Jason kept the limit).
+  - The details page's pinned bar can flash over the header just after loading, at 768 and 1440. The "Feedback" tab overlaps the header card's right edge at 768.
+  - Pressing Back just after saving the wizard can bring back an old type-specific filter as a "Details" chip that narrows nothing.
 
 ### 9.4 By design (not bugs)
 
 - **Search page:** no "Copy link" button (copy the address bar); no counts on badges or welcome tiles; with "Remote" saved, the "Remote" badge changes nothing (D-23); "Most ZLTO" is hidden on Jobs-only searches; Remote plus On-site doesn't bring in Hybrid.
 - **Preferences:** with "Start a business" saved, the skills chip stays active on a Learning-only search; in the opened Accessibility section, saved needs that no opportunity lists appear after "Other".
-- **Cards and details:** cards are not clickable, only the button; Event cards show the start date (for example "Thu 1 Oct"); on the details page a lone card sits in the left column, leaving the right half empty.
+- **Cards and details:** cards are not clickable, only the button; Event cards show the start date (for example "Sun 4 Oct"); on the details page a lone card sits in the left column, leaving the right half empty.
 - **Admin:** Treasury shows "This view is provisional…" in local builds.
 
 ### 9.5 Not built yet, and not yet run
 
-- **Not built (out of scope for this round):** picking skills here (Skills shows "Coming soon"); a per-section "include not specified" switch; a "my country only" switch on discovery; the "guide only" marker on Minimum qualification and Experience level; per-type card layouts; moving the remaining old links to discovery. The classic details layout can't be tested in this build: it needs a code change, and that would break saving.
-- **Not yet run:** a timed full pass of this guide; a full production build; the full YOM-1261 manual script end to end; an automated check that desktop and phone filters match; and the signed-in DEV pass (read-only profile country, a device in another country, "Keep my answers" dropping a place from another country, and a profile with missing fields where saving the place must fail visibly).
+- **Not built (out of scope for this round):** picking skills here (Skills shows "Coming soon"); a per-section "include not specified" switch; a "my country only" switch on discovery; a "guide only" marker on each field (a generic note is there instead, D-78); per-type card layouts; moving the remaining old links to discovery. The classic details layout can't be tested in this build: it needs a code change, and that would break saving.
+- **Not yet run:** a timed full pass of this guide; a full production build; the full YOM-1261 manual script end to end; an automated check that desktop and phone filters match; an admin pass at 320 (admin filters, editor Preview, the admin Incentive row); a signed-in check that "Keep my answers" drops the old goal's type-specific filters; and the signed-in DEV pass (read-only profile country, a device in another country, "Keep my answers" dropping a place from another country, and a profile with missing fields where saving the place must fail visibly).
 
 ### 9.6 Not covered by this guide
 
 The branch carries more custom-field work than this guide tests. These need their own scripts; ask the web team (Jason) who tests them and when:
 
-- The youth's completion form ("Upload your completion files") and its type-specific questions (YOM-1255).
-- Completion answers shown in "My opportunities" (YOM-1255).
+- The youth's completion form ("Upload your completion files"): its type-specific questions and saving. DP-08 checks only that admin descriptions are hidden (YOM-1255).
+- Completion answers shown in "My opportunities", beyond DP-08's phone check (YOM-1255).
 - Credentials: the admin schemas page, choosing a schema by type in the editor, issuing, and how the youth sees a credential in their wallet (YOM-1280 to YOM-1283; the API part is Adrian's).
 - The old page's type-specific filters beyond LG-04 (YOM-1260).
 
@@ -1642,45 +1759,46 @@ The branch carries more custom-field work than this guide tests. These need thei
 
 ## Appendix A: fixture cheat sheet
 
-Local data seeded on 2026-10-03 at about 05:11 UTC. All 24 belong to one organisation ("Jobberman - Nigeria" on this seed). Search **Search fixture** to see them.
+Local data seeded on 2026-10-06 at about 09:55 UTC. All 24 belong to one organisation ("Jobberman - Nigeria" on this seed). Search **Search fixture** to see them.
 
-- "PL" = incomplete partner-like: no provider, engagement, incentive, targeted groups or SDGs. "FP" = provider "Fixture provider". Distances are approximate, from central Cape Town. "Yes: Q, W" = support Yes, with Quiet workspace and Wheelchair accessible.
-- The **type**, categories, languages, skills, effort and "Featured" are random at each reseed. Incentive, ZLTO and the Notes on salary, effort and skills follow the type: a Job that isn't partner-like is always Incentive No (a partner-like one, like 06 and 12, has no answer, "—"); no Job has ZLTO; Jobs and Entrepreneurship have no effort; and the disclosed salary goes to the most recently created Job (fixture 06 on this seed). Provider, engagement, accessibility, ages, locations and dates are fixed by the number.
+- "PL" = incomplete partner-like: no provider, engagement, incentive, targeted groups, SDGs or type-specific details. "FP" = provider "Fixture provider". Distances are approximate, from central Cape Town. "Yes: Q, W" = support Yes, with Quiet workspace and Wheelchair accessible.
+- Everything in the table is fixed by the number since the 6 October reseed (Adrian's 5 October update). Categories, languages, skills, effort, "Featured", participant limits and most type-specific details are random at each reseed. Jobs and Entrepreneurship never state an effort.
 
-| NN | Type (this seed) | Provider | Engagement | Incentive | ZLTO | Accessibility | Ages | Location | Notes |
+| NN | Type | Provider | Engagement | Incentive | ZLTO | Accessibility | Ages | Location | Notes |
 |---|---|---|---|---|---|---|---|---|---|
-| 01 | Event | FP | On-site | No | — | Yes: Other ("Large-print material"), Q, W | 18+ | Cape Town (~5 km) | |
-| 02 | Impact Action | FP | Remote | Yes | 50 | Yes: Q | up to 30 | Cape Town (~20 km) | |
-| 03 | Learning (PL) | — | — | — | — | No | 21–27 | Cape Town (~60 km) | |
-| 04 | Impact Action | FP | Remote | Yes | 100 | On request: Q | none | Cape Town (~150 km) | |
-| 05 | Entrepreneurship | FP | On-site | No | — | not specified | 18+ | Gauteng, Johannesburg (no map point) | No effort |
-| 06 | Job (PL) | — | — | — | — | Yes: Q, W | up to 30 | South Africa only | No effort, languages or skills; salary "USD 1 000 / mo" |
-| 07 | Job | FP | On-site | No | — | Yes: Q | 21–27 | Cape Town (~5 km) | **Ended**: hidden from youth search. No effort |
-| 08 | Learning | FP | Remote | Yes | 200 | No | none | Cape Town (~20 km) | Starts 5 Oct, ends 6 Oct |
-| 09 | Event (PL) | — | — | — | — | On request (no list) | 18+ | Cape Town (~60 km) | **No end date** |
-| 10 | Impact Action | FP | Remote | Yes | 250 | not specified | up to 30 | Cape Town (~150 km) | |
-| 11 | Learning ("PL" in title) | FP | On-site | No | — | Yes: Other (no description), Q, W | 21–27 | Gauteng, Johannesburg | Only gap: "Other" has no description |
-| 12 | Job (PL) | — | — | — | — | Yes: Q | none | South Africa only | No effort, languages or skills |
+| 01 | Job | FP | On-site | Yes | — | Yes: Other ("Large-print material"), Q, W | 18+ | Cape Town (~5 km) | Salary "USD 1 000 / mo"; testuser's completed placement |
+| 02 | Job | FP | Remote | No | — | Yes: Q | up to 30 | Cape Town (~20 km) | |
+| 03 | Impact Action (PL) | — | — | — | — | No | 21–27 | Cape Town (~60 km) | |
+| 04 | Event | FP | Remote | Yes | 100 | On request: Q | none | Cape Town (~150 km) | testuser's Pending completion |
+| 05 | Job | FP | On-site | No | — | not specified | 18+ | Gauteng, Johannesburg (no map point) | |
+| 06 | Job (PL) | — | — | — | — | Yes: Q, W | up to 30 | South Africa only | No languages or skills |
+| 07 | Learning | FP | On-site | No | — | Yes: Q | 21–27 | Cape Town (~5 km) | **Ended**: hidden from youth search |
+| 08 | Event | FP | Remote | Yes | 200 | No | none | Cape Town (~20 km) | Starts 5 Nov, ends 4 Jan 2027 |
+| 09 | Entrepreneurship (PL) | — | — | — | — | On request (no list) | 18+ | Cape Town (~60 km) | **No end date** |
+| 10 | Learning | FP | Remote | Yes | 250 | not specified | up to 30 | Cape Town (~150 km) | |
+| 11 | Impact Action ("PL" in title) | FP | On-site | No | — | Yes: Other (no description), Q, W | 21–27 | Gauteng, Johannesburg | No type-specific details |
+| 12 | Event (PL) | — | — | — | — | Yes: Q | none | South Africa only | No languages or skills |
 | 13 | Learning | FP | On-site | No | — | No | 18+ | Cape Town (~5 km) | |
-| 14 | Impact Action | FP | Remote | Yes | 350 | On request: Q | up to 30 | Cape Town (~20 km) | |
-| 15 | Other (PL) | — | — | — | — | not specified | 21–27 | Cape Town (~60 km) | |
-| 16 | Learning | FP | Remote | Yes | 400 | Yes: Q, W | none | Cape Town (~150 km) | |
-| 17 | Event | FP | On-site | No | — | Yes: Q | 18+ | Gauteng, Johannesburg | |
-| 18 | Event (PL) | — | — | — | — | No | up to 30 | South Africa only | No languages or skills |
-| 19 | Learning | FP | On-site | No | — | On request (no list) | 21–27 | Cape Town (~5 km) | |
-| 20 | Learning | FP | Remote | Yes | 500 | not specified | none | Cape Town (~20 km) | |
-| 21 | Impact Action (PL) | — | — | — | — | Yes: Q, W | 18+ | Cape Town (~60 km) | |
-| 22 | Event | FP | Remote | Yes | 550 | Yes: Q | up to 30 | Cape Town (~150 km) | |
-| 23 | Job | FP | On-site | No | — | No | 21–27 | **Worldwide only** | No effort; required skill "Foreign Exchange Markets" (random) |
-| 24 | Other (PL) | — | — | — | — | On request: Q | none | South Africa (no region) **and** Worldwide | No languages or skills |
+| 14 | Event | FP | Remote | Yes | 350 | On request: Q | up to 30 | Cape Town (~20 km) | |
+| 15 | Entrepreneurship (PL) | — | — | — | — | not specified | 21–27 | Cape Town (~60 km) | |
+| 16 | Entrepreneurship | FP | Remote | Yes | 400 | Yes: Q, W | none | Cape Town (~150 km) | |
+| 17 | Other | FP | On-site | No | — | Yes: Q | 18+ | Gauteng, Johannesburg | |
+| 18 | Other (PL) | — | — | — | — | No | up to 30 | South Africa only | No languages or skills |
+| 19 | Impact Action | FP | On-site | No | — | On request (no list) | 21–27 | Cape Town (~5 km) | |
+| 20 | Entrepreneurship | FP | Remote | Yes | 500 | not specified | none | Cape Town (~20 km) | |
+| 21 | Job (PL) | — | — | — | — | Yes: Q, W | 18+ | Cape Town (~60 km) | |
+| 22 | Job | FP | Remote | No | — | Yes: Q | up to 30 | Cape Town (~150 km) | |
+| 23 | Other | FP | On-site | No | — | No | 21–27 | **Worldwide only** | |
+| 24 | Learning (PL) | — | — | — | — | On request: Q | none | South Africa (no region) **and** Worldwide | No languages or skills |
 
 **Patterns that hold after any reseed:**
-- Every third fixture is partner-like. Engagement: even numbers Remote, odd On-site, except partner-like fixtures (none).
+- Every third fixture is partner-like, and 11 carries the label too. Engagement: even numbers Remote, odd On-site, except partner-like fixtures (none).
+- Incentive: Jobs "No", except 01 (a disclosed salary). Other types: even numbers "Yes" with ZLTO of 25 × NN, odd numbers "No". Partner-like fixtures have no answer.
 - Accessibility support repeats every 5 (Yes, Yes, No, On request, not specified). The lists vary: 01 and 11 add "Other", and only even "On request" fixtures list Quiet workspace.
 - Ages repeat every 4. Locations repeat every 6, except 23 and 24.
-- Every fixture except 08 started 2 days before seeding (1 Oct). Every fixture except 07, 08 and 09 ends 30 days plus NN hours after seeding (2–3 Nov).
+- Every fixture except 08 started 2 days before seeding (4 Oct). Every fixture except 07, 08 and 09 ends 30 days plus NN hours after seeding (5–6 Nov).
 
-**Handy counts** (signed out, word "Search fixture", no preferences): 23 in all. Engagement: Remote 8, On-site 7, not specified 8. Incentive *(seed)*: "Paid or rewarded" 16 (8 + 8), "Unpaid" 15 (7 + 8). "With ZLTO reward" 8 *(seed)*. Provider "fixture" 15. South Africa picked 22; saved 23. Accessibility picked: "Quiet workspace" 12, "Other" 2.
+**Handy counts** (signed out, word "Search fixture", no preferences): 23 in all. Types: Job 6, Event 4, Entrepreneurship 4, Learning 3, Impact Action 3, Other 3. Engagement: Remote 8, On-site 7, not specified 8. Incentive: "Paid or rewarded" 15 (7 + 8), "Unpaid" 16 (8 + 8). "With ZLTO reward" 6. Provider "fixture" 15. South Africa picked 22; saved 23. Accessibility picked: "Quiet workspace" 12, "Other" 2.
 
 ---
 
@@ -1688,7 +1806,9 @@ Local data seeded on 2026-10-03 at about 05:11 UTC. All 24 belong to one organis
 
 **How this guide was built.** Behaviour comes from the code in the working tree on 2026-10-03, including the uncommitted changes on `feature/cf-implementation` (W1–W3: the web move onto the API's revised search contract, recorded in handoff `2026-10-03-a.md`). Reasons come from the Decisions logs; a later entry wins over an earlier one. Fixture counts were checked with anonymous requests to the local server, for example a POST to `http://localhost:5000/api/v3/opportunity/search` with `{"valueContains":"Search fixture","pageNumber":1,"pageSize":30}` (or `{"valueContains":"Search fixture","totalCountOnly":true}` for a count). No one signed in for this guide; the signed-in screenshots (08, 09) are copies of earlier captures from the same day.
 
-**Commit references.** This branch needs an API at `77646a74` (2026-10-02, server search changes) or later. The on-screen "Awaiting BA sign-off" label (Q-B10) was removed in `40acb781` (2026-09-29 web integration). Both are branch commits on `origin/feature/cf-implementation`. `master` is squash-merged, so re-point them at the squashed `(#NNNN)` commit before the PR merges. On DEV, a server older than `77646a74` fails this branch's search (seen as error 42703).
+**The 2026-10-06 update** was checked against the working tree that day: `6cdf18d8` (Jason's 5 October round), `c86f09f2` (his 6 October round), Adrian's `5378337c`, and the uncommitted 6 October follow-ups (spec `design/2026-10-06-api-followups.md`), which were being built while this was written. Their quoted strings were checked against the working tree, including the rail subtitle "Latest start dates first", which Jason chose after the first draft. Every fixture count was re-run anonymously against the reseeded local API, rebuilding discovery's request shapes from `searchRequest.ts`. No browser was used, and no new screenshots were taken.
+
+**Commit references.** This branch needs an API at `77646a74` (2026-10-02, server search changes) or later, and at `5378337c` (2026-10-05: one-level groups, fixtures fixed by number) for this guide's groups and counts, with the local database recreated. The on-screen "Awaiting BA sign-off" label (Q-B10) was removed in `40acb781` (2026-09-29 web integration). All of these, and `6cdf18d8` and `c86f09f2`, are branch commits on `origin/feature/cf-implementation`. `master` is squash-merged, so re-point them at the squashed `(#NNNN)` commit before the PR merges. On DEV, a server older than `77646a74` fails this branch's search (seen as error 42703).
 
 **Browser storage** (developer tools, F12 → Application → Storage). Session storage: `yoma.discovery.preferences.anonymous` (signed-out answers) and `yoma.discovery.writeBackDismissed` ("Not now"). Local storage: `yoma.discovery.personalizationSeen` (welcome seen), `yoma.discovery.recentSearches` and `yoma.discovery.viewMode` (Grid or List).
 
@@ -1714,11 +1834,17 @@ Local data seeded on 2026-10-03 at about 05:11 UTC. All 24 belong to one organis
 | Q-W24 | Some planning docs are out of date. Mark these superseded by the 2026-10-03 decisions: "Unresolved before build" rows 4 and 5, and row 6's "Built with Awaiting BA sign-off" note (row 6 itself stays open as Q-B10); the YOM-1261 entry of 2026-09-29; the BA tables' "Where it shows here" column, and the Paid Work Preference row's "removed as a stored preference"; YOM-1261's Plan ("Pay was removed as a stored preference") and its "Start a business … stays inert" task. | Web team | Update in the next docs pass. |
 
 **Where things live** (paths under `src/web/src/` unless shown)
-- **Discovery** (`pages/opportunities/discover/index.tsx`, `features/discovery/`): search building `lib/searchRequest.ts`, `lib/preferenceMapping.ts`, `lib/location.ts`; state `lib/discoveryReducer.ts`, `lib/types.ts`; filter sections and rule lines `registry/filterSections.ts`, `components/Filters/` (`useSectionModel.ts`, `FilterControl.tsx`, `WhereControl.tsx`, `TypeRow.tsx`, `TypeSpecificFilters.tsx`); wizard `registry/preferenceSteps.ts`, `components/Personalize/`; banner, offer and count footer `components/shared/PreferenceBanner.tsx`, `CountFooter.tsx`; landing rails `components/Discover/DiscoveryLanding.tsx`, `DiscoveryRail.tsx`; quick searches `registry/quickSearches.ts`; chips, privacy, heading `lib/chipModel.ts`, `lib/chipGroups.ts`; address `lib/urlCodec.ts`; sort and divider `lib/resultsOrder.ts`, `components/Results/` (`SortControl.tsx`, `IncentiveDivider.tsx`, `DiscoveryResults.tsx`); cards `OpportunityCard.tsx`, `OpportunityRow.tsx`, `lib/cardFacts.ts`, `lib/money.ts`, `lib/cardStatus.ts`.
-- **Shared:** release switch `lib/constants.ts` (`CUSTOM_FIELDS_ENABLED`); saving preferences `api/services/userPreferencesLive.ts`, `api/models/userPreferences.ts` (`mergeUserPreferences`); search request model `api/models/opportunity.ts`; shared search format (old page, admin, export, Treasury) `api/services/opportunitySearchPayload.ts`; details page `components/Opportunity/TabbedDetails/` (`detailFacts.ts`).
+- **Discovery** (`pages/opportunities/discover/index.tsx`, `features/discovery/`): search building `lib/searchRequest.ts`, `lib/preferenceMapping.ts`, `lib/location.ts`; state `lib/discoveryReducer.ts`, `lib/types.ts`; filter sections and rule lines `registry/filterSections.ts`, `components/Filters/` (`useSectionModel.ts`, `FilterControl.tsx`, `WhereControl.tsx`, `TypeRow.tsx`, `TypeSpecificFilters.tsx`); wizard `registry/preferenceSteps.ts`, `components/Personalize/`; banner, offer and count footer `components/shared/PreferenceBanner.tsx`, `CountFooter.tsx`; landing rails `components/Discover/DiscoveryLanding.tsx`, `DiscoveryRail.tsx`; quick searches `registry/quickSearches.ts`; chips, privacy, heading `lib/chipModel.ts`, `lib/chipGroups.ts`; address `lib/urlCodec.ts`; sort and divider `lib/resultsOrder.ts`, `components/Results/` (`SortControl.tsx`, `IncentiveDivider.tsx`, `DiscoveryResults.tsx`); cards `OpportunityCard.tsx`, `OpportunityRow.tsx`, `lib/cardFacts.ts`, `lib/money.ts`, `lib/cardStatus.ts`; type filters leaving with their type `lib/discoveryReducer.ts`, `lib/typeDefinitions.ts`; the Filters badge `state/DiscoveryContext.tsx` (`filterCount`); wizard count `components/Personalize/LiveCountPanel.tsx`.
+- **Shared:** release switch `lib/constants.ts` (`CUSTOM_FIELDS_ENABLED`); saving preferences `api/services/userPreferencesLive.ts`, `api/models/userPreferences.ts` (`mergeUserPreferences`); search request model `api/models/opportunity.ts`; shared search format (old page, admin, export, Treasury) `api/services/opportunitySearchPayload.ts`; details page `components/Opportunity/TabbedDetails/` (`detailFacts.ts`, `detailSectionCopy.ts`, `DetailHeaderCard.tsx`, `lineClamp.ts`, `OpportunityDetailSections.tsx`); one control per field `lib/customFields/customFieldFilterClauses.ts`; "Skill no longer listed" and "Skill name unavailable" `lib/customFields/skillLabels.ts`; wrapping values `components/Opportunity/CustomFieldsView.tsx` (`wrapValues`), `MyOpportunityCustomFieldsSection.tsx`; the completion form `components/Opportunity/OpportunityCompletionEdit.tsx` (`hideDescriptions`).
 - **Old page, admin and editor:** old-page filters (with type-specific fields) `components/Opportunity/OpportunityFilterVertical.tsx`; admin lists `pages/admin/opportunities/[[...query]]/index.tsx`, `pages/organisations/[id]/opportunities/index.tsx`; admin filters `components/Opportunity/OpportunityAdminFilterVertical.tsx`, `CustomFieldFilters.tsx`; export `components/Opportunity/Admin/OpportunityExport.tsx`; Job completion review, import help and sample `components/Opportunity/OpportunityCompletionRead.tsx`, `components/Opportunity/Admin/VerificationImport.tsx`, `src/web/public/docs/MyOpportunityInfoCsvImport_Sample.csv`; editor `pages/organisations/[id]/opportunities/[opportunityId]/index.tsx`, `components/Opportunity/CustomFields.tsx`, `lib/customFields/customFieldRules.ts`.
-- **API:** fixture and test-account seed `src/api/cicd/scripts/postgressql-init/post.sql` (fixture block, which seeds no user preferences; "Verification (Pending)"; testuser skills); admin status filter (Expired question) `src/api/src/domain/Yoma.Core.Domain/Opportunity/Services/OpportunityService.cs`; custom-field filter rules `src/api/src/domain/Yoma.Core.Domain/Core/Validators/CustomFieldFilterValidator.cs` (Q-W02).
+- **API:** fixture and test-account seed `src/api/cicd/scripts/postgressql-init/post.sql` (fixture block, which seeds no user preferences; "Verification (Pending)"; testuser skills); admin status filter (Expired question) `src/api/src/domain/Yoma.Core.Domain/Opportunity/Services/OpportunityService.cs`; custom-field filter rules `src/api/src/domain/Yoma.Core.Domain/Core/Validators/CustomFieldFilterValidator.cs` (Q-W02, Q-A10); youth default order, latest start first (Q-W25) `src/api/src/domain/Yoma.Core.Domain/Opportunity/Services/OpportunityInfoService.cs`.
 
-**Docs this guide draws on** (under `docs/work/active/YOM-1244-customizable-fields-framework/`): `README.md` (the epic); `handoffs/2026-10-01-c.md` (the server search contract); `YOM-1262-…/feature.md` (Decisions, "BA sign-off summary", "Unresolved before build"); `YOM-1262-…/handoffs/2026-10-03-a.md` (today's handoff); `YOM-1262-…/design/2026-10-03-search-contract.md` and `…-compare.md`; the `feature.md` files of YOM-1261, YOM-1260 and YOM-1255. Local data notes: `src/web/AGENTS.md`, "Local data".
+**Sources by section** (for the plain-word "Sources" lines in the text):
+- **1:** YOM-1262 `feature.md` Decisions 2026-09-22 to 2026-10-06; handoffs `2026-10-03-a.md`, `2026-10-05-a.md`, `2026-10-06-a.md`; design specs `2026-10-03-search-contract.md`, `2026-10-06-api-followups.md`; YOM-1254 handoff `2026-10-05-a.md`.
+- **2.1:** handoffs 2026-10-03-a and 2026-10-06-a "Next Steps"; epic README "DEV environment skew"; `src/web/AGENTS.md` "Local stack".
+- **2.2:** `src/web/AGENTS.md` "Local data"; handoff 2026-10-03-a "Current State"; `post.sql` (testuser profile, verified skills, the two fixture completions; "no user location/preferences are seeded"). 2.8: YOM-1262 `feature.md` Decisions.
+- **4.3:** `features/discovery/registry/filterSections.ts` rule lines; `lib/preferenceMapping.ts`; handoff 2026-10-01-c "Typed criteria and defaults"; YOM-1262 Decisions 2026-10-03.
 
-**Screenshots** are in `testing/2026-10-03/`. Images 01–07 were captured signed out on 2026-10-03. Image 07 is a composite of two crops, with captions added. Images 08 and 09 were copied from that day's signed-in captures, and 08 shows the seeded test account's email.
+**Docs this guide draws on** (under `docs/work/active/YOM-1244-customizable-fields-framework/`): `README.md` (the epic); `handoffs/2026-10-01-c.md` (the server search contract); `YOM-1262-…/feature.md` (Decisions, "BA sign-off summary", "Unresolved before build"); `YOM-1262-…/handoffs/2026-10-03-a.md`, `2026-10-05-a.md` and `2026-10-06-a.md`; `YOM-1262-…/design/2026-10-03-search-contract.md` and `…-compare.md`, `2026-10-05-feedback-round.md`, `2026-10-06-detail-header-mobile.md` and `2026-10-06-api-followups.md`; `YOM-1254-…/handoffs/2026-10-05-a.md` (Adrian: groups, fixtures, guidance labels); the `feature.md` files of YOM-1261, YOM-1260 and YOM-1255. Local data notes: `src/web/AGENTS.md`, "Local data".
+
+**Screenshots** are in `testing/2026-10-03/`. Images 01–07 were captured signed out on 2026-10-03. Image 07 is a composite of two crops, with captions added. Images 08 and 09 were copied from that day's signed-in captures, and 08 shows the seeded test account's email. Images 01, 02, 03, 05, 07 and 09 predate 2026-10-06, as their captions say; 04, 06 and 08 still match.

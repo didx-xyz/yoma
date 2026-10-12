@@ -814,6 +814,9 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                               }
                               onChange={onChange}
                               showErrors={isSubmitted}
+                              // No intro line, and no definition descriptions: they're written
+                              // for admins, and the titles and options carry the meaning
+                              hideDescriptions
                             />
                           )}
                         />

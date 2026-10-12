@@ -2,6 +2,7 @@ import type { OpportunityInfo } from "~/api/models/opportunity";
 import { Status } from "~/api/models/opportunity";
 import type { ClosingInfo } from "./dates";
 import { closingInfo } from "./dates";
+import { formatNumber } from "./format";
 
 /**
  * Card status — ONE rule for the grid card and the compact row (2026-09-22).
@@ -15,7 +16,8 @@ import { closingInfo } from "./dates";
  *
  *   closed  = status is not Active, OR the end date has passed  → "Closed", no places shown
  *   full    = the participant limit is reached                  → "No places left"
- *   open    = the closing label from `closingInfo`, and "X of Y places left" when a limit exists
+ *   open    = the closing label from `closingInfo`, and "X places left" when a limit exists
+ *             ("1 place left"; the limit itself went on 2026-10-07 — "160 of 160" said it twice)
  *
  * `status` arrives as the enum NAME ("Active") — the model's `Status | string` — so both forms
  * are accepted. Places render from exposed fields only (`participantLimit`, counts, and the
@@ -74,7 +76,7 @@ export function cardStatus(
   return {
     closing,
     closed,
-    places: `${left} of ${opportunity.participantLimit} places left`,
+    places: `${formatNumber(left)} ${left === 1 ? "place" : "places"} left`,
     highlight,
   };
 }

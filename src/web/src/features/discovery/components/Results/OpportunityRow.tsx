@@ -34,7 +34,7 @@ export const OpportunityRow: React.FC<{
   opportunity: OpportunityInfo;
   now: Date;
 }> = ({ opportunity, now }) => {
-  const { lookups } = useDiscovery();
+  const { lookups, effectiveFilters } = useDiscovery();
   const definitions = useCardDefinitions();
   // Same status rule as the grid card (`lib/cardStatus.ts`): a closed opportunity says so.
   const { closing, places, highlight } = cardStatus(opportunity, now);
@@ -42,7 +42,13 @@ export const OpportunityRow: React.FC<{
     ? "font-semibold text-pink"
     : "text-gray-dark";
   const money = moneyFactsOf(opportunity, lookups.currencies);
-  const fact = cardFacts(opportunity, definitions)[0] ?? null;
+  const fact =
+    cardFacts(
+      opportunity,
+      definitions,
+      now,
+      effectiveFilters.accommodations.length > 0,
+    )[0] ?? null;
   const type = typeLabel(lookups.types, opportunity.type);
   const firstCountry = opportunity.countries?.[0];
   const location = firstCountry?.city ?? firstCountry?.name ?? null;
@@ -97,8 +103,12 @@ export const OpportunityRow: React.FC<{
         <span className={LIST_COLUMNS.badge}>{chip}</span>
         <span className={LIST_COLUMNS.title}>
           <span className="flex min-w-0 items-center gap-2">
-            {/* Same title size as the grid card */}
-            <span className="truncate text-sm font-semibold md:text-base">
+            {/* Same title size as the grid card. Every cell that truncates carries its whole
+                text as a tooltip (2026-10-08). */}
+            <span
+              title={opportunity.title}
+              className="truncate text-sm font-semibold md:text-base"
+            >
               {opportunity.title}
             </span>
             {highlight && (
@@ -109,7 +119,12 @@ export const OpportunityRow: React.FC<{
               </span>
             )}
           </span>
-          <span className="text-gray-dark block truncate text-xs">
+          <span
+            title={[opportunity.organizationName, opportunity.summary]
+              .filter(Boolean)
+              .join(" · ")}
+            className="text-gray-dark block truncate text-xs"
+          >
             <span className="font-semibold text-black">
               {opportunity.organizationName}
             </span>
@@ -119,16 +134,28 @@ export const OpportunityRow: React.FC<{
         <span className={`${LIST_COLUMNS.money} truncate`}>
           {hasMoney ? <MoneyBadge compact facts={money} /> : "—"}
         </span>
-        <span className={`${LIST_COLUMNS.where} text-gray-dark truncate`}>
+        <span
+          title={where || undefined}
+          className={`${LIST_COLUMNS.where} text-gray-dark truncate`}
+        >
           {where || "—"}
         </span>
-        <span className={`${LIST_COLUMNS.fact} text-gray-dark truncate`}>
+        <span
+          title={fact?.tip}
+          className={`${LIST_COLUMNS.fact} text-gray-dark truncate`}
+        >
           {fact?.text ?? "—"}
         </span>
-        <span className={`${LIST_COLUMNS.status} truncate ${closesClass}`}>
+        <span
+          title={closing.label}
+          className={`${LIST_COLUMNS.status} truncate ${closesClass}`}
+        >
           {closing.label}
         </span>
-        <span className={`${LIST_COLUMNS.places} text-gray-dark truncate`}>
+        <span
+          title={places ?? undefined}
+          className={`${LIST_COLUMNS.places} text-gray-dark truncate`}
+        >
           {places ?? "—"}
         </span>
         <span className={LIST_COLUMNS.action}>
@@ -162,7 +189,9 @@ export const OpportunityRow: React.FC<{
               </span>
             )}
             {location && (
-              <span className="text-gray-dark truncate">{location}</span>
+              <span title={location} className="text-gray-dark truncate">
+                {location}
+              </span>
             )}
           </span>
           <span className={`hidden text-xs max-[359px]:block ${closesClass}`}>

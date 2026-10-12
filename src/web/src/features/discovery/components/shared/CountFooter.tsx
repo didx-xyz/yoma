@@ -41,7 +41,7 @@ export const CountFooter: React.FC<{
       )}
       {countFailed && (
         <span className="text-gray-dark text-xs">
-          Count unavailable right now.
+          Can&apos;t count results right now.
         </span>
       )}
     </div>

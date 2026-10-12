@@ -12,7 +12,7 @@ import type { DiscoveryChip } from "../../lib/chipModel";
  * with an undo. Every action target is ≥44px on touch.
  *
  * Long labels wrap to two lines below `md` and truncate from there: `max-w-40 truncate` cut the
- * second chip in half on a 390px row ("Interests: AI, Data and Ana…"), and a chip whose value is
+ * second chip in half on a 390px row ("Interest: AI, Data and Ana…"), and a chip whose value is
  * unreadable is not a chip. Desktop keeps one line — there is room, and the row stays scannable.
  *
  * A `pending` chip (region / city / distance until the Location search API lands) is drawn with

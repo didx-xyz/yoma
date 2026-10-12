@@ -15,6 +15,7 @@ import {
   useEducationsQuery,
   useOpportunityCountriesQuery,
   useOpportunityLanguagesQuery,
+  useSkillLabeler,
   useSkillsQuery,
 } from "~/hooks/useOpportunityMutations";
 import { CUSTOM_FIELDS_ENABLED, PAGE_SIZE_MEDIUM } from "~/lib/constants";
@@ -33,6 +34,7 @@ import {
   isShownByFixedControl,
   sanitizeCustomFieldFilters,
 } from "~/lib/customFields/customFieldFilterClauses";
+import { skillIdsInFilters } from "~/lib/customFields/skillLabels";
 import { dateInputToUTC, debounce, utcToDateInput } from "~/lib/utils";
 import { getCustomFieldNumberError } from "./CustomFields";
 
@@ -230,11 +232,18 @@ export function getCustomFieldFilterError(
 /**
  * Resolves option keys / lookup GUIDs to display names for the current definitions.
  * Lookups are only fetched when a definition actually references them.
+ *
+ * `clauses` (optional) are the clauses the labels are for. Given, the skills in them are named
+ * by id (`useSkillLabeler`, one request for exactly those ids). Omitted, as the legacy search
+ * page does, skill names come from the first catalogue page as before, so a skill outside it
+ * shows its id.
  */
 export function useCustomFieldFilterLabeler(
   definitions: CustomFieldDefinition[] | null | undefined,
+  clauses?: CustomFieldFilter[] | null,
 ) {
   const defs = useMemo(() => definitions ?? [], [definitions]);
+  const skillsById = clauses !== undefined;
 
   const needsCountry = defs.some(
     (d) => lookupTypeOf(d) === CustomFieldLookupType.Country,
@@ -260,8 +269,13 @@ export function useCustomFieldFilterLabeler(
   });
   const { data: skillsData } = useSkillsQuery(
     { nameContains: null, pageNumber: 1, pageSize: 500 },
-    { enabled: needsSkill },
+    { enabled: needsSkill && !skillsById },
   );
+  const skillIds = useMemo(
+    () => (skillsById ? skillIdsInFilters(defs, clauses) : []),
+    [skillsById, defs, clauses],
+  );
+  const skillLabel = useSkillLabeler(skillIds);
   const { data: educationsData } = useEducationsQuery({
     enabled: needsEducation,
   });
@@ -305,7 +319,9 @@ export function useCustomFieldFilterLabeler(
         case CustomFieldLookupType.Language:
           return languageMap.get(value) ?? value;
         case CustomFieldLookupType.Skill:
-          return skillMap.get(value) ?? value;
+          return skillsById
+            ? skillLabel(value)
+            : (skillMap.get(value) ?? value);
         case CustomFieldLookupType.Education:
           return educationMap.get(value) ?? value;
         case CustomFieldLookupType.Currency:
@@ -353,7 +369,16 @@ export function useCustomFieldFilterLabeler(
 
       return resolve(definition, filter.value ?? "");
     };
-  }, [defs, countryMap, languageMap, skillMap, educationMap, currencyMap]);
+  }, [
+    defs,
+    countryMap,
+    languageMap,
+    skillsById,
+    skillMap,
+    skillLabel,
+    educationMap,
+    currencyMap,
+  ]);
 }
 
 // shared react-select styling, matching the rest of the opportunity forms
@@ -424,6 +449,19 @@ export interface CustomFieldFiltersProps {
    * their own committed values.
    */
   resetKey?: string;
+  /**
+   * Names the selected skills by id (`useSkillLabeler`, one request for every skill clause here),
+   * so a value from a link or a saved search shows its name rather than its id. Off by default,
+   * so the legacy panel is unchanged: it names only skills a search has already returned.
+   * Discovery and the admin panel opt in.
+   */
+  resolveSkillsById?: boolean;
+  /**
+   * Leave out each field's title label: the caller names the field itself (discovery's filter
+   * rows, where the field is picked from a dropdown beside its value, 2026-10-09). The controls
+   * keep their accessible names. Off by default.
+   */
+  hideLabels?: boolean;
   className?: string;
 }
 
@@ -437,6 +475,8 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
   commitOnBlur = false,
   fixedOperators = false,
   resetKey,
+  resolveSkillsById = false,
+  hideLabels = false,
   className = "",
 }) => {
   const selectClasses = largeTouchTargets
@@ -506,7 +546,7 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
 
   // Clauses the fixed controls can't show (older links) are named under their field in the chip
   // wording, so they're labelled here. Only their definitions are passed, so no lookup is fetched
-  // unless such a clause exists.
+  // unless such a clause exists; the clauses come too, so a skill among them is named by id.
   const unshownDefinitions = useMemo(
     () =>
       fixedOperators
@@ -520,7 +560,7 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
         : [],
     [fixedOperators, ordered, filters],
   );
-  const labelUnshown = useCustomFieldFilterLabeler(unshownDefinitions);
+  const labelUnshown = useCustomFieldFilterLabeler(unshownDefinitions, filters);
 
   //#region Lookups
   const needsCountry = ordered.some(
@@ -600,6 +640,11 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
       ),
     [],
   );
+  const skillIds = useMemo(
+    () => (resolveSkillsById ? skillIdsInFilters(ordered, filters) : []),
+    [resolveSkillsById, ordered, filters],
+  );
+  const skillLabel = useSkillLabeler(skillIds, skillCache);
   //#endregion Lookups
 
   const [defaultPortalTarget, setDefaultPortalTarget] =
@@ -667,7 +712,9 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
           }
           value={selected.map((id) => ({
             value: id,
-            label: skillCache.find((s) => s.id === id)?.name ?? id,
+            label: resolveSkillsById
+              ? skillLabel(id)
+              : (skillCache.find((s) => s.id === id)?.name ?? id),
           }))}
           menuPortalTarget={portalTarget}
           styles={SELECT_STYLES}
@@ -975,11 +1022,13 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
               data-custom-field-key={definition.key}
               data-custom-field-datatype={definition.dataType}
             >
-              <label className="label">
-                <span className="label-text font-semibold">
-                  {definition.title}
-                </span>
-              </label>
+              {!hideLabels && (
+                <label className="label">
+                  <span className="label-text font-semibold">
+                    {definition.title}
+                  </span>
+                </label>
+              )}
 
               {/* A clause from an older link that this control can't show: it still filters,
                   and editing the control replaces it. */}
@@ -1014,11 +1063,13 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
             data-custom-field-key={definition.key}
             data-custom-field-datatype={definition.dataType}
           >
-            <label className="label">
-              <span className="label-text font-semibold">
-                {definition.title}
-              </span>
-            </label>
+            {!hideLabels && (
+              <label className="label">
+                <span className="label-text font-semibold">
+                  {definition.title}
+                </span>
+              </label>
+            )}
 
             <div className="flex min-w-0 flex-col gap-1 sm:flex-row">
               <select

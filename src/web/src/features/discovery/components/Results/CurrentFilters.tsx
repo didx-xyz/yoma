@@ -14,7 +14,10 @@ const SHOWN = 2;
  * preferences, 2026-09-05), then the chips. The preference chips live in the banner, so each
  * colour has one home. Renders only while the search has filters of its own.
  */
-export const CurrentFilters: React.FC = () => {
+export const CurrentFilters: React.FC<{
+  /** Opens the Filters dialog (sheet on phones), beside Clear filters (2026-10-09). */
+  onOpenFilters: () => void;
+}> = ({ onOpenFilters }) => {
   const { state, chips, clearFilters, hasFilters } = useDiscovery();
   const pulse = useChipPulse();
 
@@ -46,16 +49,26 @@ export const CurrentFilters: React.FC = () => {
             For this search only. Your preferences don&apos;t change.
           </span>
         </p>
-        {hasFilters && (
+        <span className="flex items-center gap-2">
           <button
             type="button"
-            onClick={clearFilters}
-            className="btn btn-xs bg-green hover:bg-green-dark h-7 rounded-full border-none text-[11px] font-semibold text-white"
+            onClick={onOpenFilters}
+            className="btn btn-xs border-green text-green hover:bg-green-light h-7 rounded-full bg-white text-[11px] font-semibold"
           >
-            <IoClose className="h-3 w-3" />
-            Clear filters
+            <IoOptionsOutline className="h-3 w-3" />
+            Open filters
           </button>
-        )}
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="btn btn-xs bg-green hover:bg-green-dark h-7 rounded-full border-none text-[11px] font-semibold text-white"
+            >
+              <IoClose className="h-3 w-3" />
+              Clear filters
+            </button>
+          )}
+        </span>
       </div>
       <AppliedChips kind="manual" pulseChipId={pulse} />
     </section>

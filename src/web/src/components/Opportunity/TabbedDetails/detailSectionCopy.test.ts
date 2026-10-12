@@ -57,7 +57,7 @@ const copy = (
 const NOT_SPECIFIED = {
   kind: "static",
   value: "Not specified",
-  note: "The provider hasn't said whether this pays or rewards.",
+  note: "The provider hasn't said if this pays or gives a reward.",
 };
 
 describe("Incentive — which states show", () => {
@@ -188,7 +188,7 @@ describe("Incentive — ZLTO", () => {
         kind: "disclosure",
         preview: "Earn 200 ZLTO",
         amount: { text: "200 ZLTO", zlto: true },
-        body: "An estimate. You earn it once your completion is verified, and you may get less if the reward pool runs low.",
+        body: "This is an estimate. You get it once your completion is verified. You may get less if the reward runs low.",
         cashOut: true,
       },
     );
@@ -212,7 +212,7 @@ describe("Incentive — ZLTO", () => {
         kind: "disclosure",
         preview: "Earn ZLTO",
         amount: { text: "ZLTO reward", zlto: true },
-        body: "You earn Zlto once your completion is verified. The amount isn't shown for this opportunity.",
+        body: "You get Zlto once your completion is verified. The amount isn't shown.",
         cashOut: true,
       },
     );
@@ -225,7 +225,7 @@ describe("Incentive — ZLTO", () => {
         kind: "disclosure",
         preview: "ZLTO rewards have run out",
         amount: null,
-        body: "This opportunity's ZLTO reward pool has run out, so completing it now earns no Zlto.",
+        body: "The ZLTO for this opportunity has run out, so finishing it now earns no Zlto.",
         cashOut: false,
       },
     );
@@ -243,7 +243,7 @@ describe("Incentive — partner incentive", () => {
         kind: "disclosure",
         preview: "USD 150 from the partner",
         amount: { text: "USD 150", zlto: false },
-        body: "Offered and paid by the partner that runs this opportunity, not by Yoma. Ask them how and when it's paid.",
+        body: "The partner running this pays it, not Yoma. Ask them how and when you'll get it.",
         cashOut: false,
       },
     );
@@ -271,7 +271,7 @@ describe("Incentive — partner incentive", () => {
       kind: "disclosure",
       preview: "Partner incentive",
       amount: null,
-      body: "The partner that runs this opportunity offers an incentive. Ask them for the details — Yoma doesn't pay or process it.",
+      body: "The partner running this offers a reward. Ask them for details. Yoma doesn't pay it.",
       cashOut: false,
     });
   });
@@ -366,7 +366,7 @@ describe("Incentive — the cash-out line (C1)", () => {
 
   test("the hedged line, with marketplace as its link", () => {
     assert.deepEqual(line(false), {
-      text: "Spend your Zlto in the marketplace, or cash it out for real money in supported countries.",
+      text: "Spend your Zlto in the marketplace, or swap it for money in some countries.",
       link: "marketplace",
     });
   });
@@ -445,11 +445,11 @@ describe("Accessibility — notes and closing lines", () => {
   test("each static value says its own thing", () => {
     assert.equal(
       accessibilityNote(AccessibilitySupport.No),
-      "The provider says it offers no accessibility accommodations.",
+      "The provider says it can't offer support for people with disabilities.",
     );
     assert.equal(
       accessibilityNote(null),
-      "The provider hasn't said whether it offers accessibility accommodations.",
+      "The provider hasn't said if it offers support for people with disabilities.",
     );
     assert.equal(
       accessibilityNote(AccessibilitySupport.AvailableOnRequest),

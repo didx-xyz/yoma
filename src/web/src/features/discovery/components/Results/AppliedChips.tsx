@@ -17,22 +17,33 @@ import { Chip } from "../shared/Chip";
  *               “dri”"; `customFieldChipValue`). Rendered by the filters panel, which owns
  *               "Clear filters".
  *
- * Mobile: one drag-scrollable line (`ScrollableContainer`); desktop: the chips wrap. Removing an
+ * Mobile: one drag-scrollable line (`ScrollableContainer`), its edges fading while there is more
+ * to scroll; desktop: the chips wrap. Removing an
  * inherited chip skips its preference for this search; removing a manual one edits the filter.
  */
 export const AppliedChips: React.FC<{
   kind: "inherited" | "manual";
   pulseChipId?: string | null;
 }> = ({ kind, pulseChipId }) => {
-  const { state, dispatch, chips, effectiveFilters, skipPreference } =
-    useDiscovery();
+  const {
+    state,
+    dispatch,
+    chips,
+    effectiveFilters,
+    skipPreference,
+    restorePreference,
+  } = useDiscovery();
   const types = effectiveFilters.types;
   const clauses = kind === "manual" ? state.filters.customFields : [];
   const { data: definitions } = useOpportunityCustomFieldDefinitionsQuery(
     types.length > 0 ? types : null,
     { enabled: types.length > 0 && clauses.length > 0 },
   );
-  const labelFor = useCustomFieldFilterLabeler(definitions);
+  // The skills in these clauses are named by id, one request for all of them. Each filter block
+  // asks for the skills in its own fields, so the chips and the controls share one request (one
+  // query key) while every selected skill sits in one block; otherwise each block with skills
+  // makes its own request, plus one here for all of them
+  const labelFor = useCustomFieldFilterLabeler(definitions, clauses);
 
   const rowChips = chips.filter((c) =>
     kind === "manual" ? c.provenance === "manual" : c.provenance !== "manual",
@@ -43,7 +54,9 @@ export const AppliedChips: React.FC<{
     <ScrollableContainer
       containerClassName=""
       className="flex items-center gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible md:pb-0"
-      showShadows={false}
+      // The edge fade of every sideways row (2026-10-08), as a mask: the panels behind are
+      // translucent tints no overlay colour can match.
+      fadeEdges
     >
       {rowChips.map((chip) => (
         <Chip
@@ -52,7 +65,7 @@ export const AppliedChips: React.FC<{
           pulse={chip.id === pulseChipId}
           onRemove={() =>
             chip.prefKey
-              ? skipPreference(chip.prefKey)
+              ? skipPreference(chip.prefKey, chip.interest)
               : chip.facet &&
                 chip.raw !== null &&
                 dispatch({
@@ -62,12 +75,7 @@ export const AppliedChips: React.FC<{
                 })
           }
           onUndo={() =>
-            chip.prefKey &&
-            dispatch({
-              kind: "setPreferenceSkipped",
-              key: chip.prefKey,
-              skipped: false,
-            })
+            chip.prefKey && restorePreference(chip.prefKey, chip.interest)
           }
         />
       ))}

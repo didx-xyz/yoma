@@ -1,252 +1,188 @@
 import React, { useState } from "react";
-import { IoChevronDown, IoOptionsOutline } from "react-icons/io5";
-import type { CustomFieldDefinition } from "~/api/models/opportunity";
+import { IoShapesOutline } from "react-icons/io5";
 import {
-  CustomFieldFilters,
-  sortCustomFieldDefinitions,
-} from "~/components/Opportunity/CustomFieldFilters";
+  TYPE_ROW_HINT,
+  TYPE_ROW_QUESTION,
+} from "../../registry/filterSections";
 import { useDiscovery } from "../../state/DiscoveryContext";
-import { useIsCompact } from "../../state/useIsCompact";
-import { useTypeDefinitions } from "../../state/useTypeDefinitions";
-import { Badge } from "../shared/Badge";
+import {
+  useAllTypeDefinitions,
+  useTypeDefinitions,
+} from "../../state/useTypeDefinitions";
 import { Message } from "../shared/Message";
 import { SectionHeader } from "./SectionHeader";
+import { TypeRow } from "./TypeRow";
+import type { FieldSet } from "./TypeSpecificFilterRows";
+import { TypeSpecificFilterRows } from "./TypeSpecificFilterRows";
 
 /**
- * Block 5 — the type-conditional custom-field filters, appearing and disappearing with the type
- * selection. Two or more types split into "Details (all types)" (the generic definitions, with no
- * type context) plus one section per type carrying only ITS own; with one type selected there is
- * nothing to share and the single "«DisplayName» filters" section carries everything. See
- * `splitTypeDefinitions` for the split.
- *
- * Inside each section, one nested disclosure per definition GROUP (the "More filters" pattern),
- * from the endpoint's own grouping in the order returned — nothing keyed to a specific field.
- * Clause editing reuses YOM-1260's `CustomFieldFilters` with its fixed operators: one per data
- * type, so the youth never picks one (the rules are in `customFieldFilterClauses`).
+ * The guidance line over the type-specific filters (2026-10-06): a generic note, never keyed to
+ * a field, so a group such as "Requirements" doesn't read as an entry rule.
  */
-export const TypeSpecificFilters: React.FC = () => {
+export const TYPE_FILTERS_NOTE =
+  "These describe the opportunity. They are not entry rules. The provider decides who can join.";
+
+/** With no type selected, what picking a type's field does. */
+const ANY_TYPE_NOTE = "Choosing one also picks its type.";
+
+/**
+ * The type-specific filters on offer, as the rows' dropdown groups them (`FieldSet`):
+ *
+ * - one type: its definitions under their own group names;
+ * - two or more: the shared definitions ("All types", no type context), then each type's own
+ *   under its name (`splitTypeDefinitions`);
+ * - none (2026-10-09, Jason): EVERY type's, the same way, from one request
+ *   (`useAllTypeDefinitions`), only while `loadAll` (the block is on screen). Picking a type's
+ *   field selects that type (`TypeSpecificFilterRows`), so the results mean what the filter says:
+ *   the API lets every other type through a type's clause.
+ *
+ * Also the load state, said once by the caller.
+ */
+export function useTypeFilterSets(loadAll: boolean): {
+  types: string[];
+  sets: FieldSet[];
+  /** "Job filters" for one type, else "Type-specific filters". */
+  heading: string;
+  unavailable: boolean;
+  failed: boolean;
+  retry: () => void;
+} {
   const { effectiveFilters, lookups } = useDiscovery();
   const types = effectiveFilters.types;
-  const { shared, perType, unavailable, failed, retry } =
-    useTypeDefinitions(types);
-
-  if (types.length === 0) return null;
-
+  const anyType = types.length === 0;
+  const selected = useTypeDefinitions(types);
+  const allNames = lookups.types.map((t) => t.name);
+  const every = useAllTypeDefinitions(allNames, anyType && loadAll);
+  // Just after a pick selected its type, that type's own list may still be loading: the
+  // all-types list (still cached) stands in, so the block doesn't empty and drop the new row.
+  const everyLoaded = every.shared.length + every.perType.length > 0;
+  const standIn =
+    !anyType && selected.loading && everyLoaded
+      ? {
+          shared: types.length === 1 ? [] : every.shared,
+          perType: types.map((typeName) => ({
+            typeName,
+            definitions: [
+              ...(types.length === 1 ? every.shared : []),
+              ...(every.perType.find((p) => p.typeName === typeName)
+                ?.definitions ?? []),
+            ],
+          })),
+        }
+      : null;
+  const source = anyType ? every : selected;
+  const { unavailable, failed, retry } = source;
+  const { shared, perType } = standIn ?? source;
   const displayNameOf = (name: string): string =>
     lookups.types.find((t) => t.name === name)?.displayName ?? name;
 
-  // A 404 means this API build has no custom-field definitions at all (the DEV preview, until
-  // the YOM-1254 endpoints deploy). Said once, plainly, and NOT as an error — the block is
-  // conditional by design, so rendering nothing would be the silent placeholder the surface
-  // does not allow, and an error would blame the page for the environment.
+  const single = types.length === 1;
+  const sets: FieldSet[] = [
+    {
+      label: single ? null : "All types",
+      typeName: null,
+      definitions: shared,
+    },
+    ...perType.map(({ typeName, definitions }) => ({
+      label: single ? null : displayNameOf(typeName),
+      typeName,
+      definitions,
+    })),
+  ].filter((set) => set.definitions.length > 0);
+
+  return {
+    types,
+    sets,
+    heading:
+      single && types[0]
+        ? `${displayNameOf(types[0])} filters`
+        : "Type-specific filters",
+    unavailable,
+    failed,
+    retry,
+  };
+}
+
+/**
+ * The type-specific filter rows with their heading and note, and the load states said once:
+ * the body under the type pills, in the Filters dialog's Type section and the WHAT popover.
+ */
+export const TypeFiltersBlock: React.FC = () => {
+  const { types, sets, heading, unavailable, failed, retry } =
+    useTypeFilterSets(true);
+
+  // A 404 means this API build has no custom-field definitions at all. Said once, plainly, and
+  // NOT as an error: the block is conditional by design.
   if (unavailable)
     return (
-      <section className="border-gray border-b py-2">
-        <Message>
-          Type-specific filters aren&apos;t available from this API yet.
-        </Message>
-      </section>
+      <Message className="mt-2">
+        Type-specific filters aren&apos;t available from this API yet.
+      </Message>
     );
-
   if (failed)
     return (
-      <section className="border-gray border-b py-2">
-        <Message kind="error">
-          Couldn&apos;t load the filters for this type.{" "}
-          <button
-            type="button"
-            onClick={retry}
-            className="font-semibold underline"
-          >
-            Retry
-          </button>
-        </Message>
-      </section>
+      <Message kind="error" className="mt-2">
+        Couldn&apos;t load the filters for this type.{" "}
+        <button
+          type="button"
+          onClick={retry}
+          className="font-semibold underline"
+        >
+          Retry
+        </button>
+      </Message>
     );
+  if (sets.length === 0) return null;
 
   return (
-    <>
-      {shared.length > 0 && (
-        <DefinitionsSection
-          id="shared"
-          label="Details (all types)"
-          definitions={shared}
-        />
-      )}
-      {perType
-        .filter(({ definitions }) => definitions.length > 0)
-        .map(({ typeName, definitions }) => (
-          <DefinitionsSection
-            key={typeName}
-            id={typeName}
-            label={`${displayNameOf(typeName)} filters`}
-            definitions={definitions}
-            badge={<Badge intent="provenance">FROM THIS TYPE</Badge>}
-          />
-        ))}
-    </>
+    <div className="border-gray/60 mt-1 border-t pt-3">
+      <h4 className="text-sm font-semibold tracking-normal">{heading}</h4>
+      <p className="text-gray-dark pb-2 text-xs">
+        {TYPE_FILTERS_NOTE}
+        {types.length === 0 && ` ${ANY_TYPE_NOTE}`}
+      </p>
+      <TypeSpecificFilterRows sets={sets} />
+    </div>
   );
 };
 
-/** Ordered unique values of a definition field, preserving display order. */
-const orderedUnique = (values: (string | null | undefined)[]): string[] => [
-  ...new Set(values.map((v) => v ?? "")),
-];
+/**
+ * Block 5 — the opportunity type and its own filters as ONE collapsible section (2026-10-09,
+ * Jason): the type pills (`TypeRow`), then the type-specific filter rows (`TypeFiltersBlock`).
+ * Open by default, as the type row always was. The search bar's WHAT popover renders the same
+ * two under its question.
+ */
+export const TypeSection: React.FC = () => {
+  const { effectiveFilters, lookups } = useDiscovery();
+  const [open, setOpen] = useState(true);
 
-/** One collapsible section over a set of definitions — the shared set, or one type's own. */
-const DefinitionsSection: React.FC<{
-  id: string;
-  label: string;
-  definitions: CustomFieldDefinition[];
-  badge?: React.ReactNode;
-}> = ({ id, label, definitions, badge }) => {
-  const { state } = useDiscovery();
-
-  const keys = new Set(definitions.map((d) => d.key));
-  const ownClauses = state.filters.customFields.filter((c) => keys.has(c.key));
-
-  // Collapsed by default, like every section — open only when clauses are already set. The
-  // initializer runs before definitions arrive, so it keys on ANY clauses being present rather
-  // than this section's own (which are unknowable at mount).
-  const [open, setOpen] = useState(() => state.filters.customFields.length > 0);
-
-  const sorted = sortCustomFieldDefinitions(definitions);
-  const groups = orderedUnique(sorted.map((d) => d.group)).map((group) => ({
-    group,
-    definitions: sorted.filter((d) => (d.group ?? "") === group),
-  }));
+  const types = effectiveFilters.types
+    .map((name) => lookups.types.find((t) => t.name === name)?.displayName)
+    .filter((label): label is string => !!label);
+  const clauses = new Set(effectiveFilters.customFields.map((c) => c.key)).size;
+  const value = [
+    types.length > 0 ? types.join(" · ") : "Any type",
+    ...(clauses > 0
+      ? [`${clauses} ${clauses === 1 ? "filter" : "filters"}`]
+      : []),
+  ].join(" · ");
 
   return (
     <section className="border-gray border-b py-1">
       <SectionHeader
-        icon={IoOptionsOutline}
-        label={label}
-        value={`${definitions.length} filters${
-          ownClauses.length > 0 ? ` · ${ownClauses.length} set` : ""
-        }`}
-        badges={badge}
+        icon={IoShapesOutline}
+        label="Type"
+        value={value}
+        subtitle={open ? `${TYPE_ROW_QUESTION} ${TYPE_ROW_HINT}` : null}
         expanded={open}
         onToggle={() => setOpen((v) => !v)}
       />
       {open && (
-        <div className="flex flex-col pb-3">
-          {groups.map(({ group, definitions: groupDefinitions }) => (
-            <GroupDisclosure
-              key={`${id}:${group || "(ungrouped)"}`}
-              label={group || "Details"}
-              definitions={groupDefinitions}
-            />
-          ))}
+        <div className="pb-3">
+          <TypeRow bare />
+          <TypeFiltersBlock />
         </div>
       )}
     </section>
-  );
-};
-
-/**
- * A sub-group that wraps exactly ONE field does not earn a heading: its name becomes the field's
- * label prefix ("Application · Required"). Five of six sub-groups in the seeded data were
- * one-field headings, which is a whole level of chrome per control. Below `md` the heading level
- * goes entirely and every field carries the prefix instead — same information, one less level of
- * nesting on the narrowest screen.
- *
- * The prefix is applied to a COPY of the definition (display only): nothing about the key,
- * grouping or clause shape changes, so this stays a presentation rule over whatever the endpoint
- * returns.
- */
-const prefixed = (
-  definition: CustomFieldDefinition,
-  subGroup: string,
-): CustomFieldDefinition =>
-  subGroup
-    ? { ...definition, title: `${subGroup} · ${definition.title}` }
-    : definition;
-
-/** One definition group as a nested disclosure — the "More filters" pattern, one level down. */
-const GroupDisclosure: React.FC<{
-  label: string;
-  definitions: CustomFieldDefinition[];
-}> = ({ label, definitions }) => {
-  const { state, dispatch, resetEpoch } = useDiscovery();
-  const compact = useIsCompact();
-
-  const keys = new Set(definitions.map((d) => d.key));
-  const ownClauses = state.filters.customFields.filter((c) => keys.has(c.key));
-  const [open, setOpen] = useState(() => ownClauses.length > 0);
-
-  const subGroups = orderedUnique(definitions.map((d) => d.subGroup)).map(
-    (subGroup) => {
-      const own = definitions.filter((d) => (d.subGroup ?? "") === subGroup);
-      // Heading only where it earns its level: more than one field, and room to show it.
-      const heading = subGroup && own.length > 1 && !compact ? subGroup : null;
-      return {
-        subGroup,
-        heading,
-        definitions: heading ? own : own.map((d) => prefixed(d, subGroup)),
-      };
-    },
-  );
-
-  return (
-    // The divider spans the section's FULL width; only the CONTENT is indented — a padded
-    // wrapper would inset the border line too (browser feedback, 2026-09-03). One indent level
-    // only, and a shallower one below md.
-    <div className="border-gray/60 border-b last:border-b-0">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        className="flex min-h-11 w-full items-center gap-3 py-1.5 pl-3 text-left md:pl-7"
-      >
-        <span className="min-w-0 truncate text-sm font-semibold">{label}</span>
-        <span className="text-gray-dark text-xs">
-          {definitions.length}
-          {ownClauses.length > 0 && ` · ${ownClauses.length} set`}
-        </span>
-        <IoChevronDown
-          className={`ml-auto h-5 w-5 shrink-0 transition-transform motion-reduce:transition-none ${open ? "rotate-180" : ""}`}
-        />
-      </button>
-      {open && (
-        // Touch targets: the shared filter controls size themselves for the pointer by default;
-        // discovery opts into the 44px variant (`largeTouchTargets`) for the sheet. It also fixes
-        // one operator per data type (`fixedOperators`) and commits typed values on blur or Enter
-        // (`commitOnBlur`), so a search runs per edit, not per keystroke (2026-10-05).
-        <div className="flex flex-col gap-3 pb-3 pl-3 md:pl-7">
-          {subGroups.map(
-            ({ subGroup, heading, definitions: subDefinitions }) => (
-              <div key={subGroup || "(none)"} className="flex flex-col gap-1">
-                {heading && (
-                  <h4 className="text-gray-dark text-xs font-bold tracking-wide uppercase">
-                    {heading}
-                  </h4>
-                )}
-                <CustomFieldFilters
-                  definitions={subDefinitions}
-                  largeTouchTargets
-                  fixedOperators
-                  commitOnBlur
-                  // Clear filters or a replaced search drops an uncommitted (invalid) draft;
-                  // an unrelated change keeps it, with its error.
-                  resetKey={String(resetEpoch)}
-                  value={state.filters.customFields.filter((c) =>
-                    subDefinitions.some((d) => d.key === c.key),
-                  )}
-                  // Replaces this block's own clauses in the reducer, so a change in another
-                  // block in the same task (a blur commit, then the tap) isn't undone.
-                  onChange={(next) =>
-                    dispatch({
-                      kind: "setCustomFieldClauses",
-                      keys: subDefinitions.map((d) => d.key),
-                      clauses: next,
-                    })
-                  }
-                />
-              </div>
-            ),
-          )}
-        </div>
-      )}
-    </div>
   );
 };

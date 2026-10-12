@@ -175,8 +175,31 @@ export function mapPreferencesToFilters(
   return fragments;
 }
 
+/**
+ * The preference layer without the saved interests switched off one by one (2026-10-08, each
+ * interest has its own chip): they leave the interests fragment, which goes with the last of
+ * them. Applied to the fragments BEFORE anything composes a search, so every rule downstream
+ * (the search, the count, the rails, the place) sees only the interests in play. The chips are
+ * built from the fragments as saved, so a skipped interest keeps its struck-through chip.
+ */
+export function withoutSkippedInterests(
+  fragments: InheritedFragments,
+  interestsSkipped: string[],
+): InheritedFragments {
+  const interests = fragments.targetCategories;
+  if (!interests?.categories || interestsSkipped.length === 0) return fragments;
+  const categories = interests.categories.filter(
+    (id) => !interestsSkipped.includes(id),
+  );
+  const rest = { ...fragments };
+  delete rest.targetCategories;
+  return categories.length > 0
+    ? { ...rest, targetCategories: { ...interests, categories } }
+    : rest;
+}
+
 /** The fragments still in play: none with preferences off, and none the youth switched off. */
-function survivingFragments(
+export function survivingFragments(
   fragments: InheritedFragments,
   preferencesOff: boolean,
   skipped: PreferenceKey[],
@@ -397,6 +420,24 @@ export function skipsAfterSave(
       !SAVABLE_SKIP_KEYS.includes(key) ||
       (key === "skills" && verifiedSkillIds.length > 0),
   );
+}
+
+/**
+ * "Make this my default" for interests switched off one by one: they leave the saved interests;
+ * the rest stay.
+ */
+export function removeInterests(
+  preferences: UserPreferences,
+  interests: string[],
+): UserPreferences {
+  return interests.length === 0
+    ? preferences
+    : {
+        ...preferences,
+        targetCategories: preferences.targetCategories.filter(
+          (id) => !interests.includes(id),
+        ),
+      };
 }
 
 /**

@@ -162,6 +162,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
             onChange={setCustomFieldFilters}
             showErrors={showCustomFieldErrors}
             menuPortalTarget={htmlRef}
+            resolveSkillsById
           />
         ) : (
           <p className="text-gray-dark pb-2 text-sm italic">

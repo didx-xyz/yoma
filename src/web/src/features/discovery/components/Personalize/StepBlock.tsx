@@ -80,6 +80,7 @@ export const StepBlock: React.FC<{
               <Pill
                 key={option.id}
                 label={option.label}
+                imageURL={option.imageURL}
                 active={draft[key].includes(option.id)}
                 onToggle={() =>
                   onPatch({ [key]: toggleIn(draft[key], option.id) })

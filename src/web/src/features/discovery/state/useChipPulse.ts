@@ -1,5 +1,4 @@
 import { useEffect, useRef } from "react";
-import { isDefaultDiscoveryState } from "../lib/urlCodec";
 import { useDiscovery } from "./DiscoveryContext";
 import { useDiscoveryResults } from "./useDiscoveryResults";
 
@@ -10,8 +9,9 @@ import { useDiscoveryResults } from "./useDiscoveryResults";
  * react-query shares it — no second request).
  */
 export function useChipPulse(): string | null {
-  const { state, search, lookups, searchReady, chips } = useDiscovery();
-  const landing = isDefaultDiscoveryState(state);
+  const { state, search, lookups, searchReady, chips, hasFilters } =
+    useDiscovery();
+  const landing = !hasFilters;
   const { loading } = useDiscoveryResults(
     search,
     state.sort,

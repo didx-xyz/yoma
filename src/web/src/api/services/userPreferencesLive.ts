@@ -43,8 +43,9 @@ import {
  * (resending every other profile field as loaded). Country is the profile's and is never written
  * from here.
  *
- * Anonymous preferences are permanently client-held: answers live in `sessionStorage`, with an
- * offer to keep them on sign-in.
+ * Anonymous preferences are permanently client-held: answers live in `localStorage`, with an
+ * offer to keep them on sign-in (which then removes them). Per device since 2026-10-07: in
+ * `sessionStorage` they stayed in the tab that saved them, so every new tab asked again.
  */
 
 const ANONYMOUS_STORAGE_KEY = "yoma.discovery.preferences.anonymous";
@@ -63,7 +64,7 @@ const GOAL_NAMES: Record<UserGoal, string> = {
 
 export const readAnonymousPreferences = (): UserPreferences | null => {
   if (typeof window === "undefined") return null;
-  const raw = window.sessionStorage.getItem(ANONYMOUS_STORAGE_KEY);
+  const raw = window.localStorage.getItem(ANONYMOUS_STORAGE_KEY);
   if (raw === null) return null;
   try {
     return normalizeUserPreferences(JSON.parse(raw));
@@ -77,9 +78,9 @@ export const writeAnonymousPreferences = (
 ): void => {
   if (typeof window === "undefined") return;
   if (preferences === null)
-    window.sessionStorage.removeItem(ANONYMOUS_STORAGE_KEY);
+    window.localStorage.removeItem(ANONYMOUS_STORAGE_KEY);
   else
-    window.sessionStorage.setItem(
+    window.localStorage.setItem(
       ANONYMOUS_STORAGE_KEY,
       JSON.stringify(preferences),
     );

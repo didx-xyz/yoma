@@ -9,9 +9,12 @@ import {
   headingSubject,
   inheritedSummary,
   recentSearchLabel,
-  tunedToParts,
+  tunedToText,
 } from "./chipModel";
-import { mapPreferencesToFilters } from "./preferenceMapping";
+import {
+  mapPreferencesToFilters,
+  withoutSkippedInterests,
+} from "./preferenceMapping";
 import type { SearchLookups } from "./searchRequest";
 import type { DiscoveryFilters, PreferenceKey } from "./types";
 import { EMPTY_DISCOVERY_FILTERS } from "./types";
@@ -84,12 +87,12 @@ const chip = (
 ) => chipsFor(patch, verifiedSkillIds).find((c) => c.id === id);
 
 describe("inherited chip values (2026-10-03)", () => {
-  test('skills: "Skills: {n} job skill(s)", n the skills sent', () => {
+  test('skills: "Skills: {n} of yours", n the skills sent (2026-10-06)', () => {
     const one = chip(
       { selfReportedSkills: [{ id: "s1", name: "Excel" }] },
       "pref:skills",
     );
-    assert.deepEqual([one?.group, one?.value], ["Skills", "1 job skill"]);
+    assert.deepEqual([one?.group, one?.value], ["Skills", "1 of yours"]);
     // Self-attested plus verified, once each.
     const three = chip(
       {
@@ -101,7 +104,24 @@ describe("inherited chip values (2026-10-03)", () => {
       "pref:skills",
       ["s2", "s3"],
     );
-    assert.equal(three?.value, "3 job skills");
+    assert.equal(three?.value, "3 of yours");
+    assert.match(three?.note ?? "", /^Skills you added, or earned/);
+  });
+
+  test('skills: the summaries, which drop the group, say "{n} of your skills"', () => {
+    const chips = chipsFor(
+      { selfReportedSkills: [{ id: "s1", name: "Excel" }] },
+      ["s2"],
+    );
+    assert.deepEqual(inheritedSummary(chips).named, ["2 of your skills"]);
+    assert.deepEqual(headingSubject(null, filteringSummary(chips), 0), {
+      first: "2 of your skills",
+      rest: 0,
+    });
+    assert.equal(
+      recentSearchLabel(null, filteringSummary(chips)),
+      "2 of your skills",
+    );
   });
 
   test('accessibility: "Accessibility: your needs", never naming or counting them', () => {
@@ -212,7 +232,7 @@ describe("inherited chip notes — the tooltip after the label (2026-10-03)", ()
     assert.equal(skills?.provenance, "inherited");
     assert.equal(
       skills?.note,
-      "Jobs that ask for none of these are left out; jobs that list no skills stay in. Other types aren't affected.",
+      "Skills you added, or earned by finishing opportunities. We hide jobs that need none of them. Jobs that don't list skills still show. Other types aren't affected.",
     );
   });
 
@@ -228,7 +248,7 @@ describe("inherited chip notes — the tooltip after the label (2026-10-03)", ()
     );
     assert.equal(
       accessibility?.note,
-      "Leaves out opportunities that say No, or whose list misses one of your needs. Ones that haven't said stay in.",
+      "Hides opportunities that say No, or that miss one of your needs. Ones that haven't said still show.",
     );
   });
 
@@ -254,14 +274,6 @@ describe("inherited chip notes — the tooltip after the label (2026-10-03)", ()
     );
     assert.equal(engagement?.value, "Remote +1");
     assert.equal(engagement?.note, "Remote, On-site");
-    const interests = chip(
-      { targetCategories: ["c-tech", "c-biz"] },
-      "pref:targetCategories",
-    );
-    assert.equal(
-      interests?.note,
-      "Technology, AI & Data, Business, Finance & Marketing",
-    );
     assert.equal(
       chip({ engagement: ["remote"] }, "pref:engagement")?.note,
       null,
@@ -272,7 +284,7 @@ describe("inherited chip notes — the tooltip after the label (2026-10-03)", ()
     assert.equal(
       chipsFor({}, [], { countryId: "za" }).find((c) => c.id === "pref:country")
         ?.note,
-      "Also includes opportunities open worldwide, except in a distance search.",
+      "Also shows worldwide opportunities, but not in a distance search.",
     );
   });
 });
@@ -291,7 +303,7 @@ describe("the skills chip on a search with no jobs (Q8)", () => {
   test("types without Job: ghosted, with why", () => {
     const skills = skillsChip({ types: ["Learning"] });
     assert.equal(skills?.provenance, "inheritedInapplicable");
-    assert.equal(skills?.note, "Not applied — this search has no jobs.");
+    assert.equal(skills?.note, "Not used: this search has no jobs.");
   });
 
   test("no type, or Job among them: applied", () => {
@@ -314,7 +326,7 @@ describe("the skills chip on a search with no jobs (Q8)", () => {
   test("skipped wins: struck through with its own note, not ghosted", () => {
     const skills = skillsChip({ types: ["Learning"] }, {}, ["skills"]);
     assert.equal(skills?.provenance, "inheritedOff");
-    assert.match(skills?.note ?? "", /^Jobs that ask/);
+    assert.match(skills?.note ?? "", /^Skills you added, or earned/);
   });
 });
 
@@ -341,16 +353,30 @@ describe("private chips and the summaries (Q2)", () => {
 
   test('"tuned to": named values first, the private one only in the +N', () => {
     const chips = chipsFor(BIZ_WEEK_NEEDS);
-    const parts = tunedToParts(inheritedSummary(chips), 2);
-    assert.deepEqual(parts, ["Starting a business", "Up to 1 week", "+1"]);
-    assert.equal(leaks(parts.join(" · ")), false);
+    const text = tunedToText(inheritedSummary(chips), 2);
+    assert.equal(text, "Starting a business · Up to 1 week +1 other");
+    assert.equal(leaks(text), false);
+  });
+
+  test('"tuned to" counts a multi-value chip\'s further values with the rest, never "+1 · +2"', () => {
+    const chips = chipsFor({
+      goal: "job",
+      targetCategories: ["c-tech", "c-biz"],
+      engagement: ["remote", "onsite"],
+    });
+    // The engagement chip still reads "Remote +1" on its own.
+    assert.ok(chips.some((c) => c.value === "Remote +1"));
+    // The goal and Technology by name; the other interest and the engagement chip's two values
+    // make 3 others.
+    const summary = inheritedSummary(chips);
+    assert.equal(
+      tunedToText(summary, 2),
+      `${summary.named[0]} · Technology, AI & Data +3 others`,
+    );
   });
 
   test('"tuned to" with nothing nameable is empty — the caller says "your preferences"', () => {
-    assert.deepEqual(
-      tunedToParts(inheritedSummary(chipsFor(WHEELCHAIR)), 2),
-      [],
-    );
+    assert.equal(tunedToText(inheritedSummary(chipsFor(WHEELCHAIR)), 2), "");
     // The rail still renders: a preference applies.
     assert.equal(inheritedSummary(chipsFor(WHEELCHAIR)).unnamed, 1);
   });
@@ -362,6 +388,8 @@ describe("private chips and the summaries (Q2)", () => {
     assert.deepEqual(summary, {
       named: ["Starting a business", "Up to 1 week"],
       unnamed: 0,
+      firsts: ["Starting a business", "Up to 1 week"],
+      more: 0,
     });
   });
 
@@ -423,5 +451,81 @@ describe("private chips and the summaries (Q2)", () => {
         false,
         c.id,
       );
+  });
+});
+
+describe("interests: a chip each, skipped one by one (2026-10-08)", () => {
+  const PREFS = { targetCategories: ["c-tech", "c-biz"] };
+
+  test("one chip per saved interest, named, with its own id", () => {
+    const interests = chipsFor(PREFS).filter(
+      (c) => c.prefKey === "targetCategories",
+    );
+    assert.deepEqual(
+      interests.map((c) => [c.id, c.value, c.interest, c.provenance]),
+      [
+        [
+          "pref:targetCategories:c-tech",
+          "Technology, AI & Data",
+          "c-tech",
+          "inherited",
+        ],
+        [
+          "pref:targetCategories:c-biz",
+          "Business, Finance & Marketing",
+          "c-biz",
+          "inherited",
+        ],
+      ],
+    );
+  });
+
+  test("a skipped interest is struck through; the other keeps filtering", () => {
+    const fragments = mapPreferencesToFilters(
+      { ...EMPTY_USER_PREFERENCES, ...PREFS },
+      {
+        countryId: null,
+        age: null,
+        verifiedSkillIds: [],
+        otherAccommodationId: null,
+      },
+    );
+    const chips = buildChips(
+      EMPTY_DISCOVERY_FILTERS,
+      fragments,
+      false,
+      [],
+      resolve,
+      LOOKUPS,
+      ["c-tech"],
+    );
+    assert.deepEqual(
+      chips
+        .filter((c) => c.prefKey === "targetCategories")
+        .map((c) => [c.interest, c.provenance]),
+      [
+        ["c-tech", "inheritedOff"],
+        ["c-biz", "inherited"],
+      ],
+    );
+    // The search composes without it.
+    assert.deepEqual(
+      withoutSkippedInterests(fragments, ["c-tech"]).targetCategories,
+      { categories: ["c-biz"] },
+    );
+    // The last one skipped takes the fragment with it.
+    assert.equal(
+      withoutSkippedInterests(fragments, ["c-tech", "c-biz"]).targetCategories,
+      undefined,
+    );
+  });
+
+  test("switching off the whole preference strikes every interest", () => {
+    const chips = chipsFor(PREFS, [], { skipped: ["targetCategories"] });
+    assert.ok(
+      chips
+        .filter((c) => c.prefKey === "targetCategories")
+        .every((c) => c.provenance === "inheritedOff"),
+    );
   });
 });

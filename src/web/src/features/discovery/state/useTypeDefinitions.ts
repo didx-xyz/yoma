@@ -1,4 +1,4 @@
-import { useQueries, useQueryClient } from "@tanstack/react-query";
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import type { CustomFieldDefinition } from "~/api/models/opportunity";
 import { getOpportunityCustomFieldDefinitions } from "~/api/services/opportunities";
@@ -60,6 +60,38 @@ export function useTypeDefinitions(typeNames: string[]): TypeDefinitions {
     retry: () => {
       for (const query of queries) if (query.isError) void query.refetch();
     },
+  };
+}
+
+/**
+ * Every type's custom-field definitions in ONE request (`?types=…` for each), for the
+ * type-specific filters with no type selected (2026-10-09): the dropdown offers every type's
+ * fields, and picking one selects its type. Split by `entityContext` like
+ * `splitTypeDefinitions`: the generic definitions once, then each type's own. Only while
+ * `enabled` (the block is on screen), so the landing never pays for it.
+ */
+export function useAllTypeDefinitions(
+  typeNames: string[],
+  enabled: boolean,
+): TypeDefinitions {
+  const query = useQuery({
+    queryKey: OPPORTUNITY_QUERY_KEYS.customFieldDefinitions(typeNames),
+    queryFn: () => getOpportunityCustomFieldDefinitions(typeNames),
+    enabled: CUSTOM_FIELDS_ENABLED && enabled && typeNames.length > 0,
+  });
+  const all = query.data ?? [];
+  return {
+    shared: all.filter((definition) => definition.entityContext === null),
+    perType: typeNames.map((typeName) => ({
+      typeName,
+      definitions: all.filter(
+        (definition) => definition.entityContext === typeName,
+      ),
+    })),
+    loading: query.isLoading,
+    unavailable: query.isError && isNotFoundError(query.error),
+    failed: query.isError && !isNotFoundError(query.error),
+    retry: () => void query.refetch(),
   };
 }
 

@@ -9,9 +9,10 @@ import {
   incentivizedLabel,
   JOB_SKILLS_INAPPLICABLE_NOTE,
   JOB_SKILLS_NOTE,
-  jobSkillsLabel,
   MANUAL_LIST_FACETS,
   PREF_GROUPS,
+  yourSkillsLabel,
+  yourSkillsSummary,
 } from "./chipGroups";
 import type { LocationFragmentState } from "./location";
 import {
@@ -28,6 +29,7 @@ import {
   categoryIdByName,
   composeSearch,
   GOAL_CATEGORY_NAMES,
+  withoutSkippedInterests,
 } from "./preferenceMapping";
 import type { SearchLookups } from "./searchRequest";
 import { jobSkillsApply } from "./searchRequest";
@@ -57,6 +59,11 @@ export interface DiscoveryChip {
   provenance: ChipProvenance;
   /** Set on inherited chips: remove = skip this preference for this search; undo = unskip. */
   prefKey: PreferenceKey | null;
+  /**
+   * Set on an interest's own chip (`targetCategories`, one chip per saved category since
+   * 2026-10-08): remove and undo act on this one interest, not the whole preference.
+   */
+  interest?: string;
   /** Set on manual chips: the facet + raw value the removal edits. */
   facet: keyof DiscoveryFilters | null;
   raw: string | null;
@@ -76,6 +83,19 @@ export interface DiscoveryChip {
    * naming it.
    */
   private: boolean;
+  /**
+   * The value as the summaries print it, without the group, where the value alone wouldn't say
+   * what it is: the inherited skills' "57 of yours" reads "57 of your skills" there. Omitted,
+   * they print `value`.
+   */
+  summaryValue?: string;
+  /**
+   * A multi-value chip ("Technology, AI & Data +3") as the "tuned to" line counts it: its first
+   * value, and how many follow (2026-10-08). That line names first values only and counts every
+   * other value in ONE "+N others", rather than a chip's own "+3" beside its "+4".
+   */
+  summaryFirst?: string;
+  summaryMore?: number;
 }
 
 /** Resolves a raw facet value (usually a lookup id) to its display name. */
@@ -90,6 +110,21 @@ const commitmentLabel = (
 ): string =>
   `Up to ${commitment.count} ${resolve("commitment", commitment.intervalId).toLowerCase()}`;
 
+/** A list fragment's first value, by name, and how many follow it. `null` for a scalar one. */
+function listParts(
+  fragment: Partial<DiscoveryFilters>,
+  resolve: ChipLabelResolver,
+): { first: string; more: number } | null {
+  const [facet, values] =
+    Object.entries(fragment).find(([, v]) => Array.isArray(v)) ?? [];
+  return facet && Array.isArray(values) && typeof values[0] === "string"
+    ? {
+        first: resolve(facet as keyof DiscoveryFilters, values[0]),
+        more: values.length - 1,
+      }
+    : null;
+}
+
 function fragmentValue(
   fragment: Partial<DiscoveryFilters>,
   resolve: ChipLabelResolver,
@@ -98,13 +133,9 @@ function fragmentValue(
   if (typeof fragment.incentivized === "boolean")
     return incentivizedLabel(fragment.incentivized);
   if (typeof fragment.age === "number") return `${fragment.age} years`;
-  const [facet, values] =
-    Object.entries(fragment).find(([, v]) => Array.isArray(v)) ?? [];
-  if (facet && Array.isArray(values) && typeof values[0] === "string") {
-    const first = resolve(facet as keyof DiscoveryFilters, values[0]);
-    return values.length > 1 ? `${first} +${values.length - 1}` : first;
-  }
-  return "";
+  const parts = listParts(fragment, resolve);
+  if (!parts) return "";
+  return parts.more > 0 ? `${parts.first} +${parts.more}` : parts.first;
 }
 
 /** The chip group for whatever facet a fragment carries — `null` for an empty fragment. */
@@ -156,7 +187,16 @@ function inheritedLabel(
   fragment: InheritedFragment,
   resolve: ChipLabelResolver,
   lookups: SearchLookups,
-): Pick<DiscoveryChip, "group" | "value" | "note" | "private"> {
+): Pick<
+  DiscoveryChip,
+  | "group"
+  | "value"
+  | "note"
+  | "private"
+  | "summaryValue"
+  | "summaryFirst"
+  | "summaryMore"
+> {
   const group = PREF_GROUPS[key] ?? facetGroup(fragment) ?? key;
   const goal = fragment.userGoal ? GOAL_CHIPS[fragment.userGoal] : undefined;
   if (key === "goal" && goal)
@@ -169,7 +209,8 @@ function inheritedLabel(
   if (key === "skills")
     return {
       group,
-      value: jobSkillsLabel(fragment.skills?.length ?? 0),
+      value: yourSkillsLabel(fragment.skills?.length ?? 0),
+      summaryValue: yourSkillsSummary(fragment.skills?.length ?? 0),
       note: JOB_SKILLS_NOTE,
       private: false,
     };
@@ -180,11 +221,15 @@ function inheritedLabel(
       note: ACCESSIBILITY_NOTE,
       private: true,
     };
+  const parts = listParts(fragment, resolve);
   return {
     group,
     value: fragmentValue(fragment, resolve),
     note: key === "country" ? COUNTRY_NOTE : allValuesNote(fragment, resolve),
     private: false,
+    ...(parts && parts.more > 0
+      ? { summaryFirst: parts.first, summaryMore: parts.more }
+      : {}),
   };
 }
 
@@ -219,20 +264,27 @@ export function buildChips(
   resolve: ChipLabelResolver,
   /** The request's lookups: whether the skills apply, and the goal's category name. */
   lookups: SearchLookups,
+  /** Interests switched off one by one (`DiscoveryState.interestsSkipped`). */
+  interestsSkipped: string[] = [],
 ): DiscoveryChip[] {
+  // The chips show every preference as saved; the search, the coverage and the place read the
+  // layer without the skipped interests, as the surface composes it.
   const entries = Object.entries(fragments) as [
     PreferenceKey,
     InheritedFragment,
   ][];
-  const active = entries
+  const inPlay = withoutSkippedInterests(fragments, interestsSkipped);
+  const active = (
+    Object.entries(inPlay) as [PreferenceKey, InheritedFragment][]
+  )
     .filter(([key]) => !preferencesOff && !skipped.includes(key))
     .map(([, fragment]) => fragment);
 
-  const search = composeSearch(manual, fragments, preferencesOff, skipped);
+  const search = composeSearch(manual, inPlay, preferencesOff, skipped);
   const effective = search.filters;
   const location = locationFragmentState(
     manual,
-    fragments,
+    inPlay,
     preferencesOff,
     skipped,
   );
@@ -241,6 +293,7 @@ export function buildChips(
     ...inheritedChips(entries, preferencesOff, skipped, resolve, lookups, {
       location: { state: location, countries: effective.countries },
       jobSkillsApply: jobSkillsApply(search, lookups),
+      interestsSkipped,
     }),
     ...manualChips(manual, active, resolve, effective),
   ];
@@ -253,13 +306,13 @@ function locationNote(
   resolve: ChipLabelResolver,
 ): string | null {
   if (state === "replaced")
-    return "Not applied — this search uses the place you picked here.";
+    return "Not used: this search uses the place you picked here.";
   if (state !== "otherCountry") return null;
   if (countries.length === 0)
-    return "Not applied — this search covers every country.";
+    return "Not used: this search covers every country.";
   if (countries.length > 1)
-    return "Not applied — pick one country to use your place.";
-  return `Not applied — this search is for ${resolve("countries", countries[0]!)}.`;
+    return "Not used: pick one country to use your place.";
+  return `Not used: this search is for ${resolve("countries", countries[0]!)}.`;
 }
 
 // Inherited first, in mapping order. Hidden wholesale only by the master switch. The group is
@@ -276,11 +329,38 @@ function inheritedChips(
     location: { state: LocationFragmentState | null; countries: string[] };
     /** The skills group goes out — W2's rule, so the chip and the request cannot disagree. */
     jobSkillsApply: boolean;
+    interestsSkipped: string[];
   },
 ): DiscoveryChip[] {
   if (preferencesOff) return [];
   const { location } = context;
-  return entries.map(([key, fragment]): DiscoveryChip => {
+  return entries.flatMap(([key, fragment]): DiscoveryChip[] => {
+    // One chip per saved interest (2026-10-08), each skipped on its own; the whole preference's
+    // skip still strikes them all.
+    if (key === "targetCategories" && fragment.categories)
+      return fragment.categories.map((id) => ({
+        id: `pref:targetCategories:${id}`,
+        group: PREF_GROUPS[key] ?? facetGroup(fragment) ?? key,
+        value: resolve("categories", id),
+        provenance:
+          skipped.includes(key) || context.interestsSkipped.includes(id)
+            ? "inheritedOff"
+            : "inherited",
+        prefKey: key,
+        interest: id,
+        facet: null,
+        raw: null,
+        private: false,
+        pending: false,
+        note: null,
+      }));
+    return [inheritedChip(key, fragment)];
+  });
+
+  function inheritedChip(
+    key: PreferenceKey,
+    fragment: InheritedFragment,
+  ): DiscoveryChip {
     const base = {
       id: `pref:${key}`,
       group: PREF_GROUPS[key] ?? facetGroup(fragment) ?? key,
@@ -323,7 +403,7 @@ function inheritedChips(
       pending: false,
       note: inapplicable ? JOB_SKILLS_INAPPLICABLE_NOTE : label.note,
     };
-  });
+  }
 }
 
 // Manual chips: whatever the session chose that an active inherited fragment doesn't carry.
@@ -386,6 +466,9 @@ function manualChips(
   // "Picks: Featured" — the facet's only control; removing it resets to the scalar default.
   if (manual.featured === true)
     chips.push(manualChip("featured", "true", "Featured"));
+  // "Showing: All opportunities" — removing it is the way back to the landing.
+  if (manual.all === true)
+    chips.push(manualChip("all", "true", "All opportunities"));
   return chips;
 }
 
@@ -398,11 +481,22 @@ function manualChips(
 export interface ChipSummary {
   named: string[];
   unnamed: number;
+  /**
+   * For the "tuned to" line: each named chip's first value, and how many values follow them
+   * (`summaryFirst` / `summaryMore`). Omitted, `named` with nothing following.
+   */
+  firsts?: string[];
+  more?: number;
 }
 
 const summarize = (chips: DiscoveryChip[]): ChipSummary => {
-  const named = chips.filter((c) => !c.private).map((c) => c.value);
-  return { named, unnamed: chips.length - named.length };
+  const nameable = chips.filter((c) => !c.private);
+  return {
+    named: nameable.map((c) => c.summaryValue ?? c.value),
+    unnamed: chips.length - nameable.length,
+    firsts: nameable.map((c) => c.summaryFirst ?? c.summaryValue ?? c.value),
+    more: nameable.reduce((sum, c) => sum + (c.summaryMore ?? 0), 0),
+  };
 };
 
 /** The preference layer in play: the active inherited chips, not skipped or inapplicable ones. */
@@ -423,15 +517,22 @@ export const filteringSummary = (chips: DiscoveryChip[]): ChipSummary =>
   );
 
 /**
- * "Starting a business · Up to 1 week · +2": the first `shown` nameable values, then the rest —
- * private ones included — as a count. Empty when nothing can be named; the caller then says
- * "your preferences".
+ * "Job · Technology, AI & Data +7 others": the first `shown` nameable values, then EVERY other
+ * value as one count: the other chips, the further values of a multi-value chip (its own "+3"),
+ * and the private ones. The preference banner and the Picked for you subtitle both say it
+ * (2026-10-08; before, "Job · Technology, AI & Data +3 · +4"). Empty when nothing can be named;
+ * the caller then says "your preferences".
  */
-export function tunedToParts(summary: ChipSummary, shown: number): string[] {
-  if (summary.named.length === 0) return [];
-  const listed = summary.named.slice(0, shown);
-  const rest = summary.named.length - listed.length + summary.unnamed;
-  return rest > 0 ? [...listed, `+${rest}`] : listed;
+export function tunedToText(summary: ChipSummary, shown: number): string {
+  const names = summary.firsts ?? summary.named;
+  if (names.length === 0) return "";
+  const listed = names.slice(0, shown);
+  const rest =
+    names.length - listed.length + summary.unnamed + (summary.more ?? 0);
+  const others = rest === 1 ? "other" : "others";
+  return rest > 0
+    ? `${listed.join(" · ")} +${rest} ${others}`
+    : listed.join(" · ");
 }
 
 /**

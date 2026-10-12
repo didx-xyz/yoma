@@ -25,6 +25,7 @@ import {
 import { Message } from "../shared/Message";
 import { NoMatches } from "./NoMatches";
 import { ResultsGrid } from "./ResultsGrid";
+import { GridSkeleton, ListSkeleton } from "./ResultSkeletons";
 import { ResultsList } from "./ResultsList";
 import { SortControl } from "./SortControl";
 import { ViewToggle } from "./ViewToggle";
@@ -151,9 +152,15 @@ export const DiscoveryResults: React.FC<{
               stays on screen; from `sm` it is one line, as before. */}
           <h2 className="flex min-w-0 items-center gap-2 text-base font-bold tracking-normal sm:shrink-0 sm:whitespace-nowrap md:text-lg">
             {total === null ? (
-              // First load only. A static word, not a shimmer: the surface has exactly one
-              // loading treatment (fade the results, blur the previous number).
-              <span className="text-gray-dark font-normal">Searching…</span>
+              // First load only: a skeleton bar where the count will be (2026-10-09, Jason),
+              // and the words for assistive technology.
+              <>
+                <span className="sr-only">Searching…</span>
+                <span
+                  aria-hidden
+                  className="skeleton bg-gray block h-5 w-48 rounded motion-reduce:animate-none"
+                />
+              </>
             ) : (
               // While updating, the previous number stays and only the TEXT blurs — never a
               // swapped-in placeholder box (browser feedback, 2026-09-03).
@@ -205,7 +212,15 @@ export const DiscoveryResults: React.FC<{
           loading ? "opacity-50" : "opacity-100"
         }`}
       >
-        {state.view === "grid" ? (
+        {/* First load: the results' own shapes until they arrive; later loads fade the
+            previous results instead. */}
+        {total === null && !failed ? (
+          state.view === "grid" ? (
+            <GridSkeleton />
+          ) : (
+            <ListSkeleton />
+          )
+        ) : state.view === "grid" ? (
           <ResultsGrid items={items} now={now} incentiveSplitAt={splitAt} />
         ) : (
           <ResultsList items={items} now={now} incentiveSplitAt={splitAt} />

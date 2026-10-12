@@ -10,13 +10,15 @@ import type { DiscoveryFilters, PreferenceKey } from "./types";
  * type OR the Business category since 2026-10-03.
  */
 export const PREF_GROUPS: Partial<Record<PreferenceKey, string>> = {
-  targetCategories: "Interests",
+  // Singular: each interest has its own chip ("Interest: Technology, AI & Data", 2026-10-08).
+  targetCategories: "Interest",
   country: "Where",
   location: "Where",
   age: "Age",
   skills: "Skills",
   maxCommitment: "Time",
-  engagement: "Engagement",
+  // "How: Remote", as the How section and segment name it (2026-10-09).
+  engagement: "How",
   incentivized: "Pay",
   languages: "Language",
   accessibility: "Accessibility",
@@ -30,21 +32,23 @@ export const GOAL_CHIPS: Partial<Record<UserGoal, string>> = {
 
 export const FACET_GROUPS: Partial<Record<keyof DiscoveryFilters, string>> = {
   types: "Type",
-  categories: "Categories",
+  // Singular, like every one-value chip: "Category: Beauty & Personal Care" (2026-10-08).
+  categories: "Category",
   countries: "Where",
   region: "Where",
   city: "Where",
   radiusKm: "Distance",
-  engagementTypes: "Engagement",
+  engagementTypes: "How",
   commitment: "Time",
   incentivized: "Pay",
   hasReward: "Rewards",
   zltoRanges: "Rewards",
   languages: "Language",
   accommodations: "Accessibility",
-  sdgs: "SDGs",
+  sdgs: "Global goal",
   provider: "Provider",
   featured: "Picks",
+  all: "Showing",
   age: "Age",
 };
 
@@ -59,18 +63,24 @@ export const MANUAL_LIST_FACETS = [
   "sdgs",
 ] as const;
 
-/** The inherited skills chip: how many skills the Jobs-only group sends. */
-export const jobSkillsLabel = (count: number): string =>
-  `${count} job ${count === 1 ? "skill" : "skills"}`;
+/**
+ * The inherited skills chip, "Skills: 57 of yours" (Jason, 2026-10-06): how many of the youth's
+ * skills the Jobs-only group sends. They aren't job skills, so the value doesn't say so.
+ */
+export const yourSkillsLabel = (count: number): string => `${count} of yours`;
+
+/** The same count where it's printed without the chip's group: the one-line summaries. */
+export const yourSkillsSummary = (count: number): string =>
+  `${count} of your skills`;
 
 /**
  * The inherited chips' notes — each chip's tooltip after its label (`Chip.tsx`). The skills group
  * narrows Jobs only, so on a search that can return no Job the chip is ghosted with the second.
  */
 export const JOB_SKILLS_NOTE =
-  "Jobs that ask for none of these are left out; jobs that list no skills stay in. Other types aren't affected.";
+  "Skills you added, or earned by finishing opportunities. We hide jobs that need none of them. Jobs that don't list skills still show. Other types aren't affected.";
 export const JOB_SKILLS_INAPPLICABLE_NOTE =
-  "Not applied — this search has no jobs.";
+  "Not used: this search has no jobs.";
 
 /**
  * The inherited accessibility chip, always: the needs are private and the screen may be shared,
@@ -78,11 +88,11 @@ export const JOB_SKILLS_INAPPLICABLE_NOTE =
  */
 export const ACCESSIBILITY_CHIP_VALUE = "your needs";
 export const ACCESSIBILITY_NOTE =
-  "Leaves out opportunities that say No, or whose list misses one of your needs. Ones that haven't said stay in.";
+  "Hides opportunities that say No, or that miss one of your needs. Ones that haven't said still show.";
 
 /** The inherited home country also brings in Worldwide, except with a radius on (2026-10-03). */
 export const COUNTRY_NOTE =
-  "Also includes opportunities open worldwide, except in a distance search.";
+  "Also shows worldwide opportunities, but not in a distance search.";
 
 /**
  * A goal that is more than a type names both halves: "Entrepreneurship, plus Business, Finance &

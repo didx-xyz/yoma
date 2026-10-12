@@ -413,7 +413,7 @@ describe("composeSearch — provenance", () => {
   });
 });
 
-describe('"Make this my default" and skipped skills (2026-10-03)', () => {
+describe('"Save as my default" and skipped skills (2026-10-03)', () => {
   const selfAttested = prefs({
     selfReportedSkills: [{ id: "s1", name: "Excel" }],
   });

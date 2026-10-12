@@ -11,11 +11,7 @@ import type {
   DiscoveryViewMode,
   PreferenceKey,
 } from "./types";
-import {
-  DEFAULT_DISCOVERY_STATE,
-  hasActiveFilters,
-  PREFERENCE_KEYS,
-} from "./types";
+import { DEFAULT_DISCOVERY_STATE, PREFERENCE_KEYS } from "./types";
 
 /**
  * URL ↔ DiscoveryState — the single parser and single serialiser. The URL is the only source of
@@ -41,6 +37,12 @@ import {
  *
  * 2026-10-02 (round 10): `featured=1`, the landing's Featured rail. Only `1` is read: the API
  * filters on `featured == true` alone, so a `0` would be a filter that filters nothing.
+ *
+ * 2026-10-08: `prefsSkipCat=` lists the saved interests (category ids) switched off one by one,
+ * beside `prefsSkip`'s whole preferences.
+ *
+ * 2026-10-08: `all=1`, "All opportunities" — the "Latest opportunities" See all with no place. It
+ * filters nothing (the API never sees it); it only makes the URL a search.
  *
  * 2026-10-05: `cf` clauses without the value their operator needs are dropped on read. A cleared
  * field used to leave `{ operator, value: null }` in the URL, which the API rejects (400), and old
@@ -143,6 +145,7 @@ export function parseDiscoveryQuery(query: Query): DiscoveryState {
       sdgs: list(query, "sdg"),
       provider: single(query, "provider"),
       featured: single(query, "featured") === "1" ? true : null,
+      all: single(query, "all") === "1" ? true : null,
       age: null,
       skills: [],
       customFields: parseCustomFields(single(query, "cf")),
@@ -152,6 +155,7 @@ export function parseDiscoveryQuery(query: Query): DiscoveryState {
       (key): key is PreferenceKey =>
         (PREFERENCE_KEYS as readonly string[]).includes(key),
     ),
+    interestsSkipped: list(query, "prefsSkipCat"),
     sort:
       sort === "endingSoonest" || sort === "mostZlto"
         ? (sort as DiscoverySort)
@@ -181,6 +185,7 @@ export function serializeDiscoveryState(state: DiscoveryState): string {
     if (values.length > 0) params.set(key, values.join(","));
   if (filters.provider) params.set("provider", filters.provider);
   if (filters.featured) params.set("featured", "1");
+  if (filters.all) params.set("all", "1");
   if (filters.incentivized !== null)
     params.set("paid", filters.incentivized ? "1" : "0");
   if (filters.region) params.set("region", filters.region);
@@ -203,19 +208,11 @@ export function serializeDiscoveryState(state: DiscoveryState): string {
   if (state.preferencesOff) params.set("prefsOff", "1");
   if (state.preferencesSkipped.length > 0)
     params.set("prefsSkip", state.preferencesSkipped.join(","));
+  if (state.interestsSkipped.length > 0)
+    params.set("prefsSkipCat", state.interestsSkipped.join(","));
   if (state.sort !== defaults.sort) params.set("sort", state.sort);
   if (state.view !== defaults.view) params.set("view", state.view);
   if (state.page > 1) params.set("page", String(state.page));
 
   return params.toString();
-}
-
-/** True when nothing differs from a clean landing — the "search not yet run" surface. */
-export function isDefaultDiscoveryState(state: DiscoveryState): boolean {
-  return (
-    serializeDiscoveryState({
-      ...state,
-      view: DEFAULT_DISCOVERY_STATE.view,
-    }) === "" && !hasActiveFilters(state.filters)
-  );
 }

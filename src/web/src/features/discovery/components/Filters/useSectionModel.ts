@@ -26,11 +26,19 @@ export interface SectionOption {
   /** `null` = the lookup carries no counts (only categories do today). 0 greys out, stays visible. */
   count: number | null;
   label: string;
+  /** The option's icon (categories, as on Browse by category). Presentation only. */
+  imageURL?: string;
 }
 
 export interface SectionModel {
   options: SectionOption[];
   selected: string[];
+  /**
+   * The selected values the preferences supply and this search does not: `selected` minus the
+   * manual picks (manual wins when a value is both, as in `segmentTone`). Presentation only — the
+   * purple tone of the colour rule (2026-09-30); `toggle` decides what a tap does.
+   */
+  inherited: string[];
   toggle: (id: string) => void;
   /** Header summary of the current selection, e.g. "2 selected" or "Any". */
   summary: string;
@@ -99,6 +107,7 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
     return {
       options,
       selected,
+      inherited: selected.filter((id) => !manual.includes(id)),
       toggle: (id) => {
         if (manual.includes(id)) {
           dispatch({
@@ -110,7 +119,9 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
         const prefKey = selected.includes(id)
           ? owningPreference(fragments, facet, id)
           : null;
-        if (prefKey) skipPreference(prefKey);
+        // A saved interest goes on its own (2026-10-08); any other preference goes whole.
+        if (prefKey === "targetCategories") skipPreference(prefKey, id);
+        else if (prefKey) skipPreference(prefKey);
         else
           dispatch({
             kind: "patchFilters",
@@ -135,12 +146,14 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
     const effective = effectiveFilters.incentivized;
     const selectedId =
       effective === null ? null : effective ? PAID_ID : UNPAID_ID;
+    const inheritedId = filters.incentivized === null ? selectedId : null;
     return {
       options: [
         { id: PAID_ID, label: incentivizedLabel(true), count: null },
         { id: UNPAID_ID, label: incentivizedLabel(false), count: null },
       ],
       selected: selectedId ? [selectedId] : [],
+      inherited: inheritedId ? [inheritedId] : [],
       toggle: (id) => {
         const value = id === PAID_ID;
         const inherited =
@@ -174,6 +187,7 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
           id: c.id,
           label: c.name,
           count: c.count,
+          imageURL: c.imageURL ?? undefined,
         })),
         "categories",
       );
@@ -243,6 +257,7 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
       return {
         options: [],
         selected: [],
+        inherited: [],
         toggle: () => undefined,
         summary: filters.provider ?? "Any",
         status,
@@ -268,6 +283,7 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
       return {
         options,
         selected: selectedId ? [selectedId] : [],
+        inherited: manualId === null && selectedId ? [selectedId] : [],
         toggle: (id) => {
           if (manualId === id) {
             dispatch({ kind: "patchFilters", patch: { commitment: null } });
@@ -313,6 +329,7 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
       return {
         options,
         selected,
+        inherited: [],
         toggle: (id) =>
           dispatch({
             kind: "patchFilters",
@@ -332,7 +349,7 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
               ? paid.summary
               : `${inPlay} selected`,
         status,
-        notice: jobSelected ? "Jobs do not carry ZLTO." : null,
+        notice: jobSelected ? "Jobs don't give ZLTO." : null,
         secondary: paid,
         text: null,
       };
@@ -341,6 +358,7 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
       return {
         options: [],
         selected: [],
+        inherited: [],
         toggle: () => undefined,
         summary: "Coming soon",
         status,

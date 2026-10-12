@@ -412,7 +412,7 @@ describe("preferencesSaved — a saved preset's Goal takes its type's clauses wi
     assert.deepEqual(state.filters.customFields, [DIFFICULTY]);
   });
 
-  test("Make this my default: the skipped Goal is cleared from the preset; nothing was in effect, nothing goes", () => {
+  test("Save as my default: the skipped Goal is cleared from the preset; nothing was in effect, nothing goes", () => {
     const state = reduceDiscovery(
       stateWith(["Event"], [DIFFICULTY], { preferencesSkipped: ["goal"] }),
       {

@@ -28,9 +28,11 @@ export const OpportunityAdminFilterBadges: React.FC<{
   onSubmit,
   className,
 }) => {
-  // resolves a custom-field clause to its display value (option / lookup names)
+  // resolves a custom-field clause to its display value (option / lookup names; the skills in
+  // these clauses by id)
   const describeCustomFieldFilter = useCustomFieldFilterLabeler(
     lookups_customFieldDefinitions,
+    searchFilter.customFields ?? [],
   );
 
   return (

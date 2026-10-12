@@ -35,7 +35,7 @@ export const LOCATION_NOT_APPLIED =
  * distance is in play, so a thin result reads as thin data, not a broken filter.
  */
 export const DISTANCE_NOTE =
-  "Distance only finds opportunities that have a mapped city — many don't have one yet.";
+  "Distance only finds opportunities with a city on the map. Many don't have one yet.";
 
 export const RADIUS_OPTIONS_KM = [10, 25, 50, 100] as const;
 export const DEFAULT_RADIUS_KM = 25;

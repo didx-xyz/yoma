@@ -43,6 +43,13 @@ export interface StepBlockEntry {
   icon?: IconType;
   /** Right-hand caption (readonly identity rows: what the field maps to). */
   caption?: string;
+  /** One line under the label (the goal cards, 2026-10-09): what choosing it means. */
+  description?: string;
+  /**
+   * The opportunity type whose colour the entry's icon takes (the goal cards, 2026-10-09): the
+   * type each goal leads to, as the result cards colour it (`typeBadgeClass`).
+   */
+  toneType?: string;
   comingSoon?: boolean;
 }
 
@@ -78,7 +85,7 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
     id: "goal",
     title: "What brings you to Yoma?",
     subheading:
-      "One choice only — it sets the shape of your feed, and you can change it any time.",
+      "Pick one. We'll show you opportunities that match it. You can change it any time.",
     infoNote: null,
     blocks: [
       {
@@ -88,15 +95,41 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
         note: null,
         optionsSource: null,
         entries: [
-          { id: "job", label: "Get a job", icon: IoBriefcaseOutline },
-          { id: "learn", label: "Learn new skills", icon: IoBookOutline },
-          { id: "event", label: "Attend events", icon: IoCalendarOutline },
+          {
+            id: "job",
+            label: "Get a job",
+            description: "Find full-time, part-time and short-term work.",
+            icon: IoBriefcaseOutline,
+            toneType: "Job",
+          },
+          {
+            id: "learn",
+            label: "Learn new skills",
+            description: "Take courses and training, many of them free.",
+            icon: IoBookOutline,
+            toneType: "Learning",
+          },
+          {
+            id: "event",
+            label: "Attend events",
+            description: "Join workshops, talks and meetups.",
+            icon: IoCalendarOutline,
+            toneType: "Event",
+          },
           {
             id: "impact",
             label: "Volunteer & give back",
+            description: "Help your community and earn rewards.",
             icon: IoHeartOutline,
+            toneType: "ImpactAction",
           },
-          { id: "biz", label: "Start a business", icon: IoRocketOutline },
+          {
+            id: "biz",
+            label: "Start a business",
+            description: "Get support to start or grow your business.",
+            icon: IoRocketOutline,
+            toneType: "Entrepreneurship",
+          },
         ],
       },
     ],
@@ -105,7 +138,7 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
     id: "interests",
     title: "What are you interested in?",
     subheading:
-      "Pick as many as you like — these shape which categories lead your feed.",
+      "Pick as many as you like. We'll show you opportunities in these areas.",
     infoNote: null,
     blocks: [
       {
@@ -122,7 +155,7 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
     id: "skills",
     title: "What skills do you have?",
     subheading:
-      "Search and add skills — verified skills from your YoID count automatically.",
+      "Search and add your skills. Skills you've earned on Yoma are added for you.",
     infoNote: null,
     blocks: [
       {
@@ -130,7 +163,7 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
         prefKey: "skills",
         heading: null,
         // The saved skills narrow Jobs only, inclusively (2026-10-03, `searchRequest.ts`).
-        note: "Your skills narrow jobs only: a job that asks for none of them is hidden, and one that lists no skills stays in.",
+        note: "Your skills only affect jobs. We hide jobs that need none of your skills. Jobs that don't list skills still show.",
         optionsSource: "skills",
         entries: null,
       },
@@ -138,18 +171,18 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
   },
   {
     id: "time-format",
-    title: "How much time do you have?",
+    title: "What works for you?",
     subheading:
-      "The most time you can give, and the ways you'd like to take part.",
+      "How much time you have, how you want to take part, and if you want pay.",
     infoNote: null,
     blocks: [
       {
         kind: "pills",
         prefKey: "maxCommitment",
-        heading: "How long", // matches the filter section's name
+        heading: "Time you have", // matches the filter section's name
         // Matches the section's null rule: a maximum keeps opportunities with no commitment set
         // (the revised search contract, 2026-10-03).
-        note: "Ones with no time commitment stay in your feed.",
+        note: "Opportunities that don't say how long they take still show.",
         optionsSource: "commitmentIntervals",
         entries: null,
       },
@@ -158,8 +191,8 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
       {
         kind: "pills",
         prefKey: "engagement",
-        heading: "How you take part",
-        note: "Pick any that suit you. Ones that don't say how you take part stay in your feed.",
+        heading: "Online or in person",
+        note: "Pick any that suit you. Opportunities that don't say still show.",
         optionsSource: "engagementTypes",
         entries: null,
       },
@@ -169,7 +202,7 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
         kind: "pills",
         prefKey: "incentivized",
         heading: "Pay or rewards",
-        note: "Leave both off if it doesn't matter. Ones with no incentive specified stay in, after the ones that match.",
+        note: "Leave both off if it doesn't matter. Opportunities that don't say still show, after the ones that match.",
         optionsSource: null,
         entries: [
           { id: "yes", label: "Paid or rewarded" },
@@ -180,9 +213,8 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
   },
   {
     id: "language",
-    title: "Your area and languages?",
-    subheading:
-      "Where you're based, and the languages you're comfortable working in.",
+    title: "Where are you, and what languages do you speak?",
+    subheading: "Where you live, and the languages you understand well.",
     infoNote: null,
     blocks: [
       // Step 5, above Languages, rather than a step of its own (Jason, 2026-09-28: keep the
@@ -208,8 +240,8 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
   },
   {
     id: "accessibility-identity",
-    title: "Anything we should accommodate?",
-    subheading: "Opt-in, private to Yoma, and never shared with anyone.",
+    title: "Do you need support to take part?",
+    subheading: "Only if you want to. We keep this private.",
     infoNote: null,
     blocks: [
       // The API's accessibility requirements (2026-09-28): the shared accessibility list, plus a
@@ -220,32 +252,32 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
         kind: "accessibility",
         prefKey: "accessibility",
         heading: "Accessibility",
-        note: "Opportunities that say No, or whose list misses something you pick, are hidden from your feed. Ones that haven't said stay in. Your needs are never shared outside Yoma — not with partners, not in credentials, not in analytics.",
+        note: "We hide opportunities that say they offer no support, or that don't offer something you picked. Ones that haven't said still show. We never share your needs: not with partners, not on your YoID, not in our statistics.",
         optionsSource: "accessibility",
         entries: null,
       },
       {
         kind: "readonly",
         prefKey: null,
-        heading: "From your profile — read, never changed here",
-        note: "These are used to shape your feed and are never written by this dialog.",
+        heading: "From your profile",
+        note: "We use these to choose what you see. You can change them in your profile.",
         optionsSource: null,
         entries: [
           {
             id: "dateOfBirth",
             label: "Date of birth",
             caption:
-              "Maps to: your age — shows opportunities open to it; you can switch it off per search",
+              "Shows opportunities for your age. You can switch this off for a search.",
           },
           {
             id: "gender",
             label: "Gender",
-            caption: "Ranking only — privacy sign-off pending",
+            caption: "Not used to filter",
           },
           {
             id: "education",
             label: "Education",
-            caption: "No filter",
+            caption: "Not used to filter",
           },
         ],
       },

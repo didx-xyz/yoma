@@ -1,63 +1,95 @@
+import Image from "next/image";
 import Link from "next/link";
-import React, { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/router";
+import React, { useCallback, useEffect, useId, useRef, useState } from "react";
+import type { OpportunityInfo } from "~/api/models/opportunity";
+import CustomCarouselV3 from "~/components/Carousel/CustomCarouselV3";
 import { formatNumber } from "../../lib/format";
-import type { DiscoverySearch } from "../../lib/preferenceMapping";
+import type { LandingRail } from "../../lib/landingRails";
 import { useDiscovery } from "../../state/DiscoveryContext";
-import { useDiscoveryResults } from "../../state/useDiscoveryResults";
+import { useInView, useRailResults } from "../../state/useRailResults";
 import { OpportunityCard } from "../Results/OpportunityCard";
+import { CardSkeleton } from "../Results/ResultSkeletons";
+import { Message } from "../shared/Message";
+import { railCopy } from "./railCopy";
 
 /** Share of the rail on screen before its cards rise in. */
 const REVEAL_THRESHOLD = 0.15;
 const STAGGER_MS = 40;
+/** Only the cards a youth can see when the rail arrives rise in; the rest are off to the side. */
+const RISING_CARDS = 5;
+/** How far ahead of the viewport a rail requests its first page, so it is rarely seen loading. */
+const LOAD_AHEAD = "400px 0px";
 
 /**
- * One landing rail — a titled row of cards over a search (`composeSearch`, or `manualSearch` for a
- * rail that ignores preferences) in the default order, with "See all N" navigating to the same
- * set as a real search (the URL is the state, so a rail is just a saved query).
+ * Scroller row, with top room for the card shadow (V3 forces the bottom room). Edge to edge on
+ * phones through `BLEED_CLASS` on its wrapper, not on the scroller itself: the edge fades are
+ * pinned to the wrapper, and on a bled scroller they sat 16px in, a band sliding over the cards
+ * (2026-10-08). `from-gray-light` is the page behind the rails, so the fades show.
+ */
+const BLEED_CLASS = "-mx-4 sm:mx-0";
+const SCROLLER_CLASS = "flex gap-3 px-4 pt-2 scroll-px-4 sm:px-1";
+
+/**
+ * One landing rail (`landingRails`, 2026-10-07): our header over `CustomCarouselV3`, which pages
+ * sideways through the rail's ONE search (`useRailResults`), never a request per card.
  *
- * Round 10 (2026-10-02): below `sm` the row is a sideways snap scroller (290px cards, the next one
- * peeking), a plain `div` because `ScrollableContainer`'s drag handler fights snapping; from `sm`
- * it is the 2-column grid, 4 from `lg`. The first time a rail is 15% on screen its cards rise 8px
- * in sequence, once — a 150ms fade with no stagger under reduced motion. Until then they are
- * transparent, so no frame shows them before the rise begins.
+ * - The header renders at once from the catalogue; "See all N →" fades in when the count
+ *   arrives, in room reserved for it (`min-w-24`), so the title never rewraps. With
+ *   `seeAllExact` false the link has no number; with no query string, no link.
+ * - The body reserves the scroller's exact height (card + 8px top + 12px bottom) and says
+ *   card skeletons until page 1 arrives. The first page is requested ~400px before the rail
+ *   reaches the viewport, so that is rarely on screen.
+ * - A failed rail keeps its header and says so, with a Retry; so does a failed sideways page, at
+ *   the row's end. An empty one collapses: loading starts early, so that almost always happens
+ *   below the fold.
+ * - The first time the loaded rail is 15% on screen its first five cards rise 8px in sequence,
+ *   once (a 150ms fade under reduced motion); until then they are transparent. Cards appended by
+ *   sideways loading just appear.
+ *
+ * Cards: 290px on phones, 272px at 320 so the next one visibly peeks; 288px from `sm`, where 1440
+ * shows four and the 5th peeking. That peek, the edge fades and drag are the sideways affordance
+ * (V3 draws no scrollbar since 2026-10-08).
  */
 export const DiscoveryRail: React.FC<{
-  title: string;
-  subtitle: string;
-  search: DiscoverySearch;
-  /**
-   * `search` is the surface's own (`useDiscovery().search`), preference layer and all, so it waits
-   * on the surface's gate (`searchReady`) too.
-   */
-  personalized?: boolean;
-  /** `""` (a search no URL can carry apart from the landing itself) draws no See all. */
-  seeAllQueryString: string;
+  rail: LandingRail;
+  /** Picked for you's nameable values ("Job · Technology, AI & Data +7 others"); `""` for none. */
+  tunedTo: string;
   now: Date;
-}> = ({
-  title,
-  subtitle,
-  search,
-  personalized = false,
-  seeAllQueryString,
-  now,
-}) => {
-  const { lookups, ready, searchReady } = useDiscovery();
-  const { results } = useDiscoveryResults(
-    search,
-    "newest",
-    1,
-    lookups,
-    personalized ? searchReady : ready && lookups.searchReady,
-  );
-  const items = results?.items.slice(0, 4) ?? [];
-  const drawn = items.length > 0;
+}> = ({ rail, tunedTo, now }) => {
+  const { title, subtitle } = railCopy(rail, tunedTo);
+  const router = useRouter();
+  const { scrollToResults } = useDiscovery();
+  // See all lands on the results, not the top of the page (2026-10-09, Jason): once the route
+  // has changed, the results heading scrolls into view (`scrollToResults` waits for it).
+  const jumpToResults = (): void => {
+    const done = (): void => {
+      router.events.off("routeChangeComplete", done);
+      scrollToResults();
+    };
+    router.events.on("routeChangeComplete", done);
+  };
+  const headingId = useId();
 
+  // The section, or the sentinel a collapsed rail leaves: whichever is mounted is watched.
   const sectionRef = useRef<HTMLElement | null>(null);
+  const { ref: inViewRef, inView } = useInView({ rootMargin: LOAD_AHEAD });
+  const setSection = useCallback(
+    (element: HTMLElement | null) => {
+      sectionRef.current = element;
+      inViewRef(element);
+    },
+    [inViewRef],
+  );
+  const { results, failed, retry, loadData } = useRailResults(rail, inView);
+  const items: OpportunityInfo[] | null = results?.items ?? null;
+  const drawn = items !== null && items.length > 0;
+
   const [revealed, setRevealed] = useState(false);
-  // Keyed on `drawn`: the section only exists once the rail has cards to show.
+  // Keyed on `drawn`: the cards only exist once page 1 has some.
   useEffect(() => {
     const section = sectionRef.current;
-    if (!section || revealed) return;
+    if (!drawn || !section || revealed) return;
     if (typeof IntersectionObserver === "undefined") {
       setRevealed(true);
       return;
@@ -75,60 +107,130 @@ export const DiscoveryRail: React.FC<{
     return () => observer.disconnect();
   }, [drawn, revealed]);
 
-  if (!drawn) return null;
+  // Empty: collapse, header and all (as an empty rail always has). A zero-height sentinel stays,
+  // so a rail that mounts on a cached empty page 1 is still watched, and refreshes once in view.
+  // Its negative margin cancels the landing's gap (`gap-8 md:gap-10`), so it takes no room.
+  if (!failed && items !== null && items.length === 0)
+    return <div ref={setSection} aria-hidden className="-mt-8 h-0 md:-mt-10" />;
+
+  const total = results?.totalCount ?? null;
+  // A CSS id: the rail ids carry a colon (`category:<id>`).
+  const carouselId = `discovery-rail-${rail.id.replace(/[^\w-]/g, "-")}`;
 
   return (
-    <section ref={sectionRef}>
-      <div className="pb-2">
-        <div className="flex items-baseline justify-between gap-3">
-          <h2 className="font-nunito text-base font-black tracking-normal md:text-lg">
-            {title}
+    <section ref={setSection} aria-labelledby={headingId}>
+      <div className="pb-1">
+        <div className="flex items-start justify-between gap-3">
+          <h2
+            id={headingId}
+            className="font-nunito flex min-w-0 items-start gap-2 text-base font-black tracking-normal md:text-lg"
+          >
+            {rail.kind === "category" && rail.category.imageURL && (
+              // The category's own badge, as Browse by category draws it: never tinted.
+              <Image
+                src={rail.category.imageURL}
+                alt=""
+                width={20}
+                height={20}
+                className="mt-0.5 h-5 w-5 shrink-0 md:mt-1"
+              />
+            )}
+            <span className="line-clamp-2">{title}</span>
           </h2>
           {/* An empty query string is the landing itself, never the set the rail shows. */}
-          {seeAllQueryString !== "" &&
-            results?.totalCount !== null &&
-            results !== undefined && (
-              <Link
-                href={`/opportunities/discover?${seeAllQueryString}`}
-                className="text-green shrink-0 text-xs font-semibold whitespace-nowrap md:text-sm"
-              >
-                See all {formatNumber(results.totalCount)} →
-              </Link>
-            )}
+          {rail.seeAllQueryString !== "" && (
+            <span className="min-w-24 shrink-0 text-right leading-6 md:leading-7">
+              {results !== undefined &&
+                (!rail.seeAllExact || total !== null) && (
+                  <Link
+                    href={`/opportunities/discover?${rail.seeAllQueryString}`}
+                    scroll={false}
+                    onClick={jumpToResults}
+                    className="text-green text-xs font-semibold whitespace-nowrap motion-safe:animate-[fade-in_150ms_ease-out] md:text-sm"
+                  >
+                    {rail.seeAllExact && total !== null
+                      ? `See all ${formatNumber(total)} →`
+                      : "See all →"}
+                  </Link>
+                )}
+            </span>
+          )}
         </div>
-        <p className="text-gray-dark text-sm">{subtitle}</p>
+        <p className="text-gray-dark line-clamp-2 text-sm">{subtitle}</p>
       </div>
-      {/* A labelled region, not a tab stop: it scrolls only below `sm`, and there each card's
-          one link scrolls into view in the snap row when tabbed to. The scrollbar is hidden
-          inline: the global unlayered `* { scrollbar-width: thin }` outranks utilities. A
-          scroller clips on both axes, so `-my-2 py-2` gives the cards' shadow room without
-          changing the rail's height. */}
-      <div
-        role="region"
-        aria-label={title}
-        style={{ scrollbarWidth: "none" }}
-        className="-mx-4 -my-2 flex snap-x snap-mandatory scroll-px-4 gap-2.5 overflow-x-auto px-4 py-2 sm:m-0 sm:grid sm:snap-none sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:p-0 lg:grid-cols-4"
-      >
-        {items.map((item, i) => (
-          <div
-            key={item.id}
-            style={
-              revealed
-                ? ({
-                    "--rise-delay": `${i * STAGGER_MS}ms`,
-                  } as React.CSSProperties)
-                : undefined
-            }
-            className={`w-72.5 shrink-0 snap-start sm:w-auto ${
-              revealed
-                ? "motion-safe:animate-[rise-in_240ms_ease-out_both] motion-safe:[animation-delay:var(--rise-delay)] motion-reduce:animate-[fade-in_150ms_ease-out_both]"
-                : "opacity-0 print:opacity-100"
-            }`}
+      {failed ? (
+        <Message kind="error" className="mt-2">
+          Couldn&apos;t load these.{" "}
+          <button
+            type="button"
+            onClick={retry}
+            className="font-semibold underline"
           >
-            <OpportunityCard opportunity={item} now={now} />
+            Retry
+          </button>
+        </Message>
+      ) : items !== null && drawn ? (
+        // Not a tab stop: each card's one link scrolls into view when tabbed to.
+        <div className={BLEED_CLASS}>
+          <CustomCarouselV3
+            id={carouselId}
+            data={items}
+            loadData={loadData}
+            scrollerClassName={SCROLLER_CLASS}
+            shadowFromClassName="from-gray-light"
+            renderLoadFailed={(retryLoad) => (
+              <Message kind="error" className="w-56">
+                Couldn&apos;t load more.{" "}
+                <button
+                  type="button"
+                  onClick={retryLoad}
+                  className="font-semibold underline"
+                >
+                  Retry
+                </button>
+              </Message>
+            )}
+            renderSlide={(item: OpportunityInfo, index: number) => {
+              const rises = index < RISING_CARDS;
+              return (
+                <div
+                  style={
+                    revealed && rises
+                      ? ({
+                          "--rise-delay": `${index * STAGGER_MS}ms`,
+                        } as React.CSSProperties)
+                      : undefined
+                  }
+                  className={`w-[min(18.125rem,calc(100vw-3rem))] sm:w-72 ${
+                    !rises
+                      ? ""
+                      : revealed
+                        ? "motion-safe:animate-[rise-in_240ms_ease-out_both] motion-safe:[animation-delay:var(--rise-delay)] motion-reduce:animate-[fade-in_150ms_ease-out_both]"
+                        : "opacity-0 print:opacity-100"
+                  }`}
+                >
+                  <OpportunityCard opportunity={item} now={now} />
+                </div>
+              );
+            }}
+          />
+        </div>
+      ) : (
+        // The scroller's exact height, so nothing below jumps when the cards arrive: the card and
+        // V3's 8px top and 12px bottom room (it draws no scrollbar). Card skeletons in the
+        // cards' own widths and spacing (2026-10-09, Jason), clipped like the row they become.
+        <div className={`${BLEED_CLASS} overflow-hidden`}>
+          <div className={`${SCROLLER_CLASS} pb-3`}>
+            <span className="sr-only">Searching…</span>
+            {Array.from({ length: 5 }, (_, index) => (
+              <CardSkeleton
+                key={index}
+                className="w-[min(18.125rem,calc(100vw-3rem))] shrink-0 sm:w-72"
+              />
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </section>
   );
 };

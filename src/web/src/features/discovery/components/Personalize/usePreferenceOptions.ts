@@ -18,6 +18,8 @@ import { useDiscovery } from "../../state/DiscoveryContext";
 export interface PreferenceOption {
   id: string;
   label: string;
+  /** The category's icon — the one Browse by category shows. Categories only. */
+  imageURL?: string;
 }
 
 /** The API's minimum for a skill name search (`nameContains`, 3–50 characters). */
@@ -54,6 +56,7 @@ export function usePreferenceOptions(
       return (allCategories ?? lookups.categories).map((c) => ({
         id: c.id,
         label: c.name,
+        imageURL: c.imageURL,
       }));
     case "commitmentIntervals":
       return lookups.timeIntervals.map((i) => ({

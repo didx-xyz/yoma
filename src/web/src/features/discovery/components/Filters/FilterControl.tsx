@@ -1,3 +1,4 @@
+import Image from "next/image";
 import React, { useState } from "react";
 import { IoCloseCircleOutline, IoSearchOutline } from "react-icons/io5";
 import type { FilterSectionDef } from "../../registry/filterSections";
@@ -13,30 +14,98 @@ import { WhereControl } from "./WhereControl";
  */
 const VISIBLE_BEFORE_SHOW_ALL = 8;
 
+/**
+ * Where a selected option comes from: this search's own pick, or the preferences'. The colour
+ * rule (2026-09-30): GREEN = this search, PURPLE = inherited. Manual wins when a value is both.
+ */
+export type OptionTone = "manual" | "inherited" | "off";
+
+/**
+ * The option pills' look per tone (2026-10-07, every chip section and the Type row). An
+ * inherited value is a white pill with a purple outline; this search's picks stay green: filled,
+ * or outlined when the pill carries an icon, which a fill would hide (as in the wizard).
+ */
+export const OPTION_TONE_CLASS: Record<
+  OptionTone,
+  { pill: string; iconPill: string; count: string; iconCount: string }
+> = {
+  off: {
+    pill: "border-gray hover:border-green bg-white text-black",
+    iconPill: "border-gray hover:border-green bg-white text-black",
+    count: "text-gray-dark",
+    iconCount: "text-gray-dark",
+  },
+  manual: {
+    pill: "border-green bg-green text-white",
+    iconPill:
+      "border-green ring-green text-green bg-white font-semibold ring-1",
+    count: "text-green-light",
+    iconCount: "text-green font-normal opacity-70",
+  },
+  inherited: {
+    pill: "border-purple ring-purple text-purple bg-white font-semibold ring-1",
+    iconPill:
+      "border-purple ring-purple text-purple bg-white font-semibold ring-1",
+    count: "text-purple font-normal opacity-70",
+    iconCount: "text-purple font-normal opacity-70",
+  },
+};
+
 const OptionChip: React.FC<{
   option: SectionOption;
-  active: boolean;
+  tone: OptionTone;
   onToggle: () => void;
-}> = ({ option, active, onToggle }) => {
+}> = ({ option, tone, onToggle }) => {
   const zero = option.count === 0;
-  let variant = "border-gray hover:border-green bg-white text-black";
-  if (active) variant = "border-green bg-green text-white";
-  else if (zero) variant = "border-gray text-gray-dark bg-white opacity-50";
+  const icon = !!option.imageURL;
+  const classes = OPTION_TONE_CLASS[tone];
+  const variant =
+    tone === "off" && zero
+      ? "border-gray text-gray-dark bg-white opacity-50"
+      : icon
+        ? classes.iconPill
+        : classes.pill;
+  const count = option.count !== null && (
+    <span
+      className={`ml-1 text-xs ${icon ? classes.iconCount : classes.count}`}
+    >
+      {option.count}
+    </span>
+  );
   return (
     <button
       type="button"
       onClick={onToggle}
       disabled={zero}
-      // 44px on touch, the compact pill from md up.
-      className={`flex min-h-11 items-center rounded-full border px-3 text-xs md:min-h-9 ${variant}`}
+      // 44px on touch, the compact pill from md up. With an icon (the categories) the name
+      // wraps left-aligned beside it at 320, padded, rather than centring under it.
+      className={`flex min-h-11 items-center rounded-full border text-xs md:min-h-9 ${
+        icon
+          ? "gap-1.5 py-1 pr-3 pl-2.5 text-left transition-colors duration-150 motion-reduce:transition-none"
+          : "px-3"
+      } ${variant}`}
     >
-      {option.label}
-      {option.count !== null && (
-        <span
-          className={`ml-1 text-xs ${active ? "text-green-light" : "text-gray-dark"}`}
-        >
-          {option.count}
-        </span>
+      {option.imageURL ? (
+        <>
+          {/* Self-contained badges (glyph on their own circle): drawn as they are, never
+              tinted — the wizard's and Browse by category's icon. */}
+          <Image
+            src={option.imageURL}
+            alt=""
+            width={18}
+            height={18}
+            className="h-4.5 w-4.5 shrink-0"
+          />
+          <span className="min-w-0">
+            {option.label}
+            {count}
+          </span>
+        </>
+      ) : (
+        <>
+          {option.label}
+          {count}
+        </>
       )}
     </button>
   );
@@ -67,7 +136,13 @@ const ChipSet: React.FC<{ model: SectionModel; filterText?: string }> = ({
         <OptionChip
           key={option.id}
           option={option}
-          active={model.selected.includes(option.id)}
+          tone={
+            !model.selected.includes(option.id)
+              ? "off"
+              : model.inherited.includes(option.id)
+                ? "inherited"
+                : "manual"
+          }
           onToggle={() => model.toggle(option.id)}
         />
       ))}

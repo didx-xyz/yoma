@@ -43,7 +43,7 @@ export const sortNote = (
   sort: DiscoverySort,
 ): string | null =>
   sort === "mostZlto" && isJobsOnly(types)
-    ? "Jobs don't carry ZLTO, so they're shown newest first."
+    ? "Jobs don't give ZLTO, so they're sorted newest first."
     : null;
 
 /**

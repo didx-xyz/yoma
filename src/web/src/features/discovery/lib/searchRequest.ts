@@ -38,6 +38,13 @@ import type { DiscoveryFilters, DiscoverySort } from "./types";
  */
 
 /**
+ * The results page size. The landing rails page at it too, so a rail's first page and its See
+ * all's are one request and one query key (`useDiscoveryResults`). It lives here rather than in
+ * the hook so the pure modules and their tests can read it.
+ */
+export const DISCOVERY_PAGE_SIZE = 20;
+
+/**
  * The lookups the request resolves through; `DiscoveryLookups` satisfies it. Worldwide and the
  * goal's category are found by code and name, so a list that failed to load degrades the request
  * (no Worldwide entry; the goal's type alone) rather than blocking it.
@@ -50,9 +57,9 @@ export interface SearchLookups {
 }
 
 /**
- * The sort → `ordering` (2026-10-03). Newest is the API's own default order — the "Newest on
- * Yoma" rail's — so it sends none. The others break ties (and order the nulls, which sort last)
- * newest first, rather than by id.
+ * The sort → `ordering` (2026-10-03). Newest is the API's own default order, latest start date
+ * first — the "Latest opportunities" rail's — so it sends none. The others break ties (and order
+ * the nulls, which sort last) by date created, newest first, rather than by id.
  */
 const ORDERING: Record<DiscoverySort, OpportunitySearchOrdering[] | undefined> =
   {
