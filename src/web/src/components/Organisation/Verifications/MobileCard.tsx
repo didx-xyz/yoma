@@ -3,6 +3,7 @@ import Link from "next/link";
 import { IoInformationCircleOutline } from "react-icons/io5";
 import { IoMdAlert, IoMdCheckmark, IoMdClose } from "react-icons/io";
 import { type MyOpportunityInfo } from "~/api/models/myOpportunity";
+import { completionLocation } from "~/components/MyOpportunity/completionLocation";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { getSafeUrl } from "~/lib/utils";
 import { useRouter } from "next/router";
@@ -33,6 +34,7 @@ const MobileCard: React.FC<MobileCardProps> = ({
   const partnerSourceLabel =
     item.syncedInfo?.partners?.map((partner) => partner.partner).join(", ") ||
     null;
+  const where = completionLocation(item);
   const detailsHref = `/organisations/${id}/opportunities/${item.opportunityId}/info?returnUrl=${encodeURIComponent(
     getSafeUrl(returnUrl?.toString(), router.asPath),
   )}`;
@@ -68,6 +70,13 @@ const MobileCard: React.FC<MobileCardProps> = ({
           <p className="text-sm tracking-wider">Student</p>
           <span className="text-right text-sm">{item.userDisplayName}</span>
         </div>
+
+        {where && (
+          <div className="flex justify-between gap-4">
+            <p className="text-sm tracking-wider">{where.label}</p>
+            <span className="text-right text-sm">{where.text}</span>
+          </div>
+        )}
 
         <div className="flex justify-between gap-4">
           <p className="text-sm tracking-wider">Date connected</p>

@@ -246,7 +246,7 @@ describe("toSearchFilterPayload — flat filters", () => {
   test("custom-field clauses pass through as they are", () => {
     const customFields = [
       {
-        key: "jobSalaryMinimum",
+        key: "JobSalaryMinimum",
         operator: CustomFieldFilterOperator.GreaterThanOrEqual,
         value: "5000",
       },
@@ -255,7 +255,7 @@ describe("toSearchFilterPayload — flat filters", () => {
         operator: CustomFieldFilterOperator.AnyOf,
         values: ["remote", "hybrid"],
       },
-      { key: "eventRole", unspecified: UnspecifiedMatch.Only },
+      { key: "EventRole", unspecified: UnspecifiedMatch.Only },
     ];
     const body = toYouth({ ...EMPTY_FILTER, customFields });
 
@@ -496,7 +496,7 @@ describe("toSearchFilterPayload — typed requests", () => {
         },
       ],
       customFields: [
-        { key: "jobSalaryMinimum", unspecified: UnspecifiedMatch.Only },
+        { key: "JobSalaryMinimum", unspecified: UnspecifiedMatch.Only },
       ],
     };
     const snapshot = structuredClone(request);

@@ -81,6 +81,7 @@ import NoRowsMessage from "~/components/NoRowsMessage";
 import VerificationExport from "~/components/Opportunity/Admin/VerificationExport";
 import { VerificationImport } from "~/components/Opportunity/Admin/VerificationImport";
 import { OpportunityCompletionRead } from "~/components/Opportunity/OpportunityCompletionRead";
+import { completionLocation } from "~/components/MyOpportunity/completionLocation";
 import MobileCard from "~/components/Organisation/Verifications/MobileCard";
 import VerificationAdminFilterVertical, {
   VerificationFilterOptions,
@@ -946,6 +947,12 @@ const OpportunityVerifications: NextPageWithLayout<{
                       </th>
                       <th className="border-gray-light pl-0">Student</th>
                       <th className="border-gray-light">Opportunity</th>
+                      <th
+                        className="border-gray-light w-[200px]"
+                        title="Where it was completed. For Entrepreneurship, where the business is."
+                      >
+                        Location
+                      </th>
                       <th className="border-gray-light w-[195px]">
                         Date connected
                       </th>
@@ -993,6 +1000,21 @@ const OpportunityVerifications: NextPageWithLayout<{
                               >
                                 {item.opportunityTitle}
                               </Link>
+                            );
+                          })()}
+                        </td>
+                        <td className="border-gray-light text-gray-dark w-[200px] border-t-2 !align-top text-sm">
+                          {(() => {
+                            const where = completionLocation(item);
+                            return where ? (
+                              <span
+                                className="line-clamp-2"
+                                title={`${where.label}: ${where.text}`}
+                              >
+                                {where.text}
+                              </span>
+                            ) : (
+                              <span title="Not recorded">—</span>
                             );
                           })()}
                         </td>

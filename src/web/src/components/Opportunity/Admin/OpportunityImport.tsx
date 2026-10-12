@@ -310,6 +310,19 @@ export const OpportunityImport: React.FC<InputProps> = ({
                       Provider (informational name, up to 255 characters; does
                       not change the owning organisation)
                     </li>
+                    <li>
+                      ProviderURL (the provider&apos;s website, a valid URL up
+                      to 2048 characters; not the opportunity&apos;s Link)
+                    </li>
+                    <li>
+                      ProviderLogoURL (a link to the provider&apos;s logo image,
+                      a valid URL up to 2048 characters)
+                    </li>
+                    <li>
+                      ProviderCountry (where the provider is based, one ISO
+                      CodeAlpha2 code, e.g. ZA; Worldwide (WW) is not allowed.
+                      Not where the opportunity is available)
+                    </li>
                     <li>Incentivized (Yes, No)</li>
                     <li>RewardType (None, ZLTO, PartnerIncentive)</li>
                     <li>
@@ -349,23 +362,23 @@ export const OpportunityImport: React.FC<InputProps> = ({
                   </p>
                   <ul className="ml-5 list-disc">
                     <li>
-                      Learning: CF:learningDifficulty (Beginner, Intermediate,
+                      Learning: CF:LearningDifficulty (Beginner, Intermediate,
                       Advanced, AnyLevel)
                     </li>
                     <li>
-                      Other: CF:otherDifficulty (Beginner, Intermediate,
+                      Other: CF:OtherDifficulty (Beginner, Intermediate,
                       Advanced, AnyLevel)
                     </li>
                     <li>
-                      ImpactAction: CF:impactActionDifficulty (EntryLevel,
+                      ImpactAction: CF:ImpactActionDifficulty (EntryLevel,
                       ExperienceNeeded, SkillsRequired)
                     </li>
                     <li>
-                      Event: CF:eventDifficulty (OpenToAll, FamiliarityNeeded,
+                      Event: CF:EventDifficulty (OpenToAll, FamiliarityNeeded,
                       ExperiencedIndividuals)
                     </li>
                     <li>
-                      Job: CF:jobExperienceLevel (None, EntryJunior, Mid,
+                      Job: CF:JobExperienceLevel (None, EntryJunior, Mid,
                       Senior)
                     </li>
                     <li>Entrepreneurship: none</li>
@@ -380,19 +393,19 @@ export const OpportunityImport: React.FC<InputProps> = ({
                   </p>
                   <ul className="ml-5 list-disc">
                     <li>
-                      CF:impactActionToolsRequired (Computer, Smartphone,
+                      CF:ImpactActionToolsRequired (Computer, Smartphone,
                       Tablet, GpsDevice, Camera, PowerBank, ProtectiveEquipment,
                       HandTools, GardeningTools, CleaningEquipment,
                       MeasuringEquipment, Stationery, Other; separate several
                       with |)
                     </li>
                     <li>
-                      CF:impactActionToolsOtherDescription (up to 500
+                      CF:ImpactActionToolsOtherDescription (up to 500
                       characters; required with Other and not allowed without it
                       — to clear both, leave both cells empty)
                     </li>
                     <li>
-                      CF:impactActionVerifiedActivityType
+                      CF:ImpactActionVerifiedActivityType
                       (VerifiedFacilitationSession,
                       WaterQualityMonitoringSession,
                       VerifiedInclusiveStorytelling)
@@ -403,16 +416,16 @@ export const OpportunityImport: React.FC<InputProps> = ({
                   </p>
                   <ul className="ml-5 list-disc">
                     <li>
-                      CF:entrepreneurshipProgrammeType (BeGreen, EKYAN,
+                      CF:EntrepreneurshipProgrammeType (BeGreen, EKYAN,
                       JACompanyProgramme, UmuziVentures, SupaMotoAcademy, Other)
                     </li>
                     <li>
-                      CF:entrepreneurshipProgrammeOtherDescription (up to 255
+                      CF:EntrepreneurshipProgrammeOtherDescription (up to 255
                       characters; required with Other and not allowed without it
                       — to clear both, leave both cells empty)
                     </li>
                     <li>
-                      CF:entrepreneurshipVentureStageTargeted (IdeaPreVenture,
+                      CF:EntrepreneurshipVentureStageTargeted (IdeaPreVenture,
                       InformalSelfEmployed, RegisteredEarlyStage,
                       EstablishedGrowth)
                     </li>

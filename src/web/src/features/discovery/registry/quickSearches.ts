@@ -154,7 +154,7 @@ export const QUICK_SEARCHES: QuickSearchDef[] = [
     label: "No experience needed",
     status: "parked",
     needs:
-      "Job Experience Level is an ordinary custom field (jobExperienceLevel, not system-controlled) — a badge may not key to it until the API protects it",
+      "Job Experience Level is an ordinary custom field (JobExperienceLevel, not system-controlled) — a badge may not key to it until the API protects it",
     resolve: () => null,
   },
   {

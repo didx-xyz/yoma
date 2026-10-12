@@ -13,8 +13,8 @@ const keys = (definitions: CustomFieldDefinition[]): string[] =>
   definitions.map((d) => d.key);
 
 const GENERIC = definition("difficulty", null);
-const JOB = [GENERIC, definition("jobSalaryMinimum", "Job")];
-const EVENT = [GENERIC, definition("eventRole", "Event")];
+const JOB = [GENERIC, definition("JobSalaryMinimum", "Job")];
+const EVENT = [GENERIC, definition("EventRole", "Event")];
 
 describe("splitTypeDefinitions — by entityContext (rule 6)", () => {
   test("one type: nothing shared, its section carries everything, as before", () => {
@@ -22,7 +22,7 @@ describe("splitTypeDefinitions — by entityContext (rule 6)", () => {
     assert.deepEqual(split.shared, []);
     assert.deepEqual(
       split.perType.map((t) => [t.typeName, keys(t.definitions)]),
-      [["Job", ["difficulty", "jobSalaryMinimum"]]],
+      [["Job", ["difficulty", "JobSalaryMinimum"]]],
     );
   });
 
@@ -32,8 +32,8 @@ describe("splitTypeDefinitions — by entityContext (rule 6)", () => {
     assert.deepEqual(
       split.perType.map((t) => [t.typeName, keys(t.definitions)]),
       [
-        ["Job", ["jobSalaryMinimum"]],
-        ["Event", ["eventRole"]],
+        ["Job", ["JobSalaryMinimum"]],
+        ["Event", ["EventRole"]],
       ],
     );
   });
@@ -62,7 +62,7 @@ describe("typeOwnKeys — one type's own keys, from what is already loaded", () 
   test("from its own list: the definitions with its context, never the generic ones", () => {
     assert.deepEqual(
       typeOwnKeys("Job", [{ types: ["Job"], definitions: JOB }]),
-      ["jobSalaryMinimum"],
+      ["JobSalaryMinimum"],
     );
   });
 
@@ -71,7 +71,7 @@ describe("typeOwnKeys — one type's own keys, from what is already loaded", () 
       typeOwnKeys("Event", [
         { types: ["Job", "Event"], definitions: [...JOB, ...EVENT] },
       ]),
-      ["eventRole"],
+      ["EventRole"],
     );
   });
 
@@ -106,7 +106,7 @@ describe("typeOwnKeys — one type's own keys, from what is already loaded", () 
         { types: ["Event"], definitions: undefined },
         { types: ["Job", "Event"], definitions: [...JOB, ...EVENT] },
       ]),
-      ["eventRole"],
+      ["EventRole"],
     );
   });
 });

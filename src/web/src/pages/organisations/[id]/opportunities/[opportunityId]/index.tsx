@@ -62,6 +62,8 @@ import {
   updateOpportunity,
 } from "~/api/services/opportunities";
 import { AvatarImage } from "~/components/AvatarImage";
+import { ProviderLogo } from "~/components/Opportunity/ProviderLogo";
+import { absoluteWebURL } from "~/components/Opportunity/providerFacts";
 import CustomModal from "~/components/Common/CustomModal";
 import FormCheckbox from "~/components/Common/FormCheckbox";
 import FormField from "~/components/Common/FormField";
@@ -244,6 +246,10 @@ const toOpportunityRequestViewModel = (
     showZltoRewardPool: zlto && !!opportunity?.zltoRewardPool,
     externalId: opportunity?.externalId ?? "",
     provider: opportunity?.provider ?? null,
+    // The update replaces these too, so an import's or a partner's values must round-trip.
+    providerURL: opportunity?.providerURL ?? null,
+    providerLogoURL: opportunity?.providerLogoURL ?? null,
+    providerCountryId: opportunity?.providerCountryId ?? null,
     // null on legacy / imported data — manual capture then requires an explicit answer
     incentivized: opportunity?.incentivized ?? null,
     rewardType,
@@ -397,6 +403,14 @@ const OpportunityAdminDetails: NextPageWithLayout<{
         label: c.name,
       })) ?? [],
     [countriesData],
+  );
+  // Where the provider is based: a specific country, so Worldwide is left out.
+  const providerCountryOptions = useMemo<SelectOption[]>(
+    () =>
+      countriesOptions.filter(
+        (c) => !isWorldwideCountry(c.value, countriesData),
+      ),
+    [countriesOptions, countriesData],
   );
 
   // Languages
@@ -572,6 +586,23 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       .string()
       .max(255, "Provider cannot exceed 255 characters.")
       .nullish(),
+    providerURL: z
+      .string()
+      .max(2048, "Provider website cannot exceed 2048 characters.")
+      .nullish()
+      .refine(
+        (value) => !value?.trim() || absoluteWebURL(value) !== null,
+        "Please enter a valid link, e.g. https://www.example.com",
+      ),
+    providerLogoURL: z
+      .string()
+      .max(2048, "Provider logo link cannot exceed 2048 characters.")
+      .nullish()
+      .refine(
+        (value) => !value?.trim() || absoluteWebURL(value) !== null,
+        "Please enter a valid link, e.g. https://www.example.com/logo.png",
+      ),
+    providerCountryId: z.string().nullish(),
   });
 
   const {
@@ -589,6 +620,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   });
 
   const watchTypeId = watchStep1("typeId");
+  const watchProvider = watchStep1("provider");
+  const watchProviderLogoURL = watchStep1("providerLogoURL");
   const isJobOpportunity = isJobOpportunityTypeValue(
     watchTypeId ?? formData.typeId,
   );
@@ -1590,6 +1623,12 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       verificationEnabled: formData.verificationEnabled ?? false,
       verificationMethod: formData.verificationMethod,
       provider: formData.provider?.trim() || null,
+      providerURL: absoluteWebURL(formData.providerURL),
+      providerLogoURL: absoluteWebURL(formData.providerLogoURL),
+      providerCountryId: formData.providerCountryId || null,
+      providerCountry:
+        countriesData?.find((x) => x.id === formData.providerCountryId)?.name ??
+        null,
       incentivized: formData.incentivized,
       rewardType: formData.rewardType,
       partnerIncentiveAmount:
@@ -1875,6 +1914,10 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
         // core metadata: blanks → null, unset numbers → null, selections consistent with rules
         data.provider = data.provider?.trim() || null;
+        // The API takes absolute links only: a typed "example.com" gains https://
+        data.providerURL = absoluteWebURL(data.providerURL);
+        data.providerLogoURL = absoluteWebURL(data.providerLogoURL);
+        data.providerCountryId = data.providerCountryId || null;
         data.ageFrom = finiteOrNull(data.ageFrom);
         data.ageTo = finiteOrNull(data.ageTo);
         data.commitmentIntervalId = data.commitmentIntervalId || null;
@@ -2625,6 +2668,111 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                           id: "input_provider", // e2e
                           ...registerStep1("provider"),
                         }}
+                      />
+                    </FormField>
+
+                    <FormField
+                      label="Provider website"
+                      subLabel="Optional. The provider's own website, shown on the opportunity page. Not the Link above."
+                      showWarningIcon={
+                        !!formStateStep1.errors.providerURL?.message
+                      }
+                      showError={
+                        !!formStateStep1.touchedFields.providerURL ||
+                        formStateStep1.isSubmitted
+                      }
+                      error={formStateStep1.errors.providerURL?.message}
+                    >
+                      <FormInput
+                        className="md:w-1/2"
+                        inputProps={{
+                          type: "text",
+                          placeholder: "https://www.example.com",
+                          maxLength: 2048,
+                          id: "input_provider_url", // e2e
+                          ...registerStep1("providerURL"),
+                        }}
+                      />
+                    </FormField>
+
+                    <FormField
+                      label="Provider logo"
+                      subLabel="Optional. A link to the provider's logo image. Your organisation's logo is shown separately."
+                      showWarningIcon={
+                        !!formStateStep1.errors.providerLogoURL?.message
+                      }
+                      showError={
+                        !!formStateStep1.touchedFields.providerLogoURL ||
+                        formStateStep1.isSubmitted
+                      }
+                      error={formStateStep1.errors.providerLogoURL?.message}
+                    >
+                      <div className="flex items-center gap-3 md:w-1/2">
+                        <FormInput
+                          className="grow"
+                          inputProps={{
+                            type: "text",
+                            placeholder: "https://www.example.com/logo.png",
+                            maxLength: 2048,
+                            id: "input_provider_logo_url", // e2e
+                            ...registerStep1("providerLogoURL"),
+                          }}
+                        />
+                        {/* A broken link shows the fallback tile, so the admin can tell */}
+                        <ProviderLogo
+                          url={absoluteWebURL(watchProviderLogoURL)}
+                          name={watchProvider}
+                        />
+                      </div>
+                    </FormField>
+
+                    <FormField
+                      label="Provider country"
+                      subLabel="Optional. Where the provider is based, not where the opportunity is available. A Worldwide opportunity also shows up in searches for this country."
+                      showWarningIcon={
+                        !!formStateStep1.errors.providerCountryId?.message
+                      }
+                      showError={
+                        !!formStateStep1.touchedFields.providerCountryId ||
+                        formStateStep1.isSubmitted
+                      }
+                      error={formStateStep1.errors.providerCountryId?.message}
+                    >
+                      <Controller
+                        control={controlStep1}
+                        name="providerCountryId"
+                        render={({ field: { onChange, value, onBlur } }) => (
+                          <Select
+                            instanceId="providerCountryId"
+                            classNames={{
+                              control: () =>
+                                "input w-full pr-0 pl-2 !border-gray md:w-1/2",
+                            }}
+                            options={providerCountryOptions}
+                            onBlur={onBlur} // mark the field as touched
+                            onChange={(val) => onChange(val?.value ?? null)}
+                            value={
+                              providerCountryOptions.find(
+                                (c) => c.value === value,
+                              ) ?? null
+                            }
+                            isClearable
+                            // fix menu z-index issue
+                            menuPortalTarget={htmlRef.current}
+                            styles={{
+                              menuPortal: (base) => ({
+                                ...base,
+                                zIndex: 9999,
+                              }),
+                              placeholder: (base) => ({
+                                ...base,
+                                color: "#A3A6AF",
+                              }),
+                            }}
+                            inputId="input_provider_country" // e2e
+                            placeholder="Select country..."
+                          />
+                        )}
                       />
                     </FormField>
 

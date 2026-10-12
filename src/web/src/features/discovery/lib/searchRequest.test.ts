@@ -244,7 +244,7 @@ describe("rule 2 — modes by provenance", () => {
           featured: true,
           customFields: [
             {
-              key: "eventRole",
+              key: "EventRole",
               operator: CustomFieldFilterOperator.Equals,
               values: ["Speaker"],
             },
@@ -520,7 +520,7 @@ describe("rule 5 — country and Worldwide (L1)", () => {
 describe("rule 6 — custom-field clauses stay root", () => {
   test("sent as they are, beside the groups", () => {
     const clause = {
-      key: "jobSalaryMinimum",
+      key: "JobSalaryMinimum",
       operator: CustomFieldFilterOperator.GreaterThanOrEqual,
       values: ["5000"],
     };
@@ -704,7 +704,7 @@ describe("rule 11 — group limits", () => {
           featured: true,
           customFields: [
             {
-              key: "jobSalaryMinimum",
+              key: "JobSalaryMinimum",
               operator: CustomFieldFilterOperator.GreaterThanOrEqual,
               values: ["5000"],
             },

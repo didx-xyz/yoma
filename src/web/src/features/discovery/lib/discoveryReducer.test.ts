@@ -22,18 +22,18 @@ const OP = CustomFieldFilterOperator;
 type Query = Record<string, string>;
 
 const INDUSTRY: CustomFieldFilter = {
-  key: "jobIndustry",
+  key: "JobIndustry",
   operator: OP.AnyOf,
   values: ["K"],
 };
 const SALARY: CustomFieldFilter = {
-  key: "jobSalaryMinimum",
+  key: "JobSalaryMinimum",
   operator: OP.GreaterThanOrEqual,
   value: "5000",
 };
 
 const DIFFICULTY: CustomFieldFilter = {
-  key: "eventDifficulty",
+  key: "EventDifficulty",
   operator: OP.AnyOf,
   values: ["Beginner"],
 };

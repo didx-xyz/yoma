@@ -18,8 +18,8 @@ import {
   IoLocationOutline,
   IoPeopleCircleOutline,
   IoPersonOutline,
+  IoOpenOutline,
   IoPricetagsOutline,
-  IoStorefrontOutline,
   IoTimeOutline,
 } from "react-icons/io5";
 import {
@@ -32,6 +32,8 @@ import {
 } from "~/components/Opportunity/Admin/opportunityCoreFields";
 import { CustomFieldsView } from "~/components/Opportunity/CustomFieldsView";
 import { getCommitmentDisplay } from "~/components/Opportunity/opportunityTypeTheme";
+import { ProviderLogo } from "~/components/Opportunity/ProviderLogo";
+import { providerFacts } from "~/components/Opportunity/providerFacts";
 import { MoneyBadge } from "~/features/discovery/components/Results/MoneyBadge";
 import { closingInfo } from "~/features/discovery/lib/dates";
 import { moneyFactsOf } from "~/features/discovery/lib/money";
@@ -651,7 +653,7 @@ export const OpportunityDetailSections: React.FC<{
     preview,
   ]);
 
-  const provider = opportunity.provider?.trim() ? opportunity.provider : null;
+  const provider = providerFacts(opportunity);
   const visibleGroups = [
     ...GROUPS.filter(
       (g) =>
@@ -792,7 +794,7 @@ export const OpportunityDetailSections: React.FC<{
         {visibleGroups.map((g) => {
           const groupSections = sections.filter((s) => s.group === g.id);
           const hostContent = extraGroups.find((x) => x.id === g.id)?.content;
-          const showProvider = g.id === "provider" && !!provider;
+          const showProvider = g.id === "provider" ? provider : null;
           return (
             <section
               key={g.id}
@@ -821,14 +823,45 @@ export const OpportunityDetailSections: React.FC<{
                   <div className="lg:col-span-2">{hostContent}</div>
                 )}
                 {showProvider && (
-                  // Provider is a card, not a disclosure — informational provider text,
-                  // not the owning organisation
+                  // Provider is a card, not a disclosure — who delivers the opportunity, not
+                  // the owning organisation: its logo, name, where it is based and its website
                   <div className="border-gray flex items-center gap-3.5 rounded-[18px] border bg-white px-5 py-[18px]">
-                    <span className="bg-gray-light text-gray-dark flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
-                      <IoStorefrontOutline className={ICON} />
-                    </span>
-                    <span className="min-w-0 text-[15px] font-extrabold text-black">
-                      {provider}
+                    <ProviderLogo
+                      url={showProvider.logoURL}
+                      name={showProvider.name}
+                    />
+                    <span className="flex min-w-0 flex-col gap-0.5">
+                      {showProvider.name && (
+                        <span className="text-[15px] font-extrabold wrap-break-word text-black">
+                          {showProvider.name}
+                        </span>
+                      )}
+                      {showProvider.basedIn && (
+                        <span className="text-gray-dark flex items-center gap-1 text-sm">
+                          <IoLocationOutline
+                            className="h-3.5 w-3.5 shrink-0"
+                            aria-hidden="true"
+                          />
+                          {showProvider.basedIn}
+                        </span>
+                      )}
+                      {showProvider.website && (
+                        <a
+                          href={showProvider.website.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-green flex min-w-0 items-center gap-1 text-sm font-semibold hover:underline"
+                        >
+                          <span className="truncate">
+                            {showProvider.website.host}
+                          </span>
+                          <IoOpenOutline
+                            className="h-3.5 w-3.5 shrink-0"
+                            aria-hidden="true"
+                          />
+                          <span className="sr-only">(opens in a new tab)</span>
+                        </a>
+                      )}
                     </span>
                   </div>
                 )}

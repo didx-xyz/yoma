@@ -18,6 +18,7 @@ import type { CardFact, CardFactKind } from "../../lib/cardFacts";
 import { cardFacts } from "../../lib/cardFacts";
 import { cardStatus } from "../../lib/cardStatus";
 import { detailHref } from "../../lib/detailHref";
+import { cardPlace } from "../../lib/location";
 import { moneyFactsOf } from "../../lib/money";
 import { useCardDefinitions } from "../../state/useCardDefinitions";
 import { useDiscovery } from "../../state/DiscoveryContext";
@@ -195,9 +196,8 @@ export const OpportunityCard: React.FC<{
     now,
     effectiveFilters.accommodations.length > 0,
   );
-  // The most specific place the first country names — its city, else the country.
-  const firstCountry = opportunity.countries?.[0];
-  const location = firstCountry?.city ?? firstCountry?.name ?? null;
+  // The first country's city, else its name; a Worldwide one names where its provider is based.
+  const location = cardPlace(opportunity);
   const engagement =
     typeof opportunity.engagementType === "string"
       ? engagementDisplayName(

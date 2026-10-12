@@ -83,6 +83,14 @@ export const ACCESSIBILITY_SUPPORT_LABELS: Record<
 export interface OpportunityCoreMetadata {
   /** Informational text (e.g. "KFC"), not the owning organisation. */
   provider: string | null;
+  /** The provider's website — not the opportunity's `uRL` (2026-10-11). */
+  providerURL: string | null;
+  /** Any external image URL; not the owning organisation's logo. */
+  providerLogoURL: string | null;
+  /** Where the provider is based: a specific country, never Worldwide. Not availability. */
+  providerCountryId: string | null;
+  /** The provider country's name. */
+  providerCountry: string | null;
   /** Null = unspecified (imports / partners) — never read it as "unpaid". */
   incentivized: boolean | null;
   rewardType: RewardType | string;
@@ -534,6 +542,10 @@ export interface OpportunityRequestBase {
   ssiSchemaName: string | null;
   engagementTypeId: string | null;
   provider: string | null;
+  /** The update replaces all three: omitting one clears it. */
+  providerURL: string | null;
+  providerLogoURL: string | null;
+  providerCountryId: string | null;
   /** Required (true / false) on manual capture. */
   incentivized: boolean | null;
   rewardType: RewardType;

@@ -37,14 +37,14 @@ const definition = (
   }) as unknown as CustomFieldDefinition;
 
 const DEFINITIONS = [
-  definition("jobEmploymentType", [
+  definition("JobEmploymentType", [
     ["Permanent", "Permanent"],
     ["FixedTerm", "Fixed term"],
     ["Internship", "Internship"],
   ]),
-  definition("jobEmploymentDurationUnit", [["Months", "Months"]]),
-  definition("learningDifficulty", [["Beginner", "Beginner"]]),
-  definition("eventDifficulty", [["OpenToAll", "Open to all"]]),
+  definition("JobEmploymentDurationUnit", [["Months", "Months"]]),
+  definition("LearningDifficulty", [["Beginner", "Beginner"]]),
+  definition("EventDifficulty", [["OpenToAll", "Open to all"]]),
 ];
 
 const RAMP = [
@@ -61,7 +61,7 @@ describe("Card facts say what they are (2026-10-07)", () => {
     const job = opportunity({
       commitmentIntervalDescription: "1 Week",
       customFields: [
-        { key: "jobEmploymentType", values: ["Permanent"] },
+        { key: "JobEmploymentType", values: ["Permanent"] },
       ] as OpportunityInfo["customFields"],
     });
     assert.deepEqual(texts(job), ["Permanent", "1 week effort"]);
@@ -70,9 +70,9 @@ describe("Card facts say what they are (2026-10-07)", () => {
   test("an employment type with its duration; the tooltip names it", () => {
     const job = opportunity({
       customFields: [
-        { key: "jobEmploymentType", values: ["FixedTerm"] },
-        { key: "jobEmploymentDuration", value: "6" },
-        { key: "jobEmploymentDurationUnit", values: ["Months"] },
+        { key: "JobEmploymentType", values: ["FixedTerm"] },
+        { key: "JobEmploymentDuration", value: "6" },
+        { key: "JobEmploymentDurationUnit", values: ["Months"] },
       ] as OpportunityInfo["customFields"],
     });
     const [fact] = cardFacts(job, DEFINITIONS, NOW, false);
@@ -90,7 +90,7 @@ describe("Card facts say what they are (2026-10-07)", () => {
       type: "Learning",
       dateStart: "2026-11-06T00:00:00Z",
       customFields: [
-        { key: "learningDifficulty", values: ["Beginner"] },
+        { key: "LearningDifficulty", values: ["Beginner"] },
       ] as OpportunityInfo["customFields"],
     });
     const facts = cardFacts(learning, DEFINITIONS, NOW, false);
@@ -142,7 +142,7 @@ describe("Accessibility, only while it is part of this search (2026-10-07)", () 
       accommodations: RAMP,
       commitmentIntervalDescription: "2 Hours",
       customFields: [
-        { key: "eventDifficulty", values: ["OpenToAll"] },
+        { key: "EventDifficulty", values: ["OpenToAll"] },
       ] as OpportunityInfo["customFields"],
     });
     // The start has passed, so the accessibility leads.
@@ -172,7 +172,7 @@ describe("Accessibility, only while it is part of this search (2026-10-07)", () 
       commitmentIntervalDescription: "1 Week",
       accommodations: RAMP,
       customFields: [
-        { key: "jobEmploymentType", values: ["Internship"] },
+        { key: "JobEmploymentType", values: ["Internship"] },
       ] as OpportunityInfo["customFields"],
     });
     assert.deepEqual(texts(job, true), [
@@ -202,7 +202,7 @@ describe("Languages and skills fill the spare slots (2026-10-08)", () => {
       skills: SKILLS,
       verificationEnabled: true,
       customFields: [
-        { key: "jobEmploymentType", values: ["Permanent"] },
+        { key: "JobEmploymentType", values: ["Permanent"] },
       ] as OpportunityInfo["customFields"],
     });
     const facts = cardFacts(job, DEFINITIONS, NOW, false);
@@ -235,7 +235,7 @@ describe("Languages and skills fill the spare slots (2026-10-08)", () => {
       skills: SKILLS,
       verificationEnabled: true,
       customFields: [
-        { key: "jobEmploymentType", values: ["Internship"] },
+        { key: "JobEmploymentType", values: ["Internship"] },
       ] as OpportunityInfo["customFields"],
     });
     assert.deepEqual(texts(job), [

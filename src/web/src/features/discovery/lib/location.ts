@@ -4,6 +4,8 @@ import type {
 } from "~/api/models/userPreferences";
 import type { UserPreferences } from "~/api/models/userPreferences";
 import { hasPlace } from "~/api/models/location";
+import type { OpportunityInfo } from "~/api/models/opportunity";
+import { COUNTRY_CODE_WW } from "~/lib/constants";
 import type { InheritedFragments } from "./preferenceMapping";
 import type { DiscoveryFilters, PreferenceKey } from "./types";
 
@@ -151,3 +153,23 @@ export function whereSummary(
 /** Whether any below-country location value is in play — the "not applied yet" line's trigger. */
 export const hasLocationFilter = (filters: DiscoveryFilters): boolean =>
   filters.region !== null || filters.city !== null || filters.radiusKm !== null;
+
+/**
+ * The place a card or row names: the first country's city, else its name. A Worldwide
+ * opportunity whose provider is based in a known country also names it, "Worldwide · from South
+ * Africa": a country search returns those too since 2026-10-11 (available there, OR Worldwide
+ * from a provider based there), so the card says why it is in the results.
+ */
+export function cardPlace(
+  opportunity: Pick<OpportunityInfo, "countries" | "providerCountry">,
+): string | null {
+  const first = opportunity.countries?.[0];
+  if (!first) return null;
+  // Older data can still mix Worldwide with specific countries: name the Worldwide entry.
+  const worldwide = opportunity.countries?.find(
+    (c) => c.codeAlpha2 === COUNTRY_CODE_WW,
+  );
+  if (worldwide && opportunity.providerCountry)
+    return `${worldwide.name} · from ${opportunity.providerCountry}`;
+  return first.city ?? first.name ?? null;
+}

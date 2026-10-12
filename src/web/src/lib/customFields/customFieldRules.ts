@@ -25,34 +25,34 @@ import type {
 //   - is pure; the API remains the authority. Keep it in step with the API.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Mirrors `CustomFieldConstants.ImpactAction` (API). Persisted contracts — never rename. */
+/** Mirrors `CustomFieldConstants.ImpactAction` (API); change only with the API. */
 export const IMPACT_ACTION_CUSTOM_FIELD_KEYS = {
-  toolsRequired: "impactActionToolsRequired",
-  toolsOtherDescription: "impactActionToolsOtherDescription",
+  toolsRequired: "ImpactActionToolsRequired",
+  toolsOtherDescription: "ImpactActionToolsOtherDescription",
 } as const;
 
 /** Mirrors the API's `ImpactActionTool` enum — the one tool option a rule interprets. */
 export const IMPACT_ACTION_TOOL_OPTIONS = { Other: "Other" } as const;
 
-/** Mirrors `CustomFieldConstants.Entrepreneurship` (API). Persisted contracts — never rename. */
+/** Mirrors `CustomFieldConstants.Entrepreneurship` (API); change only with the API. */
 export const ENTREPRENEURSHIP_CUSTOM_FIELD_KEYS = {
-  programmeType: "entrepreneurshipProgrammeType",
-  programmeOtherDescription: "entrepreneurshipProgrammeOtherDescription",
+  programmeType: "EntrepreneurshipProgrammeType",
+  programmeOtherDescription: "EntrepreneurshipProgrammeOtherDescription",
 } as const;
 
 /** Mirrors the API's `EntrepreneurshipProgrammeType` enum — the one programme option a rule interprets. */
 export const ENTREPRENEURSHIP_PROGRAMME_OPTIONS = { Other: "Other" } as const;
 
-/** Mirrors `CustomFieldConstants.Job` (API). Persisted contracts — never rename. */
+/** Mirrors `CustomFieldConstants.Job` (API); change only with the API. */
 export const JOB_CUSTOM_FIELD_KEYS = {
-  salaryDisclosed: "jobSalaryDisclosed",
-  salaryMinimum: "jobSalaryMinimum",
-  salaryMaximum: "jobSalaryMaximum",
-  salaryCurrency: "jobSalaryCurrency",
-  payInterval: "jobPayInterval",
-  employmentType: "jobEmploymentType",
-  employmentDuration: "jobEmploymentDuration",
-  employmentDurationUnit: "jobEmploymentDurationUnit",
+  salaryDisclosed: "JobSalaryDisclosed",
+  salaryMinimum: "JobSalaryMinimum",
+  salaryMaximum: "JobSalaryMaximum",
+  salaryCurrency: "JobSalaryCurrency",
+  payInterval: "JobPayInterval",
+  employmentType: "JobEmploymentType",
+  employmentDuration: "JobEmploymentDuration",
+  employmentDurationUnit: "JobEmploymentDurationUnit",
 } as const;
 
 /**
@@ -137,8 +137,8 @@ const numberOf = (
 
 /**
  * Applies the API's cross-field rules (`AssertCrossFieldRules`) to a custom-field collection.
- * Job salary rules run only when `jobSalaryDisclosed` is among the definitions, employment rules
- * only when `jobEmploymentType` is, the Impact Action tools rule only when both tools keys are,
+ * Job salary rules run only when `JobSalaryDisclosed` is among the definitions, employment rules
+ * only when `JobEmploymentType` is, the Impact Action tools rule only when both tools keys are,
  * and the Entrepreneurship programme rule only when both programme keys are. Otherwise the
  * input is returned untouched.
  */

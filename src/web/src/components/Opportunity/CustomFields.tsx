@@ -248,7 +248,7 @@ export function toEcmaScriptPattern(pattern: string): string {
 
 // The API tests `validationRegex` against the NORMALISED value, for every data type
 // (`CustomFieldValueService.Normalize`): a String trimmed, an Integer as its invariant
-// `int` text ("007" → "7", "-0" → "0"), so `entrepreneurshipJobsCreated`'s
+// `int` text ("007" → "7", "-0" → "0"), so `EntrepreneurshipJobsCreated`'s
 // non-negative pattern rejects "-1" here rather than on save. Other types are not
 // mirrored — no definition gives them a pattern — and are left to the API.
 function patternSubject(dataType: string, value: string): string | null {

@@ -8,12 +8,13 @@ import {
   FcGraduationCap,
   FcVideoCall,
 } from "react-icons/fc";
-import { IoMdPin } from "react-icons/io";
+import { IoMdFlag, IoMdPin } from "react-icons/io";
 import Moment from "react-moment";
 import type { MyOpportunityInfo } from "~/api/models/myOpportunity";
 import { DATE_FORMAT_HUMAN, OPPORTUNITY_TYPE_NANE_JOB } from "~/lib/constants";
 import { fetchClientEnv } from "~/lib/utils";
 import { getCommitmentDisplay } from "./opportunityTypeTheme";
+import { completionLocation } from "../MyOpportunity/completionLocation";
 import { UserInitialsAvatar } from "../User/UserInitialsAvatar";
 import { MyOpportunityCustomFieldsSection } from "./MyOpportunityCustomFieldsSection";
 
@@ -124,6 +125,9 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
   const iconPath =
     "M 12 2 C 8.1 2 5 5.1 5 9 c 0 5.3 7 13 7 13 s 7 -7.8 7 -13 c 0 -3.9 -3.1 -7 -7 -7 z M 7 9 c 0 -2.8 2.2 -5 5 -5 s 5 2.2 5 5 c 0 2.9 -2.9 7.2 -5 9.9 C 9.9 16.2 7 11.8 7 9 z M 10 9 C 10 8 11 7 12 7 C 13 7 14 8 14 9 C 14 10 13 11 12 11 C 11 11 10 10 10 9 M 12 7";
 
+  // Where it happened, captured on submission — not the profile country above
+  const where = data ? completionLocation(data) : null;
+
   return (
     <div
       key={`OpportunityCompletionRead_${id}`}
@@ -137,10 +141,22 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
           <p className="text-gray-dark text-sm">
             {data?.userEmail ?? data?.userPhoneNumer}
           </p>
-          <p className="text-gray-dark mt-2 flex flex-row items-center text-sm">
+          <p
+            className="text-gray-dark mt-2 flex flex-row items-center text-sm"
+            title="Profile country"
+          >
             <IoMdPin className="text-gray-dark mr-2 h-4 w-4" />
             {data?.userCountry}
           </p>
+          {where && (
+            <p className="text-gray-dark mt-1 flex flex-row items-start text-sm">
+              <IoMdFlag className="text-gray-dark mt-0.5 mr-2 h-4 w-4 shrink-0" />
+              <span>
+                <span className="font-semibold text-black">{where.label}:</span>{" "}
+                {where.text}
+              </span>
+            </p>
+          )}
         </div>
         <div className="flex flex-col items-center justify-center gap-4">
           <UserInitialsAvatar

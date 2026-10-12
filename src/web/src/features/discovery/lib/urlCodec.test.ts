@@ -13,30 +13,30 @@ const parseCf = (clauses: unknown): CustomFieldFilter[] =>
 describe("urlCodec — the cf param", () => {
   test("an incomplete clause from an old link or recent search is dropped", () => {
     assert.deepEqual(
-      parseCf([{ key: "jobSalaryMinimum", operator: "Equals", value: null }]),
+      parseCf([{ key: "JobSalaryMinimum", operator: "Equals", value: null }]),
       [],
     );
     assert.deepEqual(
-      parseCf([{ key: "jobIndustry", operator: "AnyOf", values: null }]),
+      parseCf([{ key: "JobIndustry", operator: "AnyOf", values: null }]),
       [],
     );
   });
 
   test("a complete clause keeps its operator, whatever it is", () => {
     const clauses = [
-      { key: "jobSalaryDisclosed", operator: OP.Exists },
-      { key: "jobSalaryMinimum", operator: OP.GreaterThan, value: "5000" },
-      { key: "jobIndustry", operator: OP.Equals, value: "K" },
+      { key: "JobSalaryDisclosed", operator: OP.Exists },
+      { key: "JobSalaryMinimum", operator: OP.GreaterThan, value: "5000" },
+      { key: "JobIndustry", operator: OP.Equals, value: "K" },
     ];
     assert.deepEqual(parseCf(clauses), clauses);
   });
 
   test("a malformed clause drops alone; the rest still filter", () => {
-    const good = { key: "jobIndustry", operator: OP.AnyOf, values: ["K"] };
+    const good = { key: "JobIndustry", operator: OP.AnyOf, values: ["K"] };
     assert.deepEqual(
       parseCf([
-        { key: "jobSalaryMinimum", operator: "Equals", value: 5000 },
-        { key: "jobIndustry", operator: "AnyOf", values: "K" },
+        { key: "JobSalaryMinimum", operator: "Equals", value: 5000 },
+        { key: "JobIndustry", operator: "AnyOf", values: "K" },
         { key: "noOperator" },
         good,
       ]),
@@ -45,11 +45,11 @@ describe("urlCodec — the cf param", () => {
   });
 
   test("a clause with an operator the API doesn't know drops alone", () => {
-    const good = { key: "jobSalaryDisclosed", operator: OP.Exists };
+    const good = { key: "JobSalaryDisclosed", operator: OP.Exists };
     assert.deepEqual(
       parseCf([
-        { key: "jobSalaryMinimum", operator: "AtLeast", value: "5000" },
-        { key: "jobIndustry", operator: "anyof", values: ["K"] },
+        { key: "JobSalaryMinimum", operator: "AtLeast", value: "5000" },
+        { key: "JobIndustry", operator: "anyof", values: ["K"] },
         good,
       ]),
       [good],
@@ -67,7 +67,7 @@ describe("urlCodec — the cf param", () => {
   test("clauses round-trip through the URL", () => {
     const customFields: CustomFieldFilter[] = [
       {
-        key: "jobSalaryMinimum",
+        key: "JobSalaryMinimum",
         operator: OP.Between,
         value: "5000",
         valueTo: "9000",

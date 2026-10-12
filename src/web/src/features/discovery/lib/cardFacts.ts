@@ -19,7 +19,7 @@ import { calendarDaysUntil } from "./dates";
  * they are left out of the lines below.
  *
  *   Job       employment · date · effort · a11y*   (qualification is left out:
- *                                                  `jobMinimumQualification` is not a
+ *                                                  `JobMinimumQualification` is not a
  *                                                  system-controlled key — the reason "No
  *                                                  experience needed" is parked too)
  *   Learning  effort · difficulty · date · a11y*
@@ -113,19 +113,19 @@ const NAMES: Record<CardFactKind, string> = {
   skills: "Skills you earn",
 };
 
-/** Mirrors `CustomFieldConstants` (API) — persisted contracts, never rename. */
+/** Mirrors `CustomFieldConstants` (API) — persisted contracts, change only with the API. */
 const KEYS = {
-  employmentType: "jobEmploymentType",
-  employmentDuration: "jobEmploymentDuration",
-  employmentDurationUnit: "jobEmploymentDurationUnit",
-  toolsRequired: "impactActionToolsRequired",
-  programmeType: "entrepreneurshipProgrammeType",
-  programmeOtherDescription: "entrepreneurshipProgrammeOtherDescription",
+  employmentType: "JobEmploymentType",
+  employmentDuration: "JobEmploymentDuration",
+  employmentDurationUnit: "JobEmploymentDurationUnit",
+  toolsRequired: "ImpactActionToolsRequired",
+  programmeType: "EntrepreneurshipProgrammeType",
+  programmeOtherDescription: "EntrepreneurshipProgrammeOtherDescription",
   difficulty: {
-    Learning: "learningDifficulty",
-    ImpactAction: "impactActionDifficulty",
-    Event: "eventDifficulty",
-    Other: "otherDifficulty",
+    Learning: "LearningDifficulty",
+    ImpactAction: "ImpactActionDifficulty",
+    Event: "EventDifficulty",
+    Other: "OtherDifficulty",
   } as Record<string, string>,
 } as const;
 

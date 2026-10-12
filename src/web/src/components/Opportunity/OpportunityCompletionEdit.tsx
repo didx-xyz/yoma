@@ -21,6 +21,10 @@ import type {
 } from "~/api/models/opportunity";
 import { performActionSendForVerificationManual } from "~/api/services/myOpportunities";
 import { useMyOpportunityCustomFieldDefinitionsQuery } from "~/hooks/useOpportunityMutations";
+import {
+  BusinessLocationField,
+  type BusinessLocation,
+} from "./BusinessLocationField";
 import { CustomFields, getCustomFieldErrors } from "./CustomFields";
 import {
   ACCEPTED_AUDIO_TYPES,
@@ -33,6 +37,7 @@ import {
   ACCEPTED_VIDEO_TYPES_LABEL,
   CUSTOM_FIELDS_ENABLED,
   DATE_FORMAT_SYSTEM,
+  OPPORTUNITY_TYPE_NAME_ENTREPRENEURSHIP,
   MAX_FILE_SIZE,
   MAX_FILE_SIZE_LABEL,
   MAX_FILE_VIDEO_SIZE,
@@ -62,6 +67,9 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const { data: session } = useSession();
+  // Only an Entrepreneurship completion asks where the venture is (2026-10-11).
+  const isEntrepreneurship =
+    opportunityInfo?.type === OPPORTUNITY_TYPE_NAME_ENTREPRENEURSHIP;
 
   // Definition-driven completion custom fields (YOM-1244 / YOM-1255), loaded per
   // opportunity (type resolved server-side). Renders nothing when none apply.
@@ -95,6 +103,8 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
       feedback: z.string().nullable().optional(),
       // definition-driven custom fields; validated against their definitions below
       customFields: z.array(z.any()).nullish(),
+      // Entrepreneurship only: where the venture is based (`BusinessLocationField`)
+      businessLocation: z.any().optional(),
     })
     .superRefine((values, ctx) => {
       // custom fields must be valid before submitting (required + typed rules).
@@ -336,6 +346,15 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
         })(),
       };
 
+      // The business location, for Entrepreneurship only: the API rejects a manual location for
+      // any other type. Unset parts are left out (`objectToFormData` skips them).
+      const business = data.businessLocation as BusinessLocation | undefined;
+      if (isEntrepreneurship && business?.countryId) {
+        request.countryId = business.countryId;
+        request.region = business.place.region;
+        request.city = business.place.city;
+      }
+
       // convert dates to UTC string in format "YYYY-MM-DD" while preserving UTC timezone
       if (request.dateStart) {
         request.dateStart = request.dateStart
@@ -368,7 +387,13 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
           });
         });
     },
-    [onSave, opportunityInfo, session, customFieldDefinitions],
+    [
+      onSave,
+      opportunityInfo,
+      session,
+      customFieldDefinitions,
+      isEntrepreneurship,
+    ],
   );
 
   const {
@@ -823,6 +848,24 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                       )}
                     </div>
                   )}
+                </div>
+              )}
+
+              {isEntrepreneurship && (
+                <div
+                  className="bg-gray-light flex flex-col rounded-lg border-dotted px-8 py-4"
+                  style={{ animationDelay: "1.2s" }}
+                >
+                  <Controller
+                    control={control}
+                    name="businessLocation"
+                    render={({ field: { onChange, value } }) => (
+                      <BusinessLocationField
+                        value={value as BusinessLocation | undefined}
+                        onChange={onChange}
+                      />
+                    )}
+                  />
                 </div>
               )}
 

@@ -257,6 +257,15 @@ export const VerificationImport: React.FC<InputProps> = ({
                       DateCompleted (YYYY-MM-DD or YYYY/MM/DD; defaults to the
                       current date if omitted)
                     </li>
+                    <li>
+                      CountryCompleted (where the youth took part, one ISO
+                      CodeAlpha2 code; Worldwide (WW) is not allowed). Separate
+                      from Country above, which is the youth&apos;s profile.
+                      Recorded for on-site and hybrid opportunities; when blank,
+                      or for a Worldwide opportunity, the profile country is
+                      used. For Entrepreneurship it is where the business is,
+                      and blank leaves it unknown.
+                    </li>
                   </ul>
                 </div>
 
@@ -270,15 +279,15 @@ export const VerificationImport: React.FC<InputProps> = ({
                   </p>
                   <ul className="ml-5 list-disc text-sm">
                     <li>
-                      CF:jobEmploymentStartDate (Job — the actual start date,
+                      CF:JobEmploymentStartDate (Job — the actual start date,
                       strictly YYYY-MM-DD; not the application deadline)
                     </li>
                     <li>
-                      CF:impactActionImpactAchieved (Impact Action — the
+                      CF:ImpactActionImpactAchieved (Impact Action — the
                       outcome, up to 1000 characters)
                     </li>
                     <li>
-                      CF:eventRole (Event — Participant, Speaker, Panelist,
+                      CF:EventRole (Event — Participant, Speaker, Panelist,
                       FacilitatorTrainer, CoOrganiser or Volunteer; blank leaves
                       it unspecified)
                     </li>
@@ -290,49 +299,49 @@ export const VerificationImport: React.FC<InputProps> = ({
                   </p>
                   <ul className="ml-5 list-disc text-sm">
                     <li>
-                      CF:entrepreneurshipBusinessName (up to 255 characters)
+                      CF:EntrepreneurshipBusinessName (up to 255 characters)
                     </li>
                     <li>
-                      CF:entrepreneurshipBusinessSummary (up to 300 characters)
+                      CF:EntrepreneurshipBusinessSummary (up to 300 characters)
                     </li>
                     <li>
-                      CF:entrepreneurshipBusinessRegistered (Yes or No — No for
+                      CF:EntrepreneurshipBusinessRegistered (Yes or No — No for
                       an informal venture)
                     </li>
                     <li>
-                      CF:entrepreneurshipRegistrationReference (up to 125
+                      CF:EntrepreneurshipRegistrationReference (up to 125
                       characters, only for a registered venture)
                     </li>
                     <li>
-                      CF:entrepreneurshipSector (ISIC Rev. 5 section letter, A
+                      CF:EntrepreneurshipSector (ISIC Rev. 5 section letter, A
                       to V — the same options as the Job industry)
                     </li>
                     <li>
-                      CF:entrepreneurshipJobsCreated (zero or more, excluding
+                      CF:EntrepreneurshipJobsCreated (zero or more, excluding
                       the founder)
                     </li>
                     <li>
-                      CF:entrepreneurshipRevenueBand (PreRevenue, Under100,
+                      CF:EntrepreneurshipRevenueBand (PreRevenue, Under100,
                       From100To500, From500To2000, From2000To10000, Over10000 —
                       USD a month)
                     </li>
                     <li>
-                      CF:entrepreneurshipRevenueCurrency (ISO currency code,
+                      CF:EntrepreneurshipRevenueCurrency (ISO currency code,
                       e.g. ZAR)
                     </li>
                     <li>
-                      CF:entrepreneurshipFundingTypes (Grant, SeedAngel, Equity,
+                      CF:EntrepreneurshipFundingTypes (Grant, SeedAngel, Equity,
                       FormalLoan, CommunityFinance, FamilyFriends,
                       CompetitionPrize, InKind; separate several with |)
                     </li>
                     <li>
-                      CF:entrepreneurshipFundingAmountBand (Under500,
+                      CF:EntrepreneurshipFundingAmountBand (Under500,
                       From500To2000, From2000To10000, From10000To50000,
                       Over50000 — USD in total)
                     </li>
-                    <li>CF:entrepreneurshipFunder (up to 255 characters)</li>
+                    <li>CF:EntrepreneurshipFunder (up to 255 characters)</li>
                     <li>
-                      CF:entrepreneurshipClientLocation (LocalCommunity,
+                      CF:EntrepreneurshipCustomerReach (LocalCommunity,
                       Regional, National, CrossBorder, InternationalOnline)
                     </li>
                   </ul>

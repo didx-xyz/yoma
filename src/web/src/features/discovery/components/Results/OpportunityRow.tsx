@@ -7,6 +7,7 @@ import { getTypeConfig } from "~/components/Opportunity/opportunityTypeTheme";
 import { cardFacts } from "../../lib/cardFacts";
 import { cardStatus } from "../../lib/cardStatus";
 import { detailHref } from "../../lib/detailHref";
+import { cardPlace } from "../../lib/location";
 import { moneyFactsOf } from "../../lib/money";
 import { useCardDefinitions } from "../../state/useCardDefinitions";
 import { useDiscovery } from "../../state/DiscoveryContext";
@@ -50,8 +51,8 @@ export const OpportunityRow: React.FC<{
       effectiveFilters.accommodations.length > 0,
     )[0] ?? null;
   const type = typeLabel(lookups.types, opportunity.type);
-  const firstCountry = opportunity.countries?.[0];
-  const location = firstCountry?.city ?? firstCountry?.name ?? null;
+  // The first country's city, else its name; a Worldwide one names where its provider is based.
+  const location = cardPlace(opportunity);
   const engagement =
     typeof opportunity.engagementType === "string"
       ? engagementDisplayName(

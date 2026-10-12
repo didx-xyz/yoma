@@ -31,6 +31,11 @@ export interface MyOpportunityRequestVerify {
   // Definition-driven custom fields (YOM-1244 / YOM-1255). Submitted as one
   // JSON-encoded multipart field; replacement semantics (full collection).
   customFields?: CustomFieldValueRequest[] | null;
+  // Entrepreneurship's business location only: the API rejects a manual location for any other
+  // type. A specific country (never Worldwide); region and city need it, up to 255 characters.
+  countryId?: string | null;
+  region?: string | null;
+  city?: string | null;
 }
 
 export interface MyOpportunityRequestVerifyCommitmentInterval {
@@ -112,6 +117,14 @@ export interface MyOpportunityInfo {
   syncedInfo: SyncInfoEntity | null;
   verifications: MyOpportunityInfoVerification[] | null;
   skills: Skill[] | null;
+  // Where the completion happened, captured when it was submitted (2026-10-11): an
+  // Entrepreneurship venture's business location, or the youth's profile place for an on-site or
+  // hybrid opportunity. Null when unknown. The API's `location` is never filled, so the text is
+  // built from these (`completionLocation`).
+  countryId?: string | null;
+  country?: string | null;
+  region?: string | null;
+  city?: string | null;
   // Hydrated completion custom-field values (YOM-1244 / YOM-1255), joined to
   // MyOpportunity definitions by key. Forward-looking until the API projects them.
   customFields?: CustomFieldValueItem[] | null;
