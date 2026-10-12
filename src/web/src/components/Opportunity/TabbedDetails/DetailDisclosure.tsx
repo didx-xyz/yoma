@@ -35,6 +35,8 @@ export const DetailDisclosure: React.FC<{
   onToggle: () => void;
   /** The section a tab tap just opened — marked with the green edge. */
   focused?: boolean;
+  /** A header chip just jumped here: a green ring that fades once the page has settled. */
+  flash?: boolean;
   children?: React.ReactNode;
 }> = ({
   id,
@@ -49,6 +51,7 @@ export const DetailDisclosure: React.FC<{
   open,
   onToggle,
   focused = false,
+  flash = false,
   children,
 }) => {
   // The content mounts on the first open and then stays: an unopened section costs nothing
@@ -107,8 +110,8 @@ export const DetailDisclosure: React.FC<{
         // a static row has nothing to open, so it does not answer the pointer
         isStatic
           ? ""
-          : "hover:border-gray-dark/30 transition-colors duration-120 motion-reduce:transition-none"
-      } ${
+          : "hover:border-gray-dark/30 transition-[border-color,box-shadow] duration-300 motion-reduce:transition-none"
+      } ${flash ? "ring-green ring-2" : ""} ${
         // an inset edge, not a border: a border would push the row's content 4px sideways
         focused ? "shadow-[inset_4px_0_0_var(--color-green)]" : ""
       }`}

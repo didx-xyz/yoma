@@ -1186,14 +1186,7 @@ const OpportunityPublicDetails: React.FC<{
       {opportunityInfo && (
         <div className="flex flex-col gap-4">
           {layout === "tabbed" ? (
-            <DetailHeaderCard
-              ref={headerCardRef}
-              opportunity={opportunityInfo}
-              // the Reward badge's cash-out line follows the youth's own Cash Out, as the
-              // Pay and rewards section's does; the editor preview shows what any youth sees
-              cashOutClosed={!preview && isCashOutClosed(userProfile?.payout)}
-              preview={preview}
-            >
+            <DetailHeaderCard ref={headerCardRef} opportunity={opportunityInfo}>
               {/* BUTTONS — the same elements (see goToButton above). Round 10: the call to
                   action, Save and Share together, Upload right-aligned (on its own line when
                   the row is too narrow, e.g. 768); on mobile Save and Share are circles beside

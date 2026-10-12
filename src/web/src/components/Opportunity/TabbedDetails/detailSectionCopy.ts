@@ -93,7 +93,7 @@ export const incentiveCopy = (
         kind: "disclosure",
         preview: "Earn ZLTO",
         amount: { text: "ZLTO reward", zlto: true },
-        body: "You get Zlto once your completion is verified. The amount isn't shown.",
+        body: "ZLTO is Yoma's reward currency. You get it once your completion is verified. The amount isn't shown.",
         cashOut: true,
       };
     if (estimate > 0)
@@ -101,7 +101,7 @@ export const incentiveCopy = (
         kind: "disclosure",
         preview: `Earn ${formatNumber(estimate)} ZLTO`,
         amount: { text: `${formatNumber(estimate)} ZLTO`, zlto: true },
-        body: "This is an estimate. You get it once your completion is verified. You may get less if the reward runs low.",
+        body: "ZLTO is Yoma's reward currency. You get it once your completion is verified. This amount is an estimate. You may get less if the reward runs low.",
         cashOut: true,
       };
     // 0: the pool is depleted (the header's Reward tile says "Depleted")
@@ -109,7 +109,7 @@ export const incentiveCopy = (
       kind: "disclosure",
       preview: "ZLTO rewards have run out",
       amount: null,
-      body: "The ZLTO for this opportunity has run out, so finishing it now earns no Zlto.",
+      body: "The ZLTO for this opportunity has run out, so finishing it now earns no Zlto. You can still take part.",
       cashOut: false,
     };
   }
@@ -144,14 +144,14 @@ export const incentiveCopy = (
         kind: "disclosure",
         preview: payLine,
         amount: { text: payLine, zlto: false },
-        body: "The pay the employer has shared for this job.",
+        body: "This is the pay the employer shared. Check the details with them before you accept.",
         cashOut: false,
       };
     return {
       kind: "disclosure",
       preview: "Paid",
       amount: null,
-      body: "This job is paid. The employer hasn't shared the amount.",
+      body: "This job is paid, but the employer hasn't shared how much. Ask them when you apply.",
       cashOut: false,
     };
   }

@@ -11,12 +11,16 @@ import React, {
 import {
   IoAccessibilityOutline,
   IoBulbOutline,
+  IoCalendarOutline,
   IoEarthOutline,
   IoGiftOutline,
+  IoHourglassOutline,
   IoInformationCircleOutline,
   IoLanguageOutline,
   IoLocationOutline,
+  IoLockClosedOutline,
   IoPeopleCircleOutline,
+  IoPeopleOutline,
   IoPersonOutline,
   IoOpenOutline,
   IoPricetagsOutline,
@@ -30,8 +34,12 @@ import {
   formatAccessibilitySupport,
   formatSustainableDevelopmentGoal,
 } from "~/components/Opportunity/Admin/opportunityCoreFields";
+import { JumpToTop } from "~/components/Common/JumpToTop";
 import { CustomFieldsView } from "~/components/Opportunity/CustomFieldsView";
-import { getCommitmentDisplay } from "~/components/Opportunity/opportunityTypeTheme";
+import {
+  getCommitmentDisplay,
+  getEngagementConfig,
+} from "~/components/Opportunity/opportunityTypeTheme";
 import { ProviderLogo } from "~/components/Opportunity/ProviderLogo";
 import { providerFacts } from "~/components/Opportunity/providerFacts";
 import { MoneyBadge } from "~/features/discovery/components/Results/MoneyBadge";
@@ -43,8 +51,10 @@ import {
 } from "~/hooks/useOpportunityMutations";
 import { OPPORTUNITY_TYPE_NANE_JOB } from "~/lib/constants";
 import { ClampedDescription } from "./ClampedDescription";
+import { detailBadges, type DetailBadge } from "./detailBadges";
 import { ChipList, DetailDisclosure } from "./DetailDisclosure";
 import { effortLabel } from "./detailFacts";
+import { DETAIL_SECTION_JUMP } from "./detailSectionJump";
 import {
   accessibilityClosing,
   accessibilityNote,
@@ -128,6 +138,67 @@ const TONE = {
   green: "bg-green-light text-green",
   grey: "bg-gray-light text-gray-dark",
 } as const;
+
+/**
+ * How, Dates and Places' content: the header chip's detail (`detailBadges`' panel), which used to
+ * expand in the header (2026-10-12, Jason). Facts as two columns, then short paragraphs; Places
+ * adds how full it is.
+ */
+const BadgePanel: React.FC<{ badge: DetailBadge }> = ({ badge }) => {
+  const panel = badge.panel;
+  if (!panel) return null;
+  return (
+    <div className="flex flex-col gap-2 text-sm text-black">
+      {panel.lead && <p className="font-semibold">{panel.lead}</p>}
+      {panel.facts && panel.facts.length > 0 && (
+        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
+          {panel.facts.map(([term, value]) => (
+            <React.Fragment key={term}>
+              <dt className="text-gray-dark">{term}</dt>
+              <dd>{value}</dd>
+            </React.Fragment>
+          ))}
+        </dl>
+      )}
+      {/* only once something is taken: an empty track says nothing */}
+      {(badge.bar ?? 0) > 0 && (
+        <span
+          aria-hidden
+          className="bg-gray-light block h-1.5 w-full max-w-xs overflow-hidden rounded-full"
+        >
+          <span
+            className={`block h-full rounded-full ${
+              badge.tone === "almostFull"
+                ? "bg-pink"
+                : badge.tone === "full"
+                  ? "bg-gray-dark"
+                  : "bg-green"
+            }`}
+            style={{ width: `${(badge.bar ?? 0) * 100}%` }}
+          />
+        </span>
+      )}
+      {panel.paragraphs.map((paragraph, index) => (
+        <p key={index}>
+          {paragraph.lead && (
+            <span className="font-semibold">{paragraph.lead} </span>
+          )}
+          {paragraph.text}
+        </p>
+      ))}
+    </div>
+  );
+};
+
+/** The Dates section's icon follows its chip: an hourglass when close, a lock once closed. */
+const datesIcon = (badge: DetailBadge): React.ReactNode =>
+  badge.icon === "hourglass" ? (
+    <IoHourglassOutline className={ICON} />
+  ) : badge.icon === "lock" ? (
+    <IoLockClosedOutline className={ICON} />
+  ) : (
+    <IoCalendarOutline className={ICON} />
+  );
 
 /** "English, isiZulu +2" — the closed row's preview. */
 const previewOf = (labels: string[], max = 2): string =>
@@ -334,6 +405,24 @@ export const OpportunityDetailSections: React.FC<{
     [opportunity, currencies],
   );
 
+  // The header chips' facts (`detailBadges`, as `DetailFactBadges` builds them): How, Dates
+  // and Places are sections here, with the detail the chips used to expand (2026-10-12).
+  const badges = useMemo(
+    () =>
+      detailBadges(opportunity, {
+        now,
+        money,
+        effort: effortLabel(opportunity),
+        engagement:
+          getEngagementConfig(
+            typeof opportunity.engagementType === "string"
+              ? opportunity.engagementType
+              : null,
+          )?.label ?? null,
+      }),
+    [opportunity, now, money],
+  );
+
   // ── the sections: exactly the existing public page's set and conditions ──
   const sections = useMemo((): SectionDef[] => {
     const list: SectionDef[] = [];
@@ -410,12 +499,30 @@ export const OpportunityDetailSections: React.FC<{
       });
     }
 
+    // How, Dates and Places — the header chips' sections (2026-10-12): a chip jumps here and
+    // opens it, so each carries the detail the chip used to expand
+    const how = badges.find((b) => b.id === "how");
+    const dates = badges.find((b) => b.id === "dates");
+    const places = badges.find((b) => b.id === "places");
+
     // Time needed — one static row (2026-10-05): the interval ("4 minutes"), else the total
-    // hours; an interval given only as a description is shown as it is, without "About"
+    // hours; an interval given only as a description is shown as it is, without "About". With
+    // a How chip it is the How section instead, the time and the way you take part together.
     const commitment = getCommitmentDisplay(opportunity);
     const effort = effortLabel(opportunity);
     const time = effort ?? commitment?.label ?? null;
-    if (time)
+    if (how)
+      list.push({
+        id: "how",
+        group: "about",
+        icon: <IoTimeOutline className={ICON} />,
+        toneClass: TONE.blue,
+        title: "How you take part",
+        preview: how.value,
+        note: how.info,
+        content: <BadgePanel badge={how} />,
+      });
+    else if (time)
       list.push({
         id: "time",
         group: "about",
@@ -426,6 +533,31 @@ export const OpportunityDetailSections: React.FC<{
         note: "Roughly how long it takes. It's a guide, not a deadline.",
         content: null,
         static: true,
+      });
+
+    if (dates)
+      list.push({
+        id: "dates",
+        group: "about",
+        icon: datesIcon(dates),
+        toneClass:
+          dates.tone === "urgent" ? "bg-pink/10 text-pink" : TONE.lilac,
+        title: "Dates",
+        preview: dates.value,
+        note: dates.info,
+        content: <BadgePanel badge={dates} />,
+      });
+
+    if (places)
+      list.push({
+        id: "places",
+        group: "about",
+        icon: <IoPeopleOutline className={ICON} />,
+        toneClass: TONE.green,
+        title: "Places",
+        preview: places.value,
+        note: places.info,
+        content: <BadgePanel badge={places} />,
       });
 
     // Skills — a Job's are its requirements (open by default); anyone else's are awarded
@@ -648,6 +780,7 @@ export const OpportunityDetailSections: React.FC<{
     opportunity,
     definitions,
     money,
+    badges,
     showUnspecifiedIncentive,
     cashOutClosed,
     preview,
@@ -670,6 +803,13 @@ export const OpportunityDetailSections: React.FC<{
     () => new Set(sections.filter((s) => s.defaultOpen).map((s) => s.id)),
   );
   const [focused, setFocused] = useState<string | null>(null);
+  // The section a header chip just jumped to: ringed for a moment, so the eye finds it.
+  const [flashId, setFlashId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!flashId) return;
+    const timer = window.setTimeout(() => setFlashId(null), 1600);
+    return () => window.clearTimeout(timer);
+  }, [flashId]);
   const toggle = (id: string): void =>
     setOpen((current) => {
       const next = new Set(current);
@@ -770,6 +910,38 @@ export const OpportunityDetailSections: React.FC<{
     // eslint-disable-next-line react-hooks/exhaustive-deps -- arrival only
   }, []);
 
+  // A header chip's tap (`jumpToDetailSection`): open its section, mark it, and scroll it under
+  // the sticky panel, as a tab tap does for a group. Focus moves to the section's button, so a
+  // keyboard or screen-reader user lands where the page went.
+  useEffect(() => {
+    const onJump = (event: Event): void => {
+      const id = (event as CustomEvent<string>).detail;
+      const section = sections.find((s) => s.id === id);
+      if (!section) return;
+      tappedRef.current = { group: section.group, at: Date.now() };
+      setActive(section.group);
+      setOpen((current) => new Set(current).add(id));
+      setFocused(id);
+      setFlashId(id);
+      // after the open has rendered, so the card is where it will stay
+      requestAnimationFrame(() => {
+        const card = document.getElementById(`section-${id}-body`)
+          ?.parentElement as HTMLElement | null | undefined;
+        if (!card) return;
+        const reduce = window.matchMedia(
+          "(prefers-reduced-motion: reduce)",
+        ).matches;
+        window.scrollTo({
+          top: card.getBoundingClientRect().top + window.scrollY - offsetTop(),
+          behavior: reduce ? "auto" : "smooth",
+        });
+        card.querySelector("button")?.focus({ preventScroll: true });
+      });
+    };
+    window.addEventListener(DETAIL_SECTION_JUMP, onJump);
+    return () => window.removeEventListener(DETAIL_SECTION_JUMP, onJump);
+  }, [sections, offsetTop]);
+
   const tabs = (
     <DetailTabs groups={visibleGroups} active={active} onSelect={goTo} />
   );
@@ -812,10 +984,18 @@ export const OpportunityDetailSections: React.FC<{
               </h2>
               {/* Two columns from `lg`: the description and host content span both; cards flow
                   into the next cell (an odd one out, a lone card too, takes the left), and a
-                  closed card never stretches to an open neighbour's height */}
-              <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-2 lg:items-start">
+                  closed card never stretches to an open neighbour's height. About stays one
+                  column (2026-10-12): a header chip jumps to one of its cards, and beside a
+                  neighbour the eye landed on the wrong one */}
+              <div
+                className={
+                  g.id === "about"
+                    ? "grid grid-cols-1 gap-3.5"
+                    : "grid grid-cols-1 gap-3.5 lg:grid-cols-2 lg:items-start"
+                }
+              >
                 {g.id === "about" && (
-                  <div className="border-gray rounded-[18px] border bg-white px-5 py-5 md:px-[30px] md:py-[26px] lg:col-span-2">
+                  <div className="border-gray rounded-[18px] border bg-white px-5 py-5 md:px-[30px] md:py-[26px]">
                     <ClampedDescription value={opportunity.description} />
                   </div>
                 )}
@@ -879,6 +1059,7 @@ export const OpportunityDetailSections: React.FC<{
                     static={s.static}
                     open={open.has(s.id)}
                     focused={focused === s.id}
+                    flash={flashId === s.id}
                     onToggle={() => {
                       setFocused(null);
                       toggle(s.id);
@@ -892,6 +1073,10 @@ export const OpportunityDetailSections: React.FC<{
           );
         })}
       </div>
+
+      {/* Under the last section (2026-10-12): the page runs long, more so on a phone. Not in the
+          editor's preview, where the top is the editor's own. */}
+      {!preview && <JumpToTop />}
 
       {/* The sticky panel — hangs from the fixed navbar once the header card is gone. Desktop
           always; mobile too in "full" mode. */}

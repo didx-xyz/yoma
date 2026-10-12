@@ -1,6 +1,7 @@
 import { useRouter } from "next/router";
 import React, { useEffect, useMemo, useState } from "react";
-import { IoArrowUp, IoOptionsOutline, IoSearchOutline } from "react-icons/io5";
+import { IoOptionsOutline, IoSearchOutline } from "react-icons/io5";
+import { JumpToTop } from "~/components/Common/JumpToTop";
 import AnimatedText from "~/components/Opportunity/AnimatedText";
 import { formatNumber } from "../../lib/format";
 import { whereSummary } from "../../lib/location";
@@ -283,24 +284,7 @@ export const DiscoverySurface: React.FC = () => {
           <DiscoveryResults now={now} />
         )}
         {/* Under the rails or the pager: both run long, more so on a phone (2026-10-08). */}
-        <div className="flex justify-center pt-2">
-          <button
-            type="button"
-            onClick={() =>
-              window.scrollTo({
-                top: 0,
-                behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
-                  .matches
-                  ? "auto"
-                  : "smooth",
-              })
-            }
-            className="text-green inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm font-semibold hover:underline"
-          >
-            <IoArrowUp className="h-4 w-4" aria-hidden />
-            Jump to top
-          </button>
-        </div>
+        <JumpToTop />
       </main>
 
       {/* Same filter state, two containers — the breakpoint picks the chrome, never the content. */}

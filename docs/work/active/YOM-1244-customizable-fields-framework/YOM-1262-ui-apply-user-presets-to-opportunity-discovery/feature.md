@@ -432,6 +432,11 @@ commitment set; **accessibility excludes** those that have not described their a
 - [ ] Follow-ups from 2026-10-09 (b): the unchecked badge states (handoff); `detailFacts()` and
       `spotsLeftLabel` in `detailFacts.ts` are now unused; the testing guide predates the renames
       and the badges.
+- [x] **Jason's 2026-10-12 round** (handoff [`handoffs/2026-10-12-a.md`](handoffs/2026-10-12-a.md)): the
+      header's fact badges are small neutral chips that jump to their section below and open it;
+      How, Dates and Places are sections in About with the detail the badges used to expand.
+      Follow-ups: About is one column and a jump rings its card; "Jump to top" under the details
+      page's last section (shared `JumpToTop`, as on discovery).
 
 ## Decisions
 
@@ -1679,6 +1684,33 @@ commitment set; **accessibility excludes** those that have not described their a
     - the gender caption → "Not used to filter", because gender isn't used to filter;
     - "Make this my default" → "Save as my default";
     - "Verified" stays.
+
+- **2026-10-12 — header chips instead of expandable badges** (Jason: "I don't like the coloured
+  badges… make it a lot smaller. Remove expand/collapse. Rather make it jump to the relevant
+  section… expanded"). This replaces Part A's layout and expansion in
+  [`design/2026-10-09-detail-badges-copy.md`](design/2026-10-09-detail-badges-copy.md); its
+  wording rules (`detailBadges`) stay.
+  - **The header shows chips** (`DetailFactBadges`): a small white pill each, icon and value,
+    34px tall. No tints. Pink only for a deadline within 7 days, grey once closed or full.
+  - **A tap jumps** (`jumpToDetailSection`, a window event, because the header card and the
+    sections are siblings in every host). The section opens, gets the green focus edge, scrolls
+    under the sticky panel, and its button takes focus. Pay and Reward go to "Pay and
+    rewards"; How, Dates and Places go to their own sections.
+  - **How, Dates and Places are sections in About**, after "Pay and rewards". They show the
+    badge's value as the preview, its line as the note, and the old panel as the body. "How you
+    take part" replaces the static "Time needed" row whenever there is an effort or an
+    engagement. "Time needed" stays only for a commitment given as a description. Places draws
+    its bar only once a place is taken.
+  - **"Pay and rewards" takes the panels' wording** (`incentiveCopy`): "ZLTO is Yoma's reward
+    currency…", "Check the details with them before you accept", "Ask them when you apply",
+    "You can still take part". The Pay and Reward panels and the cash-out option left
+    `detailBadges`.
+  - **Follow-up (Jason, same day): About is one column, and a jump rings its card.** In two
+    columns, How shared a row with "Pay and rewards" and Places with Dates. The scroll landed
+    on the right row, but the eye went to the left card, so a jump looked wrong. About now
+    stacks its cards; the other groups keep two columns. The description card lost
+    `lg:col-span-2`, because a span of 2 in a one-column grid adds an implicit second column.
+    The card a chip jumps to also gets a green ring for 1.6s (`DetailDisclosure` `flash`).
 
 ## BA sign-off summary (2026-09-22)
 

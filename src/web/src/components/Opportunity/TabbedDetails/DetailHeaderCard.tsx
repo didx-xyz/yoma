@@ -42,7 +42,7 @@ const STRIP_COLUMNS: Record<number, string> = {
 // overflowing its tile (320 is the minimum width, 2026-10-05).
 /**
  * The grid columns for a strip of `count` tiles: the admin stat strip's. The public header's
- * facts are badges since 2026-10-09 (`DetailFactBadges`), with their own layout.
+ * facts are chips since 2026-10-12 (`DetailFactBadges`): each jumps to its section below.
  */
 export const stripColumns = (count: number): string =>
   STRIP_COLUMNS[count] ?? "";
@@ -168,19 +168,7 @@ export const DetailHeaderCard: React.FC<{
   trailingChips?: React.ReactNode;
   /** The host's actions, under the fact strip. */
   children?: React.ReactNode;
-  /** For the Reward badge's cash-out line (`DetailFactBadges`). */
-  cashOutClosed?: boolean;
-  /** The editor's preview: the Reward badge's marketplace link isn't a link. */
-  preview?: boolean;
-}> = ({
-  opportunity,
-  ref,
-  leadingChips,
-  trailingChips,
-  children,
-  cashOutClosed = false,
-  preview = false,
-}) => {
+}> = ({ opportunity, ref, leadingChips, trailingChips, children }) => {
   const typeConfig = getTypeConfig(opportunity.type);
   // With host chips the row may not fit one line: it wraps, and org · location keeps at least
   // 12rem beside the chips or takes the next line. The public row (type chip only) is as it was.
@@ -246,13 +234,8 @@ export const DetailHeaderCard: React.FC<{
         </p>
       </div>
 
-      {/* The fact badges (2026-10-09), reset per opportunity */}
-      <DetailFactBadges
-        key={opportunity.id}
-        opportunity={opportunity}
-        cashOutClosed={cashOutClosed}
-        preview={preview}
-      />
+      {/* The fact chips (2026-10-12), reset per opportunity: each jumps to its section below */}
+      <DetailFactBadges key={opportunity.id} opportunity={opportunity} />
 
       {children}
     </div>

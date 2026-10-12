@@ -7,12 +7,13 @@ import {
   resolveMoneyBadge,
   type MoneyFacts,
 } from "~/features/discovery/lib/money";
-import { cashOutLine } from "./detailSectionCopy";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The tabbed header's fact BADGES (2026-10-09, Jason; spec
 // `design/2026-10-09-detail-badges-copy.md` Part A): Pay · Reward · How · Dates · Places, each an
-// icon, a value that stands alone, one informative line, and expandable detail. Pure: every value
+// icon, a value that stands alone and one informative line. Since 2026-10-12 (Jason) the header
+// shows them as small chips that jump to their `section` below, and the `panel` is that section's
+// content (`OpportunityDetailSections`): nothing expands in the header any more. Pure: every value
 // comes from the opportunity the page already has. `now` is the youth's clock, set after mount;
 // `null` before it (the server), when the dates read in their absolute form so the two renders
 // match. The effort and engagement labels come from the caller (`effortLabel`,
@@ -20,6 +21,17 @@ import { cashOutLine } from "./detailSectionCopy";
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type DetailBadgeId = "pay" | "reward" | "how" | "dates" | "places";
+
+/** The section below a badge jumps to and opens: Pay and Reward share "Pay and rewards". */
+export type DetailBadgeSection = "incentive" | "how" | "dates" | "places";
+
+const SECTION: Record<DetailBadgeId, DetailBadgeSection> = {
+  pay: "incentive",
+  reward: "incentive",
+  how: "how",
+  dates: "dates",
+  places: "places",
+};
 
 /** What the badge's colours say (spec A2.3): pink is "act soon" only. */
 export type DetailBadgeTone =
@@ -47,6 +59,8 @@ export type DetailBadgeIcon =
 
 export interface DetailBadge {
   id: DetailBadgeId;
+  /** Where a tap on it goes (`SECTION`). */
+  section: DetailBadgeSection;
   /** The small label above the value, from `md` only. */
   eyebrow: string;
   value: string;
@@ -55,39 +69,29 @@ export interface DetailBadge {
   icon: DetailBadgeIcon;
   /** Places only: how full, 0–1 (at least 0.04 once anything is taken, so it shows). */
   bar?: number;
-  /** The expanded content. */
-  panel: {
+  /**
+   * The content of its section below, for How, Dates and Places. Pay and Reward have none: they
+   * jump to "Pay and rewards", which `incentiveCopy` words.
+   */
+  panel?: {
     /** A bold first line. */
     lead?: string;
     /** Short paragraphs, each with an optional bold lead word ("Time:"). */
     paragraphs: { lead?: string; text: string }[];
     /** A two-column fact list. */
     facts?: [string, string][];
-    /** Reward: the cash-out line, with its marketplace link. */
-    cashOut?: { before: string; link: string; after: string };
   };
 }
 
-const PAY_SUFFIXES: [string, string][] = [
-  ["/ yr", "per year"],
-  ["/ mo", "per month"],
-  ["/ hr", "per hour"],
-  ["once-off", "paid once"],
-];
-
-/** "USD 1 000 / mo" → "USD 1 000 per month". */
-const spelledPay = (payLine: string): string =>
-  PAY_SUFFIXES.reduce(
-    (line, [suffix, words]) => line.replace(suffix, words),
-    payLine,
-  );
+/** A badge before its section is set (`detailBadges` adds it from `SECTION`). */
+type BadgeDraft = Omit<DetailBadge, "section">;
 
 const UNDISCLOSED = "Paid — amount not disclosed";
 
 const payBadge = (
   opportunity: OpportunityInfo,
   money: MoneyFacts | null,
-): DetailBadge | null => {
+): BadgeDraft | null => {
   const pay = money ? resolveMoneyBadge(money) : null;
   if (!pay?.payLine) return null;
   const base = {
@@ -102,56 +106,23 @@ const payBadge = (
       ? {
           ...base,
           info: "Ask about pay when you apply",
-          panel: {
-            paragraphs: [
-              {
-                text: "This job is paid, but the employer hasn't shared how much. Ask them when you apply.",
-              },
-            ],
-          },
         }
       : {
           ...base,
           info: "Ask the provider about pay",
-          panel: {
-            paragraphs: [
-              {
-                text: "This opportunity pays, but the amount isn't shared. Ask the provider for details.",
-              },
-            ],
-          },
         };
   if (pay.partnerPaid)
     return {
       ...base,
       info: "Paid by the partner, not Yoma",
-      panel: {
-        lead: pay.payLine,
-        paragraphs: [
-          {
-            text: "The partner running this pays it, not Yoma. Ask them how and when you'll get it.",
-          },
-        ],
-      },
     };
   return {
     ...base,
     info: "Salary from the employer",
-    panel: {
-      lead: spelledPay(pay.payLine),
-      paragraphs: [
-        {
-          text: "This is the pay the employer shared. Check the details with them before you accept.",
-        },
-      ],
-    },
   };
 };
 
-const rewardBadge = (
-  opportunity: OpportunityInfo,
-  cashOutClosed: boolean,
-): DetailBadge | null => {
+const rewardBadge = (opportunity: OpportunityInfo): BadgeDraft | null => {
   const reward = opportunity.zltoRewardEstimate;
   if (reward == null) return null;
   if (reward <= 0)
@@ -162,13 +133,6 @@ const rewardBadge = (
       info: "No reward left to earn",
       tone: "reward",
       icon: "zlto",
-      panel: {
-        paragraphs: [
-          {
-            text: "The ZLTO for this opportunity has run out, so finishing it now earns no Zlto. You can still take part.",
-          },
-        ],
-      },
     };
   const amount = formatNumber(reward);
   return {
@@ -178,15 +142,6 @@ const rewardBadge = (
     info: "Earn it when you finish",
     tone: "reward",
     icon: "zlto",
-    panel: {
-      lead: `About ${amount} ZLTO`,
-      paragraphs: [
-        {
-          text: "ZLTO is Yoma's reward currency. You get it once your completion is verified. This amount is an estimate. You may get less if the reward runs low.",
-        },
-      ],
-      cashOut: cashOutLine(cashOutClosed),
-    },
   };
 };
 
@@ -241,7 +196,7 @@ const howBadge = (
   opportunity: OpportunityInfo,
   effort: string | null,
   engagement: string | null,
-): DetailBadge | null => {
+): BadgeDraft | null => {
   const key =
     typeof opportunity.engagementType === "string"
       ? opportunity.engagementType
@@ -283,7 +238,7 @@ const timeLeft = (days: number): string =>
 const datesBadge = (
   opportunity: OpportunityInfo,
   now: Date | null,
-): DetailBadge | null => {
+): BadgeDraft | null => {
   // Only while Active, as before.
   if (opportunity.status !== "Active") return null;
   const start = new Date(opportunity.dateStart);
@@ -387,7 +342,7 @@ const PLACES_RULE =
 const placesBadge = (
   opportunity: OpportunityInfo,
   now: Date | null,
-): DetailBadge | null => {
+): BadgeDraft | null => {
   const limit = opportunity.participantLimit;
   if (limit == null) return null;
   // Closed shows no badge; before mount nothing is known closed (the dates wait the same way).
@@ -449,7 +404,6 @@ export const detailBadges = (
   options: {
     now: Date | null;
     money: MoneyFacts | null;
-    cashOutClosed: boolean;
     /** `effortLabel(opportunity)`: "10 minutes". */
     effort: string | null;
     /** `getEngagementConfig(engagementType)?.label`: "Remote". */
@@ -458,8 +412,10 @@ export const detailBadges = (
 ): DetailBadge[] =>
   [
     payBadge(opportunity, options.money),
-    rewardBadge(opportunity, options.cashOutClosed),
+    rewardBadge(opportunity),
     howBadge(opportunity, options.effort, options.engagement),
     datesBadge(opportunity, options.now),
     placesBadge(opportunity, options.now),
-  ].filter((badge): badge is DetailBadge => badge !== null);
+  ]
+    .filter((badge): badge is BadgeDraft => badge !== null)
+    .map((badge) => ({ ...badge, section: SECTION[badge.id] }));

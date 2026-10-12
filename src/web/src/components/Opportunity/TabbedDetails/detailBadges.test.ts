@@ -34,7 +34,6 @@ const badges = (o: OpportunityInfo, now: Date | null = NOW) =>
   detailBadges(o, {
     now,
     money: null,
-    cashOutClosed: false,
     // As the component passes them: `effortLabel` and the engagement's label.
     effort: o.commitmentIntervalCount
       ? `${o.commitmentIntervalCount} ${String(o.commitmentInterval).toLowerCase()}s`
@@ -115,7 +114,7 @@ describe("How and Reward badges", () => {
     );
     assert.equal(how?.value, "10 minutes · Remote");
     assert.equal(how?.info, "Online, from anywhere");
-    assert.equal(how?.panel.paragraphs.length, 2);
+    assert.equal(how?.panel?.paragraphs.length, 2);
   });
 
   test("on-site names its one place", () => {
@@ -135,7 +134,7 @@ describe("How and Reward badges", () => {
     );
     assert.equal(how?.value, "On-site");
     assert.equal(
-      how?.panel.paragraphs[0]?.text,
+      how?.panel?.paragraphs[0]?.text,
       "You go there in person, in Cape Town, Western Cape.",
     );
   });
@@ -149,5 +148,41 @@ describe("How and Reward badges", () => {
       badge(opportunity({ zltoRewardEstimate: 0 }), "reward")?.value,
       "ZLTO ran out",
     );
+  });
+});
+
+describe("Where a chip jumps (2026-10-12)", () => {
+  test("Reward to Pay and rewards, the others to their own section", () => {
+    const all = badges(
+      opportunity({
+        zltoRewardEstimate: 200,
+        commitmentInterval: "Hour",
+        commitmentIntervalCount: 2,
+        engagementType: "Remote",
+        participantLimit: 100,
+      }),
+    );
+    assert.deepEqual(
+      all.map((b) => [b.id, b.section]),
+      [
+        ["reward", "incentive"],
+        ["how", "how"],
+        ["dates", "dates"],
+        ["places", "places"],
+      ],
+    );
+  });
+
+  test("Reward has no detail of its own; How, Dates and Places do", () => {
+    const all = badges(
+      opportunity({
+        zltoRewardEstimate: 200,
+        engagementType: "Remote",
+        participantLimit: 100,
+      }),
+    );
+    assert.equal(all.find((b) => b.id === "reward")?.panel, undefined);
+    for (const id of ["how", "dates", "places"])
+      assert.ok(all.find((b) => b.id === id)?.panel, id);
   });
 });
