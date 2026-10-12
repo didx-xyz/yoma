@@ -758,6 +758,7 @@ mandatory when the final capture implementation permits them to be absent or did
 
 ## Tasks
 
+- [x] Fix pending completion deletion to remove non-file evidence as well as file-backed evidence before the parent; preserve blob rollback, custom-field cleanup and pending-only rules. Nine new regression cases; 41 focused tests pass (2026-10-12).
 - [x] Make Opportunity Details precede Completion Details in the SSI-only shared presentation helper; preserve other-group/ungrouped/system and field ordering, with all-six-context wallet assertions and catalogue/CF regression checks. No migration change.
 - [x] Apply Completion Details and friendly User/Engagement/Duration labels to all six defaults; order User, optional Skills Earned, type-specific completion fields, Location, Duration, Method/Evidence through existing seed metadata. Verify exact populated/omitted wallet order, metadata-only reseed stability and persisted fresh-DB layout.
 - [x] Resolve repeated constant-array arguments in PartnerProviderLocationTests using static readonly class fields; clean build and all eleven focused tests pass.
@@ -806,6 +807,8 @@ mandatory when the final capture implementation permits them to be absent or did
 - [ ] Prepare the later didx:me cutover/replay plan without executing a production replay in this phase.
 
 ## Decisions
+
+- 2026-10-12 (pending completion deletion): retain explicit service cleanup instead of adding cascade deletes. Every MyOpportunityVerification row must be removed, while blob backup/deletion/restoration remains conditional on FileId. This fixes the required-child EF exception for location evidence without a migration or frontend contract change. See the consolidated handoff for test evidence and the remaining UI retry.
 
 - 2026-10-11 (schema validation follow-up): Adrian approved replacing ArgumentException with the existing FluentValidation ValidationException for incompatible schema attributes and invalid list type contexts. Existing middleware produces HTTP 400; no global exception remapping, attribute-rule, schema-write, tenant-timeout or provider change. Four focused service/middleware cases and the 684-case regression pass; this follow-up remains uncommitted.
 

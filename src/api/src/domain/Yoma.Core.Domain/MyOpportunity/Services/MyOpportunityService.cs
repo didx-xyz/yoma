@@ -1499,13 +1499,13 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             }
           }
 
-          //delete existing items in blob storage and db
-          foreach (var item in itemsExisting)
+          //Delete every evidence row, including non-file evidence such as location.
+          //Only file-backed evidence has a blob to delete and restore on rollback.
+          foreach (var item in myOpportunity.Verifications ?? [])
           {
-            if (!item.FileId.HasValue)
-              throw new InvalidOperationException("File expected");
-
             await _myOpportunityVerificationRepository.Delete(item);
+            if (!item.FileId.HasValue) continue;
+
             await _blobService.Delete(item.FileId.Value);
             itemsExistingDeleted.Add(item);
           }
