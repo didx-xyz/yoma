@@ -1,5 +1,16 @@
 # Epic: YOM-1051 — ZLTO Payout (Treasury, Reward Pools and Youth Cash-Out)
 
+## Temporary Stage YoID recovery — 2026-10-13
+
+Stage shares the ACA-Py test registry with Local/Dev. The CF branch published YoID Default 1.1
+with AccountVerificationMethods, which the deployed Stage catalogue cannot map. Temporary
+recovery is on `fix/stage-yoid-schema-compatibility`, based on freshly fetched origin/master.
+See [the recovery handoff](./handoffs/2026-10-13-a.md). Production behaviour remains strict.
+**Production release gate: remove all temporary bypass code and its tests before releasing
+cash-out to Production, even though execution is guarded by the injected Staging environment.**
+No registry schema, wallet or issued credential was deleted or rewritten.
+
+
 ## Login webhook recovery — 2026-10-06
 
 Release hardening requested by Adrian after failed registration webhooks left Keycloak accounts
