@@ -348,6 +348,11 @@ namespace Yoma.Core.Domain.SSI.Services
                     request.SchemaName = schema.Name;
                     request.ArtifactType = schema.ArtifactType;
 
+                    // Stage may intentionally use an older compatible YoID version from the shared test registry.
+                    // Preserve that exact selection rather than resolving the incompatible latest version again.
+                    if (_environmentProvider.Environment == Core.Environment.Staging)
+                      request.SchemaId = schema.Id;
+
                     foreach (var entity in schema.Entities)
                     {
                       var entityType = Type.GetType(entity.TypeName)
