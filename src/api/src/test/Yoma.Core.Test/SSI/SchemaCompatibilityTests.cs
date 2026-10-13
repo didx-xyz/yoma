@@ -81,7 +81,10 @@ namespace Yoma.Core.Test.SSI
       using var fixture = new Fixture(Domain.Core.Environment.Staging);
       fixture.Schemas.Add(new Schema
       {
-        Id = "restored", Name = "YoID|Default", Version = new Version(1, 2), ArtifactType = ArtifactType.ACR,
+        Id = "restored",
+        Name = "YoID|Default",
+        Version = new Version(1, 2),
+        ArtifactType = ArtifactType.ACR,
         AttributeNames = [.. fixture.Schemas[0].AttributeNames]
       });
       fixture.Schemas.Reverse();
@@ -95,7 +98,8 @@ namespace Yoma.Core.Test.SSI
       using var fixture = new Fixture(Domain.Core.Environment.Staging);
       fixture.Entities.Single(entity => entity.Name == "User").Properties!.Add(new()
       {
-        Name = "AccountVerificationMethods", AttributeName = "User_AccountVerificationMethods"
+        Name = "AccountVerificationMethods",
+        AttributeName = "User_AccountVerificationMethods"
       });
       Assert.Equal("cf", (await fixture.Service.GetByFullName("YoID|Default")).Id);
       Assert.Empty(fixture.Logger.Invocations);
@@ -107,7 +111,8 @@ namespace Yoma.Core.Test.SSI
       using var fixture = new Fixture(Domain.Core.Environment.Staging);
       fixture.Entities.Single(entity => entity.Name == "User").Properties!.Add(new()
       {
-        Name = "Email", AttributeName = "User_Email"
+        Name = "Email",
+        AttributeName = "User_Email"
       });
       await Assert.ThrowsAsync<DataInconsistencyException>(() => fixture.Service.List(SchemaType.YoID));
     }
@@ -133,22 +138,31 @@ namespace Yoma.Core.Test.SSI
         };
         Entities = [.. attributes.GroupBy(attribute => attribute.Split('_')[0]).Select(group => new SSISchemaEntity
         {
-          Id = Guid.NewGuid(), Name = group.Key, Types = [type],
+          Id = Guid.NewGuid(),
+          Name = group.Key,
+          Types = [type],
           Properties = [.. group.Select(attribute => new SSISchemaEntityProperty
           {
-            Name = attribute[(attribute.IndexOf('_') + 1)..], AttributeName = attribute
+            Name = attribute[(attribute.IndexOf('_') + 1)..],
+            AttributeName = attribute
           })]
         })];
         Schemas =
         [
           new()
           {
-            Id = "original", Name = "YoID|Default", Version = new Version(1, 0), ArtifactType = ArtifactType.ACR,
+            Id = "original",
+            Name = "YoID|Default",
+            Version = new Version(1, 0),
+            ArtifactType = ArtifactType.ACR,
             AttributeNames = [.. SSISchemaService.SchemaAttributes_Internal, .. attributes]
           },
           new()
           {
-            Id = "cf", Name = "YoID|Default", Version = new Version(1, 1), ArtifactType = ArtifactType.ACR,
+            Id = "cf",
+            Name = "YoID|Default",
+            Version = new Version(1, 1),
+            ArtifactType = ArtifactType.ACR,
             AttributeNames = [.. SSISchemaService.SchemaAttributes_Internal,
               .. attributes.Where(attribute => attribute != "User_Email"), "User_AccountVerificationMethods"]
           }

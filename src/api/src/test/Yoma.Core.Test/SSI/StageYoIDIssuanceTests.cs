@@ -98,8 +98,14 @@ namespace Yoma.Core.Test.SSI
       {
         Http.RespondWithJson(new
         {
-          access_token = "test-token", token = "test-token", expires_in = 3600, token_type = "Bearer",
-          wallet_id = "tenant", wallet_name = "tenant", wallet_label = "tenant", created_at = DateTimeOffset.UtcNow.ToString("O")
+          access_token = "test-token",
+          token = "test-token",
+          expires_in = 3600,
+          token_type = "Bearer",
+          wallet_id = "tenant",
+          wallet_name = "tenant",
+          wallet_label = "tenant",
+          created_at = DateTimeOffset.UtcNow.ToString("O")
         });
         Http.ForCallsTo("*definitions/schemas?*").RespondWithJson(new[]
         {
@@ -107,7 +113,10 @@ namespace Yoma.Core.Test.SSI
         });
         Http.ForCallsTo("*definitions/schemas/schema-original").RespondWithJson(new
         {
-          id = "schema-original", name = "YoID|Default", version = "1.0", attribute_names = new[] { "User_Email", "_Referent_Client" }
+          id = "schema-original",
+          name = "YoID|Default",
+          version = "1.0",
+          attribute_names = new[] { "User_Email", "_Referent_Client" }
         }, (int)schemaLookupStatus);
         Http.ForCallsTo("*wallet/credentials*").RespondWithJson(new
         {
@@ -140,8 +149,12 @@ namespace Yoma.Core.Test.SSI
         Request = new CredentialIssuanceRequest
         {
           ClientReferent = new("_Referent_Client", "test-referent"),
-          SchemaName = "YoID|Default", SchemaId = "schema-original", SchemaType = Domain.SSI.SchemaType.YoID.ToString(),
-          ArtifactType = ArtifactType.ACR, TenantIdIssuer = "tenant", TenantIdHolder = "tenant",
+          SchemaName = "YoID|Default",
+          SchemaId = "schema-original",
+          SchemaType = Domain.SSI.SchemaType.YoID.ToString(),
+          ArtifactType = ArtifactType.ACR,
+          TenantIdIssuer = "tenant",
+          TenantIdHolder = "tenant",
           Attributes = new() { ["User_Email"] = "test@example.invalid", ["_Referent_Client"] = "test-referent" }
         };
       }
