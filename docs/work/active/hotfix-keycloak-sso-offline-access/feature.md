@@ -3,8 +3,8 @@
 ## Meta
 
 - **Feature**: Keep the Keycloak browser session alive after sign-in
-- **Epic**: none (unticketed hotfix, reported by the IXO integration work)
-- **Ticket**: none
+- **Epic**: none (hotfix, reported by the IXO integration work)
+- **Ticket**: [YOM-1299](https://linear.app/didx/issue/YOM-1299)
 - **Owner**: Adrian
 - **Areas**: keycloak
 - **Status**: review — stage rollout and sign-in lifetime decision pending
@@ -46,5 +46,6 @@ Realm config change in `src/keycloak/exports/01-yoma-realm.yaml`:
 
 ## Links
 
+- Ticket: [YOM-1299](https://linear.app/didx/issue/YOM-1299)
 - PRs: [#1973](https://github.com/didx-xyz/yoma/pull/1973)
 - Related: #1517 (Keycloak 26 upgrade)
