@@ -237,7 +237,6 @@ keycloak:
         -XX:+UseContainerSupport
         -XX:MaxRAMPercentage=75.0
         -Djava.awt.headless=true
-        -Dkeycloak.profile.feature.upload_scripts=enabled
     - name: KC_CACHE
       value: ispn
     - name: KC_CACHE_STACK
