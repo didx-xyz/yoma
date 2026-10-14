@@ -46,5 +46,5 @@ Realm config change in `src/keycloak/exports/01-yoma-realm.yaml`:
 
 ## Links
 
-- PRs: see the latest handoff
+- PRs: [#1973](https://github.com/didx-xyz/yoma/pull/1973)
 - Related: #1517 (Keycloak 26 upgrade)
