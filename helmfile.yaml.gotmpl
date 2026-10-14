@@ -53,6 +53,9 @@ releases:
     namespace: {{ .Values.namespace }}
     chart: ./helm/keycloak
     version: 0.4.0
+    # Keycloak upgrades run database migrations; an atomic rollback after a
+    # migration leaves the older version unable to serve logins.
+    timeout: 600
     values:
       - ./helm/keycloak/conf/{{ .Environment.Name }}/values.yaml
       - keycloak:
