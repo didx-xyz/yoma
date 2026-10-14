@@ -15,6 +15,8 @@ Upgrade the Keycloak server from 26.4.0 to 26.8.1 in Helm and local compose. Reb
 - [x] Remove the `realm-management` client and its client roles from the realm export.
 - [x] Keep the password fields on the registration form (`always_set_password_on_register_form`).
 - [x] Local smoke test: fresh install, and a 26.4.0 database upgraded in place.
+- [x] Helm upgrade of an existing 26.4.0 deployment on a local kind cluster, deployed the way CI does it (see "Helm upgrade test" below).
+- [ ] Decide the rollout plan for Dev, Stage and Prod (all three run `replicas: 2`).
 - [ ] Deploy to Dev, then Stage. Register with phone (real SMS), log in with Google and Facebook, and check SendGrid email.
 - [ ] Prod rollout with no 26.4.0 pod running next to a 26.8.1 pod (see Gotchas).
 
@@ -28,8 +30,19 @@ Upgrade the Keycloak server from 26.4.0 to 26.8.1 in Helm and local compose. Reb
 
 ## Gotchas
 
-- Prod runs `replicas: 2`. Upgrade notes for 26.6 say the `OFFLINE_CLIENT_SESSION.REALM_ID` migration needs downtime: do not run 26.6+ next to an older version on the same database. A StatefulSet rolling update would do exactly that. Bring Prod to zero (or one) replicas before the new image starts.
+- Dev, Stage and Prod run `replicas: 2`, and a normal rolling update runs 26.4.0 and 26.8.1 side by side. The kind test reproduced the result the upgrade notes warn about: offline sessions created by the old pod during the overlap are invisible to 26.8.1, so those users are logged out. With one replica there was no overlap.
+- CI deploys with `helmfile apply` and `helmDefaults` of `atomic: true`, `timeout: 300`. If the upgrade passes 300 seconds after the database has migrated, Helm rolls back to 26.4.0, and 26.4.0 on a 26.8.1 schema returns HTTP 500 on the login page. The two-replica upgrade on kind took 272 of the 300 seconds, most of it pulling images.
 - SMTP: since 26.8.1, `starttls: "true"` (set in the realm) fails the send if the server does not offer STARTTLS. SendGrid offers it, but check on Stage that mail still sends.
 - Since 26.8.0, an email is marked verified only by email verification. Linking a brokered (Google or Facebook) account by email no longer sets `emailVerified`. The API copies `EmailVerified` into `EmailConfirmed` in `WebhookController`.
 - Providers download from the `providers.ref` git ref at pod start. Merge the JARs together with the image bump.
 - Keycloak logs that `KEYCLOAK_ADMIN` and `KEYCLOAK_ADMIN_PASSWORD` are deprecated (use `KC_BOOTSTRAP_ADMIN_*`). They still work on 26.8.1.
+
+## Helm upgrade test
+
+Run on 2026-10-14 against a local kind cluster with one control-plane node and two workers in different zones, so Prod's required pod anti-affinity applies. The chart was deployed with `values.yaml`, `conf/prod/values.yaml` and a local override for ingress, memory, secrets and the config-cli URL. Each install used the same `--set *.ref=<sha>` flags as CI, plus `--wait --atomic --timeout 300s` to mirror `helmDefaults`.
+
+- Baseline: 26.4.0 from `master` (`a1f96612`), 2 replicas, config-cli import passed. Seeded an email user with a password, a user with a temporary password, a phone user with an OTP credential, and an offline refresh token.
+- Two-replica upgrade to this branch: completed in 272 seconds. The StatefulSet replaced `keycloak-1` first; it migrated the schema while `keycloak-0` (26.4.0) kept serving. A probe inside the cluster saw no failed request. Afterwards the database held 140 `yoma-web` offline client sessions but Keycloak reported 138. The 2 missing rows had `REALM_ID` null, written by the 26.4.0 pod after the migration. The two versions also formed separate Infinispan clusters during the overlap.
+- Rollback after migration (what `atomic` does on timeout): the 26.4.0 pods started and reported ready, but logged `column ipe1_0.organization_id does not exist`, the login page returned HTTP 500, and config-cli failed with HTTP 500.
+- One-replica upgrade (`--set keycloak.replicas=1`) from a fresh baseline: completed in 114 seconds with the image already cached on the node. Keycloak was unreachable for about 67 seconds. No `REALM_ID` null rows. Raising replicas back to 2 afterwards added `keycloak-1` without restarting `keycloak-0` and without failed requests.
+- After both upgrade paths: the pre-upgrade refresh token still worked, all seeded users could log in (the temporary-password user got `UPDATE_PASSWORD`), the phone user's attributes were intact, `realm-management` had 22 roles, and the registration password option was applied.
