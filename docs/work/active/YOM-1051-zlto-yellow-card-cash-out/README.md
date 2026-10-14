@@ -1,6 +1,6 @@
 # Epic: YOM-1051 — ZLTO Payout (Treasury, Reward Pools and Youth Cash-Out)
 
-## Temporary Stage YoID recovery — 2026-10-13
+## Temporary Stage YoID recovery and Production removal — 2026-10-14
 
 Stage shares the ACA-Py test registry with Local/Dev. The CF branch published YoID Default 1.1
 with AccountVerificationMethods, which the deployed Stage catalogue cannot map. Temporary
@@ -9,6 +9,20 @@ See [the recovery handoff](./handoffs/2026-10-13-a.md). Production behaviour rem
 **Production release gate: remove all temporary bypass code and its tests before releasing
 cash-out to Production, even though execution is guarded by the injected Staging environment.**
 No registry schema, wallet or issued credential was deleted or rewritten.
+
+The workaround was merged as `a1f966128` (#1971), and Adrian confirmed that the Stage
+deployment resolved the failure. Its removal is now prepared, **uncommitted and not deployed**,
+on `chore/cash-out-final-prep` from the latest `origin/master`. Adrian will push this shared
+release-preparation branch so Jason can complete the Web cleanup there too.
+See [the removal handoff](./handoffs/2026-10-14-a.md) for scope and verification.
+
+- [x] Prepare removal of all four production-code additions and both bypass-specific test files.
+- [ ] Adrian reviews, commits and merges the removal before the cash-out Production release.
+- [ ] Verify that the deployed Production release contains no temporary bypass code.
+
+Merging the removal restores strict schema mapping on Stage too. If Stage still shares the
+incompatible test registry, its original YoID mismatch can return. Coordinate the merge/deploy
+timing; this removal does not isolate the registry or deploy the unmerged CF work.
 
 
 ## Login webhook recovery — 2026-10-06

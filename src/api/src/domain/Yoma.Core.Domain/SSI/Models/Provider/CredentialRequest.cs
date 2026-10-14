@@ -9,12 +9,6 @@ namespace Yoma.Core.Domain.SSI.Models.Provider
     /// </summary>
     public string SchemaName { get; set; } = null!;
 
-    /// <summary>
-    /// Exact schema selected for the temporary Stage YoID compatibility fallback.
-    /// Other environments and schema types retain their existing name-based issuance.
-    /// </summary>
-    public string? SchemaId { get; set; }
-
     public string SchemaType { get; set; } = null!;
 
     public ArtifactType ArtifactType { get; set; }
