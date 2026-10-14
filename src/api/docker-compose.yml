@@ -113,7 +113,7 @@ services:
 
   keycloak:
     # Local Keycloak server
-    image: quay.io/keycloak/keycloak:26.4.0
+    image: quay.io/keycloak/keycloak:26.8.1
     container_name: keycloak
     environment:
       WEBHOOK_EVENTS_TAKEN: "LOGIN,REGISTER,UPDATE_PROFILE"
@@ -179,7 +179,7 @@ services:
 
   keycloak-config:
     # Import Keycloak configuration
-    image: docker.io/adorsys/keycloak-config-cli:6.4.0-26.1.0
+    image: docker.io/adorsys/keycloak-config-cli:6.5.1-26.5.5
     container_name: keycloak-config
     environment:
       KEYCLOAK_URL: "http://keycloak:8080/"
