@@ -37,7 +37,11 @@ Upgrade the Keycloak server from 26.4.0 to 26.8.1 in Helm and local compose. Reb
 - Dev, Stage and Prod run `replicas: 2`, and a normal rolling update runs 26.4.0 and 26.8.1 side by side. The kind test reproduced the result the upgrade notes warn about: offline sessions created by the old pod during the overlap are invisible to 26.8.1, so those users are logged out. With one replica there was no overlap.
 - CI deploys with `helmfile apply` and `helmDefaults` of `atomic: true`, `timeout: 300`. If the upgrade passes 300 seconds after the database has migrated, Helm rolls back to 26.4.0, and 26.4.0 on a 26.8.1 schema returns HTTP 500 on the login page. The two-replica upgrade on kind took 272 of the 300 seconds, most of it pulling images.
 - SMTP: since 26.8.1, `starttls: "true"` (set in the realm) fails the send if the server does not offer STARTTLS. SendGrid offers it, but check on Stage that mail still sends.
-- Since 26.8.0, an email is marked verified only by email verification. Linking a brokered (Google or Facebook) account by email no longer sets `emailVerified`. The API copies `EmailVerified` into `EmailConfirmed` in `WebhookController`.
+- Since 26.8.0, Keycloak marks an email verified only through email verification ([keycloak#50946](https://github.com/keycloak/keycloak/pull/50946)). That change touches three places. The first is the "link by email" confirmation (`idp-email-verification`); our Google and Facebook first-login flows (`auto-link-social`, `auto-link-facebook`) do not use it. The second is password reset by email. The third is admin "execute actions" emails that leave out Verify Email; the API sends `send-verify-email` instead. Tested on 26.4.0 and 26.8.1 with a fake OIDC provider bound to our real flows, with `trustEmail: true`, and got the same result on both:
+  - A new user created through the provider gets `emailVerified = true`.
+  - An existing unverified account gets linked but stays unverified and is sent to Verify Email.
+  - Resetting a password by email leaves an unverified account unverified and sends a verification email.
+  - Nothing changes for the API's `EmailConfirmed`. One side effect: an admin's "Credential reset" email from the admin console no longer verifies the address unless Verify Email is one of the actions.
 - Providers download from the `providers.ref` git ref at pod start. Merge the JARs together with the image bump.
 - Keycloak logs that `KEYCLOAK_ADMIN` and `KEYCLOAK_ADMIN_PASSWORD` are deprecated (use `KC_BOOTSTRAP_ADMIN_*`). They still work on 26.8.1.
 
