@@ -96,170 +96,6 @@ roles:
       attributes: {}
   client:
     atingi: []
-    realm-management:
-      - id: b9415561-7458-40c4-b3ef-d21a2934c02c
-        name: manage-authorization
-        description: ${role_manage-authorization}
-        composite: false
-        clientRole: true
-        containerId: 8fb0b64b-d141-41be-90a2-2bc5298eb53b
-        attributes: {}
-      - id: db9c5444-a758-4ded-afb1-e7517e6d0138
-        name: view-realm
-        description: ${role_view-realm}
-        composite: false
-        clientRole: true
-        containerId: 8fb0b64b-d141-41be-90a2-2bc5298eb53b
-        attributes: {}
-      - id: 8c997016-0864-4b8c-8d55-269ab88e0db0
-        name: view-authorization
-        description: ${role_view-authorization}
-        composite: false
-        clientRole: true
-        containerId: 8fb0b64b-d141-41be-90a2-2bc5298eb53b
-        attributes: {}
-      - id: 1908aee7-c3b0-46d5-8059-6bbfc02356f9
-        name: manage-clients
-        description: ${role_manage-clients}
-        composite: false
-        clientRole: true
-        containerId: 8fb0b64b-d141-41be-90a2-2bc5298eb53b
-        attributes: {}
-      - id: 336af4a5-4761-4c68-9a7a-ec72d3b28aa8
-        name: query-clients
-        description: ${role_query-clients}
-        composite: false
-        clientRole: true
-        containerId: 8fb0b64b-d141-41be-90a2-2bc5298eb53b
-        attributes: {}
-      - id: 3f686401-0ab8-480f-b36e-981b12717790
-        name: manage-users
-        description: ${role_manage-users}
-        composite: false
-        clientRole: true
-        containerId: 8fb0b64b-d141-41be-90a2-2bc5298eb53b
-        attributes: {}
-      - id: abe0180a-936e-4265-b49d-514a1e10a318
-        name: view-clients
-        description: ${role_view-clients}
-        composite: true
-        composites:
-          client:
-            realm-management:
-              - query-clients
-        clientRole: true
-        containerId: 8fb0b64b-d141-41be-90a2-2bc5298eb53b
-        attributes: {}
-      - id: 1fcb22ec-90d8-43f6-99ec-5905c51f4682
-        name: view-events
-        description: ${role_view-events}
-        composite: false
-        clientRole: true
-        containerId: 8fb0b64b-d141-41be-90a2-2bc5298eb53b
-        attributes: {}
-      - id: 62f9c3ba-a79e-4bbf-b653-ab3a3898094d
-        name: query-users
-        description: ${role_query-users}
-        composite: false
-        clientRole: true
-        containerId: 8fb0b64b-d141-41be-90a2-2bc5298eb53b
-        attributes: {}
-      - id: 96cfe80d-e0c5-4486-b323-06777fe0d300
-        name: create-client
-        description: ${role_create-client}
-        composite: false
-        clientRole: true
-        containerId: 8fb0b64b-d141-41be-90a2-2bc5298eb53b
-        attributes: {}
-      - id: d7de685d-daa9-425d-988f-75b61a038b10
-        name: view-identity-providers
-        description: ${role_view-identity-providers}
-        composite: false
-        clientRole: true
-        containerId: 8fb0b64b-d141-41be-90a2-2bc5298eb53b
-        attributes: {}
-      - id: aec30e46-b94d-411e-b2ef-289c60364e85
-        name: query-realms
-        description: ${role_query-realms}
-        composite: false
-        clientRole: true
-        containerId: 8fb0b64b-d141-41be-90a2-2bc5298eb53b
-        attributes: {}
-      - id: 3d5017d6-90c7-4866-8c14-ce8a74d5e329
-        name: realm-admin
-        description: ${role_realm-admin}
-        composite: true
-        composites:
-          client:
-            realm-management:
-              - manage-authorization
-              - view-realm
-              - view-authorization
-              - manage-clients
-              - query-clients
-              - manage-users
-              - view-clients
-              - view-events
-              - query-users
-              - create-client
-              - view-identity-providers
-              - query-realms
-              - view-users
-              - manage-events
-              - manage-identity-providers
-              - manage-realm
-              - impersonation
-              - query-groups
-        clientRole: true
-        containerId: 8fb0b64b-d141-41be-90a2-2bc5298eb53b
-        attributes: {}
-      - id: f198513a-4bf3-44f9-a226-006ef77029a6
-        name: manage-events
-        description: ${role_manage-events}
-        composite: false
-        clientRole: true
-        containerId: 8fb0b64b-d141-41be-90a2-2bc5298eb53b
-        attributes: {}
-      - id: d6f14d18-3de8-4dff-9808-204d53e67942
-        name: view-users
-        description: ${role_view-users}
-        composite: true
-        composites:
-          client:
-            realm-management:
-              - query-users
-              - query-groups
-        clientRole: true
-        containerId: 8fb0b64b-d141-41be-90a2-2bc5298eb53b
-        attributes: {}
-      - id: 50ced65b-9559-47ea-a76a-53e22014a0d7
-        name: manage-identity-providers
-        description: ${role_manage-identity-providers}
-        composite: false
-        clientRole: true
-        containerId: 8fb0b64b-d141-41be-90a2-2bc5298eb53b
-        attributes: {}
-      - id: bbd35e5b-0b18-46a1-821f-4f1f9ce157a4
-        name: manage-realm
-        description: ${role_manage-realm}
-        composite: false
-        clientRole: true
-        containerId: 8fb0b64b-d141-41be-90a2-2bc5298eb53b
-        attributes: {}
-      - id: 4cd7a5fc-2f9a-4f4c-9e41-c1fb9f6ea569
-        name: impersonation
-        description: ${role_impersonation}
-        composite: false
-        clientRole: true
-        containerId: 8fb0b64b-d141-41be-90a2-2bc5298eb53b
-        attributes: {}
-      - id: 9e06f72b-6857-4d0e-ab81-5aa3f23bc81c
-        name: query-groups
-        description: ${role_query-groups}
-        composite: false
-        clientRole: true
-        containerId: 8fb0b64b-d141-41be-90a2-2bc5298eb53b
-        attributes: {}
     security-admin-console: []
     goodwall: []
     account-console: []
@@ -617,40 +453,6 @@ clients:
       - acr
       - roles
       - profile
-      - email
-    optionalClientScopes:
-      - address
-      - phone
-      - offline_access
-      - microprofile-jwt
-  - id: 8fb0b64b-d141-41be-90a2-2bc5298eb53b
-    clientId: realm-management
-    name: ${client_realm-management}
-    surrogateAuthRequired: false
-    enabled: true
-    alwaysDisplayInConsole: false
-    clientAuthenticatorType: client-secret
-    redirectUris: []
-    webOrigins: []
-    notBefore: 0
-    bearerOnly: true
-    consentRequired: false
-    standardFlowEnabled: true
-    implicitFlowEnabled: false
-    directAccessGrantsEnabled: false
-    serviceAccountsEnabled: false
-    publicClient: false
-    frontchannelLogout: false
-    protocol: openid-connect
-    attributes: {}
-    authenticationFlowBindingOverrides: {}
-    fullScopeAllowed: false
-    nodeReRegistrationTimeout: 0
-    defaultClientScopes:
-      - web-origins
-      - acr
-      - profile
-      - roles
       - email
     optionalClientScopes:
       - address
@@ -2572,7 +2374,8 @@ authenticationFlows:
         priority: 0
         autheticatorFlow: false
         userSetupAllowed: false
-      - authenticator: registration-password-action
+      - authenticatorConfig: registration password config
+        authenticator: registration-password-action
         authenticatorFlow: false
         requirement: REQUIRED
         priority: 2
@@ -2942,6 +2745,10 @@ authenticatorConfig:
     config:
       loginWithPhoneNumber: "true"
       loginWithPhoneVerify: "true"
+  - id: 41bcb6dd-9e80-4168-a4f1-d65807045bab
+    alias: registration password config
+    config:
+      always_set_password_on_register_form: "true"
   - id: 9d873a46-e2fc-4ba0-8b04-8c6f35a0436c
     alias: phone validation config
     config:
@@ -3045,7 +2852,7 @@ directGrantFlow: direct grant
 resetCredentialsFlow: Reset credentials with phone
 clientAuthenticationFlow: clients
 dockerAuthenticationFlow: docker auth
-keycloakVersion: 26.4.0
+keycloakVersion: 26.8.1
 userManagedAccessAllowed: false
 clientProfiles:
   profiles: []
