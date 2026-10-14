@@ -6,8 +6,8 @@ revokeRefreshToken: false
 refreshTokenMaxReuse: 1
 accessTokenLifespan: 300
 accessTokenLifespanForImplicitFlow: 900
-ssoSessionIdleTimeout: 1800
-ssoSessionMaxLifespan: 36000
+ssoSessionIdleTimeout: 2592000 # 30 days
+ssoSessionMaxLifespan: 5184000 # 60 days
 ssoSessionIdleTimeoutRememberMe: 2592000 # 30 days
 ssoSessionMaxLifespanRememberMe: 0
 offlineSessionIdleTimeout: 2592000
@@ -578,7 +578,6 @@ clients:
     defaultClientScopes:
       - web-origins
       - acr
-      - offline_access
       - profile
       - roles
       - yoma-api
@@ -587,6 +586,7 @@ clients:
     optionalClientScopes:
       - address
       - phone
+      - offline_access
       - microprofile-jwt
   - id: 288159fa-4e1c-4f2c-86e1-eebdc7d4dc83
     clientId: broker
@@ -750,7 +750,6 @@ clients:
     defaultClientScopes:
       - web-origins
       - acr
-      - offline_access
       - profile
       - roles
       - yoma-api
@@ -759,6 +758,7 @@ clients:
     optionalClientScopes:
       - address
       - phone
+      - offline_access
       - microprofile-jwt
   - id: 42e6fb2b-7f5a-4af4-8f1a-272c437fd025
     clientId: iiasa
@@ -800,7 +800,6 @@ clients:
     defaultClientScopes:
       - web-origins
       - acr
-      - offline_access
       - profile
       - roles
       - yoma-api
@@ -809,6 +808,7 @@ clients:
     optionalClientScopes:
       - address
       - phone
+      - offline_access
       - microprofile-jwt
   - id: 045a13ad-3d8e-4d2b-ac96-5a8d9567dadf
     clientId: ixo
@@ -855,7 +855,6 @@ clients:
       - web-origins
       - acr
       - roles
-      - offline_access
       - profile
       - yoma-api
       - audience_scope
@@ -863,6 +862,7 @@ clients:
     optionalClientScopes:
       - address
       - phone
+      - offline_access
       - microprofile-jwt
   - id: 7e6a6154-9978-4fdf-94b0-837bfeefdbcb
     clientId: ixo-webos
@@ -910,7 +910,6 @@ clients:
       - web-origins
       - acr
       - roles
-      - offline_access
       - profile
       - yoma-api
       - audience_scope
@@ -918,6 +917,7 @@ clients:
     optionalClientScopes:
       - address
       - phone
+      - offline_access
       - microprofile-jwt
   - id: ff74b115-0fdb-4a94-9e05-7459601ae7ee
     clientId: maza-app
@@ -991,7 +991,6 @@ clients:
       - web-origins
       - acr
       - roles
-      - offline_access
       - profile
       - yoma-api
       - audience_scope
@@ -999,6 +998,7 @@ clients:
     optionalClientScopes:
       - address
       - phone
+      - offline_access
       - microprofile-jwt
   - id: 259d0a20-1c74-4c0e-8797-3df0fb628113
     clientId: unicef-kenya
@@ -1035,7 +1035,6 @@ clients:
       - web-origins
       - acr
       - roles
-      - offline_access
       - profile
       - yoma-api
       - audience_scope
@@ -1043,6 +1042,7 @@ clients:
     optionalClientScopes:
       - address
       - phone
+      - offline_access
       - microprofile-jwt
   - id: 4369c21f-5fee-41e7-82ec-a70b9e3a69a8
     clientId: mini-sass
@@ -1084,7 +1084,6 @@ clients:
     defaultClientScopes:
       - web-origins
       - acr
-      - offline_access
       - profile
       - roles
       - yoma-api
@@ -1093,6 +1092,7 @@ clients:
     optionalClientScopes:
       - address
       - phone
+      - offline_access
       - microprofile-jwt
   - id: 0c2180cf-5b44-4683-83bb-4f9b5b60f67f
     clientId: p2e-global
@@ -1348,7 +1348,6 @@ clients:
     defaultClientScopes:
       - web-origins
       - acr
-      - offline_access
       - profile
       - roles
       - yoma-api
@@ -1357,6 +1356,7 @@ clients:
     optionalClientScopes:
       - address
       - phone
+      - offline_access
       - microprofile-jwt
   - id: e394e8ee-3dcd-47d7-a34a-10e5d9e83fe9
     clientId: yoma-web
@@ -1446,7 +1446,6 @@ clients:
     defaultClientScopes:
       - web-origins
       - acr
-      - offline_access
       - profile
       - roles
       - yoma-api
@@ -1455,6 +1454,7 @@ clients:
     optionalClientScopes:
       - address
       - phone
+      - offline_access
       - microprofile-jwt
 clientScopes:
   - id: 02d9a22f-86c6-46f3-96c1-644a66e726ae
@@ -1974,12 +1974,12 @@ defaultDefaultClientScopes:
   - roles
   - web-origins
   - acr
-  - offline_access
   - audience_scope
   - yoma-api
 defaultOptionalClientScopes:
   - address
   - phone
+  - offline_access
   - microprofile-jwt
 browserSecurityHeaders: {}
 smtpServer:
