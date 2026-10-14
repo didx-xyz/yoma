@@ -193,15 +193,6 @@ export const TreasuryOpportunitiesTab: React.FC = () => {
         </p>
       </div>
 
-      {/* ⚠️ TEMPORARY — see the note at the top of this file. Remove with the tab when this view
-          folds into Organisations. Dev builds only, like the ?mock= aid. */}
-      {process.env.NODE_ENV !== "production" && (
-        <FormMessage messageType={FormMessageType.Info}>
-          This view is provisional and will likely be folded into the
-          Organisations tab.
-        </FormMessage>
-      )}
-
       <ListPageSearchToolbar
         defaultValue={search}
         placeholder="Search opportunities..."

@@ -1,5 +1,23 @@
 # Epic: YOM-1051 — ZLTO Payout (Treasury, Reward Pools and Youth Cash-Out)
 
+## Production release prep — Web — 2026-10-14
+
+Jason reports that Stage testing and UAT concluded on 2026-10-14. The Web half of the release cleanup is on the shared
+`chore/cash-out-final-prep` branch, alongside Adrian's YoID bypass removal below.
+See [the Web release-prep handoff](./handoffs/2026-10-14-b.md).
+
+- [x] Remove the Treasury `?mock=` dev aid: `lib/treasury/treasuryMockScenarios.ts`, the mock
+  blocks and `MOCK_PARAM` in `pages/admin/treasury/index.tsx`, and the dev-only "provisional"
+  banner in `TreasuryOpportunitiesTab.tsx`.
+- [x] Delete the Cash Out state gallery: `pages/dev/cash-out.tsx` and `pages/dev/cash-out-provider.tsx`.
+- [x] Close the outstanding UI browser-pass items (YOM-1072, YOM-1063, YOM-1073, YOM-1074).
+  Stage UAT covered them, and the four web tickets move to `review`.
+- [ ] Set the web tickets to `shipped` once the Production release is deployed.
+- [ ] **Deferred: archive this epic.** Do this once every child ships. `git mv` the folder to
+  `docs/work/archive/`, and replace the dead branch-SHA citations with a reconstructed context pack
+  (`docs/work/templates/context-pack.md`). See the citations item under Epic-Wide Remaining Work.
+  Do not start until the release has landed.
+
 ## Temporary Stage YoID recovery and Production removal — 2026-10-14
 
 Stage shares the ACA-Py test registry with Local/Dev. The CF branch published YoID Default 1.1
@@ -186,10 +204,10 @@ frozen and shared rather than re-decided per ticket.
 | [`YOM-1055-api-yellow-card-hosted-payout-integration/`](./YOM-1055-api-yellow-card-hosted-payout-integration/feature.md) | [YOM-1055](https://linear.app/didx/issue/YOM-1055) | api | — | in-progress — client implemented, E2E pending |
 | [`YOM-1059-api-yellow-card-payout-status-integration/`](./YOM-1059-api-yellow-card-payout-status-integration/feature.md) | [YOM-1059](https://linear.app/didx/issue/YOM-1059) | api | — | in-progress — implemented, E2E pending |
 | [`YOM-1077-sre-webhooks-and-yellow-card-configuration/`](./YOM-1077-sre-webhooks-and-yellow-card-configuration/feature.md) | [YOM-1077](https://linear.app/didx/issue/YOM-1077) | api/SRE | — | in-progress — environment configuration pending |
-| [`YOM-1072-ui-treasury-admin/`](./YOM-1072-ui-treasury-admin/feature.md)                                                           | [YOM-1072](https://linear.app/didx/issue/YOM-1072) | web  | T0, T1     | in-progress — dev complete (incl. Payouts tab, 2026-09-21), browser pass owed |
-| [`YOM-1063-ui-organization-and-opportunity-admin/`](./YOM-1063-ui-organization-and-opportunity-admin/feature.md)                   | [YOM-1063](https://linear.app/didx/issue/YOM-1063) | web  | T2, T3     | in-progress — dev complete, T3 reduced |
-| [`YOM-1073-ui-referral-program-rewards-create-update-info/`](./YOM-1073-ui-referral-program-rewards-create-update-info/feature.md) | [YOM-1073](https://linear.app/didx/issue/YOM-1073) | web  | T4         | in-progress — dev complete, browser pass owed |
-| [`YOM-1074-ui-youth-yellow-card-cash-out/`](./YOM-1074-ui-youth-yellow-card-cash-out/feature.md)                                   | [YOM-1074](https://linear.app/didx/issue/YOM-1074) | web  | T5         | in-progress — T5 built end to end; Dev session pass owed |
+| [`YOM-1072-ui-treasury-admin/`](./YOM-1072-ui-treasury-admin/feature.md)                                                           | [YOM-1072](https://linear.app/didx/issue/YOM-1072) | web  | T0, T1     | review — Stage UAT passed; Production release pending |
+| [`YOM-1063-ui-organization-and-opportunity-admin/`](./YOM-1063-ui-organization-and-opportunity-admin/feature.md)                   | [YOM-1063](https://linear.app/didx/issue/YOM-1063) | web  | T2, T3     | review — Stage UAT passed; Production release pending |
+| [`YOM-1073-ui-referral-program-rewards-create-update-info/`](./YOM-1073-ui-referral-program-rewards-create-update-info/feature.md) | [YOM-1073](https://linear.app/didx/issue/YOM-1073) | web  | T4         | review — Stage UAT passed; Production release pending |
+| [`YOM-1074-ui-youth-yellow-card-cash-out/`](./YOM-1074-ui-youth-yellow-card-cash-out/feature.md)                                   | [YOM-1074](https://linear.app/didx/issue/YOM-1074) | web  | T5         | review — Stage UAT passed; Production release pending |
 
 ### T-number → ticket map
 
@@ -564,7 +582,10 @@ protection would be lost.
 
 Not owned by any one child ticket. **T6 in the old numbering.**
 
-- [ ] **T6 — production hardening.** Consistency and scope-labelling audit across all five tabs and
+- [x] **T6 — production hardening.** Closed 2026-10-14. Both dev aids are removed on
+      `chore/cash-out-final-prep`. The consistency, scope-labelling and a11y review was accepted
+      through Stage UAT, concluded 2026-10-14 (Jason); no separate a11y audit was run. Original scope below, kept for the record:
+      consistency and scope-labelling audit across all five tabs and
       every reward surface, a11y pass, and **removal of the two dev aids**. **Neither must merge.**
   - **`?mock=`** — `lib/treasury/treasuryMockScenarios.ts` plus the three `⚠️⚠️ MOCK SCENARIOS`
     blocks and `MOCK_PARAM` in `pages/admin/treasury/index.tsx`, and the dev-only banner in
@@ -573,7 +594,8 @@ Not owned by any one child ticket. **T6 in the old numbering.**
     Deliberately built as standalone pages that import the real components and 404 in a production
     build, *because* of how much work the `?mock=` approach turned out to be: removing these is
     deleting two files, with nothing to unpick.
-- [ ] **Authenticated browser pass** across YOM-1072 + YOM-1063 + YOM-1073. No reward surface in
+- [x] **Authenticated browser pass.** Closed 2026-10-14; covered by Stage UAT, concluded 2026-10-14 (Jason). Original note, kept
+      for the record (its `?mock=` advice no longer applies): across YOM-1072 + YOM-1063 + YOM-1073. No reward surface in
       this epic has been visually verified. Seeded admin `testadminuser@gmail.com`, credentials at
       `src/api/cicd/scripts/postgressql-init/post.sql:18`. Use `?mock=payoutAvailableDepleted` to
       see the capacity banner without touching data.
@@ -583,7 +605,7 @@ Not owned by any one child ticket. **T6 in the old numbering.**
       payout **rows**, which a fresh local database has none of; `?mock=` does not cover it, since
       that dev aid only substitutes the Treasury record.
 - [ ] **Fold the Opportunities tab into Organisations** (owner intent) — spans YOM-1063 and the
-      shared tab shell.
+      shared tab shell. **Post-release follow-up, not a release gate**; the tab ships as-is.
 - [ ] ⚠️ **The commit citations were not re-pointed and the PR has now merged.** The squash
       happened on 2026-09-16 (`20a4f268`, #1924), so the window closed. Verified 2026-09-21:
       `70b2ccd`, `0d7a67ba`, `f051dfd8`, `48540971` and `08cb6c10a` still resolve in a local clone
@@ -591,8 +613,8 @@ Not owned by any one child ticket. **T6 in the old numbering.**
       GitHub keeps the PR head (`refs/pull/1741/head`, `refs/pull/1924/head`), not in the repo's
       own history. Do not add more branch SHAs. When these are next touched, annotate each with
       "branch-only, squashed into `20a4f268` (#1924)" rather than guessing an equivalent, or
-      replace the doc set with a context pack (`docs/work/templates/context-pack.md`). The
-      `?mock=` removal is now independent of this and still owed.
+      replace the doc set with a context pack (`docs/work/templates/context-pack.md`).
+      **Deferred to the archive move (2026-10-14)**; see the release-prep section at the top.
 
 ## Out of Scope (whole epic)
 
@@ -607,10 +629,10 @@ Not owned by any one child ticket. **T6 in the old numbering.**
 
 | Blocker                                                                | Severity | Note                                                                                                                 |
 | ---------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------- |
-| No authenticated browser pass on any reward surface                    | High     | Blocks calling YOM-1072 / YOM-1063 / YOM-1073 done. Unblocked otherwise — the corrective work is in                  |
-| `?mock=` dev aid is committed                                          | High     | Must be removed before this epic merges                                                                              |
+| ~~No authenticated browser pass on any reward surface~~ | ~~High~~ | **Resolved 2026-10-14** by Stage UAT, concluded 2026-10-14 (Jason) |
+| ~~`?mock=` dev aid is committed~~ | ~~High~~ | **Resolved 2026-10-14**: removed on `chore/cash-out-final-prep`, together with the Cash Out state gallery |
 | ~~No youth-facing payout status or terminal outcome~~ | ~~High~~ | **Resolved 2026-09-10** by the API additions above (`status`, `canResume`, `dateCreated`, `GET /user/payout/latest`); Flow D was built against them on 2026-09-11 |
-| **Gender is rejected by the provider's verification step** (found 2026-09-11 on Dev, [YOM-1074](./YOM-1074-ui-youth-yellow-card-cash-out/feature.md)) | High | The hosted KYC answers `'personDetails.gender' should be equal to one of the allowed values: male, female, other`. Yoma's lookup is `Female`/`Male`/`Prefer not to say` and `YellowCardClient` sends it untouched, so **every** value is refused — two for case, the third because it is not in the provider's set. Blocks the hosted journey for every user. API-side mapping needed (`Male → male`, `Female → female`, else `other`); no UI change can affect it |
+| ~~**Gender is rejected by the provider's verification step**~~ (found 2026-09-11 on Dev, [YOM-1074](./YOM-1074-ui-youth-yellow-card-cash-out/feature.md)) | ~~High~~ | **Resolved** by the API's gender normalisation ([YOM-1055](./YOM-1055-api-yellow-card-hosted-payout-integration/feature.md)); the hosted journey passed Stage UAT. Original note: The hosted KYC answers `'personDetails.gender' should be equal to one of the allowed values: male, female, other`. Yoma's lookup is `Female`/`Male`/`Prefer not to say` and `YellowCardClient` sends it untouched, so **every** value is refused — two for case, the third because it is not in the provider's set. Blocks the hosted journey for every user. API-side mapping needed (`Male → male`, `Female → female`, else `other`); no UI change can affect it |
 | ~~**The hosted sign-in step refuses to be framed**~~ (found 2026-09-11 on Dev, [YOM-1074](./YOM-1074-ui-youth-yellow-card-cash-out/feature.md)) | ~~High~~ | **Resolved by design change 2026-09-18.** There was no allowlist to be granted — WorkOS does not permit framed sign-in at all — so IXO moved sign-in *and* KYC into a **popup their page opens**, returning to the frame afterwards. The iframe stays; Yoma's only change is the escape hatch below. See the row under it for what this trades the problem for |
 | **A blocked popup ends the journey, and Yoma cannot see it** (IXO design change, 2026-09-18) | Low | Sign-in and KYC are popups opened by the provider's code in the provider's document, so a blocker produces a tap that does nothing — no event, nothing cross-origin to read. **Narrowed 2026-09-21:** IXO confirmed the popup is opened synchronously in the click handler, blank, and navigated afterwards, which is the pattern iOS Safari requires — so an ordinary browser should not block it. "Open in a new window" is permanent and takes the journey top-level either way. What remains is the webview row below |
 | **The embedded flow is unsupported in in-app browsers** (IXO, 2026-09-21) | High | Facebook, Instagram and WhatsApp webviews block or mangle new windows, and **some replace the whole view with the sign-in page, destroying the iframe** — so this is not a blocked-popup case with a graceful message, it can be the frame disappearing. IXO's words: "we do not support the embedded flow there and I would not try." Their supported path is the **standalone page** — the same `paymentUrl`, opened top-level, where their page uses a full-window redirect and no popup at all. **Accepted 2026-09-21 (owner): rely on the fallbacks, do not detect.** A youth in one gets the permanent "Open in a new window", or the equivalent link IXO render inside their own page. Detection was weighed and deferred — it is User-Agent sniffing, the tokens are conventions that rot, iOS gives no reliable generic signal, and a false positive sends someone on a good browser out of Yoma for nothing. The full write-up — what a webview is, what is wrongly mistaken for one (Custom Tabs and `SFSafariViewController` are *not* webviews), the token table, and the evidence that would reopen it — is in [YOM-1074's feature doc](./YOM-1074-ui-youth-yellow-card-cash-out/feature.md#in-app-browsers-webviews--deferred-detection). Remains High because the gap is real, not because work is pending |

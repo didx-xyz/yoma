@@ -7,8 +7,7 @@
 - **Ticket**: [YOM-1074](https://linear.app/didx/issue/YOM-1074)
 - **Owner**: Jason
 - **Areas**: web
-- **Status**: in-progress — T5 built end to end (entry point, amount, preview, initiation, hosted
-  iframe journey, resume, outcomes), browser-verified; a session-backed pass on Dev is what remains
+- **Status**: review — Stage UAT passed; Production release pending
 - **Started**: 2026-09-09
 - **Plan tasks**: **T5**
 - **Rebuilt**: 2026-09-08 — clean-slate rewrite against the epic README and the API child docs (YOM-1052 / 1055 / 1057 / 1059) and their 2026-08-27 → 2026-09-01 handoffs
@@ -436,14 +435,16 @@ why this is written down rather than dismissed.
       `canResume` on `UserProfilePayout`, `GET /user/payout/latest` for outcomes,
       `conversionRateZltoPerUsd` on the conversion preview, and `dateCreated` for "Started". Wired
       up 2026-09-11; the rate *inference* is deleted.
-- [ ] **Session-backed pass on Dev** — the interactive half (typing, `Max`, 1 → 2 → 3, a real POST,
+- [x] **Session-backed pass** — covered by Stage UAT, concluded 2026-10-14 (Jason). Original note: the interactive half (typing, `Max`, 1 → 2 → 3, a real POST,
       the iframe against the real provider). Test wallet funded with 2,000 ZLTO on
       `jason.dicker@didx.co.za`; needs a browser login, so it cannot run headless here.
-- [ ] **Framing works for the payment page, not for the hosted sign-in** (Dev, 2026-09-11). The
+- [x] **Framing works for the payment page, not for the hosted sign-in** (Dev, 2026-09-11). Resolved by
+      IXO's 2026-09-18 design change (sign-in/KYC moved to a provider-opened popup; see the epic Blockers). The
       `/pay` response sets no `X-Frame-Options` and no framing CSP, but the sign-in it redirects to
       sets `frame-ancestors` without Yoma's origin, so a **returning** youth gets a blank frame.
       Needs IXO to allowlist Yoma's origins, or the iframe becomes a new window.
-- [ ] **Blocked on the API: the provider rejects Yoma's gender values** — the hosted verification
+- [x] **Blocked on the API: the provider rejects Yoma's gender values** — resolved by the API's gender
+      normalisation ([YOM-1055](../YOM-1055-api-yellow-card-hosted-payout-integration/feature.md)). Original note: the hosted verification
       step wants `male | female | other` and Yoma sends `Male` / `Female` / `Prefer not to say`
       untouched. Blocks the hosted journey for every user; nothing on the UI side can affect it.
 

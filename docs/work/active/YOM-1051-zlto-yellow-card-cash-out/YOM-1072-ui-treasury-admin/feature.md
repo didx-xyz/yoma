@@ -7,7 +7,7 @@
 - **Ticket**: [YOM-1072](https://linear.app/didx/issue/YOM-1072)
 - **Owner**: Jason
 - **Areas**: web
-- **Status**: in-progress — dev complete, authenticated browser pass owed
+- **Status**: review — Stage UAT passed; Production release pending
 - **Started**: 2026-08-03
 - **Plan tasks**: **T0** (foundations) and **T1** (Treasury admin) in the epic's T-number map
 
@@ -93,11 +93,11 @@ it, after which no ZLTO reward is capped anywhere. Always send current values fo
       server behaviour; now "Not set — ZLTO rewards are not capped by the Treasury" (done during T4)
 - [x] **`TreasuryZltoRewardStats` extracted** from `TreasuryOverview` so referral surfaces reuse it
       rather than duplicating the four figures (done during T4)
-- [ ] **Authenticated browser pass** — Overview → Manage → a real save → the rollover dialog, plus
+- [x] **Authenticated browser pass** — covered by Stage UAT, concluded 2026-10-14 (Jason). Overview → Manage → a real save → the rollover dialog, plus
       Payouts → search → filters → a row's detail dialog. Tracked epic-wide; this ticket is the
       largest part of it. Payouts additionally needs **data**: a local database has no payout rows,
       so it wants Dev/Stage or a seeded transaction
-- [ ] **Remove the `?mock=` dev aid** — tracked as epic-wide T6, but the code is all in this ticket's files
+- [x] **Remove the `?mock=` dev aid** — removed 2026-10-14 on `chore/cash-out-final-prep` (epic-wide T6)
 
 ## Decisions
 

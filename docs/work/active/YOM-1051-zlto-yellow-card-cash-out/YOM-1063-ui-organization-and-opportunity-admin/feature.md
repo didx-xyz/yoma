@@ -7,7 +7,7 @@
 - **Ticket**: [YOM-1063](https://linear.app/didx/issue/YOM-1063)
 - **Owner**: Jason
 - **Areas**: web
-- **Status**: in-progress — dev complete, T3 reduced, browser pass owed
+- **Status**: review — Stage UAT passed; Production release pending
 - **Started**: 2026-08-04
 - **Plan tasks**: **T2** (organisation rewards) and **T3** (opportunity rewards)
 
@@ -69,12 +69,14 @@ tab — see the epic README. The components are durable; the tab's grouping, pag
 - [x] **Pool-unset copy corrected** on `OrganizationRewardStats` — "Not set — no ZLTO can be
       awarded" was the inverse of the server behaviour; now "…this organisation's awards are not
       capped" (done during T4)
-- [ ] **Authenticated browser pass** — org edit Reward step (single-field form), org info Rewards
+- [x] **Authenticated browser pass** — covered by Stage UAT, concluded 2026-10-14 (Jason). Org edit Reward step (single-field form), org info Rewards
       block, opportunity Rewards block on both the admin detail and info pages, and both tabs.
       Include a **form-kit smoke check**: T2's `FormField`/`FormLabel`/`FormError` changes are
       repo-wide and reach every consumer
-- [ ] **Fold the Opportunities tab into Organisations** (owner intent; tracked epic-wide)
-- [ ] **`OpportunityType.displayName`** — the API gained it (`8d72254d`); the web's TS
+- [ ] **Fold the Opportunities tab into Organisations** (owner intent; tracked epic-wide). Post-release
+      follow-up, not a release gate
+- [x] **`OpportunityType.displayName`** — closed 2026-10-14: the web's `OpportunityType` now carries
+      `displayName` (`api/models/opportunity.ts`). Original note: the API gained it (`8d72254d`); the web's TS
       `OpportunityType` still has only `id`/`name`. Additive, nothing crashes, but any surface
       showing an opportunity type is showing the wrong field. Not strictly this ticket — flag to
       whoever picks up opportunity-type display

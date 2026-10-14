@@ -7,7 +7,7 @@
 - **Ticket**: [YOM-1073](https://linear.app/didx/issue/YOM-1073)
 - **Owner**: Jason
 - **Areas**: web
-- **Status**: in-progress — dev complete, browser pass owed
+- **Status**: review — Stage UAT passed; Production release pending
 - **Started**: 2026-08-07
 - **Plan tasks**: **T4**
 
@@ -75,10 +75,11 @@ role) — so unlike YOM-1063's Opportunities tab there is **no API gap** and not
       `ReferralStatsSmallLink`)
 - [x] Validation digest corrected — the referral rows now cite `ProgramRequestValidator.cs`, not the
       web mirror, and gained the two reward rows plus an explicit "no server rule exists" row
-- [ ] **Authenticated browser pass** — the `?tab=referrals` rows, the detail block on
+- [x] **Authenticated browser pass** — covered by Stage UAT, concluded 2026-10-14 (Jason). The `?tab=referrals` rows, the detail block on
       `/admin/referrals/[id]/info`, and the capacity notice on the edit wizard's Completion &
       Rewards step, **including the case where the typed pool differs from the saved one**
-- [ ] **Freeze or rename the new vocabulary** — "Payable now" (group) and "Payable per completion"
+- [x] **Freeze or rename the new vocabulary** — closed 2026-10-14: both labels kept as written through
+      Stage UAT. They remain inline literals, not `lib/format/rewards.ts` constants. Original note: "Payable now" (group) and "Payable per completion"
       (row stat) are not in the frozen T0 list. If they read well in the browser, promote them to
       constants in `lib/format/rewards.ts`; if not, rename before YOM-1074 copies them
 

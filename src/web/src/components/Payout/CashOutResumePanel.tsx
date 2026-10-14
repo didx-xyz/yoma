@@ -33,7 +33,7 @@ import { CashOutSummaryRow, CashOutZltoAmount } from "./CashOutSummary";
 /**
  * Which of the three things this panel is. **A discriminator rather than a handful of independent
  * flags**: the mapping from state to heading, icon, tone and button label used to live in the
- * caller, so every caller had to repeat it — and the dev gallery got it wrong twice, showing a
+ * caller, so every caller had to repeat it — and a second caller got it wrong twice, showing a
  * headless message and the wrong verb on a screen the flow renders correctly. Derived here, that
  * cannot happen.
  */
