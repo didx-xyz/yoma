@@ -6,7 +6,7 @@
 - **Ticket**: [YOM-1295](https://linear.app/didx/issue/YOM-1295/partner-synchronization-umuzi-phase-1)
 - **Owner**: Adrian
 - **Areas**: api; partner-owned learner UI
-- **Status**: blocked — code-complete; partner URL and learner-page readiness precede end-to-end Stage testing
+- **Status**: review — creation-only hidden mapping implemented; independent Stage validation pending
 - **Recorded**: 2026-09-16
 
 ## Problem / Goal
@@ -21,6 +21,23 @@ Maintain Umuzi opportunities and import progress/completions for Yoma-originated
 
 ## Plan / Contract
 
+### Creation-Only Visibility Follow-up — 2026-10-15
+
+Ngoako supplied an updated opportunity payload containing boolean `hidden`. The DTO now accepts
+that property and the Umuzi mapper passes it to the create request. `true` creates hidden;
+`false` or an omitted property retains the visible default. This applies to Learning and Job.
+
+After creation, Yoma owns visibility. Existing shared pull orchestration continues to call
+`ToRequestUpdate(..., applyHidden: false)` for both update requests and their payload hashes;
+normal domain updates preserve the stored value when Hidden is null. Feed visibility changes
+therefore neither overwrite a Yoma setting nor trigger a visibility-only domain update.
+This is not a retroactive hide/backfill of existing opportunities. `active: false` retains its
+terminal removal meaning. No schema, configuration, pre-authentication or Web change is needed.
+
+The change is on `codex/umuzi-hidden-on-create`, from freshly fetched `origin/master`, independent
+of the committed cash-out preparation/archive branch. The historical Phase 1 readiness text below
+is retained; this follow-up does not assert new live completion/credential or Production validation.
+
 Implementation is in PR #1929 on feature/sync-umuzi. No merge or deployment was performed during this status reconciliation.
 
 - UmuziClient and OpportunityCatalogueBackgroundService own transport, catalogue caching and mapping.
@@ -33,6 +50,12 @@ Implementation is in PR #1929 on feature/sync-umuzi. No merge or deployment was 
 
 ## Tasks
 
+- [x] Accept the supplied `hidden` boolean and map initial visibility only.
+- [x] Keep shared update/hash visibility exclusion and cover it for Learning and Job.
+- [x] Include a hidden active opportunity in the embedded sample; omitted flags remain covered.
+- [x] Build cleanly and pass eight new visibility cases plus existing partner/skill regression (56 total).
+- [ ] Adrian review, then deploy this independent branch through the normal Stage workflow and validate new hidden/visible opportunities plus Yoma-owned updates.
+
 - [x] Implement catalogue and verification integration and correlation redirect.
 - [x] Align categories and date/overlap contract with partner feedback.
 - [x] Exercise local embedded samples: matching, progress-to-completion, repeat-run skips, participant counts and issuance queueing.
@@ -42,6 +65,8 @@ Implementation is in PR #1929 on feature/sync-umuzi. No merge or deployment was 
 - [ ] Receive production URL/credentials, configure and validate production activation.
 
 ## Decisions
+
+- 2026-10-15: Honour Umuzi's hidden flag only on initial creation, defaulting to false when omitted. Subsequent visibility belongs to Yoma and remains excluded from mapped update hashes. Keep the change based on remote master so Stage delivery does not require the cash-out prep/archive changes.
 
 - 2026-09-16: Track one deliverable rather than creating implementation-shaped sub-tickets. Linear status is In Progress with explicit blockers because the YOMA team has no Blocked state.
 - 2026-09-16: Do not request seeded records now; local mocks suffice until partner readiness, then coordinate live Stage tests.

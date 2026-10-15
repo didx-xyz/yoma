@@ -57,6 +57,7 @@
       "difficulty": "Any Level",
       "engagementType": null,
       "active": true,
+      "hidden": true,
       "createdAt": "2026-09-01T20:21:14.830034Z",
       "updatedAt": "2026-09-04T18:47:13.111818Z"
     },
