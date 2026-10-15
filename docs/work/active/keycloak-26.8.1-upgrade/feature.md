@@ -63,3 +63,14 @@ Run on 2026-10-14 against a local kind cluster with one control-plane node and t
 - Rollback after migration (what `atomic` does on timeout): the 26.4.0 pods started and reported ready, but logged `column ipe1_0.organization_id does not exist`, the login page returned HTTP 500, and config-cli failed with HTTP 500.
 - One-replica upgrade (`--set keycloak.replicas=1`) from a fresh baseline: completed in 114 seconds with the image already cached on the node. Keycloak was unreachable for about 67 seconds. No `REALM_ID` null rows. Raising replicas back to 2 afterwards added `keycloak-1` without restarting `keycloak-0` and without failed requests.
 - After both upgrade paths: the pre-upgrade refresh token still worked, all seeded users could log in (the temporary-password user got `UPDATE_PASSWORD`), the phone user's attributes were intact, `realm-management` had 22 roles, and the registration password option was applied.
+
+## Upgrade check after the SSO session fix
+
+The tests above ran before #1973, which made `offline_access` an optional scope and raised the SSO session timeouts to 30 days idle and 60 days maximum. Their offline-token results (`refresh_expires_in`, offline session counts) describe the realm before that change.
+
+After rebasing onto #1973, I ran the Keycloak-only compose stack on 2026-10-15. It started on `master` (26.4.0 with #1973), I logged in through the browser flow, and then I upgraded the same database in place to this branch:
+
+- **Before the upgrade:** the login returned a `Refresh` token (not `Offline`) with `refresh_expires_in` of `2592000`, and the browser SSO session survived the code exchange (`prompt=none` returned a code).
+- **After the upgrade:** config-cli imported cleanly. The pre-upgrade SSO session and refresh token still worked. A new login behaved the same as before the upgrade.
+- **Explicit `offline_access`:** requesting the scope still returns an `Offline` token and drops the browser session, the Keycloak 26.1+ behaviour #1973 describes.
+- **Errors:** the only Keycloak errors were webhook delivery failures, because the stack ran without the API.
