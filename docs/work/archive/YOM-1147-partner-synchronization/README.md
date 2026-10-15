@@ -4,7 +4,8 @@
 > Start with the [RECONSTRUCTED context pack](./CONTEXT-PACK.md) and [archive handoff](./handoffs/2026-10-14-a.md).
 > Umuzi production rollout remains tied to the combined cash-out release; archival is not deployment proof.
 > The original working record below is preserved. Its continuing-capability/partner-URL blockers are historical;
-> later CF remapping, B2B onboarding and creation-only hidden mapping remain separate follow-ups.
+> later CF remapping and B2B onboarding remain separate follow-ups. Creation-only hidden mapping
+> merged in #1974 on October 15; the context pack and YOM-1295 record its remaining Stage smoke check.
 
 Archive finalisation and provenance/link checks were completed on 2026-10-15; see the
 [finalisation handoff](./handoffs/2026-10-15-a.md). This does not assert a Production deployment.
@@ -131,6 +132,12 @@ more technically granular than new Linear tickets should be. Their folders prese
 breakdown belongs in the parent feature checklist rather than new class/endpoint-shaped tickets.
 
 ## Shared Contract
+
+**Umuzi visibility follow-up (2026-10-15, merged #1974; Stage smoke unconfirmed):** initial creation now maps the feed's optional
+boolean `hidden` (omitted defaults to false). Existing pull updates continue to preserve Yoma's
+stored visibility and exclude Hidden from their effective payload hashes. Other providers are
+unchanged. See [YOM-1295](./YOM-1295-partner-synchronization-umuzi-phase-1/feature.md) and its
+[current handoff](./YOM-1295-partner-synchronization-umuzi-phase-1/handoffs/2026-10-15-a.md).
 
 Verified by reading `SyncBackgroundService`, provider factory resolution, capability/configuration
 lookups, tracking/processing repositories and each provider client; migrations confirm the shared

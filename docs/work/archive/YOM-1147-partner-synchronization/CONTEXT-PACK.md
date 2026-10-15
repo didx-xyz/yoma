@@ -13,6 +13,7 @@
   - `b5bfe4005` (#1910): JobJack Phase 1; `7932adc6b` (#1915): production feed/sample.
   - `9f8ec5a84` (#1913), `7d7f48460` (#1920), `dd7a330cb` (#1926), `77942fe38` (#1934): IXO integration, official contract, impact-action support and production configuration.
   - `52b3be093` (#1929): Umuzi Phase 1; `f346a1ad9` (#1965): production configuration.
+  - October 15 follow-up: `ca62876d4` (#1974), creation-only Umuzi visibility mapping; Stage smoke remains unconfirmed.
   - `f0cfeac6b` (#1942), then `b82b2f993` (#1959): shared conservative/explicit skill matching.
 - **Citation boundary:** source branch hashes mostly still resolve, but a resolving object is not proof of squash ancestry. The references above identify reviewed merged deliveries, not an asserted one-to-one mapping for every historical branch commit. One original Alison source citation does not resolve; it remains explicitly flagged in the historical May 15/August 12 documents and is not silently equated to the similarly named merged SHA.
 - **Not verified today:** live partner endpoints, production activation, secrets/decryption, deployment health, or a live Umuzi completion/credential. No SQL or sync jobs ran for this archive.
@@ -64,8 +65,8 @@ progress/completion/credential E2E are not established by the retained extracts 
 - `recordedAt` must advance on changed records. Pull overlap protects late availability; duplicate handling must compare mapped payload state, not permanently discard every later record with the same source ID.
 - Date/commitment validation remains authoritative. A corrected source record previously exhausted by retries may need a deliberate processing-state reset; do not globally clear errors or retry counters.
 - The production organisation was confirmed as active Umuzi, ID `967e7cbf-5c7f-4b26-0d3d-08db08ffa993`. Production API URL was confirmed and configuration committed in #1965; credentials stay in the secret store. The migration inserts the partner active with Entity/Verification/UserAuthentication capabilities; operational activation still depends on the deployed migration/config.
-- **Current hidden behaviour:** create maps Hidden=false; subsequent pulls preserve Yoma's setting. `active=false` is terminal removal, not a temporary private/draft state.
-- **October 14 proposed extension, NOT implemented:** map Umuzi's boolean hidden field on initial creation only. Updates must preserve Yoma-owned visibility. Await the updated example opportunity JSON and partner confirmation; do not add update mapping or import private programmes assuming the change already exists.
+- **Current hidden behaviour, updated October 15:** #1974 maps Umuzi's boolean `hidden` on initial creation for Learning and Job; false/omitted remains visible. Subsequent pulls preserve Yoma's setting and exclude Hidden from effective update hashes. This is not a backfill; `active=false` is terminal removal, not a temporary private/draft state.
+- The October 14 proposal is now implemented and merged. The [follow-up handoff](./YOM-1295-partner-synchronization-umuzi-phase-1/handoffs/2026-10-15-a.md) records eight mocked visibility cases and 56 passing partner/lookup cases; independent Stage smoke is not established by that record.
 - Sara's ensure-account request is separate B2B onboarding scope. Assessment was handed to Koni; account lookup/creation, client-credential organisation attribution and generic audit logging still need prioritisation. Do not claim that sending a GUID or configuring inbound SSO implements it.
 
 ### Skill matching
@@ -109,7 +110,7 @@ archive does not copy undeployed CF behaviour into the cash-out release branch.
 
 - Adrian/Robbie: complete the combined cash-out/Umuzi production rollout, migration/config/activation and controlled smoke verification. This archive does not say it already deployed.
 - Umuzi/Adrian: retain or complete evidence for live learner capture, in-progress-to-completed import and credential delivery; no seed record was requested during this archive.
-- Umuzi: supply the hidden-field example and confirm creation-only ownership before the proposed change is implemented.
+- Umuzi/Adrian: retain or complete Stage smoke evidence for creation-only hidden/visible mapping and preservation of Yoma-owned visibility; code merged in #1974.
 - Koni: prioritise the separately assessed ensure-account B2B capability and any later pre-authentication.
 - CF: rework approved fields/default credential mappings across providers under [YOM-1244](../../active/YOM-1244-customizable-fields-framework/README.md). This is later scope, not an uncompleted foundation ticket.
 - JobJack: Phase 2 needs a separately agreed completion/hand-off contract; CSV is the existing manual bulk route, not already-live completion pull.
