@@ -103,9 +103,8 @@ config-cli:
     CLIENT_IXO_ENABLED: "false"
     CLIENT_IXO_URL: https://jambo.yoma.impacts.exchange
     CLIENT_IXO_URL_REDIRECT: https://jambo.yoma.impacts.exchange/auth/passkey
-    CLIENT_IXO_WEBOS_ENABLED: "false"
-    CLIENT_IXO_WEBOS_URL: https://jambo.yoma.impacts.exchange
-    CLIENT_IXO_WEBOS_URL_REDIRECT: https://jambo.yoma.impacts.exchange/auth/passkey
+    CLIENT_IXO_WEBOS_URL: https://auth.workos.com
+    CLIENT_IXO_WEBOS_URL_REDIRECT: https://auth.workos.com/sso/oidc/LxFOvIFBGFi1ZGTFxY8hfQGlN/callback
     CLIENT_UNICEF_KENYA_ENABLED: "false"
     CLIENT_MINI_SASS_URL: https://minisass.org
     CLIENT_MINI_SASS_URL_REDIRECT: https://minisass.org/authentication/api/yoma/callback
