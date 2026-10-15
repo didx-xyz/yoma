@@ -123,6 +123,12 @@ breakdown belongs in the parent feature checklist rather than new class/endpoint
 
 ## Shared Contract
 
+**Umuzi visibility follow-up (2026-10-15, review):** initial creation now maps the feed's optional
+boolean `hidden` (omitted defaults to false). Existing pull updates continue to preserve Yoma's
+stored visibility and exclude Hidden from their effective payload hashes. Other providers are
+unchanged. See [YOM-1295](./YOM-1295-partner-synchronization-umuzi-phase-1/feature.md) and its
+[current handoff](./YOM-1295-partner-synchronization-umuzi-phase-1/handoffs/2026-10-15-a.md).
+
 Verified by reading `SyncBackgroundService`, provider factory resolution, capability/configuration
 lookups, tracking/processing repositories and each provider client; migrations confirm the shared
 and provider-owned persistence. JobJack and IXO were also run against embedded feeds on Stage, and
