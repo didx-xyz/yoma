@@ -9,12 +9,16 @@ import java.util.Set;
 import org.jboss.logging.Logger;
 import org.keycloak.Config.Scope;
 import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.services.validation.Validation;
 
 import cc.coopersoft.common.OptionalUtils;
+import cc.coopersoft.keycloak.phone.providers.constants.MessageSendResult;
 import cc.coopersoft.keycloak.phone.providers.constants.TokenCodeType;
+import cc.coopersoft.keycloak.phone.providers.exception.MessageRecipientException;
 import cc.coopersoft.keycloak.phone.providers.exception.MessageSendException;
 import cc.coopersoft.keycloak.phone.providers.representations.TokenCodeRepresentation;
+import cc.coopersoft.keycloak.phone.providers.representations.TokenCodeSendResult;
 import cc.coopersoft.keycloak.phone.providers.spi.MessageSenderService;
 import cc.coopersoft.keycloak.phone.providers.spi.PhoneProvider;
 import cc.coopersoft.keycloak.phone.providers.spi.PhoneVerificationCodeProvider;
@@ -129,7 +133,7 @@ public class DefaultPhoneProvider implements PhoneProvider {
     }
 
     @Override
-    public int sendTokenCode(String phoneNumber, String sourceAddr, TokenCodeType type, String kind) {
+    public TokenCodeSendResult sendTokenCode(String phoneNumber, String sourceAddr, TokenCodeType type, String kind) {
 
         logger.info(String.format("Attempting to send %s code to phone: %s from source: %s",
                 type.label, phoneNumber, sourceAddr != null ? sourceAddr : "unknown"));
@@ -165,13 +169,14 @@ public class DefaultPhoneProvider implements PhoneProvider {
             logger.debug(String.format("Generated new token code for %s with expiry of %d seconds", phoneNumber, tokenExpiresIn));
         }
 
+        MessageSendResult result = MessageSendResult.SENT;
         try {
             if (!isTestPhoneNumber) {
                 // Only send SMS for non-test phone numbers
                 logger.debug(String.format("Using message service: %s to send %s code", service, type.label));
-                session.getProvider(MessageSenderService.class, service).sendSmsMessage(type, phoneNumber, token.getCode(), tokenExpiresIn, kind);
-                logger.info(String.format("Successfully sent %s code to %s using service: %s (expires in %d seconds)",
-                        type.label, phoneNumber, service, tokenExpiresIn));
+                result = session.getProvider(MessageSenderService.class, service).sendSmsMessage(type, phoneNumber, token.getCode(), tokenExpiresIn, kind);
+                logger.info(String.format("Successfully sent %s code to %s using service: %s (expires in %d seconds, result: %s)",
+                        type.label, phoneNumber, service, tokenExpiresIn, result));
             } else {
                 // Skip SMS sending for test phone number
                 logger.info(String.format("Skipped SMS sending for test phone number: %s, OTP code: %s (expires in %d seconds)",
@@ -180,11 +185,31 @@ public class DefaultPhoneProvider implements PhoneProvider {
 
             getTokenCodeService().persistCode(token, type, tokenExpiresIn);
 
+        } catch (MessageRecipientException e) {
+            // This number cannot be reached; retrying will not help
+            logger.warn(String.format("Cannot send %s code to %s: %s", type.label, phoneNumber, e.getMessage()));
+            recordFailedSend(phoneNumber, type, sourceAddr);
+            throw new BadRequestException(e.getMessage());
         } catch (MessageSendException e) {
             logger.error(String.format("Failed to send %s code to %s: %s", type.label, phoneNumber, e.getMessage()), e);
+            recordFailedSend(phoneNumber, type, sourceAddr);
             throw new ServiceUnavailableException(e.getMessage());
         }
 
-        return tokenExpiresIn;
+        return new TokenCodeSendResult(tokenExpiresIn, result != MessageSendResult.DELIVERY_UNCONFIRMED);
+    }
+
+    /**
+     * Counts a failed send toward the abuse limits. The error response rolls
+     * back the request transaction, so the record is written in its own.
+     */
+    private void recordFailedSend(String phoneNumber, TokenCodeType type, String sourceAddr) {
+        try {
+            KeycloakModelUtils.runJobInTransaction(session.getKeycloakSessionFactory(), session.getContext(),
+                    s -> s.getProvider(PhoneVerificationCodeProvider.class).persistFailedSend(phoneNumber, type, sourceAddr));
+        } catch (RuntimeException e) {
+            // Never hide the send error behind a bookkeeping failure
+            logger.warn(String.format("Could not record failed %s send to %s: %s", type.label, phoneNumber, e.getMessage()));
+        }
     }
 }

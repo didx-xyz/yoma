@@ -138,7 +138,7 @@ public class SmsOtpMfaAuthenticator implements Authenticator, CredentialValidato
         PhoneProvider phoneProvider = context.getSession().getProvider(PhoneProvider.class);
         try {
             int expires = phoneProvider.sendTokenCode(phoneNumber, context.getConnection().getRemoteAddr(),
-                    TokenCodeType.OTP, null);
+                    TokenCodeType.OTP, null).expiresIn();
             context.form()
                     .setInfo("codeSent", phoneNumber)
                     .setAttribute("expires", expires)
