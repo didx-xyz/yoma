@@ -123,12 +123,15 @@ releases:
           database: yoma-dev
         primary:
           resourcesPreset: medium
-          # Runs as the postgres superuser on first init. The API account cannot create untrusted extensions.
+          # The API account cannot create untrusted extensions such as PostGIS.
+          # Bitnami runs `.sql` init scripts as `auth.username`, so this script
+          # connects as `postgres`. ON_ERROR_STOP makes a failure stop the init.
           initdb:
             scripts:
-              00-extensions.sql: |
-                \connect "yoma-dev"
+              00-extensions.sh: |
+                postgresql_execute "$POSTGRESQL_DATABASE" postgres "$POSTGRESQL_POSTGRES_PASSWORD" "-v ON_ERROR_STOP=1" <<'SQL'
                 CREATE EXTENSION IF NOT EXISTS postgis;
+                SQL
           persistentVolumeClaimRetentionPolicy:
             enabled: true
             whenDeleted: Delete
