@@ -75,8 +75,8 @@ public class TwilioSmsSenderServiceProvider extends FullSmsSenderAbstractService
         if (whatsappEnabled) {
             try {
                 sendWhatsAppMessage(phoneNumber, message);
-                logger.info("WhatsApp delivery successful to: " + phoneNumber);
-                return; // If WhatsApp succeeds, don't attempt SMS
+                logger.info("WhatsApp dispatch accepted for: " + phoneNumber);
+                return; // If WhatsApp dispatch is accepted, don't attempt SMS
             } catch (Exception e) {
                 logger.warn("WhatsApp message failed, falling back to SMS: " + e.getMessage());
                 // Continue to SMS fallback
@@ -175,10 +175,14 @@ public class TwilioSmsSenderServiceProvider extends FullSmsSenderAbstractService
     }
 
     /**
-     * Checks the delivery status of a sent WhatsApp message
+     * Polls a WhatsApp message until Twilio accepts dispatch. "sent" means the
+     * message was handed to WhatsApp; it does not confirm handset delivery, so
+     * the message can still fail later. "delivered" and "read" are confirmed
+     * delivery.
      *
      * @param messageSid The SID of the message to check
-     * @throws MessageSendException if the message delivery fails
+     * @throws MessageSendException if the message fails, or is still queued or
+     *                              sending after all checks
      */
     private void checkMessageDeliveryStatus(String messageSid) throws MessageSendException {
         final int MAX_RETRY = 8;
@@ -208,6 +212,10 @@ public class TwilioSmsSenderServiceProvider extends FullSmsSenderAbstractService
                         logger.info("WhatsApp message " + messageSid + " was read by recipient");
                         return;
                     case "sent":
+                        // Accepted by WhatsApp; delivery to the handset is not yet confirmed
+                        logger.info("WhatsApp message " + messageSid
+                                + " dispatched; delivery is not yet confirmed");
+                        return;
                     case "queued":
                     case "sending":
                         // Still processing, continue to next attempt
