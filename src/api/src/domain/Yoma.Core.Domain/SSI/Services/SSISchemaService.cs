@@ -1,6 +1,5 @@
 using FluentValidation;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
@@ -21,10 +20,8 @@ namespace Yoma.Core.Domain.SSI.Services
   public class SSISchemaService : ISSISchemaService
   {
     #region Class Variables
-    private readonly ILogger<SSISchemaService> _logger;
     private readonly AppSettings _appSettings;
     private readonly IMemoryCache _memoryCache;
-    private readonly IEnvironmentProvider _environmentProvider;
     private readonly ISSIProviderClient _ssiProviderClient;
     private readonly ISSISchemaEntityService _ssiSchemaEntityService;
     private readonly ICustomFieldDefinitionService _customFieldDefinitionService;
@@ -41,10 +38,8 @@ namespace Yoma.Core.Domain.SSI.Services
     #endregion
 
     #region Constructor
-    public SSISchemaService(ILogger<SSISchemaService> logger,
-        IOptions<AppSettings> appSettings,
+    public SSISchemaService(IOptions<AppSettings> appSettings,
         IMemoryCache memoryCache,
-        IEnvironmentProvider environmentProvider,
         ISSIProviderClientFactory ssiProviderClientFactory,
         ISSISchemaEntityService ssiSchemaEntityService,
         ICustomFieldDefinitionService customFieldDefinitionService,
@@ -52,10 +47,8 @@ namespace Yoma.Core.Domain.SSI.Services
         SchemaRequestValidatorCreate schemaRequestValidatorCreate,
         SchemaRequestValidatorUpdate schemaRequestValidatorUpdate)
     {
-      _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _appSettings = appSettings.Value;
       _memoryCache = memoryCache;
-      _environmentProvider = environmentProvider ?? throw new ArgumentNullException(nameof(environmentProvider));
       _ssiProviderClient = ssiProviderClientFactory.CreateClient();
       _ssiSchemaEntityService = ssiSchemaEntityService;
       _customFieldDefinitionService = customFieldDefinitionService;
@@ -299,44 +292,6 @@ namespace Yoma.Core.Domain.SSI.Services
 
       // No matches found for schema attributes that match entities
       if (matchedEntitiesGrouped.Count == 0) return results;
-
-      // Temporary Stage-only recovery: Local/Dev published newer YoID versions into the shared test registry.
-      // Keep strict mappings everywhere else and never select a partially mapped schema for issuance.
-      // TODO: Isolate CF schema publication from Stage, then remove this compatibility fallback.
-      if (_environmentProvider.Environment == Core.Environment.Staging)
-      {
-        var yoIDDefaults = schemas
-          .Where(schema => schema.ArtifactType == ArtifactType.ACR &&
-            string.Equals(schema.Name, _appSettings.SSISchemaFullNameYoID, StringComparison.OrdinalIgnoreCase))
-          .ToList();
-        var compatibleDefaultExists = yoIDDefaults.Any(schema =>
-          matchedEntitiesGrouped.TryGetValue(schema.Id, out var entities) &&
-          entities.Sum(CountFields) == schema.AttributeNames.Except(SchemaAttributes_Internal).Count() &&
-          entities.All(entity => entity.Types?.Any(type => type.Type == SchemaType.YoID) == true));
-
-        if (compatibleDefaultExists)
-        {
-          foreach (var schema in yoIDDefaults)
-          {
-            var mappedAttributes = matchedEntitiesGrouped.TryGetValue(schema.Id, out var entities)
-              ? entities.SelectMany(GetAttributeNames)
-              : [];
-            var unsupportedAttributes = schema.AttributeNames
-              .Except(SchemaAttributes_Internal)
-              .Except(mappedAttributes, StringComparer.OrdinalIgnoreCase)
-              .ToList();
-            if (unsupportedAttributes.Count == 0) continue;
-
-            if (_logger.IsEnabled(LogLevel.Warning))
-              _logger.LogWarning(
-                "Stage YoID schema compatibility fallback: ignoring schema '{schemaName}' version '{schemaVersion}' with id '{schemaId}'; unsupported attributes: '{unsupportedAttributes}'. A fully mapped version remains available",
-                schema.Name, schema.Version, schema.Id, string.Join(",", unsupportedAttributes));
-
-            schemas.Remove(schema);
-            matchedEntitiesGrouped.Remove(schema.Id);
-          }
-        }
-      }
 
       // Provider schemas are the source of truth. Re-applying this one-way protection also self-heals the rare case where
       // provider schema creation succeeded but persisting the local protection flag failed.

@@ -328,20 +328,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
       if (request.Attributes == null || request.Attributes.Count == 0)
         throw new ArgumentException($"'{nameof(request.Attributes)}' is required", nameof(request));
 
-      Domain.SSI.Models.Provider.Schema schema;
-      if (_environmentProvider.Environment == Domain.Core.Environment.Staging &&
-        request.ArtifactType == ArtifactType.ACR && request.SchemaType == Domain.SSI.SchemaType.YoID.ToString() &&
-        !string.IsNullOrEmpty(request.SchemaId))
-      {
-        // Only Stage YoID recovery pins the fully mapped version selected by the domain.
-        var schemaAries = await _clientFactory.CreateGovernanceClient().GetSchemaByIdAsync(schema_id: request.SchemaId);
-        schema = schemaAries?.ToSchema()
-          ?? throw new EntityNotFoundException($"Schema with id '{request.SchemaId}' does not exist");
-        if (schema.Id != request.SchemaId || !string.Equals(schema.Name, request.SchemaName, StringComparison.OrdinalIgnoreCase))
-          throw new InvalidOperationException("Stage YoID schema identity does not match the selected schema");
-      }
-      else
-        schema = await GetSchemaByName(request.SchemaName);
+      var schema = await GetSchemaByName(request.SchemaName);
 
       //validate specified attributes against schema
       var undefinedAttributes = request.Attributes.Keys.Except(schema.AttributeNames);
