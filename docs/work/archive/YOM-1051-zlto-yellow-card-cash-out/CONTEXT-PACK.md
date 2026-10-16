@@ -54,6 +54,20 @@ The release branch `chore/cash-out-final-prep` removes two things:
 
 ## Decisions That Still Bind
 
+### Production release settings — October 15 update
+
+- New migration `20261015090000_ApplicationDb_Treasury_CashOut_Release_Defaults` sets the payout
+  pool to **USD 0** and conversion to **57 ZLTO per USD 1** (stored as rounded USD per ZLTO).
+  It runs once on existing Stage/Production databases and after the original seed on fresh installs;
+  historical applied migrations are unchanged. It is prepared, not applied or deployed by this session.
+- Financial year stays **1 March through the end of February**. No reward pools, payout/reward
+  cumulatives, reservations or transaction records are changed. Existing payouts keep their locked amounts.
+- Cash-outs must also remain disabled in the UI until funding and readiness are confirmed. This
+  migration is the API capacity safeguard; it does not change the UI switch or environment config.
+- Administrator Treasury updates currently require a positive payout pool. The release migration
+  deliberately sets zero directly; this session does not relax validation or change Jason's form.
+  See the [release-settings handoff](./handoffs/2026-10-15-a.md) before deployment or later changes.
+
 ### Naming and scope
 
 - **Provider neutrality.** User-facing copy never names, brands or hints at the payout provider. The
