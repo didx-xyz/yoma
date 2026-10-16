@@ -24,6 +24,14 @@ ingress:
           - path: /auth/resources
           - path: /auth/js
 
+traefikMiddleware:
+  sms-ratelimit:
+    enabled: true
+
+traefikIngressRoute:
+  sms-ratelimit:
+    enabled: true
+
 postInstallHook:
   enabled: false
 
