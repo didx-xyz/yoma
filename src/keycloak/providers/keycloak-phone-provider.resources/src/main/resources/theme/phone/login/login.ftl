@@ -256,6 +256,7 @@
                   resetSendCodeButton: false,
                   codeSendStatus: <#if codeSendStatus??>'${codeSendStatus}'<#else>'NOT_SENT'</#if>,
                   codeExpiresIn: <#if codeExpiresIn??>${codeExpiresIn}<#else>0</#if>,
+                  deliveryUnconfirmed: false,
                   isFormSubmitting: false,
                 },
                 mounted() {
@@ -295,6 +296,11 @@
                         icon: 'fa-check-circle',
                         type: 'pf-m-success'
                       },
+                      'SENT_UNCONFIRMED': {
+                        message: "${msg('codeSentUnconfirmed')?no_esc}",
+                        icon: 'fa-exclamation-triangle',
+                        type: 'pf-m-warning'
+                      },
                       'ALREADY_SENT': {
                         message: "${msg('codeSentAlready')?no_esc}",
                         icon: 'fa-exclamation-triangle',
@@ -312,7 +318,10 @@
                       }
                     };
 
-                    const config = configs[this.codeSendStatus] || {};
+                    const status = this.codeSendStatus === CODE_SEND_STATUS.SENT && this.deliveryUnconfirmed
+                      ? 'SENT_UNCONFIRMED'
+                      : this.codeSendStatus;
+                    const config = configs[status] || {};
                     if (config.message) {
                       config.message = config.message
                         .replace('{0}', this.maskedPhoneNumber)
@@ -378,6 +387,7 @@
                         {
                           // set code send status to SENT
                           this.codeSendStatus = CODE_SEND_STATUS.SENT;
+                          this.deliveryUnconfirmed = res.data.delivery_confirmed === false;
 
                           this.countDownExpiresIn(res.data.expires_in);
                           this.clearMessages();

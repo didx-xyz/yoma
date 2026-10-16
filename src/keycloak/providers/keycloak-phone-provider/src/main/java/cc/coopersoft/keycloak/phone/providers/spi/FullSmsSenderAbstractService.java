@@ -11,6 +11,7 @@ import org.keycloak.models.UserModel;
 import org.keycloak.theme.Theme;
 
 import cc.coopersoft.keycloak.phone.Utils;
+import cc.coopersoft.keycloak.phone.providers.constants.MessageSendResult;
 import cc.coopersoft.keycloak.phone.providers.constants.TokenCodeType;
 import cc.coopersoft.keycloak.phone.providers.exception.MessageSendException;
 
@@ -33,15 +34,15 @@ public abstract class FullSmsSenderAbstractService implements MessageSenderServi
         this.realmDisplay = session.getContext().getRealm().getDisplayName();
     }
 
-    public abstract void sendMessage(String phoneNumber, String message) throws MessageSendException;
+    public abstract MessageSendResult sendMessage(String phoneNumber, String message) throws MessageSendException;
 
     @Override
-    public void sendSmsMessage(TokenCodeType type, String phoneNumber, String code, int expires, String kind)
+    public MessageSendResult sendSmsMessage(TokenCodeType type, String phoneNumber, String code, int expires, String kind)
             throws MessageSendException {
         final String defaultMessage = String.format("%s: %s is your %s code. This code expires in %s minutes.",
                 realmDisplay.toUpperCase(), code, type.label, expires / 60);
         final String MESSAGE = localizeMessage(type, phoneNumber, code, expires).orElse(defaultMessage);
-        sendMessage(phoneNumber, MESSAGE);
+        return sendMessage(phoneNumber, MESSAGE);
     }
 
     /**

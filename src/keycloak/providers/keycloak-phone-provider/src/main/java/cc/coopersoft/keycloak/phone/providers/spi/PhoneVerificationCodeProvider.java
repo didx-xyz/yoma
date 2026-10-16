@@ -13,6 +13,12 @@ public interface PhoneVerificationCodeProvider extends Provider {
 
     void persistCode(TokenCodeRepresentation tokenCode, TokenCodeType tokenCodeType, int tokenExpiresIn);
 
+    /**
+     * Records a send that failed, so it counts toward the abuse limits. The
+     * record is already expired and can never be validated.
+     */
+    void persistFailedSend(String phoneNumber, TokenCodeType tokenCodeType, String sourceAddr);
+
     void validateCode(UserModel user, String phoneNumber, String code);
 
     void validateCode(UserModel user, String phoneNumber, String code, TokenCodeType tokenCodeType);
