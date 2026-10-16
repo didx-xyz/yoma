@@ -186,7 +186,13 @@ export function useDiscoveryLookups(): DiscoveryLookups {
   // Entrepreneurship · Other, unknown types after) everywhere on the surface; labels still come
   // from `displayName`.
   const types = typesQuery.data ? sortTypes(typesQuery.data) : undefined;
-  const status = (query: (typeof queries)[number]): FacetStatus =>
+  // Structural, like `hasSettled`: a union of the queries' result types stops type-checking on
+  // newer @tanstack/react-query releases (5.104 rejects every member but the first).
+  const status = (query: {
+    isPending: boolean;
+    isError: boolean;
+    error: unknown;
+  }): FacetStatus =>
     query.isPending ? "loading" : facetStatus(query.isError, query.error);
   const otherIn = (list: { id: string; name: string }[] | undefined) =>
     list?.find((option) => option.name === ACCESSIBILITY_NAME_OTHER)?.id;
