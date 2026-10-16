@@ -16,6 +16,68 @@ namespace Yoma.Core.Test.Referral.Services
     private const string RefereeUsername = "referee@example.com";
     #endregion
 
+    #region Progress
+    [Trait("Category", "Referral")]
+    [Theory]
+    [InlineData(ReferralLinkUsageStatus.Completed, true, 100d)]
+    [InlineData(ReferralLinkUsageStatus.Completed, false, 100d)]
+    [InlineData(ReferralLinkUsageStatus.Pending, false, 33.33d)]
+    public void GetById_PathwayChangesPreserveCompletedProgress(
+      ReferralLinkUsageStatus status, bool pathwayAddedAfterCompletion, double expectedPercent)
+    {
+      var fixture = new LinkUsageServiceFixture(RefereeUsername);
+      var completionDate = DateTimeOffset.UtcNow.AddDays(-2);
+      var usage = new ReferralLinkUsageBuilder().WithStatus(status).Build();
+      usage.DateModified = completionDate;
+
+      var opportunityId = Guid.NewGuid();
+      var pathway = new ProgramPathway
+      {
+        Id = Guid.NewGuid(),
+        Name = "Current pathway",
+        DateCreated = completionDate.AddDays(pathwayAddedAfterCompletion ? 1 : -1),
+        Rule = PathwayCompletionRule.All,
+        Steps =
+        [
+          new ProgramPathwayStep
+          {
+            Id = Guid.NewGuid(),
+            Name = "First step",
+            Rule = PathwayCompletionRule.All,
+            Tasks =
+            [
+              new ProgramPathwayTask
+              {
+                Id = Guid.NewGuid(),
+                EntityType = PathwayTaskEntityType.Opportunity,
+                Opportunity = new Domain.Opportunity.Models.OpportunityItem { Id = opportunityId }
+              }
+            ]
+          }
+        ]
+      };
+      var program = new ProgramBuilder()
+        .WithId(usage.ProgramId)
+        .WithPathwayRequired(true)
+        .WithPathway(pathway)
+        .Build();
+
+      fixture.LinkUsageRepository.Setup(r => r.Query()).Returns(new[] { usage }.AsQueryable());
+      fixture.ProgramService.Setup(s => s.GetById(usage.ProgramId, true, false)).Returns(program);
+      fixture.MyOpportunityService.Setup(s => s.GetVerificationStatus(opportunityId, usage.UserId))
+        .Returns(new Domain.MyOpportunity.Models.MyOpportunityResponseVerifyStatus
+        {
+          Status = Domain.MyOpportunity.VerificationStatus.Pending
+        });
+
+      var result = fixture.Build().GetById(usage.Id, true, false, false);
+
+      Assert.Equal(status, result.Status);
+      Assert.Equal((decimal)expectedPercent, result.PercentComplete);
+      Assert.NotNull(result.Pathway);
+    }
+    #endregion
+
     #region ClaimAsReferee
 
     [Trait("Category", "Referral")]

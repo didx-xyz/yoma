@@ -61,6 +61,8 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Client
     #endregion
 
     #region Public Members
+    public string WalletUrl => _options.WalletUrl;
+
     /// <inheritdoc />
     public async Task<PayoutCountries> ListCountriesSupported()
     {

@@ -82,6 +82,9 @@ namespace Yoma.Core.Infrastructure.Umuzi.Models
     // Nullable so an omitted active flag cannot silently delete an opportunity.
     [JsonProperty("active")]
     public bool? Active { get; set; }
+    // Initial visibility only; later pull updates preserve Yoma's hidden setting.
+    [JsonProperty("hidden")]
+    public bool Hidden { get; set; }
     [JsonProperty("createdAt"), JsonConverter(typeof(UtcDateTimeOffsetConverter))]
     public DateTimeOffset? CreatedAt { get; set; }
     [JsonProperty("updatedAt"), JsonConverter(typeof(UtcDateTimeOffsetConverter))]

@@ -445,9 +445,12 @@ namespace Yoma.Core.Domain.Entity.Services
       result.Settings = SettingsHelper.FilterByRoles(result.Settings, roles);
 
       var payout = _payoutTransactionService.GetByUserIdOrNull(result.Id);
+      var (walletAvailable, walletUrl) = _payoutService.GetWalletAccessByUserId(result.Id);
       result.Payout = new UserProfilePayout
       {
         Enabled = _payoutService.Enabled,
+        WalletAvailable = walletAvailable,
+        WalletUrl = walletUrl,
         Status = payout?.Status,
         Amount = payout?.Amount,
         Currency = payout == null ? null : Enum.Parse<CurrencyOption>(payout.Currency, true),

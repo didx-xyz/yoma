@@ -85,7 +85,7 @@ jobs:
             changes:
               - '${{ matrix.dir }}/**'
 
-      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+      - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
         with:
           install: true
@@ -387,7 +387,7 @@ jobs:
           API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
           YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
 
-      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+      - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
         if: steps.should-run.outputs.run == 'true'
         with:
           install: true
@@ -474,7 +474,7 @@ jobs:
           fi
       - name: SOPS Binary Installer
         if: steps.should-run.outputs.run == 'true'
-        uses: mdgreenwald/mozilla-sops-action@55177c1ff20a2b396280e4c5f53c32b69f0c1e40 # v2.1.1
+        uses: mdgreenwald/mozilla-sops-action@d180aee439b894360c10dde0652df5d0fe0210dc # v2.1.2
       - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         if: steps.should-run.outputs.run == 'true'
         with:
@@ -483,7 +483,7 @@ jobs:
           role-session-name: github-cicd
       - run: aws eks update-kubeconfig --name ${{ secrets.CLUSTER }}
         if: steps.should-run.outputs.run == 'true'
-      - uses: tailscale/github-action@780049a30b6ff5c378a9e7b389d15ece7a204888 # v4.1.3
+      - uses: tailscale/github-action@d1b6cd204f8dceda5b3eaad7f1f767be390056cd # v4.2.0
         if: steps.should-run.outputs.run == 'true'
         with:
           oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
@@ -492,7 +492,7 @@ jobs:
           version: ${{ env.TAILSCALE_VERSION }}
       - name: Helmfile Destroy
         if: github.event.inputs.reset-deployments == 'true'
-        uses: helmfile/helmfile-action@1f44bcb43e5fb17ecb2685d8b6081ec5f6aa5fcf # v2.4.7
+        uses: helmfile/helmfile-action@614b4cd063ada10b87f668f6ffd35485bce0cac5 # v2.4.8
         with:
           helmfile-args: |
             destroy \
@@ -508,7 +508,7 @@ jobs:
         run: kubectl delete pods,pvc --all --namespace yoma-v3-dev
       - name: Deploy fresh DBs
         if: github.event.inputs.reset-deployments == 'true'
-        uses: helmfile/helmfile-action@1f44bcb43e5fb17ecb2685d8b6081ec5f6aa5fcf # v2.4.7
+        uses: helmfile/helmfile-action@614b4cd063ada10b87f668f6ffd35485bce0cac5 # v2.4.8
         with:
           helmfile-args: |
             apply \
@@ -529,7 +529,7 @@ jobs:
           steps.filter.outputs.keycloak == 'true' ||
           github.event_name == 'workflow_dispatch'
           ) && steps.should-run.outputs.run == 'true'
-        uses: helmfile/helmfile-action@1f44bcb43e5fb17ecb2685d8b6081ec5f6aa5fcf # v2.4.7
+        uses: helmfile/helmfile-action@614b4cd063ada10b87f668f6ffd35485bce0cac5 # v2.4.8
         with:
           helmfile-args: |
             ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft) && 'diff' || 'apply' }} \
@@ -547,7 +547,7 @@ jobs:
       # On fresh deployment we want single replica due to DB migrations
       - name: Helmfile Apply Fresh API
         if: github.event.inputs.reset-deployments == 'true'
-        uses: helmfile/helmfile-action@1f44bcb43e5fb17ecb2685d8b6081ec5f6aa5fcf # v2.4.7
+        uses: helmfile/helmfile-action@614b4cd063ada10b87f668f6ffd35485bce0cac5 # v2.4.8
         with:
           helmfile-args: |
             apply \
@@ -567,7 +567,7 @@ jobs:
           steps.filter.outputs.api == 'true' ||
           github.event_name == 'workflow_dispatch'
           ) && steps.should-run.outputs.run == 'true'
-        uses: helmfile/helmfile-action@1f44bcb43e5fb17ecb2685d8b6081ec5f6aa5fcf # v2.4.7
+        uses: helmfile/helmfile-action@614b4cd063ada10b87f668f6ffd35485bce0cac5 # v2.4.8
         with:
           helmfile-args: |
             ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft) && 'diff' || 'apply' }} \
@@ -594,7 +594,7 @@ jobs:
           steps.filter.outputs.web == 'true' ||
           github.event_name == 'workflow_dispatch'
           ) && steps.should-run.outputs.run == 'true'
-        uses: helmfile/helmfile-action@1f44bcb43e5fb17ecb2685d8b6081ec5f6aa5fcf # v2.4.7
+        uses: helmfile/helmfile-action@614b4cd063ada10b87f668f6ffd35485bce0cac5 # v2.4.8
         with:
           helmfile-args: |
             ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft) && 'diff' || 'apply' }} \

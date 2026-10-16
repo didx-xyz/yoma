@@ -4,6 +4,9 @@ namespace Yoma.Core.Domain.Payout.Interfaces.Provider
 {
   public interface IPayoutProviderClient
   {
+    /// <summary>Hosted wallet landing page, independent of the partner API endpoint.</summary>
+    string WalletUrl { get; }
+
     /// <summary>
     /// Returns supported payout countries, preserving standard country fields and adding nullable minimums,
     /// together with live provider availability.

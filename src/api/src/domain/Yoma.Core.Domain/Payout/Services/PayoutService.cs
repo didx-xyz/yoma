@@ -247,6 +247,19 @@ namespace Yoma.Core.Domain.Payout.Services
       return result;
     }
 
+    public (bool Available, string? Url) GetWalletAccessByUserId(Guid userId)
+    {
+      if (userId == Guid.Empty)
+        throw new ArgumentNullException(nameof(userId));
+
+      // A completed cash-out keeps wallet access available even if a newer payout is pending or failed.
+      var completedStatusId = _payoutTransactionStatusService.GetByName(PayoutTransactionStatus.Completed.ToString()).Id;
+      var available = _payoutTransactionRepository.Query().Any(o => o.UserId == userId &&
+        o.StatusId == completedStatusId && o.Type == PayoutType.PayoutRewards.ToString() &&
+        o.Provider == Provider_Default.ToString());
+      return (available, available ? _payoutProviderClient.WalletUrl : null);
+    }
+
     public async Task Cancel(Guid userId, Guid payoutId)
     {
       if (userId == Guid.Empty || payoutId == Guid.Empty)

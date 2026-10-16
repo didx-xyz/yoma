@@ -183,6 +183,23 @@ namespace Yoma.Core.Test.Core
       Assert.Null(offline.Currency);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ZeroPayoutPoolStopsBeforeCreationAndReservation(bool reward)
+    {
+      var fixture = new Fixture(minimum: null, rate: decimal.Round(1m / 57m, 10), pool: 0m);
+
+      var error = reward
+        ? await Assert.ThrowsAsync<ValidationException>(() => fixture.Service.PayoutRewards(fixture.User.Id, 100))
+        : await Assert.ThrowsAsync<ValidationException>(() => fixture.Service.Payout(fixture.User.Id, 10m));
+
+      Assert.Equal("There are insufficient funds available to complete this payout", error.Message);
+      Assert.DoesNotContain(fixture.Transactions.Invocations, invocation => invocation.Method.Name == nameof(IPayoutTransactionService.Create));
+      Assert.DoesNotContain(fixture.Provider.Invocations, invocation => invocation.Method.Name == nameof(IPayoutProviderClient.Initiate));
+      fixture.RewardProvider.VerifyNoOtherCalls();
+    }
+
     private sealed class Fixture
     {
       public User User { get; } = new()
@@ -200,7 +217,7 @@ namespace Yoma.Core.Test.Core
       public Mock<IPayoutTransactionService> Transactions { get; } = new();
       public PayoutService Service { get; }
 
-      public Fixture(decimal? minimum = 7m, decimal rate = 0.06994m)
+      public Fixture(decimal? minimum = 7m, decimal rate = 0.06994m, decimal? pool = null)
       {
         Provider.Setup(p => p.ListCountriesSupported()).ReturnsAsync(new PayoutCountries
         {
@@ -216,7 +233,11 @@ namespace Yoma.Core.Test.Core
         wallets.Setup(p => p.GetWalletStatusAndBalance(User.Id)).ReturnsAsync(
           (WalletCreationStatus.Created, new WalletBalance { WalletId = "test-wallet", Available = 1000 }));
         var treasury = new Mock<ITreasuryService>();
-        treasury.Setup(p => p.Get(LockMode.Wait)).Returns(new Domain.Treasury.Models.Treasury { ConversionRateZltoUsd = rate });
+        treasury.Setup(p => p.Get(LockMode.Wait)).Returns(new Domain.Treasury.Models.Treasury
+        {
+          PayoutPoolCurrentFinancialYearInUsd = pool,
+          ConversionRateZltoUsd = rate
+        });
         var strategy = new Mock<IExecutionStrategyService>();
         strategy.Setup(p => p.ExecuteInExecutionStrategyAsync(It.IsAny<Func<Task>>(), false))
           .Returns((Func<Task> body, bool _) => body());

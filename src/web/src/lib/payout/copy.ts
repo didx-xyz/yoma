@@ -70,11 +70,15 @@ export const GATE_COPY: Record<
    * No "try again later" and no "coming soon" — unlike `providerOffline`, which is minutes, this
    * one can stay closed for weeks, and neither a horizon nor a promise is ours to give. It says
    * where the Zlto is and what can still be done with it, and stops.
+   *
+   * **No link** (owner, 2026-09-25). The body still mentions the marketplace as the thing the Zlto
+   * is good for, but a button promoting it turns "Cash Out is unavailable" into a redirect to
+   * spending — a nudge, on the screen where someone has just been told they cannot have their
+   * money. Close is the only action.
    */
   payoutDisabled: {
     title: "Cash Out isn't available right now",
     body: "Your Zlto is safe in your wallet, and you can still spend it in the marketplace.",
-    link: { label: "Go to the marketplace", href: "/marketplace" },
   },
   profileIncomplete: {
     // Names who needs the data, and the colon introduces the list of missing fields below it.
@@ -148,6 +152,36 @@ export const AMOUNT_COPY = {
   estimateRetryAction: "Try again",
   /** screen-reader text for the skeleton on the USD figure */
   estimateLoading: "Working out your estimate…",
+} as const;
+
+/**
+ * The way back to money already cashed out (API 2026-09-25) — a link to the wallet the provider
+ * holds, shown once the youth has completed at least one cash out.
+ *
+ * ⚠️ **It may not claim anything about that wallet.** `walletAvailable` means a wallet exists, full
+ * stop: not that there is a balance, not that a bank or mobile-money delivery landed, not that
+ * anything can be retried. `Completed` is Yoma-to-wallet completion, and delivery happens after it.
+ * So every string here describes a *destination*, never a state — "see what's there", never "see
+ * your money".
+ *
+ * ⚠️ **The label avoids the word "wallet" entirely** (owner, 2026-09-25). This button sits on the
+ * Yo-ID *Wallet* card beside a Zlto balance, so any label containing "wallet" competes with the
+ * thing the youth is already looking at — "View my cash-out wallet" distinguished the two by being
+ * longer, which is the expensive way. Naming what they went to *do* sidesteps it: they know what a
+ * cash out is, they have just made one, and the destination is where those went.
+ *
+ * ⚠️ **The provider is not named** — the epic's rule, and the API's own field names follow it
+ * (`walletAvailable`, not `ixoWallet`). There is a fair argument that naming a third-party
+ * destination is *better* for a youth about to leave the product, and that argument has not been
+ * had; if it is, `action` is the one string to change.
+ */
+export const WALLET_ACCESS_COPY = {
+  action: "View my cash-outs",
+  /**
+   * For a screen reader, and the reason the link is marked as leaving Yoma: it opens a new tab on
+   * someone else's site, and that is worth announcing before the tab appears rather than after.
+   */
+  opensElsewhere: "Opens our secure payout partner's site in a new tab",
 } as const;
 
 /**

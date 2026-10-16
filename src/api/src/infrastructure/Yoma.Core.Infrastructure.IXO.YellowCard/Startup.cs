@@ -20,6 +20,7 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard
         .AddOptions<YellowCardOptions>()
         .Bind(configuration.GetSection(YellowCardOptions.Section))
         .Validate(options => IsHttpsUrl(options.BaseUrl), $"{YellowCardOptions.Section}:{nameof(YellowCardOptions.BaseUrl)} must be a valid HTTPS URL")
+        .Validate(options => IsHttpsUrl(options.WalletUrl), $"{YellowCardOptions.Section}:{nameof(YellowCardOptions.WalletUrl)} must be a valid HTTPS URL")
         .Validate(options => IsHttpsUrl(options.SupportedCountriesUrl), $"{YellowCardOptions.Section}:{nameof(YellowCardOptions.SupportedCountriesUrl)} must be a valid HTTPS URL")
         .Validate(options => !string.IsNullOrWhiteSpace(options.AccessTokenPath), $"{YellowCardOptions.Section}:{nameof(YellowCardOptions.AccessTokenPath)} is required")
         .Validate(options => !string.IsNullOrWhiteSpace(options.PayoutsPath), $"{YellowCardOptions.Section}:{nameof(YellowCardOptions.PayoutsPath)} is required")

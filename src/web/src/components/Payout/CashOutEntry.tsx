@@ -6,6 +6,7 @@ import {
   IoCheckmarkCircleOutline,
 } from "react-icons/io5";
 import type { PayoutSession, PayoutTransactionInfo } from "~/api/models/payout";
+import { PayoutTransactionStatus } from "~/api/models/payout";
 import type { UserProfile } from "~/api/models/user";
 import {
   cancelPayout,
@@ -260,6 +261,26 @@ export const CashOutEntry: React.FC<{
       refreshProfile(),
     ]);
     setView({ name: "outcome", payout });
+
+    /*
+      ⚠️ A second refresh, and it is not redundant (API note, 2026-09-25).
+
+      The two reads above are concurrent, so the completion webhook can land *between* them: the
+      outcome comes back `Completed` while the profile was fetched a moment earlier and still says
+      `walletAvailable: false`. The youth would then be told their cash out is complete on a screen
+      whose wallet link is missing — precisely when they most want it — and it would stay missing
+      until something else happened to refresh the profile.
+
+      So: re-read once a terminal Completed is actually in hand. Only then, because this is the one
+      status that flips the flag, and every other outcome would be spending a request to learn
+      nothing. `await`ed rather than fired and forgotten so the ledger behind the dialog is correct
+      by the time it is looked at.
+
+      This does not cover a webhook arriving after the dialog closes; nothing pushes into the page,
+      so that one waits for the next profile refresh or navigation.
+    */
+    if (payout?.status === PayoutTransactionStatus.Completed)
+      await refreshProfile();
   }, [refreshProfile]);
 
   /**

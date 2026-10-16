@@ -9,8 +9,7 @@ import { CashOutStepper, type CashOutStep } from "./CashOutStepper";
  * stepper when the screen is part of the three-step flow.
  *
  * Its own component so the state machine is not also a layout, and so anything that renders these
- * screens outside the flow — the dev-only state gallery, most obviously — gets the real chrome by
- * construction rather than a copy of it that drifts.
+ * screens outside the flow gets the real chrome by construction rather than a copy of it that drifts.
  *
  * Two shapes, and the difference is not cosmetic:
  *

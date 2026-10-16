@@ -74,7 +74,7 @@ namespace Yoma.Core.Infrastructure.Umuzi.Client
         SSISchemaName = SSISSchemaHelper.ToDefaultFullName(type),
         Skills = skills?.Select(o => o.Id).ToList(),
         ShareWithPartners = false,
-        Hidden = false,
+        Hidden = item.Hidden,
         Keywords = keywords,
         Categories = [.. categories.Select(o => o.Id)],
         Countries = [.. countries.Select(o => new Domain.Opportunity.Models.OpportunityRequestCountry { CountryId = o.Id })],
