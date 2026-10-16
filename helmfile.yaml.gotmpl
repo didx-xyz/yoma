@@ -123,6 +123,12 @@ releases:
           database: yoma-dev
         primary:
           resourcesPreset: medium
+          # Runs as the postgres superuser on first init. The API account cannot create untrusted extensions.
+          initdb:
+            scripts:
+              00-extensions.sql: |
+                \connect "yoma-dev"
+                CREATE EXTENSION IF NOT EXISTS postgis;
           persistentVolumeClaimRetentionPolicy:
             enabled: true
             whenDeleted: Delete
