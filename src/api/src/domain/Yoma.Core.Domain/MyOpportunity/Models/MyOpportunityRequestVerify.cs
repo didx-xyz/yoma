@@ -31,6 +31,17 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public MyOpportunityRequestVerifyCommitmentInterval? CommitmentInterval { get; set; }
 
+    /// <summary>
+    /// Optional business location for a manual Entrepreneurship submission. Other manual types use the youth profile.
+    /// CSV/partner paths can supply a participant location; capture rules apply engagement and Worldwide availability.
+    /// This is a named location, not evidence geometry; region/city require a specific country.
+    /// </summary>
+    public Guid? CountryId { get; set; }
+
+    public string? Region { get; set; }
+
+    public string? City { get; set; }
+
     [JsonIgnore]
     internal decimal? PercentComplete { get; set; }
 

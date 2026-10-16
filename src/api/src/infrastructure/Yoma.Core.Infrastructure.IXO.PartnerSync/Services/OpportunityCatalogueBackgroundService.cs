@@ -24,7 +24,7 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Services
     private readonly ScheduleJobOptions _scheduleJobOptions;
     private readonly IRepositoryBatched<Opportunity> _opportunityRepository;
     private readonly IDistributedLockService _distributedLockService;
-    private readonly IExecutionStrategyService _executionStrategyService;
+    private readonly ExecutionStrategyService _executionStrategyService;
     private readonly IIXOAuthService _ixoAuthService;
     #endregion
 
@@ -37,7 +37,7 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Services
       IOptions<ScheduleJobOptions> scheduleJobOptions,
       IRepositoryBatched<Opportunity> opportunityRepository,
       IDistributedLockService distributedLockService,
-      IExecutionStrategyService executionStrategyService,
+      ExecutionStrategyService executionStrategyService,
       IIXOAuthService ixoAuthService)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -347,8 +347,7 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Services
           throw new InvalidOperationException($"IXO opportunity '{item.ExternalId}' does not contain the required removed flag");
 
         item.Type = (item.Type ?? string.Empty).Trim();
-        // TODO: Replace the temporary IXO wire-value constant with the Yoma opportunity type enum
-        // once Task is renamed to Impact Action by the custom-fields initiative.
+        // IXO sends the display name "Impact Action"; Yoma stores the enum/lookup name ImpactAction.
         if (!string.Equals(item.Type, nameof(Domain.Opportunity.Type.Learning), StringComparison.OrdinalIgnoreCase) &&
             !string.Equals(item.Type, nameof(Domain.Opportunity.Type.Job), StringComparison.OrdinalIgnoreCase) &&
             !string.Equals(item.Type, Constants.OpportunityTypeImpactAction, StringComparison.OrdinalIgnoreCase))

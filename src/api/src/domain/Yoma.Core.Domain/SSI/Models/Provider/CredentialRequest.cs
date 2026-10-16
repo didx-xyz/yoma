@@ -5,6 +5,12 @@ namespace Yoma.Core.Domain.SSI.Models.Provider
     public KeyValuePair<string, string> ClientReferent { get; set; }
 
     /// <summary>
+    /// Immutable provider schema identity resolved for this issuance attempt.
+    /// The provider must not resolve a newer version by name after claims have been mapped.
+    /// </summary>
+    public string SchemaId { get; set; } = null!;
+
+    /// <summary>
     /// Full name of the schema used to issue the credential.
     /// </summary>
     public string SchemaName { get; set; } = null!;

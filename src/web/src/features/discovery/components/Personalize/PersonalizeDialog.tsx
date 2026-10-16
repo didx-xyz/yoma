@@ -6,22 +6,34 @@ import type { UserPreferences } from "~/api/models/userPreferences";
 import { EMPTY_USER_PREFERENCES } from "~/api/models/userPreferences";
 import { userProfileAtom } from "~/lib/store";
 import {
-  applyInheritedFragments,
+  composeSearch,
   mapPreferencesToFilters,
 } from "../../lib/preferenceMapping";
+import { ageInYears } from "../../lib/dates";
+import { homeCountryId } from "../../lib/location";
 import { EMPTY_DISCOVERY_FILTERS } from "../../lib/types";
 import { PREFERENCE_STEPS } from "../../registry/preferenceSteps";
 import { useDiscovery } from "../../state/DiscoveryContext";
 import { useDialogDismiss } from "../../state/useDialogDismiss";
+import { REDUCED_MOTION_QUERY } from "../../state/useCountUp";
 import { useResultCount } from "../../state/useResultCount";
 import { Message } from "../shared/Message";
+import { otherAccessibilityId } from "./blocks/AccessibilityBlock";
 import { LiveCountPanel } from "./LiveCountPanel";
 import { StepBlock } from "./StepBlock";
+import { useAccessibilityOptions } from "./usePreferenceOptions";
+import { WelcomeStep } from "./WelcomeStep";
 
 /**
  * The personalization wizard (YOM-1261) — six registry-driven steps beside the live-count panel.
- * Every step is optional and skippable; answers save to the preset (via the façade) only on
- * finish, and nothing here writes to the profile or the YoID.
+ * Every step is optional (Continue moves on without an answer); answers save only on finish.
+ * Signed in they go to `/user/preferences` — except the place, which is a profile field, so a
+ * changed region / city is the one thing the wizard writes to the profile (country is never
+ * written here). A failed save keeps the dialog open with the draft intact and says what failed.
+ *
+ * Step 0 (round 7, 2026-09-30): until the wizard has been completed once — no preferences saved,
+ * or none in the anonymous session — the dialog opens on the welcome (`WelcomeStep`), purple
+ * edge to edge, with the same live count; "Get started" returns to this split layout at step 1.
  */
 /**
  * NB: mount this only while open (`{open && <PersonalizeDialog …>}`). The draft is seeded from
@@ -37,8 +49,10 @@ export const PersonalizeDialog: React.FC<{
     savePreferences,
     markPersonalizationSeen,
     lookups,
-    dispatch,
     scrollToResults,
+    scope,
+    preferenceSearchReady,
+    verifiedSkillIds,
   } = useDiscovery();
 
   // Escape and the browser Back button behave exactly like the X: seen, unsaved, closed.
@@ -48,6 +62,51 @@ export const PersonalizeDialog: React.FC<{
   };
   useDialogDismiss(true, dismiss);
   const profile = useAtomValue(userProfileAtom);
+  // Completed = preferences exist (signed in: saved; anonymous: in the session). Browse on my
+  // own and the close button leave it uncompleted, so the welcome shows again next time.
+  const [welcome, setWelcome] = useState(() => preferences === null);
+  // Welcome → step 1 (round 10 follow-ups, F2): the welcome's content fades out for 100ms, then
+  // step 1 renders in the SAME frame, which eases to the wizard's size and fill. `cameFromWelcome`
+  // is never reset while mounted; a wizard opened directly (preferences exist) never sets it, so
+  // it opens with no transition, as before. Reduced motion: no exit phase, no timer.
+  const [cameFromWelcome, setCameFromWelcome] = useState(false);
+  // The frame's transition classes, only for the morph itself: left on, every later window resize
+  // would ease the wizard's size over 300ms too. Dropped when the fill's transition ends — the fill
+  // is the one property that changes at every width. Under reduced motion they are inert anyway.
+  const [morphing, setMorphing] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  // The welcome's measured height, held inline through the fade. The ease to the wizard's height
+  // then starts from a length: from `auto` it started from step 1's content height instead (the
+  // new content is already in when the transition begins), a visible 56px snap. A length also
+  // eases in every browser, where `interpolate-size` is Chromium-only.
+  const frameRef = useRef<HTMLDivElement>(null);
+  const [heldHeight, setHeldHeight] = useState<number | null>(null);
+  const leaveTimer = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      // Escape, Back or × during the fade still close the dialog; the timer must not outlive it
+      if (leaveTimer.current !== null) window.clearTimeout(leaveTimer.current);
+    },
+    [],
+  );
+  const getStarted = (): void => {
+    setCameFromWelcome(true);
+    setMorphing(true);
+    if (window.matchMedia(REDUCED_MOTION_QUERY).matches) {
+      setWelcome(false);
+      return;
+    }
+    setHeldHeight(frameRef.current?.offsetHeight ?? null);
+    setLeaving(true);
+    leaveTimer.current = window.setTimeout(() => setWelcome(false), 100);
+  };
+  // Get started's button unmounts with the welcome, so focus goes to step 1's heading — a screen
+  // reader announces the step, and the next Tab reaches its first control.
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (!welcome && cameFromWelcome)
+      headingRef.current?.focus({ preventScroll: true });
+  }, [welcome, cameFromWelcome]);
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<UserPreferences>(
     () => preferences ?? EMPTY_USER_PREFERENCES,
@@ -59,9 +118,21 @@ export const PersonalizeDialog: React.FC<{
     contentRef.current?.scrollTo({ top: 0 });
   }, [step]);
 
-  const previewFilters = applyInheritedFragments(
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const accessibilityOptions = useAccessibilityOptions();
+
+  // The draft as the feed would apply it — the same composition and builder as the surface.
+  const previewSearch = composeSearch(
     EMPTY_DISCOVERY_FILTERS,
-    mapPreferencesToFilters(draft, { countryId: profile?.countryId ?? null }),
+    mapPreferencesToFilters(draft, {
+      // The DRAFT's country for an anonymous youth — the live count follows the picker.
+      countryId: homeCountryId(scope, profile?.countryId ?? null, draft),
+      age:
+        scope === "user" ? ageInYears(profile?.dateOfBirth, new Date()) : null,
+      verifiedSkillIds,
+      otherAccommodationId: lookups.otherAccommodationId,
+    }),
     false,
     [],
   );
@@ -70,19 +141,48 @@ export const PersonalizeDialog: React.FC<{
     counting,
     failed: countFailed,
   } = useResultCount(
-    previewFilters,
-    lookups.typeIdByName,
-    lookups.types.length > 0,
+    previewSearch,
+    lookups,
+    preferenceSearchReady(draft.accessibility.requirements),
   );
 
   const current = PREFERENCE_STEPS[step]!;
   const last = step === PREFERENCE_STEPS.length - 1;
 
   const finish = async (): Promise<void> => {
-    await savePreferences(draft);
-    // The preset just saved IS the new default — per-preference skips and the master-off switch
-    // referred to the old one, and keeping them would strike out what was just chosen.
-    dispatch({ kind: "resetPreferenceOverrides" });
+    // The API requires a description with Other — say so here rather than failing the save.
+    const otherId = otherAccessibilityId(
+      accessibilityOptions.map((a) => ({ id: a.id, label: a.name })),
+    );
+    if (
+      otherId &&
+      draft.accessibility.requirements.includes(otherId) &&
+      !draft.accessibility.otherDescription?.trim()
+    ) {
+      setSaveError(
+        "Tell us what you need under Other, or untick it, before you finish.",
+      );
+      return;
+    }
+    setSaving(true);
+    setSaveError(null);
+    try {
+      // The preset just saved IS the new default — per-preference skips and the master-off
+      // switch referred to the old one, and keeping them would strike out what was just chosen.
+      // Dispatched with the save, so a type only the old Goal supplied takes its clauses with it.
+      await savePreferences(draft, { kind: "resetPreferenceOverrides" });
+    } catch (error) {
+      // Nothing is lost: the draft stays on screen. A failed place (a profile field) is reported
+      // after the preferences themselves saved — the message says which.
+      setSaveError(
+        error instanceof Error && error.message
+          ? error.message
+          : "We couldn't save your preferences. Please try again.",
+      );
+      setSaving(false);
+      return;
+    }
+    setSaving(false);
     markPersonalizationSeen();
     onClose();
     scrollToResults();
@@ -101,86 +201,168 @@ export const PersonalizeDialog: React.FC<{
     >
       {/* Only the step content scrolls; the purple panel, the progress row and the action
           footer stay put on both breakpoints. */}
-      {/* Fixed height on md+ for the same reason the panel is fixed-width: the dialog must not
-          resize as the youth moves between steps of different lengths. The rem cap keeps it
-          from stretching into a tower on tall monitors. */}
-      <div className="flex h-full w-full flex-col overflow-hidden bg-white md:h-[min(85vh,46rem)] md:max-w-4xl md:flex-row md:rounded-2xl">
-        <LiveCountPanel
-          count={count}
-          counting={counting}
-          failed={countFailed}
-        />
-        <div className="flex min-h-0 grow flex-col p-4 md:p-8">
-          <div className="flex items-center gap-1">
-            {PREFERENCE_STEPS.map((s, i) => (
-              <span
-                key={s.id}
-                className={`h-1 grow rounded ${i <= step ? "bg-green" : "bg-gray"}`}
-              />
-            ))}
-            <button
-              type="button"
-              onClick={dismiss}
-              aria-label="Close personalization"
-              className="hover:bg-gray-light ml-2 flex h-11 w-11 items-center justify-center rounded-full"
+      {/* The wizard: a fixed height on md+ for the same reason the panel is fixed-width — the
+          dialog must not resize as the youth moves between steps of different lengths. The rem
+          cap keeps it from stretching into a tower on tall monitors.
+          The welcome (round 10 follow-ups, F1) takes its content's height from md, capped to the
+          window (16px margins on a short lg window); it scrolls inside only below the heights it
+          was laid out for. ONE frame serves both modes, so Get started can morph it (F2). */}
+      <div
+        ref={frameRef}
+        style={
+          welcome && heldHeight !== null ? { height: heldHeight } : undefined
+        }
+        onTransitionEnd={(e) => {
+          // its own fill only: the steps' controls have transitions of their own, which bubble
+          if (
+            !welcome &&
+            e.target === e.currentTarget &&
+            e.propertyName === "background-color"
+          )
+            setMorphing(false);
+        }}
+        className={`flex h-full w-full flex-col overflow-hidden md:rounded-2xl ${
+          welcome
+            ? "bg-purple md:h-auto md:max-h-[calc(100vh-64px)] md:max-w-[1072px] lg:[@media(max-height:680px)]:max-h-[calc(100vh-32px)]"
+            : "bg-white md:h-[min(85vh,46rem)] md:max-w-4xl md:flex-row"
+        } ${
+          // the purple box eases to the wizard's size and fill (from the held height, above)
+          morphing
+            ? "transition-[max-width,height,background-color] duration-300 ease-in-out motion-reduce:transition-none"
+            : ""
+        }`}
+      >
+        {welcome ? (
+          <WelcomeStep
+            count={count}
+            counting={counting}
+            leaving={leaving}
+            onGetStarted={getStarted}
+            onBrowse={dismiss}
+            onPicked={() => {
+              dismiss();
+              scrollToResults();
+            }}
+          />
+        ) : (
+          <>
+            <LiveCountPanel
+              count={count}
+              counting={counting}
+              failed={countFailed}
+              // its text fades in over the frame's whitening; the purple root itself never fades
+              className={
+                cameFromWelcome
+                  ? "*:motion-safe:animate-[fade-in_200ms_ease-out_60ms_both] *:motion-reduce:animate-[fade-in_150ms_ease-out_both]"
+                  : ""
+              }
+            />
+            <div
+              className={`flex min-h-0 grow flex-col p-4 md:p-8 ${
+                cameFromWelcome
+                  ? "motion-safe:animate-[rise-in_240ms_ease-out_60ms_both] motion-reduce:animate-[fade-in_150ms_ease-out_both]"
+                  : ""
+              }`}
             >
-              <IoClose className="h-5 w-5" />
-            </button>
-          </div>
-          <div ref={contentRef} className="min-h-0 grow overflow-y-auto pr-2">
-            <p className="text-green pt-2 text-xs font-bold tracking-widest uppercase">
-              Step {step + 1} of {PREFERENCE_STEPS.length}
-            </p>
-            <h1 className="pt-1 text-lg font-bold tracking-normal md:text-xl">
-              {current.title}
-            </h1>
-            <p className="text-gray-dark pt-1 pb-4 text-sm">
-              {current.subheading}
-            </p>
-            <div className="flex flex-col gap-5">
-              {current.blocks.map((block, i) => (
-                <StepBlock
-                  key={`${current.id}:${i}`}
-                  block={block}
-                  draft={draft}
-                  onPatch={(patch) => setDraft((d) => ({ ...d, ...patch }))}
-                />
-              ))}
-              {current.infoNote && <Message>{current.infoNote}</Message>}
+              <div className="flex items-center gap-1">
+                {PREFERENCE_STEPS.map((s, i) => (
+                  <span
+                    key={s.id}
+                    className={`h-1 grow rounded ${i <= step ? "bg-green" : "bg-gray"}`}
+                  />
+                ))}
+                <button
+                  type="button"
+                  onClick={dismiss}
+                  aria-label="Close personalization"
+                  className="hover:bg-gray-light ml-2 flex h-11 w-11 items-center justify-center rounded-full"
+                >
+                  <IoClose className="h-5 w-5" />
+                </button>
+              </div>
+              {/* Inner padding all round, so a selected pill's outline ring isn't clipped by the
+                  scroller; the negative left margin keeps the content where it was (2026-10-08). */}
+              <div
+                ref={contentRef}
+                className="-ml-1 min-h-0 grow overflow-y-auto pr-2 pb-1 pl-1"
+              >
+                <p className="text-green pt-2 text-xs font-bold tracking-widest uppercase">
+                  Step {step + 1} of {PREFERENCE_STEPS.length}
+                </p>
+                {/* Focused after Get started; not interactive, so no ring */}
+                <h1
+                  ref={headingRef}
+                  tabIndex={-1}
+                  className="pt-1 text-lg font-bold tracking-normal outline-none md:text-xl"
+                >
+                  {current.title}
+                </h1>
+                <p className="text-gray-dark pt-1 pb-4 text-sm">
+                  {current.subheading}
+                </p>
+                <div className="flex flex-col gap-5">
+                  {current.blocks.map((block, i) => (
+                    <StepBlock
+                      key={`${current.id}:${i}`}
+                      block={block}
+                      draft={draft}
+                      onPatch={(patch) => setDraft((d) => ({ ...d, ...patch }))}
+                    />
+                  ))}
+                  {current.infoNote && <Message>{current.infoNote}</Message>}
+                </div>
+              </div>
+              {saveError && (
+                <div className="shrink-0 pt-3">
+                  <Message kind="error">{saveError}</Message>
+                </div>
+              )}
+              {/* One scrollable action row: Back on the left, Continue / Finish on the right. There
+              is no "Skip this" (removed 2026-10-06): it did exactly what Continue does, and every
+              step is optional anyway. Button text never wraps at 390px; below 360px Back is
+              icon-only (its name stays "Back"), so the row fits without scrolling (2026-10-05).
+              containerClassName="" drops the wrapper's default h-full, which would stretch this
+              row to fill the fixed-height wizard column. */}
+              <ScrollableContainer
+                containerClassName=""
+                className="flex shrink-0 items-center gap-3 overflow-x-auto pt-4 md:pt-6"
+              >
+                {/* Back from step 1 returns to the welcome it came from; with nowhere to go back
+                    to (opened on step 1, to edit), there is no Back at all, rather than a faded,
+                    disabled one that read as missing on phones (2026-10-09, Jason). */}
+                {(step > 0 || cameFromWelcome) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (step > 0) setStep(step - 1);
+                      else {
+                        // Undo Get started's hand-over, so the welcome comes back whole.
+                        setCameFromWelcome(false);
+                        setLeaving(false);
+                        setMorphing(false);
+                        setHeldHeight(null);
+                        setWelcome(true);
+                      }
+                    }}
+                    className="btn border-gray min-h-11 shrink-0 rounded-full bg-white whitespace-nowrap max-[359px]:w-11 max-[359px]:px-0"
+                  >
+                    <IoArrowBack className="h-4 w-4" />
+                    <span className="max-[359px]:sr-only">Back</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={advance}
+                  disabled={saving}
+                  className="btn bg-green hover:bg-green-dark ml-auto min-h-11 shrink-0 rounded-full border-none px-6 whitespace-nowrap text-white disabled:opacity-60"
+                >
+                  {last ? (saving ? "Saving…" : "Finish") : "Continue"}{" "}
+                  <IoArrowForward className="h-4 w-4" />
+                </button>
+              </ScrollableContainer>
             </div>
-          </div>
-          {/* One scrollable action row — button text never wraps at 390px. containerClassName=""
-              drops the wrapper's default h-full, which would stretch this row to fill the
-              fixed-height wizard column. */}
-          <ScrollableContainer
-            containerClassName=""
-            className="flex shrink-0 items-center gap-3 overflow-x-auto pt-4 md:pt-6"
-          >
-            <button
-              type="button"
-              disabled={step === 0}
-              onClick={() => setStep(step - 1)}
-              className="btn border-gray min-h-11 shrink-0 rounded-full bg-white whitespace-nowrap disabled:opacity-40"
-            >
-              <IoArrowBack className="h-4 w-4" /> Back
-            </button>
-            <button
-              type="button"
-              onClick={advance}
-              className="text-gray-dark ml-auto min-h-11 shrink-0 cursor-pointer text-sm font-semibold whitespace-nowrap"
-            >
-              Skip this
-            </button>
-            <button
-              type="button"
-              onClick={advance}
-              className="btn bg-green hover:bg-green-dark min-h-11 shrink-0 rounded-full border-none px-6 whitespace-nowrap text-white"
-            >
-              {last ? "Finish" : "Continue"}{" "}
-              <IoArrowForward className="h-4 w-4" />
-            </button>
-          </ScrollableContainer>
-        </div>
+          </>
+        )}
       </div>
     </dialog>
   );

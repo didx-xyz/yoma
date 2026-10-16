@@ -29,6 +29,13 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public DateOnly? DateCompleted { get; set; }
 
+    /// <summary>
+    /// Specific ISO alpha-2 country for participation or Entrepreneurship business location.
+    /// Country above remains the user's profile country; CSV does not capture region/city on either entity.
+    /// Missing business location stays unknown. Other eligible types default to the youth profile when omitted.
+    /// </summary>
+    public string? CountryCompleted { get; set; }
+
     [Required]
     public string OpportunityExternalId { get; set; } = null!;
 

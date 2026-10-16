@@ -33,6 +33,97 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public string? URL { get; set; }
 
+    /// <summary>
+    /// Informational provider; does not change the owning organisation or its permissions.
+    /// </summary>
+    public string? Provider { get; set; }
+
+    /// <summary>
+    /// Optional provider website, distinct from the opportunity's action link.
+    /// </summary>
+    [Ignore]
+    public string? ProviderURL { get; set; }
+
+    /// <summary>
+    /// Optional provider logo image URL, distinct from the provider's website and owning organisation's logo.
+    /// </summary>
+    [Ignore]
+    public string? ProviderLogoURL { get; set; }
+
+    /// <summary>
+    /// Optional provider origin for discovery, never availability or the youth's participation/business location.
+    /// Must be a specific country; Worldwide is not a provider origin.
+    /// </summary>
+    [Ignore]
+    public Guid? ProviderCountryId { get; set; }
+
+    [Ignore]
+    public string? ProviderCountry { get; set; }
+
+    /// <summary>
+    /// Whether any incentive is offered. Null means not specified, not unpaid.
+    /// </summary>
+    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
+    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
+    public bool? Incentivized { get; set; }
+
+    /// <summary>
+    /// Distinguishes Yoma ZLTO rewards from informational partner incentives.
+    /// </summary>
+    public RewardType RewardType { get; set; }
+
+    /// <summary>
+    /// Informational partner-funded amount; Yoma does not process this payment.
+    /// </summary>
+    public decimal? PartnerIncentiveAmount { get; set; }
+
+    /// <summary>
+    /// ISO 4217 currency code for the partner incentive. Not a ZLTO currency.
+    /// </summary>
+    public string? PartnerIncentiveCurrency { get; set; }
+
+    /// <summary>
+    /// Declared accessibility support; available accommodations describe the supported needs.
+    /// </summary>
+    public AccessibilitySupport? AccessibilitySupport { get; set; }
+
+    /// <summary>
+    /// Description required only when the Other accommodation is selected.
+    /// </summary>
+    public string? AccommodationOtherDescription { get; set; }
+
+    /// <summary>
+    /// Inclusive minimum age checked only on submission for verification using self-declared birth date.
+    /// Browsing and finalization are not age-gated. Partner-reported verifications remain authoritative.
+    /// </summary>
+    public short? AgeFrom { get; set; }
+
+    /// <summary>
+    /// Inclusive maximum age; a missing birth date does not block participation.
+    /// </summary>
+    public short? AgeTo { get; set; }
+
+    [Ignore]
+    public List<Accessibility>? Accommodations { get; set; }
+
+    [JsonIgnore]
+    [Name("Accommodations")]
+    public string? AccommodationsFlattened => Accommodations?.Count > 0 ? string.Join(CSVImportHelper.Value_Delimiter, Accommodations.Select(o => o.Name)) : null;
+
+    [Ignore]
+    public List<TargetedGroup>? TargetedGroups { get; set; }
+
+    [JsonIgnore]
+    [Name("TargetedGroups")]
+    public string? TargetedGroupsFlattened => TargetedGroups?.Count > 0 ? string.Join(CSVImportHelper.Value_Delimiter, TargetedGroups.Select(o => o.Name)) : null;
+
+    [Ignore]
+    public List<SustainableDevelopmentGoal>? SustainableDevelopmentGoals { get; set; }
+
+    [JsonIgnore]
+    [Name("SustainableDevelopmentGoals")]
+    public string? SustainableDevelopmentGoalsFlattened => SustainableDevelopmentGoals?.Count > 0 ? string.Join(CSVImportHelper.Value_Delimiter, SustainableDevelopmentGoals.Select(o => o.Number.ToString())) : null;
+
     [Name("Zlto Reward")]
     public decimal? ZltoReward { get; set; }
 
@@ -49,8 +140,6 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     [Name("Verification Method")]
     public VerificationMethod? VerificationMethod { get; set; }
-
-    public string? Difficulty { get; set; }
 
     [Ignore]
     public Core.TimeIntervalOption? CommitmentInterval { get; set; }
@@ -166,7 +255,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public string? CategoriesFlattened => Categories == null || Categories.Count == 0 ? null : string.Join(", ", Categories.Select(o => o.Name));
 
     [Ignore]
-    public List<Country>? Countries { get; set; }
+    public List<OpportunityCountryInfo>? Countries { get; set; }
 
     [JsonIgnore]
     [Name("Countries")]

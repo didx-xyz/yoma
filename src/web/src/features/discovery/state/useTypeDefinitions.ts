@@ -1,32 +1,26 @@
-import { useQueries } from "@tanstack/react-query";
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
 import type { CustomFieldDefinition } from "~/api/models/opportunity";
 import { getOpportunityCustomFieldDefinitions } from "~/api/services/opportunities";
 import { OPPORTUNITY_QUERY_KEYS } from "~/hooks/useOpportunityMutations";
 import { CUSTOM_FIELDS_ENABLED } from "~/lib/constants";
 import { isNotFoundError } from "../lib/apiStatus";
+import { splitTypeDefinitions, typeOwnKeys } from "../lib/typeDefinitions";
 
 /**
  * Custom-field definitions for the selected Opportunity types, split into what they SHARE and
- * what is particular to each.
- *
- * The definitions endpoint returns the generic definitions plus the type's own for every type
- * asked about, and a definition carries no marker saying which. With Job + Event selected that
- * meant the same nine controls rendered twice — 18 of 24 controls on screen were duplicates, and
- * editing one silently edited "both". Intersecting the keys across the fetched types recovers
- * the generic set without an API change: what every type returns is by definition not particular
- * to any of them.
- *
- * With ONE type selected the intersection is the whole set, which would leave an empty per-type
- * section — so the split only applies from two types up, and one type renders exactly as before.
+ * what is particular to each — by each definition's `entityContext` (`splitTypeDefinitions`).
+ * Without the split, Job + Event rendered the generic controls twice, and editing one silently
+ * edited "both". With ONE type selected nothing is split, and it renders exactly as before.
  *
  * `useQueries` (rather than the shared `useOpportunityCustomFieldDefinitionsQuery`, which cannot
  * be called in a loop) deliberately reuses that hook's query key and fetcher, so both share one
  * cache entry per type.
  */
 export interface TypeDefinitions {
-  /** Definitions every selected type returns — rendered once, above the per-type sections. */
+  /** The generic definitions (no type context) — rendered once, above the per-type sections. */
   shared: CustomFieldDefinition[];
-  /** Per selected type, in selection order: what that type adds over `shared`. */
+  /** Per selected type, in selection order: its own definitions (all of them, with one type). */
   perType: { typeName: string; definitions: CustomFieldDefinition[] }[];
   loading: boolean;
   /** 404: this API build has no custom-field definitions at all (the DEV preview, today). */
@@ -48,32 +42,14 @@ export function useTypeDefinitions(typeNames: string[]): TypeDefinitions {
     })),
   });
 
-  const loaded = queries.map((query) => query.data ?? []);
-  const sharedKeys =
-    typeNames.length > 1
-      ? new Set(
-          loaded[0]
-            ?.map((definition) => definition.key)
-            .filter((key) =>
-              loaded
-                .slice(1)
-                .every((definitions) =>
-                  definitions.some((definition) => definition.key === key),
-                ),
-            ) ?? [],
-        )
-      : new Set<string>();
+  const { shared, perType } = splitTypeDefinitions(
+    typeNames,
+    queries.map((query) => query.data ?? []),
+  );
 
   return {
-    shared: (loaded[0] ?? []).filter((definition) =>
-      sharedKeys.has(definition.key),
-    ),
-    perType: typeNames.map((typeName, index) => ({
-      typeName,
-      definitions: (loaded[index] ?? []).filter(
-        (definition) => !sharedKeys.has(definition.key),
-      ),
-    })),
+    shared,
+    perType,
     loading: queries.some((query) => query.isLoading),
     unavailable: queries.some(
       (query) => query.isError && isNotFoundError(query.error),
@@ -85,4 +61,59 @@ export function useTypeDefinitions(typeNames: string[]): TypeDefinitions {
       for (const query of queries) if (query.isError) void query.refetch();
     },
   };
+}
+
+/**
+ * Every type's custom-field definitions in ONE request (`?types=…` for each), for the
+ * type-specific filters with no type selected (2026-10-09): the dropdown offers every type's
+ * fields, and picking one selects its type. Split by `entityContext` like
+ * `splitTypeDefinitions`: the generic definitions once, then each type's own. Only while
+ * `enabled` (the block is on screen), so the landing never pays for it.
+ */
+export function useAllTypeDefinitions(
+  typeNames: string[],
+  enabled: boolean,
+): TypeDefinitions {
+  const query = useQuery({
+    queryKey: OPPORTUNITY_QUERY_KEYS.customFieldDefinitions(typeNames),
+    queryFn: () => getOpportunityCustomFieldDefinitions(typeNames),
+    enabled: CUSTOM_FIELDS_ENABLED && enabled && typeNames.length > 0,
+  });
+  const all = query.data ?? [];
+  return {
+    shared: all.filter((definition) => definition.entityContext === null),
+    perType: typeNames.map((typeName) => ({
+      typeName,
+      definitions: all.filter(
+        (definition) => definition.entityContext === typeName,
+      ),
+    })),
+    loading: query.isLoading,
+    unavailable: query.isError && isNotFoundError(query.error),
+    failed: query.isError && !isNotFoundError(query.error),
+    retry: () => void query.refetch(),
+  };
+}
+
+/**
+ * Reads one type's own custom-field keys (`typeOwnKeys`) from the definitions already in the
+ * query cache, never through a request. For the reducer's clause rule (`ClauseAttribution`),
+ * called at dispatch, so it sees whatever has loaded since the last render.
+ */
+export function useLoadedTypeKeys(): (
+  typeName: string,
+) => string[] | undefined {
+  const queryClient = useQueryClient();
+  return useCallback(
+    (typeName: string) =>
+      typeOwnKeys(
+        typeName,
+        queryClient
+          .getQueriesData<CustomFieldDefinition[]>({
+            queryKey: OPPORTUNITY_QUERY_KEYS.customFieldDefinitions(),
+          })
+          .map(([key, definitions]) => ({ types: key.slice(1), definitions })),
+      ),
+    [queryClient],
+  );
 }

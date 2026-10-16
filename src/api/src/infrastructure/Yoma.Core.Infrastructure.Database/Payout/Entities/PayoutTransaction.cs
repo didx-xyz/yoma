@@ -33,7 +33,7 @@ namespace Yoma.Core.Infrastructure.Database.Payout.Entities
     public decimal Amount { get; set; }
 
     [Required]
-    [Column(TypeName = "varchar(10)")]
+    [Column(TypeName = "varchar(3)")]
     public string Currency { get; set; } = null!;
 
     [Column(TypeName = "varchar(50)")]

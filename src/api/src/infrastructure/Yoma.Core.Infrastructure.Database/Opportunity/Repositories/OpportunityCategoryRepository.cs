@@ -27,6 +27,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         OpportunityId = entity.OpportunityId,
         OpportunityStatusId = entity.Opportunity.Status.Id,
         OpportunityDateStart = entity.Opportunity.DateStart,
+        OpportunityDateEnd = entity.Opportunity.DateEnd,
         OpporunityHidden = entity.Opportunity.Hidden,
         OrganizationId = entity.Opportunity.OrganizationId,
         OrganizationStatusId = entity.Opportunity.Organization.Status.Id,

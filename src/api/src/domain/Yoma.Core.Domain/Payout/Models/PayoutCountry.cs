@@ -15,6 +15,6 @@ namespace Yoma.Core.Domain.Payout.Models
     /// This labels the monetary value; it is not a user-selectable payout currency.
     /// Multi-currency support requires coordinated provider, Treasury, validation and UI changes.
     /// </summary>
-    public Currency Currency { get; set; } = Currency.USD;
+    public Core.CurrencyOption Currency { get; set; } = Core.CurrencyOption.USD;
   }
 }

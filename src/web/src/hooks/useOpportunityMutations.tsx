@@ -5,15 +5,22 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { type AxiosError } from "axios";
+import { useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { SchemaType, type SSISchema } from "~/api/models/credential";
 import { CUSTOM_FIELDS_ENABLED } from "~/lib/constants";
 import type {
+  Accessibility,
   Country,
+  Currency,
+  Education,
   EngagementType,
   Language,
+  Skill,
   SkillSearchFilter,
   SkillSearchResults,
+  SustainableDevelopmentGoal,
+  TargetedGroup,
   TimeInterval,
 } from "~/api/models/lookups";
 import {
@@ -27,7 +34,6 @@ import {
   type CustomFieldDefinition,
   type Opportunity,
   type OpportunityCategory,
-  type OpportunityDifficulty,
   type OpportunityInfo,
   type OpportunitySearchFilterAdmin,
   type OpportunitySearchResults,
@@ -37,17 +43,22 @@ import {
 } from "~/api/models/opportunity";
 import type { Organization, OrganizationInfo } from "~/api/models/organisation";
 import {
+  getAccessibilityOptions,
   getCountries,
+  getCurrencies,
+  getEducations,
   getEngagementTypes,
   getLanguages,
   getSkills,
+  getSkillsByIds,
+  getSustainableDevelopmentGoals,
+  getTargetedGroups,
   getTimeIntervals,
 } from "~/api/services/lookups";
 import {
   getCategories,
   getCategoriesAdmin,
   getCountriesAdmin,
-  getDifficulties,
   getLanguagesAdmin,
   getOpportunitiesAdmin,
   getOpportunityById,
@@ -72,6 +83,15 @@ import { getSchemas } from "~/api/services/credentialSchemaAdmin";
 import { getOrganisationById } from "~/api/services/organisations";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { analytics } from "~/lib/analytics";
+import {
+  EMPTY_SKILL_LOOKUP,
+  rememberSkillLookup,
+  skillIdsToResolve,
+  skillLabelOf,
+  skillNamesById,
+  type SkillLookupMemory,
+  type SkillLookupStatus,
+} from "~/lib/customFields/skillLabels";
 
 // ─── Query Key Factories ────────────────────────────────────────────────────
 // Centralised here so all callers reference the same keys.
@@ -151,13 +171,20 @@ export const OPPORTUNITY_QUERY_KEYS = {
   languages: () => ["languages"] as const,
   opportunityTypes: () => ["opportunityTypes"] as const,
   verificationTypes: () => ["verificationTypes"] as const,
-  difficulties: () => ["difficulties"] as const,
   timeIntervals: () => ["timeIntervals"] as const,
   engagementTypes: () => ["engagementTypes"] as const,
+  /** Shared with the profile pages' `["educations"]` cache. */
+  educations: () => ["educations"] as const,
+  currencies: () => ["currencies"] as const,
+  accessibility: () => ["accessibility"] as const,
+  targetedGroups: () => ["targetedGroups"] as const,
+  sustainableDevelopmentGoals: () => ["sustainableDevelopmentGoals"] as const,
   /** Scoped by opportunity type context — the applicable set differs per type */
   schemas: (typeContext?: string | null) =>
     ["schemas", typeContext ?? null] as const,
   skills: (filter: SkillSearchFilter) => ["skills", filter] as const,
+  /** Selected skills by id — pass the sorted, de-duplicated ids (`skillIdsToResolve`) */
+  skillsByIds: (ids: string[]) => ["skillsByIds", ...ids] as const,
   organisation: (id: string) => ["organisation", id] as const,
   /** Definition-driven custom field definitions, scoped by opportunity type name(s) */
   customFieldDefinitions: (types?: string[] | null): unknown[] => [
@@ -246,7 +273,7 @@ export function useOpportunityTypesQuery(options?: { enabled?: boolean }) {
 /**
  * Definition-driven custom field definitions (create/edit page).
  * Keyed on the selected opportunity type name(s), so the query re-runs whenever the
- * watched opportunity type changes. `types` are enum names: Other | Learning | Event | Job | Task.
+ * watched opportunity type changes. `types` are enum names: Other | Learning | Event | Job | ImpactAction | Entrepreneurship.
  *
  * Disabled outright when `CUSTOM_FIELDS_ENABLED` is off. This is the chokepoint for the whole
  * read side of the framework: every editor, read-only section and filter panel keys off the
@@ -294,13 +321,50 @@ export function useOpportunityVerificationTypesQuery(options?: {
   });
 }
 
-/** Difficulties lookup (create/edit page). */
-export function useOpportunityDifficultiesQuery(options?: {
+/** Education lookup — Job Minimum Qualification and any other Education-backed custom field. */
+export function useEducationsQuery(options?: { enabled?: boolean }) {
+  return useQuery<Education[]>({
+    queryKey: OPPORTUNITY_QUERY_KEYS.educations(),
+    queryFn: () => getEducations(),
+    enabled: options?.enabled ?? true,
+  });
+}
+
+/** Currency lookup (ISO 4217) — partner incentive currency and Currency-backed custom fields. */
+export function useCurrenciesQuery(options?: { enabled?: boolean }) {
+  return useQuery<Currency[]>({
+    queryKey: OPPORTUNITY_QUERY_KEYS.currencies(),
+    queryFn: () => getCurrencies(),
+    enabled: options?.enabled ?? true,
+    staleTime: Infinity,
+  });
+}
+
+/** Accessibility lookup — opportunity accommodations (create/edit page). */
+export function useAccessibilityQuery(options?: { enabled?: boolean }) {
+  return useQuery<Accessibility[]>({
+    queryKey: OPPORTUNITY_QUERY_KEYS.accessibility(),
+    queryFn: () => getAccessibilityOptions(),
+    enabled: options?.enabled ?? true,
+  });
+}
+
+/** Targeted groups lookup (create/edit page). */
+export function useTargetedGroupsQuery(options?: { enabled?: boolean }) {
+  return useQuery<TargetedGroup[]>({
+    queryKey: OPPORTUNITY_QUERY_KEYS.targetedGroups(),
+    queryFn: () => getTargetedGroups(),
+    enabled: options?.enabled ?? true,
+  });
+}
+
+/** Sustainable Development Goals lookup (create/edit page). */
+export function useSustainableDevelopmentGoalsQuery(options?: {
   enabled?: boolean;
 }) {
-  return useQuery<OpportunityDifficulty[]>({
-    queryKey: OPPORTUNITY_QUERY_KEYS.difficulties(),
-    queryFn: () => getDifficulties(),
+  return useQuery<SustainableDevelopmentGoal[]>({
+    queryKey: OPPORTUNITY_QUERY_KEYS.sustainableDevelopmentGoals(),
+    queryFn: () => getSustainableDevelopmentGoals(),
     enabled: options?.enabled ?? true,
   });
 }
@@ -359,6 +423,71 @@ export function useSkillsQuery(
 }
 
 /**
+ * Selected skills by id (`POST /lookup/skill/ids`): the names behind Skill custom-field values
+ * and filter clauses, which no catalogue page can be relied on to hold. Keyed on the sorted,
+ * de-duplicated ids, and off when there are none (the API rejects an empty list). Unknown ids are
+ * absent from the result. The previous result stays while a changed selection loads, so the
+ * names already on screen don't blink. Name search stays `useSkillsQuery` / `getSkills`.
+ */
+export function useSkillsByIdsQuery(
+  ids: string[],
+  options?: { enabled?: boolean },
+) {
+  const resolvable = skillIdsToResolve(ids);
+  return useQuery<Skill[]>({
+    queryKey: OPPORTUNITY_QUERY_KEYS.skillsByIds(resolvable),
+    queryFn: () => getSkillsByIds(resolvable),
+    enabled: resolvable.length > 0 && (options?.enabled ?? true),
+    placeholderData: keepPreviousData,
+  });
+}
+
+/**
+ * Labels for selected skill ids, from one `useSkillsByIdsQuery` over `ids`: pass every id the
+ * caller shows, so it makes one request rather than one per control or chip. `known` adds skills
+ * the caller already holds, such as a search's results, so a skill picked from them is named
+ * before the lookup answers.
+ *
+ * Every successful response is remembered (`rememberSkillLookup`) for as long as the caller is
+ * mounted. A changed selection or a failed lookup keeps the names already shown, and a skill a
+ * response left out stays "no longer listed" rather than flashing "…". See `skillLabelOf` for
+ * the labels.
+ */
+export function useSkillLabeler(
+  ids: string[],
+  known?: readonly Skill[],
+): (id: string) => string {
+  const { data, isError, isPending, isPlaceholderData } =
+    useSkillsByIdsQuery(ids);
+  // The current ids' own response; a placeholder is the previous ids', already remembered
+  const current = isPlaceholderData ? undefined : data;
+  const status: SkillLookupStatus = isError
+    ? "failed"
+    : isPending || isPlaceholderData
+      ? "pending"
+      : "settled";
+
+  // Folded in during render (React's "information from previous renders" pattern), so a new
+  // response is labelled in the same render it arrives in
+  const [memory, setMemory] = useState<{
+    from?: Skill[];
+    lookup: SkillLookupMemory;
+  }>({ lookup: EMPTY_SKILL_LOOKUP });
+  let lookup = memory.lookup;
+  if (current && current !== memory.from) {
+    lookup = rememberSkillLookup(lookup, skillIdsToResolve(ids), current);
+    setMemory({ from: current, lookup });
+  }
+
+  return useMemo(() => {
+    // a lookup's name wins over one the caller holds
+    const names = new Map([...skillNamesById(known), ...lookup.names]);
+    const merged = { names, absent: lookup.absent };
+    return (id: string) => skillLabelOf(id, merged, status);
+  }, [known, lookup, status]);
+}
+
+/**
  * Org-admin paginated opportunity list.
  * NB: the previous page's rows are kept while the next page loads, so the list never
  * collapses to a skeleton mid-paging (which shrinks the document and makes the browser
@@ -381,7 +510,8 @@ export function useOrgOpportunitiesListQuery(
 /**
  * Status-tab count for the admin & org-admin opportunity search pages.
  * The count honours every applied filter, so pass the same (id-based) filter as the
- * search itself — only paging and the statuses are overridden here.
+ * search itself — it is sent as a count-only search (`totalCountOnly`, no paging, no items),
+ * one request per tab, with only the statuses overridden.
  * Pass `null` as `status` for the “All” tab (queries all 4 statuses), and `null` as
  * `orgId` for the admin (all organisations) page.
  */
@@ -399,8 +529,9 @@ export function useOpportunityStatusCountQuery(
     queryFn: () => {
       const filter: OpportunitySearchFilterAdmin = {
         ...searchFilter,
-        pageNumber: 1,
-        pageSize: 1,
+        pageNumber: null,
+        pageSize: null,
+        totalCountOnly: true,
         statuses:
           status !== null
             ? [status]

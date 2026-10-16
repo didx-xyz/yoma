@@ -25,7 +25,6 @@ namespace Yoma.Core.Api.Controllers
     private readonly IOpportunityService _opportunityService;
     private readonly IOpportunityInfoService _opportunityInfoService;
     private readonly IOpportunityCategoryService _opportunityCategoryService;
-    private readonly IOpportunityDifficultyService _opportunityDifficultyService;
     private readonly IOpportunityTypeService _opportunityTypeService;
     private readonly IOpportunityVerificationTypeService _opportunityVerificationTypeService;
     #endregion
@@ -36,7 +35,6 @@ namespace Yoma.Core.Api.Controllers
         IOpportunityService opportunityService,
         IOpportunityInfoService opportunityInfoService,
         IOpportunityCategoryService opportunityCategoryService,
-        IOpportunityDifficultyService opportunityDifficultyService,
         IOpportunityTypeService opportunityTypeService,
         IOpportunityVerificationTypeService opportunityVerificationTypeService)
     {
@@ -44,7 +42,6 @@ namespace Yoma.Core.Api.Controllers
       _opportunityService = opportunityService ?? throw new ArgumentNullException(nameof(opportunityService));
       _opportunityInfoService = opportunityInfoService ?? throw new ArgumentNullException(nameof(opportunityInfoService));
       _opportunityCategoryService = opportunityCategoryService ?? throw new ArgumentNullException(nameof(opportunityCategoryService));
-      _opportunityDifficultyService = opportunityDifficultyService ?? throw new ArgumentNullException(nameof(opportunityDifficultyService));
       _opportunityTypeService = opportunityTypeService ?? throw new ArgumentNullException(nameof(opportunityTypeService));
       _opportunityVerificationTypeService = opportunityVerificationTypeService ?? throw new ArgumentNullException(nameof(opportunityVerificationTypeService));
     }
@@ -84,7 +81,7 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(
     Summary = "Search for published opportunities based on the supplied filter (Anonymous)",
-      Description = "By default, results include opportunities that are published (both the opportunity and its organization are Active), regardless of whether they have started (thus published states NotStarted and Active). This default behavior can be overridden")]
+      Description = "By default, results include opportunities that are published (both the opportunity and its organization are Active), regardless of whether they have started (thus published states NotStarted and Active). This default behavior can be overridden. Set TotalCountOnly to return only TotalCount without loading result items; pagination is then optional.")]
     [HttpPost("search")]
     [ProducesResponseType(typeof(OpportunitySearchResultsInfo), (int)HttpStatusCode.OK)]
     [AllowAnonymous]
@@ -158,6 +155,54 @@ namespace Yoma.Core.Api.Controllers
       var result = _opportunityService.ListOpportunitySearchCriteriaLanguages(publishedStates, languageCodeAlpha2Site);
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaLanguages));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Return a list of accommodations associated with published opportunities (Anonymous)",
+        Description = "By default, results include opportunities that are published (both the opportunity and its organization are Active), regardless of whether they have started (thus published states NotStarted and Active). This default behavior can be overridden")]
+    [HttpGet("search/filter/accommodation")]
+    [ProducesResponseType(typeof(List<Domain.Lookups.Models.Accessibility>), (int)HttpStatusCode.OK)]
+    [AllowAnonymous]
+    public IActionResult ListOpportunitySearchCriteriaAccommodations([FromQuery] List<PublishedState>? publishedStates)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaAccommodations));
+
+      var result = _opportunityService.ListOpportunitySearchCriteriaAccommodations(publishedStates);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaAccommodations));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Return a list of targeted groups associated with published opportunities (Anonymous)",
+        Description = "By default, results include opportunities that are published (both the opportunity and its organization are Active), regardless of whether they have started (thus published states NotStarted and Active). This default behavior can be overridden")]
+    [HttpGet("search/filter/targeted/group")]
+    [ProducesResponseType(typeof(List<Domain.Lookups.Models.TargetedGroup>), (int)HttpStatusCode.OK)]
+    [AllowAnonymous]
+    public IActionResult ListOpportunitySearchCriteriaTargetedGroups([FromQuery] List<PublishedState>? publishedStates)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaTargetedGroups));
+
+      var result = _opportunityService.ListOpportunitySearchCriteriaTargetedGroups(publishedStates);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaTargetedGroups));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Return a list of sustainable development goals associated with published opportunities (Anonymous)",
+        Description = "By default, results include opportunities that are published (both the opportunity and its organization are Active), regardless of whether they have started (thus published states NotStarted and Active). This default behavior can be overridden")]
+    [HttpGet("search/filter/sustainable/development/goal")]
+    [ProducesResponseType(typeof(List<Domain.Lookups.Models.SustainableDevelopmentGoal>), (int)HttpStatusCode.OK)]
+    [AllowAnonymous]
+    public IActionResult ListOpportunitySearchCriteriaSustainableDevelopmentGoals([FromQuery] List<PublishedState>? publishedStates)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaSustainableDevelopmentGoals));
+
+      var result = _opportunityService.ListOpportunitySearchCriteriaSustainableDevelopmentGoals(publishedStates);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaSustainableDevelopmentGoals));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -242,6 +287,21 @@ namespace Yoma.Core.Api.Controllers
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
+
+    [SwaggerOperation(Summary = "Return a list of opportunity categories (Authenticated User)")]
+    [HttpGet("category")]
+    [ProducesResponseType(typeof(List<Domain.Opportunity.Models.Lookups.OpportunityCategory>), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    public IActionResult ListOpportunityCategories()
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunityCategories));
+
+      var result = _opportunityCategoryService.List();
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunityCategories));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
     #endregion Authenticated User Based Actions
 
     #region Administrative Actions
@@ -293,6 +353,54 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
+    [SwaggerOperation(Summary = "Return a list of accommodations associated with opportunities",
+      Description = "Organizations: optional for Admin role. Required for Organization Admin role")]
+    [HttpGet("search/filter/accommodation/admin")]
+    [ProducesResponseType(typeof(List<Domain.Lookups.Models.Accessibility>), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    public IActionResult ListOpportunitySearchCriteriaAccommodationsAdmin([FromQuery] List<Guid>? organizations)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaAccommodationsAdmin));
+
+      var result = _opportunityService.ListOpportunitySearchCriteriaAccommodationsAdmin(organizations, true);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaAccommodationsAdmin));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Return a list of targeted groups associated with opportunities",
+      Description = "Organizations: optional for Admin role. Required for Organization Admin role")]
+    [HttpGet("search/filter/targeted/group/admin")]
+    [ProducesResponseType(typeof(List<Domain.Lookups.Models.TargetedGroup>), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    public IActionResult ListOpportunitySearchCriteriaTargetedGroupsAdmin([FromQuery] List<Guid>? organizations)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaTargetedGroupsAdmin));
+
+      var result = _opportunityService.ListOpportunitySearchCriteriaTargetedGroupsAdmin(organizations, true);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaTargetedGroupsAdmin));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Return a list of sustainable development goals associated with opportunities",
+      Description = "Organizations: optional for Admin role. Required for Organization Admin role")]
+    [HttpGet("search/filter/sustainable/development/goal/admin")]
+    [ProducesResponseType(typeof(List<Domain.Lookups.Models.SustainableDevelopmentGoal>), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    public IActionResult ListOpportunitySearchCriteriaSustainableDevelopmentGoalsAdmin([FromQuery] List<Guid>? organizations)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaSustainableDevelopmentGoalsAdmin));
+
+      var result = _opportunityService.ListOpportunitySearchCriteriaSustainableDevelopmentGoalsAdmin(organizations, true);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaSustainableDevelopmentGoalsAdmin));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
     [SwaggerOperation(Summary = "Return a list of active organizations associated with opportunities (Admin role required)")]
     [HttpGet("search/filter/organization/admin")]
     [ProducesResponseType(typeof(List<Domain.Entity.Models.OrganizationInfoAdmin>), (int)HttpStatusCode.OK)]
@@ -320,36 +428,6 @@ namespace Yoma.Core.Api.Controllers
       var result = _opportunityService.SearchCriteriaOpportunities(filter, true);
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchCriteriaOpportunities));
-
-      return StatusCode((int)HttpStatusCode.OK, result);
-    }
-
-    [SwaggerOperation(Summary = "Return a list of opportunity categories")]
-    [HttpGet("category")]
-    [ProducesResponseType(typeof(List<Domain.Opportunity.Models.Lookups.OpportunityCategory>), (int)HttpStatusCode.OK)]
-    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public IActionResult ListOpportunityCategories()
-    {
-      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunityCategories));
-
-      var result = _opportunityCategoryService.List();
-
-      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunityCategories));
-
-      return StatusCode((int)HttpStatusCode.OK, result);
-    }
-
-    [SwaggerOperation(Summary = "Return a list of opportunity difficulties")]
-    [HttpGet("difficulty")]
-    [ProducesResponseType(typeof(List<OpportunityDifficulty>), (int)HttpStatusCode.OK)]
-    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public IActionResult ListOpportunityDifficulties()
-    {
-      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunityDifficulties));
-
-      var result = _opportunityDifficultyService.List();
-
-      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunityDifficulties));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -553,15 +631,15 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK);
     }
 
-    [SwaggerOperation(Summary = "Assign country(ies) to the specified opportunity")]
+    [SwaggerOperation(Summary = "Assign country(ies) and optional location details to the specified opportunity")]
     [HttpPatch("{id}/assign/countries")]
     [ProducesResponseType((int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public async Task<IActionResult> AssignCountries([FromRoute] Guid id, [Required][FromBody] List<Guid> countryIds)
+    public async Task<IActionResult> AssignCountries([FromRoute] Guid id, [Required][FromBody] List<OpportunityRequestCountry> countries)
     {
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(AssignCountries));
 
-      await _opportunityService.AssignCountries(id, countryIds, true);
+      await _opportunityService.AssignCountries(id, countries, true);
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(AssignCountries));
 

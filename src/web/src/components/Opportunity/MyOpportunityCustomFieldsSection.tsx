@@ -51,6 +51,13 @@ export const MyOpportunityCustomFieldsSection: React.FC<
       fields={fields}
       className={className}
       hideGrouping={true}
+      // One column of wrapping rows: in two truncating columns a phone had no width left for
+      // the value (YOM-1262)
+      columns={1}
+      wrapValues
+      // No `resolveSkillsById`: this renders once per card (the YoID lists, the verification
+      // modal), and a by-id lookup per card would be one request per card. Skills are named
+      // from the shared first catalogue page instead.
     />
   );
 };

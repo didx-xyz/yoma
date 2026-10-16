@@ -16,6 +16,7 @@ using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.SSI.Helpers;
 using Yoma.Core.Domain.SSI.Interfaces;
+using Yoma.Core.Domain.SSI.Interfaces.Lookups;
 using Yoma.Core.Domain.SSI.Interfaces.Provider;
 using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Domain.SSI.Models.Lookups;
@@ -32,6 +33,7 @@ namespace Yoma.Core.Domain.SSI.Services
     private readonly ScheduleJobOptions _scheduleJobOptions;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ISSISchemaService _ssiSchemaService;
+    private readonly ISSISchemaEntityService _ssiSchemaEntityService;
     private readonly ISSITenantService _ssiTenantService;
     private readonly ISSICredentialService _ssiCredentialService;
     private readonly IDistributedLockService _distributedLockService;
@@ -44,6 +46,7 @@ namespace Yoma.Core.Domain.SSI.Services
         IOptions<ScheduleJobOptions> scheduleJobOptions,
         IServiceScopeFactory scopeFactory,
         ISSISchemaService ssiSchemaService,
+        ISSISchemaEntityService ssiSchemaEntityService,
         ISSITenantService ssiTenantService,
         ISSICredentialService ssiCredentialService,
         IDistributedLockService distributedLockService)
@@ -54,6 +57,7 @@ namespace Yoma.Core.Domain.SSI.Services
       _scheduleJobOptions = scheduleJobOptions.Value;
       _scopeFactory = scopeFactory;
       _ssiSchemaService = ssiSchemaService;
+      _ssiSchemaEntityService = ssiSchemaEntityService;
       _ssiTenantService = ssiTenantService;
       _ssiCredentialService = ssiCredentialService;
       _distributedLockService = distributedLockService;
@@ -62,7 +66,9 @@ namespace Yoma.Core.Domain.SSI.Services
 
     #region Public Members
     /// <summary>
-    /// Seed the default schemas for Opportunity and YoID (all environments)
+    /// Seeds the base and type-specific Opportunity defaults and the YoID identity schema.
+    /// Only schema configuration is seeded in enabled environments; no credentials are issued here.
+    /// Opportunity assignments are migrated separately; startup never rewrites them or their queues.
     /// </summary>
     public async Task SeedSchemas()
     {
@@ -83,15 +89,140 @@ namespace Yoma.Core.Domain.SSI.Services
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing SSI default schema seeding");
 
-        // TODO [YOM-1264/YOM-1278]: Seed all approved generic and type-specific Opportunity schemas,
-        // including their final core/custom-field mappings, once the BA-approved definitions are available.
+        // Learning and Other share the base claim set. Each distinct type adds its own configured CFs;
+        // keys identify the definitions, while option labels and presentation come from the CF framework.
         await SeedSchema(ArtifactType.JWS,
-             SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default"),
-             ["Opportunity_OrganizationName", "Opportunity_OrganizationLogoURL", "Opportunity_Title", "Opportunity_Skills", "Opportunity_Summary", "Opportunity_Type", "MyOpportunity_UserDisplayName", "MyOpportunity_UserDateOfBirth", "MyOpportunity_DateCompleted"]);
+          SSISSchemaHelper.ToDefaultFullName(Opportunity.Type.Learning),
+          [
+            "Opportunity_OrganizationName",
+            "Opportunity_OrganizationLogoURL",
+            "Opportunity_Title",
+            "Opportunity_Summary",
+            "Opportunity_Type",
+            "MyOpportunity_Location",
+            "Opportunity_EngagementType",
+            "Opportunity_Skills",
+            "MyOpportunity_UserDisplayName",
+            "MyOpportunity_CommitmentIntervalDescription",
+            "Opportunity_VerificationMethod",
+            "MyOpportunity_VerificationEvidence"
+          ]);
 
+        await SeedSchema(ArtifactType.JWS,
+          SSISSchemaHelper.ToDefaultFullName(Opportunity.Type.ImpactAction),
+          [
+            "Opportunity_OrganizationName",
+            "Opportunity_OrganizationLogoURL",
+            "Opportunity_Title",
+            "Opportunity_Summary",
+            "Opportunity_Type",
+            "MyOpportunity_Location",
+            "Opportunity_EngagementType",
+            "Opportunity_Skills",
+            "MyOpportunity_UserDisplayName",
+            "MyOpportunity_CommitmentIntervalDescription",
+            "Opportunity_VerificationMethod",
+            "MyOpportunity_VerificationEvidence",
+            "Opportunity_ImpactActionVerifiedActivityType",
+            "MyOpportunity_ImpactActionImpactAchieved"
+          ]);
+
+        await SeedSchema(ArtifactType.JWS,
+          SSISSchemaHelper.ToDefaultFullName(Opportunity.Type.Event),
+          [
+            "Opportunity_OrganizationName",
+            "Opportunity_OrganizationLogoURL",
+            "Opportunity_Title",
+            "Opportunity_Summary",
+            "Opportunity_Type",
+            "MyOpportunity_Location",
+            "Opportunity_EngagementType",
+            "Opportunity_Skills",
+            "MyOpportunity_UserDisplayName",
+            "MyOpportunity_CommitmentIntervalDescription",
+            "Opportunity_VerificationMethod",
+            "MyOpportunity_VerificationEvidence",
+            "MyOpportunity_EventRole"
+          ]);
+
+        await SeedSchema(ArtifactType.JWS,
+          SSISSchemaHelper.ToDefaultFullName(Opportunity.Type.Job),
+          [
+            "Opportunity_OrganizationName",
+            "Opportunity_OrganizationLogoURL",
+            "Opportunity_Title",
+            "Opportunity_Summary",
+            "Opportunity_Type",
+            "MyOpportunity_Location",
+            "Opportunity_EngagementType",
+            "MyOpportunity_UserDisplayName",
+            "MyOpportunity_CommitmentIntervalDescription",
+            "Opportunity_VerificationMethod",
+            "MyOpportunity_VerificationEvidence",
+            "Opportunity_JobIndustry",
+            "Opportunity_JobCategory",
+            "Opportunity_JobEmploymentType",
+            "Opportunity_JobWorkSchedule",
+            "Opportunity_JobEmploymentDuration",
+            "Opportunity_JobEmploymentDurationUnit",
+            "Opportunity_JobSalaryDisclosed",
+            "Opportunity_JobSalaryMinimum",
+            "Opportunity_JobSalaryMaximum",
+            "Opportunity_JobSalaryCurrency",
+            "Opportunity_JobPayInterval",
+            "MyOpportunity_JobEmploymentStartDate"
+          ]);
+
+        await SeedSchema(ArtifactType.JWS,
+          SSISSchemaHelper.ToDefaultFullName(Opportunity.Type.Entrepreneurship),
+          [
+            "Opportunity_OrganizationName",
+            "Opportunity_OrganizationLogoURL",
+            "Opportunity_Title",
+            "Opportunity_Summary",
+            "Opportunity_Type",
+            "Opportunity_EngagementType",
+            "Opportunity_Skills",
+            "MyOpportunity_UserDisplayName",
+            "MyOpportunity_CommitmentIntervalDescription",
+            "Opportunity_VerificationMethod",
+            "MyOpportunity_VerificationEvidence",
+            "Opportunity_EntrepreneurshipProgrammeType",
+            "Opportunity_EntrepreneurshipProgrammeOtherDescription",
+            "MyOpportunity_EntrepreneurshipBusinessName",
+            "MyOpportunity_EntrepreneurshipBusinessSummary",
+            "MyOpportunity_Location",
+            "MyOpportunity_EntrepreneurshipBusinessRegistered",
+            "MyOpportunity_EntrepreneurshipRegistrationReference",
+            "MyOpportunity_EntrepreneurshipSector",
+            "MyOpportunity_EntrepreneurshipJobsCreated",
+            "MyOpportunity_EntrepreneurshipRevenueBand",
+            "MyOpportunity_EntrepreneurshipRevenueCurrency",
+            "MyOpportunity_EntrepreneurshipFundingTypes",
+            "MyOpportunity_EntrepreneurshipFundingAmountBand",
+            "MyOpportunity_EntrepreneurshipFunder",
+            "MyOpportunity_EntrepreneurshipCustomerReach"
+          ]);
+
+        // YoID remains AnonCreds. Missing optional source values retain the established n/a handling;
+        // user discovery preferences and precise coordinates are deliberately not identity claims.
+        // User_DisplayName is the protected Title attribute, rendered above the credential body.
+        // Do not duplicate it as another body attribute merely to match the BA mock-up's row.
+        // Email remains available to historical/custom schemas, but is not a default identity claim.
         await SeedSchema(ArtifactType.ACR,
-            _appSettings.SSISchemaFullNameYoID,
-            ["Organization_Name", "Organization_LogoURL", "User_DisplayName", "User_FirstName", "User_Surname", "User_DateOfBirth", "User_Email", "User_Gender", "User_Education", "User_Country"]);
+          _appSettings.SSISchemaFullNameYoID,
+          [
+            "Organization_Name",
+            "Organization_LogoURL",
+            "User_DisplayName",
+            "User_FirstName",
+            "User_Surname",
+            "User_DateOfBirth",
+            "User_Gender",
+            "User_Education",
+            "User_Country",
+            "User_AccountVerificationMethods"
+          ]);
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed SSI default schema seeding");
       }
@@ -345,6 +476,7 @@ namespace Yoma.Core.Domain.SSI.Services
                     schema = await schemaService.GetByFullName(item.SchemaName);
                     AssertIssuanceSchemaApplicable(schema, item);
 
+                    request.SchemaId = schema.Id;
                     request.SchemaName = schema.Name;
                     request.ArtifactType = schema.ArtifactType;
 
@@ -375,6 +507,8 @@ namespace Yoma.Core.Domain.SSI.Services
                     var myOpportunity = myOpportunityService.GetById(item.MyOpportunityId.Value, true, true, false);
                     var opportunity = opportunityService.GetById(myOpportunity.OpportunityId, true, true, false);
 
+                    opportunity.Difficulty = ResolveLegacyDifficulty(opportunity, customFieldDefinitionService, customFieldValueService);
+
                     tenantIssuer = GetTenantId(tenantService, item, EntityType.Organization, myOpportunity.OrganizationId);
                     if (!tenantIssuer.proceed)
                     {
@@ -395,6 +529,7 @@ namespace Yoma.Core.Domain.SSI.Services
                     // already scheduled credential; processing resolves only the latest version of that schema.
                     schema = await schemaService.GetByFullName(item.SchemaName);
                     AssertIssuanceSchemaApplicable(schema, item);
+                    request.SchemaId = schema.Id;
                     request.SchemaName = schema.Name;
                     request.ArtifactType = schema.ArtifactType;
 
@@ -423,9 +558,19 @@ namespace Yoma.Core.Domain.SSI.Services
                     throw new InvalidOperationException($"Schema type '{item.SchemaType}' not supported");
                 }
 
-                item.CredentialId = await providerClient.IssueCredential(request);
-                // Schema type, artifact type and full name are fixed at scheduling. Record the resolved version only
-                // after successful issuance so it describes the credential that was actually issued.
+                var credential = await providerClient.IssueCredential(request);
+                ArgumentNullException.ThrowIfNull(credential);
+                ArgumentException.ThrowIfNullOrWhiteSpace(credential.Id);
+                ArgumentException.ThrowIfNullOrWhiteSpace(credential.SchemaId);
+
+                // A provider-success/local-failure retry can recover a credential issued against an older
+                // version. Record that credential's schema, not the latest version used to prepare this attempt.
+                if (credential.SchemaId != schema.Id)
+                  schema = await schemaService.GetById(credential.SchemaId);
+
+                AssertIssuanceSchemaApplicable(schema, item);
+
+                item.CredentialId = credential.Id;
                 item.SchemaVersion = schema.Version.ToString();
                 item.Status = CredentialIssuanceStatus.Issued;
                 await credentialService.UpdateScheduleIssuance(item);
@@ -468,6 +613,9 @@ namespace Yoma.Core.Domain.SSI.Services
     #region Private Members
     private static void AssertIssuanceSchemaApplicable(SSISchema schema, SSICredentialIssuance item)
     {
+      if (!string.Equals(schema.Name, item.SchemaName, StringComparison.OrdinalIgnoreCase))
+        throw new InvalidOperationException($"SSI schema '{schema.Name}' does not match scheduled schema '{item.SchemaName}'");
+
       if (schema.Type != item.SchemaType)
         throw new InvalidOperationException($"SSI schema '{schema.Name}' is not applicable to schema type '{item.SchemaType}'");
 
@@ -512,10 +660,24 @@ namespace Yoma.Core.Domain.SSI.Services
       if (schema.ArtifactType != artifactType)
         throw new InvalidOperationException($"Artifact type mismatch detected for existing schema '{schemaFullName}': Requested '{artifactType.ToDescription()}' vs. Existing '{schema.ArtifactType.ToDescription()}'");
 
-      var misMatchesAttributes = attributes.Where(attr => !schema.Entities.Any(entity =>
-        entity.Properties?.Any(property => property.AttributeName == attr) == true ||
-        entity.CustomFields?.Any(customField => customField.AttributeName == attr) == true)).ToList();
-      if (misMatchesAttributes == null || misMatchesAttributes.Count == 0) return;
+      // Create/Update always adds compatible system properties. Include these in the expected set,
+      // but compare only public entity attributes: internal attributes are not returned in Entities.
+      // Full-set comparison detects removals as well as additions; ordering alone never creates a version.
+      // Signed names are case-sensitive contracts: the CF PascalCase change must create a version.
+      var expectedAttributes = attributes
+        .Concat(_ssiSchemaEntityService.List(schema.Type, schema.TypeContext)
+          .SelectMany(entity => entity.Properties?.Where(property => property.System) ?? [])
+          .Select(property => property.AttributeName))
+        .Select(attribute => attribute.Trim())
+        .ToHashSet(StringComparer.Ordinal);
+
+      var existingAttributes = schema.Entities
+        .SelectMany(entity => (entity.Properties?.Select(property => property.AttributeName) ?? [])
+          .Concat(entity.CustomFields?.Select(customField => customField.AttributeName) ?? []))
+        .Select(attribute => attribute.Trim())
+        .ToHashSet(StringComparer.Ordinal);
+
+      if (expectedAttributes.SetEquals(existingAttributes)) return;
 
       await _ssiSchemaService.Update(new SSISchemaRequestUpdate
       {
@@ -577,6 +739,7 @@ namespace Yoma.Core.Domain.SSI.Services
                })
                 .Select(name => name?.Trim())
                 .Where(name => !string.IsNullOrEmpty(name))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Select(name => new SSICredentialAttributeItem { Name = name! })
                .ToList();
 
@@ -590,6 +753,24 @@ namespace Yoma.Core.Domain.SSI.Services
 
           // Complex properties are stored as JSON within the provider's string attribute contract. Wallet rendering
           // normalizes both this representation and historical comma-delimited values into the same display contract.
+          propValue = JsonConvert.SerializeObject(items);
+        }
+        else if (propValueObject is Enum flags && flags.GetType().IsDefined(typeof(FlagsAttribute), false))
+        {
+          // Keep the domain's combined flags value, but use the existing signed list contract
+          // for credential presentation. None has no selected items and follows optionality.
+          var items = flags.GetFlags()
+            .Select(flag => new SSICredentialAttributeItem { Name = flag.ToDescription() })
+            .ToList();
+
+          if (items.Count == 0)
+          {
+            if (prop.Required)
+              throw new InvalidOperationException($"Entity property '{prop.Name}' marked as required but has no selected flags");
+            MapOptionalCredentialAttributeWithoutValue(request, prop.AttributeName);
+            continue;
+          }
+
           propValue = JsonConvert.SerializeObject(items);
         }
         else
@@ -620,8 +801,34 @@ namespace Yoma.Core.Domain.SSI.Services
     }
 
     /// <summary>
-    /// Maps dynamic custom fields by their stable definition keys. These values intentionally bypass CLR reflection:
-    /// static schema properties and dynamic custom-field values are separate concerns.
+    /// TODO [CF / SSI]: Remove this method, its call and Opportunity.Difficulty once remaining
+    /// queued/custom schemas no longer select the legacy mapping. New defaults already omit it.
+    /// Resolve labels through the existing CF framework; never duplicate seeded options.
+    /// Job experience is not legacy difficulty and must not be substituted.
+    /// </summary>
+    private static string? ResolveLegacyDifficulty(Opportunity.Models.Opportunity opportunity,
+      ICustomFieldDefinitionService definitionService, ICustomFieldValueService valueService)
+    {
+      var key = opportunity.Type switch
+      {
+        Opportunity.Type.Learning => Opportunity.CustomFieldConstants.Difficulty.Keys.Learning,
+        Opportunity.Type.Other => Opportunity.CustomFieldConstants.Difficulty.Keys.Other,
+        Opportunity.Type.ImpactAction => Opportunity.CustomFieldConstants.Difficulty.Keys.ImpactAction,
+        Opportunity.Type.Event => Opportunity.CustomFieldConstants.Difficulty.Keys.Event,
+        Opportunity.Type.Job or Opportunity.Type.Entrepreneurship => null,
+        _ => throw new NotSupportedException($"Opportunity type '{opportunity.Type}' is not supported")
+      };
+      if (key == null) return null;
+
+      var value = opportunity.CustomFields?.SingleOrDefault(o => o.Key == key);
+      if (value == null) return null;
+
+      var definition = definitionService.GetByKey(CustomFieldEntityType.Opportunity, key, true, false);
+      return valueService.ResolveDisplayValues(definition, value).SingleOrDefault();
+    }
+
+    /// <summary>
+    /// Maps dynamic custom fields by stable definition keys without CLR reflection.
     /// </summary>
     private static void MapCustomFieldValues<T>(CredentialIssuanceRequest request, SSISchemaEntity schemaEntity, T entity,
       ICustomFieldDefinitionService customFieldDefinitionService, ICustomFieldValueService customFieldValueService)

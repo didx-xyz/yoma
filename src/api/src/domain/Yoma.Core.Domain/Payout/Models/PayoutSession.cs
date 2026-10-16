@@ -1,3 +1,5 @@
+using Yoma.Core.Domain.Core;
+
 namespace Yoma.Core.Domain.Payout.Models
 {
   public sealed class PayoutSession
@@ -15,7 +17,7 @@ namespace Yoma.Core.Domain.Payout.Models
 
     public decimal Amount { get; set; }
 
-    public Currency Currency { get; } = Currency.USD;
+    public CurrencyOption Currency { get; } = CurrencyOption.USD;
 
     public string PaymentUrl { get; set; } = null!;
 

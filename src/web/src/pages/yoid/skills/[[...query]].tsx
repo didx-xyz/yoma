@@ -9,6 +9,7 @@ import { Unauthorized } from "~/components/Status/Unauthorized";
 import YoID from "~/components/Layout/YoID";
 import Link from "next/link";
 import { AvatarImage } from "~/components/AvatarImage";
+import { UserSkillType } from "~/api/models/user";
 import { getUserSkills } from "~/api/services/user";
 import Suspense from "~/components/Common/Suspense";
 import Breadcrumb from "~/components/Breadcrumb";
@@ -50,8 +51,8 @@ const MySkills: NextPageWithLayout<{
     error: dataError,
     isLoading: dataIsLoading,
   } = useQuery({
-    queryKey: ["User", "Skills"],
-    queryFn: () => getUserSkills(),
+    queryKey: ["User", "Skills", UserSkillType.Verified],
+    queryFn: () => getUserSkills(UserSkillType.Verified),
     enabled: !error,
   });
 

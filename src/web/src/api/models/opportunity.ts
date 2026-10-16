@@ -3,7 +3,108 @@ import type {
   PaginationFilter,
   TimeIntervalOption,
 } from "./common";
-import type { Country, Language, Skill } from "./lookups";
+import type {
+  Accessibility,
+  Country,
+  Language,
+  Skill,
+  SustainableDevelopmentGoal,
+  TargetedGroup,
+} from "./lookups";
+
+/**
+ * An opportunity's country with its optional place — one per country (API 2026-09-28).
+ * `id` is the COUNTRY lookup id (map it to `countryId` when editing), not the mapping id.
+ */
+export interface OpportunityCountryInfo extends Country {
+  region: string | null;
+  city: string | null;
+  /** City centre as `[longitude, latitude]` — see `~/api/models/location` for conversions. */
+  coordinates: number[] | null;
+}
+
+/** One country on an opportunity create / update (or `PATCH /opportunity/{id}/assign/countries`). */
+export interface OpportunityRequestCountry {
+  countryId: string;
+  region: string | null;
+  city: string | null;
+  /** `[longitude, latitude]`; requires a city; never on Worldwide. */
+  coordinates: number[] | null;
+}
+
+/**
+ * One country with a place, as a flat filter caller holds it: region / city, or `coordinates` +
+ * `radiusKm` — never both. `toSearchFilterPayload` turns it into the wire
+ * `OpportunitySearchFilterCountry`, each part with no mode: region / city ("contains") keep an
+ * opportunity that names no place, and a radius leaves out one without coordinates.
+ */
+export interface OpportunitySearchCountryLocation {
+  countryId: string;
+  region?: string | null;
+  city?: string | null;
+  /** `[longitude, latitude]`. */
+  coordinates?: number[] | null;
+  radiusKm?: number | null;
+}
+
+/** Enum names on the wire. Jobs never take `ZLTO`. */
+export enum RewardType {
+  None = "None",
+  ZLTO = "ZLTO",
+  PartnerIncentive = "PartnerIncentive",
+}
+
+export const REWARD_TYPE_LABELS: Record<RewardType, string> = {
+  [RewardType.None]: "None",
+  [RewardType.ZLTO]: "ZLTO",
+  [RewardType.PartnerIncentive]: "Partner incentive",
+};
+
+/** Enum names on the wire. `Yes` needs at least one accommodation; `No` / null carry none. */
+export enum AccessibilitySupport {
+  Yes = "Yes",
+  No = "No",
+  AvailableOnRequest = "AvailableOnRequest",
+}
+
+export const ACCESSIBILITY_SUPPORT_LABELS: Record<
+  AccessibilitySupport,
+  string
+> = {
+  [AccessibilitySupport.Yes]: "Yes",
+  [AccessibilitySupport.No]: "No",
+  [AccessibilitySupport.AvailableOnRequest]: "Available on request",
+};
+
+/**
+ * Core opportunity metadata added 2026-09-28 (Provider through SDGs). Core fields — not custom
+ * fields — shared by the read models; writes send the three collections as id arrays instead.
+ */
+export interface OpportunityCoreMetadata {
+  /** Informational text (e.g. "KFC"), not the owning organisation. */
+  provider: string | null;
+  /** The provider's website — not the opportunity's `uRL` (2026-10-11). */
+  providerURL: string | null;
+  /** Any external image URL; not the owning organisation's logo. */
+  providerLogoURL: string | null;
+  /** Where the provider is based: a specific country, never Worldwide. Not availability. */
+  providerCountryId: string | null;
+  /** The provider country's name. */
+  providerCountry: string | null;
+  /** Null = unspecified (imports / partners) — never read it as "unpaid". */
+  incentivized: boolean | null;
+  rewardType: RewardType | string;
+  partnerIncentiveAmount: number | null;
+  /** ISO 4217 code. */
+  partnerIncentiveCurrency: string | null;
+  accessibilitySupport: AccessibilitySupport | string | null;
+  accommodationOtherDescription: string | null;
+  ageFrom: number | null;
+  ageTo: number | null;
+  accommodations: Accessibility[] | null;
+  targetedGroups: TargetedGroup[] | null;
+  sustainableDevelopmentGoals: SustainableDevelopmentGoal[] | null;
+}
 
 export interface OpportunitySearchFilterAdmin extends OpportunitySearchFilterBase {
   startDate: string | null;
@@ -19,7 +120,7 @@ export interface OpportunitySearchResultsBase {
   totalCount: number | null;
 }
 
-export interface Opportunity {
+export interface Opportunity extends OpportunityCoreMetadata {
   id: string;
   title: string;
   description: string;
@@ -43,8 +144,6 @@ export interface Opportunity {
   organizationZltoRewardBalanceCurrentFinancialYear?: number | null;
   verificationEnabled: boolean;
   verificationMethod: VerificationMethod | null;
-  difficultyId: string | null;
-  difficulty: string | null;
   commitmentIntervalId: string | null;
   commitmentInterval: string | null;
   commitmentIntervalCount: number | null;
@@ -71,7 +170,7 @@ export interface Opportunity {
   isCompletable: boolean;
   nonCompletableReason: string | null;
   categories: OpportunityCategory[] | null;
-  countries: Country[] | null;
+  countries: OpportunityCountryInfo[] | null;
   languages: Language[] | null;
   skills: Skill[] | null;
   verificationTypes: OpportunityVerificationType[] | null;
@@ -81,7 +180,7 @@ export interface Opportunity {
   customFields?: CustomFieldValueItem[] | null;
 }
 
-export interface OpportunityInfo {
+export interface OpportunityInfo extends OpportunityCoreMetadata {
   id: string;
   title: string;
   description: string;
@@ -97,7 +196,6 @@ export interface OpportunityInfo {
   zltoRewardCumulative: number | null;
   verificationEnabled: boolean;
   verificationMethod: VerificationMethod | null | string; // NB: string
-  difficulty: string | null;
   commitmentInterval: TimeIntervalOption | null | string; // NB: string
   commitmentIntervalCount: number | null;
   commitmentIntervalTotalHours: number | null;
@@ -124,7 +222,7 @@ export interface OpportunityInfo {
   nonCompletableReason: string | null;
   syncedInfo: SyncInfoEntity | null;
   categories: OpportunityCategory[] | null;
-  countries: Country[] | null;
+  countries: OpportunityCountryInfo[] | null;
   languages: Language[] | null;
   skills: Skill[] | null;
   verificationTypes: OpportunityVerificationType[] | null;
@@ -132,6 +230,10 @@ export interface OpportunityInfo {
   customFields?: CustomFieldValueItem[] | null;
 }
 
+/**
+ * The flat search filters the legacy and admin callers hold: bare ids, values and lists. The
+ * wire takes typed criteria (`OpportunitySearchRequest*` below); `toSearchFilterPayload` converts.
+ */
 export interface OpportunitySearchFilter extends OpportunitySearchFilterBase {
   publishedStates: PublishedState[] | null | string[]; //NB
   commitmentInterval: OpportunitySearchFilterCommitmentInterval | null;
@@ -144,13 +246,184 @@ export interface OpportunitySearchFilterBase extends PaginationFilter {
   types: string[] | null;
   categories: string[] | null;
   languages: string[] | null;
+  /**
+   * Country ids. The API takes `OpportunitySearchFilterCountry[]`; the search services wrap each
+   * id as `{ countryId }` (`toSearchFilterPayload`), so callers keep passing ids.
+   */
   countries: string[] | null;
+  /**
+   * Web-only: country entries with a region / city or a point + radius. When set it REPLACES
+   * `countries` on the wire; it is never sent as its own property.
+   */
+  countryLocations?: OpportunitySearchCountryLocation[] | null;
   organizations: string[] | null;
   engagementTypes: string[] | null;
   featured: boolean | null;
   valueContains: string | null;
   customFields?: CustomFieldFilter[] | null;
+  /** Case-insensitive contains on the Provider text; opportunities with no provider stay in. */
+  provider?: string | null;
+  /** Exact true / false, plus opportunities that have not said. */
+  incentivized?: boolean | null;
+  /** ANY of these. `None` is an explicit classification, not "unspecified". */
+  rewardTypes?: RewardType[] | null;
+  /** This status, plus opportunities that have not said. */
+  accessibilitySupport?: AccessibilitySupport | null;
+  /** Requires the Other accommodation in `accommodations`. */
+  accommodationOtherDescription?: string | null;
+  /** ALL of these must be listed — opportunities that list none are EXCLUDED. */
+  accommodations?: string[] | null;
+  /** ANY of these, or no targeting specified. */
+  targetedGroups?: string[] | null;
+  /** ANY of these, or no goals specified. */
+  sustainableDevelopmentGoals?: string[] | null;
+  /** Whole years, within both inclusive bounds; an unset bound is unrestricted. */
+  age?: number | null;
+  /**
+   * Count only: the same filtered query, `totalCount` back and NO `items`; paging is optional.
+   * Both searches; the CSV export rejects it.
+   */
+  totalCountOnly?: boolean;
 }
+
+//#region Search request wire shape (API 2026-10-03)
+// The revised search contract (epic handoff 2026-10-01-c). Every selection criterion travels as a
+// `SearchCriterion` except `age` (a plain number) and `countries` (a plain list of entries). The
+// flat filters above go through `toSearchFilterPayload` (`~/api/services/opportunitySearchPayload`),
+// which wraps each criterion with no mode so the API's default applies; a request typed with
+// these passes through it untouched.
+
+/** Enum names on the wire. What a criterion does with opportunities that have not said. */
+export enum UnspecifiedMatch {
+  /** Matching known values only. */
+  Exclude = "Exclude",
+  /** Matching values, or no value at all. A known, different value is not "no value". */
+  Include = "Include",
+  /** No value only — send no `value`. */
+  Only = "Only",
+}
+
+/**
+ * One criterion: the comparison value and the policy for opportunities that have no value. An
+ * omitted `unspecified` takes the criterion's API default, which differs per criterion; an
+ * omitted criterion does not filter. `types`, `organizations` and `rewardTypes` reject every mode.
+ */
+export interface SearchCriterion<T> {
+  value?: T;
+  unspecified?: UnspecifiedMatch;
+}
+
+export interface OpportunitySearchRadius {
+  /** `[longitude, latitude]`. */
+  coordinates: number[];
+  /** Positive kilometres. */
+  radiusKm: number;
+}
+
+/**
+ * One country in a search. Entries are alternatives (OR); region, city and radius apply to that
+ * same country's mapping. A radius is an alternative to region / city, never with them, and never
+ * on Worldwide; duplicate countries are rejected. Defaults: region / city Include, radius Exclude.
+ */
+export interface OpportunitySearchFilterCountry {
+  countryId: string;
+  region?: SearchCriterion<string>;
+  city?: SearchCriterion<string>;
+  radius?: SearchCriterion<OpportunitySearchRadius>;
+}
+
+/**
+ * The AND-ed criteria of the root search and of each OR branch. Paging, ordering and the other
+ * root controls are never branch members: the API rejects unknown members.
+ */
+export interface OpportunitySearchSelection {
+  provider?: SearchCriterion<string>;
+  incentivized?: SearchCriterion<boolean>;
+  rewardTypes?: SearchCriterion<RewardType[]>;
+  accessibilitySupport?: SearchCriterion<AccessibilitySupport>;
+  /** Requires the Other accommodation in `accommodations` of the same selection. */
+  accommodationOtherDescription?: SearchCriterion<string>;
+  /** ALL of these. */
+  accommodations?: SearchCriterion<string[]>;
+  targetedGroups?: SearchCriterion<string[]>;
+  sustainableDevelopmentGoals?: SearchCriterion<string[]>;
+  /** Whole years; no modes. */
+  age?: number;
+  types?: SearchCriterion<string[]>;
+  categories?: SearchCriterion<string[]>;
+  languages?: SearchCriterion<string[]>;
+  countries?: OpportunitySearchFilterCountry[];
+  organizations?: SearchCriterion<string[]>;
+  engagementTypes?: SearchCriterion<string[]>;
+  skills?: SearchCriterion<string[]>;
+  /** Exact `options` OR a maximum `interval`, never both; the one not in use may be left out. */
+  commitmentInterval?: SearchCriterion<
+    Partial<OpportunitySearchFilterCommitmentInterval>
+  >;
+  /** `ranges` OR `hasReward: true`, never both; the one not in use may be left out. */
+  zltoReward?: SearchCriterion<Partial<OpportunitySearchFilterZltoReward>>;
+  /** Duplicate keys in one selection are rejected. */
+  customFields?: CustomFieldFilter[];
+}
+
+/** Alternatives: one to eight branches. Groups (at most four) AND with the root and each other. */
+export interface OpportunitySearchGroup {
+  anyOf: OpportunitySearchSelection[];
+}
+
+/** Enum names on the wire. */
+export enum OpportunitySearchOrderField {
+  DateCreated = "DateCreated",
+  DateEnd = "DateEnd",
+  ZltoReward = "ZltoReward",
+}
+
+/** Enum names on the wire. */
+export enum FilterSortOrder {
+  Ascending = "Ascending",
+  Descending = "Descending",
+}
+
+/** One to three unique fields. Nulls sort last in either direction; ID ascending breaks ties. */
+export interface OpportunitySearchOrdering {
+  field: OpportunitySearchOrderField;
+  direction: FilterSortOrder;
+}
+
+/** The root controls both searches share, around the root selection. Never wrapped. */
+export interface OpportunitySearchRequestBase extends OpportunitySearchSelection {
+  pageNumber?: number | null;
+  pageSize?: number | null;
+  featured?: boolean | null;
+  shareWithPartners?: boolean | null;
+  valueContains?: string | null;
+  groups?: OpportunitySearchGroup[];
+  /** Omitted = the endpoint's default order. Not with an active `mostViewed` / `mostCompleted`. */
+  ordering?: OpportunitySearchOrdering[];
+  /** `totalCount` back and no `items`; paging is then optional. */
+  totalCountOnly?: boolean;
+}
+
+/** `POST /opportunity/search` — anonymous and youth. */
+export interface OpportunitySearchRequest extends OpportunitySearchRequestBase {
+  publishedStates?: PublishedState[] | string[] | null;
+  mostViewed?: boolean | null;
+  mostCompleted?: boolean | null;
+}
+
+/** `POST /opportunity/search/admin`. */
+export interface OpportunitySearchRequestAdmin extends OpportunitySearchRequestBase {
+  startDate?: string | null;
+  endDate?: string | null;
+  statuses?: Status[] | string[] | null;
+}
+
+/** `POST /opportunity/search/admin/csv` — the admin criteria; count-only is invalid here. */
+export type OpportunitySearchRequestAdminCSV = Omit<
+  OpportunitySearchRequestAdmin,
+  "totalCountOnly"
+>;
+//#endregion Search request wire shape
 
 export interface OpportunitySearchResultsInfo extends OpportunitySearchResultsBase {
   items: OpportunityInfo[];
@@ -259,7 +532,6 @@ export interface OpportunityRequestBase {
   zltoRewardPool: number | null;
   verificationEnabled: boolean | null;
   verificationMethod: VerificationMethod | null | string;
-  difficultyId: string | null;
   commitmentIntervalId: string | null;
   commitmentIntervalCount: number | null;
   participantLimit: number | null;
@@ -269,8 +541,27 @@ export interface OpportunityRequestBase {
   credentialIssuanceEnabled: boolean;
   ssiSchemaName: string | null;
   engagementTypeId: string | null;
+  provider: string | null;
+  /** The update replaces all three: omitting one clears it. */
+  providerURL: string | null;
+  providerLogoURL: string | null;
+  providerCountryId: string | null;
+  /** Required (true / false) on manual capture. */
+  incentivized: boolean | null;
+  rewardType: RewardType;
+  partnerIncentiveAmount: number | null;
+  /** ISO 4217 `code` — not the lookup id. */
+  partnerIncentiveCurrency: string | null;
+  accessibilitySupport: AccessibilitySupport | null;
+  accommodationOtherDescription: string | null;
+  ageFrom: number | null;
+  ageTo: number | null;
+  accommodations: string[] | null;
+  targetedGroups: string[] | null;
+  sustainableDevelopmentGoals: string[] | null;
   categories: string[];
-  countries: string[];
+  /** Full update REPLACES the selection — resubmit loaded places for untouched countries. */
+  countries: OpportunityRequestCountry[];
   languages: string[];
   skills: string[];
   verificationTypes: OpportunityVerificationType[] | null;
@@ -314,11 +605,6 @@ export interface OpportunityLanguage {
   organizationStatusId: string;
   languageId: string;
   dateCreated: string;
-}
-
-export interface OpportunityDifficulty {
-  id: string;
-  name: string;
 }
 
 export interface OpportunityType {
@@ -420,6 +706,8 @@ export enum CustomFieldDataType {
   Integer = "Integer",
   Decimal = "Decimal",
   Boolean = "Boolean",
+  /** Date only, `yyyy-MM-dd` on the wire — never converted to UTC (API 2026-09-29). */
+  Date = "Date",
   DateTime = "DateTime",
   Option = "Option",
 }
@@ -430,11 +718,15 @@ export enum CustomFieldLookupType {
   Country = "Country",
   Language = "Language",
   Skill = "Skill",
+  /** `GET /lookup/education` — display `name`, submit `id`. */
+  Education = "Education",
+  /** `GET /lookup/currency` — display the code / name, submit `id` (never the code). */
+  Currency = "Currency",
 }
 
 // Valid filter operators per data type (mirrors server-side validation):
 //   String  → Equals | Contains | AnyOf | Exists
-//   Integer/Decimal/DateTime → Equals | AnyOf | Exists | GreaterThan | GreaterThanOrEqual | LessThan | LessThanOrEqual | Between
+//   Integer/Decimal/Date/DateTime → Equals | AnyOf | Exists | GreaterThan | GreaterThanOrEqual | LessThan | LessThanOrEqual | Between
 //   Boolean → Equals | AnyOf | Exists
 //   Option  → Equals | AnyOf | AllOf | Exists
 export enum CustomFieldFilterOperator {
@@ -450,11 +742,17 @@ export enum CustomFieldFilterOperator {
   Between = "Between",
 }
 
-/** One custom-field filter clause sent in OpportunitySearchFilter.customFields. */
+/** One custom-field filter clause sent in a search selection's `customFields`. */
 export interface CustomFieldFilter {
   /** Matches CustomFieldDefinition.key (case-insensitive, server-side). */
   key: string;
-  operator: CustomFieldFilterOperator;
+  /** Omitted only by an `Only` clause: `{ key, unspecified: "Only" }`, with no values. */
+  operator?: CustomFieldFilterOperator;
+  /**
+   * Opportunities the definition applies to that have no stored value. Default Exclude;
+   * `Exists` rejects Include and Only.
+   */
+  unspecified?: UnspecifiedMatch;
   /** Single scalar value (Equals / Contains / GreaterThan* / LessThan* / lower bound of Between). */
   value?: string | null;
   /** Upper bound — used only with Between. */

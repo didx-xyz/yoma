@@ -16,6 +16,7 @@ import {
 import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
 import { searchCredentials } from "~/api/services/credentials";
 import { searchMyOpportunitiesSummary } from "~/api/services/myOpportunities";
+import { UserSkillType } from "~/api/models/user";
 import { getUserSkills } from "~/api/services/user";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import { CUSTOM_FIELDS_ENABLED, MAXINT32 } from "~/lib/constants";
@@ -75,8 +76,8 @@ export const UserMenu: React.FC = () => {
     error: skillsError,
     isLoading: skillsIsLoading,
   } = useQuery({
-    queryKey: ["User", "Skills"],
-    queryFn: () => getUserSkills(),
+    queryKey: ["User", "Skills", UserSkillType.Verified],
+    queryFn: () => getUserSkills(UserSkillType.Verified),
     enabled: isDrawerOpen,
   });
 

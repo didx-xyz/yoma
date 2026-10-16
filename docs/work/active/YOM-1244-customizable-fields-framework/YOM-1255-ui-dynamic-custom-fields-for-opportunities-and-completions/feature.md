@@ -79,6 +79,20 @@ is `multipart/form-data` with `CustomFields` as one JSON-encoded form field
       completion read view, custom-field metadata on `MyOpportunity/OpportunityListItem`.
 - [x] **T3 — Details.** `OpportunityCustomFieldsSection` on the org-admin and public detail pages;
       sidebar sections refactored onto `DetailSection`.
+- [x] **Entrepreneurship type** (Adrian's `f0194e90`, 2026-10-01 —
+      [`../handoffs/2026-10-01-b.md`](../handoffs/2026-10-01-b.md)): editor effort optional and
+      paired; incentive "Not specified"; the programme Other ↔ description rule; Integer
+      `validationRegex`; both import help texts. The completion form needed no change.
+- [x] **PascalCase CF keys** (Adrian's 2026-10-11 rename,
+      [`../handoffs/2026-10-12-a.md`](../handoffs/2026-10-12-a.md)): the rule and card-fact key
+      constants, both import help texts (plus ProviderURL, ProviderLogoURL, ProviderCountry and
+      CountryCompleted), the three CSV samples copied from the API, tests and mock data.
+- [x] Provider website, logo and country in the editor, the details page and on Worldwide cards;
+      the Entrepreneurship business location on the completion form; the completion location
+      on the admin completion card and the verifications list (2026-10-12, same handoff).
+- [ ] Drive the Entrepreneurship editor (Rewards "Not specified", the programme Other rule) and a
+      youth completion (the three required venture fields, "Jobs created" = -1) signed in. Not
+      done 2026-10-01: that session had no signed-in API or browser access.
 - [ ] Re-verify every surface once the BA-approved definitions land (YOM-1264). No code change
       should be needed — that is the point of the definition-driven rule.
 - [ ] Resolve the Skill label fallback if a batch skill get-by-ids ever appears (see Gotchas).
@@ -100,6 +114,39 @@ is `multipart/form-data` with `CustomFields` as one JSON-encoded form field
   it takes definitions and values, and knows nothing about Opportunity vs MyOpportunity.
 - 2026-07-27: Completion reuses the same editor and validators; only the definitions source and
   the multipart submission differ.
+- 2026-10-01 (Jason): **Entrepreneurship's Rewards step offers "Not specified"** beside Yes / No,
+  mirroring the API's Manual rule set. While it is unanswered there is no reward; submit forces
+  None, because the API rejects a rewarded non-Job that is not marked incentivized. Effort is
+  optional and paired, as for Jobs. The type is detected by the selected type's enum **name**
+  (`OPPORTUNITY_TYPE_NAME_ENTREPRENEURSHIP`), never its GUID.
+- 2026-10-01: **`validationRegex` now also applies to Integer values**, tested against the
+  normalised text the API tests (`int.ToString()`, so "007" → "7"), and Strings are trimmed
+  first, as the API does. Previously only Strings were checked, so `entrepreneurshipJobsCreated`
+  = -1 failed only on save. Other data types stay API-only: no definition gives them a pattern.
+- 2026-10-12 (Jason): **Provider details and the completion location**, following the API's
+  2026-10-11 contract (README; YOM-1277).
+  - **Editor, step 1:** Provider website, Provider logo (a link, with a live preview) and Provider
+    country (no Worldwide), under Provider. The view model carries all three, because the update
+    replaces them: before this, any save from the web cleared values set by an import or a
+    partner.
+  - **Provider links follow the API, not the Link field** (Jason, same day): any absolute
+    http(s) link with a host is valid, localhost and query strings included (`absoluteWebURL`).
+    The Link field's pattern wants a dot-and-TLD host, so it refused
+    `http://localhost:3000/_next/image?url=…`. A link typed without a scheme gains https:// on
+    submit, because the API stores absolute links only.
+  - **Details page:** the Provider card shows the logo, the name (else the website's host),
+    "Based in {country}" and the website, opening in a new tab. `ProviderLogo` is unoptimised
+    with a storefront fallback, because the logo can be any host and `next/image` optimises only
+    the allow-listed ones. The classic layouts are untouched: `CUSTOM_FIELDS_ENABLED` is `true`.
+  - **Cards and rows** say "Worldwide · from South Africa" when a Worldwide opportunity's
+    provider country is known (`cardPlace`), because a country search now also returns those.
+  - **Completion form:** Entrepreneurship only, an optional "Where is your business?" (country,
+    then region and city via `LocationInput`). It is never prefilled from the profile. Other
+    types send no location, because the API rejects it.
+  - **Admin:** the completion card shows "Business location" or "Completed in" under the
+    profile country. The verifications table has a Location column, and its mobile card a row.
+    The youth's own list doesn't show it (Jason). The text is built from city, region and
+    country (`completionLocation`), because the API's `location` is never filled.
 
 ## Links
 

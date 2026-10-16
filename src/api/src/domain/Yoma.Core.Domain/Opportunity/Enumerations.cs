@@ -2,6 +2,33 @@ using System.ComponentModel;
 
 namespace Yoma.Core.Domain.Opportunity
 {
+  public enum OpportunitySearchOrderField
+  {
+    DateCreated,
+    DateEnd,
+    ZltoReward
+  }
+
+  public enum RewardType
+  {
+    [Description("None")]
+    None,
+    [Description("ZLTO")]
+    ZLTO,
+    [Description("Partner incentive")]
+    PartnerIncentive,
+  }
+
+  public enum AccessibilitySupport
+  {
+    [Description("Yes")]
+    Yes,
+    [Description("No")]
+    No,
+    [Description("Available on request")]
+    AvailableOnRequest,
+  }
+
   public enum Status
   {
     Active, //flagged as expired provided ended (notified)
@@ -25,9 +52,11 @@ namespace Yoma.Core.Domain.Opportunity
 
   public enum VerificationType
   {
+    [Description("File Upload")]
     FileUpload,
     Picture,
     Location,
+    [Description("Voice Note")]
     VoiceNote,
     Video
   }
@@ -41,12 +70,33 @@ namespace Yoma.Core.Domain.Opportunity
     Learning,
     Event,
     Job,
-    Task
+    [Description("Impact Action")]
+    ImpactAction,
+    Entrepreneurship
   }
 
   public enum Category
   {
     Other
+  }
+
+  /// <summary>
+  /// Only the programme option interpreted by cross-field validation belongs in code.
+  /// Other programme values remain configurable custom-field options.
+  /// </summary>
+  public enum EntrepreneurshipProgrammeType
+  {
+    Other
+  }
+
+  /// <summary>
+  /// Only options selected by application logic belong here; remaining CF options are metadata.
+  /// Member names are stable option keys, while descriptions are display labels.
+  /// </summary>
+  public enum Difficulty
+  {
+    [Description("Any level")]
+    AnyLevel
   }
 
   public enum UpdateAction
@@ -59,9 +109,22 @@ namespace Yoma.Core.Domain.Opportunity
     Other
   }
 
-  public enum Difficulty
+  /// <summary>
+  /// Stable CF option keys interpreted by employment validation and partner mappings.
+  /// </summary>
+  public enum EmploymentType
   {
-    [Description("Any Level")]
-    AnyLevel
+    Permanent,
+    FixedTerm
   }
+
+  /// <summary>
+  /// Only the tools option that controls conditional text belongs in code.
+  /// Remaining tools are configurable CF options, not logical enum members.
+  /// </summary>
+  public enum ImpactActionTool
+  {
+    Other
+  }
+
 }

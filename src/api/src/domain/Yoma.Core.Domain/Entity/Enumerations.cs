@@ -1,5 +1,29 @@
+using System.ComponentModel;
+
 namespace Yoma.Core.Domain.Entity
 {
+  public enum UserSkillType
+  {
+    SelfAttested,
+    Verified
+  }
+
+  /// <summary>
+  /// Confirmed account-access methods, not identity assurance or KYC levels.
+  /// Multiple methods can be recorded for the same account.
+  /// </summary>
+  [Flags]
+  public enum AccountVerificationMethod
+  {
+    None = 0,
+    [Description("Email Verified")]
+    EmailVerified = 1,
+    [Description("Mobile Verified (OTP)")]
+    MobileVerified = 2,
+    [Description("Social Login")]
+    SocialLogin = 4
+  }
+
   public enum OrganizationStatus
   {
     Inactive, //flagged as declined if inactive and not modified for x days

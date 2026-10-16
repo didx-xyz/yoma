@@ -237,7 +237,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         {
           // items that can be completed, thus started opportunities (active) or expired opportunities that relate to active organizations
           VerificationStatus.Pending =>
-              predicate.Or(o => o.VerificationStatusId == verificationStatusId && ((o.OpportunityStatusId == opportunityStatusActiveId && o.DateStart <= DateTimeOffset.UtcNow) ||
+              predicate.Or(o => o.VerificationStatusId == verificationStatusId && ((o.OpportunityStatusId == opportunityStatusActiveId && o.OpportunityDateStart <= DateTimeOffset.UtcNow) ||
               o.OpportunityStatusId == opportunityStatusExpiredId) && o.OrganizationStatusId == organizationStatusActiveId),
 
           // all, irrespective of related opportunity and organization status
@@ -661,8 +661,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             switch (status)
             {
               case VerificationStatus.Pending:
-                //items that can be completed, thus started opportunities (active) or expired opportunities that relates to active organizations
-                predicate = predicate.Or(o => o.VerificationStatusId == verificationStatusId && ((o.OpportunityStatusId == opportunityStatusActiveId && o.DateStart <= DateTimeOffset.UtcNow) ||
+                // Review eligibility follows the opportunity, not optional participation timing.
+                // Job/Entrepreneurship submissions with no youth start date remain reviewable.
+                predicate = predicate.Or(o => o.VerificationStatusId == verificationStatusId && ((o.OpportunityStatusId == opportunityStatusActiveId && o.OpportunityDateStart <= DateTimeOffset.UtcNow) ||
                     o.OpportunityStatusId == opportunityStatusExpiredId) && o.OrganizationStatusId == organizationStatusActiveId);
                 break;
 
@@ -945,7 +946,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             InstantVerification = true,
             EnqueueOutcomes = true,
             MutateBlobStorage = true,
-            Comment = "Auto-verification",
+            Comment = "Auto-verification: Action Link",
             SendNotification = true,
             PublishEvents = true
           };
@@ -1128,7 +1129,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var opportunityStatusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
       var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
 
-      //Keep the existing Search count predicates, including MyOpportunity.DateStart for pending verification.
+      // Keep counts aligned with review search; optional youth timing is not an eligibility gate.
       return [.. _myOpportunityRepository.Query(false)
         .Where(o => opportunityIds.Contains(o.OpportunityId))
         .GroupBy(o => o.OpportunityId)
@@ -1139,7 +1140,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           CountNavigatedExternalLink = group.Count(o => o.ActionId == actionNavigatedId),
           ParticipantCountPending = group.Count(o =>
             o.ActionId == actionVerificationId && o.VerificationStatusId == verificationPendingId &&
-            ((o.OpportunityStatusId == opportunityStatusActiveId && o.DateStart <= DateTimeOffset.UtcNow) ||
+            ((o.OpportunityStatusId == opportunityStatusActiveId && o.OpportunityDateStart <= DateTimeOffset.UtcNow) ||
               o.OpportunityStatusId == opportunityStatusExpiredId) && o.OrganizationStatusId == organizationStatusActiveId)
         })];
     }
@@ -1235,6 +1236,14 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         case VerificationStatus.Rejected:
           result.SkipReason = $"Verification already {myOpportunityExisting.VerificationStatus.Value.ToDescription().ToLower()} for user '{user.Username}' and opportunity '{opportunity.Title}'";
           return result;
+
+        case null:
+        case VerificationStatus.None:
+        case VerificationStatus.Pending:
+          break;
+
+        default:
+          throw new InvalidOperationException($"Verification status of '{myOpportunityExisting.VerificationStatus}' is not supported");
       }
 
       try
@@ -1265,6 +1274,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             DateEnd = request.DateEnd,
             CommitmentInterval = request.CommitmentInterval,
             PercentComplete = request.PercentComplete,
+            CountryId = request.CountryId,
+            Region = request.Region,
+            City = request.City,
             CustomFields = request.CustomFields
           };
 
@@ -1302,7 +1314,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var organization = _organizationService.GetById(request.OrganizationId, false, false, ensureOrganizationAuthorization);
 
       request.Comment = request.Comment?.Trim();
-      if (string.IsNullOrEmpty(request.Comment)) request.Comment = "Auto-verification";
+      if (string.IsNullOrEmpty(request.Comment)) request.Comment = "Auto-verification: CSV Import";
 
       using var stream = request.File.OpenReadStream();
       using var baseReader = new StreamReader(stream);
@@ -1487,13 +1499,13 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             }
           }
 
-          //delete existing items in blob storage and db
-          foreach (var item in itemsExisting)
+          //Delete every evidence row, including non-file evidence such as location.
+          //Only file-backed evidence has a blob to delete and restore on rollback.
+          foreach (var item in myOpportunity.Verifications ?? [])
           {
-            if (!item.FileId.HasValue)
-              throw new InvalidOperationException("File expected");
-
             await _myOpportunityVerificationRepository.Delete(item);
+            if (!item.FileId.HasValue) continue;
+
             await _blobService.Delete(item.FileId.Value);
             itemsExistingDeleted.Add(item);
           }
@@ -1601,6 +1613,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       Domain.Lookups.Models.Country? country = null;
       if (!string.IsNullOrEmpty(item.Country)) country = _countryService.GetByCodeAlpha2(item.Country);
 
+      // CountryCompleted belongs to the outcome, never to the user's profile Country.
+      var locationCountry = string.IsNullOrEmpty(item.CountryCompleted) ? null : _countryService.GetByCodeAlpha2(item.CountryCompleted);
+
       Domain.Lookups.Models.Gender? gender = null;
       if (!string.IsNullOrEmpty(item.Gender)) gender = _genderService.GetByName(item.Gender);
 
@@ -1661,6 +1676,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       // Verification method must be automatic; imported verifications are auto-finalized, so pending notifications are not sent.
       await PerformActionSendForVerification(user, opportunity.Id, new MyOpportunityRequestVerify
       {
+        CountryId = locationCountry?.Id,
         CustomFields = customFields
       }, options);
 
@@ -1932,6 +1948,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       if (request.DateStart.HasValue || request.CommitmentInterval != null) return;
 
+      // Placement attests an outcome, not advertised work effort. Genuine supplied timing
+      // is still validated; historical timing is retained because its origin is unknown.
+      if (opportunity.Type == Opportunity.Type.Job) return;
+
       if (!opportunity.CommitmentIntervalId.HasValue || !opportunity.CommitmentIntervalCount.HasValue || !opportunity.CommitmentInterval.HasValue)
         return;
 
@@ -1996,6 +2016,93 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       };
     }
 
+    /// <summary>
+    /// Captures participation location for a new submission or rejected resubmission; existing snapshots remain unchanged.
+    /// Entrepreneurship records an optional explicit business location, independent of engagement/Worldwide; never profile-inferred.
+    /// Other types record On-site/Hybrid participation only. CSV/partner input takes precedence only without Worldwide;
+    /// otherwise the profile is used, including legacy Worldwide-plus-country lists. Partial input is not supplemented.
+    /// This records submission-time context, not proof of physical attendance; existing eligibility gates remain unchanged.
+    /// </summary>
+    private static void PerformActionSendForVerificationApplyCompletionLocation(Models.MyOpportunity myOpportunity,
+      User user,
+      Opportunity.Models.Opportunity opportunity,
+      MyOpportunityRequestVerify request,
+      MyOpportunityVerificationOptions options,
+      Domain.Lookups.Models.Country? country)
+    {
+      // Manual location belongs to Entrepreneurship's business outcome. Other manual types use the profile.
+      if (!options.AutoFinalizedVerification && opportunity.Type != Opportunity.Type.Entrepreneurship &&
+        (request.CountryId.HasValue || request.Region != null || request.City != null))
+        throw new ValidationException("Manual location input is supported only for Entrepreneurship business location.");
+
+      // A rejected submission starts a new attempt. Pending partner/import updates preserve the
+      // original snapshot, including historical nulls; finalization and issuance never recapture it.
+      if (myOpportunity.Id != Guid.Empty && myOpportunity.VerificationStatus != VerificationStatus.Rejected) return;
+
+      myOpportunity.CountryId = null;
+      myOpportunity.Country = null;
+      myOpportunity.Region = null;
+      myOpportunity.City = null;
+
+      // Business location is a venture outcome, not programme attendance or customer reach.
+      switch (opportunity.Type)
+      {
+        case Opportunity.Type.Entrepreneurship:
+          if (options.InstantVerification || country == null) return;
+
+          myOpportunity.CountryId = country.Id;
+          myOpportunity.Country = country.Name;
+          myOpportunity.Region = request.Region;
+          myOpportunity.City = request.City;
+          return;
+
+        case Opportunity.Type.Learning:
+        case Opportunity.Type.Other:
+        case Opportunity.Type.ImpactAction:
+        case Opportunity.Type.Event:
+        case Opportunity.Type.Job:
+          break;
+
+        default:
+          throw new NotSupportedException($"Opportunity type '{opportunity.Type}' is not supported");
+      }
+
+      switch (opportunity.EngagementType)
+      {
+        case null:
+        case EngagementTypeOption.Remote:
+          return;
+
+        case EngagementTypeOption.OnSite:
+        case EngagementTypeOption.Hybrid:
+          break;
+
+        default:
+          throw new NotSupportedException($"Engagement type '{opportunity.EngagementType}' is not supported");
+      }
+
+      var worldwide = opportunity.Countries?.Any(country => country.CodeAlpha2 == Core.Country.Worldwide.ToDescription()) == true;
+      if (options.ImportedOrPartnerSyncedVerification && !worldwide && country != null)
+      {
+        // Explicit participant country may differ from the profile. Never supplement
+        // its missing region/city from the profile or opportunity's availability mappings.
+        myOpportunity.CountryId = country.Id;
+        myOpportunity.Country = country.Name;
+        myOpportunity.Region = request.Region;
+        myOpportunity.City = request.City;
+        return;
+      }
+
+      // Worldwide wins even in legacy mixed lists. All other paths default to the same
+      // submission-time profile location; an unknown country means no location at all.
+      if (!user.CountryId.HasValue) return;
+
+      myOpportunity.CountryId = user.CountryId;
+      myOpportunity.Country = user.Country;
+      myOpportunity.Region = user.Region;
+      myOpportunity.City = user.City;
+    }
+
     private async Task<Models.MyOpportunity> PerformActionSendForVerification(User user,
       Guid opportunityId,
       MyOpportunityRequestVerify request,
@@ -2009,10 +2116,16 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       var opportunity = _opportunityService.GetById(opportunityId, true, true, false);
 
+      // Apply the soft age gate when submitting, using the current self-declared profile age.
+      // Browsing remains unrestricted and an accepted submission is not rechecked at finalization.
+      if (!options.PartnerSyncedVerification)
+        opportunity.AssertAgeEligibility(user.DateOfBirth);
+
       PerformActionSendForVerificationApplyDefaults(request, opportunity, options);
 
       var validationContext = new ValidationContext<MyOpportunityRequestVerify>(request);
       validationContext.RootContextData[nameof(MyOpportunityVerificationOptions.AutoFinalizedVerification)] = options.AutoFinalizedVerification;
+      validationContext.RootContextData[nameof(Opportunity.Models.Opportunity.Type)] = opportunity.Type;
       var validationResult = await _myOpportunityRequestValidatorVerify.ValidateAsync(validationContext);
       if (!validationResult.IsValid) throw new ValidationException(validationResult.Errors);
 
@@ -2080,6 +2193,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             throw new InvalidOperationException($"Unknown / unsupported '{nameof(myOpportunity.VerificationStatus)}' of '{myOpportunity.VerificationStatus.Value}'");
         }
       }
+
+      PerformActionSendForVerificationApplyCompletionLocation(myOpportunity, user, opportunity, request, options,
+        request.CountryId.HasValue ? _countryService.GetById(request.CountryId.Value) : null);
 
       myOpportunity.VerificationStatusId = verificationStatusPendingId;
       myOpportunity.CommitmentIntervalId = request.CommitmentInterval?.Id;

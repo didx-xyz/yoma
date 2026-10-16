@@ -1,3 +1,5 @@
+import Image from "next/image";
+import iconZlto from "public/images/icon-zlto.svg";
 import React from "react";
 import { formatNumber } from "../../lib/format";
 import type { MoneyFacts } from "../../lib/money";
@@ -30,8 +32,20 @@ export const MoneyBadge: React.FC<{ facts: MoneyFacts; compact?: boolean }> = ({
         </span>
       )}
       {model.zlto !== null && (
-        <span className="bg-green-light text-green rounded-full px-2 py-0.5 font-bold">
-          Z {formatNumber(model.zlto)}
+        // The ZLTO icon and the reward's orange, as the rest of the app shows a ZLTO reward
+        // (`ZltoRewardBadge`), rather than a "Z" on green (2026-10-07).
+        <span
+          title="ZLTO reward"
+          className="bg-orange-light text-orange flex items-center gap-1 rounded-full py-0.5 pr-2 pl-1 font-bold"
+        >
+          <Image
+            src={iconZlto}
+            alt="ZLTO"
+            width={14}
+            height={14}
+            className="h-3.5 w-3.5 shrink-0"
+          />
+          {formatNumber(model.zlto)}
         </span>
       )}
     </span>

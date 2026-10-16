@@ -35,7 +35,7 @@ namespace Yoma.Core.Infrastructure.Umuzi.Migrations
           name: "IX_Opportunity_Deleted_DateModified",
           schema: "Umuzi",
           table: "Opportunity",
-          columns: new[] { "Deleted", "DateModified" });
+          columns: ["Deleted", "DateModified"]);
 
       migrationBuilder.CreateIndex(
           name: "IX_Opportunity_ExternalId",
@@ -48,7 +48,7 @@ namespace Yoma.Core.Infrastructure.Umuzi.Migrations
           name: "IX_Opportunity_ExternalId_DateCreated_DateModified",
           schema: "Umuzi",
           table: "Opportunity",
-          columns: new[] { "ExternalId", "DateCreated", "DateModified" });
+          columns: ["ExternalId", "DateCreated", "DateModified"]);
     }
 
     /// <inheritdoc />

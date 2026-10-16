@@ -17,6 +17,8 @@ namespace Yoma.Core.Domain.Core.Services
     private readonly ICountryService _countryService;
     private readonly ILanguageService _languageService;
     private readonly ISkillService _skillService;
+    private readonly IEducationService _educationService;
+    private readonly ICurrencyService _currencyService;
     private readonly IRepository<CustomFieldValue> _customFieldValueRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
     #endregion
@@ -26,6 +28,8 @@ namespace Yoma.Core.Domain.Core.Services
       ICountryService countryService,
       ILanguageService languageService,
       ISkillService skillService,
+      IEducationService educationService,
+      ICurrencyService currencyService,
       IRepository<CustomFieldValue> customFieldValueRepository,
       IExecutionStrategyService executionStrategyService)
     {
@@ -33,6 +37,8 @@ namespace Yoma.Core.Domain.Core.Services
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
       _skillService = skillService ?? throw new ArgumentNullException(nameof(skillService));
+      _educationService = educationService ?? throw new ArgumentNullException(nameof(educationService));
+      _currencyService = currencyService ?? throw new ArgumentNullException(nameof(currencyService));
       _customFieldValueRepository = customFieldValueRepository ?? throw new ArgumentNullException(nameof(customFieldValueRepository));
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
     }
@@ -112,6 +118,14 @@ namespace Yoma.Core.Domain.Core.Services
         filter.Key = definition.Key;
         filter.CustomFieldDefinitionId = definition.Id;
         filter.DataType = definition.DataType;
+        filter.EntityContext = definition.EntityContext;
+
+        // The Opportunity query owns the new missing-value policies. Keep the existing
+        // MyOpportunity search contract strict until its own search work is agreed.
+        if (entityType == CustomFieldEntityType.MyOpportunity && filter.Unspecified is UnspecifiedMatch.Include or UnspecifiedMatch.Only)
+          throw new ValidationException("Unspecified custom-field policies are supported only by Opportunity search.");
+
+        if (filter.Unspecified == UnspecifiedMatch.Only) continue;
 
         ValidateFilterOperator(definition, filter);
         NormalizeFilterValues(definition, filter);
@@ -405,12 +419,19 @@ namespace Yoma.Core.Domain.Core.Services
         _ => null
       };
 
-      value.ValueDateTime = definition.DataType == CustomFieldDataType.DateTime
-        ? DateTimeOffset.Parse(
+      value.ValueDateTime = definition.DataType switch
+      {
+        CustomFieldDataType.Date => new DateTimeOffset(
+          DateOnly.ParseExact(value.Value, "yyyy-MM-dd", CultureInfo.InvariantCulture).ToDateTime(TimeOnly.MinValue),
+          TimeSpan.Zero),
+
+        CustomFieldDataType.DateTime => DateTimeOffset.Parse(
           value.Value,
           CultureInfo.InvariantCulture,
-          DateTimeStyles.RoundtripKind)
-        : null;
+          DateTimeStyles.RoundtripKind),
+
+        _ => null
+      };
     }
 
     private string? Normalize(CustomFieldDefinition definition, CustomFieldValueRequest request)
@@ -433,6 +454,7 @@ namespace Yoma.Core.Domain.Core.Services
         CustomFieldDataType.Integer => NormalizeInteger(definition, request),
         CustomFieldDataType.Decimal => NormalizeDecimal(definition, request),
         CustomFieldDataType.Boolean => NormalizeBoolean(definition, request),
+        CustomFieldDataType.Date => NormalizeDate(definition, request),
         CustomFieldDataType.DateTime => NormalizeDateTime(definition, request),
         CustomFieldDataType.Option => NormalizeOption(definition, request),
         _ => throw new ArgumentOutOfRangeException(nameof(definition), $"Custom field data type '{definition.DataType}' is not supported")
@@ -483,6 +505,17 @@ namespace Yoma.Core.Domain.Core.Services
         throw new ValidationException($"Custom field '{definition.Title}' must be true or false");
 
       return value.ToString().ToLowerInvariant();
+    }
+
+    private static string NormalizeDate(CustomFieldDefinition definition, CustomFieldValueRequest request)
+    {
+      if (request.Values != null)
+        throw new ValidationException($"Custom field '{definition.Title}' must specify value; values is only supported for option fields");
+
+      if (!DateOnly.TryParseExact(request.Value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var value))
+        throw new ValidationException($"Custom field '{definition.Title}' must be a valid date in yyyy-MM-dd format");
+
+      return value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
     }
 
     private static string NormalizeDateTime(CustomFieldDefinition definition, CustomFieldValueRequest request)
@@ -543,12 +576,14 @@ namespace Yoma.Core.Domain.Core.Services
       if (definition.LookupType.HasValue)
       {
         // Match the established CSV lookup conventions: country and language use
-        // alpha-2 codes, while skills use their full display names.
+        // alpha-2 codes, currency uses its ISO code, and skills/education use full names.
         var id = definition.LookupType.Value switch
         {
           CustomFieldLookupType.Country => _countryService.GetByCodeAlpha2OrNull(value)?.Id,
           CustomFieldLookupType.Language => _languageService.GetByCodeAlpha2OrNull(value)?.Id,
           CustomFieldLookupType.Skill => _skillService.GetByNameOrNull(value)?.Id,
+          CustomFieldLookupType.Education => _educationService.GetByNameOrNull(value)?.Id,
+          CustomFieldLookupType.Currency => _currencyService.GetByCodeOrNull(value)?.Id,
           _ => throw new ArgumentOutOfRangeException(
             nameof(definition),
             $"Custom field lookup type '{definition.LookupType}' is not supported")
@@ -558,16 +593,7 @@ namespace Yoma.Core.Domain.Core.Services
           $"Custom field '{definition.Title}' contains an invalid lookup value: {value}");
       }
 
-      var option = definition.Options?
-        .SingleOrDefault(o =>
-          o.IsActive &&
-          (string.Equals(o.Name, value, StringComparison.OrdinalIgnoreCase) ||
-           string.Equals(o.Key, value, StringComparison.OrdinalIgnoreCase)));
-
-      return option == null
-        ? throw new ValidationException(
-          $"Custom field '{definition.Title}' contains an invalid option value: {value}")
-        : option.Key;
+      return definition.ResolveOptionKey(value, true);
     }
 
     private string NormalizeOptionValue(CustomFieldDefinition definition, string value)
@@ -588,15 +614,7 @@ namespace Yoma.Core.Domain.Core.Services
           $"Custom field '{definition.Title}' contains an invalid lookup value: {value}");
       }
 
-      var option = definition.Options?
-        .SingleOrDefault(o =>
-          o.IsActive &&
-          string.Equals(o.Key, value, StringComparison.OrdinalIgnoreCase));
-
-      return option == null
-        ? throw new ValidationException(
-          $"Custom field '{definition.Title}' contains an invalid option value: {value}")
-        : option.Key;
+      return definition.ResolveOptionKey(value);
     }
 
     private static List<CustomFieldValueItem>? ToCustomFieldValueItems(List<CustomFieldDefinition> definitions, List<CustomFieldValue> values)
@@ -632,6 +650,7 @@ namespace Yoma.Core.Domain.Core.Services
 
         CustomFieldDataType.Integer or
         CustomFieldDataType.Decimal or
+        CustomFieldDataType.Date or
         CustomFieldDataType.DateTime =>
           filter.Operator is
             CustomFieldFilterOperator.Equals or
@@ -721,6 +740,10 @@ namespace Yoma.Core.Domain.Core.Services
           decimal.Parse(filter.Value!, NumberStyles.Number, CultureInfo.InvariantCulture) <=
           decimal.Parse(filter.ValueTo!, NumberStyles.Number, CultureInfo.InvariantCulture),
 
+        CustomFieldDataType.Date =>
+          DateOnly.ParseExact(filter.Value!, "yyyy-MM-dd", CultureInfo.InvariantCulture) <=
+          DateOnly.ParseExact(filter.ValueTo!, "yyyy-MM-dd", CultureInfo.InvariantCulture),
+
         CustomFieldDataType.DateTime =>
           DateTimeOffset.Parse(filter.Value!, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind) <=
           DateTimeOffset.Parse(filter.ValueTo!, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind),
@@ -755,6 +778,9 @@ namespace Yoma.Core.Domain.Core.Services
         CustomFieldDataType.Boolean =>
           NormalizeBoolean(definition, request),
 
+        CustomFieldDataType.Date =>
+          NormalizeDate(definition, request),
+
         CustomFieldDataType.DateTime =>
           NormalizeDateTime(definition, request),
 
@@ -786,6 +812,12 @@ namespace Yoma.Core.Domain.Core.Services
         CustomFieldLookupType.Skill =>
           _skillService.GetByIdOrNull(id)?.Id.ToString(),
 
+        CustomFieldLookupType.Education =>
+          _educationService.GetByIdOrNull(id)?.Id.ToString(),
+
+        CustomFieldLookupType.Currency =>
+          _currencyService.GetByIdOrNull(id)?.Id.ToString(),
+
         _ => throw new ArgumentOutOfRangeException(
           nameof(lookupType),
           $"Custom field lookup type '{lookupType}' is not supported")
@@ -807,6 +839,12 @@ namespace Yoma.Core.Domain.Core.Services
 
         CustomFieldLookupType.Skill =>
           _skillService.GetByIdOrNull(id)?.Name,
+
+        CustomFieldLookupType.Education =>
+          _educationService.GetByIdOrNull(id)?.Name,
+
+        CustomFieldLookupType.Currency =>
+          _currencyService.GetByIdOrNull(id)?.Code,
 
         _ => throw new ArgumentOutOfRangeException(
           nameof(lookupType),

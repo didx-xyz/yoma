@@ -1,7 +1,8 @@
 name: yoma-v3
 services:
   postgres:
-    image: docker.io/postgres:18.4-alpine
+    # PostgreSQL 18 with the PostGIS server files required by location migrations.
+    image: docker.io/postgis/postgis:18-3.6-alpine
     container_name: yoma-postgres
     # ports:
     #   - 5432:5432

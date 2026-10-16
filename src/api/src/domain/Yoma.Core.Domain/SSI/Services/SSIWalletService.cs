@@ -159,6 +159,10 @@ namespace Yoma.Core.Domain.SSI.Services
             result.IssuerLogoURL = ParseCredentialAttributeValue(property, attribute.Value);
             break;
 
+          case SchemaEntityPropertySystemType.OpportunityType:
+            result.TypeContext = SSICredentialOpportunityTypeMapper.ParseOrNull(attribute.Value.Value)?.ToString();
+            break;
+
           default:
             throw new InvalidOperationException($"System property type '{property.SystemType}' not supported");
         }
@@ -178,8 +182,9 @@ namespace Yoma.Core.Domain.SSI.Services
         if (attribute.HasValue) result.Attributes.Add(ParseCredentialAttribute(property, attribute.Value));
       }
 
-      // Custom fields are a new credential capability and therefore require no legacy credential conversion. Their
-      // labels and human-readable option / lookup values come from the exact issued schema and signed attributes.
+      // Custom fields are a new credential capability and therefore require no legacy credential conversion.
+      // The issued schema determines claim membership; current catalogue metadata supplies labels and layout.
+      // Human-readable option / lookup values come from the signed attributes, not today's source records.
       var customFields = schema.Entities.SelectMany(entity => entity.CustomFields ?? Enumerable.Empty<SSISchemaEntityCustomField>()).ToList();
       foreach (var customField in customFields)
       {
@@ -299,6 +304,14 @@ namespace Yoma.Core.Domain.SSI.Services
 
       if (type == typeof(string))
         return string.IsNullOrEmpty(property.Format) ? result : string.Format(CultureInfo.InvariantCulture, property.Format, result);
+      else if (type.IsEnum)
+      {
+        // Signed values retain their technical codes. Presentation uses the shared enum descriptions;
+        // historical values unknown to the current enum remain readable without inventing a label.
+        return Enum.TryParse(type, result, true, out var value) && ((Enum)value).IsDefinedOrValidFlags()
+          ? ((Enum)value).ToDescription()
+          : result;
+      }
       else if (type == typeof(bool))
       {
         if (!bool.TryParse(result, out var value)) return result;
@@ -352,6 +365,8 @@ namespace Yoma.Core.Domain.SSI.Services
           value.ToString(CultureInfo.InvariantCulture),
         CustomFieldDataType.Decimal when decimal.TryParse(result, NumberStyles.Number, CultureInfo.InvariantCulture, out var value) =>
           value.ToString(CultureInfo.InvariantCulture),
+        CustomFieldDataType.Date when DateOnly.TryParseExact(result, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var value) =>
+          value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
         CustomFieldDataType.DateTime when DateTimeHelper.TryParse(result) is DateTimeOffset value =>
           value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
         _ => result

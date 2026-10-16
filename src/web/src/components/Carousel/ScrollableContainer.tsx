@@ -5,6 +5,12 @@ interface ScrollableContainerProps {
   className?: string;
   scrollSpeed?: number;
   showShadows?: boolean;
+  /**
+   * Fade the content itself at an edge with more to scroll, through a CSS mask, instead of a
+   * coloured overlay (2026-10-08). For a scroller on a translucent or uneven background, which no
+   * `from-*` colour can match (the discovery chip rows). Off by default.
+   */
+  fadeEdges?: boolean;
   scrollToEndOnChange?: boolean;
   /**
    * Tailwind `from-*` class for the edge-fade shadows — pass the colour of the surface BEHIND
@@ -27,11 +33,13 @@ const ScrollableContainer: React.FC<ScrollableContainerProps> = ({
   className = "",
   scrollSpeed = 2,
   showShadows = false,
+  fadeEdges = false,
   scrollToEndOnChange = false,
   shadowFromClassName = "from-gray-light/5",
   containerClassName = "h-full",
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const tracksEdges = showShadows || fadeEdges;
   const [showLeftShadow, setShowLeftShadow] = useState(false);
   const [showRightShadow, setShowRightShadow] = useState(false);
 
@@ -48,7 +56,7 @@ const ScrollableContainer: React.FC<ScrollableContainerProps> = ({
   };
 
   useEffect(() => {
-    if (!showShadows) return;
+    if (!tracksEdges) return;
 
     // Initial check after mount
     updateShadows();
@@ -59,14 +67,14 @@ const ScrollableContainer: React.FC<ScrollableContainerProps> = ({
     return () => {
       window.removeEventListener("resize", handleResize);
     };
-  }, [showShadows]);
+  }, [tracksEdges]);
 
   // Separate effect to update shadows when children change
   useEffect(() => {
-    if (!showShadows) return;
+    if (!tracksEdges) return;
     const timeoutId = setTimeout(updateShadows, 100);
     return () => clearTimeout(timeoutId);
-  }, [children, showShadows]);
+  }, [children, tracksEdges]);
 
   // Optional behavior: keep the scroller pinned to the far right when content changes.
   useEffect(() => {
@@ -177,30 +185,24 @@ const ScrollableContainer: React.FC<ScrollableContainerProps> = ({
   };
 
   const handleScroll = () => {
-    if (showShadows) {
+    if (tracksEdges) {
       updateShadows();
     }
   };
+
+  // Only while there is more to scroll: a mask clips whatever lies outside the box, so a row that
+  // fits (or wraps, from `md`) is never masked.
+  const fade = fadeEdges && (showLeftShadow || showRightShadow);
+  const mask = `linear-gradient(to right, ${showLeftShadow ? "transparent" : "black"}, black 2.5rem, black calc(100% - 2.5rem), ${showRightShadow ? "transparent" : "black"})`;
+  const edgeMask: React.CSSProperties = fade
+    ? { maskImage: mask, WebkitMaskImage: mask }
+    : {};
 
   const defaultClasses = "cursor-grab select-none active:cursor-grabbing";
   const combinedClasses = `${defaultClasses} ${className}`.trim();
 
   return (
     <div className={`relative ${containerClassName}`.trim()}>
-      {/* Left shadow */}
-      {showShadows && showLeftShadow && (
-        <div
-          className={`backdrop-blur-smx ${shadowFromClassName} pointer-events-none absolute top-0 bottom-0 left-0 z-10 w-12 bg-linear-to-r to-transparent`}
-        ></div>
-      )}
-
-      {/* Right shadow */}
-      {showShadows && showRightShadow && (
-        <div
-          className={`backdrop-blur-smx ${shadowFromClassName} pointer-events-none absolute top-0 right-0 bottom-0 z-10 w-12 bg-linear-to-l to-transparent`}
-        ></div>
-      )}
-
       <div
         ref={containerRef}
         className={`h-full ${combinedClasses}`}
@@ -208,6 +210,7 @@ const ScrollableContainer: React.FC<ScrollableContainerProps> = ({
           scrollbarWidth: "none",
           msOverflowStyle: "none",
           WebkitOverflowScrolling: "touch",
+          ...edgeMask,
         }}
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
@@ -215,6 +218,25 @@ const ScrollableContainer: React.FC<ScrollableContainerProps> = ({
       >
         {children}
       </div>
+      {/* Edge fades. Always mounted and faded in or out, rather than mounted on each scroll
+          update, which flickered while dragging (2026-10-08). They come AFTER the scroller:
+          callers find it as the wrapper's first child (`CustomCarouselV3`). */}
+      {showShadows && (
+        <div
+          aria-hidden
+          className={`${shadowFromClassName} pointer-events-none absolute top-0 bottom-0 left-0 z-10 w-12 bg-linear-to-r to-transparent transition-opacity duration-150 motion-reduce:transition-none ${
+            showLeftShadow ? "opacity-100" : "opacity-0"
+          }`}
+        ></div>
+      )}
+      {showShadows && (
+        <div
+          aria-hidden
+          className={`${shadowFromClassName} pointer-events-none absolute top-0 right-0 bottom-0 z-10 w-12 bg-linear-to-l to-transparent transition-opacity duration-150 motion-reduce:transition-none ${
+            showRightShadow ? "opacity-100" : "opacity-0"
+          }`}
+        ></div>
+      )}
     </div>
   );
 };

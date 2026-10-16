@@ -1,6 +1,12 @@
-/** Thousands-separated number formatting, space-grouped ("2 473") — the one place it lives. */
+/**
+ * Thousands-separated number formatting, space-grouped ("2 473", "150.5") — the one place it
+ * lives. Grouped with a no-break space so a figure never wraps; the decimal point stays a point
+ * (en-ZA's decimal COMMA, space-replaced, turned a 150.5 partner incentive into "150 5").
+ */
 export const formatNumber = (value: number): string =>
-  value.toLocaleString("en-ZA").replaceAll(",", " ");
+  value
+    .toLocaleString("en-US", { maximumFractionDigits: 4 })
+    .replaceAll(",", "\u00a0");
 
 /**
  * "Up to an hour" / "Up to a week" — the commitment-interval label, in the one place both the

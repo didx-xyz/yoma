@@ -35,7 +35,7 @@ namespace Yoma.Core.Domain.Entity.Events
 
         var filter = new OpportunitySearchFilterAdmin
         {
-          Organizations = [notification.Entity.Id],
+          Organizations = new() { Value = [notification.Entity.Id] },
           PageNumber = 1,
           PageSize = 100
         };

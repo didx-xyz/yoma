@@ -29,12 +29,14 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
 
     public IQueryable<Domain.Opportunity.Models.Opportunity> Query(LockMode lockMode)
     {
-      return Query(false).WithLock(lockMode);
+      return Query(false, lockMode);
     }
 
     public IQueryable<Domain.Opportunity.Models.Opportunity> Query(bool includeChildItems, LockMode lockMode)
     {
-      return Query(includeChildItems).WithLock(lockMode);
+      // Keep the locked root at the outer SQL level; collection projections must not nest its alias.
+      // Split-child reads use the same transaction and do not acquire separate root locks.
+      return Query(includeChildItems).AsSplitQuery().WithLock(lockMode);
     }
 
     public IQueryable<Domain.Opportunity.Models.Opportunity> Query(bool includeChildItems)
@@ -58,14 +60,41 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         Summary = entity.Summary,
         Instructions = entity.Instructions,
         URL = entity.URL,
+        Provider = entity.Provider,
+        ProviderURL = entity.ProviderURL,
+        ProviderLogoURL = entity.ProviderLogoURL,
+        ProviderCountryId = entity.ProviderCountryId,
+        ProviderCountry = entity.ProviderCountry == null ? null : entity.ProviderCountry.Name,
+        Incentivized = entity.Incentivized,
+        RewardType = entity.RewardType,
+        PartnerIncentiveAmount = entity.PartnerIncentiveAmount,
+        PartnerIncentiveCurrency = entity.PartnerIncentiveCurrency,
+        AccessibilitySupport = entity.AccessibilitySupport,
+        AccommodationOtherDescription = entity.AccommodationOtherDescription,
+        AgeFrom = entity.AgeFrom,
+        AgeTo = entity.AgeTo,
+        Accommodations = includeChildItems ? entity.Accommodations.Select(o => new Domain.Lookups.Models.Accessibility
+        {
+          Id = o.AccommodationId,
+          Name = o.Accommodation.Name
+        }).OrderBy(o => o.Name).ToList() : null,
+        TargetedGroups = includeChildItems ? entity.TargetedGroups.Select(o => new Domain.Lookups.Models.TargetedGroup
+        {
+          Id = o.TargetedGroupId,
+          Name = o.TargetedGroup.Name
+        }).OrderBy(o => o.Name).ToList() : null,
+        SustainableDevelopmentGoals = includeChildItems ? entity.SustainableDevelopmentGoals.Select(o => new Domain.Lookups.Models.SustainableDevelopmentGoal
+        {
+          Id = o.SustainableDevelopmentGoalId,
+          Number = o.SustainableDevelopmentGoal.Number,
+          Name = o.SustainableDevelopmentGoal.Name
+        }).OrderBy(o => o.Name).ToList() : null,
         ZltoReward = entity.ZltoReward,
         ZltoRewardPool = entity.ZltoRewardPool,
         ZltoRewardCumulative = entity.ZltoRewardCumulative,
         VerificationEnabled = entity.VerificationEnabled,
         VerificationMethodValue = entity.VerificationMethod,
         VerificationMethod = string.IsNullOrEmpty(entity.VerificationMethod) ? null : Enum.Parse<VerificationMethod>(entity.VerificationMethod, true),
-        DifficultyId = entity.DifficultyId,
-        Difficulty = entity.Difficulty == null ? null : entity.Difficulty.Name,
         CommitmentIntervalId = entity.CommitmentIntervalId,
         CommitmentInterval = entity.CommitmentInterval == null ? null : Enum.Parse<TimeIntervalOption>(entity.CommitmentInterval.Name, true),
         CommitmentIntervalCount = entity.CommitmentIntervalCount,
@@ -100,13 +129,16 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 ImageURL = o.Category.ImageURL
               }).OrderBy(o => o.Name).ToList() : null,
         Countries = includeChildItems ?
-              entity.Countries.Select(o => new Domain.Lookups.Models.Country
+              entity.Countries.Select(o => new Domain.Opportunity.Models.OpportunityCountryInfo
               {
                 Id = o.CountryId,
                 Name = o.Country.Name,
                 CodeAlpha2 = o.Country.CodeAlpha2,
                 CodeAlpha3 = o.Country.CodeAlpha3,
-                CodeNumeric = o.Country.CodeNumeric
+                CodeNumeric = o.Country.CodeNumeric,
+                Region = o.Region,
+                City = o.City,
+                Coordinates = Core.Helpers.CoordinatesHelper.ToArray(o.Coordinates)
               }).OrderBy(o => o.Name).ToList() : null,
         Languages = includeChildItems ?
               entity.Languages.Select(o => new Domain.Lookups.Models.Language
@@ -154,6 +186,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
       //MS SQL: Contains
       return predicate.Or(o => EF.Functions.ILike(o.Title, $"%{value}%")
           || (!string.IsNullOrEmpty(o.Summary) && EF.Functions.ILike(o.Summary, $"%{value}%"))
+          || (!string.IsNullOrEmpty(o.Provider) && EF.Functions.ILike(o.Provider, $"%{value}%"))
           || (!string.IsNullOrEmpty(o.KeywordsFlattened) && EF.Functions.ILike(o.KeywordsFlattened, $"%{value}%"))
           || EF.Functions.ToTsVector("english", o.Description).Matches(value));
     }
@@ -163,14 +196,40 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
       return this.WhereContains(query, value);
     }
 
+    public Expression<Func<Domain.Opportunity.Models.Opportunity, bool>> Contains(Expression<Func<Domain.Opportunity.Models.Opportunity, string?>> property, string value)
+    {
+      return Core.Helpers.PropertyContainsHelper.Contains(property, value);
+    }
+
+    public IQueryable<Domain.Opportunity.Models.Opportunity> Contains(IQueryable<Domain.Opportunity.Models.Opportunity> query, Expression<Func<Domain.Opportunity.Models.Opportunity, string?>> property, string value)
+    {
+      return query.Where(Contains(property, value));
+    }
+
     public IQueryable<Domain.Opportunity.Models.Opportunity> WhereCustomFields(IQueryable<Domain.Opportunity.Models.Opportunity> query, List<CustomFieldFilter>? filters)
     {
       if (filters == null || filters.Count == 0) return query;
 
       foreach (var filter in filters)
       {
-        var ids = _context.CustomFieldValue.MatchingEntityIds(CustomFieldEntityType.Opportunity, filter);
-        query = query.Where(o => ids.Contains(o.Id));
+        var presentIds = _context.CustomFieldValue
+          .Where(o => o.CustomFieldDefinitionId == filter.CustomFieldDefinitionId && o.OpportunityId.HasValue)
+          .Select(o => o.OpportunityId!.Value);
+
+        var predicate = PredicateBuilder.False<Domain.Opportunity.Models.Opportunity>();
+        if (filter.Unspecified != UnspecifiedMatch.Only)
+        {
+          var matchedIds = _context.CustomFieldValue.MatchingEntityIds(CustomFieldEntityType.Opportunity, filter);
+          predicate = o => matchedIds.Contains(o.Id);
+        }
+
+        predicate = Domain.Core.Helpers.SearchCriterionHelper.Apply(predicate,
+          o => !presentIds.Contains(o.Id), filter.Unspecified);
+
+        if (filter.AppliesToTypeId.HasValue)
+          predicate = predicate.Or(o => o.TypeId != filter.AppliesToTypeId.Value);
+
+        query = query.Where(predicate);
       }
 
       return query;
@@ -191,11 +250,22 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         Summary = item.Summary,
         Instructions = item.Instructions,
         URL = item.URL,
+        Provider = item.Provider,
+        ProviderURL = item.ProviderURL,
+        ProviderLogoURL = item.ProviderLogoURL,
+        ProviderCountryId = item.ProviderCountryId,
+        Incentivized = item.Incentivized,
+        RewardType = item.RewardType,
+        PartnerIncentiveAmount = item.PartnerIncentiveAmount,
+        PartnerIncentiveCurrency = item.PartnerIncentiveCurrency,
+        AccessibilitySupport = item.AccessibilitySupport,
+        AccommodationOtherDescription = item.AccommodationOtherDescription,
+        AgeFrom = item.AgeFrom,
+        AgeTo = item.AgeTo,
         ZltoReward = item.ZltoReward,
         ZltoRewardPool = item.ZltoRewardPool,
         VerificationEnabled = item.VerificationEnabled,
         VerificationMethod = item.VerificationMethod?.ToString(),
-        DifficultyId = item.DifficultyId,
         CommitmentIntervalId = item.CommitmentIntervalId,
         CommitmentIntervalCount = item.CommitmentIntervalCount,
         ParticipantLimit = item.ParticipantLimit,
@@ -242,12 +312,23 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
           Summary = item.Summary,
           Instructions = item.Instructions,
           URL = item.URL,
+          Provider = item.Provider,
+          ProviderURL = item.ProviderURL,
+          ProviderLogoURL = item.ProviderLogoURL,
+          ProviderCountryId = item.ProviderCountryId,
+          Incentivized = item.Incentivized,
+          RewardType = item.RewardType,
+          PartnerIncentiveAmount = item.PartnerIncentiveAmount,
+          PartnerIncentiveCurrency = item.PartnerIncentiveCurrency,
+          AccessibilitySupport = item.AccessibilitySupport,
+          AccommodationOtherDescription = item.AccommodationOtherDescription,
+          AgeFrom = item.AgeFrom,
+          AgeTo = item.AgeTo,
           ZltoReward = item.ZltoReward,
           ZltoRewardPool = item.ZltoRewardPool,
           ZltoRewardCumulative = item.ZltoRewardCumulative,
           VerificationEnabled = item.VerificationEnabled,
           VerificationMethod = item.VerificationMethod?.ToString(),
-          DifficultyId = item.DifficultyId,
           CommitmentIntervalId = item.CommitmentIntervalId,
           CommitmentIntervalCount = item.CommitmentIntervalCount,
           ParticipantLimit = item.ParticipantLimit,
@@ -297,12 +378,23 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
       entity.Summary = item.Summary;
       entity.Instructions = item.Instructions;
       entity.URL = item.URL;
+      entity.Provider = item.Provider;
+      entity.ProviderURL = item.ProviderURL;
+      entity.ProviderLogoURL = item.ProviderLogoURL;
+      entity.ProviderCountryId = item.ProviderCountryId;
+      entity.Incentivized = item.Incentivized;
+      entity.RewardType = item.RewardType;
+      entity.PartnerIncentiveAmount = item.PartnerIncentiveAmount;
+      entity.PartnerIncentiveCurrency = item.PartnerIncentiveCurrency;
+      entity.AccessibilitySupport = item.AccessibilitySupport;
+      entity.AccommodationOtherDescription = item.AccommodationOtherDescription;
+      entity.AgeFrom = item.AgeFrom;
+      entity.AgeTo = item.AgeTo;
       entity.ZltoReward = item.ZltoReward;
       entity.ZltoRewardPool = item.ZltoRewardPool;
       entity.ZltoRewardCumulative = item.ZltoRewardCumulative;
       entity.VerificationEnabled = item.VerificationEnabled;
       entity.VerificationMethod = item.VerificationMethod?.ToString();
-      entity.DifficultyId = item.DifficultyId;
       entity.CommitmentIntervalId = item.CommitmentIntervalId;
       entity.CommitmentIntervalCount = item.CommitmentIntervalCount;
       entity.ParticipantLimit = item.ParticipantLimit;
@@ -349,12 +441,23 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         entity.Summary = item.Summary;
         entity.Instructions = item.Instructions;
         entity.URL = item.URL;
+        entity.Provider = item.Provider;
+        entity.ProviderURL = item.ProviderURL;
+        entity.ProviderLogoURL = item.ProviderLogoURL;
+        entity.ProviderCountryId = item.ProviderCountryId;
+        entity.Incentivized = item.Incentivized;
+        entity.RewardType = item.RewardType;
+        entity.PartnerIncentiveAmount = item.PartnerIncentiveAmount;
+        entity.PartnerIncentiveCurrency = item.PartnerIncentiveCurrency;
+        entity.AccessibilitySupport = item.AccessibilitySupport;
+        entity.AccommodationOtherDescription = item.AccommodationOtherDescription;
+        entity.AgeFrom = item.AgeFrom;
+        entity.AgeTo = item.AgeTo;
         entity.ZltoReward = item.ZltoReward;
         entity.ZltoRewardPool = item.ZltoRewardPool;
         entity.ZltoRewardCumulative = item.ZltoRewardCumulative;
         entity.VerificationEnabled = item.VerificationEnabled;
         entity.VerificationMethod = item.VerificationMethod?.ToString();
-        entity.DifficultyId = item.DifficultyId;
         entity.CommitmentIntervalId = item.CommitmentIntervalId;
         entity.CommitmentIntervalCount = item.CommitmentIntervalCount;
         entity.ParticipantLimit = item.ParticipantLimit;

@@ -247,7 +247,14 @@ namespace Yoma.Core.Domain.Reward.Services
                   request.Description = opportunity.Description;
                   request.Instructions = opportunity.Instructions;
                   request.Skills = opportunity.Skills;
-                  request.Countries = opportunity.Countries;
+                  request.Countries = opportunity.Countries?.Select(o => new Domain.Lookups.Models.Country
+                  {
+                    Id = o.Id,
+                    Name = o.Name,
+                    CodeAlpha2 = o.CodeAlpha2,
+                    CodeAlpha3 = o.CodeAlpha3,
+                    CodeNumeric = o.CodeNumeric
+                  }).ToList();
                   request.Languages = opportunity.Languages;
                   request.TimeInvestedInHours = opportunity.TimeIntervalToHours();
                   request.ExternalURL = opportunity.URL;

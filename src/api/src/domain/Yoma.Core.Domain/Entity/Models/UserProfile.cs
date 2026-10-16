@@ -20,7 +20,23 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public bool? PhoneNumberConfirmed { get; set; }
 
+    /// <summary>
+    /// Confirmed account access methods, not KYC or verification of self-declared profile details.
+    /// </summary>
+    public AccountVerificationMethod AccountVerificationMethods { get; set; }
+
     public Guid? CountryId { get; set; }
+
+    public string? Region { get; set; }
+
+    public string? City { get; set; }
+
+    /// <summary>
+    /// City centre as [longitude, latitude], without elevation. Stored only in Yoma.
+    /// </summary>
+    public double[]? Coordinates { get; set; }
+
+    public Core.LocationSource? LocationSource { get; set; }
 
     public Guid? EducationId { get; set; }
 

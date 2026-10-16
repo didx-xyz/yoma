@@ -4,16 +4,17 @@ import {
   IoBriefcaseOutline,
   IoCalendarOutline,
   IoHeartOutline,
-  IoStarOutline,
+  IoRocketOutline,
 } from "react-icons/io5";
 import type { PreferenceKey } from "../lib/types";
 
 /**
- * The personalization wizard (YOM-1261), as data. Six steps cover the seven editable
+ * The personalization wizard (YOM-1261), as data. Six steps cover the nine editable
  * preferences; `<StepBlock kind=…>` is the single kind→control switch. Adding a preference is a
  * data change here — no new JSX. Entries with `comingSoon` render a badge and are NOT selectable;
  * that is the reusable pattern for anything the BA has not settled (visible and inert beats
- * quietly missing).
+ * quietly missing). No entry carries it today — "Start a business" was the last, and the BA
+ * mapping landed on 2026-09-22.
  */
 
 export type StepBlockKind =
@@ -21,16 +22,20 @@ export type StepBlockKind =
   | "chips"
   | "rows"
   | "pills"
-  | "toggle"
   | "lookupSearch"
-  | "readonly";
+  | "readonly"
+  /** Country (anonymous) or the profile country (signed-in), then region / city. */
+  | "location"
+  /** Accessibility requirements, plus the description the API requires with "Other". */
+  | "accessibility";
 
 export type PreferenceOptionsSource =
   | "categories"
   | "skills"
   | "commitmentIntervals"
   | "engagementTypes"
-  | "languages";
+  | "languages"
+  | "accessibility";
 
 export interface StepBlockEntry {
   id: string;
@@ -38,6 +43,13 @@ export interface StepBlockEntry {
   icon?: IconType;
   /** Right-hand caption (readonly identity rows: what the field maps to). */
   caption?: string;
+  /** One line under the label (the goal cards, 2026-10-09): what choosing it means. */
+  description?: string;
+  /**
+   * The opportunity type whose colour the entry's icon takes (the goal cards, 2026-10-09): the
+   * type each goal leads to, as the result cards colour it (`typeBadgeClass`).
+   */
+  toneType?: string;
   comingSoon?: boolean;
 }
 
@@ -58,20 +70,23 @@ export interface PreferenceStepDef {
   id: string;
   title: string;
   subheading: string;
+  /** A boxed note under the step's blocks — for rules the youth needs, never design rationale. */
   infoNote: string | null;
   blocks: StepBlockDef[];
 }
 
-const PROPOSED = "Proposed — awaiting BA sign-off (YOM-1264).";
-
 export const PREFERENCE_STEPS: PreferenceStepDef[] = [
+  // Goal mapping per the BA sheet (2026-09-22): Get a job → Job · Learn new skills → Learning ·
+  // Volunteer → Impact Action · Start a business → Category "Business, Finance & Marketing".
+  // The ids are web keys; the saved goal is the `/user/goal` lookup entry of the same name.
+  // "Attend events" is a design proposal still awaiting BA confirmation (it closes the gap where
+  // Events were reachable from no goal) — kept selectable, recorded in the feature doc.
   {
     id: "goal",
     title: "What brings you to Yoma?",
     subheading:
-      "One choice only — it sets the shape of your feed, and you can change it any time.",
-    infoNote:
-      "Attend events is new — it closes a gap where Events were reachable from no goal at all. Start a business is shown but marked coming soon: it is the one goal with no agreed filter mapping yet, so it stays visible and inert rather than quietly missing.",
+      "Pick one. We'll show you opportunities that match it. You can change it any time.",
+    infoNote: null,
     blocks: [
       {
         kind: "cards",
@@ -80,19 +95,40 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
         note: null,
         optionsSource: null,
         entries: [
-          { id: "job", label: "Get a job", icon: IoBriefcaseOutline },
-          { id: "learn", label: "Learn new skills", icon: IoBookOutline },
-          { id: "event", label: "Attend events", icon: IoCalendarOutline },
+          {
+            id: "job",
+            label: "Get a job",
+            description: "Find full-time, part-time and short-term work.",
+            icon: IoBriefcaseOutline,
+            toneType: "Job",
+          },
+          {
+            id: "learn",
+            label: "Learn new skills",
+            description: "Take courses and training, many of them free.",
+            icon: IoBookOutline,
+            toneType: "Learning",
+          },
+          {
+            id: "event",
+            label: "Attend events",
+            description: "Join workshops, talks and meetups.",
+            icon: IoCalendarOutline,
+            toneType: "Event",
+          },
           {
             id: "impact",
             label: "Volunteer & give back",
+            description: "Help your community and earn rewards.",
             icon: IoHeartOutline,
+            toneType: "ImpactAction",
           },
           {
             id: "biz",
             label: "Start a business",
-            icon: IoStarOutline,
-            comingSoon: true,
+            description: "Get support to start or grow your business.",
+            icon: IoRocketOutline,
+            toneType: "Entrepreneurship",
           },
         ],
       },
@@ -102,7 +138,7 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
     id: "interests",
     title: "What are you interested in?",
     subheading:
-      "Pick as many as you like — these shape which categories lead your feed.",
+      "Pick as many as you like. We'll show you opportunities in these areas.",
     infoNote: null,
     blocks: [
       {
@@ -119,14 +155,15 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
     id: "skills",
     title: "What skills do you have?",
     subheading:
-      "Search and add skills — verified skills from your YoID count automatically.",
+      "Search and add your skills. Skills you've earned on Yoma are added for you.",
     infoNote: null,
     blocks: [
       {
         kind: "lookupSearch",
         prefKey: "skills",
         heading: null,
-        note: "Only jobs are matched on required skills; learning and volunteering award skills instead.",
+        // The saved skills narrow Jobs only, inclusively (2026-10-03, `searchRequest.ts`).
+        note: "Your skills only affect jobs. We hide jobs that need none of your skills. Jobs that don't list skills still show.",
         optionsSource: "skills",
         entries: null,
       },
@@ -134,41 +171,68 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
   },
   {
     id: "time-format",
-    title: "How much time do you have?",
-    subheading: "The most time you can give, and how you'd like to take part.",
+    title: "What works for you?",
+    subheading:
+      "How much time you have, how you want to take part, and if you want pay.",
     infoNote: null,
     blocks: [
       {
         kind: "pills",
         prefKey: "maxCommitment",
-        heading: "How long", // matches the filter section's name
-        // Matches the section's null rule: the API's interval filter EXCLUDES unset commitments.
-        note: "Opportunities that don't state a time commitment are excluded by this.",
+        heading: "Time you have", // matches the filter section's name
+        // Matches the section's null rule: a maximum keeps opportunities with no commitment set
+        // (the revised search contract, 2026-10-03).
+        note: "Opportunities that don't say how long they take still show.",
         optionsSource: "commitmentIntervals",
         entries: null,
       },
+      // Multi-select since 2026-10-03: the API stores a list (`engagementTypes`). Inherited, the
+      // opportunities that don't say stay in. The note's first sentence is the multi-select cue.
       {
         kind: "pills",
         prefKey: "engagement",
-        heading: "How you take part",
-        note: PROPOSED,
+        heading: "Online or in person",
+        note: "Pick any that suit you. Opportunities that don't say still show.",
         optionsSource: "engagementTypes",
         entries: null,
       },
+      // The API's `incentivized` preference (2026-09-28) — the BA's Paid Work Preference, back as
+      // a stored preference. Any incentive counts: pay, ZLTO or another reward.
+      {
+        kind: "pills",
+        prefKey: "incentivized",
+        heading: "Pay or rewards",
+        note: "Leave both off if it doesn't matter. Opportunities that don't say still show, after the ones that match.",
+        optionsSource: null,
+        entries: [
+          { id: "yes", label: "Paid or rewarded" },
+          { id: "no", label: "Unpaid" },
+        ],
+      },
     ],
   },
-  // Pay was removed as a stored preference (2026-08-31 revision §4) — it stays a session filter.
   {
     id: "language",
-    title: "What languages work for you?",
-    subheading: "The languages you're comfortable working in.",
+    title: "Where are you, and what languages do you speak?",
+    subheading: "Where you live, and the languages you understand well.",
     infoNote: null,
     blocks: [
+      // Step 5, above Languages, rather than a step of its own (Jason, 2026-09-28: keep the
+      // steps to a minimum; moved here from under Engagement the same day). The profile country
+      // moved here from the read-only identity block.
+      {
+        kind: "location",
+        prefKey: "location",
+        heading: "Where you are",
+        note: null,
+        optionsSource: null,
+        entries: null,
+      },
       {
         kind: "chips",
         prefKey: "languages",
         heading: "Language",
-        note: PROPOSED,
+        note: null,
         optionsSource: "languages",
         entries: null,
       },
@@ -176,44 +240,44 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
   },
   {
     id: "accessibility-identity",
-    title: "Anything we should accommodate?",
-    subheading: "Opt-in, private to Yoma, and never shared with anyone.",
+    title: "Do you need support to take part?",
+    subheading: "Only if you want to. We keep this private.",
     infoNote: null,
     blocks: [
+      // The API's accessibility requirements (2026-09-28): the shared accessibility list, plus a
+      // description when Other is picked. Inherited since 2026-10-03, inclusively: opportunities
+      // that haven't described their accommodations stay in, an explicit No or a list missing a
+      // need never does (`preferenceMapping.ts`). Other and its description are never searched.
       {
-        kind: "toggle",
+        kind: "accessibility",
         prefKey: "accessibility",
         heading: "Accessibility",
-        note: "Turning this on will exclude opportunities that haven't described their accommodations. It is never shared outside Yoma — not with partners, not in credentials, not in analytics.",
-        optionsSource: null,
+        note: "We hide opportunities that say they offer no support, or that don't offer something you picked. Ones that haven't said still show. We never share your needs: not with partners, not on your YoID, not in our statistics.",
+        optionsSource: "accessibility",
         entries: null,
       },
       {
         kind: "readonly",
         prefKey: null,
-        heading: "From your profile — read, never changed here",
-        note: "These are used to shape your feed and are never written by this dialog.",
+        heading: "From your profile",
+        note: "We use these to choose what you see. You can change them in your profile.",
         optionsSource: null,
         entries: [
           {
-            id: "country",
-            label: "Country",
-            caption: "Maps to: location country",
-          },
-          {
             id: "dateOfBirth",
             label: "Date of birth",
-            caption: "Maps to: age range",
+            caption:
+              "Shows opportunities for your age. You can switch this off for a search.",
           },
           {
             id: "gender",
             label: "Gender",
-            caption: "Ranking only — never a filter",
+            caption: "Not used to filter",
           },
           {
             id: "education",
             label: "Education",
-            caption: "No filter yet — deferred to the AI project",
+            caption: "Not used to filter",
           },
         ],
       },

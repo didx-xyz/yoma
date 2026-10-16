@@ -1,4 +1,6 @@
 using FluentValidation;
+using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
@@ -12,9 +14,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
     #endregion
 
     #region Constructor
-    public MyOpportunityRequestValidatorVerify(ITimeIntervalService timeIntervalService)
+    public MyOpportunityRequestValidatorVerify(ITimeIntervalService timeIntervalService,
+      ICountryService countryService)
     {
-      _timeIntervalService = timeIntervalService;
+      _timeIntervalService = timeIntervalService ?? throw new ArgumentNullException(nameof(timeIntervalService));
+      ArgumentNullException.ThrowIfNull(countryService);
 
       RuleFor(x => x.Certificate).Must(file => file == null || file.Length > 0).WithMessage("{PropertyName} is optional, but if specified, cannot be empty.");
       RuleFor(x => x.VoiceNote).Must(file => file == null || file.Length > 0).WithMessage("{PropertyName} is optional, but if specified, cannot be empty.");
@@ -37,25 +41,24 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
 
       RuleFor(x => x.DateStart)
         .NotEmpty()
-        .When((model, context) => model.CommitmentInterval == null && !AutoFinalizedVerification(context))
+        .When((model, context) => model.CommitmentInterval == null && RequiresParticipationPeriod(context))
         .WithMessage("Start date is required when the commitment interval (time to complete) is not specified.");
 
       RuleFor(x => x.CommitmentInterval)
         .NotNull()
-        .When((model, context) => !model.DateStart.HasValue && !AutoFinalizedVerification(context))
-        .WithMessage("Commitment interval (time to complete) is required when start date is not specified.")
-        .DependentRules(() =>
-        {
-          RuleFor(x => x.CommitmentInterval!.Id)
-            .Must(id => id != Guid.Empty && CommitmentIntervalExists(id))
-            .WithMessage("Commitment interval is empty or does not exist.")
-            .When(x => x.CommitmentInterval != null);
+        .When((model, context) => !model.DateStart.HasValue && RequiresParticipationPeriod(context))
+        .WithMessage("Commitment interval (time to complete) is required when start date is not specified.");
 
-          RuleFor(x => x.CommitmentInterval!.Count)
-            .GreaterThanOrEqualTo((short)1)
-            .WithMessage("Commitment interval count must be greater than or equal to 1.")
-            .When(x => x.CommitmentInterval != null);
-        });
+      // Optional participation periods still require a valid interval when supplied.
+      RuleFor(x => x.CommitmentInterval!.Id)
+        .Must(id => id != Guid.Empty && CommitmentIntervalExists(id))
+        .WithMessage("Commitment interval is empty or does not exist.")
+        .When(x => x.CommitmentInterval != null);
+
+      RuleFor(x => x.CommitmentInterval!.Count)
+        .GreaterThanOrEqualTo((short)1)
+        .WithMessage("Commitment interval count must be greater than or equal to 1.")
+        .When(x => x.CommitmentInterval != null);
 
       RuleFor(x => x.DateEnd)
         .NotEmpty()
@@ -64,6 +67,24 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
         .GreaterThanOrEqualTo(x => x.DateStart)
         .When(x => x.DateStart.HasValue)
         .WithMessage("End date (when did you finish) is earlier than the start date");
+
+      // Named location is optional, but incomplete or non-specific references are never valid.
+      RuleFor(x => x.CountryId)
+        .NotEmpty()
+        .When(x => x.Region != null || x.City != null)
+        .WithMessage("'Country' is required when location details are specified.");
+
+      RuleFor(x => x.CountryId)
+        .Must(id => id.HasValue && countryService.GetByIdOrNull(id.Value) is { } country &&
+          country.CodeAlpha2 != Country.Worldwide.ToDescription())
+        .When(x => x.CountryId.HasValue)
+        .WithMessage("Location country must be a specific country that exists.");
+
+      RuleFor(x => x.Region)
+        .MaximumLength(Constants.Region_MaxLength);
+
+      RuleFor(x => x.City)
+        .MaximumLength(Constants.City_MaxLength);
 
       RuleFor(x => x.PercentComplete)
         .InclusiveBetween(0m, 100m)
@@ -107,6 +128,16 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
     {
       return context.RootContextData.TryGetValue(nameof(MyOpportunityVerificationOptions.AutoFinalizedVerification), out var value) &&
         value is true;
+    }
+
+    private static bool RequiresParticipationPeriod(ValidationContext<MyOpportunityRequestVerify> context)
+    {
+      if (AutoFinalizedVerification(context)) return false;
+
+      // A placement or verified venture outcome need not represent a timed participation period.
+      // Dates or commitment may still be supplied and are validated when present.
+      return !context.RootContextData.TryGetValue(nameof(Opportunity.Models.Opportunity.Type), out var type) ||
+        type is not (Opportunity.Type.Job or Opportunity.Type.Entrepreneurship);
     }
 
     private bool CommitmentIntervalExists(Guid id)

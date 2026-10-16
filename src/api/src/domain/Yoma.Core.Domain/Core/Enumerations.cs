@@ -2,6 +2,22 @@ using System.ComponentModel;
 
 namespace Yoma.Core.Domain.Core
 {
+  public enum UnspecifiedMatch
+  {
+    Exclude,
+    Include,
+    Only
+  }
+
+  public enum LocationSource
+  {
+    // Selected from a location provider's search/autocomplete results.
+    Lookup,
+    // Resolved using the device's location.
+    Device,
+    Manual
+  }
+
   public enum LockMode
   {
     // SELECT ... FOR UPDATE
@@ -65,6 +81,27 @@ namespace Yoma.Core.Domain.Core
     Other
   }
 
+  public enum AccessibilityOption
+  {
+    Other
+  }
+
+  public enum TargetedGroupOption
+  {
+    [Description("Open to all")]
+    OpenToAll
+  }
+
+  /// <summary>
+  /// Currency codes referenced explicitly by application logic. The shared currency lookup
+  /// supplies the full selection; this enum does not restrict its available currencies.
+  /// Payout and Treasury currently use USD only, independently of opportunity incentive currency.
+  /// </summary>
+  public enum CurrencyOption
+  {
+    USD
+  }
+
   public enum SpatialType
   {
     None,
@@ -113,8 +150,9 @@ namespace Yoma.Core.Domain.Core
 
   public enum EngagementTypeOption
   {
-    Online,
-    Offline,
+    Remote,
+    [Description("On-site")]
+    OnSite,
     Hybrid
   }
 
@@ -215,6 +253,7 @@ namespace Yoma.Core.Domain.Core
     Integer,
     Decimal,
     Boolean,
+    Date,
     DateTime,
     Option
   }
@@ -246,9 +285,20 @@ namespace Yoma.Core.Domain.Core
     Language,
 
     /// <summary>
-    /// Skill lookup values are available from the public relative route <c>api/v3/lookup/skill</c>.
+    /// Skill lookup values are available through paged search at <c>api/v3/lookup/skill</c>.
+    /// Resolve selected IDs without paging through <c>POST api/v3/lookup/skill/ids</c>.
     /// </summary>
-    Skill
+    Skill,
+
+    /// <summary>
+    /// Education lookup values are available from the public relative route <c>api/v3/lookup/education</c>.
+    /// </summary>
+    Education,
+
+    /// <summary>
+    /// Currency lookup values are available from the public relative route <c>api/v3/lookup/currency</c>.
+    /// </summary>
+    Currency
   }
 
   public enum CustomFieldUpsertMode

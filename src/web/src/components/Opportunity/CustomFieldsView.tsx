@@ -7,10 +7,14 @@ import {
 } from "~/api/models/opportunity";
 import DetailSection from "~/components/Common/DetailSection";
 import {
+  useCurrenciesQuery,
+  useEducationsQuery,
   useOpportunityCountriesQuery,
   useOpportunityLanguagesQuery,
+  useSkillLabeler,
   useSkillsQuery,
 } from "~/hooks/useOpportunityMutations";
+import { skillIdsInValues } from "~/lib/customFields/skillLabels";
 import { utcToDateInput } from "~/lib/utils";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -41,6 +45,20 @@ export interface CustomFieldsViewProps {
   columns?: number;
   /** Hide group and subgroup section headers. Defaults to false. */
   hideGrouping?: boolean;
+  /**
+   * Wrap long values instead of truncating them (YOM-1262): below `sm` each label sits above its
+   * value; from `sm` they share the row, the value wrapping right-aligned. Off by default, so
+   * every other host keeps its one-line rows. Pair it with `columns={1}`.
+   */
+  wrapValues?: boolean;
+  /**
+   * Name the selected skills by id (`useSkillLabeler`): one request for exactly the skills shown,
+   * so a skill outside the catalogue's first page shows its name rather than its id. Off by
+   * default, and on only for a host that renders one view per page: the request is keyed on its
+   * ids, so a list of cards would make one request per card. Off, skill names come from the first
+   * catalogue page, one shared query for every view.
+   */
+  resolveSkillsById?: boolean;
 }
 
 const dataTypeOf = (definition: CustomFieldDefinition) =>
@@ -58,6 +76,8 @@ export const CustomFieldsView: React.FC<CustomFieldsViewProps> = ({
   className,
   columns = 2,
   hideGrouping = false,
+  wrapValues = false,
+  resolveSkillsById = false,
 }) => {
   const defs = useMemo(() => definitions ?? [], [definitions]);
 
@@ -71,15 +91,27 @@ export const CustomFieldsView: React.FC<CustomFieldsViewProps> = ({
   const needsSkill = defs.some(
     (d) => lookupTypeOf(d) === CustomFieldLookupType.Skill,
   );
+  const needsEducation = defs.some(
+    (d) => lookupTypeOf(d) === CustomFieldLookupType.Education,
+  );
+  const needsCurrency = defs.some(
+    (d) => lookupTypeOf(d) === CustomFieldLookupType.Currency,
+  );
   const { data: countriesData } = useOpportunityCountriesQuery({
     enabled: needsCountry,
+  });
+  const { data: educationsData } = useEducationsQuery({
+    enabled: needsEducation,
+  });
+  const { data: currenciesData } = useCurrenciesQuery({
+    enabled: needsCurrency,
   });
   const { data: languagesData } = useOpportunityLanguagesQuery({
     enabled: needsLanguage,
   });
   const { data: skillsData } = useSkillsQuery(
     { nameContains: null, pageNumber: 1, pageSize: 500 },
-    { enabled: needsSkill },
+    { enabled: needsSkill && !resolveSkillsById },
   );
   const countryMap = useMemo(
     () => new Map((countriesData ?? []).map((c) => [c.id, c.name])),
@@ -92,6 +124,18 @@ export const CustomFieldsView: React.FC<CustomFieldsViewProps> = ({
   const skillMap = useMemo(
     () => new Map((skillsData?.items ?? []).map((s) => [s.id, s.name])),
     [skillsData?.items],
+  );
+  const educationMap = useMemo(
+    () => new Map((educationsData ?? []).map((e) => [e.id, e.name])),
+    [educationsData],
+  );
+  // Currency custom fields store the lookup id, not the ISO code
+  const currencyMap = useMemo(
+    () =>
+      new Map(
+        (currenciesData ?? []).map((c) => [c.id, `${c.code} — ${c.name}`]),
+      ),
+    [currenciesData],
   );
 
   const valueByKey = useMemo(() => {
@@ -118,6 +162,15 @@ export const CustomFieldsView: React.FC<CustomFieldsViewProps> = ({
     );
   }, [defs, fields]);
 
+  // With `resolveSkillsById`, skills are named by id — exactly the selected ones in the fields
+  // shown, one request for the view — rather than from a catalogue page, which needn't hold them.
+  // Off, no ids means no request.
+  const skillIds = useMemo(
+    () => (resolveSkillsById ? skillIdsInValues(ordered, values) : []),
+    [resolveSkillsById, ordered, values],
+  );
+  const skillLabel = useSkillLabeler(skillIds);
+
   const resolveOptionLabel = (
     definition: CustomFieldDefinition,
     value: string,
@@ -128,7 +181,13 @@ export const CustomFieldsView: React.FC<CustomFieldsViewProps> = ({
       case CustomFieldLookupType.Language:
         return languageMap.get(value) ?? value;
       case CustomFieldLookupType.Skill:
-        return skillMap.get(value) ?? value;
+        return resolveSkillsById
+          ? skillLabel(value)
+          : (skillMap.get(value) ?? value);
+      case CustomFieldLookupType.Education:
+        return educationMap.get(value) ?? value;
+      case CustomFieldLookupType.Currency:
+        return currencyMap.get(value) ?? value;
       default:
         return (
           definition.options?.find(
@@ -153,7 +212,7 @@ export const CustomFieldsView: React.FC<CustomFieldsViewProps> = ({
     const raw = item.value;
     if (raw == null || raw.trim() === "") return null;
     if (dataType === CustomFieldDataType.Boolean)
-      return raw === "true" ? "Yes" : "No";
+      return raw.trim().toLowerCase() === "true" ? "Yes" : "No";
     if (dataType === CustomFieldDataType.DateTime)
       return utcToDateInput(raw) || raw;
     return raw;
@@ -196,19 +255,33 @@ export const CustomFieldsView: React.FC<CustomFieldsViewProps> = ({
       }}
       data-testid="custom-fields-view"
     >
-      {fieldsToRender.map((r) => (
-        <div key={r.key} className="flex flex-row justify-between gap-2">
-          <span
-            className="font-semiboldx min-w-40 truncate text-nowrap"
-            title={r.title}
+      {fieldsToRender.map((r) =>
+        wrapValues ? (
+          <div
+            key={r.key}
+            className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4"
           >
-            {r.title}:
-          </span>
-          <span className="line-clamp-2 truncate font-bold" title={r.value}>
-            {r.value}
-          </span>
-        </div>
-      ))}
+            <span className="text-[13px] sm:shrink-0 sm:text-sm">
+              {r.title}:
+            </span>
+            <span className="min-w-0 font-bold wrap-break-word sm:text-right">
+              {r.value}
+            </span>
+          </div>
+        ) : (
+          <div key={r.key} className="flex flex-row justify-between gap-2">
+            <span
+              className="font-semiboldx min-w-40 truncate text-nowrap"
+              title={r.title}
+            >
+              {r.title}:
+            </span>
+            <span className="line-clamp-2 truncate font-bold" title={r.value}>
+              {r.value}
+            </span>
+          </div>
+        ),
+      )}
     </div>
   );
 

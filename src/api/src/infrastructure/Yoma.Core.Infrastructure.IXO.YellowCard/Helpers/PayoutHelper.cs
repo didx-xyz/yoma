@@ -1,3 +1,4 @@
+using Yoma.Core.Domain.Core;
 using System.Globalization;
 using Yoma.Core.Domain.Payout;
 using Yoma.Core.Domain.Payout.Models.Provider;
@@ -24,7 +25,7 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Helpers
         // lowestMinUsd already includes IXO's exchange-rate buffer. Zero means no minimum.
         // The provider's currency field labels local channel amounts, not this USD value.
         MinimumAmount = minimum == 0 ? null : minimum,
-        Currency = Currency.USD
+        Currency = CurrencyOption.USD
       };
     }
 

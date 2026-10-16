@@ -20,7 +20,14 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
     public Skill Skill { get; set; } = null!;
 
     [Required]
+    [Column(TypeName = "varchar(25)")]
+    public string Type { get; set; } = null!;
+
+    [Required]
     public DateTimeOffset DateCreated { get; set; }
+
+    [Required]
+    public DateTimeOffset DateModified { get; set; }
 
     public ICollection<UserSkillOrganization> Organizations { get; set; } = null!;
   }

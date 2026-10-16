@@ -8,6 +8,10 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public Guid SkillId { get; set; }
 
+    public UserSkillType Type { get; set; }
+
     public DateTimeOffset DateCreated { get; set; }
+
+    public DateTimeOffset DateModified { get; set; }
   }
 }

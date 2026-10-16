@@ -89,7 +89,7 @@ namespace Yoma.Core.Domain.SSI.Services
       if (string.IsNullOrEmpty(typeContext)) return results;
 
       if (!type.HasValue || !_ssiSchemaEntityService.TypeContextValid(type.Value, typeContext))
-        throw new ArgumentException($"Type context '{typeContext}' is invalid or unsupported for schema type '{type}'", nameof(typeContext));
+        throw new ValidationException($"Type context '{typeContext}' is invalid or unsupported for schema type '{type}'");
 
       // Opportunity management may select any generic schema or one scoped to the selected Opportunity type.
       // Schemas scoped to another type are excluded; no schema is selected or substituted by this operation.
@@ -199,9 +199,8 @@ namespace Yoma.Core.Domain.SSI.Services
       if (nameParts.Length is < 2 or > 3 || nameParts.Any(string.IsNullOrWhiteSpace))
         throw new ArgumentException($"Schema name of '{schemaFullName}' is invalid. Expecting [type]|[name] or [type]|[typeContext]|[name]", nameof(schemaFullName));
 
-      var schemaType = _ssiSchemaTypeService.GetByNameOrNull(nameParts.First());
-      if (schemaType == null)
-        throw new ArgumentException($"Schema full name of '{schemaFullName}' is invalid. Specified type '{nameParts.First()}' does not exist", nameof(schemaFullName));
+      var schemaType = _ssiSchemaTypeService.GetByNameOrNull(nameParts.First())
+        ?? throw new ArgumentException($"Schema full name of '{schemaFullName}' is invalid. Specified type '{nameParts.First()}' does not exist", nameof(schemaFullName));
 
       var typeContext = nameParts.Length == 3
         ? nameParts[1].Trim()
@@ -381,9 +380,8 @@ namespace Yoma.Core.Domain.SSI.Services
         .ToList();
 
       if (attributesInvalid.Count != 0)
-        throw new ArgumentException(
-          $"Request contains attributes that are not available for the specified schema type and context: '{string.Join(",", attributesInvalid)}'",
-          nameof(request));
+        throw new ValidationException(
+          $"Request contains attributes that are not available for the specified schema type and context: '{string.Join(",", attributesInvalid)}'");
     }
 
     /// <summary>

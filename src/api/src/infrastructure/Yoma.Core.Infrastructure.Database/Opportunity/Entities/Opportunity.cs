@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Yoma.Core.Domain.Opportunity;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Yoma.Core.Infrastructure.Database.Entity.Entities;
@@ -10,7 +11,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
   [Table("Opportunity", Schema = "Opportunity")]
   [Index(nameof(Title), IsUnique = true)]
   [Index(nameof(OrganizationId), nameof(ExternalId), IsUnique = true)]
-  [Index(nameof(TypeId), nameof(OrganizationId), nameof(ZltoReward), nameof(DifficultyId), nameof(CommitmentIntervalId), nameof(CommitmentIntervalCount), nameof(StatusId), nameof(Keywords),
+  [Index(nameof(TypeId), nameof(OrganizationId), nameof(ZltoReward), nameof(CommitmentIntervalId), nameof(CommitmentIntervalCount), nameof(StatusId), nameof(Keywords),
     nameof(DateStart), nameof(DateEnd), nameof(CredentialIssuanceEnabled), nameof(Featured), nameof(EngagementTypeId), nameof(ShareWithPartners), nameof(Hidden),
     nameof(DateCreated), nameof(CreatedByUserId), nameof(DateModified), nameof(ModifiedByUserId))]
   public class Opportunity : Shared.Entities.BaseEntity<Guid>
@@ -46,6 +47,38 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
     [Column(TypeName = "varchar(2048)")]
     public string? URL { get; set; }
 
+    [Column(TypeName = "varchar(255)")]
+    public string? Provider { get; set; }
+
+    [Column(TypeName = "varchar(2048)")]
+    public string? ProviderURL { get; set; }
+
+    [Column(TypeName = "varchar(2048)")]
+    public string? ProviderLogoURL { get; set; }
+
+    [ForeignKey("ProviderCountryId")]
+    public Guid? ProviderCountryId { get; set; }
+    public Country? ProviderCountry { get; set; }
+
+    public bool? Incentivized { get; set; }
+
+    public RewardType RewardType { get; set; }
+
+    [Column(TypeName = "decimal(18,4)")]
+    public decimal? PartnerIncentiveAmount { get; set; }
+
+    [Column(TypeName = "varchar(3)")]
+    public string? PartnerIncentiveCurrency { get; set; }
+
+    public AccessibilitySupport? AccessibilitySupport { get; set; }
+
+    [Column(TypeName = "varchar(500)")]
+    public string? AccommodationOtherDescription { get; set; }
+
+    public short? AgeFrom { get; set; }
+
+    public short? AgeTo { get; set; }
+
     [Column(TypeName = "decimal(8,2)")]
     public decimal? ZltoReward { get; set; }
 
@@ -60,10 +93,6 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
 
     [Column(TypeName = "varchar(20)")]
     public string? VerificationMethod { get; set; }
-
-    [ForeignKey("DifficultyId")]
-    public Guid? DifficultyId { get; set; }
-    public OpportunityDifficulty? Difficulty { get; set; } = null!;
 
     [ForeignKey("CommitmentIntervalId")]
     public Guid? CommitmentIntervalId { get; set; }
@@ -122,6 +151,12 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
     [ForeignKey("ModifiedByUserId")]
     public Guid ModifiedByUserId { get; set; }
     public User ModifiedByUser { get; set; } = null!;
+
+    public ICollection<OpportunityAccommodation> Accommodations { get; set; } = null!;
+
+    public ICollection<OpportunityTargetedGroup> TargetedGroups { get; set; } = null!;
+
+    public ICollection<OpportunitySustainableDevelopmentGoal> SustainableDevelopmentGoals { get; set; } = null!;
 
     public ICollection<OpportunityCategory> Categories { get; set; } = null!;
 

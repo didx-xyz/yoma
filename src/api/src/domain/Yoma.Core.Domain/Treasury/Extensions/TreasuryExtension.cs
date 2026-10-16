@@ -32,8 +32,7 @@ namespace Yoma.Core.Domain.Treasury.Extensions
     {
       ArgumentNullException.ThrowIfNull(value, nameof(value));
 
-      if (payoutTotalPending < 0m)
-        throw new ArgumentOutOfRangeException(nameof(payoutTotalPending));
+      ArgumentOutOfRangeException.ThrowIfLessThan(payoutTotalPending, 0m);
 
       return value.PayoutBalanceCurrentFinancialYearInUsd.HasValue
         ? value.PayoutBalanceCurrentFinancialYearInUsd.Value - payoutTotalPending

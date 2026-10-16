@@ -4,7 +4,6 @@ using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Services;
 using Yoma.Core.Domain.PartnerSync.Models;
-using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Helpers;
 using Yoma.Core.Infrastructure.Umuzi.Models;
 
@@ -72,23 +71,23 @@ namespace Yoma.Core.Infrastructure.Umuzi.Client
         ZltoReward = null,
         ZltoRewardPool = null,
         CredentialIssuanceEnabled = true,
-        SSISchemaName = SSISSchemaHelper.ToFullName(SchemaType.Opportunity, "Default"),
+        SSISchemaName = SSISSchemaHelper.ToDefaultFullName(type),
         Skills = skills?.Select(o => o.Id).ToList(),
         ShareWithPartners = false,
         Hidden = item.Hidden,
         Keywords = keywords,
-        Categories = categories.Select(o => o.Id).ToList(),
-        Countries = countries.Select(o => o.Id).ToList(),
-        Languages = languages.Select(o => o.Id).ToList()
+        Categories = [.. categories.Select(o => o.Id)],
+        Countries = [.. countries.Select(o => new Domain.Opportunity.Models.OpportunityRequestCountry { CountryId = o.Id })],
+        Languages = [.. languages.Select(o => o.Id)]
       };
 
       if (type != Domain.Opportunity.Type.Job)
       {
-        var difficulty = ResolveDifficulty(item.Difficulty);
+        var difficulty = ResolveDifficulty(type, item.Difficulty);
         var (Interval, Count) = ResolveCommitment(item.CommitmentInterval, item.CommitmentCount);
         var engagementType = ResolveEngagementType(item.EngagementType);
 
-        result.DifficultyId = difficulty.Id;
+        result.CustomFields = [difficulty];
         result.CommitmentIntervalId = Interval.Id;
         result.CommitmentIntervalCount = Count;
         result.EngagementTypeId = engagementType.Id;

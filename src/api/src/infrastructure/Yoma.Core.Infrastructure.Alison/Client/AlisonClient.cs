@@ -19,7 +19,6 @@ using Yoma.Core.Domain.PartnerSync;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Provider;
 using Yoma.Core.Domain.PartnerSync.Models;
 using Yoma.Core.Domain.PartnerSync.Validators;
-using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Helpers;
 using Yoma.Core.Infrastructure.Alison.Extensions;
 using Yoma.Core.Infrastructure.Alison.Interfaces;
@@ -38,36 +37,42 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     // If unresolved, default to Other.
     private static readonly Dictionary<Guid, string[]> Categories_Map = new()
     {
-      // Agriculture
-      { new Guid("2ccbacf7-1ed9-4e20-bb7c-43edfdb3f950"), ["agriculture", "farming"] },
-      // Career and Personal Development
-      { new Guid("89f4ab46-0767-494f-a18c-3037f698133a"), ["language", "education", "personal-development"] },
-      // Business and Entrepreneurship
-      { new Guid("c76786fd-fca9-4633-85b3-11e53486d708"), ["business", "marketing", "engineering", "management", "entrepreneurship", "finance", "economics", "law", "accounting", "e-commerce", "sales", "digital-marketing", "marketing/social-media", "marketing/sales", "marketing/retail"] },
-      // Environment and Climate
-      { new Guid("d0d322ab-d1d7-44b6-94e8-7b85246aa42e"), ["education/climate-change", "engineering/renewable-energy"] },
-      // Technology and Digitization
-      { new Guid("fa564c1c-591a-4a6d-8294-20165da8866b"), ["it", "network-and-security", "software-development", "software-tools", "it-management", "software-engineering", "it/administration", "it/aws", "it/ccna", "it/comptia", "it/computer-networking", "it/data-security", "it/devops", "it/microsoft", "it/security", "it/server"] },
-      // Tourism and Hospitality
+      // Agriculture, Food, Environment and Climate
+      { new Guid("2ccbacf7-1ed9-4e20-bb7c-43edfdb3f950"), ["agriculture", "farming", "education/climate-change", "engineering/renewable-energy"] },
+      // Languages & Communication
+      { new Guid("be1c903e-87bb-41cd-8da4-1f2f286d7dc9"), ["language"] },
+      // Education & Teaching
+      { new Guid("1e8e59ae-4009-48ef-8c09-a72d6af068c7"), ["education"] },
+      // Personal Development & Career Readiness
+      { new Guid("89f4ab46-0767-494f-a18c-3037f698133a"), ["personal-development"] },
+      // Business, Finance & Marketing
+      { new Guid("c76786fd-fca9-4633-85b3-11e53486d708"), ["business", "marketing", "management", "entrepreneurship", "finance", "economics", "accounting", "e-commerce", "sales", "digital-marketing", "marketing/social-media", "marketing/sales"] },
+      // Engineering, Science & Mathematics
+      { new Guid("15ba04a2-5b3d-4d40-aa20-62ea38c9769a"), ["engineering"] },
+      // Law, Governance & Compliance
+      { new Guid("944c4b9a-8dc8-4e18-8913-2a01461a4f9b"), ["law"] },
+      // Retail & Food Services
+      { new Guid("8a1778eb-0cd3-434c-bfb6-15788fd0b678"), ["marketing/retail"] },
+      // Technology, AI & Data
+      { new Guid("fa564c1c-591a-4a6d-8294-20165da8866b"), ["it", "network-and-security", "software-development", "software-tools", "it-management", "software-engineering", "it/administration", "it/aws", "it/ccna", "it/comptia", "it/computer-networking", "it/data-security", "it/devops", "it/microsoft", "it/security", "it/server", "data-science", "databases"] },
+      // Hospitality & Tourism
       { new Guid("f36051c9-9057-4765-bc2f-9dee82ef60d6"), ["tourism-and-hospitality", "language/travel"] },
-      // AI, Data and Analytics
-      { new Guid("1dc39a5d-e049-4cfe-b708-855fce97b86e"), ["data-science", "databases"] },
-      // Creative Industry and Arts
+      // Creative, Media & Design
       { new Guid("7afb66ad-164e-46a3-933f-a0bac1ca1923"), ["media-and-journalism", "music", "photography", "literature", "education/music-theory"] },
-      // Health and Care
+      // Health, Safety & Wellbeing
       { new Guid("6e6a5f23-6d2e-4f45-8b4d-5d9c9a6b1e71"), ["health", "mental-health", "health-care", "nursing", "caregiving", "nutrition", "pharmacology", "personal-development/health", "personal-development/mental-health", "personal-development/depression", "personal-development/anxiety", "personal-development/diet", "fitness", "health-and-safety", "business/health-and-safety", "engineering/health-and-safety", "management/health-and-safety", "management/nursing"] }
     };
 
-    // Yoma difficulty id -> Alison course levels.
+    // Legacy difficulty -> Alison course levels.
     // Unknown or omitted values default to Any Level.
-    private static readonly Dictionary<Guid, string[]> Difficulty_Map = new()
+    private static readonly Dictionary<string, string[]> Difficulty_Map = new()
     {
       // Beginner
-      { new Guid("e33ae372-c63f-459d-983f-4527355fd0c4"), ["Beginner", "Beginner Level"] },
+      { CustomFieldConstants.Difficulty.Options.Beginner, ["Beginner", "Beginner Level"] },
       // Intermediate
-      { new Guid("e84efa58-f0ff-41f4-a2db-12c33f5e306c"), ["Intermediate", "Intermediate Level"] },
+      { CustomFieldConstants.Difficulty.Options.Intermediate, ["Intermediate", "Intermediate Level"] },
       // Advanced
-      { new Guid("833e1f02-31b9-455e-8f4f-ce6a6c4a9aa7"), ["Advanced", "Advanced Level", "Expert", "Expert Level"] }
+      { CustomFieldConstants.Difficulty.Options.Advanced, ["Advanced", "Advanced Level", "Expert", "Expert Level"] }
     };
 
     // Yoma time interval name -> Alison duration unit values.
@@ -87,11 +92,12 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     private readonly AlisonOptions _options;
     private readonly IRepositoryBatched<AlisonOpportunity> _opportunityRepository;
     private readonly IOpportunityTypeService _opportunityTypeService;
+    private readonly ICustomFieldDefinitionService _customFieldDefinitionService;
     private readonly IOpportunityCategoryService _opportunityCategoryService;
     private readonly ICountryService _countryService;
     private readonly ILanguageService _languageService;
     private readonly ISkillService _skillService;
-    private readonly IOpportunityDifficultyService _opportunityDifficultyService;
+    private readonly ISustainableDevelopmentGoalService _sustainableDevelopmentGoalService;
     private readonly ITimeIntervalService _timeIntervalService;
     private readonly IEngagementTypeService _engagementTypeService;
     private readonly IAlisonAuthService _alisonAuthService;
@@ -107,11 +113,12 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       AlisonOptions options,
       IRepositoryBatched<AlisonOpportunity> opportunityRepository,
       IOpportunityTypeService opportunityTypeService,
+      ICustomFieldDefinitionService customFieldDefinitionService,
       IOpportunityCategoryService opportunityCategoryService,
       ICountryService countryService,
       ILanguageService languageService,
       ISkillService skillService,
-      IOpportunityDifficultyService opportunityDifficultyService,
+      ISustainableDevelopmentGoalService sustainableDevelopmentGoalService,
       ITimeIntervalService timeIntervalService,
       IEngagementTypeService engagementTypeService,
       IAlisonAuthService alisonAuthService,
@@ -124,11 +131,12 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       _options = options ?? throw new ArgumentNullException(nameof(options));
       _opportunityRepository = opportunityRepository ?? throw new ArgumentNullException(nameof(opportunityRepository));
       _opportunityTypeService = opportunityTypeService ?? throw new ArgumentNullException(nameof(opportunityTypeService));
+      _customFieldDefinitionService = customFieldDefinitionService ?? throw new ArgumentNullException(nameof(customFieldDefinitionService));
       _opportunityCategoryService = opportunityCategoryService ?? throw new ArgumentNullException(nameof(opportunityCategoryService));
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
       _skillService = skillService ?? throw new ArgumentNullException(nameof(skillService));
-      _opportunityDifficultyService = opportunityDifficultyService ?? throw new ArgumentNullException(nameof(opportunityDifficultyService));
+      _sustainableDevelopmentGoalService = sustainableDevelopmentGoalService ?? throw new ArgumentNullException(nameof(sustainableDevelopmentGoalService));
       _timeIntervalService = timeIntervalService ?? throw new ArgumentNullException(nameof(timeIntervalService));
       _engagementTypeService = engagementTypeService ?? throw new ArgumentNullException(nameof(engagementTypeService));
       _alisonAuthService = alisonAuthService ?? throw new ArgumentNullException(nameof(alisonAuthService));
@@ -412,11 +420,19 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       var categories = GetCategories(course);
 
       // Countries:
-      // Always include Worldwide because Alison courses appear globally accessible.
-      // If publisher.location contains a specific resolvable country, also include it for publisher-country discoverability.
-      // Skip "Global" / "Worldwide" because those are already represented by WW.
-      // Ignore Alison publisher.country_id because it is Alison-specific and not mapped to Yoma/ISO country ids.
-      var countries = GetCountries(course);
+      // Course availability is Worldwide only; publisher origin is separate discoverability metadata.
+      // Alison-specific publisher.country_id is not a Yoma/ISO country reference.
+      var countries = new List<Domain.Lookups.Models.Country>
+      {
+        _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription())
+      };
+
+      // Provider:
+      // Publishers have no timestamp to identify the latest, so use the first supplied publisher.
+      // Keep name, logo and origin together; missing data must not be borrowed from another publisher.
+      var publisher = course.Publishers.FirstOrDefault();
+      var publisherName = publisher?.Name.HtmlDecode()?.RemoveHtmlTags()?.NormalizeNullableValue();
+      var providerCountry = GetProviderCountry(publisher);
 
       // Languages:
       // Store Alison opportunity content in English where available, but map all course-level supported languages.
@@ -431,11 +447,10 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       // Title and summary are shaped to satisfy Yoma validation limits.
       // Summary is plain text only.
       // Description is converted from Alison HTML to Yoma markdown-style formatting.
-      // Description also appends selected Alison metadata such as publisher and course type.
-      var publisherName = GetPublisherName(course);
+      // Description retains course type and certificate guidance; publisher is exposed as Provider.
       var title = GetTitle(course);
       var summary = GetSummary(course, title);
-      var description = GetDescription(course, title, publisherName);
+      var description = GetDescription(course, title);
 
       // Dates:
       // DateStart = published_at -> created_at -> UtcNow.
@@ -479,8 +494,8 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       var (interval, count) = GetCommitment(course);
 
       // Engagement type:
-      // Alison provides online courses only, so all synced Alison opportunities are mapped as Online.
-      var engagementType = _engagementTypeService.GetByName(EngagementTypeOption.Online.ToString());
+      // Alison provides remote courses only.
+      var engagementType = _engagementTypeService.GetByName(EngagementTypeOption.Remote.ToString());
 
       return new SyncItemEntity<OpportunityRequestCreate>
       {
@@ -493,6 +508,9 @@ namespace Yoma.Core.Infrastructure.Alison.Client
           TypeId = opportunityType.Id,
           Summary = summary,
           URL = course.ToCourseUrl(_options.WebBaseUrl),
+          Provider = publisherName,
+          ProviderLogoURL = publisher?.ImageUrl?.NormalizeNullableValue(),
+          ProviderCountryId = providerCountry?.Id,
 
           OrganizationId = _options.OrganizationIdYoma,
 
@@ -512,11 +530,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
           ZltoRewardPool = null,
 
           CredentialIssuanceEnabled = true,
-          // TODO [YOM-1264/YOM-1280]: Review and assign the approved generic or type-specific
-          // credential schema once the final custom fields and schema flavours are agreed.
-          SSISchemaName = SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default"),
-
-          DifficultyId = difficulty.Id,
+          SSISchemaName = SSISSchemaHelper.ToDefaultFullName(Domain.Opportunity.Type.Learning),
 
           CommitmentIntervalId = interval.Id,
           CommitmentIntervalCount = count,
@@ -529,13 +543,14 @@ namespace Yoma.Core.Infrastructure.Alison.Client
           Hidden = false,
 
           Keywords = keywords,
+          SustainableDevelopmentGoals = GetSustainableDevelopmentGoals(course),
           Categories = [.. categories.Select(o => o.Id)],
-          Countries = [.. countries.Select(o => o.Id)],
+          Countries = [.. countries.Select(o => new OpportunityRequestCountry { CountryId = o.Id })],
           Languages = [.. languages.Select(o => o.Id)],
 
           // Populate when available. Partner sync uses PatchAllowMissingRequired:
           // omitted fields are preserved and key-only fields delete existing values.
-          CustomFields = null
+          CustomFields = [difficulty]
         }
       };
     }
@@ -600,27 +615,12 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return false;
     }
 
-    private List<Domain.Lookups.Models.Country> GetCountries(Course course)
+    private Domain.Lookups.Models.Country? GetProviderCountry(Publisher? publisher)
     {
-      ArgumentNullException.ThrowIfNull(course);
+      var countryName = ResolvePublisherCountryName(publisher?.Location);
+      if (string.IsNullOrEmpty(countryName)) return null;
 
-      var result = new List<Domain.Lookups.Models.Country>
-      {
-        _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription())
-      };
-
-      foreach (var publisher in course.Publishers)
-      {
-        var countryName = ResolvePublisherCountryName(publisher.Location);
-        if (string.IsNullOrEmpty(countryName)) continue;
-
-        var country = _countryService.GetByNameOrNull(countryName);
-        if (country == null) continue;
-
-        result.Add(country);
-      }
-
-      return [.. result.DistinctBy(item => item.Id)];
+      return _countryService.GetByNameOrNull(countryName);
     }
 
     private static string? ResolvePublisherCountryName(string? location)
@@ -740,7 +740,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return (summary ?? title).TrimToLengthWithEllipsis(OpportunityService.Summary_MaxLength);
     }
 
-    private static string GetDescription(Course course, string title, string? publisherName)
+    private static string GetDescription(Course course, string title)
     {
       ArgumentNullException.ThrowIfNull(course);
 
@@ -755,10 +755,6 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
       var metadata = new List<string>();
 
-      publisherName = publisherName?.Trim();
-      if (!string.IsNullOrEmpty(publisherName))
-        metadata.Add($"**Publisher:** {publisherName}");
-
       var courseType = course.Type?.Trim().HtmlDecode().RemoveHtmlTags();
       if (!string.IsNullOrEmpty(courseType))
         metadata.Add($"**Course type:** {courseType.TitleCase()}");
@@ -769,15 +765,6 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       description = $"{description}{StringExtensions.MarkdownParagraphBreak}{certificateNotice}";
 
       return description.NormalizeTrimMultiline();
-    }
-
-    private static string? GetPublisherName(Course course)
-    {
-      ArgumentNullException.ThrowIfNull(course);
-
-      return course.Publishers
-        .Select(item => item.Name.HtmlDecode()?.RemoveHtmlTags())
-        .FirstOrDefault(item => !string.IsNullOrWhiteSpace(item));
     }
 
     private static CourseTranslation? GetPreferredTranslation(Course course)
@@ -842,6 +829,22 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       keywords.Add(value);
     }
 
+    private List<Guid>? GetSustainableDevelopmentGoals(Course course)
+    {
+      // Only explicit SDG tags identify a goal. Do not infer goals from general course topics.
+      var numbers = course.Tags.Select(tag => tag.GetName()?.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        .Where(parts => parts is { Length: >= 2 } && string.Equals(parts[0], "SDG", StringComparison.OrdinalIgnoreCase))
+        .Select(parts => int.TryParse(parts![1], NumberStyles.None, CultureInfo.InvariantCulture, out var number) ? number : 0)
+        .Where(number => number >= 1 && number <= 17)
+        .Distinct()
+        .ToList();
+
+      if (numbers.Count == 0) return null;
+
+      return [.. _sustainableDevelopmentGoalService.List().Where(goal => numbers.Contains(goal.Number))
+        .OrderBy(goal => goal.Number).Select(goal => goal.Id)];
+    }
+
     private List<Domain.Lookups.Models.Skill>? GetSkills(Course course)
     {
       ArgumentNullException.ThrowIfNull(course);
@@ -883,31 +886,24 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return null;
     }
 
-    private Domain.Opportunity.Models.Lookups.OpportunityDifficulty GetDifficulty(Course course)
+    private CustomFieldValueRequest GetDifficulty(Course course)
     {
       ArgumentNullException.ThrowIfNull(course);
 
-      var difficultyId = ResolveDifficultyIdOrNull(course.CourseLevel);
-
-      return difficultyId.HasValue
-        ? _opportunityDifficultyService.GetById(difficultyId.Value)
-        : _opportunityDifficultyService.GetByName(Difficulty.AnyLevel.ToDescription());
-    }
-
-    private static Guid? ResolveDifficultyIdOrNull(string? courseLevel)
-    {
-      courseLevel = courseLevel?.NormalizeNullableValue();
-
-      if (string.IsNullOrEmpty(courseLevel))
-        return null;
-
+      var courseLevel = course.CourseLevel?.NormalizeNullableValue();
+      var option = Difficulty.AnyLevel.ToString();
       foreach (var mapping in Difficulty_Map)
       {
         if (mapping.Value.Any(item => string.Equals(item, courseLevel, StringComparison.OrdinalIgnoreCase)))
-          return mapping.Key;
+        {
+          option = mapping.Key;
+          break;
+        }
       }
 
-      return null;
+      var definition = _customFieldDefinitionService.GetByKey(
+        CustomFieldEntityType.Opportunity, CustomFieldConstants.Difficulty.Keys.Learning, true, true);
+      return definition.ToOptionRequest(option);
     }
 
     private (Domain.Lookups.Models.TimeInterval Interval, short Count) GetCommitment(Course course)

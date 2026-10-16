@@ -13,11 +13,12 @@ import {
 } from "~/api/services/userPreferences";
 
 /**
- * The anonymous → signed-in hand-over (YOM-1261). Anonymous answers live in `sessionStorage` and
- * die with the session; when a youth signs in while such answers exist, we offer ONCE to keep
+ * The anonymous → signed-in hand-over (YOM-1261). Anonymous answers live in `localStorage` (per
+ * device, since 2026-10-07); when a youth signs in while such answers exist, we offer ONCE to keep
  * them. Keeping merges them into the stored preset through the façade — an existing preset is
- * never overwritten silently (multi-selects union; the session's answers win where both set a
- * single value). Declining discards the session answers, which also retires the offer.
+ * never overwritten silently (multi-selects union, engagement included since the wizard step
+ * picks several; the session's answers win where both set a single value). Declining discards
+ * the session answers, which also retires the offer.
  */
 const hasAnswers = (preferences: UserPreferences | null): boolean =>
   preferences !== null &&
@@ -27,7 +28,13 @@ export function useAnonymousMigration(
   scope: UserPreferenceScope,
   /** The signed-in youth's stored preset — `undefined` while loading. */
   stored: UserPreferences | null | undefined,
+  /**
+   * The provider's save. The session's goal can replace the stored one, and the provider then
+   * drops the clauses of a type only the old goal supplied (`preferencesSaved`).
+   */
   saveStored: (preferences: UserPreferences) => Promise<UserPreferences>,
+  /** The profile's global country — it wins over the session's; see `mergeUserPreferences`. */
+  profileCountryId: string | null,
 ): {
   /**
    * Session-held answers awaiting the youth's keep/discard decision. `undefined` = still
@@ -69,10 +76,14 @@ export function useAnonymousMigration(
     // would clobber an existing preset. The prompt only renders once it has resolved.
     if (!pendingAnonymous || stored === undefined) return;
     await saveStored(
-      mergeUserPreferences(stored ?? EMPTY_USER_PREFERENCES, pendingAnonymous),
+      mergeUserPreferences(
+        stored ?? EMPTY_USER_PREFERENCES,
+        pendingAnonymous,
+        profileCountryId,
+      ),
     );
     await retire();
-  }, [pendingAnonymous, stored, saveStored, retire]);
+  }, [pendingAnonymous, stored, saveStored, retire, profileCountryId]);
 
   return {
     pendingAnonymous,

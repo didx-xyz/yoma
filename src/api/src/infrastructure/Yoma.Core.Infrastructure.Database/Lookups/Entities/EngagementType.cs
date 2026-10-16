@@ -13,6 +13,10 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Entities
     public string Name { get; set; } = null!;
 
     [Required]
+    [Column(TypeName = "varchar(125)")]
+    public string DisplayName { get; set; } = null!;
+
+    [Required]
     public DateTimeOffset DateCreated { get; set; }
   }
 }

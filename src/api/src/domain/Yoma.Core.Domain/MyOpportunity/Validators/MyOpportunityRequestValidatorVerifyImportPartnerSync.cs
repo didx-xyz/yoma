@@ -1,13 +1,22 @@
 using FluentValidation;
+using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
 
 namespace Yoma.Core.Domain.MyOpportunity.Validators
 {
+  /// <summary>
+  /// Validates optional partner-supplied participation data, without enforcing youth-country availability.
+  /// Location references and lengths are validated here; engagement, Worldwide and type applicability are applied at capture.
+  /// </summary>
   public sealed class MyOpportunityRequestValidatorVerifyImportPartnerSync : AbstractValidator<MyOpportunityRequestVerifyImportPartnerSync>
   {
     #region Constructor
-    public MyOpportunityRequestValidatorVerifyImportPartnerSync()
+    public MyOpportunityRequestValidatorVerifyImportPartnerSync(ICountryService countryService)
     {
+      ArgumentNullException.ThrowIfNull(countryService);
+
       RuleFor(x => x.OpportunityId)
         .NotEmpty()
         .WithMessage("Opportunity id is required.");
@@ -45,6 +54,24 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
         .GreaterThanOrEqualTo(x => x.DateStart)
         .When(x => x.Completed && x.DateCompleted.HasValue && x.DateStart.HasValue)
         .WithMessage("Date completed cannot be earlier than start date.");
+
+      // Partial partner locations are allowed, but region/city need their own explicit country.
+      RuleFor(x => x.CountryId)
+        .NotEmpty()
+        .When(x => x.Region != null || x.City != null)
+        .WithMessage("'Country' is required when location details are specified.");
+
+      RuleFor(x => x.CountryId)
+        .Must(id => id.HasValue && countryService.GetByIdOrNull(id.Value) is { } country &&
+          country.CodeAlpha2 != Country.Worldwide.ToDescription())
+        .When(x => x.CountryId.HasValue)
+        .WithMessage("Location country must be a specific country that exists.");
+
+      RuleFor(x => x.Region)
+        .MaximumLength(Constants.Region_MaxLength);
+
+      RuleFor(x => x.City)
+        .MaximumLength(Constants.City_MaxLength);
     }
     #endregion
   }

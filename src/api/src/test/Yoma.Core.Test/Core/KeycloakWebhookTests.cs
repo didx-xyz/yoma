@@ -21,6 +21,7 @@ using Yoma.Core.Domain.Entity.Services;
 using Yoma.Core.Domain.Entity.Validators;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
+using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Payout.Interfaces;
 using Yoma.Core.Domain.Referral.Events;
 using Yoma.Core.Domain.Reward.Interfaces;
@@ -758,16 +759,25 @@ namespace Yoma.Core.Test.Core
           Options.Create(new AppSettings()),
           Mock.Of<IBlobService>(),
           Mock.Of<ISkillService>(),
+          Mock.Of<IOpportunityCategoryService>(),
+          Mock.Of<IAccessibilityService>(),
+          Mock.Of<ILanguageService>(),
+          Mock.Of<IEngagementTypeService>(),
           _tenant.Object,
           _credential.Object,
           definitions.Object,
           Mock.Of<IDelayedExecutionService>(),
-          new UserRequestValidator(Country.Object, Education.Object, Gender.Object),
+          new UserRequestValidator(Country.Object, Education.Object, Gender.Object,
+            new Domain.Core.Validators.CoordinatesValidator()),
           new UserSearchFilterValidator(),
           new SettingsRequestValidator(),
           Repository.Object,
           Mock.Of<IRepository<UserSkill>>(),
           Mock.Of<IRepository<UserSkillOrganization>>(),
+          Mock.Of<IRepository<UserPreferenceCategory>>(),
+          Mock.Of<IRepository<UserPreferenceAccessibilityRequirement>>(),
+          Mock.Of<IRepository<UserPreferenceLanguage>>(),
+          Mock.Of<IRepository<UserPreferenceEngagementType>>(),
           history.Object,
           Mock.Of<IExecutionStrategyService>(),
           _mediator.Object);

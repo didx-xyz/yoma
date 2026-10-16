@@ -91,6 +91,10 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
         DateEnd = entity.DateEnd,
         PercentComplete = entity.PercentComplete,
         DateCompleted = entity.DateCompleted,
+        CountryId = entity.CountryId,
+        Country = entity.Country == null ? null : entity.Country.Name,
+        Region = entity.Region,
+        City = entity.City,
         ZltoReward = entity.ZltoReward,
         Recommendable = entity.Recommendable,
         StarRating = entity.StarRating,
@@ -169,6 +173,9 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
         DateEnd = item.DateEnd,
         PercentComplete = item.PercentComplete,
         DateCompleted = item.DateCompleted,
+        CountryId = item.CountryId,
+        Region = item.Region,
+        City = item.City,
         ZltoReward = item.ZltoReward,
         Recommendable = item.Recommendable,
         StarRating = item.StarRating,
@@ -206,6 +213,9 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
           DateEnd = item.DateEnd,
           PercentComplete = item.PercentComplete,
           DateCompleted = item.DateCompleted,
+          CountryId = item.CountryId,
+          Region = item.Region,
+          City = item.City,
           ZltoReward = item.ZltoReward,
           Recommendable = item.Recommendable,
           StarRating = item.StarRating,
@@ -244,6 +254,9 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
       entity.DateEnd = item.DateEnd;
       entity.PercentComplete = item.PercentComplete;
       entity.DateCompleted = item.DateCompleted;
+      entity.CountryId = item.CountryId;
+      entity.Region = item.Region;
+      entity.City = item.City;
       entity.ZltoReward = item.ZltoReward;
       entity.Recommendable = item.Recommendable;
       entity.StarRating = item.StarRating;
@@ -280,6 +293,9 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
         entity.DateEnd = item.DateEnd;
         entity.PercentComplete = item.PercentComplete;
         entity.DateCompleted = item.DateCompleted;
+        entity.CountryId = item.CountryId;
+        entity.Region = item.Region;
+        entity.City = item.City;
         entity.ZltoReward = item.ZltoReward;
         entity.Recommendable = item.Recommendable;
         entity.StarRating = item.StarRating;

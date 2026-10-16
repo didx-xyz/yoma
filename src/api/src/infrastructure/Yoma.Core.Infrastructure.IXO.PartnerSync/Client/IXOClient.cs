@@ -1,3 +1,4 @@
+using Yoma.Core.Domain.Opportunity;
 using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -23,14 +24,60 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
     #region Class Variables
     private static readonly Dictionary<Guid, string[]> CategoryMappings = new()
     {
-      // Career and Personal Development
-      { new Guid("89f4ab46-0767-494f-a18c-3037f698133a"), ["Education", "Social impact"] },
-      // Business and Entrepreneurship
+      // Education & Teaching
+      { new Guid("1e8e59ae-4009-48ef-8c09-a72d6af068c7"), ["Education"] },
+      // History, Society & Human Rights
+      { new Guid("1612eb90-806b-40db-bc6e-a428780581dc"), ["Social impact"] },
+      // Business, Finance & Marketing
       { new Guid("c76786fd-fca9-4633-85b3-11e53486d708"), ["Green entrepreneurship"] },
-      // Environment and Climate
-      { new Guid("d0d322ab-d1d7-44b6-94e8-7b85246aa42e"), ["Circular economy", "Environment & Climate"] },
-      // Technology and Digitization
+      // Agriculture, Food, Environment and Climate
+      { new Guid("2ccbacf7-1ed9-4e20-bb7c-43edfdb3f950"), ["Circular economy", "Environment & Climate"] },
+      // Technology, AI & Data
       { new Guid("fa564c1c-591a-4a6d-8294-20165da8866b"), ["Digital services"] }
+    };
+
+    private static readonly Dictionary<string, EngagementTypeOption> EngagementTypeMappings = new(StringComparer.OrdinalIgnoreCase)
+    {
+      ["Online"] = EngagementTypeOption.Remote,
+      ["Offline"] = EngagementTypeOption.OnSite
+    };
+
+    // Partner vocabulary belongs here; definitions and option validity come from the CF framework.
+    // Missing difficulty retains this partner's existing Any Level fallback. Jobs are not mapped.
+    private static readonly Dictionary<Domain.Opportunity.Type, (string Key, Dictionary<string, string> Options)> DifficultyMappings = new()
+    {
+      [Domain.Opportunity.Type.Learning] = (CustomFieldConstants.Difficulty.Keys.Learning, new(StringComparer.OrdinalIgnoreCase)
+      {
+        [Difficulty.AnyLevel.ToString()] = Difficulty.AnyLevel.ToString(),
+        ["Any Level"] = Difficulty.AnyLevel.ToString(),
+        ["Beginner"] = CustomFieldConstants.Difficulty.Options.Beginner,
+        ["Intermediate"] = CustomFieldConstants.Difficulty.Options.Intermediate,
+        ["Advanced"] = CustomFieldConstants.Difficulty.Options.Advanced
+      }),
+      [Domain.Opportunity.Type.Other] = (CustomFieldConstants.Difficulty.Keys.Other, new(StringComparer.OrdinalIgnoreCase)
+      {
+        [Difficulty.AnyLevel.ToString()] = Difficulty.AnyLevel.ToString(),
+        ["Any Level"] = Difficulty.AnyLevel.ToString(),
+        ["Beginner"] = CustomFieldConstants.Difficulty.Options.Beginner,
+        ["Intermediate"] = CustomFieldConstants.Difficulty.Options.Intermediate,
+        ["Advanced"] = CustomFieldConstants.Difficulty.Options.Advanced
+      }),
+      [Domain.Opportunity.Type.ImpactAction] = (CustomFieldConstants.Difficulty.Keys.ImpactAction, new(StringComparer.OrdinalIgnoreCase)
+      {
+        [Difficulty.AnyLevel.ToString()] = CustomFieldConstants.Difficulty.Options.EntryLevel,
+        ["Any Level"] = CustomFieldConstants.Difficulty.Options.EntryLevel,
+        ["Beginner"] = CustomFieldConstants.Difficulty.Options.EntryLevel,
+        ["Intermediate"] = CustomFieldConstants.Difficulty.Options.ExperienceNeeded,
+        ["Advanced"] = CustomFieldConstants.Difficulty.Options.SkillsRequired
+      }),
+      [Domain.Opportunity.Type.Event] = (CustomFieldConstants.Difficulty.Keys.Event, new(StringComparer.OrdinalIgnoreCase)
+      {
+        [Difficulty.AnyLevel.ToString()] = CustomFieldConstants.Difficulty.Options.OpenToAll,
+        ["Any Level"] = CustomFieldConstants.Difficulty.Options.OpenToAll,
+        ["Beginner"] = CustomFieldConstants.Difficulty.Options.OpenToAll,
+        ["Intermediate"] = CustomFieldConstants.Difficulty.Options.FamiliarityNeeded,
+        ["Advanced"] = CustomFieldConstants.Difficulty.Options.ExperiencedIndividuals
+      })
     };
 
     private readonly ILogger<IXOClient> _logger;
@@ -39,11 +86,11 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
     private readonly IXOPartnerSyncOptions _options;
     private readonly IRepositoryBatched<Opportunity> _opportunityRepository;
     private readonly IOpportunityTypeService _opportunityTypeService;
+    private readonly ICustomFieldDefinitionService _customFieldDefinitionService;
     private readonly IOpportunityCategoryService _opportunityCategoryService;
     private readonly ICountryService _countryService;
     private readonly ILanguageService _languageService;
     private readonly ISkillService _skillService;
-    private readonly IOpportunityDifficultyService _opportunityDifficultyService;
     private readonly ITimeIntervalService _timeIntervalService;
     private readonly IEngagementTypeService _engagementTypeService;
     private readonly IIXOAuthService _ixoAuthService;
@@ -59,11 +106,11 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
       IOptions<IXOPartnerSyncOptions> options,
       IRepositoryBatched<Opportunity> opportunityRepository,
       IOpportunityTypeService opportunityTypeService,
+      ICustomFieldDefinitionService customFieldDefinitionService,
       IOpportunityCategoryService opportunityCategoryService,
       ICountryService countryService,
       ILanguageService languageService,
       ISkillService skillService,
-      IOpportunityDifficultyService opportunityDifficultyService,
       ITimeIntervalService timeIntervalService,
       IEngagementTypeService engagementTypeService,
       IIXOAuthService ixoAuthService,
@@ -76,11 +123,11 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
       _options = options.Value ?? throw new ArgumentNullException(nameof(options));
       _opportunityRepository = opportunityRepository ?? throw new ArgumentNullException(nameof(opportunityRepository));
       _opportunityTypeService = opportunityTypeService ?? throw new ArgumentNullException(nameof(opportunityTypeService));
+      _customFieldDefinitionService = customFieldDefinitionService ?? throw new ArgumentNullException(nameof(customFieldDefinitionService));
       _opportunityCategoryService = opportunityCategoryService ?? throw new ArgumentNullException(nameof(opportunityCategoryService));
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
       _skillService = skillService ?? throw new ArgumentNullException(nameof(skillService));
-      _opportunityDifficultyService = opportunityDifficultyService ?? throw new ArgumentNullException(nameof(opportunityDifficultyService));
       _timeIntervalService = timeIntervalService ?? throw new ArgumentNullException(nameof(timeIntervalService));
       _engagementTypeService = engagementTypeService ?? throw new ArgumentNullException(nameof(engagementTypeService));
       _ixoAuthService = ixoAuthService ?? throw new ArgumentNullException(nameof(ixoAuthService));

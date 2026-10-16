@@ -10,7 +10,11 @@ import {
 } from "~/api/services/lookups";
 import type { AxiosError } from "axios";
 import { toast } from "react-toastify";
-import type { UserProfile, UserRequestProfile } from "~/api/models/user";
+import type {
+  UserLocationFields,
+  UserProfile,
+  UserRequestProfile,
+} from "~/api/models/user";
 import { deletePhoto, patchPhoto, patchUser } from "~/api/services/user";
 import analytics from "~/lib/analytics";
 import AvatarUpload from "../Organisation/Upsert/AvatarUpload";
@@ -62,7 +66,7 @@ export const UserProfileForm: React.FC<{
   const [removePhoto, setRemovePhoto] = useState(false);
   const setUserProfileAtom = useSetAtom(userProfileAtom);
   const [formData] = useState<
-    UserRequestProfile & {
+    Omit<UserRequestProfile, keyof UserLocationFields> & {
       dateOfBirthDay?: string;
       dateOfBirthMonth?: string;
       dateOfBirthYear?: string;
@@ -315,9 +319,26 @@ export const UserProfileForm: React.FC<{
         // update profile data (only if non-photo fields are included)
         let userProfileResult = userProfile;
         if (isProfileUpdate) {
-          userProfileResult = await patchUser(
-            submissionData as UserRequestProfile,
-          );
+          // PATCH /user is a full replacement and omitted location fields CLEAR the stored place.
+          // This form does not edit it, so resend the loaded place — unless the country changed,
+          // since a place is only valid within its country.
+          const keepLocation =
+            submissionData.countryId === userProfile?.countryId;
+          const location: UserLocationFields = {
+            region: keepLocation ? (userProfile?.region ?? null) : null,
+            city: keepLocation ? (userProfile?.city ?? null) : null,
+            coordinates: keepLocation
+              ? (userProfile?.coordinates ?? null)
+              : null,
+            locationSource: keepLocation
+              ? (userProfile?.locationSource ?? null)
+              : null,
+          };
+
+          userProfileResult = await patchUser({
+            ...submissionData,
+            ...location,
+          } as UserRequestProfile);
 
           // 📊 ANALYTICS: track profile update - only fields that actually changed
           analytics.trackEvent("profile_updated", {

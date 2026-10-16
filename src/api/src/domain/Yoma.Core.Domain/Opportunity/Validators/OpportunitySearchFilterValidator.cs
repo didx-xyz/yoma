@@ -1,5 +1,4 @@
 using FluentValidation;
-using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Core.Validators;
 using Yoma.Core.Domain.Opportunity.Models;
 
@@ -8,76 +7,84 @@ namespace Yoma.Core.Domain.Opportunity.Validators
   public class OpportunitySearchFilterValidator : PaginationFilterValidator<OpportunitySearchFilterAdmin>
   {
     #region Constructor
-    public OpportunitySearchFilterValidator()
+    public OpportunitySearchFilterValidator(OpportunitySearchSelectionValidator selectionValidator)
     {
-      RuleFor(x => x.PaginationEnabled).Equal(true).When(x => !x.TotalCountOnly && !x.UnrestrictedQuery).WithMessage("Pagination required");
-      RuleFor(x => x.Types).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
-      RuleFor(x => x.Categories).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
-      RuleFor(x => x.Languages).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
-      RuleFor(x => x.Countries).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
-      RuleFor(x => x.Organizations).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
-      RuleFor(x => x.EngagementTypes).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
-      RuleFor(x => x.ValueContains).Length(3, 50).When(x => !string.IsNullOrEmpty(x.ValueContains));
-      RuleFor(x => x.EndDate).GreaterThanOrEqualTo(x => x.StartDate).When(x => x.EndDate.HasValue && x.StartDate.HasValue).WithMessage("{PropertyName} is earlier than the Start Date.");
-      RuleFor(x => x.Opportunities).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
+      ArgumentNullException.ThrowIfNull(selectionValidator);
 
-      // CommitmentInterval
-      // Options and Interval are optional but mutually exclusive
-      RuleFor(x => x.CommitmentInterval)
-          .Must(ci => ci?.Options == null || ci.Options.Count == 0 || ci?.Interval == null)
-          .WithMessage("{PropertyName}: Both Options and Interval cannot be specified at the same time.");
+      RuleFor(x => x)
+        .SetValidator(selectionValidator);
 
-      RuleFor(x => x.CommitmentInterval)
-          .Must(ci => ci?.OptionsParsed == null ||
-                      ci.OptionsParsed.Count == 0 ||
-                      ci.OptionsParsed.All(item => item.Id != Guid.Empty && item.Count >= 1))
-          .WithMessage("{PropertyName} is empty, contains an empty interval or count is smaller than 1.");
-
-      RuleFor(x => x.CommitmentInterval)
-          .Must(ci => ci?.Interval == null || (ci.Interval.Id != Guid.Empty && ci.Interval.Count >= 1))
-          .WithMessage("{PropertyName}: Interval is empty, contains an empty interval or count is smaller than 1.");
-
-      // ZltoReward:
-      // Ranges and HasReward are optional but mutually exclusive
-      RuleFor(x => x.ZltoReward)
-          .Must(zr => zr?.Ranges == null || zr.Ranges.Count == 0 || zr?.HasReward == false)
-          .WithMessage("{PropertyName}: Both Ranges and HasReward cannot be specified at the same time.");
-
-      RuleFor(x => x.ZltoReward)
-           .Must(zr => zr?.RangesParsed == null ||
-                       zr.RangesParsed.Count == 0 ||
-                       zr.RangesParsed.All(item => item.From >= 0 && item.To > item.From))
-           .WithMessage("{PropertyName} is empty, contains invalid reward ranges (the 'To' value must be greater than the 'From' value and the 'From' value must be greater or equal to 0.");
-
-      RuleFor(x => x.OrderInstructions)
-          .NotNull().WithMessage("{PropertyName} is required")
-          .Must(x => x != null && x.Count > 0).WithMessage("{PropertyName} must contain at least one item.");
-
-      RuleFor(x => x.CustomFields)
-        .Must(HaveUniqueCustomFieldKeys)
-        .WithMessage("{PropertyName} contains duplicate field keys.");
-
-      RuleFor(x => x.CustomFields)
+      RuleFor(x => x.AdditionalMembers)
         .Must(x => x == null || x.Count == 0)
-        .When(x => x.ApplyUserPresets)
-        .WithMessage($"{nameof(OpportunitySearchFilter.ApplyUserPresets)} and {{PropertyName}} cannot be specified together.");
+        .WithMessage("Unknown search members are not supported; use groups for OR selections.");
 
-      RuleForEach(x => x.CustomFields)
-        .SetValidator(new CustomFieldFilterValidator());
+      RuleFor(x => x.PaginationEnabled)
+        .Equal(true)
+        .When(x => !x.TotalCountOnly && !x.UnrestrictedQuery)
+        .WithMessage("Pagination required");
+
+      RuleFor(x => x.ValueContains)
+        .Length(3, 50)
+        .When(x => !string.IsNullOrEmpty(x.ValueContains));
+
+      RuleFor(x => x.EndDate)
+        .GreaterThanOrEqualTo(x => x.StartDate)
+        .When(x => x.EndDate.HasValue && x.StartDate.HasValue);
+
+      RuleForEach(x => x.Statuses)
+        .IsInEnum();
+
+      RuleForEach(x => x.PublishedStates)
+        .IsInEnum();
+
+      RuleFor(x => x.Ordering)
+        .Must(x => x == null || x.Count is > 0 and <= OpportunitySearchConstants.Ordering_MaxCount &&
+          x.All(o => o != null) && x.Select(o => o.Field).Distinct().Count() == x.Count)
+        .WithMessage("Ordering requires one to three unique supported fields.");
+      RuleForEach(x => x.Ordering)
+        .ChildRules(order =>
+      {
+        order.RuleFor(x => x.Field)
+          .IsInEnum();
+
+        order.RuleFor(x => x.Direction)
+          .IsInEnum();
+      });
+
+      RuleFor(x => x.Groups)
+        .Must(x => x == null || x.Count is > 0 and <= OpportunitySearchConstants.Groups_MaxCount && x.All(o => o != null))
+        .WithMessage("Supply one to four non-empty groups.");
+      RuleForEach(x => x.Groups)
+        .ChildRules(group =>
+      {
+        group.RuleFor(x => x.AnyOf)
+          .Must(x => x != null && x.Count is > 0 and <= OpportunitySearchConstants.Branches_MaxCount && x.All(o => o != null))
+          .WithMessage("Each group requires one to eight non-empty branches.");
+        group.RuleForEach(x => x.AnyOf)
+          .SetValidator(selectionValidator);
+
+        group.RuleForEach(x => x.AnyOf)
+          .ChildRules(branch =>
+        {
+          branch.RuleFor(x => x.AdditionalMembers)
+            .Must(x => x == null || x.Count == 0)
+            .WithMessage("Root-only controls, unknown fields and nested groups are not allowed in branches.");
+          branch.RuleFor(x => x)
+            .Must(x => ActiveCriteriaCount(x) is > 0 and <= OpportunitySearchConstants.Criteria_MaxCount)
+            .WithMessage("Each branch requires one to twenty-four active criteria.");
+        });
+      });
     }
     #endregion
 
     #region Private Members
-    private static bool HaveUniqueCustomFieldKeys(List<CustomFieldFilter>? fields)
+    private static int ActiveCriteriaCount(OpportunitySearchSelection selection)
     {
-      if (fields == null || fields.Count == 0) return true;
-
-      var keys = fields
-        .Where(o => !string.IsNullOrWhiteSpace(o.Key))
-        .Select(o => o.Key.Trim())
-        .ToList();
-
-      return keys.Distinct(StringComparer.OrdinalIgnoreCase).Count() == keys.Count;
+      // Count only selection members, never pagination/ordering controls inherited by the root.
+      return typeof(OpportunitySearchSelection).GetProperties()
+        .Count(o => o.GetValue(selection) != null &&
+          (o.Name != nameof(selection.ZltoReward) || selection.ZltoReward?.Value?.HasReward != false ||
+            selection.ZltoReward.Value.Ranges?.Count > 0 || selection.ZltoReward.Unspecified.HasValue));
     }
     #endregion
   }

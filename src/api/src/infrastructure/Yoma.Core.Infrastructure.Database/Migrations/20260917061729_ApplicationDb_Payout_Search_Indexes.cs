@@ -17,6 +17,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
     protected override void Up(MigrationBuilder migrationBuilder)
     {
+      // EF's non-transactional migration warning is expected: CONCURRENTLY requires suppressTransaction.
+      // An interrupted run may need index cleanup because these operations cannot roll back atomically.
+      // Already deployed; retain the migration structure. Fresh Local/Dev databases replay it and log the warning.
       // Payout search deliberately retains lower + literal Contains. Existing raw-column
       // trigram indexes cannot index that expression. Like the older Lower indexes, these
       // expression indexes are managed by migration SQL rather than the EF model snapshot.

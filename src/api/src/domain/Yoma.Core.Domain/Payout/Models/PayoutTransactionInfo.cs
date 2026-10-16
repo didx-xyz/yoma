@@ -1,3 +1,5 @@
+using Yoma.Core.Domain.Core;
+
 namespace Yoma.Core.Domain.Payout.Models
 {
   /// <summary>
@@ -18,7 +20,7 @@ namespace Yoma.Core.Domain.Payout.Models
     /// </summary>
     public decimal Amount { get; set; }
 
-    public Currency Currency { get; set; }
+    public CurrencyOption Currency { get; set; }
 
     public DateTimeOffset DateCreated { get; set; }
 

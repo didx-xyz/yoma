@@ -21,7 +21,7 @@ export const FiltersSheet: React.FC<{
     countFailed,
     clearFilters,
     hasFilters,
-    chips,
+    filterCount,
     scrollToResults,
   } = useDiscovery();
   useDialogDismiss(open, onClose);
@@ -47,9 +47,9 @@ export const FiltersSheet: React.FC<{
             buttons a screen apart doing the same thing read as two different things. */}
         <h2 className="flex grow items-center justify-center gap-2 text-base font-bold tracking-normal">
           Filters
-          {chips.length > 0 && (
+          {filterCount > 0 && (
             <span className="bg-green flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold text-white">
-              {chips.length}
+              {filterCount}
             </span>
           )}
         </h2>

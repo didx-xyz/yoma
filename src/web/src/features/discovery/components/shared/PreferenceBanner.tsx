@@ -1,10 +1,15 @@
 import React, { useState } from "react";
 import { IoPencilOutline, IoPersonOutline } from "react-icons/io5";
+import { inheritedSummary, tunedToText } from "../../lib/chipModel";
 import {
-  SAVABLE_SKIP_KEYS,
   applySkipsToPreferences,
+  removeInterests,
+  savableSkips as savableSkipsOf,
+  skipsAfterSave,
 } from "../../lib/preferenceMapping";
 import { useDiscovery } from "../../state/DiscoveryContext";
+import { useChipPulse } from "../../state/useChipPulse";
+import { AppliedChips } from "../Results/AppliedChips";
 
 /**
  * The preference strip above the results — and the ONE home for preference state on this page.
@@ -12,10 +17,13 @@ import { useDiscovery } from "../../state/DiscoveryContext";
  * inside the same panel, not a third stacked panel) the write-back offer whenever inherited
  * preferences are overridden. Never on load, never automatic.
  *
- * "Make this my default" persists the overrides one-tap through the façade: a skipped preference
- * is cleared from the preset. It is deliberately NOT called "save to profile" — the line
- * directly above promises this never touches the profile or the YoID, and a preset is neither.
+ * "Save as my default" (was "Make this my default") persists the overrides one-tap through the façade: a skipped preference
+ * is cleared from the preset. It is deliberately NOT called "save to profile" — a preset is
+ * neither the profile nor the YoID. (The strip no longer promises "never touches your profile":
+ * signed in, a place picked in the wizard IS written to the profile — see `LiveCountPanel`.)
  * Saving leaves an inline undo, because a one-tap write with no way back is not one-tap.
+ * Since 2026-10-01 the preference CHIPS live here too (inherited, switched-off, inapplicable) —
+ * every purple thing in one panel; this search's own filters have the green panel below.
  * Identity-derived skips (country, age) have no preset field, so they stay per-search and raise
  * no offer. "Not now" dismisses the CURRENT override set only — the next change to the skips
  * brings the offer back (the dismissal is keyed to a signature of the skipped keys).
@@ -34,12 +42,15 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
     chips,
     preferences,
     savePreferences,
+    verifiedSkillIds,
     // Held on the context, not here: saving the last override can flip the surface from results
     // to landing, which remounts this banner (see `PreferenceSnapshot`).
     preferenceUndo: undoTo,
     setPreferenceUndo: setUndoTo,
   } = useDiscovery();
+  const pulse = useChipPulse();
   const [saving, setSaving] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
   const [dismissedSignature, setDismissedSignature] = useState<string | null>(
     () =>
       typeof window !== "undefined"
@@ -61,8 +72,8 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
         <p className="min-w-40 grow basis-56 text-xs">
           <span className="font-semibold">Tune your feed.</span>{" "}
           <span className="text-gray-dark">
-            Tell us what you&apos;re looking for — set once, used on every
-            search, never touching your profile or your YoID.
+            Tell us what you&apos;re looking for. We&apos;ll use it on every
+            search. It doesn&apos;t change your YoID.
           </span>
         </p>
         <button
@@ -75,58 +86,73 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
       </div>
     );
 
-  const savableSkips = state.preferencesSkipped.filter((key) =>
-    SAVABLE_SKIP_KEYS.includes(key),
-  );
-  const skipSignature = [...savableSkips].sort().join(",");
+  const savableSkips = savableSkipsOf(state.preferencesSkipped, preferences);
+  // Interests switched off one by one, each its own override, while still saved (and not
+  // already covered by switching off the whole preference).
+  const savableInterests = state.preferencesSkipped.includes("targetCategories")
+    ? []
+    : state.interestsSkipped.filter((id) =>
+        preferences.targetCategories.includes(id),
+      );
+  const offCount = savableSkips.length + savableInterests.length;
+  const skipSignature = [
+    ...savableSkips,
+    ...savableInterests.map((id) => `interest:${id}`),
+  ]
+    .sort()
+    .join(",");
   const notNow = (): void => {
     window.sessionStorage.setItem(DISMISSED_KEY, skipSignature);
     setDismissedSignature(skipSignature);
   };
 
   // Every inherited value, not just the first: "tuned to Job" hid the four other things the
-  // feed was doing. Two by name, the rest as a count.
-  const inherited = chips
-    .filter((c) => c.provenance === "inherited")
-    .map((c) => c.value);
-  const tunedTo = [
-    ...inherited.slice(0, TUNED_TO_SHOWN),
-    ...(inherited.length > TUNED_TO_SHOWN
-      ? [`+${inherited.length - TUNED_TO_SHOWN}`]
-      : []),
-  ].join(" · ");
+  // feed was doing. Two by name, the rest as a count — a private value (the accessibility needs)
+  // only ever in the count.
+  const tunedTo = tunedToText(inheritedSummary(chips), TUNED_TO_SHOWN);
+  // Saving a skills skip clears only the self-attested skills: the earned (verified) ones still
+  // apply on the next visit (Jason, 2026-10-03), so the offer says so.
+  const earnedSkillsStay =
+    savableSkips.includes("skills") && verifiedSkillIds.length > 0;
 
   const saveOverrides = (): void => {
     setSaving(true);
+    setSaveFailed(false);
     const previous = {
       preferences,
       skipped: state.preferencesSkipped,
+      interestsSkipped: state.interestsSkipped,
     };
     void savePreferences(
-      applySkipsToPreferences(preferences, state.preferencesSkipped),
+      // A skipped interest leaves the saved interests; the others stay.
+      removeInterests(
+        applySkipsToPreferences(preferences, state.preferencesSkipped),
+        savableInterests,
+      ),
+      // The persisted skips no longer exist as preferences; only the identity-derived
+      // (unsavable) ones stay switched off for this search — and skills, while verified skills
+      // would bring the chip straight back (`skipsAfterSave`). Dispatched with the save.
+      {
+        kind: "setSkippedPreferences",
+        keys: skipsAfterSave(state.preferencesSkipped, verifiedSkillIds),
+      },
     )
-      .then(() => {
-        setUndoTo(previous);
-        // The persisted skips no longer exist as preferences; only the identity-derived
-        // (unsavable) ones stay switched off for this search.
-        dispatch({
-          kind: "setSkippedPreferences",
-          keys: state.preferencesSkipped.filter(
-            (key) => !SAVABLE_SKIP_KEYS.includes(key),
-          ),
-        });
-      })
+      .then(() => setUndoTo(previous))
+      .catch(() => setSaveFailed(true))
       .finally(() => setSaving(false));
   };
 
   const undoSave = (): void => {
     if (!undoTo) return;
     setSaving(true);
-    void savePreferences(undoTo.preferences)
-      .then(() => {
-        dispatch({ kind: "setSkippedPreferences", keys: undoTo.skipped });
-        setUndoTo(null);
-      })
+    setSaveFailed(false);
+    void savePreferences(undoTo.preferences, {
+      kind: "setSkippedPreferences",
+      keys: undoTo.skipped,
+      interests: undoTo.interestsSkipped,
+    })
+      .then(() => setUndoTo(null))
+      .catch(() => setSaveFailed(true))
       .finally(() => setSaving(false));
   };
 
@@ -140,7 +166,7 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
         <p className="min-w-40 grow basis-56 text-xs">
           {state.preferencesOff ? (
             <span className="font-semibold">
-              Preferences switched off for this search. Your profile has not
+              Your preferences are off for this search. Your profile hasn&apos;t
               changed.
             </span>
           ) : (
@@ -150,8 +176,7 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
                 {tunedTo || "your preferences"}
               </span>
               <span className="text-gray-dark block text-[11px]">
-                Set once, used on every search — it never touches your profile
-                or your YoID.
+                Used on every search. It doesn&apos;t change your YoID.
               </span>
             </>
           )}
@@ -178,14 +203,16 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
           />
         </span>
       </div>
+      <AppliedChips kind="inherited" pulseChipId={pulse} />
       {/* Second LINE of this panel, not a panel of its own — preference state has one home. */}
-      {savableSkips.length > 0 && skipSignature !== dismissedSignature && (
+      {offCount > 0 && skipSignature !== dismissedSignature && (
         <div className="border-purple-tint flex flex-wrap items-center gap-x-2.5 gap-y-1 border-t pt-2 text-xs">
           <span className="min-w-40 grow basis-56">
-            {savableSkips.length === 1
+            {offCount === 1
               ? "1 preference is off for this search."
-              : `${savableSkips.length} preferences are off for this search.`}{" "}
-            Keep {savableSkips.length === 1 ? "it" : "them"} off from now on?
+              : `${offCount} preferences are off for this search.`}{" "}
+            Keep {offCount === 1 ? "it" : "them"} off from now on?
+            {earnedSkillsStay && " Skills you've earned still apply."}
           </span>
           <span className="flex items-center gap-2">
             <button
@@ -201,10 +228,15 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
               onClick={saveOverrides}
               className="btn btn-xs bg-green h-7 rounded-full border-none text-[11px] text-white disabled:opacity-40"
             >
-              Make this my default
+              Save as my default
             </button>
           </span>
         </div>
+      )}
+      {saveFailed && (
+        <p className="border-purple-tint text-pink border-t pt-2 text-xs font-semibold">
+          Couldn&apos;t save that change. Please try again.
+        </p>
       )}
       {undoTo && (
         <p className="border-purple-tint flex items-center gap-2 border-t pt-2 text-xs">

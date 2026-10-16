@@ -10,12 +10,12 @@ import { type ReactElement } from "react";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import {
   IoBulbOutline,
+  IoBusinessOutline,
   IoLanguageOutline,
   IoLocationOutline,
   IoPeopleOutline,
   IoPricetagsOutline,
   IoTimeOutline,
-  IoTrendingUpOutline,
 } from "react-icons/io5";
 import { getOpportunityInfoByIdAdminOrgAdminOrUser } from "~/api/services/opportunities";
 import {
@@ -25,6 +25,9 @@ import {
 } from "~/hooks/useOpportunityMutations";
 import { AvatarImage } from "~/components/AvatarImage";
 import DetailSection from "~/components/Common/DetailSection";
+import { formatCountryPlace } from "~/components/Opportunity/Admin/OpportunityCountryPlaces";
+import { OpportunityCoreDetails } from "~/components/Opportunity/OpportunityCoreDetails";
+import { OpportunityAdminInfo } from "~/components/Opportunity/TabbedDetails/OpportunityAdminInfo";
 import { OpportunityCustomFieldsSection } from "~/components/Opportunity/OpportunityCustomFieldsSection";
 import MainLayout from "~/components/Layout/Main";
 import OrgAdminBadges from "~/components/Opportunity/Badges/OrgAdminBadges";
@@ -49,7 +52,11 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { ROLE_ADMIN } from "~/lib/constants";
+import {
+  CUSTOM_FIELDS_ENABLED,
+  OPPORTUNITY_TYPE_NANE_JOB,
+  ROLE_ADMIN,
+} from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { currentOrganisationInactiveAtom } from "~/lib/store";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
@@ -119,13 +126,21 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 // 👇 PAGE COMPONENT: Opportunity Detail
 // this page is accessed from the /organisations/[id]/.. pages (OrgAdmin role)
 // or from the /admin/opportunities/.. pages (Admin role). the retunUrl query param is used to redirect back to the admin page
-const OpportunityDetails: NextPageWithLayout<{
+interface OpportunityInfoPageProps {
   id: string;
   opportunityId: string;
   user: User;
   theme: string;
   error?: number;
-}> = ({ id, opportunityId, user, error }) => {
+}
+
+/** The CLASSIC two-column info page — rendered only while the kill-switch is off (see below). */
+const OpportunityInfoClassic: React.FC<OpportunityInfoPageProps> = ({
+  id,
+  opportunityId,
+  user,
+  error,
+}) => {
   const router = useRouter();
   const { returnUrl } = router.query;
   const currentOrganisationInactive = useAtomValue(
@@ -160,6 +175,7 @@ const OpportunityDetails: NextPageWithLayout<{
   const commitmentDisplay = opportunity
     ? getCommitmentDisplay(opportunity)
     : null;
+
   let commitmentSummary = "";
   if (commitmentDisplay?.totalHours != null) {
     const hourLabel = commitmentDisplay.totalHours === 1 ? "" : "s";
@@ -371,7 +387,12 @@ const OpportunityDetails: NextPageWithLayout<{
                 <div className="divide-gray flex flex-col divide-y rounded-lg bg-white p-6">
                   {(opportunity?.skills?.length ?? 0) > 0 && (
                     <DetailSection
-                      title="Skills you will learn"
+                      // a Job's skills are its requirements, never awarded on completion
+                      title={
+                        opportunity?.type === OPPORTUNITY_TYPE_NANE_JOB
+                          ? "Skills required"
+                          : "Skills you will learn"
+                      }
                       icon={<IoBulbOutline className="text-green h-5 w-5" />}
                       className="pb-4"
                     >
@@ -446,18 +467,8 @@ const OpportunityDetails: NextPageWithLayout<{
                       </div>
                     </DetailSection>
                   )}
-                  {!!opportunity?.difficulty && (
-                    <DetailSection
-                      title="Course difficulty"
-                      icon={
-                        <IoTrendingUpOutline className="text-green h-5 w-5" />
-                      }
-                    >
-                      <div className="badge bg-green my-2 h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white">
-                        {opportunity.difficulty}
-                      </div>
-                    </DetailSection>
-                  )}
+                  {/* Difficulty is a per-type custom field now (see the custom-fields
+                      section below), not a core field. */}
                   {(opportunity?.countries?.length ?? 0) > 0 && (
                     <DetailSection
                       title="Countries"
@@ -467,17 +478,36 @@ const OpportunityDetails: NextPageWithLayout<{
                       className="pt-4 first:pt-0"
                     >
                       <div className="my-2 flex flex-wrap gap-2">
-                        {opportunity?.countries?.map((country) => (
-                          <div
-                            key={country.id}
-                            className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
-                          >
-                            {country.name}
-                          </div>
-                        ))}
+                        {opportunity?.countries?.map((country) => {
+                          const place = formatCountryPlace(country);
+                          return (
+                            <div
+                              key={country.id}
+                              className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
+                            >
+                              {place
+                                ? `${country.name} · ${place}`
+                                : country.name}
+                            </div>
+                          );
+                        })}
                       </div>
                     </DetailSection>
                   )}
+                  {!!opportunity?.provider && (
+                    <DetailSection
+                      title="Provider"
+                      icon={
+                        <IoBusinessOutline className="text-green h-5 w-5" />
+                      }
+                    >
+                      <div className="my-2 text-sm">{opportunity.provider}</div>
+                    </DetailSection>
+                  )}
+                  <OpportunityCoreDetails
+                    opportunity={opportunity}
+                    showUnspecifiedIncentive
+                  />
                   {/* CUSTOM FIELDS (definition-driven, read-only). Renders nothing
                       when there are no values. */}
                   <OpportunityCustomFieldsSection
@@ -517,6 +547,20 @@ const OpportunityDetails: NextPageWithLayout<{
     </>
   );
 };
+
+/**
+ * The release kill-switch picks the layout (2026-10-01, Jason): `CUSTOM_FIELDS_ENABLED` on → the
+ * tabbed round-7 page (`OpportunityAdminInfo`), off → the classic one above. Same props, same
+ * server-side data; a build-time constant, so the choice never changes between renders.
+ */
+const OpportunityDetails: NextPageWithLayout<OpportunityInfoPageProps> = (
+  props,
+) =>
+  CUSTOM_FIELDS_ENABLED ? (
+    <OpportunityAdminInfo {...props} />
+  ) : (
+    <OpportunityInfoClassic {...props} />
+  );
 
 OpportunityDetails.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;

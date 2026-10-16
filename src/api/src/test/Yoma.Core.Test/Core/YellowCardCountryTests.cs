@@ -16,6 +16,10 @@ namespace Yoma.Core.Test.Core
 {
   public class YellowCardCountryTests
   {
+    #region Class Variables
+    private static readonly string[] SupportedCountryCodes = ["ZA"];
+    #endregion Class Variables
+
     [Theory]
     [InlineData("29376.34", "29376.34")]
     [InlineData("null", null)]
@@ -37,7 +41,7 @@ namespace Yoma.Core.Test.Core
       var result = await CreateClient().ListCountriesSupported();
       var country = Assert.Single(result.Countries!);
       Assert.Equal(expected == null ? null : decimal.Parse(expected, System.Globalization.CultureInfo.InvariantCulture), country.MinimumAmount);
-      Assert.Equal(Currency.USD, country.Currency);
+      Assert.Equal(Domain.Core.CurrencyOption.USD, country.Currency);
       Assert.Equal("ZAF", country.CodeAlpha3);
       Assert.Equal("710", country.CodeNumeric);
       http.ShouldHaveCalled("https://ixo.test/countries?ramp=offramp&limits=true").WithVerb(HttpMethod.Get).Times(1);
@@ -62,7 +66,7 @@ namespace Yoma.Core.Test.Core
     public async Task NegativeMinimumIsRejected()
     {
       using var http = new HttpTest();
-      http.RespondWithJson(new { success = true, count = 1, countries = new[] { "ZA" }, limits = new { ZA = new { lowestMinUsd = -1 } } });
+      http.RespondWithJson(new { success = true, count = 1, countries = SupportedCountryCodes, limits = new { ZA = new { lowestMinUsd = -1 } } });
       await Assert.ThrowsAsync<DataInconsistencyException>(() => CreateClient().ListCountriesSupported());
     }
 
@@ -70,7 +74,7 @@ namespace Yoma.Core.Test.Core
     public async Task CacheHasOneHourAbsoluteCap()
     {
       using var http = new HttpTest();
-      http.RespondWithJson(new { success = true, count = 1, countries = new[] { "ZA" }, limits = new { ZA = new { lowestMinUsd = 6.48m } } });
+      http.RespondWithJson(new { success = true, count = 1, countries = SupportedCountryCodes, limits = new { ZA = new { lowestMinUsd = 6.48m } } });
       var entry = new Mock<ICacheEntry>();
       entry.SetupAllProperties();
       var cache = new Mock<IMemoryCache>();

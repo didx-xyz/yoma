@@ -190,6 +190,8 @@ DECLARE
     V_CommitmentIntervalName VARCHAR(100);
     V_CommitmentIntervalCount INT;
     V_CommitmentIntervalDays INT;
+    V_OpportunityTypeId UUID;
+    V_OpportunityIsJob BOOLEAN;
     V_DateStart TIMESTAMP;
     V_DateEnd TIMESTAMP;
 BEGIN
@@ -276,6 +278,10 @@ BEGIN
             RAISE EXCEPTION 'Unsupported TimeInterval: %', V_CommitmentIntervalName;
         END IF;
 
+        -- New seed rows must respect Job reward restrictions; existing records are not changed.
+        SELECT "Id", "Name" = 'Job' INTO V_OpportunityTypeId, V_OpportunityIsJob
+        FROM "Opportunity"."OpportunityType" ORDER BY RANDOM() LIMIT 1;
+
         --start date
         V_DateStart := date_trunc('day', V_DateStartRunning);
 
@@ -286,8 +292,8 @@ BEGIN
 	    -- Insert into the Opportunity table
 	    INSERT INTO "Opportunity"."Opportunity"(
 	        "Id", "Title", "Description", "TypeId", "OrganizationId", "Summary", "Instructions", "URL", "ZltoReward", "ZltoRewardPool",
-	        "ZltoRewardCumulative", "VerificationEnabled", "VerificationMethod",
-	        "DifficultyId", "CommitmentIntervalId", "CommitmentIntervalCount", "ParticipantLimit", "ParticipantCount", "StatusId",
+	        "ZltoRewardCumulative", "RewardType", "Incentivized", "VerificationEnabled", "VerificationMethod",
+	        "CommitmentIntervalId", "CommitmentIntervalCount", "ParticipantLimit", "ParticipantCount", "StatusId",
 	        "Keywords", "DateStart", "DateEnd", "CredentialIssuanceEnabled", "SSISchemaName", "Featured", "EngagementTypeId", "DateCreated", "CreatedByUserId",
 	        "DateModified", "ModifiedByUserId"
 	    )
@@ -295,17 +301,18 @@ BEGIN
 	        gen_random_uuid() as "Id",
           V_OppTitle as "Title",
           V_OppDesc as "Description",
-	        (SELECT "Id" FROM "Opportunity"."OpportunityType" ORDER BY RANDOM() LIMIT 1) as "TypeId",
+	        V_OpportunityTypeId as "TypeId",
 	        (SELECT "Id" FROM "Entity"."Organization" ORDER BY RANDOM() LIMIT 1) as "OrganizationId",
 	        V_OppSummary as "Summary",
 	        V_OppInstructions as "Instructions",
 	        'https://www.google.com/' as "URL",
-            (SELECT ROUND((100 + (350 - 100) * RANDOM()))::numeric) as "ZltoReward",
-            (SELECT ROUND((1000 + (3500 - 1000) * RANDOM()))::numeric) as "ZltoRewardPool",
+            CASE WHEN V_OpportunityIsJob THEN NULL ELSE ROUND((100 + (350 - 100) * RANDOM()))::numeric END as "ZltoReward",
+            CASE WHEN V_OpportunityIsJob THEN NULL ELSE ROUND((1000 + (3500 - 1000) * RANDOM()))::numeric END as "ZltoRewardPool",
 	        NULL as "ZltoRewardCumulative",
+            CASE WHEN V_OpportunityIsJob THEN 'None' ELSE 'ZLTO' END as "RewardType",
+            CASE WHEN V_OpportunityIsJob THEN NULL ELSE true END as "Incentivized",
 	        V_VerificationEnabled as "VerificationEnabled",
 	        CASE WHEN V_VerificationEnabled = true THEN 'Manual' ELSE NULL END as "VerificationMethod",
-	        (SELECT "Id" FROM "Opportunity"."OpportunityDifficulty" ORDER BY RANDOM() LIMIT 1) as "DifficultyId",
 	        V_CommitmentIntervalId as "CommitmentIntervalId",
 	        V_CommitmentIntervalCount as "CommitmentIntervalCount",
             CASE WHEN V_VerificationEnabled = true THEN 100 + ABS(FLOOR(RANDOM() * 901)) ELSE NULL END as "ParticipantLimit",
@@ -336,43 +343,78 @@ BEGIN
 	END LOOP;
 END $$ LANGUAGE plpgsql;
 
--- SSI schema definitions
-WITH CTE AS (
-    SELECT "SSISchemaName", "Id"
-    FROM "Opportunity"."Opportunity"
-    WHERE "CredentialIssuanceEnabled" = true
-)
--- Update statement
-UPDATE "Opportunity"."Opportunity" AS O
-SET "SSISchemaName" = 'Opportunity|Default'
-FROM CTE
-WHERE O."Id" = CTE."Id";
-
--- Check for unsupported SSISchemaName
+-- Custom fields (local/dev): required values follow the active metadata.
+-- Boolean and shared-lookup selections are supported; user preferences remain
+-- unseeded. Other and non-permanent employment need companion fields,
+-- so ordinary complete fixtures use an explicit option instead.
 DO $$
+DECLARE
+    V_Definition RECORD;
+    V_OptionKeys TEXT[];
+    V_Value TEXT;
+    V_Delimiter TEXT;
 BEGIN
-    IF EXISTS (
-        SELECT 1
-        FROM "Opportunity"."Opportunity"
-        WHERE "CredentialIssuanceEnabled" = true AND "SSISchemaName" = 'ERROR'
-    ) THEN
-        RAISE EXCEPTION 'Unsupported SSISchemaName: ERROR';
-    END IF;
-END $$;
+    FOR V_Definition IN
+        SELECT "Id", "Key", "EntityContext", "DataType", "LookupType", "ValidationRegex", "SupportsMultiple"
+        FROM "Core"."CustomFieldDefinition"
+        WHERE "EntityType" = 'Opportunity' AND "IsActive" = TRUE AND "IsRequired" = TRUE
+        ORDER BY "Group", "SubGroup", "SortOrder", "Key"
+    LOOP
+        V_Value := NULL;
+        V_OptionKeys := NULL;
 
--- Categories
+        IF V_Definition."DataType" = 'Boolean' THEN
+            V_Value := 'false';
+        ELSIF V_Definition."DataType" = 'Option' AND V_Definition."LookupType" = 'Education' THEN
+            SELECT "Id"::TEXT INTO V_Value FROM "Lookup"."Education" ORDER BY "Name" LIMIT 1;
+        ELSIF V_Definition."DataType" = 'Option' AND V_Definition."LookupType" = 'Currency' THEN
+            SELECT "Id"::TEXT INTO V_Value FROM "Lookup"."Currency" WHERE "Code" = 'USD' LIMIT 1;
+        ELSIF V_Definition."DataType" = 'Option' AND V_Definition."LookupType" IS NULL THEN
+            SELECT ARRAY_AGG("Key" ORDER BY "SortOrder", "Key") INTO V_OptionKeys
+            FROM "Core"."CustomFieldOption"
+            WHERE "CustomFieldDefinitionId" = V_Definition."Id"
+              AND "IsActive" = TRUE AND "Key" <> 'Other'
+              AND (V_Definition."Key" <> 'JobEmploymentType' OR "Key" = 'Permanent');
+        END IF;
+
+        IF V_Value IS NULL AND COALESCE(CARDINALITY(V_OptionKeys), 0) = 0 THEN
+            RAISE NOTICE 'CF seed skipped %: no generator for type %, lookup % or regex %.',
+                V_Definition."Key", V_Definition."DataType", V_Definition."LookupType", V_Definition."ValidationRegex";
+            CONTINUE;
+        END IF;
+
+        V_Delimiter := CASE WHEN V_Definition."SupportsMultiple" = TRUE THEN '|' ELSE '' END;
+
+        INSERT INTO "Core"."CustomFieldValue"(
+            "Id", "CustomFieldDefinitionId", "OpportunityId", "Value", "DateCreated", "DateModified"
+        )
+        SELECT gen_random_uuid(), V_Definition."Id", O."Id",
+               V_Delimiter || COALESCE(V_Value,
+                   V_OptionKeys[1 + FLOOR(RANDOM() * CARDINALITY(V_OptionKeys))::INT]) || V_Delimiter,
+               CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+        FROM "Opportunity"."Opportunity" O
+        JOIN "Opportunity"."OpportunityType" T ON T."Id" = O."TypeId"
+        WHERE (V_Definition."EntityContext" IS NULL OR V_Definition."EntityContext" = T."Name")
+          AND NOT EXISTS (
+              SELECT 1 FROM "Core"."CustomFieldValue" V
+              WHERE V."CustomFieldDefinitionId" = V_Definition."Id" AND V."OpportunityId" = O."Id"
+          );
+    END LOOP;
+END $$ LANGUAGE plpgsql;
+
+-- Categories: one to three real selections, not every category on every row.
 INSERT INTO "Opportunity"."OpportunityCategories"("Id", "OpportunityId", "CategoryId", "DateCreated")
-SELECT
-    gen_random_uuid(),
-    O."Id" AS "OpportunityId",
-    OC."Id" AS "CategoryId",
-    (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+SELECT gen_random_uuid(), O."Id", C."Id", CURRENT_TIMESTAMP
 FROM "Opportunity"."Opportunity" O
-CROSS JOIN "Opportunity"."OpportunityCategory" OC;
+CROSS JOIN LATERAL (
+    SELECT "Id" FROM "Opportunity"."OpportunityCategory"
+    ORDER BY MD5(O."Id"::TEXT || "Id"::TEXT)
+    LIMIT 1 + MOD(ABS(HASHTEXT(O."Id"::TEXT)::BIGINT), 3)
+) C;
 
 -- Countries (ensure ZA or WW always present; cover WW-only / ZA-only / ZA+random)
-INSERT INTO "Opportunity"."OpportunityCountries"("Id", "OpportunityId", "CountryId", "DateCreated")
-SELECT gen_random_uuid(), O."Id", C."CountryId", (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+INSERT INTO "Opportunity"."OpportunityCountries"("Id", "OpportunityId", "CountryId", "DateCreated", "DateModified")
+SELECT gen_random_uuid(), O."Id", C."CountryId", (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 FROM "Opportunity"."Opportunity" O
 CROSS JOIN LATERAL (
   -- 40%: WW only
@@ -404,35 +446,271 @@ CROSS JOIN LATERAL (
   WHERE (mod(abs(hashtext(O."Id"::text)), 10) >= 8)
 ) C;
 
--- Languages
-INSERT INTO "Opportunity"."OpportunityLanguages"("Id", "OpportunityId", "LanguageId", "DateCreated")
-SELECT
-    gen_random_uuid(),
-    O."Id" AS "OpportunityId",
-    R."LanguageId",
-    (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
-FROM "Opportunity"."Opportunity" O
-CROSS JOIN (
-    SELECT "Id" AS "LanguageId"
+-- Languages: independent selections per opportunity, not one global sample.
+WITH "Choices" AS MATERIALIZED (
+    SELECT "Id", ROW_NUMBER() OVER (ORDER BY "Id") AS "Index"
     FROM "Lookup"."Language"
-    ORDER BY RANDOM()
-    LIMIT 10
-) AS R;
-
--- Skills
-INSERT INTO "Opportunity"."OpportunitySkills"("Id", "OpportunityId", "SkillId", "DateCreated")
-SELECT
-    gen_random_uuid(),
-    O."Id" AS "OpportunityId",
-    R."SkillId",
-    (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+), "ChoiceCount" AS (
+    SELECT COUNT(*) AS "Count" FROM "Choices"
+)
+INSERT INTO "Opportunity"."OpportunityLanguages"("Id", "OpportunityId", "LanguageId", "DateCreated")
+SELECT gen_random_uuid(), O."Id", L."Id", CURRENT_TIMESTAMP
 FROM "Opportunity"."Opportunity" O
-CROSS JOIN (
-    SELECT "Id" AS "SkillId"
+CROSS JOIN "ChoiceCount" C
+CROSS JOIN LATERAL GENERATE_SERIES(0, MOD(ABS(HASHTEXT(O."Id"::TEXT)::BIGINT), 3)::INT) N("Offset")
+JOIN "Choices" L ON L."Index" = 1 + MOD(ABS(HASHTEXT(O."Id"::TEXT)::BIGINT) + N."Offset", C."Count");
+
+-- Skills: a varied controlled selection; Job skills remain requirements.
+-- Enumerate once, then hash-join a few indexes per opportunity (no repeated taxonomy sort).
+WITH "Choices" AS MATERIALIZED (
+    SELECT "Id", ROW_NUMBER() OVER (ORDER BY "Id") AS "Index"
     FROM "Lookup"."Skill"
-    ORDER BY RANDOM()
-    LIMIT 10
-) AS R;
+), "ChoiceCount" AS (
+    SELECT COUNT(*) AS "Count" FROM "Choices"
+)
+INSERT INTO "Opportunity"."OpportunitySkills"("Id", "OpportunityId", "SkillId", "DateCreated")
+SELECT gen_random_uuid(), O."Id", S."Id", CURRENT_TIMESTAMP
+FROM "Opportunity"."Opportunity" O
+CROSS JOIN "ChoiceCount" C
+CROSS JOIN LATERAL GENERATE_SERIES(0, MOD(ABS(HASHTEXT(O."Id"::TEXT)::BIGINT), 4)::INT) N("Offset")
+JOIN "Choices" S ON S."Index" = 1 + MOD(ABS(HASHTEXT(O."Id"::TEXT)::BIGINT) + N."Offset", C."Count");
+
+-- Search fixtures (local/dev only): complete selections and deliberately unknown
+-- partner-like metadata stay distinguishable. Opportunity availability and provider
+-- origin are separate; no user location/preferences are seeded.
+CREATE TEMP TABLE "SearchFixtures" ON COMMIT PRESERVE ROWS AS
+WITH "Requested"("Number", "Type") AS (
+    VALUES
+        (1, 'Job'), (2, 'Job'), (3, 'ImpactAction'), (4, 'Event'),
+        (5, 'Job'), (6, 'Job'), (7, 'Learning'), (8, 'Event'),
+        (9, 'Entrepreneurship'), (10, 'Learning'), (11, 'ImpactAction'), (12, 'Event'),
+        (13, 'Learning'), (14, 'Event'), (15, 'Entrepreneurship'), (16, 'Entrepreneurship'),
+        (17, 'Other'), (18, 'Other'), (19, 'ImpactAction'), (20, 'Entrepreneurship'),
+        (21, 'Job'), (22, 'Job'), (23, 'Other'), (24, 'Learning')
+), "RequestedRows" AS (
+    SELECT "Number", "Type", ROW_NUMBER() OVER (PARTITION BY "Type" ORDER BY "Number") AS "Index"
+    FROM "Requested"
+), "Candidates" AS (
+    SELECT O."Id", T."Name" AS "Type",
+        ROW_NUMBER() OVER (PARTITION BY O."TypeId" ORDER BY O."DateCreated" DESC, O."Id") AS "Index"
+    FROM "Opportunity"."Opportunity" O
+    JOIN "Opportunity"."OpportunityType" T ON T."Id" = O."TypeId"
+)
+SELECT C."Id", R."Number"
+FROM "RequestedRows" R
+JOIN "Candidates" C ON C."Type" = R."Type" AND C."Index" = R."Index";
+
+-- Choose existing rows of the correct type: never retag an opportunity and leave
+-- unrelated type-specific CFs behind. Fail visibly if the generator is reduced too far.
+DO $$
+BEGIN
+    IF (SELECT COUNT(*) FROM "SearchFixtures") <> 24 THEN
+        RAISE EXCEPTION 'Search fixtures require enough generated rows of all six opportunity types.';
+    END IF;
+END $$;
+
+-- Deliberately incomplete rows are clearly labelled, not presented as valid manual saves.
+DELETE FROM "Opportunity"."OpportunityLanguages" L USING "SearchFixtures" F
+WHERE L."OpportunityId" = F."Id" AND MOD(F."Number", 6) = 0;
+DELETE FROM "Opportunity"."OpportunitySkills" S USING "SearchFixtures" F
+WHERE S."OpportunityId" = F."Id" AND MOD(F."Number", 6) = 0;
+
+-- Match the API's UTC date boundaries. Pending verification seeding removes the
+-- start time, so a fixture start later than midnight would fail normal validation.
+UPDATE "Opportunity"."Opportunity" O
+SET "Title" = LPAD(F."Number"::TEXT, 2, '0') || ' - ' || T."Name" ||
+        CASE WHEN MOD(F."Number", 3) = 0 OR F."Number" = 11 THEN ' (incomplete partner-like)' ELSE '' END,
+    "Provider" = CASE WHEN MOD(F."Number", 3) = 0 THEN NULL ELSE 'Community Learning Centre' END,
+    "ProviderURL" = CASE WHEN MOD(F."Number", 3) = 0 THEN NULL ELSE 'https://example.com/provider' END,
+    "ProviderLogoURL" = CASE WHEN MOD(F."Number", 3) = 0 THEN NULL ELSE 'https://yoma.world/yoma-icon-192.png' END,
+    "ProviderCountryId" = CASE WHEN MOD(F."Number", 3) = 0 THEN NULL
+        ELSE (SELECT "Id" FROM "Lookup"."Country"
+            WHERE "CodeAlpha2" = CASE WHEN F."Number" = 23 THEN 'IE' ELSE 'ZA' END) END,
+    "OrganizationId" = (SELECT "Id" FROM "Entity"."Organization"
+        WHERE "StatusId" = (SELECT "Id" FROM "Entity"."OrganizationStatus" WHERE "Name" = 'Active')
+        ORDER BY "Id" LIMIT 1),
+    "StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" = 'Active'),
+    "DateStart" = date_trunc('day',
+        CASE
+            WHEN F."Number" = 8 THEN CURRENT_TIMESTAMP + INTERVAL '30 days'
+            ELSE CURRENT_TIMESTAMP - INTERVAL '2 days'
+        END AT TIME ZONE 'UTC'
+    ) AT TIME ZONE 'UTC',
+    "DateEnd" = (
+        date_trunc('day',
+            CASE
+                WHEN F."Number" = 7 THEN CURRENT_TIMESTAMP - INTERVAL '1 day'
+                WHEN F."Number" = 8 THEN CURRENT_TIMESTAMP + INTERVAL '90 days'
+                WHEN F."Number" = 9 THEN NULL
+                ELSE CURRENT_TIMESTAMP + INTERVAL '30 days' + F."Number" * INTERVAL '1 hour'
+            END AT TIME ZONE 'UTC'
+        ) + INTERVAL '1 day' - INTERVAL '1 millisecond'
+    ) AT TIME ZONE 'UTC',
+    "EngagementTypeId" = CASE WHEN F."Number" = 14
+        THEN (SELECT "Id" FROM "Lookup"."EngagementType" WHERE "Name" = 'Hybrid')
+        WHEN MOD(F."Number", 3) = 0 THEN NULL
+        ELSE (SELECT "Id" FROM "Lookup"."EngagementType"
+            WHERE "Name" = CASE WHEN MOD(F."Number", 2) = 0 THEN 'Remote' ELSE 'OnSite' END) END,
+    "Incentivized" = CASE WHEN MOD(F."Number", 3) = 0 THEN NULL
+        WHEN T."Name" = 'Job' THEN FALSE
+        ELSE MOD(F."Number", 2) = 0 END,
+    "RewardType" = CASE WHEN T."Name" <> 'Job' AND MOD(F."Number", 3) <> 0
+        AND MOD(F."Number", 2) = 0 THEN 'ZLTO' ELSE 'None' END,
+    "ZltoReward" = CASE WHEN T."Name" <> 'Job' AND MOD(F."Number", 3) <> 0
+        AND MOD(F."Number", 2) = 0 THEN F."Number" * 25 ELSE NULL END,
+    "ZltoRewardPool" = CASE WHEN T."Name" <> 'Job' AND MOD(F."Number", 3) <> 0
+        AND MOD(F."Number", 2) = 0 THEN 10000 ELSE NULL END,
+    "AccessibilitySupport" = CASE MOD(F."Number", 5)
+        WHEN 0 THEN NULL WHEN 1 THEN 'Yes' WHEN 2 THEN 'Yes'
+        WHEN 3 THEN 'No' ELSE 'AvailableOnRequest' END,
+    "AccommodationOtherDescription" = CASE WHEN F."Number" = 1 THEN 'Large-print material' ELSE NULL END,
+    "AgeFrom" = CASE MOD(F."Number", 4) WHEN 1 THEN 18 WHEN 3 THEN 21 ELSE NULL END,
+    "AgeTo" = CASE MOD(F."Number", 4) WHEN 2 THEN 30 WHEN 3 THEN 27 ELSE NULL END,
+    "CommitmentIntervalId" = CASE WHEN T."Name" IN ('Job', 'Entrepreneurship')
+        THEN NULL ELSE O."CommitmentIntervalId" END,
+    "CommitmentIntervalCount" = CASE WHEN T."Name" IN ('Job', 'Entrepreneurship')
+        THEN NULL ELSE O."CommitmentIntervalCount" END
+FROM "SearchFixtures" F, "Opportunity"."OpportunityType" T
+WHERE O."Id" = F."Id" AND T."Id" = O."TypeId";
+
+DELETE FROM "Opportunity"."OpportunityCountries" C USING "SearchFixtures" F
+WHERE C."OpportunityId" = F."Id";
+
+INSERT INTO "Opportunity"."OpportunityCountries"(
+    "Id", "OpportunityId", "CountryId", "Region", "City", "Coordinates", "DateCreated", "DateModified"
+)
+SELECT gen_random_uuid(), F."Id", C."Id",
+    CASE WHEN C."CodeAlpha2" = 'WW' OR MOD(F."Number", 6) = 0 THEN NULL
+        WHEN MOD(F."Number", 6) = 5 THEN 'Gauteng' ELSE 'Western Cape' END,
+    CASE WHEN C."CodeAlpha2" = 'WW' OR MOD(F."Number", 6) = 0 THEN NULL
+        WHEN MOD(F."Number", 6) = 5 THEN 'Johannesburg' ELSE 'Cape Town' END,
+    CASE WHEN C."CodeAlpha2" = 'WW' OR MOD(F."Number", 6) IN (0, 5) THEN NULL
+        ELSE ST_Project(ST_SetSRID(ST_MakePoint(18.4231, -33.9221), 4326)::geography,
+            CASE MOD(F."Number", 6) WHEN 1 THEN 5000 WHEN 2 THEN 20000
+                WHEN 3 THEN 60000 ELSE 150000 END, 0) END,
+    CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM "SearchFixtures" F
+JOIN "Lookup"."Country" C ON
+    (F."Number" IN (23, 24) AND C."CodeAlpha2" = 'WW') OR
+    (F."Number" NOT IN (23, 24) AND C."CodeAlpha2" = 'ZA');
+
+INSERT INTO "Opportunity"."OpportunityAccommodations"(
+    "Id", "OpportunityId", "AccommodationId", "DateCreated"
+)
+SELECT gen_random_uuid(), F."Id", A."Id", CURRENT_TIMESTAMP
+FROM "SearchFixtures" F
+JOIN "Lookup"."Accessibility" A ON
+    (MOD(F."Number", 5) = 1 AND A."Name" IN ('Wheelchair accessible', 'Quiet workspace')) OR
+    (MOD(F."Number", 5) = 2 AND A."Name" = 'Quiet workspace') OR
+    (MOD(F."Number", 5) = 4 AND MOD(F."Number", 2) = 0 AND A."Name" = 'Quiet workspace') OR
+    (F."Number" IN (1, 11) AND A."Name" = 'Other');
+
+INSERT INTO "Opportunity"."OpportunityTargetedGroups"("Id", "OpportunityId", "TargetedGroupId", "DateCreated")
+SELECT gen_random_uuid(), F."Id", G."Id", CURRENT_TIMESTAMP
+FROM "SearchFixtures" F
+CROSS JOIN LATERAL (
+    SELECT "Id" FROM "Lookup"."TargetedGroup"
+    WHERE MOD(F."Number", 3) <> 0 ORDER BY MD5(F."Id"::TEXT || "Id"::TEXT) LIMIT 1
+) G;
+
+INSERT INTO "Opportunity"."OpportunitySustainableDevelopmentGoals"(
+    "Id", "OpportunityId", "SustainableDevelopmentGoalId", "DateCreated"
+)
+SELECT gen_random_uuid(), F."Id", G."Id", CURRENT_TIMESTAMP
+FROM "SearchFixtures" F
+CROSS JOIN LATERAL (
+    SELECT "Id" FROM "Lookup"."SustainableDevelopmentGoal"
+    WHERE MOD(F."Number", 3) <> 0 ORDER BY "Number" LIMIT 2
+) G;
+
+-- A disclosed salary example complements the ordinary false/absent amount fixtures.
+INSERT INTO "Core"."CustomFieldValue"(
+    "Id", "CustomFieldDefinitionId", "OpportunityId", "Value", "ValueNumeric", "DateCreated", "DateModified"
+)
+SELECT gen_random_uuid(), D."Id", O."Id", V."Value", V."Numeric", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM (SELECT "Id" FROM "SearchFixtures" WHERE "Number" = 1) O
+JOIN (VALUES ('JobSalaryMinimum', '1000', 1000::NUMERIC),
+             ('JobSalaryCurrency', (SELECT "Id"::TEXT FROM "Lookup"."Currency" WHERE "Code" = 'USD'), NULL::NUMERIC),
+             ('JobPayInterval', 'PerMonth', NULL::NUMERIC)) V("Key", "Value", "Numeric") ON TRUE
+JOIN "Core"."CustomFieldDefinition" D ON D."Key" = V."Key" AND D."IsActive" = TRUE;
+
+UPDATE "Core"."CustomFieldValue" V SET "Value" = 'true'
+FROM "Core"."CustomFieldDefinition" D, "SearchFixtures" F
+WHERE V."CustomFieldDefinitionId" = D."Id" AND D."Key" = 'JobSalaryDisclosed'
+  AND V."OpportunityId" = F."Id" AND F."Number" = 1;
+
+-- Salary is an incentive, but not a Yoma ZLTO reward for Jobs.
+UPDATE "Opportunity"."Opportunity" O SET "Incentivized" = TRUE
+FROM "SearchFixtures" F WHERE O."Id" = F."Id" AND F."Number" = 1;
+
+-- Completion examples below must always exercise all six credential types.
+-- Other rows retain their varied settings; no Job ZLTO reward is introduced.
+UPDATE "Opportunity"."Opportunity" O
+SET "VerificationEnabled" = TRUE,
+    "VerificationMethod" = 'Manual',
+    "CredentialIssuanceEnabled" = TRUE
+FROM "SearchFixtures" F
+WHERE O."Id" = F."Id" AND F."Number" IN (1, 4, 5, 10, 13, 14, 19, 20, 23);
+
+-- Local/Dev only: assign canonical seeded schemas after the fixture overrides
+-- and before creating issuance schedules below. Learning/Other share the generic
+-- claim set; all other current types have scoped defaults.
+-- Keep this list aligned with SSISSchemaHelper.ToDefaultFullName; unknown types fail the seed.
+UPDATE "Opportunity"."Opportunity" AS O
+SET "SSISchemaName" = CASE
+    WHEN T."Name" IN ('Other', 'Learning') THEN 'Opportunity|Default'
+    WHEN T."Name" IN ('Event', 'Job', 'ImpactAction', 'Entrepreneurship')
+        THEN 'Opportunity|' || T."Name" || '|Default'
+    ELSE 'ERROR'
+END
+FROM "Opportunity"."OpportunityType" T
+WHERE O."TypeId" = T."Id"
+    AND O."CredentialIssuanceEnabled" = true;
+
+-- Check for unsupported SSISchemaName
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM "Opportunity"."Opportunity"
+        WHERE "CredentialIssuanceEnabled" = true AND "SSISchemaName" = 'ERROR'
+    ) THEN
+        RAISE EXCEPTION 'Unsupported SSISchemaName: ERROR';
+    END IF;
+END $$;
+
+-- Representative optional filters use active definition/option metadata. Leave
+-- some rows empty so missing-value policies remain testable; never choose Other
+-- without its conditional text companion. These are not production defaults.
+INSERT INTO "Core"."CustomFieldValue"(
+    "Id", "CustomFieldDefinitionId", "OpportunityId", "Value", "DateCreated", "DateModified"
+)
+SELECT gen_random_uuid(), D."Id", O."Id",
+    CASE WHEN D."SupportsMultiple" = TRUE THEN '|' || V."Value" || '|' ELSE V."Value" END,
+    CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM "Opportunity"."Opportunity" O
+JOIN "Opportunity"."OpportunityType" T ON T."Id" = O."TypeId"
+JOIN "Core"."CustomFieldDefinition" D ON D."EntityType" = 'Opportunity'
+    AND D."EntityContext" = T."Name" AND D."IsActive" = TRUE
+    AND D."Key" IN ('ImpactActionToolsRequired', 'ImpactActionVerifiedActivityType',
+        'EntrepreneurshipProgrammeType', 'EntrepreneurshipVentureStageTargeted')
+CROSS JOIN LATERAL (
+    SELECT STRING_AGG(X."Key", '|' ORDER BY X."SortOrder", X."Key") AS "Value"
+    FROM (
+        SELECT P."Key", P."SortOrder" FROM "Core"."CustomFieldOption" P
+        WHERE P."CustomFieldDefinitionId" = D."Id" AND P."IsActive" = TRUE AND P."Key" <> 'Other'
+        ORDER BY MD5(O."Id"::TEXT || P."Key")
+        LIMIT CASE WHEN D."SupportsMultiple" = TRUE THEN 2 ELSE 1 END
+    ) X
+) V
+WHERE MOD(ABS(HASHTEXT(O."Id"::TEXT)::BIGINT), 3) <> 0 AND V."Value" IS NOT NULL
+    AND NOT EXISTS (SELECT 1 FROM "Core"."CustomFieldValue" E
+        WHERE E."OpportunityId" = O."Id" AND E."CustomFieldDefinitionId" = D."Id");
+
+-- Imported/synced opportunities can lack manually required metadata. Keep those
+-- labelled fixtures genuinely incomplete, including type-specific CFs.
+DELETE FROM "Core"."CustomFieldValue" V USING "SearchFixtures" F
+WHERE V."OpportunityId" = F."Id" AND (MOD(F."Number", 3) = 0 OR F."Number" = 11);
 
 -- Verification types
 INSERT INTO "Opportunity"."OpportunityVerificationTypes"
@@ -540,6 +818,7 @@ SELECT
 	(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 FROM "Opportunity"."Opportunity" O
 WHERE O."StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" = 'Active') AND O."DateStart" <= (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') AND O."DateEnd" > (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+    AND NOT EXISTS (SELECT 1 FROM "SearchFixtures" F WHERE F."Id" = O."Id")
 ORDER BY "DateCreated"
 OFFSET 30 ROWS
 FETCH NEXT 30 ROWS ONLY;
@@ -562,6 +841,7 @@ SELECT
 	(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 FROM "Opportunity"."Opportunity" O
 WHERE O."StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" = 'Active') AND O."DateStart" <= (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') AND O."DateEnd" > (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+    AND NOT EXISTS (SELECT 1 FROM "SearchFixtures" F WHERE F."Id" = O."Id")
 ORDER BY "DateCreated"
 OFFSET 60 ROWS
 FETCH NEXT 30 ROWS ONLY;
@@ -584,9 +864,69 @@ SELECT
 	(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 FROM "Opportunity"."Opportunity" O
 WHERE O."StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" = 'Active') AND O."DateStart" <= (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') AND O."DateEnd" > (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+    AND NOT EXISTS (SELECT 1 FROM "SearchFixtures" F WHERE F."Id" = O."Id")
 ORDER BY "DateCreated"
 OFFSET 90 ROWS
 FETCH NEXT 30 ROWS ONLY;
+
+-- All six types are completed and scheduled below.
+-- Job 05 and remote Event 04 remain pending for the verification-seeding job.
+-- Specific OnSite/Hybrid snapshots illustrate supplied participation location;
+-- Entrepreneurship uses explicit business location even when Remote. Worldwide
+-- Other uses only the user's known profile location. Remote Learning stays empty.
+-- Existing generic/history examples retain their unknown locations.
+-- Provider logo above reuses a public Yoma image as a placeholder.
+INSERT INTO "Opportunity"."MyOpportunity"(
+    "Id", "UserId", "OpportunityId", "ActionId", "VerificationStatusId", "CommentVerification",
+    "DateStart", "DateEnd", "DateCompleted", "CountryId", "Region", "City", "ZltoReward", "DateCreated", "DateModified"
+)
+SELECT gen_random_uuid(), U."Id",
+    O."Id", (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification'),
+    (SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus"
+        WHERE "Name" = CASE WHEN F."Number" IN (4, 5) THEN 'Pending' ELSE 'Completed' END),
+    CASE
+        WHEN F."Number" IN (4, 5) THEN NULL
+        WHEN F."Number" = 1 THEN 'Placement confirmed'
+        WHEN F."Number" = 10 THEN 'Remote activity completed'
+        WHEN F."Number" = 20 THEN 'Business location recorded'
+        ELSE 'Participation confirmed'
+    END,
+    CASE WHEN T."Name" IN ('Job', 'Entrepreneurship') THEN NULL ELSE O."DateStart" END,
+    CASE WHEN T."Name" IN ('Job', 'Entrepreneurship') THEN NULL ELSE CURRENT_TIMESTAMP END,
+    CASE WHEN F."Number" IN (4, 5) THEN NULL ELSE CURRENT_TIMESTAMP END,
+    CASE WHEN F."Number" IN (4, 10) THEN NULL
+        WHEN F."Number" = 23 THEN U."CountryId"
+        ELSE (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2" = 'ZA') END,
+    CASE WHEN F."Number" IN (4, 10) THEN NULL
+        WHEN F."Number" = 23 THEN U."Region"
+        WHEN F."Number" IN (5, 20) THEN 'Gauteng' ELSE 'Western Cape' END,
+    CASE WHEN F."Number" IN (4, 10) THEN NULL
+        WHEN F."Number" = 23 THEN U."City"
+        WHEN F."Number" IN (5, 20) THEN 'Johannesburg' ELSE 'Cape Town' END,
+    CASE WHEN F."Number" IN (4, 5) THEN NULL ELSE O."ZltoReward" END,
+    CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM "SearchFixtures" F
+JOIN "Opportunity"."Opportunity" O ON O."Id" = F."Id"
+JOIN "Opportunity"."OpportunityType" T ON T."Id" = O."TypeId"
+CROSS JOIN "Entity"."User" U
+WHERE F."Number" IN (1, 4, 5, 10, 13, 14, 19, 20, 23)
+    AND U."Email" = 'testuser@gmail.com';
+
+-- This one explicit test outcome is not an inferred value or a historical backfill.
+-- Other completion CFs remain absent so optional/missing-value handling is testable.
+INSERT INTO "Core"."CustomFieldValue"(
+    "Id", "CustomFieldDefinitionId", "MyOpportunityId", "Value", "ValueDateTime", "DateCreated", "DateModified"
+)
+SELECT gen_random_uuid(), D."Id", M."Id", TO_CHAR(CURRENT_DATE - 7, 'YYYY-MM-DD'),
+    (CURRENT_DATE - 7)::TIMESTAMP AT TIME ZONE 'UTC', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM "SearchFixtures" F
+JOIN "Opportunity"."MyOpportunity" M ON M."OpportunityId" = F."Id"
+    AND M."ActionId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification')
+JOIN "Core"."CustomFieldDefinition" D ON D."EntityType" = 'MyOpportunity'
+    AND D."EntityContext" = 'Job' AND D."Key" = 'JobEmploymentStartDate' AND D."IsActive" = TRUE
+WHERE F."Number" = 1;
+
+DROP TABLE "SearchFixtures";
 
 -- SSI Credential Issuance (Pending) for Verification (Completed) mapped to opportunities with CredentialIssuanceEnabled
 INSERT INTO "SSI"."CredentialIssuance"("Id", "SchemaTypeId", "ArtifactType", "SchemaName", "SchemaVersion", "StatusId", "UserId", "OrganizationId",
@@ -607,21 +947,26 @@ WHERE MO."ActionId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHER
 		AND MO."VerificationStatusId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Completed')
 		AND MO."ZltoReward" > 0;
 
--- Verification (Completed): Assign User Skills
-INSERT INTO "Entity"."UserSkills"("Id", "UserId", "SkillId", "DateCreated")
+-- Verification (Completed): Assign verified skills. Job skills are requirements, not completion awards.
+INSERT INTO "Entity"."UserSkills"("Id", "UserId", "SkillId", "Type", "DateCreated", "DateModified")
 SELECT gen_random_uuid(),
     (SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testuser@gmail.com'),
     "Skills"."SkillId",
+    'Verified',
+    (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'),
     (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 FROM (
     SELECT DISTINCT OS."SkillId"
     FROM "Opportunity"."MyOpportunity" MO
     INNER JOIN "Opportunity"."OpportunitySkills" OS ON MO."OpportunityId" = OS."OpportunityId"
+    INNER JOIN "Opportunity"."Opportunity" OP ON OP."Id" = MO."OpportunityId"
     WHERE MO."ActionId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification')
         AND MO."VerificationStatusId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Completed')
+        AND MO."UserId" = (SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testuser@gmail.com')
+        AND OP."TypeId" <> (SELECT "Id" FROM "Opportunity"."OpportunityType" WHERE "Name" = 'Job')
 ) AS "Skills";
 
--- Verification (Completed): Assign User Skill Organizations
+-- Only the same user's non-Job completions establish awarding organisations.
 INSERT INTO "Entity"."UserSkillOrganizations"("Id", "UserSkillId", "OrganizationId", "DateCreated")
 SELECT
     gen_random_uuid() AS "Id",
@@ -633,8 +978,11 @@ FROM
 INNER JOIN "Opportunity"."OpportunitySkills" OS ON "UserSkills"."SkillId" = OS."SkillId"
 INNER JOIN "Opportunity"."Opportunity" OP ON OP."Id" = OS."OpportunityId"
 INNER JOIN "Opportunity"."MyOpportunity" MO ON MO."OpportunityId" = OS."OpportunityId"
+    AND MO."UserId" = "UserSkills"."UserId"
     AND MO."ActionId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification')
     AND MO."VerificationStatusId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Completed')
+WHERE OP."TypeId" <> (SELECT "Id" FROM "Opportunity"."OpportunityType" WHERE "Name" = 'Job')
+    AND "UserSkills"."Type" = 'Verified'
 GROUP BY
     "UserSkills"."Id",
     OP."OrganizationId";

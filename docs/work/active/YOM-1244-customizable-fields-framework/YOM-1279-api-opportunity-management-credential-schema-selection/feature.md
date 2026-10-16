@@ -20,7 +20,9 @@ fallbacks.
 
 - Clearing the selection in the UI when an Opportunity type changes (YOM-1282).
 - Processing-time schema version resolution and credential value mapping (YOM-1280).
-- Automatically selecting, replacing or falling back to any schema.
+- Automatically selecting/replacing a schema on a manual admin save, or silently falling back
+  when a selected/expected schema is missing. CSV/partner default naming and the one-time existing
+  Default migration are now part of YOM-1277's approved stage 2, not manual fallback behaviour.
 
 ## Plan
 
@@ -36,7 +38,8 @@ Shared naming and compatibility rules live in the [epic README](../README.md).
 - [x] Preserve unfiltered schema listing when no context is supplied.
 - [x] Require a concrete schema when credential issuance is enabled.
 - [x] Validate that the selected schema exists and is generic or matches the target Opportunity type.
-- [x] Preserve existing generic `Opportunity|Default` selections.
+- [x] Preserve compatible explicit manual selections; stage 2 migrates existing generic Defaults
+  on distinct types once, without replacing named custom schemas or queued issuance.
 - [x] Keep schema context explicit in the response model.
 - [x] Build the complete API solution with no warnings or errors.
 - [ ] Complete the UI selection and type-change clearing behavior in YOM-1282.
@@ -47,6 +50,14 @@ Shared naming and compatibility rules live in the [epic README](../README.md).
 - 2026-08-11: Type-change reselection is shared behavior: the UI clears the old selection; the API requires and validates the submitted selection against the new type.
 - 2026-08-11: No additional confirmation flag is introduced because it would describe a UI interaction rather than a domain fact.
 - 2026-08-11: No migration is required; the selected full schema name is already persisted on Opportunity.
+- 2026-10-08: Manual explicit-selection and type applicability remain unchanged. YOM-1277 stage 2
+  adds shared canonical naming for CSV/pull paths and one-time reassignment of credential-enabled
+  existing generic Defaults in the undeployed CF migration. No repository/DI extension or repeated
+  startup reassignment remains. The provider schemas are seeded by the existing startup job afterwards.
+  For a UI recommendation, use existing discovery's `displayName: "Default"` and matching
+  `typeContext`, or the generic Default for Learning/Other; submit its full `name`. Do not choose
+  the first returned schema, override a custom selection or silently substitute a missing scoped
+  default. See the consolidated [credential handoff](../YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/handoffs/2026-10-07-a.md).
 
 ## Links
 

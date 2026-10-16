@@ -11,7 +11,8 @@
  * Retry. Collapsing the two would either cry wolf on every stale environment or bury real
  * outages behind a polite note.
  */
-export type FacetStatus = "ok" | "unavailable" | "failed";
+/** `loading` = not answered yet — distinct from `ok` with an empty list, which is a fact to state. */
+export type FacetStatus = "ok" | "loading" | "unavailable" | "failed";
 
 /** Duck-typed: the app's axios client rejects with the original `AxiosError`. */
 export const isNotFoundError = (error: unknown): boolean =>
@@ -23,3 +24,13 @@ export const facetStatus = (isError: boolean, error: unknown): FacetStatus => {
   if (!isError) return "ok";
   return isNotFoundError(error) ? "unavailable" : "failed";
 };
+
+/**
+ * A query the search waits for has answered — or failed once. The search then goes out degraded
+ * at once rather than waiting out the retries (several seconds), and is rebuilt if a retry
+ * succeeds.
+ */
+export const hasSettled = (query: {
+  isPending: boolean;
+  failureCount: number;
+}): boolean => !(query.isPending && query.failureCount === 0);

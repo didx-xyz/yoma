@@ -8,12 +8,13 @@ import {
   FcGraduationCap,
   FcVideoCall,
 } from "react-icons/fc";
-import { IoMdPin } from "react-icons/io";
+import { IoMdFlag, IoMdPin } from "react-icons/io";
 import Moment from "react-moment";
 import type { MyOpportunityInfo } from "~/api/models/myOpportunity";
-import { DATE_FORMAT_HUMAN } from "~/lib/constants";
+import { DATE_FORMAT_HUMAN, OPPORTUNITY_TYPE_NANE_JOB } from "~/lib/constants";
 import { fetchClientEnv } from "~/lib/utils";
 import { getCommitmentDisplay } from "./opportunityTypeTheme";
+import { completionLocation } from "../MyOpportunity/completionLocation";
 import { UserInitialsAvatar } from "../User/UserInitialsAvatar";
 import { MyOpportunityCustomFieldsSection } from "./MyOpportunityCustomFieldsSection";
 
@@ -27,6 +28,7 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
   data,
 }) => {
   const [showLocation, setShowLocation] = useState(false);
+  const isJob = data?.opportunityType === OPPORTUNITY_TYPE_NANE_JOB;
   const commitmentDisplay = getCommitmentDisplay(data);
   /** Total hours when the API knows them, otherwise the interval label. */
   let commitmentTimeToComplete = commitmentDisplay?.label ?? "";
@@ -123,6 +125,9 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
   const iconPath =
     "M 12 2 C 8.1 2 5 5.1 5 9 c 0 5.3 7 13 7 13 s 7 -7.8 7 -13 c 0 -3.9 -3.1 -7 -7 -7 z M 7 9 c 0 -2.8 2.2 -5 5 -5 s 5 2.2 5 5 c 0 2.9 -2.9 7.2 -5 9.9 C 9.9 16.2 7 11.8 7 9 z M 10 9 C 10 8 11 7 12 7 C 13 7 14 8 14 9 C 14 10 13 11 12 11 C 11 11 10 10 10 9 M 12 7";
 
+  // Where it happened, captured on submission — not the profile country above
+  const where = data ? completionLocation(data) : null;
+
   return (
     <div
       key={`OpportunityCompletionRead_${id}`}
@@ -136,10 +141,22 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
           <p className="text-gray-dark text-sm">
             {data?.userEmail ?? data?.userPhoneNumer}
           </p>
-          <p className="text-gray-dark mt-2 flex flex-row items-center text-sm">
+          <p
+            className="text-gray-dark mt-2 flex flex-row items-center text-sm"
+            title="Profile country"
+          >
             <IoMdPin className="text-gray-dark mr-2 h-4 w-4" />
             {data?.userCountry}
           </p>
+          {where && (
+            <p className="text-gray-dark mt-1 flex flex-row items-start text-sm">
+              <IoMdFlag className="text-gray-dark mt-0.5 mr-2 h-4 w-4 shrink-0" />
+              <span>
+                <span className="font-semibold text-black">{where.label}:</span>{" "}
+                {where.text}
+              </span>
+            </p>
+          )}
         </div>
         <div className="flex flex-col items-center justify-center gap-4">
           <UserInitialsAvatar
@@ -250,65 +267,76 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
         </div>
       ))}
 
-      <div className="text-gray-dark grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
-        {data?.dateStart && (
-          <div className="flex flex-row justify-between gap-2">
-            <span
-              className="font-semiboldx min-w-40 truncate text-nowrap"
-              title="Started on"
-            >
-              Started on:
-            </span>
-            <span
-              className="line-clamp-2 truncate font-bold"
-              title={data.dateStart}
-            >
-              <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-                {data.dateStart}
-              </Moment>
-            </span>
-          </div>
-        )}
+      {/* A Job records a placement, not time spent (2026-10-03): the youth's form asks for no
+          start date, the API fills the end with the submission day (or the Job's passed
+          deadline), and "Time to complete" fell back to the advertised effort — so none of the
+          three is shown for a Job. Its own fields (e.g. the employment start date) still render
+          below. */}
+      {isJob ? (
+        <p className="text-gray-dark text-sm">
+          Jobs record a placement, not time spent.
+        </p>
+      ) : (
+        <div className="text-gray-dark grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
+          {data?.dateStart && (
+            <div className="flex flex-row justify-between gap-2">
+              <span
+                className="font-semiboldx min-w-40 truncate text-nowrap"
+                title="Started on"
+              >
+                Started on:
+              </span>
+              <span
+                className="line-clamp-2 truncate font-bold"
+                title={data.dateStart}
+              >
+                <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+                  {data.dateStart}
+                </Moment>
+              </span>
+            </div>
+          )}
 
-        {data?.dateEnd && (
-          <div className="flex flex-row justify-between gap-2">
-            <span
-              className="font-semiboldx min-w-40 truncate text-nowrap"
-              title="Finished on"
-            >
-              Finished on:
-            </span>
-            <span
-              className="line-clamp-2 truncate font-bold"
-              title={data.dateEnd}
-            >
-              <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-                {data.dateEnd}
-              </Moment>
-            </span>
-          </div>
-        )}
+          {data?.dateEnd && (
+            <div className="flex flex-row justify-between gap-2">
+              <span
+                className="font-semiboldx min-w-40 truncate text-nowrap"
+                title="Finished on"
+              >
+                Finished on:
+              </span>
+              <span
+                className="line-clamp-2 truncate font-bold"
+                title={data.dateEnd}
+              >
+                <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+                  {data.dateEnd}
+                </Moment>
+              </span>
+            </div>
+          )}
 
-        {/* Commitment now comes from `getCommitmentDisplay` (master), which prefers the
+          {/* Commitment now comes from `getCommitmentDisplay` (master), which prefers the
             API's total hours and falls back to the interval label. Rendered in this
             surface's own label/value row rather than master's inline pair. */}
-        {commitmentDisplay && (
-          <div className="flex flex-row justify-between gap-2">
-            <span
-              className="font-semiboldx min-w-40 truncate text-nowrap"
-              title="Time to complete"
-            >
-              Time to complete:
-            </span>
-            <span
-              className="line-clamp-2 truncate font-bold"
-              title={commitmentTimeToComplete}
-            >
-              {commitmentTimeToComplete}
-            </span>
-          </div>
-        )}
-      </div>
+          {commitmentDisplay && (
+            <div className="flex flex-row justify-between gap-2">
+              <span
+                className="font-semiboldx min-w-40 truncate text-nowrap"
+                title="Time to complete"
+              >
+                Time to complete:
+              </span>
+              <span
+                className="line-clamp-2 truncate font-bold"
+                title={commitmentTimeToComplete}
+              >
+                {commitmentTimeToComplete}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* CUSTOM FIELDS (definition-driven, YOM-1244 / YOM-1255) */}
       {/* Read-only completion custom-field values, hydrated on MyOpportunityInfo.

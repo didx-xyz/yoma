@@ -12,21 +12,6 @@ namespace Yoma.Core.Domain.Payout
   }
 
   /// <summary>
-  /// Currency in which payout amounts are settled and recorded.
-  /// USD is intentionally fixed by the payout service, rather than caller-selectable, to keep the current
-  /// delivery within time constraints and avoid a premature multi-currency redesign.
-  /// Supporting additional currencies requires a coordinated Treasury, persistence, API and UI redesign
-  /// when that capability is prioritized.
-  /// </summary>
-  public enum Currency
-  {
-    /// <summary>
-    /// United States Dollar (ISO 4217: USD).
-    /// </summary>
-    USD
-  }
-
-  /// <summary>
   /// Represents the provider-neutral lifecycle of a payout transaction within Yoma.
   /// </summary>
   public enum PayoutTransactionStatus

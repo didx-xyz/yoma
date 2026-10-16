@@ -23,11 +23,11 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
     private readonly IOptions<IXOPartnerSyncOptions> _options;
     private readonly IRepositoryBatched<Opportunity> _opportunityRepository;
     private readonly IOpportunityTypeService _opportunityTypeService;
+    private readonly ICustomFieldDefinitionService _customFieldDefinitionService;
     private readonly IOpportunityCategoryService _opportunityCategoryService;
     private readonly ICountryService _countryService;
     private readonly ILanguageService _languageService;
     private readonly ISkillService _skillService;
-    private readonly IOpportunityDifficultyService _opportunityDifficultyService;
     private readonly ITimeIntervalService _timeIntervalService;
     private readonly IEngagementTypeService _engagementTypeService;
     private readonly IIXOAuthService _ixoAuthService;
@@ -43,11 +43,11 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
       IOptions<IXOPartnerSyncOptions> options,
       IRepositoryBatched<Opportunity> opportunityRepository,
       IOpportunityTypeService opportunityTypeService,
+      ICustomFieldDefinitionService customFieldDefinitionService,
       IOpportunityCategoryService opportunityCategoryService,
       ICountryService countryService,
       ILanguageService languageService,
       ISkillService skillService,
-      IOpportunityDifficultyService opportunityDifficultyService,
       ITimeIntervalService timeIntervalService,
       IEngagementTypeService engagementTypeService,
       IIXOAuthService ixoAuthService,
@@ -60,11 +60,11 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
       _options = options ?? throw new ArgumentNullException(nameof(options));
       _opportunityRepository = opportunityRepository ?? throw new ArgumentNullException(nameof(opportunityRepository));
       _opportunityTypeService = opportunityTypeService ?? throw new ArgumentNullException(nameof(opportunityTypeService));
+      _customFieldDefinitionService = customFieldDefinitionService ?? throw new ArgumentNullException(nameof(customFieldDefinitionService));
       _opportunityCategoryService = opportunityCategoryService ?? throw new ArgumentNullException(nameof(opportunityCategoryService));
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
       _skillService = skillService ?? throw new ArgumentNullException(nameof(skillService));
-      _opportunityDifficultyService = opportunityDifficultyService ?? throw new ArgumentNullException(nameof(opportunityDifficultyService));
       _timeIntervalService = timeIntervalService ?? throw new ArgumentNullException(nameof(timeIntervalService));
       _engagementTypeService = engagementTypeService ?? throw new ArgumentNullException(nameof(engagementTypeService));
       _ixoAuthService = ixoAuthService ?? throw new ArgumentNullException(nameof(ixoAuthService));
@@ -97,11 +97,11 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
         _options,
         _opportunityRepository,
         _opportunityTypeService,
+        _customFieldDefinitionService,
         _opportunityCategoryService,
         _countryService,
         _languageService,
         _skillService,
-        _opportunityDifficultyService,
         _timeIntervalService,
         _engagementTypeService,
         _ixoAuthService,

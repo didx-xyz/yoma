@@ -445,9 +445,9 @@ const CUSTOM_FIELD_SEEDS: CustomFieldSeed[] = [
   // prettier-ignore
   { id: "a1000000-0000-4000-8000-000000000009", entity: "Opportunity", typeContext: "Job", key: "jobSalary", nameDisplay: "[Sample] Salary", group: "[Sample] Job Details", subGroup: "Compensation", dataType: "Decimal", sortOrder: 20 },
   // prettier-ignore
-  { id: "a1000000-0000-4000-8000-000000000010", entity: "Opportunity", typeContext: "Job", key: "jobMinimumQualification", nameDisplay: "[Sample] Minimum Qualification", group: "[Sample] Job Details", subGroup: "Requirements", dataType: "Option", supportsMultiple: false, sortOrder: 30 },
+  { id: "a1000000-0000-4000-8000-000000000010", entity: "Opportunity", typeContext: "Job", key: "JobMinimumQualification", nameDisplay: "[Sample] Minimum Qualification", group: "[Sample] Job Details", subGroup: "Requirements", dataType: "Option", supportsMultiple: false, sortOrder: 30 },
   // prettier-ignore
-  { id: "a1000000-0000-4000-8000-000000000011", entity: "Opportunity", typeContext: "Job", key: "jobExperienceLevel", nameDisplay: "[Sample] Experience Level", group: "[Sample] Job Details", subGroup: "Requirements", dataType: "Option", supportsMultiple: false, sortOrder: 40 },
+  { id: "a1000000-0000-4000-8000-000000000011", entity: "Opportunity", typeContext: "Job", key: "JobExperienceLevel", nameDisplay: "[Sample] Experience Level", group: "[Sample] Job Details", subGroup: "Requirements", dataType: "Option", supportsMultiple: false, sortOrder: 40 },
   // Opportunity — Learning
   // prettier-ignore
   { id: "a1000000-0000-4000-8000-000000000012", entity: "Opportunity", typeContext: "Learning", key: "learningDeliveryFormat", nameDisplay: "[Sample] Learning Format", group: "[Sample] Learning Details", subGroup: "Delivery", dataType: "Option", supportsMultiple: false, sortOrder: 10 },
@@ -459,9 +459,9 @@ const CUSTOM_FIELD_SEEDS: CustomFieldSeed[] = [
   // prettier-ignore
   { id: "a1000000-0000-4000-8000-000000000015", entity: "Opportunity", typeContext: "Event", key: "eventRegistrationDeadline", nameDisplay: "[Sample] Registration Deadline", group: "[Sample] Event Details", subGroup: "Registration", dataType: "DateTime", sortOrder: 20 },
   // prettier-ignore
-  { id: "a1000000-0000-4000-8000-000000000016", entity: "Opportunity", typeContext: "Task", key: "taskEstimatedMinutes", nameDisplay: "[Sample] Estimated Minutes", group: "[Sample] Task Details", subGroup: "Effort", dataType: "Integer", sortOrder: 10 },
+  { id: "a1000000-0000-4000-8000-000000000016", entity: "Opportunity", typeContext: "ImpactAction", key: "taskEstimatedMinutes", nameDisplay: "[Sample] Estimated Minutes", group: "[Sample] Task Details", subGroup: "Effort", dataType: "Integer", sortOrder: 10 },
   // prettier-ignore
-  { id: "a1000000-0000-4000-8000-000000000017", entity: "Opportunity", typeContext: "Task", key: "taskParticipationMode", nameDisplay: "[Sample] Participation Mode", group: "[Sample] Task Details", subGroup: "Participation", dataType: "Option", supportsMultiple: false, sortOrder: 20 },
+  { id: "a1000000-0000-4000-8000-000000000017", entity: "Opportunity", typeContext: "ImpactAction", key: "taskParticipationMode", nameDisplay: "[Sample] Participation Mode", group: "[Sample] Task Details", subGroup: "Participation", dataType: "Option", supportsMultiple: false, sortOrder: 20 },
   // prettier-ignore
   { id: "a1000000-0000-4000-8000-000000000018", entity: "Opportunity", typeContext: "Other", key: "otherOpportunityLabel", nameDisplay: "[Sample] Opportunity Label", group: "[Sample] Other Details", subGroup: "Classification", dataType: "String", sortOrder: 10 },
   // prettier-ignore

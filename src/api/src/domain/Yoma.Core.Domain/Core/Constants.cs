@@ -8,6 +8,9 @@ namespace Yoma.Core.Domain.Core
     public static readonly string[] Roles_Supported = [Role_User, Role_Admin, Role_OrganizationAdmin];
     public const string ClaimType_Role = "role";
 
+    public const int Region_MaxLength = 255;
+    public const int City_MaxLength = 255;
+
     internal const string System_Domain = "yoma.world";
     internal const string System_Username_ModifiedBy = $"system@{System_Domain}";
     internal const int TimeIntervalSummary_Data_MaxNoOfPoints = 52;

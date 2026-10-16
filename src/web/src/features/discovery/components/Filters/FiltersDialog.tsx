@@ -18,7 +18,7 @@ export const FiltersDialog: React.FC<{
     count,
     counting,
     countFailed,
-    chips,
+    filterCount,
     clearFilters,
     hasFilters,
     scrollToResults,
@@ -38,9 +38,9 @@ export const FiltersDialog: React.FC<{
         <div className="flex items-center justify-between px-6 pt-5 pb-2">
           <h2 className="flex items-center gap-2 text-base font-bold tracking-normal md:text-lg">
             Filters
-            {chips.length > 0 && (
+            {filterCount > 0 && (
               <span className="bg-green flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold text-white">
-                {chips.length}
+                {filterCount}
               </span>
             )}
           </h2>

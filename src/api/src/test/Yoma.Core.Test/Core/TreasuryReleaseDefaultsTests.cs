@@ -16,7 +16,8 @@ namespace Yoma.Core.Test.Core
     public void MigrationIsDiscoveredAfterTheExistingTreasurySeed()
     {
       var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-        .UseNpgsql("Host=localhost;Database=unused;Username=unused;Password=unused")
+        .UseNpgsql("Host=localhost;Database=unused;Username=unused;Password=unused",
+          options => options.UseNetTopologySuite())
         .Options;
       using var context = new ApplicationDbContext(options);
 

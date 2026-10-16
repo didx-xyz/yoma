@@ -14,6 +14,8 @@ namespace Yoma.Core.Domain.Lookups.Interfaces
 
     Skill? GetByIdOrNull(Guid id);
 
+    List<Skill> ListByIds(List<Guid> ids);
+
     List<Skill> Contains(string value);
 
     SkillSearchResults Search(SkillSearchFilter filter);

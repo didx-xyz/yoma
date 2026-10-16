@@ -4,7 +4,6 @@ using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Services;
 using Yoma.Core.Domain.PartnerSync.Models;
-using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Helpers;
 using Yoma.Core.Infrastructure.IXO.PartnerSync.Models;
 using IXOOpportunity = Yoma.Core.Infrastructure.IXO.PartnerSync.Models.OpportunityResponse;
@@ -51,6 +50,8 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
         Description = description,
         TypeId = opportunityType.Id,
 
+        Provider = item.Provider.HtmlDecode()?.RemoveHtmlTags()?.NormalizeNullableValue(),
+        ProviderLogoURL = item.ProviderLogoURL?.NormalizeNullableValue(),
         Summary = summary,
         URL = GetRequiredValue(item.URL, "url", item.ExternalId),
         OrganizationId = GetOrganizationId(),
@@ -67,18 +68,16 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
         ZltoRewardPool = null,
 
         CredentialIssuanceEnabled = true,
-        // TODO [YOM-1264/YOM-1280]: Review and assign the approved generic or type-specific credential
-        // schema per Opportunity type once the final custom fields and schema flavours are agreed.
-        SSISchemaName = SSISSchemaHelper.ToFullName(SchemaType.Opportunity, "Default"),
+        SSISchemaName = SSISSchemaHelper.ToDefaultFullName(type),
         Skills = skills?.Select(o => o.Id).ToList(),
         ShareWithPartners = false,
         Hidden = false,
 
 
         Keywords = keywords,
-        Categories = categories.Select(o => o.Id).ToList(),
-        Countries = countries.Select(o => o.Id).ToList(),
-        Languages = languages.Select(o => o.Id).ToList(),
+        Categories = [.. categories.Select(o => o.Id)],
+        Countries = [.. countries.Select(o => new Domain.Opportunity.Models.OpportunityRequestCountry { CountryId = o.Id })],
+        Languages = [.. languages.Select(o => o.Id)],
 
         // Populate when available. Partner sync uses PatchAllowMissingRequired:
         // omitted fields are preserved and key-only fields delete existing values.
@@ -87,11 +86,11 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
 
       if (type != Domain.Opportunity.Type.Job)
       {
-        var difficulty = ResolveDifficulty(item.Difficulty);
+        var difficulty = ResolveDifficulty(type, item.Difficulty);
         var (Interval, Count) = ResolveCommitment(item.Commitment);
         var engagementType = ResolveEngagementType(item.EngagementType);
 
-        result.DifficultyId = difficulty.Id;
+        result.CustomFields = [difficulty];
         result.CommitmentIntervalId = Interval.Id;
         result.CommitmentIntervalCount = Count;
         result.EngagementTypeId = engagementType.Id;
@@ -117,13 +116,12 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
     {
       value = value?.Trim();
 
-      // Yoma currently stores this opportunity type as Task. The custom-fields initiative will rename
-      // the Yoma lookup to Impact Action, while IXO already emits the future consumer-facing name.
+      // IXO sends the lookup display name; the enum and lookup Name are ImpactAction.
       if (string.Equals(value, Constants.OpportunityTypeImpactAction, StringComparison.OrdinalIgnoreCase))
-        return Domain.Opportunity.Type.Task;
+        return Domain.Opportunity.Type.ImpactAction;
 
       return Enum.TryParse<Domain.Opportunity.Type>(value, true, out var result) &&
-        result is Domain.Opportunity.Type.Learning or Domain.Opportunity.Type.Job or Domain.Opportunity.Type.Task
+        result is Domain.Opportunity.Type.Learning or Domain.Opportunity.Type.Job or Domain.Opportunity.Type.ImpactAction
           ? result
           : throw new InvalidOperationException($"IXO opportunity type '{value}' is not supported");
     }
@@ -150,8 +148,6 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
 
       if (type == Domain.Opportunity.Type.Job)
         AddDescriptionDetail(metadata, "Work type", item.WorkType);
-
-      AddDescriptionDetail(metadata, "Provider", item.Provider);
 
       if (metadata.Count > 0)
         description = $"{description}{StringExtensions.MarkdownParagraphBreak}{string.Join("\n", metadata)}";

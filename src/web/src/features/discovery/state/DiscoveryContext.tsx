@@ -3,19 +3,35 @@ import { useRouter } from "next/router";
 import React, {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
-import type { UserPreferences } from "~/api/models/userPreferences";
+import type {
+  UserPreferenceScope,
+  UserPreferences,
+} from "~/api/models/userPreferences";
 import { userProfileAtom } from "~/lib/store";
 import type { ChipLabelResolver, DiscoveryChip } from "../lib/chipModel";
 import { buildChips } from "../lib/chipModel";
-import type { DiscoveryAction } from "../lib/discoveryReducer";
-import type { InheritedFragments } from "../lib/preferenceMapping";
+import { ageInYears } from "../lib/dates";
+import type {
+  ClauseAttribution,
+  DiscoveryAction,
+  PreferenceSaveFollowUp,
+  SettlingSave,
+} from "../lib/discoveryReducer";
+import { presetToShow } from "../lib/discoveryReducer";
+import { homeCountryId as resolveHomeCountryId } from "../lib/location";
+import type {
+  DiscoverySearch,
+  InheritedFragments,
+} from "../lib/preferenceMapping";
 import {
-  applyInheritedFragments,
+  composeSearch,
   mapPreferencesToFilters,
+  withoutSkippedInterests,
 } from "../lib/preferenceMapping";
 import type {
   DiscoveryFilters,
@@ -24,19 +40,24 @@ import type {
 } from "../lib/types";
 import { hasActiveFilters } from "../lib/types";
 import {
+  engagementDisplayName,
+  sdgLabel,
   useDiscoveryLookups,
   type DiscoveryLookups,
 } from "./useDiscoveryLookups";
 import { useAnonymousMigration } from "./useAnonymousMigration";
 import { useDiscoveryQuery } from "./useDiscoveryQuery";
-import { usePreferences } from "./usePreferences";
+import { PlaceNotSavedError, usePreferences } from "./usePreferences";
 import { useResultCount } from "./useResultCount";
+import { useLoadedTypeKeys } from "./useTypeDefinitions";
+import { useVerifiedSkillIds } from "./useVerifiedSkillIds";
 import { useViewMode } from "./useViewMode";
 
 /** What "Make this my default" overwrote, so the banner can offer to put it back. */
 export interface PreferenceSnapshot {
   preferences: UserPreferences;
   skipped: PreferenceKey[];
+  interestsSkipped: string[];
 }
 
 /** One context per surface — wiring only; every rule lives in the pure modules it composes. */
@@ -44,23 +65,65 @@ export interface DiscoveryContextValue {
   state: DiscoveryState;
   dispatch: (action: DiscoveryAction) => void;
   ready: boolean;
+  /** Bumped when the search is replaced rather than edited; see `useDiscoveryQuery`. */
+  resetEpoch: number;
   lookups: DiscoveryLookups;
   preferences: UserPreferences | null | undefined;
-  savePreferences: (preferences: UserPreferences) => Promise<UserPreferences>;
+  /** Signed-in (`user`) or not — decides who owns the country (profile vs session answer). */
+  scope: UserPreferenceScope;
+  /**
+   * The youth's country: the profile's when signed in, the session answer when anonymous. The
+   * inherited country and the country the stored region / city must belong to.
+   */
+  homeCountryId: string | null;
+  /**
+   * Saves a new preset, then dispatches `then` (the caller's follow-up) together with what the
+   * save did to the inherited types, as ONE action (`preferencesSaved`).
+   */
+  savePreferences: (
+    preferences: UserPreferences,
+    then?: PreferenceSaveFollowUp,
+  ) => Promise<UserPreferences>;
   /** The sign-in "keep your answers" offer — see `useAnonymousMigration`. */
   migration: ReturnType<typeof useAnonymousMigration>;
   /**
    * The preset and skip list as they were before the banner's last "Make this my default" —
-   * what its inline Undo restores. It lives HERE rather than in the banner because saving the
-   * last override can empty the query, which flips the surface from results to landing and
-   * remounts the banner; the offer of an undo must not depend on which of the two is mounted.
+   * what its inline Undo restores. It lives HERE rather than in the banner because a save can
+   * drop the search's last filter (the clauses of a type only the old goal supplied), which flips
+   * the surface from results to landing and remounts the banner; the offer of an undo must not
+   * depend on which of the two is mounted.
    */
   preferenceUndo: PreferenceSnapshot | null;
   setPreferenceUndo: (snapshot: PreferenceSnapshot | null) => void;
   fragments: InheritedFragments;
+  /**
+   * The search with its provenance (`composeSearch`) — what every request on the surface is built
+   * from (`buildSearchFilter` / `buildCountFilter`).
+   */
+  search: DiscoverySearch;
+  /**
+   * Whether THIS search's request (`search`) can go out: the route and the lookups have settled,
+   * and — unless preferences are off — the preferences, (signed in) the verified skills and,
+   * while it inherits accessibility needs, the full accessibility list. So the first request is
+   * not replaced a moment later.
+   */
+  searchReady: boolean;
+  /**
+   * The same for a search built WITH the preference layer, inheriting these accessibility needs,
+   * whatever the switch says — the wizard's live count, over its draft.
+   */
+  preferenceSearchReady: (accessibilityNeeds: string[]) => boolean;
+  /** The signed-in youth's verified skill ids (none when signed out). */
+  verifiedSkillIds: string[];
   /** What the search actually runs with: manual state + surviving inherited fragments. */
   effectiveFilters: DiscoveryFilters;
   chips: DiscoveryChip[];
+  /**
+   * The Filters badge: one per filter of THIS search's own, the green chips. That is the chip
+   * model's manual chips plus one per custom-field clause, which `AppliedChips` renders beside
+   * them, outside the chip model. The preferences are not counted (2026-10-08).
+   */
+  filterCount: number;
   resolveLabel: ChipLabelResolver;
   /**
    * Clear this search's filters. The preference layer is NOT part of them: it survives, chips
@@ -73,9 +136,15 @@ export interface DiscoveryContextValue {
    * Switch one preference off for this search — the ONE deselect path for inherited values
    * (chip ×, section control, type row, category tile). Also strips the fragment's values from
    * the manual filters so a manual duplicate cannot survive the skip. Undo via
-   * `setPreferenceSkipped(key, false)`.
+   * `setPreferenceSkipped(key, false)`. With `interest`, only that saved interest (a category
+   * id) is switched off — the interests' own chips, Browse by category, the Categories section.
    */
-  skipPreference: (key: PreferenceKey) => void;
+  skipPreference: (key: PreferenceKey, interest?: string) => void;
+  /**
+   * A skipped chip's undo. An interest's chip restores that interest, unless the whole
+   * interests preference is what switched it off: then the preference comes back.
+   */
+  restorePreference: (key: PreferenceKey, interest?: string) => void;
   /** The results count row registers here; `scrollToResults` brings it into view. */
   resultsAnchorRef: React.RefObject<HTMLDivElement | null>;
   /**
@@ -99,36 +168,168 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const router = useRouter();
-  const { state, dispatch, ready } = useDiscoveryQuery();
+  // What the reducer's clause rule needs beyond the URL (`ClauseAttribution`): the inherited
+  // types and which type owns which key. Read at each dispatch; set below, once the fragments
+  // are known.
+  const attribution = useRef<ClauseAttribution>({
+    fragments: {},
+    typeKeys: () => undefined,
+  });
+  const { state, dispatch, ready, rendered, resetEpoch } =
+    useDiscoveryQuery(attribution);
   const lookups = useDiscoveryLookups();
   const profile = useAtomValue(userProfileAtom);
   const {
     scope,
-    preferences,
-    save: savePreferences,
+    preferences: storedPreferences,
+    settled: preferencesSettled,
+    save: savePreset,
     readPersonalizationSeen,
     markPersonalizationSeen,
   } = usePreferences();
-  const migration = useAnonymousMigration(scope, preferences, savePreferences);
+
+  // A save in flight (`presetToShow`): without the hold, Undo showed the Goal's type in effect
+  // for a moment and searched for it (2026-10-06).
+  const settling = useRef<SettlingSave<
+    UserPreferences | null | undefined
+  > | null>(null);
+  const [, setSettleTick] = useState(0);
+  const preferences = presetToShow(
+    storedPreferences,
+    settling.current,
+    rendered,
+  );
+  useEffect(() => {
+    const current = settling.current;
+    if (current === null || current.until === null) return;
+    // The save's push rendered, or the search was replaced before it could: the hold is over.
+    settling.current = null;
+    if (current.until !== rendered) setSettleTick((tick) => tick + 1);
+  }, [rendered]);
+
+  const homeCountryId = resolveHomeCountryId(
+    scope,
+    profile?.countryId ?? null,
+    preferences,
+  );
   const [preferenceUndo, setPreferenceUndo] =
     useState<PreferenceSnapshot | null>(null);
 
-  const fragments = useMemo(
+  // Identity-derived: only a signed-in youth has a date of birth to read.
+  const age =
+    scope === "user" ? ageInYears(profile?.dateOfBirth, new Date()) : null;
+  // Signed in, the earned skills join the saved ones (one cached request a session).
+  const { ids: verifiedSkillIds, settled: verifiedSkillsSettled } =
+    useVerifiedSkillIds();
+  const { otherAccommodationId } = lookups;
+
+  // The preference layer as saved, which the chips show...
+  const savedFragments = useMemo(
     () =>
       preferences
         ? mapPreferencesToFilters(preferences, {
-            countryId: profile?.countryId ?? null,
+            countryId: homeCountryId,
+            age,
+            verifiedSkillIds,
+            otherAccommodationId,
           })
         : {},
-    [preferences, profile?.countryId],
+    [preferences, homeCountryId, age, verifiedSkillIds, otherAccommodationId],
+  );
+  // ...and as this search uses it: without the interests switched off one by one (2026-10-08).
+  // Everything that composes a search reads this one.
+  const fragments = useMemo(
+    () => withoutSkippedInterests(savedFragments, state.interestsSkipped),
+    [savedFragments, state.interestsSkipped],
+  );
+  const typeKeys = useLoadedTypeKeys();
+  attribution.current = { fragments, typeKeys };
+
+  // Every save goes through here, so the search learns what the new preset does to its
+  // inherited types (`preferencesSaved`): a type only the old preset supplied leaves, and takes
+  // its clauses with it. `from` is the preset as rendered when the save began; `to` is mapped
+  // under the same profile context as `fragments`.
+  const savePreferences = async (
+    next: UserPreferences,
+    then?: PreferenceSaveFollowUp,
+  ): Promise<UserPreferences> => {
+    const from = fragments;
+    const fragmentsOf = (saved: UserPreferences): InheritedFragments =>
+      mapPreferencesToFilters(saved, {
+        countryId: resolveHomeCountryId(
+          scope,
+          profile?.countryId ?? null,
+          saved,
+        ),
+        age,
+        verifiedSkillIds,
+        otherAccommodationId,
+      });
+    const release = (): void => {
+      settling.current = null;
+      setSettleTick((tick) => tick + 1);
+    };
+    const land = (
+      saved: UserPreferences,
+      follow?: PreferenceSaveFollowUp,
+    ): void => {
+      const until = dispatch({
+        kind: "preferencesSaved",
+        from,
+        to: fragmentsOf(saved),
+        then: follow,
+      });
+      // Nothing pushed (the URL doesn't change): the stored preset can show at once.
+      if (until === null) release();
+      else if (settling.current)
+        settling.current = { ...settling.current, until };
+    };
+    settling.current = { preferences, until: null };
+    let saved: UserPreferences;
+    try {
+      saved = await savePreset(next);
+    } catch (error) {
+      // Only the place failed: the preset itself saved, so the search follows it, without the
+      // caller's follow-up (a failed save skips it). Any other failure saved nothing.
+      if (error instanceof PlaceNotSavedError) land(error.preferences);
+      else release();
+      throw error;
+    }
+    land(saved, then);
+    return saved;
+  };
+  const migration = useAnonymousMigration(
+    scope,
+    // The stored preset, not the held one: keeping the answers merges into what is saved.
+    storedPreferences,
+    savePreferences,
+    profile?.countryId ?? null,
   );
 
-  const effectiveFilters = applyInheritedFragments(
+  const search = composeSearch(
     state.filters,
     fragments,
     state.preferencesOff,
     state.preferencesSkipped,
   );
+  const effectiveFilters = search.filters;
+  // Everything a search is composed from has settled — the first request is the real one. The
+  // preference layer (the session, the preferences, the verified skills) only for a search that
+  // uses it: with preferences off it changes nothing, and must not hold the request. The full
+  // accessibility list only for a search that inherits needs: Other is found in it.
+  const preferenceSearchReady = (accessibilityNeeds: string[]): boolean =>
+    ready &&
+    lookups.searchReady &&
+    preferencesSettled &&
+    verifiedSkillsSettled &&
+    (accessibilityNeeds.length === 0 || lookups.accessibilitySettled);
+  const searchReady = state.preferencesOff
+    ? ready && lookups.searchReady
+    : preferenceSearchReady(
+        state.preferencesSkipped.includes("accessibility")
+          ? []
+          : (preferences?.accessibility.requirements ?? []),
+      );
 
   const resolveLabel: ChipLabelResolver = (facet, value) => {
     const byId = (items: { id: string; name: string }[]): string =>
@@ -144,13 +345,19 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
       case "countries":
         return byId(lookups.countries);
       case "engagementTypes":
-        return byId(lookups.engagementTypes);
+        return engagementDisplayName(lookups.engagementTypes, value);
       case "commitment":
         return byId(lookups.timeIntervals);
       case "languages":
         return byId(lookups.languages);
-      case "providers":
-        return byId(lookups.organizations);
+      case "accommodations":
+        // The facet list first, then the full list: a pick of a need no published opportunity
+        // lists (a stale or shared `acc=`) still reads as a name, never a GUID.
+        return byId([...lookups.accommodations, ...lookups.accessibility]);
+      case "sdgs": {
+        const goal = lookups.sdgs.find((g) => g.id === value);
+        return goal ? sdgLabel(goal) : value;
+      }
       default:
         return value;
     }
@@ -158,16 +365,38 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const chips = buildChips(
     state.filters,
-    fragments,
+    savedFragments,
     state.preferencesOff,
     state.preferencesSkipped,
     resolveLabel,
+    lookups,
+    state.interestsSkipped,
   );
 
-  const clearFilters = (): void => dispatch({ kind: "clearFilters" });
+  const clearFilters = (): void => {
+    dispatch({ kind: "clearFilters" });
+  };
 
-  const skipPreference = (key: PreferenceKey): void =>
-    dispatch({ kind: "skipPreference", key, fragment: fragments[key] ?? {} });
+  const skipPreference = (key: PreferenceKey, interest?: string): void => {
+    dispatch(
+      interest !== undefined
+        ? {
+            kind: "skipPreference",
+            key,
+            fragment: { categories: [interest] },
+            interest,
+          }
+        : { kind: "skipPreference", key, fragment: fragments[key] ?? {} },
+    );
+  };
+
+  const restorePreference = (key: PreferenceKey, interest?: string): void => {
+    dispatch(
+      interest !== undefined && !state.preferencesSkipped.includes(key)
+        ? { kind: "setPreferenceSkipped", key, skipped: false, interest }
+        : { kind: "setPreferenceSkipped", key, skipped: false },
+    );
+  };
 
   const resultsAnchorRef = useRef<HTMLDivElement | null>(null);
   const scrollToResults = (): void => {
@@ -191,11 +420,7 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
     count,
     counting,
     failed: countFailed,
-  } = useResultCount(
-    effectiveFilters,
-    lookups.typeIdByName,
-    ready && lookups.types.length > 0,
-  );
+  } = useResultCount(search, lookups, searchReady);
 
   const { setView } = useViewMode(
     state,
@@ -208,19 +433,33 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
     state,
     dispatch,
     ready,
+    resetEpoch,
     lookups,
     preferences,
+    scope,
+    homeCountryId,
     savePreferences,
     migration,
     preferenceUndo,
     setPreferenceUndo,
     fragments,
+    search,
+    searchReady,
+    preferenceSearchReady,
+    verifiedSkillIds,
     effectiveFilters,
     chips,
+    // This search's own filters only (2026-10-08): the preferences have their own panel and
+    // switch, so they never inflate the badge. "All opportunities" filters nothing.
+    filterCount:
+      chips.filter(
+        (chip) => chip.provenance === "manual" && chip.facet !== "all",
+      ).length + state.filters.customFields.length,
     resolveLabel,
     clearFilters,
     hasFilters: hasActiveFilters(state.filters),
     skipPreference,
+    restorePreference,
     resultsAnchorRef,
     scrollToResults,
     count,

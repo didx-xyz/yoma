@@ -16,25 +16,28 @@ namespace Yoma.Core.Infrastructure.Substack.Migrations
     #region Protected Members
     protected override void Up(MigrationBuilder migrationBuilder)
     {
+      // EF's non-transactional migration warning is expected: CONCURRENTLY requires suppressTransaction.
+      // An interrupted run may need index cleanup because these operations cannot roll back atomically.
+      // Already deployed; retain the migration structure. Fresh Local/Dev databases replay it and log the warning.
       // Provision fresh databases too; already installed is a no-op.
       migrationBuilder.AlterDatabase()
         .Annotation("Npgsql:PostgresExtension:pg_trgm", ",,");
 
-      foreach (var index in Indexes)
+      foreach (var (schema, table, column, name) in Indexes)
       {
         // Concurrent builds commit independently. Retry rebuilds only this migration's
         // new indexes, including any invalid indexes left by an interrupted build.
-        DropIndex(migrationBuilder, index.Schema, index.Name);
+        DropIndex(migrationBuilder, schema, name);
         migrationBuilder.Sql(
-          $"CREATE INDEX CONCURRENTLY \"{index.Name}\" ON \"{index.Schema}\".\"{index.Table}\" USING gin (\"{index.Column}\" gin_trgm_ops);",
+          $"CREATE INDEX CONCURRENTLY \"{name}\" ON \"{schema}\".\"{table}\" USING gin (\"{column}\" gin_trgm_ops);",
           suppressTransaction: true);
       }
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)
     {
-      foreach (var index in Indexes)
-        DropIndex(migrationBuilder, index.Schema, index.Name);
+      foreach (var (schema, _, _, name) in Indexes)
+        DropIndex(migrationBuilder, schema, name);
 
       // Retain the shared extension; other contexts/indexes may still use it.
     }

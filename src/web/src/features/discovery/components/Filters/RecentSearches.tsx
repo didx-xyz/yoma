@@ -3,15 +3,17 @@ import React, { useState } from "react";
 import { IoClose, IoTimeOutline } from "react-icons/io5";
 import type { RecentSearch } from "../../lib/recentSearches";
 import {
-  readRecentSearches,
+  clearRecentSearches,
+  readVisibleRecentSearches,
   relativeTime,
   removeRecentSearch,
 } from "../../lib/recentSearches";
 
 /**
  * Recent searches — a typeahead panel under the free-text input (both breakpoints render it
- * through the shared `FilterPanelBlocks`; it is not a standalone block). Up to five, newest
- * first, each removable. Replaying one is a plain navigation: the stored query string IS the
+ * through the shared `FilterPanelBlocks`; the search-bar segment popover renders it inline).
+ * The newest THREE of a ten-entry store, each removable — removing one promotes the next most
+ * recent — plus "Clear recent" for the lot. Replaying one is a plain navigation: the stored query string IS the
  * state. `onMouseDown` is intercepted so choosing an entry doesn't blur (and close) the panel
  * before the click lands.
  *
@@ -22,7 +24,9 @@ export const RecentSearchesPanel: React.FC<{
   variant?: "overlay" | "inline";
 }> = ({ variant = "overlay" }) => {
   const router = useRouter();
-  const [entries, setEntries] = useState<RecentSearch[]>(readRecentSearches);
+  const [entries, setEntries] = useState<RecentSearch[]>(
+    readVisibleRecentSearches,
+  );
   // One clock for the panel: every "2h ago" in it is measured from the same instant.
   const [now] = useState(() => new Date());
   if (entries.length === 0) return null;
@@ -33,7 +37,14 @@ export const RecentSearchesPanel: React.FC<{
 
   const remove = (queryString: string): void => {
     removeRecentSearch(queryString);
-    setEntries((prev) => prev.filter((e) => e.queryString !== queryString));
+    // Re-read rather than filter in place: the store keeps more than the panel shows, so
+    // removing one promotes the next most recent into view.
+    setEntries(readVisibleRecentSearches());
+  };
+
+  const clear = (): void => {
+    clearRecentSearches();
+    setEntries([]);
   };
 
   return (
@@ -44,9 +55,19 @@ export const RecentSearchesPanel: React.FC<{
           : "p-1"
       }
     >
-      <h3 className="text-gray-dark px-2 pb-1 text-xs font-bold tracking-wide uppercase">
-        Recent
-      </h3>
+      <div className="flex items-center justify-between px-2 pb-1">
+        <h3 className="text-gray-dark text-xs font-bold tracking-wide uppercase">
+          Recent
+        </h3>
+        <button
+          type="button"
+          onMouseDown={keepPanelOpen}
+          onClick={clear}
+          className="text-purple min-h-8 text-xs font-semibold underline"
+        >
+          Clear recent
+        </button>
+      </div>
       <ul className="flex flex-col">
         {entries.map((entry) => (
           <li key={entry.queryString} className="flex items-center gap-1">

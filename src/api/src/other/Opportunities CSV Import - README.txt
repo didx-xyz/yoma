@@ -22,14 +22,14 @@ For **Type = Job**, the following fields are optional:
 
 - Engagement
 - Skills
-- Difficulty
 - EffortCount
 - EffortInterval
 
 These fields may be left blank in the CSV.
 
 For **all other opportunity types**, Engagement and Skills remain optional.
-Difficulty and effort fields must still comply with the reference data lists.
+Effort fields must still comply with the reference data lists.
+Difficulty is now a type-specific custom field; see the custom-field section below.
 
 ------------------------------------------------------------------------
 
@@ -38,7 +38,6 @@ Difficulty and effort fields must still comply with the reference data lists.
 Reference JSON files:
 
 - opportunities_categories.json
-- opportunities_difficulty.json
 - opportunities_effortInterval.json
 - opportunities_engagement.json
 - opportunities_languages.json (ISO alpha-2 codes)
@@ -72,7 +71,7 @@ These headers must exist, and values must comply with rules.
 The following fields are always required:
 
 - Title — required; 1–150 characters
-- Type — required; must match opportunities_types.json (name)
+- Type — required; use a name from opportunities_types.json (ImpactAction for the displayed Impact Action type).
 - Categories — required; ≥1 from opportunities_categories.json (name); `|`-delimited
 - Summary — required; 1–150 characters
 - Description — required
@@ -89,7 +88,6 @@ For all opportunity types **except Job**:
 
 - Engagement — optional; must match opportunities_engagement.json if specified
 - Skills — optional; must match opportunities_skills.json if specified
-- Difficulty — required; must match opportunities_difficulty.json (name)
 - EffortCount — required; integer > 0
 - EffortInterval — required; must match opportunities_effortInterval.json (name)
 
@@ -97,7 +95,6 @@ For **Type = Job**:
 
 - Engagement — optional
 - Skills — optional
-- Difficulty — optional
 - EffortCount — optional
 - EffortInterval — optional
 
@@ -135,6 +132,8 @@ Headers must exist but values may be empty.
 
 - CSV delimiter: `,`
 - Multi-select delimiter: `|`
+- Enclose the entire CSV cell in double quotes when it contains commas, double quotes, or line breaks. Escape an embedded double quote by doubling it.
+- Category names can contain commas. Keep the complete name intact and use `|` between categories, e.g. `"Technology, AI & Data|Other"`. Commas inside a category name are not multi-select separators.
 - Booleans: `Yes` / `No` only
 - Dates: `YYYY-MM-DD` or `YYYY/MM/DD`
 - Languages: ISO alpha-2 codes from opportunities_languages.json
@@ -146,6 +145,12 @@ Headers must exist but values may be empty.
 6) Reference Data
 
 All values must come from the JSON reference files.
+
+After the category taxonomy migration, refresh opportunities_categories.json
+from the target environment's migrated category lookup before generating imports.
+Use only the current approved category names; legacy names are not accepted as
+CSV aliases. Partner-specific legacy category mappings do not apply to CSV imports.
+Retain Other where appropriate; it remains a valid category.
 
 Values must match **exactly**.
 
@@ -183,14 +188,12 @@ Type-specific validation:
 For **all types except Job**:
 
 - Skills: optional (must exist if specified)
-- Difficulty: required
 - EffortCount: > 0
 - EffortInterval: must match opportunities_effortInterval.json
 
 For **Type = Job**:
 
 - Skills: optional
-- Difficulty: optional
 - EffortCount: optional
 - EffortInterval: optional
 
@@ -212,7 +215,6 @@ If Keywords are not provided, auto-generate from:
 - Categories
 - Skills
 - Type
-- Difficulty
 - EffortCount + EffortInterval
 - Languages
 - Location
@@ -254,7 +256,6 @@ Examples:
 Always use names from reference JSON files.
 
 - Type → opportunities_types.json
-- Difficulty → opportunities_difficulty.json
 - EffortInterval → opportunities_effortInterval.json
 - Engagement → opportunities_engagement.json
 - Categories → opportunities_categories.json
@@ -330,3 +331,144 @@ Example:
 
 ✅ “I’ve added the Title, Summary, and Languages.”  
 ⚠️ “The Skills field is still missing for 3 rows. Please provide them.”
+
+------------------------------------------------------------------------
+
+Core metadata additions (CF implementation)
+
+The new columns are optional in CSV. When updating an existing opportunity,
+an omitted new column preserves its stored value. A present blank cell clears
+the corresponding optional value or selection. Manual API capture additionally
+requires an explicit Incentivized selection.
+
+- Provider: informational provider name, maximum 255 characters. This does not
+  change the organisation that owns the opportunity.
+- Incentivized: Yes / No / blank (not specified). Not restricted to jobs.
+- RewardType: None / ZLTO / PartnerIncentive (use the exact enum names).
+- PartnerIncentiveAmount: positive amount, up to four decimal places, only for
+  PartnerIncentive.
+- PartnerIncentiveCurrency: current ISO 4217 code from GET /api/v3/lookup/currency,
+  required together with PartnerIncentiveAmount. ZLTO is not a currency code.
+- AccessibilitySupport: Yes / No / AvailableOnRequest / blank.
+- Accommodations: approved names from GET /api/v3/lookup/accessibility, separated
+  by |. Yes requires at least one; No/blank cannot carry accommodations.
+- AccommodationOtherDescription: required only when Other is selected, maximum
+  500 characters.
+- AgeFrom / AgeTo: optional non-negative whole years, inclusive; AgeTo must not
+  be less than AgeFrom.
+- TargetedGroups: approved names from GET /api/v3/lookup/targeted/group, separated
+  by |. Open to all must be selected alone.
+- SustainableDevelopmentGoals: official goal numbers (1–17) or exact lookup
+  names from GET /api/v3/lookup/sustainable/development/goal, separated by |.
+  Exports use numbers.
+
+Jobs cannot offer ZLTO rewards or pools. A Job may be incentivized without a
+reward type because its remuneration belongs to the job salary custom fields.
+An incentivized non-Job requires ZLTO or PartnerIncentive. An opportunity with a
+reward cannot be marked No. Partner incentives are informational: Yoma does not
+pay or convert them.
+
+For older CSVs without RewardType, a supplied ZltoReward establishes ZLTO.
+For updates, an existing PartnerIncentive type is retained when its column is
+omitted. An omitted Incentivized column is inferred as Yes when a reward is
+explicit. Send the complete reward fields together when changing reward type.
+
+Region, city and coordinates remain excluded from CSV. Location remains the
+country-code selection; retained countries preserve their stored details.
+
+Only the API samples are updated here. Jason must copy the approved samples
+to the web application as part of the UI work.
+
+------------------------------------------------------------------------
+
+Difficulty / experience level custom fields
+
+The core Difficulty column and /opportunity/difficulty lookup are removed.
+Do not send Difficulty or DifficultyId. Retrieve current definitions/options from
+GET /api/v3/opportunity/custom/field/definition?types=<Type>.
+
+Use CF:<definitionKey> headers and the applicable option key:
+- Learning: CF:learningDifficulty — Beginner, Intermediate, Advanced, AnyLevel.
+- Other: CF:otherDifficulty — Beginner, Intermediate, Advanced, AnyLevel.
+- ImpactAction: CF:impactActionDifficulty — EntryLevel, ExperienceNeeded, SkillsRequired.
+- Event: CF:eventDifficulty — OpenToAll, FamiliarityNeeded, ExperiencedIndividuals.
+- Job: CF:jobExperienceLevel — None, EntryJunior, Mid, Senior.
+
+Each is a single-select. The existing CF parser also accepts the exact option
+display name, but examples use stable keys. A shared template may include several
+types' CF columns: leave non-applicable cells blank; populated non-applicable
+values are rejected. Do not infer years of Job experience from legacy difficulty.
+
+Manual API create/update requires the applicable field. CSV and partner sync
+retain the framework's PatchAllowMissingRequired behaviour: omitted columns
+preserve existing values, present blanks clear them, and supplied values must
+match the current type's definition. New rows may remain unspecified when absent.
+The report export carries keys and values in the existing flattened Custom Fields
+column; there is no separate core Difficulty export column. Report exports are
+not import templates: imports use the CF:<definitionKey> columns described above.
+The flattened report retains inline option keys and lookup IDs, including Education,
+Currency and Skill references. CSV imports resolve the human-facing names/codes
+listed below; do not use the report as an import template.
+
+------------------------------------------------------------------------
+
+Job-specific custom fields
+
+The Job sample includes the approved CF columns. All are handled by the existing
+CF importer; omitted columns preserve values and present blank cells clear them.
+Reference current definitions rather than inventing option values:
+- CF:jobSalaryDisclosed: true / false.
+- CF:jobSalaryMinimum and CF:jobSalaryMaximum: positive decimal amounts; maximum
+  must not be below minimum. Either bound may be supplied independently.
+- CF:jobSalaryCurrency: ISO currency code from /api/v3/lookup/currency.
+- CF:jobPayInterval: PerYear / PerMonth / PerHour / PerEngagement.
+- CF:jobEmploymentType: Permanent / FixedTerm / Internship / Apprenticeship /
+  FreelanceConsultancy / TemporarySeasonal; separate multiple selections with |.
+- CF:jobWorkSchedule: FullTime / PartTime.
+- CF:jobEmploymentDuration: positive whole number.
+- CF:jobEmploymentDurationUnit: Months / Years.
+- CF:jobMinimumQualification: exact Education name from /api/v3/lookup/education.
+- CF:jobPreferredSkills: exact skill names separated with |, resolved through
+  the existing Skill lookup. These supplement core required Skills, not replace them.
+- CF:jobIndustry: UN ISIC Revision 5 Section code (A-V).
+- CF:jobCategory: ISCO-08 two-digit Sub-major Group code; retain leading zeroes.
+
+Industry describes the employer's economic sector; Job category describes the
+occupation. Neither replaces the core Opportunity Categories selection.
+
+SalaryDisclosed=false excludes amounts, currency and pay interval. Salary details
+cannot accompany Incentivized=No. Permanent and FixedTerm cannot be combined;
+Permanent excludes employment duration and its unit. These consistency checks
+also apply against stored values during partial imports: clear old dependent
+values in the same row when changing their controlling value.
+
+Manual API saves require the mandatory Job definitions plus core DateEnd and
+Skills. Disclosed salary requires at least one amount, currency and interval;
+non-permanent employment requires duration and unit. CSV/partner imports may
+remain incomplete but supplied values must still be valid and consistent.
+Existing Jobs are not backfilled with guessed qualifications, salary or industry.
+
+------------------------------------------------------------------------
+
+Impact Action custom fields
+
+These are optional ImpactAction fields, not Event fields:
+- CF:impactActionToolsRequired: Computer / Smartphone / Tablet / GpsDevice /
+  Camera / PowerBank / ProtectiveEquipment / HandTools / GardeningTools /
+  CleaningEquipment / MeasuringEquipment / Stationery / Other.
+  Separate multiple selections with |. The sample uses Smartphone|Other.
+- CF:impactActionToolsOtherDescription: free text, maximum 500 characters.
+  Required when Other is selected; not permitted without Other.
+- CF:impactActionVerifiedActivityType: one of VerifiedFacilitationSession /
+  WaterQualityMonitoringSession / VerifiedInclusiveStorytelling.
+
+The normal parser accepts exact option keys or display names. Use keys in templates.
+Omitted columns preserve stored values and present blanks clear them. Changes to
+Other and its description must remain consistent with values retained by the patch.
+To clear both, supply both columns with empty cells. Other description is searchable
+through the normal string CF Contains filter; tools support AnyOf/AllOf filters.
+
+Existing actions remain unspecified; no backfill is required. These fields do not
+change verification, rewards or credential issuance. Impact Achieved belongs to
+completion data (MyOpportunity), not this opportunity import. Credential mapping
+for Verified Activity Type will be configured in the final schema work.

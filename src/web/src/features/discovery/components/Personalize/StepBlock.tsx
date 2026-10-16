@@ -3,8 +3,10 @@ import type { UserPreferences } from "~/api/models/userPreferences";
 import type { StepBlockDef } from "../../registry/preferenceSteps";
 import { Message } from "../shared/Message";
 import { usePreferenceOptions } from "./usePreferenceOptions";
+import { AccessibilityBlock } from "./blocks/AccessibilityBlock";
 import { GoalCards } from "./blocks/GoalCards";
 import { IdentityReadonly } from "./blocks/IdentityReadonly";
+import { LocationBlock } from "./blocks/LocationBlock";
 import { Pill } from "./blocks/Pill";
 import { SkillSearch } from "./blocks/SkillSearch";
 
@@ -22,9 +24,12 @@ export const StepBlock: React.FC<{
 }> = ({ block, draft, onPatch }) => {
   const options = usePreferenceOptions(block.optionsSource);
 
-  // Single-select semantics keyed by the PREFERENCE, not by the block kind — `rows` and `pills`
+  // Selection semantics keyed by the PREFERENCE, not by the block kind — `rows` and `pills`
   // are purely visual, so the registry can swap kinds without cross-wiring another preference.
-  const singleSelect = (): {
+  // Time commitment (one maximum) and the incentive preference (`yes` / `no` entries) are
+  // single-select, and tapping the chosen pill clears it. Engagement is multi-select (the API
+  // stores a list, 2026-10-03): each tap toggles its own pill, and none = no preference.
+  const pillSelection = (): {
     active: (id: string) => boolean;
     toggle: (id: string) => void;
   } => {
@@ -39,10 +44,20 @@ export const StepBlock: React.FC<{
                 : { intervalId: id, count: 1 },
           }),
       };
+    if (block.prefKey === "incentivized")
+      return {
+        active: (id) =>
+          draft.incentivized !== null && draft.incentivized === (id === "yes"),
+        toggle: (id) => {
+          const value = id === "yes";
+          onPatch({
+            incentivized: draft.incentivized === value ? null : value,
+          });
+        },
+      };
     return {
-      active: (id) => draft.engagement === id,
-      toggle: (id) =>
-        onPatch({ engagement: draft.engagement === id ? null : id }),
+      active: (id) => draft.engagement.includes(id),
+      toggle: (id) => onPatch({ engagement: toggleIn(draft.engagement, id) }),
     };
   };
 
@@ -65,6 +80,7 @@ export const StepBlock: React.FC<{
               <Pill
                 key={option.id}
                 label={option.label}
+                imageURL={option.imageURL}
                 active={draft[key].includes(option.id)}
                 onToggle={() =>
                   onPatch({ [key]: toggleIn(draft[key], option.id) })
@@ -76,7 +92,7 @@ export const StepBlock: React.FC<{
       }
       case "rows":
       case "pills": {
-        const { active, toggle } = singleSelect();
+        const { active, toggle } = pillSelection();
         const entries =
           block.entries ?? options.map((o) => ({ id: o.id, label: o.label }));
         return (
@@ -98,31 +114,20 @@ export const StepBlock: React.FC<{
           </div>
         );
       }
-      case "toggle":
+      case "accessibility":
         return (
-          <label className="border-gray flex items-center gap-3 rounded-xl border p-3">
-            <input
-              type="checkbox"
-              className="toggle checked:[--input-color:var(--color-green)]"
-              checked={draft.accessibility.enabled}
-              onChange={(e) =>
-                onPatch({
-                  accessibility: {
-                    ...draft.accessibility,
-                    enabled: e.target.checked,
-                  },
-                })
-              }
-            />
-            <span className="text-sm font-semibold">
-              Only show opportunities with accommodations
-            </span>
-          </label>
+          <AccessibilityBlock
+            options={options}
+            draft={draft}
+            onPatch={onPatch}
+          />
         );
       case "lookupSearch":
         return <SkillSearch draft={draft} onPatch={onPatch} />;
       case "readonly":
         return <IdentityReadonly entries={block.entries ?? []} />;
+      case "location":
+        return <LocationBlock draft={draft} onPatch={onPatch} />;
     }
   };
 

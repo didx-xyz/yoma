@@ -1,4 +1,4 @@
-using Yoma.Core.Domain.Payout;
+using Yoma.Core.Domain.Core;
 
 namespace Yoma.Core.Domain.Treasury.Models
 {
@@ -6,7 +6,7 @@ namespace Yoma.Core.Domain.Treasury.Models
   {
     public decimal Amount { get; set; }
 
-    public Currency Currency { get; } = Currency.USD;
+    public CurrencyOption Currency { get; } = CurrencyOption.USD;
 
     /// <summary>
     /// Number of ZLTO equivalent to 1 USD, using the same display precision as Treasury administration.

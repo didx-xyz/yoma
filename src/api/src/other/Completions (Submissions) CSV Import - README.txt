@@ -14,10 +14,10 @@ It is written for our custom GPT to follow deterministically (no guessing; refer
 - C# CSV DTO model: `MyOpportunityInfoCsvImport.cs`
 
 - Sample CSV: `MyOpportunityInfoCsvImport_Sample.csv`  
-  ➜ The **header row and order must exactly match** the sample.
+  ➜ The core header row and order must match the sample. Optional custom-field columns follow the core columns.
 
-**Headers (in this exact order):**  
-Email,PhoneNumber,FirstName,Surname,Gender,Country,DateCompleted,OpportunityExternalId
+**Sample headers (core columns first, then optional custom fields):**
+Email,PhoneNumber,FirstName,Surname,Gender,Country,DateCompleted,OpportunityExternalId,CF:jobEmploymentStartDate,CF:impactActionImpactAchieved,CF:eventRole,CF:entrepreneurshipBusinessName,CF:entrepreneurshipBusinessSummary,CF:entrepreneurshipBusinessRegistered,CF:entrepreneurshipRegistrationReference,CF:entrepreneurshipSector,CF:entrepreneurshipJobsCreated,CF:entrepreneurshipRevenueBand,CF:entrepreneurshipRevenueCurrency,CF:entrepreneurshipFundingTypes,CF:entrepreneurshipFundingAmountBand,CF:entrepreneurshipFunder,CF:entrepreneurshipClientLocation
 
 ------------------------------------------------------------------------------
 
@@ -25,7 +25,9 @@ Email,PhoneNumber,FirstName,Surname,Gender,Country,DateCompleted,OpportunityExte
 
 - File type: CSV
 - CSV delimiter: **comma (`,` only)**
-- Headers: **case-sensitive** and must match the sample file order exactly
+- Core headers are **case-sensitive** and must match the sample file order. Custom-field headers must use `CF:<definition key>` (case-sensitive), never bare keys or display titles. Use only active definitions for the matching Opportunity type; irrelevant types remain blank.
+- **All custom fields are optional for CSV imports and Partner Sync**, including definitions marked required for manual capture. Missing values remain unspecified; supplied values must satisfy their metadata and applicable cross-field rules. Do not invent values to make an import look complete.
+- Manual youth submissions enforce the applicable required CF definitions. Instant/action-link completions intentionally bypass CF processing; they must not be treated as manual submissions or given invented defaults.
 - Whitespace: trim all cells; an empty cell after trim is treated as **missing**
 - Dates: **two accepted formats** (zero-padded):
   - `YYYY-MM-DD`  (e.g., 2025-09-01)
@@ -69,6 +71,23 @@ At least **one** of **Email** or **PhoneNumber** must be provided (the “Userna
   - Length: **1–50** characters
   - Must match an existing Opportunity’s ExternalId
 
+- **CF:jobEmploymentStartDate** (Job completions only)
+  - Optional actual placement start date, strictly `YYYY-MM-DD`; not the application deadline
+- **CF:impactActionImpactAchieved** (Impact Action completions only)
+  - Optional outcome description, up to 1000 characters
+- **CF:eventRole** (Event completions only)
+  - Optional role: `Participant`, `Speaker`, `Panelist`, `FacilitatorTrainer`, `CoOrganiser`, or `Volunteer`
+  - If omitted or blank, the role remains unspecified
+
+- **Entrepreneurship completion custom fields**
+  - All Entrepreneurship columns in this CSV are optional. Business name, summary and registered status are required only for manual youth submissions, not CSV or Partner Sync.
+  - Registration reference applies only when registered. Other conditional companions can be absent on imports, but supplied values must not contradict each other.
+  - Resolve active options through the API definitions and use their stable keys, not display titles. Multi-select values are separated with `|`.
+  - CSV shared lookups use readable external values: Country/Language alpha-2 codes, Currency ISO code (for example `USD`), and full Education/Skill names. This differs from JSON API requests, which use lookup IDs.
+  - Boolean values are `true`/`false` (the established CSV Yes/No values are also accepted); integer/decimal values use invariant formatting.
+  - The API validates metadata and cross-field rules; never substitute `not available` for a missing value.
+  - Actual completion fields do not populate advertised Opportunity CFs or infer business achievements.
+
 ------------------------------------------------------------------------------
 
 ## 3) Reference Data (authoritative)
@@ -105,6 +124,7 @@ OpportunityExternalId → OpportunityExternalId  (required; 1–50; must match e
 - Country: must exist in completions_countries.json when provided; **WW not allowed**
 - DateCompleted: valid date in one of the two accepted formats; defaults to now if missing
 - OpportunityExternalId: **required**; 1–50 chars; must map to an existing Opportunity
+- Custom fields: optional on CSV/Partner Sync; supplied fields must use active matching definitions and valid values. Manual requiredness does not change CSV requiredness.
 
 ------------------------------------------------------------------------------
 
@@ -132,7 +152,7 @@ Human-readable messages remain short; the field name and offending value are sup
 ## 7) Examples
 
 **Headers:**  
-Email,PhoneNumber,FirstName,Surname,Gender,Country,DateCompleted,OpportunityExternalId
+Email,PhoneNumber,FirstName,Surname,Gender,Country,DateCompleted,OpportunityExternalId,CF:jobEmploymentStartDate,CF:impactActionImpactAchieved,CF:eventRole,CF:entrepreneurshipBusinessName,CF:entrepreneurshipBusinessSummary,CF:entrepreneurshipBusinessRegistered,CF:entrepreneurshipRegistrationReference,CF:entrepreneurshipSector,CF:entrepreneurshipJobsCreated,CF:entrepreneurshipRevenueBand,CF:entrepreneurshipRevenueCurrency,CF:entrepreneurshipFundingTypes,CF:entrepreneurshipFundingAmountBand,CF:entrepreneurshipFunder,CF:entrepreneurshipClientLocation
 
 **Valid (email given, date in `YYYY-MM-DD`):**
 ```csv
@@ -182,7 +202,7 @@ if (!DateOnly.TryParseExact(input, formats, CultureInfo.InvariantCulture, DateTi
 - Validation is background-only: highlight issues in the response; never provide or offer validation report downloads.
 - Always return download links only for the generated clean CSV files.
 - Never output non-downloadable local file paths.
-- Enforce header order exactly as in the sample file.
+- Enforce the core header order shown in the sample; include applicable optional custom-field columns after it.
 - Trim whitespace; reject empty tokens.
 - Detect and exclude phantom rows:
   - Rows that are completely blank must be ignored (not validated, silently dropped).

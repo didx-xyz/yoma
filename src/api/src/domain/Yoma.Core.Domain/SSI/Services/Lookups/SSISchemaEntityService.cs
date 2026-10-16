@@ -1,3 +1,4 @@
+using FluentValidation;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core;
@@ -124,7 +125,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
       if (string.IsNullOrEmpty(typeContext)) typeContext = null;
 
       if (type.HasValue && !TypeContextValid(type.Value, typeContext))
-        throw new ArgumentException($"Type context '{typeContext}' is invalid or unsupported for schema type '{type}'", nameof(typeContext));
+        throw new ValidationException($"Type context '{typeContext}' is invalid or unsupported for schema type '{type}'");
 
       var results = ListInternal(type);
       AddCustomFields(results, entityType => _customFieldDefinitionService.List(entityType, false, true, typeContext));
@@ -186,7 +187,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
           continue;
 
         entity.CustomFields = SSIAttributePresentationHelper.OrderCustomFields(
-          listDefinitions(entityType).Select(ToCustomField));
+          listDefinitions(entityType).Select(ToCustomField).ToList());
       }
     }
 
@@ -230,7 +231,9 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
         Group = definition.Group,
         SubGroup = definition.SubGroup,
         SortOrder = definition.SortOrder,
-        Required = definition.IsRequired,
+        // IsRequired governs manual capture, not issuance. Imports, partner outcomes and action links
+        // legitimately omit these values; JWS omits them and ACR supplies its existing placeholder.
+        Required = false,
         IsActive = definition.IsActive,
         IsSystem = definition.IsSystem,
         IsSchemaMapped = definition.IsSchemaMapped
@@ -245,6 +248,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
         CustomFieldDataType.Integer => nameof(Int32),
         CustomFieldDataType.Decimal => nameof(Decimal),
         CustomFieldDataType.Boolean => nameof(Boolean),
+        CustomFieldDataType.Date => nameof(DateOnly),
         CustomFieldDataType.DateTime => nameof(DateTimeOffset),
         CustomFieldDataType.Option when definition.SupportsMultiple == true => $"List<{nameof(String)}>",
         CustomFieldDataType.Option => nameof(String),
@@ -315,8 +319,19 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
               else
                 propTypeDisplayName = propInfo.PropertyType.Name;
 
-              prop.TypeName = string.IsNullOrEmpty(prop.TypeName) ? propTypeDisplayName : string.Format(prop.TypeName, propTypeDisplayName);
-              prop.DotNetType = string.IsNullOrEmpty(prop.DotNetType) ? propInfo.PropertyType.FullName : string.Format(prop.DotNetType, propInfo.PropertyType.FullName);
+              var propertyType = Nullable.GetUnderlyingType(propInfo.PropertyType) ?? propInfo.PropertyType;
+              if (propertyType.IsEnum && propertyType.IsDefined(typeof(FlagsAttribute), false))
+              {
+                // Flags remain a combined value on the domain model; credentials expose selected
+                // descriptions through the same list metadata as other multi-value attributes.
+                prop.TypeName = $"List<{nameof(String)}>";
+                prop.DotNetType = typeof(List<string>).FullName;
+              }
+              else
+              {
+                prop.TypeName = string.IsNullOrEmpty(prop.TypeName) ? propTypeDisplayName : string.Format(prop.TypeName, propTypeDisplayName);
+                prop.DotNetType = string.IsNullOrEmpty(prop.DotNetType) ? propInfo.PropertyType.FullName : string.Format(prop.DotNetType, propInfo.PropertyType.FullName);
+              }
             }
 
             if (string.IsNullOrEmpty(prop.AttributeName)) prop.AttributeName += $"{propInfo.DeclaringType.Name}_{propInfo.Name}";

@@ -7,7 +7,7 @@
 - **Ticket**: [YOM-1280](https://linear.app/didx/issue/YOM-1280/api-opportunity-credential-issuance-with-custom-fields)
 - **Owner**: Adrian
 - **Areas**: api
-- **Status**: in-progress - issuance and core wallet display verified; custom-field runtime pending
+- **Status**: review — six-type Opportunity issuance and CF wallet smoke passed; live history/retry follow-up remains
 - **Started**: 2026-08-12
 
 ## Problem / Goal
@@ -19,7 +19,7 @@ schemas are configured.
 
 ## Out of Scope
 
-- Final generic/type-specific schema flavours and mappings, blocked on YOM-1264.
+- Final generic/type-specific schema flavours and mappings, tracked in YOM-1277.
 - Provider and CSV-import schema assignment, tracked in YOM-1277.
 - Web credential rendering, tracked in YOM-1283.
 - Cross-taxonomy skill identifiers.
@@ -38,12 +38,30 @@ are normalized by the API; Web never parses provider JSON.
 
 Shared schema naming, protection and compatibility rules live in the [epic README](../README.md).
 
+**Current review, 2026-10-09:** [YOM-1277's consolidated stages 1–3 handoff](../YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/handoffs/2026-10-07-a.md)
+records the configured final defaults, assignment transition and exact-attempt issuance/retry fixes.
+The provider request carries the immutable resolved schema ID and issuance returns the existing
+credential model with its actual schema ID. Recovery records the historical issued version rather
+than the latest version prepared for the retry. No scheduling-time pin or DB column was added.
+The changes remain uncommitted for Adrian's review. Authenticated Local provider-backed issuance
+and wallet list/detail now pass for all six Opportunity types, including supplied Opportunity CFs
+and omitted optional completion CFs: 377 independent schema/source assertions across 46 attributes.
+Populated completion CFs and historical/retry behavior retain separate automated coverage; they
+are not claimed as live fault-injection tests. YoID live issuance failed according to Adrian and
+its cause remains unconfirmed; the unchanged ACR configuration is not marked live-passed in this run.
+The final 2026-10-09 pass records 546 selected regression cases passing with no failures/skips,
+including 102 SSI cases and all guarded local DB checks. The same handoff contains Jason's
+per-type styling/content matrix and the guided Local issuance/retrieval plan; live provider and
+visual Web sign-off are not inferred from these automated results.
+
 ## Tasks
 
 - [x] Commit the selected schema full name, schema type and artifact type when issuance is scheduled.
 - [x] Resolve the latest version of the scheduled schema during processing.
 - [x] Allow an already scheduled issuance to continue after later Opportunity configuration changes.
 - [x] Persist the resolved schema version after successful issuance.
+- [x] Use the mapped immutable schema identity throughout an attempt, including a concurrent version change.
+- [x] Recover the actual issued version after provider success/local-save failure without issuing twice.
 - [x] Keep schema version null while pending and align existing non-issued rows through migration.
 - [x] Enforce one issuance per schema type and target entity independently of the eventual schema name.
 - [x] Preserve the existing retry flow; each retry resolves the current latest applicable schema.
@@ -61,8 +79,10 @@ Shared schema naming, protection and compatibility rules live in the [epic READM
 - [x] Exercise structured Skills, scalar formatting and YoID ACR optional-value handling against a running API.
 - [x] Return core and custom-field detail attributes in one grouped, deterministic presentation order.
 - [x] Exercise the consolidated migration and grouped YoID/Opportunity wallet detail against a running API.
-- [ ] Exercise legacy comma-delimited Skills and custom-field display against a running API.
-- [ ] Exercise retry, type-specific and required-value failure scenarios against a running API.
+- [x] Exercise supplied Opportunity custom-field display and optional completion-CF omissions against the running API for all six types.
+- [x] Verify all six type-specific/generic selected defaults through real provider issuance and youth wallet list/detail retrieval.
+- [ ] Exercise legacy comma-delimited Skills against a running API; automated compatibility coverage already passes.
+- [ ] Exercise retry and required-value failure scenarios against a running API; automated intercepted coverage already passes.
 
 ## Decisions
 
@@ -100,6 +120,13 @@ Shared schema naming, protection and compatibility rules live in the [epic READM
   deliberately outside the signed credential and changing it does not create a schema version. Static
   presentation metadata is nullable; configured groups render first and unconfigured attributes remain
   readable in display-label order. Core and custom fields share the consolidated ordering space.
+- 2026-10-09: Exact attempt identity and successful retry recovery now use the existing provider
+  request/credential models: pass the mapped schema ID, return the actual credential/schema ID,
+  and persist the recovered historical version. Latest-at-processing semantics, client referent,
+  queues and retry policy remain unchanged. Regression evidence and the uncommitted review diff
+  are consolidated under YOM-1277. The subsequent authenticated Local six-type issuance/attribute
+  pass is complete; the consolidated handoff distinguishes it from historical/fault-injection
+  coverage, the unconfirmed YoID failure and Jason's visual checks.
 
 ## Links
 

@@ -380,7 +380,13 @@ userProfile:
           options:
             - Primary (Grade 1–7 or equivalent)
             - Secondary (Grade 8–12, Matric or equivalent)
-            - Tertiary (Diploma, Degree or equivalent)
+            - Tertiary (Qualification not specified)
+            - Tertiary - Certificate
+            - Tertiary - Diploma
+            - Tertiary - Bachelor’s Degree
+            - Tertiary - Honours Degree
+            - Tertiary - Master’s Degree
+            - Tertiary - PhD
             - No formal education (No schooling attended)
             - Other
 scopeMappings:

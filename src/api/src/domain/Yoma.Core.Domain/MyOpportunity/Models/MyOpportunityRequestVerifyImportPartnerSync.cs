@@ -22,6 +22,17 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public DateTimeOffset? DateCompleted { get; set; }
 
+    /// <summary>
+    /// Optional business location for Entrepreneurship, or participant location for other types.
+    /// Participation capture requires On-site/Hybrid without Worldwide; business location is independent of availability.
+    /// Region/city require a specific country. Missing business location stays null; other eligible types use the youth profile.
+    /// </summary>
+    public Guid? CountryId { get; set; }
+
+    public string? Region { get; set; }
+
+    public string? City { get; set; }
+
     public List<CustomFieldValueRequest>? CustomFields { get; set; }
 
     public void NormalizeForHashing()

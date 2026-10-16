@@ -18,6 +18,7 @@ using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Entity.Validators;
 using Yoma.Core.Domain.Lookups.Interfaces;
+using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Referral;
 using Yoma.Core.Domain.Referral.Events;
 using Yoma.Core.Domain.Referral.Models;
@@ -31,6 +32,10 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly AppSettings _appSettings;
     private readonly IBlobService _blobService;
     private readonly ISkillService _skillService;
+    private readonly IOpportunityCategoryService _opportunityCategoryService;
+    private readonly IAccessibilityService _accessibilityService;
+    private readonly ILanguageService _languageService;
+    private readonly IEngagementTypeService _engagementTypeService;
     private readonly ISSITenantService _ssiTenantService;
     private readonly ISSICredentialService _ssiCredentialService;
     private readonly ISettingsDefinitionService _settingsDefinitionService;
@@ -41,16 +46,23 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
     private readonly IRepository<UserSkill> _userSkillRepository;
     private readonly IRepository<UserSkillOrganization> _userSkillOrganizationRepository;
+    private readonly IRepository<UserPreferenceCategory> _userPreferenceCategoryRepository;
+    private readonly IRepository<UserPreferenceAccessibilityRequirement> _userPreferenceAccessibilityRequirementRepository;
+    private readonly IRepository<UserPreferenceLanguage> _userPreferenceLanguageRepository;
+    private readonly IRepository<UserPreferenceEngagementType> _userPreferenceEngagementTypeRepository;
     private readonly IRepository<UserLoginHistory> _userLoginHistoryRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
     private readonly IMediator _mediator;
     #endregion
 
     #region Constructor
-    public UserService(
-        IOptions<AppSettings> appSettings,
+    public UserService(IOptions<AppSettings> appSettings,
         IBlobService blobService,
         ISkillService skillService,
+        IOpportunityCategoryService opportunityCategoryService,
+        IAccessibilityService accessibilityService,
+        ILanguageService languageService,
+        IEngagementTypeService engagementTypeService,
         ISSITenantService ssiTenantService,
         ISSICredentialService ssiCredentialService,
         ISettingsDefinitionService settingsDefinitionService,
@@ -61,6 +73,10 @@ namespace Yoma.Core.Domain.Entity.Services
         IRepositoryValueContainsWithNavigation<User> userRepository,
         IRepository<UserSkill> userSkillRepository,
         IRepository<UserSkillOrganization> userSkillOrganizationRepository,
+        IRepository<UserPreferenceCategory> userPreferenceCategoryRepository,
+        IRepository<UserPreferenceAccessibilityRequirement> userPreferenceAccessibilityRequirementRepository,
+        IRepository<UserPreferenceLanguage> userPreferenceLanguageRepository,
+        IRepository<UserPreferenceEngagementType> userPreferenceEngagementTypeRepository,
         IRepository<UserLoginHistory> userLoginHistoryRepository,
         IExecutionStrategyService executionStrategyService,
         IMediator mediator)
@@ -68,6 +84,10 @@ namespace Yoma.Core.Domain.Entity.Services
       _appSettings = appSettings?.Value ?? throw new ArgumentNullException(nameof(appSettings));
       _blobService = blobService ?? throw new ArgumentNullException(nameof(blobService));
       _skillService = skillService ?? throw new ArgumentNullException(nameof(skillService));
+      _opportunityCategoryService = opportunityCategoryService ?? throw new ArgumentNullException(nameof(opportunityCategoryService));
+      _accessibilityService = accessibilityService ?? throw new ArgumentNullException(nameof(accessibilityService));
+      _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
+      _engagementTypeService = engagementTypeService ?? throw new ArgumentNullException(nameof(engagementTypeService));
       _ssiTenantService = ssiTenantService ?? throw new ArgumentNullException(nameof(ssiTenantService));
       _ssiCredentialService = ssiCredentialService ?? throw new ArgumentNullException(nameof(ssiCredentialService));
       _settingsDefinitionService = settingsDefinitionService ?? throw new ArgumentNullException(nameof(settingsDefinitionService));
@@ -78,6 +98,10 @@ namespace Yoma.Core.Domain.Entity.Services
       _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
       _userSkillRepository = userSkillRepository ?? throw new ArgumentNullException(nameof(userSkillRepository));
       _userSkillOrganizationRepository = userSkillOrganizationRepository ?? throw new ArgumentNullException(nameof(userSkillOrganizationRepository));
+      _userPreferenceCategoryRepository = userPreferenceCategoryRepository ?? throw new ArgumentNullException(nameof(userPreferenceCategoryRepository));
+      _userPreferenceAccessibilityRequirementRepository = userPreferenceAccessibilityRequirementRepository ?? throw new ArgumentNullException(nameof(userPreferenceAccessibilityRequirementRepository));
+      _userPreferenceLanguageRepository = userPreferenceLanguageRepository ?? throw new ArgumentNullException(nameof(userPreferenceLanguageRepository));
+      _userPreferenceEngagementTypeRepository = userPreferenceEngagementTypeRepository ?? throw new ArgumentNullException(nameof(userPreferenceEngagementTypeRepository));
       _userLoginHistoryRepository = userLoginHistoryRepository ?? throw new ArgumentNullException(nameof(userLoginHistoryRepository));
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
       _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
@@ -120,6 +144,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       if (includeComputed)
       {
+        result.SetAccountVerificationMethods(QuerySocialIdentityProviders().Any(item => item.UserId == result.Id));
         result.PhotoURL = GetBlobObjectURL(result.PhotoStorageType, result.PhotoKey);
         result.Skills?.ForEach(o => o.Organizations?.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey)));
         result.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), result.SettingsRaw);
@@ -141,6 +166,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       if (includeComputed)
       {
+        result.SetAccountVerificationMethods(QuerySocialIdentityProviders().Any(item => item.UserId == result.Id));
         result.PhotoURL = GetBlobObjectURL(result.PhotoStorageType, result.PhotoKey);
         result.Skills?.ForEach(o => o.Organizations?.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey)));
         result.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), result.SettingsRaw);
@@ -159,6 +185,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       if (includeComputed)
       {
+        result.SetAccountVerificationMethods(QuerySocialIdentityProviders().Any(item => item.UserId == result.Id));
         result.PhotoURL = GetBlobObjectURL(result.PhotoStorageType, result.PhotoKey);
         result.Skills?.ForEach(o => o.Organizations?.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey)));
         result.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), result.SettingsRaw);
@@ -185,6 +212,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       if (includeComputed)
       {
+        result.SetAccountVerificationMethods(QuerySocialIdentityProviders().Any(item => item.UserId == result.Id));
         result.PhotoURL = GetBlobObjectURL(result.PhotoStorageType, result.PhotoKey);
         result.Skills?.ForEach(o => o.Organizations?.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey)));
         result.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), result.SettingsRaw);
@@ -226,6 +254,13 @@ namespace Yoma.Core.Domain.Entity.Services
 
       if (includeComputed)
       {
+        // Resolve social login once for the returned users, not once per item.
+        var userIds = results.Select(user => user.Id).ToList();
+        var socialUserIds = userIds.Count == 0
+          ? new HashSet<Guid>()
+          : [.. QuerySocialIdentityProviders().Where(item => userIds.Contains(item.UserId)).Select(item => item.UserId)];
+        results.ForEach(user => user.SetAccountVerificationMethods(socialUserIds.Contains(user.Id)));
+
         results.ForEach(o => o.PhotoURL = GetBlobObjectURL(o.PhotoStorageType, o.PhotoKey));
         results.ForEach(o => o.Skills?.ForEach(o => o.Organizations?.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey))));
         results.ForEach(o => o.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), o.SettingsRaw));
@@ -312,6 +347,10 @@ namespace Yoma.Core.Domain.Entity.Services
         result.DisplayName = request.DisplayName;
         result.SetDisplayName();
         result.CountryId = request.CountryId;
+        result.Region = request.Region;
+        result.City = request.City;
+        result.Coordinates = request.Coordinates;
+        result.LocationSource = request.LocationSource;
         result.EducationId = request.EducationId;
         result.GenderId = request.GenderId;
         result.DateOfBirth = request.DateOfBirth.RemoveTime();
@@ -438,6 +477,10 @@ namespace Yoma.Core.Domain.Entity.Services
 
       ArgumentNullException.ThrowIfNull(opportunity, nameof(opportunity));
 
+      // Job skills describe what the role requires; completing a placement does not
+      // demonstrate or earn them. Only non-Job completions award verified skills.
+      if (opportunity.Type == Opportunity.Type.Job) return;
+
       var skillIds = opportunity.Skills?.Select(o => o.Id).ToList();
       if (skillIds == null || skillIds.Count == 0) return;
 
@@ -454,8 +497,13 @@ namespace Yoma.Core.Domain.Entity.Services
 
           if (item == null)
           {
-            item = new UserSkill { UserId = user.Id, SkillId = skill.Id };
+            item = new UserSkill { UserId = user.Id, SkillId = skill.Id, Type = UserSkillType.Verified };
             await _userSkillRepository.Create(item);
+          }
+          else if (item.Type == UserSkillType.SelfAttested)
+          {
+            item.Type = UserSkillType.Verified;
+            await _userSkillRepository.Update(item);
           }
 
           if (itemOrganization == null)
@@ -465,6 +513,250 @@ namespace Yoma.Core.Domain.Entity.Services
           }
         }
 
+        scope.Complete();
+      });
+    }
+
+    public async Task AssignSkillsSelfAttested(User user, List<Guid>? skillIds)
+    {
+      ArgumentNullException.ThrowIfNull(user, nameof(user));
+
+      if (skillIds == null || skillIds.Count == 0) return;
+
+      skillIds = [.. skillIds.Distinct()];
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+        foreach (var skillId in skillIds)
+        {
+          var skill = _skillService.GetById(skillId);
+          var item = _userSkillRepository.Query().SingleOrDefault(o => o.UserId == user.Id && o.SkillId == skill.Id);
+          if (item?.Type == UserSkillType.Verified)
+            throw new ValidationException("A verified skill cannot be added as self-attested");
+          if (item != null) continue;
+
+          await _userSkillRepository.Create(new UserSkill
+          {
+            UserId = user.Id,
+            SkillId = skill.Id,
+            Type = UserSkillType.SelfAttested
+          });
+        }
+
+        scope.Complete();
+      });
+    }
+
+    public async Task RemoveSkillsSelfAttested(User user, List<Guid>? skillIds)
+    {
+      ArgumentNullException.ThrowIfNull(user, nameof(user));
+
+      if (skillIds == null || skillIds.Count == 0) return;
+
+      skillIds = [.. skillIds.Distinct()];
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+        foreach (var skillId in skillIds)
+        {
+          var skill = _skillService.GetById(skillId);
+          var item = _userSkillRepository.Query().SingleOrDefault(o => o.UserId == user.Id && o.SkillId == skill.Id);
+          if (item?.Type != UserSkillType.SelfAttested) continue;
+
+          await _userSkillRepository.Delete(item);
+        }
+
+        scope.Complete();
+      });
+    }
+
+    public async Task AssignPreferenceCategories(User user, List<Guid>? categoryIds)
+    {
+      ArgumentNullException.ThrowIfNull(user, nameof(user));
+
+      if (categoryIds == null || categoryIds.Count == 0) return;
+
+      categoryIds = [.. categoryIds.Distinct()];
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+        foreach (var categoryId in categoryIds)
+        {
+          var category = _opportunityCategoryService.GetById(categoryId);
+          var item = _userPreferenceCategoryRepository.Query()
+            .SingleOrDefault(o => o.UserId == user.Id && o.CategoryId == category.Id);
+          if (item != null) continue;
+
+          await _userPreferenceCategoryRepository.Create(new UserPreferenceCategory
+          {
+            UserId = user.Id,
+            CategoryId = category.Id
+          });
+        }
+
+        scope.Complete();
+      });
+    }
+
+    public async Task RemovePreferenceCategories(User user, List<Guid>? categoryIds)
+    {
+      ArgumentNullException.ThrowIfNull(user, nameof(user));
+
+      if (categoryIds == null || categoryIds.Count == 0) return;
+
+      categoryIds = [.. categoryIds.Distinct()];
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+        foreach (var categoryId in categoryIds)
+        {
+          var item = _userPreferenceCategoryRepository.Query()
+            .SingleOrDefault(o => o.UserId == user.Id && o.CategoryId == categoryId);
+          if (item == null) continue;
+
+          await _userPreferenceCategoryRepository.Delete(item);
+        }
+
+        scope.Complete();
+      });
+    }
+
+    public async Task AssignAccessibilityRequirements(User user, List<Guid>? accessibilityIds)
+    {
+      ArgumentNullException.ThrowIfNull(user, nameof(user));
+      if (accessibilityIds == null || accessibilityIds.Count == 0) return;
+
+      accessibilityIds = [.. accessibilityIds.Distinct()];
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+        foreach (var accessibilityId in accessibilityIds)
+        {
+          var accessibility = _accessibilityService.GetById(accessibilityId);
+          if (_userPreferenceAccessibilityRequirementRepository.Query().Any(o => o.UserId == user.Id && o.AccessibilityId == accessibility.Id)) continue;
+          await _userPreferenceAccessibilityRequirementRepository.Create(new UserPreferenceAccessibilityRequirement
+          {
+            UserId = user.Id,
+            AccessibilityId = accessibility.Id
+          });
+        }
+        scope.Complete();
+      });
+    }
+
+    public async Task RemoveAccessibilityRequirements(User user, List<Guid>? accessibilityIds)
+    {
+      ArgumentNullException.ThrowIfNull(user, nameof(user));
+      if (accessibilityIds == null || accessibilityIds.Count == 0) return;
+
+      accessibilityIds = [.. accessibilityIds.Distinct()];
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+        foreach (var accessibilityId in accessibilityIds)
+        {
+          var item = _userPreferenceAccessibilityRequirementRepository.Query()
+            .SingleOrDefault(o => o.UserId == user.Id && o.AccessibilityId == accessibilityId);
+          if (item == null) continue;
+          await _userPreferenceAccessibilityRequirementRepository.Delete(item);
+        }
+        scope.Complete();
+      });
+    }
+
+    public async Task AssignPreferenceEngagementTypes(User user, List<Guid>? engagementTypeIds)
+    {
+      ArgumentNullException.ThrowIfNull(user);
+      if (engagementTypeIds == null || engagementTypeIds.Count == 0) return;
+
+      engagementTypeIds = [.. engagementTypeIds.Distinct()];
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+
+        foreach (var engagementTypeId in engagementTypeIds)
+        {
+          var engagementType = _engagementTypeService.GetById(engagementTypeId);
+          if (_userPreferenceEngagementTypeRepository.Query()
+            .Any(item => item.UserId == user.Id && item.EngagementTypeId == engagementType.Id)) continue;
+
+          await _userPreferenceEngagementTypeRepository.Create(new UserPreferenceEngagementType
+          {
+            UserId = user.Id,
+            EngagementTypeId = engagementType.Id
+          });
+        }
+
+        scope.Complete();
+      });
+    }
+
+    public async Task RemovePreferenceEngagementTypes(User user, List<Guid>? engagementTypeIds)
+    {
+      ArgumentNullException.ThrowIfNull(user);
+      if (engagementTypeIds == null || engagementTypeIds.Count == 0) return;
+
+      engagementTypeIds = [.. engagementTypeIds.Distinct()];
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+
+        foreach (var engagementTypeId in engagementTypeIds)
+        {
+          var item = _userPreferenceEngagementTypeRepository.Query()
+            .SingleOrDefault(value => value.UserId == user.Id && value.EngagementTypeId == engagementTypeId);
+          if (item == null) continue;
+
+          await _userPreferenceEngagementTypeRepository.Delete(item);
+        }
+
+        scope.Complete();
+      });
+    }
+
+    public async Task AssignPreferenceLanguages(User user, List<Guid>? languageIds)
+    {
+      ArgumentNullException.ThrowIfNull(user, nameof(user));
+      if (languageIds == null || languageIds.Count == 0) return;
+
+      languageIds = [.. languageIds.Distinct()];
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+        foreach (var languageId in languageIds)
+        {
+          var language = _languageService.GetById(languageId);
+          if (_userPreferenceLanguageRepository.Query().Any(item => item.UserId == user.Id && item.LanguageId == language.Id)) continue;
+          await _userPreferenceLanguageRepository.Create(new UserPreferenceLanguage
+          {
+            UserId = user.Id,
+            LanguageId = language.Id
+          });
+        }
+        scope.Complete();
+      });
+    }
+
+    public async Task RemovePreferenceLanguages(User user, List<Guid>? languageIds)
+    {
+      ArgumentNullException.ThrowIfNull(user, nameof(user));
+      if (languageIds == null || languageIds.Count == 0) return;
+
+      languageIds = [.. languageIds.Distinct()];
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+        foreach (var languageId in languageIds)
+        {
+          var item = _userPreferenceLanguageRepository.Query()
+            .SingleOrDefault(value => value.UserId == user.Id && value.LanguageId == languageId);
+          if (item == null) continue;
+          await _userPreferenceLanguageRepository.Delete(item);
+        }
         scope.Complete();
       });
     }
@@ -533,19 +825,26 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public bool HasSocialIdentityProviders(Guid id)
     {
-      var user = GetById(id, false, false);
+      GetById(id, false, false);
 
-      var providerIds = Enum.GetValues<ExternalIdpProvider>()
-        .Select(p => p.ToDescription().ToLower())
-        .ToList();
-
-      return _userLoginHistoryRepository.Query()
-        .Any(o => o.UserId == id && !string.IsNullOrEmpty(o.IdentityProvider) && providerIds.Contains(o.IdentityProvider.ToLower()));
+      return QuerySocialIdentityProviders().Any(item => item.UserId == id);
     }
 
     #endregion
 
     #region Private Members
+    private IQueryable<UserLoginHistory> QuerySocialIdentityProviders()
+    {
+      // Use the same recognised provider contracts for referrals and account verification.
+      var providerIds = Enum.GetValues<ExternalIdpProvider>()
+        .Select(provider => provider.ToDescription().ToLower())
+        .ToList();
+
+      return _userLoginHistoryRepository.Query()
+        .Where(item => !string.IsNullOrEmpty(item.IdentityProvider)
+          && providerIds.Contains(item.IdentityProvider.ToLower()));
+    }
+
     // Raises a referral event of type 'IdentityAction'. Invoked by:
     // - Upsert (above): syncs the user using the IdP as the source of truth, triggered by Keycloak events or opportunity verification imports (which act as a virtual IdP).
     // - YoIDOnboard (below): raises another event of the same type, as it is a precondition for claiming and serves as a fallback to progress referrals.

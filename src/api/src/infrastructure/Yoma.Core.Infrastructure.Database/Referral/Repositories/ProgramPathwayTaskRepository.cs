@@ -50,13 +50,16 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
           ZltoReward = entity.Opportunity.ZltoReward,
           ZltoRewardPool = entity.Opportunity.ZltoRewardPool,
           ZltoRewardCumulative = entity.Opportunity.ZltoRewardCumulative,
-          Countries = entity.Opportunity.Countries.Select(oc => new Domain.Lookups.Models.Country
+          Countries = entity.Opportunity.Countries.Select(oc => new Domain.Opportunity.Models.OpportunityCountryInfo
           {
             Id = oc.Country.Id,
             Name = oc.Country.Name,
             CodeAlpha2 = oc.Country.CodeAlpha2,
             CodeAlpha3 = oc.Country.CodeAlpha3,
-            CodeNumeric = oc.Country.CodeNumeric
+            CodeNumeric = oc.Country.CodeNumeric,
+            Region = oc.Region,
+            City = oc.City,
+            Coordinates = Core.Helpers.CoordinatesHelper.ToArray(oc.Coordinates)
           }).OrderBy(oc => oc.Name).ToList()
         },
         Order = entity.Order,
@@ -97,6 +100,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       item.Id = entity.Id;
       return item;
     }
+
     public async Task<ProgramPathwayTask> Update(ProgramPathwayTask item)
     {
       var entity = _context.ReferralProgramPathwayTask.Where(o => o.Id == item.Id).SingleOrDefault()
@@ -119,6 +123,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
     {
       var entity = _context.ReferralProgramPathwayTask.Where(o => o.Id == item.Id).SingleOrDefault()
         ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(ProgramPathwayTask)} with id '{item.Id}' does not exist");
+
       _context.ReferralProgramPathwayTask.Remove(entity);
       await _context.SaveChangesAsync();
     }

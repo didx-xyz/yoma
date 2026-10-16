@@ -221,18 +221,23 @@ export const VerificationImport: React.FC<InputProps> = ({
                 What must the file contain?
               </div>
               <div className="collapse-content space-y-4 text-sm">
+                <p className="mb-3">
+                  Start from the sample file and keep its core columns in the
+                  same order.
+                </p>
                 <div>
                   <p className="font-semibold">Required Properties</p>
-                  <p className="mb-3">
-                    The following properties must be provided for each
-                    opportunity:
-                  </p>
+                  <p className="mb-3">Every row must have:</p>
                   <ul className="ml-5 list-disc text-sm">
                     <li>Email or Phone Number (at least one required)</li>
                     <li>
                       Opportunity External Id (must match existing opportunity)
                     </li>
                   </ul>
+                  <p className="mt-3 mb-3">
+                    Imports work only for opportunities whose verification
+                    method is Automatic.
+                  </p>
                 </div>
 
                 <div>
@@ -245,8 +250,99 @@ export const VerificationImport: React.FC<InputProps> = ({
                     <li>Surname</li>
                     <li>Gender (Male, Female, Prefer not to say)</li>
                     <li>
-                      Country (use ISO CodeAlpha2, e.g. US|GB for United States
-                      and United Kingdom)
+                      Country (one ISO CodeAlpha2 code, e.g. ZA for South
+                      Africa; Worldwide (WW) is not allowed)
+                    </li>
+                    <li>
+                      DateCompleted (YYYY-MM-DD or YYYY/MM/DD; defaults to the
+                      current date if omitted)
+                    </li>
+                    <li>
+                      CountryCompleted (where the youth took part, one ISO
+                      CodeAlpha2 code; Worldwide (WW) is not allowed). Separate
+                      from Country above, which is the youth&apos;s profile.
+                      Recorded for on-site and hybrid opportunities; when blank,
+                      or for a Worldwide opportunity, the profile country is
+                      used. For Entrepreneurship it is where the business is,
+                      and blank leaves it unknown.
+                    </li>
+                  </ul>
+                </div>
+
+                <div>
+                  <p className="font-semibold">Optional Custom Field Columns</p>
+                  <p className="mb-3">
+                    These come after the core columns, each headed CF: plus the
+                    field key exactly as shown (headers are case-sensitive; a
+                    key without CF: is rejected). Use each only for its
+                    opportunity type and leave it blank for the others:
+                  </p>
+                  <ul className="ml-5 list-disc text-sm">
+                    <li>
+                      CF:JobEmploymentStartDate (Job — the actual start date,
+                      strictly YYYY-MM-DD; not the application deadline)
+                    </li>
+                    <li>
+                      CF:ImpactActionImpactAchieved (Impact Action — the
+                      outcome, up to 1000 characters)
+                    </li>
+                    <li>
+                      CF:EventRole (Event — Participant, Speaker, Panelist,
+                      FacilitatorTrainer, CoOrganiser or Volunteer; blank leaves
+                      it unspecified)
+                    </li>
+                  </ul>
+                  <p className="mt-3 mb-3">
+                    Entrepreneurship — the participant&apos;s venture. All
+                    optional here (a manual submission requires the first
+                    three); blank leaves a value unreported:
+                  </p>
+                  <ul className="ml-5 list-disc text-sm">
+                    <li>
+                      CF:EntrepreneurshipBusinessName (up to 255 characters)
+                    </li>
+                    <li>
+                      CF:EntrepreneurshipBusinessSummary (up to 300 characters)
+                    </li>
+                    <li>
+                      CF:EntrepreneurshipBusinessRegistered (Yes or No — No for
+                      an informal venture)
+                    </li>
+                    <li>
+                      CF:EntrepreneurshipRegistrationReference (up to 125
+                      characters, only for a registered venture)
+                    </li>
+                    <li>
+                      CF:EntrepreneurshipSector (ISIC Rev. 5 section letter, A
+                      to V — the same options as the Job industry)
+                    </li>
+                    <li>
+                      CF:EntrepreneurshipJobsCreated (zero or more, excluding
+                      the founder)
+                    </li>
+                    <li>
+                      CF:EntrepreneurshipRevenueBand (PreRevenue, Under100,
+                      From100To500, From500To2000, From2000To10000, Over10000 —
+                      USD a month)
+                    </li>
+                    <li>
+                      CF:EntrepreneurshipRevenueCurrency (ISO currency code,
+                      e.g. ZAR)
+                    </li>
+                    <li>
+                      CF:EntrepreneurshipFundingTypes (Grant, SeedAngel, Equity,
+                      FormalLoan, CommunityFinance, FamilyFriends,
+                      CompetitionPrize, InKind; separate several with |)
+                    </li>
+                    <li>
+                      CF:EntrepreneurshipFundingAmountBand (Under500,
+                      From500To2000, From2000To10000, From10000To50000,
+                      Over50000 — USD in total)
+                    </li>
+                    <li>CF:EntrepreneurshipFunder (up to 255 characters)</li>
+                    <li>
+                      CF:EntrepreneurshipCustomerReach (LocalCommunity,
+                      Regional, National, CrossBorder, InternationalOnline)
                     </li>
                   </ul>
                 </div>
@@ -296,7 +392,7 @@ export const VerificationImport: React.FC<InputProps> = ({
                   <a
                     href="/docs/MyOpportunityInfoCsvImport_Sample.csv"
                     target="_blank"
-                    className="text-blue-600 underline"
+                    className="text-blue-dark underline"
                   >
                     sample import file
                   </a>{" "}

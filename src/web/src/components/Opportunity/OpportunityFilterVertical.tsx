@@ -366,8 +366,11 @@ export const OpportunityFilterVertical: React.FC<{
                 isMulti={true}
                 buttons={lookups_engagementTypes.map((x) => ({
                   id: x.id,
-                  // display the themed label; the stored value stays x.name
-                  title: getEngagementConfig(x.name)?.label ?? x.name,
+                  // display the lookup label; the stored value stays x.name
+                  title:
+                    x.displayName ||
+                    getEngagementConfig(x.name)?.label ||
+                    x.name,
                   selected: value?.includes(x.name) ?? false,
                 }))}
                 onChange={(val) => {

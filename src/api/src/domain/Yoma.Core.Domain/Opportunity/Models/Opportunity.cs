@@ -50,6 +50,76 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public string? URL { get; set; }
 
+    /// <summary>
+    /// Informational provider; does not change the owning organisation or its permissions.
+    /// </summary>
+    public string? Provider { get; set; }
+
+    /// <summary>
+    /// Optional provider website, distinct from the opportunity's action link.
+    /// </summary>
+    public string? ProviderURL { get; set; }
+
+    /// <summary>
+    /// Optional provider logo image URL, distinct from the provider's website and owning organisation's logo.
+    /// </summary>
+    public string? ProviderLogoURL { get; set; }
+
+    /// <summary>
+    /// Optional provider origin for discovery, never availability or the youth's participation/business location.
+    /// Must be a specific country; Worldwide is not a provider origin.
+    /// </summary>
+    public Guid? ProviderCountryId { get; set; }
+
+    public string? ProviderCountry { get; set; }
+
+    /// <summary>
+    /// Whether any incentive is offered. Null means not specified, not unpaid.
+    /// </summary>
+    public bool? Incentivized { get; set; }
+
+    /// <summary>
+    /// Distinguishes Yoma ZLTO rewards from informational partner incentives.
+    /// </summary>
+    public RewardType RewardType { get; set; }
+
+    /// <summary>
+    /// Informational partner-funded amount; Yoma does not process this payment.
+    /// </summary>
+    public decimal? PartnerIncentiveAmount { get; set; }
+
+    /// <summary>
+    /// ISO 4217 currency code for the partner incentive. Not a ZLTO currency.
+    /// </summary>
+    public string? PartnerIncentiveCurrency { get; set; }
+
+    /// <summary>
+    /// Declared accessibility support; available accommodations describe the supported needs.
+    /// </summary>
+    public AccessibilitySupport? AccessibilitySupport { get; set; }
+
+    /// <summary>
+    /// Description required only when the Other accommodation is selected.
+    /// </summary>
+    public string? AccommodationOtherDescription { get; set; }
+
+    /// <summary>
+    /// Inclusive minimum age checked only on submission for verification using self-declared birth date.
+    /// Browsing and finalization are not age-gated. Partner-reported verifications remain authoritative.
+    /// </summary>
+    public short? AgeFrom { get; set; }
+
+    /// <summary>
+    /// Inclusive maximum age; a missing birth date does not block participation.
+    /// </summary>
+    public short? AgeTo { get; set; }
+
+    public List<Accessibility>? Accommodations { get; set; }
+
+    public List<TargetedGroup>? TargetedGroups { get; set; }
+
+    public List<SustainableDevelopmentGoal>? SustainableDevelopmentGoals { get; set; }
+
     public decimal? ZltoReward { get; set; }
 
     public decimal? ZltoRewardPool { get; set; }
@@ -65,9 +135,12 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public VerificationMethod? VerificationMethod { get; set; }
 
-    public Guid? DifficultyId { get; set; }
-
-    public string? Difficulty { get; set; }
+    /// <summary>
+    /// Compatibility value for existing credential schemas; not part of the API contract.
+    /// TODO [CF / SSI]: Remove when the final schema rework maps difficulty to custom fields.
+    /// </summary>
+    [JsonIgnore]
+    public string? Difficulty { get; internal set; }
 
     public Guid? CommitmentIntervalId { get; set; }
 
@@ -161,7 +234,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public List<Lookups.OpportunityCategory>? Categories { get; set; }
 
-    public List<Country>? Countries { get; set; }
+    public List<OpportunityCountryInfo>? Countries { get; set; }
 
     public List<Language>? Languages { get; set; }
 

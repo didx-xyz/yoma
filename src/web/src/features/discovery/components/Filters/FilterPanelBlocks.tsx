@@ -1,21 +1,22 @@
 import React, { useRef, useState } from "react";
 import { IoAddCircleOutline, IoFlashOutline } from "react-icons/io5";
-import { FILTER_SECTIONS } from "../../registry/filterSections";
+import { FILTER_SECTIONS, groupOfSection } from "../../registry/filterSections";
 import { useDiscovery } from "../../state/DiscoveryContext";
 import { QuickSearchRow } from "../Discover/QuickSearchRow";
 import { FreeTextSearchInput } from "../shared/FreeTextSearchInput";
 import { FilterSection } from "./FilterSection";
+import { FilterSectionGroup } from "./FilterSectionGroup";
 import { PreferencesBlock } from "./PreferencesBlock";
 import { RecentSearchesPanel } from "./RecentSearches";
 import { SectionHeader } from "./SectionHeader";
-import { TypeRow } from "./TypeRow";
-import { TypeSpecificFilters } from "./TypeSpecificFilters";
+import { TypeSection } from "./TypeSpecificFilters";
 
 /**
  * Blocks 1–6 of the filter surface, in the one order both breakpoints must render:
  * search input (with recents as a typeahead beneath it) · quick searches · your preferences ·
- * type row · type-specific filters · the sections (primary seven, then Skills / SDGs / Provider
- * behind one "More filters" disclosure). The desktop dialog and the mobile sheet are CONTAINERS
+ * the type with its own filters (one section since 2026-10-09) · the sections (primary six — Categories · Where · Engagement ·
+ * How long · Accessibility · Language — then Paid and rewards / Skills / SDGs / Provider behind
+ * one "More filters" disclosure). The desktop dialog and the mobile sheet are CONTAINERS
  * around this component — they may differ in chrome and density, never in the set or the order.
  * (Block 7, the sticky footer, is container chrome.)
  */
@@ -69,11 +70,18 @@ export const FilterPanelBlocks: React.FC<{ onEditPreferences: () => void }> = ({
       {/* The type row and the type-specific filters sit inside the section list so the whole
           filter surface reads as one contiguous set with shared dividers. */}
       <div>
-        <TypeRow />
-        <TypeSpecificFilters />
-        {primary.map((section) => (
-          <FilterSection key={section.id} section={section} />
-        ))}
+        <TypeSection />
+        {primary.map((section) => {
+          // A combined section (How, Requirements; 2026-10-09) renders once, where its first
+          // part would have been; its other part renders inside it.
+          const group = groupOfSection(section.id);
+          if (!group)
+            return <FilterSection key={section.id} section={section} />;
+          const firstHere = primary.find((s) => groupOfSection(s.id) === group);
+          return firstHere === section ? (
+            <FilterSectionGroup key={group.id} group={group} />
+          ) : null;
+        })}
         <SectionHeader
           icon={IoAddCircleOutline}
           label="More filters"

@@ -51,7 +51,9 @@ namespace Yoma.Core.Infrastructure.Umuzi.Client
       if (result.Count == 0)
         throw new InvalidOperationException("Umuzi opportunity must contain at least one supported country");
 
-      return result;
+      // Worldwide is exclusive availability. Do not repurpose other availability entries as provider origin.
+      var worldwide = result.SingleOrDefault(country => country.CodeAlpha2 == Country.Worldwide.ToDescription());
+      return worldwide == null ? result : [worldwide];
     }
 
     private static Domain.Lookups.Models.Country? ResolveCountry(
@@ -114,15 +116,18 @@ namespace Yoma.Core.Infrastructure.Umuzi.Client
         : _skillService.GetByNameNormalizedOrNull(value);
     }
 
-    private Domain.Opportunity.Models.Lookups.OpportunityDifficulty ResolveDifficulty(string? value)
+    private Domain.Core.Models.CustomFieldValueRequest ResolveDifficulty(Domain.Opportunity.Type type, string? value)
     {
-      value = value?.Trim();
+      if (!DifficultyMappings.TryGetValue(type, out var mapping))
+        throw new NotSupportedException($"Umuzi difficulty mapping for opportunity type '{type}' is not supported");
 
-      if (string.IsNullOrEmpty(value))
-        return _opportunityDifficultyService.GetByName(Difficulty.AnyLevel.ToDescription());
+      value = string.IsNullOrWhiteSpace(value) ? Difficulty.AnyLevel.ToString() : value.Trim();
+      if (!mapping.Options.TryGetValue(value, out var option))
+        throw new InvalidOperationException($"Umuzi opportunity difficulty '{value}' is not supported");
 
-      return _opportunityDifficultyService.GetByNameOrNull(value)
-        ?? throw new InvalidOperationException($"Umuzi opportunity difficulty '{value}' is not supported");
+      var definition = _customFieldDefinitionService.GetByKey(
+        Domain.Core.CustomFieldEntityType.Opportunity, mapping.Key, true, true);
+      return definition.ToOptionRequest(option);
     }
 
     private (Domain.Lookups.Models.TimeInterval Interval, short Count) ResolveCommitment(string? intervalName, int? count)
@@ -147,7 +152,9 @@ namespace Yoma.Core.Infrastructure.Umuzi.Client
     {
       value = value?.Trim();
       if (string.IsNullOrEmpty(value))
-        value = EngagementTypeOption.Online.ToString();
+        value = EngagementTypeOption.Remote.ToString();
+      else if (EngagementTypeMappings.TryGetValue(value, out var mapped))
+        value = mapped.ToString();
 
       return _engagementTypeService.GetByNameOrNull(value)
         ?? throw new InvalidOperationException($"Umuzi opportunity engagement type '{value}' is not supported");

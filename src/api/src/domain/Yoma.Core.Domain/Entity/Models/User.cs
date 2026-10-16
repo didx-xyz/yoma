@@ -23,9 +23,26 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public bool? PhoneNumberConfirmed { get; set; }
 
+    /// <summary>
+    /// Account verification methods, resolved from confirmed contacts and recorded social login.
+    /// This is not KYC, proof of identity or verification of the user's self-declared profile.
+    /// </summary>
+    public AccountVerificationMethod AccountVerificationMethods { get; internal set; }
+
     public Guid? CountryId { get; set; }
 
     public string? Country { get; set; }
+
+    public string? Region { get; set; }
+
+    public string? City { get; set; }
+
+    /// <summary>
+    /// City centre as [longitude, latitude], without elevation.
+    /// </summary>
+    public double[]? Coordinates { get; set; }
+
+    public Core.LocationSource? LocationSource { get; set; }
 
     public Guid? EducationId { get; set; }
 

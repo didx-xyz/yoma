@@ -1,104 +1,107 @@
-import { useAtomValue } from "jotai";
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import ScrollableContainer from "~/components/Carousel/ScrollableContainer";
-import { userProfileAtom } from "~/lib/store";
 import { isQuickSearchApplied } from "../../lib/discoveryReducer";
 import type { QuickSearchContext } from "../../registry/quickSearches";
 import { QUICK_SEARCHES } from "../../registry/quickSearches";
 import { useDiscovery } from "../../state/DiscoveryContext";
-import { Badge } from "../shared/Badge";
 
 /**
  * The quick-search badge row — every home (landing, results, desktop dialog, mobile sheet)
  * renders this one component over the one registry. A badge is a filter set: tapping applies the
- * set it owns, tapping again clears only what it added. Unresolvable badges grey out with their
- * note as a tooltip — visible and inert, never silently missing.
+ * set it owns, tapping again clears only what it added.
  *
- * Usable badges sort first. Availability is resolved at runtime (a profile country, a loaded
- * lookup), so it cannot be a registry order; with five of seven currently unavailable, the
- * registry order buried the two that work behind the ones that do not.
+ * Only what filters today is drawn (2026-09-22): shipped badges whose criteria resolve, in
+ * registry order. There is no SOON state and no "Show all N" — with four badges the row fits one
+ * line on desktop and scrolls sideways inside the mobile header. A badge that cannot resolve
+ * (no known country for "Jobs in my country", no city for "Jobs near me"; lookups still
+ * loading) is absent, not greyed.
+ * Per-badge counts are deliberately NOT fetched — each would be another search request; a
+ * batched facet-count endpoint is filed as an API ask.
  */
-const WRAP_VISIBLE_BEFORE_SHOW_ALL = 5;
+const badgeClassFor = (applied: boolean): string =>
+  applied
+    ? "border-green bg-green text-white"
+    : "border-gray hover:border-green bg-white text-black";
 
-const badgeClassFor = (applied: boolean, unavailable: boolean): string => {
-  if (applied) return "border-green bg-green text-white";
-  if (unavailable) return "border-yellow-light bg-beige text-gray-dark";
-  return "border-gray hover:border-green bg-white text-black";
-};
-
-export const QuickSearchRow: React.FC<{ wrap?: boolean }> = ({
-  wrap = true,
-}) => {
-  const { state, dispatch, lookups } = useDiscovery();
-  const profile = useAtomValue(userProfileAtom);
-  const [showAll, setShowAll] = useState(false);
+export const QuickSearchRow: React.FC<{
+  wrap?: boolean;
+  /**
+   * A 2-column grid of full-width pills instead (the welcome step, round 10). An odd last pill
+   * spans both columns, so 4, 5 or 6 badges never leave a half-width orphan. 44px tall below
+   * `lg` (the touch-target rule), 42px from `lg`.
+   */
+  grid?: boolean;
+  /** Called after a badge is tapped — the welcome step closes the dialog (round 7). */
+  onPick?: () => void;
+}> = ({ wrap = true, grid = false, onPick }) => {
+  const { state, dispatch, lookups, homeCountryId, effectiveFilters } =
+    useDiscovery();
+  const hasPoint = effectiveFilters.point !== null;
 
   const ctx: QuickSearchContext = useMemo(() => {
     const country =
-      lookups.countries.find((c) => c.id === profile?.countryId) ?? null;
+      lookups.countries.find((c) => c.id === homeCountryId) ?? null;
     return {
       profileCountry: country ? { id: country.id, name: country.name } : null,
+      hasPoint,
       categories: lookups.categories,
       commitmentIntervals: lookups.timeIntervals,
+      engagementTypes: lookups.engagementTypes,
     };
-  }, [lookups, profile?.countryId]);
+  }, [lookups, homeCountryId, hasPoint]);
 
-  // Resolve first, then order: available badges lead, the rest keep their registry order.
-  const resolved = QUICK_SEARCHES.map((badge) => ({
-    badge,
-    criteria: badge.resolve(ctx),
-  }));
-  const ordered = [
-    ...resolved.filter((r) => r.criteria !== null),
-    ...resolved.filter((r) => r.criteria === null),
-  ];
-  const visible =
-    wrap && !showAll ? ordered.slice(0, WRAP_VISIBLE_BEFORE_SHOW_ALL) : ordered;
-
-  const badges = visible.map(({ badge, criteria }) => {
-    const label =
-      typeof badge.label === "function" ? badge.label(ctx) : badge.label;
-    const applied =
-      criteria !== null && isQuickSearchApplied(state.filters, criteria);
-    const Icon = badge.icon;
-    return (
-      <button
-        key={badge.id}
-        type="button"
-        title={
-          criteria === null ? (badge.unavailableNote ?? undefined) : undefined
-        }
-        aria-disabled={criteria === null}
-        onClick={() =>
-          criteria && dispatch({ kind: "toggleQuickSearch", criteria })
-        }
-        // Panel homes are thumb-sized (44px); the hero's scrolling row stays compact.
-        className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-[11px] whitespace-nowrap md:px-3 md:text-xs ${
-          wrap ? "min-h-11 md:min-h-9" : "min-h-7 md:min-h-9"
-        } ${badgeClassFor(applied, criteria === null)}`}
-      >
-        <Icon className="h-4 w-4 shrink-0" />
-        {label}
-        {criteria === null && <Badge intent="availability">SOON</Badge>}
-      </button>
-    );
-  });
-
-  // Hero rows drag-scroll through the app's ScrollableContainer; panel homes wrap in place
-  // behind a "Show all N" so the block stays short.
-  return wrap ? (
-    <div className="flex flex-wrap items-center gap-2">
-      {badges}
-      {!showAll && QUICK_SEARCHES.length > WRAP_VISIBLE_BEFORE_SHOW_ALL && (
+  const badges = QUICK_SEARCHES.filter((badge) => badge.status === "shipped")
+    .map((badge) => ({ badge, criteria: badge.resolve(ctx) }))
+    .filter(
+      (
+        entry,
+      ): entry is {
+        badge: (typeof QUICK_SEARCHES)[number];
+        criteria: NonNullable<
+          ReturnType<(typeof QUICK_SEARCHES)[number]["resolve"]>
+        >;
+      } => entry.criteria !== null,
+    )
+    .map(({ badge, criteria }, i, all) => {
+      const label =
+        typeof badge.label === "function" ? badge.label(ctx) : badge.label;
+      const applied = isQuickSearchApplied(state.filters, criteria);
+      const Icon = badge.icon;
+      // Panel homes are thumb-sized (44px); the hero's scrolling row stays compact. The grid
+      // picks its own whole size string rather than overriding these. A grid pill is half the
+      // panel wide, so a long country ("Jobs in Central African Republic") wraps to a second
+      // line inside it instead of running into its neighbour — still the full name, on touch too.
+      const sizeClass = grid
+        ? `min-h-11 w-full justify-start px-4 py-1.5 text-left text-[13px] leading-tight font-semibold lg:min-h-[42px] ${
+            all.length % 2 === 1 && i === all.length - 1 ? "col-span-2" : ""
+          }`
+        : `px-2.5 text-[11px] whitespace-nowrap md:px-3 md:text-xs ${
+            wrap ? "min-h-11 md:min-h-9" : "min-h-7 md:min-h-9"
+          }`;
+      return (
         <button
+          key={badge.id}
           type="button"
-          onClick={() => setShowAll(true)}
-          className="text-green text-xs font-semibold underline"
+          aria-pressed={applied}
+          onClick={() => {
+            dispatch({ kind: "toggleQuickSearch", criteria });
+            onPick?.();
+          }}
+          className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border ${sizeClass} ${badgeClassFor(applied)}`}
         >
-          Show all {QUICK_SEARCHES.length}
+          <Icon className="h-4 w-4 shrink-0" />
+          {label}
         </button>
-      )}
-    </div>
+      );
+    });
+
+  if (badges.length === 0) return null;
+
+  if (grid) return <div className="grid grid-cols-2 gap-2">{badges}</div>;
+
+  // Hero rows drag-scroll through the app's ScrollableContainer; panel homes wrap in place.
+  return wrap ? (
+    <div className="flex flex-wrap items-center gap-2">{badges}</div>
   ) : (
     <ScrollableContainer
       // `justify-center-safe`: centred while the badges fit, falling back to start-aligned (and

@@ -1,55 +1,71 @@
 import React from "react";
-import { CustomFieldFilterOperator } from "~/api/models/opportunity";
 import ScrollableContainer from "~/components/Carousel/ScrollableContainer";
 import { useCustomFieldFilterLabeler } from "~/components/Opportunity/CustomFieldFilters";
 import { useOpportunityCustomFieldDefinitionsQuery } from "~/hooks/useOpportunityMutations";
+import { customFieldChipValue } from "~/lib/customFields/customFieldFilterClauses";
 import { useDiscovery } from "../../state/DiscoveryContext";
 import { Chip } from "../shared/Chip";
 
 /**
- * The applied-chip row above the results — all three provenance classes, plus the type-scoped
- * custom-field clauses labelled through YOM-1260's labeler (values only; Exists shows the
- * title). Clear filters sits at the end of the row and takes out the SESSION's filters only —
- * inherited chips stay, because preferences are a standing setting rather than part of this
- * search (2026-09-05).
+ * One row of applied chips, of ONE kind (round 7 follow-up, 2026-10-01):
+ *
+ *   inherited — the preference layer (inherited, switched-off and inapplicable chips). Rendered
+ *               inside the preference banner, so everything purple sits together.
+ *   manual    — this search's own filters, plus the type-scoped custom-field clauses labelled
+ *               through YOM-1260's labeler. The operator isn't on screen in discovery, so the
+ *               value carries it where the value alone would mislead ("From 5000", "Contains
+ *               “dri”"; `customFieldChipValue`). Rendered by the filters panel, which owns
+ *               "Clear filters".
+ *
+ * Mobile: one drag-scrollable line (`ScrollableContainer`), its edges fading while there is more
+ * to scroll; desktop: the chips wrap. Removing an
+ * inherited chip skips its preference for this search; removing a manual one edits the filter.
  */
-export const AppliedChips: React.FC<{ pulseChipId?: string | null }> = ({
-  pulseChipId,
-}) => {
+export const AppliedChips: React.FC<{
+  kind: "inherited" | "manual";
+  pulseChipId?: string | null;
+}> = ({ kind, pulseChipId }) => {
   const {
     state,
     dispatch,
     chips,
     effectiveFilters,
-    clearFilters,
-    hasFilters,
     skipPreference,
+    restorePreference,
   } = useDiscovery();
   const types = effectiveFilters.types;
+  const clauses = kind === "manual" ? state.filters.customFields : [];
   const { data: definitions } = useOpportunityCustomFieldDefinitionsQuery(
     types.length > 0 ? types : null,
-    { enabled: types.length > 0 && state.filters.customFields.length > 0 },
+    { enabled: types.length > 0 && clauses.length > 0 },
   );
-  const labelFor = useCustomFieldFilterLabeler(definitions);
+  // The skills in these clauses are named by id, one request for all of them. Each filter block
+  // asks for the skills in its own fields, so the chips and the controls share one request (one
+  // query key) while every selected skill sits in one block; otherwise each block with skills
+  // makes its own request, plus one here for all of them
+  const labelFor = useCustomFieldFilterLabeler(definitions, clauses);
 
-  const hasAny = chips.length > 0 || state.filters.customFields.length > 0;
-  if (!hasAny) return null;
+  const rowChips = chips.filter((c) =>
+    kind === "manual" ? c.provenance === "manual" : c.provenance !== "manual",
+  );
+  if (rowChips.length === 0 && clauses.length === 0) return null;
 
   return (
-    // One drag-scrollable row — chips never wrap into a tall block.
     <ScrollableContainer
-      className="flex items-center gap-2 overflow-x-auto pb-1"
-      showShadows={true}
-      shadowFromClassName="from-gray-light" // the page body's background
+      containerClassName=""
+      className="flex items-center gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible md:pb-0"
+      // The edge fade of every sideways row (2026-10-08), as a mask: the panels behind are
+      // translucent tints no overlay colour can match.
+      fadeEdges
     >
-      {chips.map((chip) => (
+      {rowChips.map((chip) => (
         <Chip
           key={chip.id}
           chip={chip}
           pulse={chip.id === pulseChipId}
           onRemove={() =>
             chip.prefKey
-              ? skipPreference(chip.prefKey)
+              ? skipPreference(chip.prefKey, chip.interest)
               : chip.facet &&
                 chip.raw !== null &&
                 dispatch({
@@ -59,60 +75,49 @@ export const AppliedChips: React.FC<{ pulseChipId?: string | null }> = ({
                 })
           }
           onUndo={() =>
-            chip.prefKey &&
-            dispatch({
-              kind: "setPreferenceSkipped",
-              key: chip.prefKey,
-              skipped: false,
-            })
+            chip.prefKey && restorePreference(chip.prefKey, chip.interest)
           }
         />
       ))}
-      {state.filters.customFields.map((clause) => (
-        <Chip
-          key={`cf:${clause.key}:${clause.operator}`}
-          chip={{
-            id: `cf:${clause.key}:${clause.operator}`,
-            // The chip is labelled by the FIELD, never its group/sub-group: the definition
-            // title is what the youth chose under, and the labeler supplies the value.
-            group:
-              definitions?.find(
-                (d) => d.key.toLowerCase() === clause.key.toLowerCase(),
-              )?.title ?? "Details",
-            value:
-              clause.operator === CustomFieldFilterOperator.Exists
-                ? "Has any value"
-                : labelFor(clause),
-            provenance: "manual",
-            prefKey: null,
-            facet: "customFields",
-            raw: null,
-          }}
-          onRemove={() =>
-            dispatch({
-              kind: "patchFilters",
-              patch: {
-                customFields: state.filters.customFields.filter(
-                  (c) => c !== clause,
-                ),
-              },
-            })
-          }
-          onUndo={() => undefined}
-        />
-      ))}
-      {/* Only when this search carries filters of its own. A row of purely inherited chips has
-          nothing for this button to clear — offering it there would imply it takes the
-          preferences off too, which is exactly what it must not do. */}
-      {hasFilters && (
-        <button
-          type="button"
-          onClick={clearFilters}
-          className="text-purple shrink-0 text-xs font-semibold whitespace-nowrap underline"
-        >
-          Clear filters
-        </button>
-      )}
+      {clauses.map((clause) => {
+        const definition = definitions?.find(
+          (d) => d.key.toLowerCase() === clause.key.toLowerCase(),
+        );
+        return (
+          <Chip
+            key={`cf:${clause.key}:${clause.operator}`}
+            chip={{
+              id: `cf:${clause.key}:${clause.operator}`,
+              // The chip is labelled by the FIELD, never its group/sub-group: the definition
+              // title is what the youth chose under, and the labeler supplies the value.
+              group: definition?.title ?? "Details",
+              value: customFieldChipValue(
+                clause,
+                labelFor(clause),
+                definition?.dataType ?? null,
+              ),
+              provenance: "manual",
+              prefKey: null,
+              facet: "customFields",
+              raw: null,
+              pending: false,
+              note: null,
+              private: false,
+            }}
+            onRemove={() =>
+              dispatch({
+                kind: "patchFilters",
+                patch: {
+                  customFields: state.filters.customFields.filter(
+                    (c) => c !== clause,
+                  ),
+                },
+              })
+            }
+            onUndo={() => undefined}
+          />
+        );
+      })}
     </ScrollableContainer>
   );
 };

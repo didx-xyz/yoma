@@ -8,6 +8,7 @@
     "lint": "eslint . && prettier --check --ignore-path ../../../.gitignore --ignore-path .prettierignore .",
     "format": "prettier --write --ignore-path ../../../.gitignore --ignore-path .prettierignore .",
     "start": "next start",
+    "test": "node --experimental-transform-types --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./test/register.mjs --test \"src/**/*.test.ts\"",
     "analyze": "cross-env ANALYZE=true next build --webpack"
   },
   "dependencies": {

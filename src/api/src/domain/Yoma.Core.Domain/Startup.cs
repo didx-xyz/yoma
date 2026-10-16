@@ -111,6 +111,7 @@ namespace Yoma.Core.Domain
       services.AddScoped<IOrganizationStatusService, OrganizationStatusService>();
       services.AddScoped<IOrganizationProviderTypeService, OrganizationProviderTypeService>();
       services.AddScoped<ISettingsDefinitionService, SettingsDefinitionService>();
+      services.AddScoped<IUserGoalService, UserGoalService>();
       #endregion Lookups
 
       services.AddScoped<IOrganizationService, OrganizationService>();
@@ -121,12 +122,16 @@ namespace Yoma.Core.Domain
       #endregion Entity
 
       #region Lookups
+      services.AddScoped<IAccessibilityService, AccessibilityService>();
       services.AddScoped<ICountryService, CountryService>();
+      services.AddScoped<ICurrencyService, CurrencyService>();
       services.AddScoped<IEducationService, EducationService>();
       services.AddScoped<IEngagementTypeService, EngagementTypeService>();
       services.AddScoped<IGenderService, GenderService>();
       services.AddScoped<ILanguageService, LanguageService>();
       services.AddScoped<ISkillService, SkillService>();
+      services.AddScoped<ISustainableDevelopmentGoalService, SustainableDevelopmentGoalService>();
+      services.AddScoped<ITargetedGroupService, TargetedGroupService>();
       services.AddScoped<ITimeIntervalService, TimeIntervalService>();
       #endregion Lookups
 
@@ -165,7 +170,6 @@ namespace Yoma.Core.Domain
       #region Opportunity
       #region Lookups
       services.AddScoped<IOpportunityCategoryService, OpportunityCategoryService>();
-      services.AddScoped<IOpportunityDifficultyService, OpportunityDifficultyService>();
       services.AddScoped<IOpportunityStatusService, OpportunityStatusService>();
       services.AddScoped<IOpportunityTypeService, OpportunityTypeService>();
       services.AddScoped<IOpportunityVerificationTypeService, OpportunityVerificationTypeService>();

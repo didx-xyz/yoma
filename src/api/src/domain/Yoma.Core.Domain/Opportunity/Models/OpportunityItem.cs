@@ -85,6 +85,6 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public string? NonCompletableReason { get; private set; }
 
     [JsonIgnore]
-    public List<Country>? Countries { get; set; }
+    public List<OpportunityCountryInfo>? Countries { get; set; }
   }
 }

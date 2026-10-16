@@ -32,6 +32,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
     #region Protected Members
     protected override void Up(MigrationBuilder migrationBuilder)
     {
+      // EF's non-transactional migration warning is expected: CONCURRENTLY requires suppressTransaction.
+      // An interrupted run may need index cleanup because these operations cannot roll back atomically.
+      // Already deployed; retain the migration structure. Fresh Local/Dev databases replay it and log the warning.
       // Provision fresh databases too; already installed is a no-op.
       migrationBuilder.AlterDatabase()
         .Annotation("Npgsql:PostgresExtension:pg_trgm", ",,");

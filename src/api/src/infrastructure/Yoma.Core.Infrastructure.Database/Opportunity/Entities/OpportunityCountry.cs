@@ -19,6 +19,19 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
     public Guid CountryId { get; set; }
     public Country Country { get; set; } = null!;
 
+    [Column(TypeName = "varchar(255)")]
+    public string? Region { get; set; }
+
+    [Column(TypeName = "varchar(255)")]
+    public string? City { get; set; }
+
+    // WGS84 point, consistent with user location storage; geography supports distances in metres.
+    [Column(TypeName = "geography (point, 4326)")]
+    public NetTopologySuite.Geometries.Point? Coordinates { get; set; }
+
+    [Required]
+    public DateTimeOffset DateModified { get; set; }
+
     [Required]
     public DateTimeOffset DateCreated { get; set; }
   }

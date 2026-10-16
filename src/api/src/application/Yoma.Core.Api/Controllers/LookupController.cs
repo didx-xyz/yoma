@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using System.ComponentModel.DataAnnotations;
 using System.Net;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Lookups.Models;
@@ -15,6 +16,10 @@ namespace Yoma.Core.Api.Controllers
   {
     #region Class Variables
     private readonly ILogger<UserController> _logger;
+    private readonly ITargetedGroupService _targetedGroupService;
+    private readonly ISustainableDevelopmentGoalService _sustainableDevelopmentGoalService;
+    private readonly ICurrencyService _currencyService;
+    private readonly IAccessibilityService _accessibilityService;
     private readonly ICountryService _countryService;
     private readonly IEducationService _educationService;
     private readonly IEngagementTypeService _engagementTypeService;
@@ -27,6 +32,10 @@ namespace Yoma.Core.Api.Controllers
     #region Constructor
     public LookupController(
         ILogger<UserController> logger,
+        ITargetedGroupService targetedGroupService,
+        ISustainableDevelopmentGoalService sustainableDevelopmentGoalService,
+        ICurrencyService currencyService,
+        IAccessibilityService accessibilityService,
         ICountryService countryService,
         IEducationService educationService,
         IEngagementTypeService engagementTypeService,
@@ -35,19 +44,79 @@ namespace Yoma.Core.Api.Controllers
         ISkillService skillService,
         ITimeIntervalService timeIntervalService)
     {
-      _logger = logger;
-      _countryService = countryService;
-      _educationService = educationService;
-      _engagementTypeService = engagementTypeService;
-      _genderService = genderService;
-      _languageService = languageService;
-      _skillService = skillService;
-      _timeIntervalService = timeIntervalService;
+      _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+      _targetedGroupService = targetedGroupService ?? throw new ArgumentNullException(nameof(targetedGroupService));
+      _sustainableDevelopmentGoalService = sustainableDevelopmentGoalService ?? throw new ArgumentNullException(nameof(sustainableDevelopmentGoalService));
+      _currencyService = currencyService ?? throw new ArgumentNullException(nameof(currencyService));
+      _accessibilityService = accessibilityService ?? throw new ArgumentNullException(nameof(accessibilityService));
+      _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
+      _educationService = educationService ?? throw new ArgumentNullException(nameof(educationService));
+      _engagementTypeService = engagementTypeService ?? throw new ArgumentNullException(nameof(engagementTypeService));
+      _genderService = genderService ?? throw new ArgumentNullException(nameof(genderService));
+      _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
+      _skillService = skillService ?? throw new ArgumentNullException(nameof(skillService));
+      _timeIntervalService = timeIntervalService ?? throw new ArgumentNullException(nameof(timeIntervalService));
     }
     #endregion
 
     #region Public Members
     #region Anonymous Actions
+    [SwaggerOperation(Summary = "Return a list of targeted groups")]
+    [HttpGet("targeted/group")]
+    [ProducesResponseType(typeof(List<TargetedGroup>), (int)HttpStatusCode.OK)]
+    public IActionResult ListTargetedGroup()
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListTargetedGroup));
+
+      var result = _targetedGroupService.List();
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListTargetedGroup));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Return a list of Sustainable Development Goals")]
+    [HttpGet("sustainable/development/goal")]
+    [ProducesResponseType(typeof(List<SustainableDevelopmentGoal>), (int)HttpStatusCode.OK)]
+    public IActionResult ListSustainableDevelopmentGoal()
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListSustainableDevelopmentGoal));
+
+      var result = _sustainableDevelopmentGoalService.List();
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListSustainableDevelopmentGoal));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Return a list of ISO currencies")]
+    [HttpGet("currency")]
+    [ProducesResponseType(typeof(List<Currency>), (int)HttpStatusCode.OK)]
+    public IActionResult ListCurrency()
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListCurrency));
+
+      var result = _currencyService.List();
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListCurrency));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Return a list of accessibility options")]
+    [HttpGet("accessibility")]
+    [ProducesResponseType(typeof(List<Accessibility>), (int)HttpStatusCode.OK)]
+    public IActionResult ListAccessibility()
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListAccessibility));
+
+      var result = _accessibilityService.List();
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListAccessibility));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
     [SwaggerOperation(Summary = "Return a list of countries. Optionally exclude Worldwide")]
     [HttpGet("country")]
     [ProducesResponseType(typeof(List<Country>), (int)HttpStatusCode.OK)]
@@ -118,7 +187,7 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Search for skills based on the supplied filter")]
+    [SwaggerOperation(Summary = "Search for skills using the supplied paged filter")]
     [HttpGet("skill")]
     [ProducesResponseType(typeof(SkillSearchResults), (int)HttpStatusCode.OK)]
     public IActionResult SearchSkills([FromQuery] SkillSearchFilter filter)
@@ -128,6 +197,20 @@ namespace Yoma.Core.Api.Controllers
       var result = _skillService.Search(filter);
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchSkills));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Resolve skills by a list of IDs. Returns all matches without pagination")]
+    [HttpPost("skill/ids")]
+    [ProducesResponseType(typeof(List<Skill>), (int)HttpStatusCode.OK)]
+    public IActionResult ListSkillsByIds([Required][FromBody] List<Guid> ids)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListSkillsByIds));
+
+      var result = _skillService.ListByIds(ids);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListSkillsByIds));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }

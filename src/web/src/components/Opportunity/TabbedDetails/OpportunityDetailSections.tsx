@@ -1,0 +1,1158 @@
+import Image from "next/image";
+import Link from "next/link";
+import iconZlto from "public/images/icon-zlto.svg";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import {
+  IoAccessibilityOutline,
+  IoBulbOutline,
+  IoCalendarOutline,
+  IoEarthOutline,
+  IoGiftOutline,
+  IoHourglassOutline,
+  IoInformationCircleOutline,
+  IoLanguageOutline,
+  IoLocationOutline,
+  IoLockClosedOutline,
+  IoPeopleCircleOutline,
+  IoPeopleOutline,
+  IoPersonOutline,
+  IoOpenOutline,
+  IoPricetagsOutline,
+  IoTimeOutline,
+} from "react-icons/io5";
+import {
+  AccessibilitySupport,
+  type OpportunityInfo,
+} from "~/api/models/opportunity";
+import {
+  formatAccessibilitySupport,
+  formatSustainableDevelopmentGoal,
+} from "~/components/Opportunity/Admin/opportunityCoreFields";
+import { JumpToTop } from "~/components/Common/JumpToTop";
+import { CustomFieldsView } from "~/components/Opportunity/CustomFieldsView";
+import {
+  getCommitmentDisplay,
+  getEngagementConfig,
+} from "~/components/Opportunity/opportunityTypeTheme";
+import { ProviderLogo } from "~/components/Opportunity/ProviderLogo";
+import { providerFacts } from "~/components/Opportunity/providerFacts";
+import { MoneyBadge } from "~/features/discovery/components/Results/MoneyBadge";
+import { closingInfo } from "~/features/discovery/lib/dates";
+import { moneyFactsOf } from "~/features/discovery/lib/money";
+import {
+  useCurrenciesQuery,
+  useOpportunityCustomFieldDefinitionsQuery,
+} from "~/hooks/useOpportunityMutations";
+import { OPPORTUNITY_TYPE_NANE_JOB } from "~/lib/constants";
+import { ClampedDescription } from "./ClampedDescription";
+import { detailBadges, type DetailBadge } from "./detailBadges";
+import { ChipList, DetailDisclosure } from "./DetailDisclosure";
+import { effortLabel } from "./detailFacts";
+import { DETAIL_SECTION_JUMP } from "./detailSectionJump";
+import {
+  accessibilityClosing,
+  accessibilityNote,
+  ageRangeLabel,
+  ageRangeNote,
+  cashOutLine,
+  incentiveCopy,
+} from "./detailSectionCopy";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// OpportunityDetailSections — the TABBED detail body (round 7, artboards
+// 11a–11e, 2026-09-30; the live layout behind the release kill-switch since
+// 2026-10-01 — `CUSTOM_FIELDS_ENABLED` off falls back to the classic one;
+// restyled in round 10, 2026-10-02). Under the header card:
+//
+//   anchor tabs  About · Requirements · Who it's for · Impact · Provider · Details (+ host
+//                groups, e.g. the admin page's Rewards), as a pill bar with a sliding fill
+//                (same-page anchors with scroll-spy; a tap opens that group's first
+//                section; a group with nothing to show has no tab)
+//   sections     one card per section, grouped, two columns from `lg` — the SAME
+//                section set, content and conditions as the existing public page;
+//                the passes regroup and restyle only
+//   sticky bar   once the header card scrolls away: desktop — logo, title, money,
+//                deadline, the host's actions and the tabs; mobile — the tabs at the
+//                top and the host's actions in a bottom bar. Not in preview (the
+//                editor's step 8 would get a bar floating over the form).
+//
+// Shared by the public page, the admin info page and the editor preview; each host
+// renders its own header card and passes its own actions.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** The built-in groups, plus any a host appends (`extraGroups` — the admin page's Rewards). */
+type GroupId = string;
+
+/** A tab's tint while inactive: `reward` is the admin page's gold Rewards pill (round 10). */
+type GroupTone = "reward";
+
+interface GroupDef {
+  id: GroupId;
+  label: string;
+  tone?: GroupTone;
+}
+
+const GROUPS: GroupDef[] = [
+  { id: "about", label: "About" },
+  { id: "requirements", label: "Requirements" },
+  { id: "who", label: "Who it's for" },
+  { id: "impact", label: "Impact" },
+  { id: "provider", label: "Provider" },
+  { id: "details", label: "Details" },
+];
+
+interface SectionDef {
+  id: string;
+  group: GroupId;
+  icon: React.ReactNode;
+  /** The icon square's tint (`TONE`). */
+  toneClass: string;
+  title: string;
+  count?: number | null;
+  valueHint?: string | null;
+  preview?: string | null;
+  /**
+   * The open card's one line on what its content means for the youth; a static row shows it
+   * always, under its title (2026-10-05).
+   */
+  note?: string | null;
+  content: React.ReactNode;
+  defaultOpen?: boolean;
+  /** A value row with nothing to open (Age range, Time needed, Incentive · None). */
+  static?: boolean;
+}
+
+const ICON = "h-5 w-5";
+
+/** The section icon squares' tints, per group (round 10). Provider keeps its grey card. */
+const TONE = {
+  gold: "bg-orange-light text-yellow",
+  blue: "bg-blue-light text-blue-dark",
+  lilac: "bg-purple-tint text-purple",
+  green: "bg-green-light text-green",
+  grey: "bg-gray-light text-gray-dark",
+} as const;
+
+/**
+ * How, Dates and Places' content: the header chip's detail (`detailBadges`' panel), which used to
+ * expand in the header (2026-10-12, Jason). Facts as two columns, then short paragraphs; Places
+ * adds how full it is.
+ */
+const BadgePanel: React.FC<{ badge: DetailBadge }> = ({ badge }) => {
+  const panel = badge.panel;
+  if (!panel) return null;
+  return (
+    <div className="flex flex-col gap-2 text-sm text-black">
+      {panel.lead && <p className="font-semibold">{panel.lead}</p>}
+      {panel.facts && panel.facts.length > 0 && (
+        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
+          {panel.facts.map(([term, value]) => (
+            <React.Fragment key={term}>
+              <dt className="text-gray-dark">{term}</dt>
+              <dd>{value}</dd>
+            </React.Fragment>
+          ))}
+        </dl>
+      )}
+      {/* only once something is taken: an empty track says nothing */}
+      {(badge.bar ?? 0) > 0 && (
+        <span
+          aria-hidden
+          className="bg-gray-light block h-1.5 w-full max-w-xs overflow-hidden rounded-full"
+        >
+          <span
+            className={`block h-full rounded-full ${
+              badge.tone === "almostFull"
+                ? "bg-pink"
+                : badge.tone === "full"
+                  ? "bg-gray-dark"
+                  : "bg-green"
+            }`}
+            style={{ width: `${(badge.bar ?? 0) * 100}%` }}
+          />
+        </span>
+      )}
+      {panel.paragraphs.map((paragraph, index) => (
+        <p key={index}>
+          {paragraph.lead && (
+            <span className="font-semibold">{paragraph.lead} </span>
+          )}
+          {paragraph.text}
+        </p>
+      ))}
+    </div>
+  );
+};
+
+/** The Dates section's icon follows its chip: an hourglass when close, a lock once closed. */
+const datesIcon = (badge: DetailBadge): React.ReactNode =>
+  badge.icon === "hourglass" ? (
+    <IoHourglassOutline className={ICON} />
+  ) : badge.icon === "lock" ? (
+    <IoLockClosedOutline className={ICON} />
+  ) : (
+    <IoCalendarOutline className={ICON} />
+  );
+
+/** "English, isiZulu +2" — the closed row's preview. */
+const previewOf = (labels: string[], max = 2): string =>
+  labels.length > max
+    ? `${labels.slice(0, max).join(", ")} +${labels.length - max}`
+    : labels.join(", ");
+
+/** The fixed navbar the sticky panels hang from. */
+const NAVBAR_PX = 80;
+/** Room between the sticky panel and the group heading a tab tap lands on. */
+const LANDING_GAP_PX = 12;
+
+/** The bar's `p-1.5`: a tab revealed at the left edge keeps it. */
+const TABS_PAD_PX = 6;
+/** The right-edge fade mask: a tab revealed at the right edge clears it. */
+const TABS_FADE_PX = 40;
+
+/**
+ * Scrolls the bar sideways (never the window, unlike `scrollIntoView`, which would cut short
+ * `goTo`'s page scroll) until the active tab is fully visible. A hidden bar is left alone.
+ */
+const revealActiveTab = (nav: HTMLElement, behavior: ScrollBehavior): void => {
+  if (nav.clientWidth === 0) return;
+  const tab = nav.querySelector<HTMLElement>('[aria-current="location"]');
+  if (!tab) return;
+  const start = tab.offsetLeft;
+  const end = start + tab.offsetWidth;
+  if (start < nav.scrollLeft)
+    nav.scrollTo({ left: start - TABS_PAD_PX, behavior });
+  else if (end > nav.scrollLeft + nav.clientWidth)
+    nav.scrollTo({ left: end + TABS_FADE_PX - nav.clientWidth, behavior });
+};
+
+/**
+ * The anchor tabs as a segmented pill bar (round 10): one purple fill slides under the active
+ * tab. Each home — in flow, the sticky panel, the mobile pin — renders its own instance and
+ * measures its own fill. The bar scrolls sideways when it does not fit, keeping the active tab
+ * in view; below `md` it then fades out at its right edge while more tabs are hidden there.
+ */
+const DetailTabs: React.FC<{
+  groups: GroupDef[];
+  active: GroupId;
+  onSelect: (group: GroupId) => void;
+}> = ({ groups, active, onSelect }) => {
+  const navRef = useRef<HTMLElement>(null);
+  const [fill, setFill] = useState<{ left: number; width: number } | null>(
+    null,
+  );
+  const [moreRight, setMoreRight] = useState(false);
+  const groupKey = groups.map((g) => g.id).join(",");
+
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const measure = (): void => {
+      const tab = nav.querySelector<HTMLElement>('[aria-current="location"]');
+      // a hidden home (display: none) measures 0 — it is re-measured once it shows
+      const next =
+        tab && tab.offsetWidth > 0
+          ? { left: tab.offsetLeft, width: tab.offsetWidth }
+          : null;
+      // the bar's own scrolling re-measures too: keep the state when nothing moved
+      setFill((current) =>
+        current &&
+        next &&
+        current.left === next.left &&
+        current.width === next.width
+          ? current
+          : next,
+      );
+      setMoreRight(nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 1);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(nav);
+    for (const tab of Array.from(nav.children)) observer.observe(tab);
+    nav.addEventListener("scroll", measure, { passive: true });
+    return () => {
+      observer.disconnect();
+      nav.removeEventListener("scroll", measure);
+    };
+  }, [active, groupKey]);
+
+  // keep the active tab in view: on a tap or a scroll-spy change, and when a hidden home
+  // (display: none below its breakpoint) shows
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const reduce = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    revealActiveTab(nav, reduce ? "auto" : "smooth");
+    let shownWidth = nav.clientWidth;
+    const observer = new ResizeObserver(() => {
+      if (shownWidth === 0 && nav.clientWidth > 0) revealActiveTab(nav, "auto");
+      shownWidth = nav.clientWidth;
+    });
+    observer.observe(nav);
+    return () => observer.disconnect();
+  }, [active, groupKey]);
+
+  return (
+    <nav
+      ref={navRef}
+      aria-label="Opportunity sections"
+      className={`border-gray relative flex w-fit max-w-full gap-1 overflow-x-auto overflow-y-hidden rounded-full border bg-white p-1.5 ${
+        moreRight
+          ? "max-md:[mask-image:linear-gradient(to_right,black_calc(100%-40px),transparent)]"
+          : ""
+      }`}
+      // inline: the global unlayered `* { scrollbar-width: thin }` outranks any utility class
+      style={{ scrollbarWidth: "none" }}
+    >
+      {fill && (
+        <span
+          aria-hidden
+          className="bg-purple absolute inset-y-1.5 rounded-full transition-[left,width] duration-220 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none"
+          style={{ left: fill.left, width: fill.width }}
+        />
+      )}
+      {groups.map((g) => (
+        <a
+          key={g.id}
+          href={`#${g.id}`}
+          aria-current={active === g.id ? "location" : undefined}
+          onClick={(e) => {
+            e.preventDefault();
+            onSelect(g.id);
+          }}
+          className={`relative z-10 shrink-0 rounded-full px-4 py-2 text-sm font-extrabold whitespace-nowrap transition-colors duration-220 motion-reduce:transition-none ${
+            active === g.id
+              ? // filled by the sliding span once measured; until then (first paint) by itself
+                `text-white ${fill ? "" : "bg-purple"}`
+              : g.tone === "reward"
+                ? // the gold pill carries the tint; a dark label keeps it readable (AA)
+                  "bg-orange-light text-black/85 hover:text-black"
+                : "text-gray-dark hover:text-black"
+          }`}
+        >
+          {g.label}
+        </a>
+      ))}
+    </nav>
+  );
+};
+
+export const OpportunityDetailSections: React.FC<{
+  opportunity: OpportunityInfo;
+  /** The host's header card — the sticky bar appears once it has scrolled away. */
+  headerRef: React.RefObject<HTMLElement | null>;
+  /** The host's compact actions for the sticky bar and the mobile bottom bar. */
+  barActions?: React.ReactNode;
+  /** Editor preview: no fixed bars, nothing floats over the form. */
+  preview?: boolean;
+  /** Admin: keep Incentive when it is still unanswered ("Not specified"), as the info page does. */
+  showUnspecifiedIncentive?: boolean;
+  /**
+   * The signed-in youth's Cash Out is closed (`isCashOutClosed`): a ZLTO incentive's cash-out
+   * line keeps only its marketplace half. Off (the hedged full line) signed out, and for hosts
+   * without a youth.
+   */
+  cashOutClosed?: boolean;
+  /**
+   * Host groups appended after Details, each with its own tab (admin: Rewards, `tone: "reward"`
+   * for its gold pill).
+   */
+  extraGroups?: {
+    id: string;
+    label: string;
+    tone?: GroupTone;
+    content: React.ReactNode;
+  }[];
+  /**
+   * `split` (public): on mobile the tabs pin at the top and the actions sit in a bottom bar.
+   * `full` (admin): the whole sticky panel — title, money, deadline, actions, tabs — on mobile
+   * too, and no bottom bar.
+   */
+  stickyMode?: "split" | "full";
+}> = ({
+  opportunity,
+  headerRef,
+  barActions,
+  preview = false,
+  showUnspecifiedIncentive = false,
+  cashOutClosed = false,
+  extraGroups = [],
+  stickyMode = "split",
+}) => {
+  // The youth's own clock, set after mount: the deadline counts calendar days in local time, so
+  // the server (UTC) and the browser can disagree around midnight. Nothing is drawn until then.
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => setNow(new Date()), []);
+  const { data: currencies } = useCurrenciesQuery();
+  const { data: definitions } = useOpportunityCustomFieldDefinitionsQuery(
+    opportunity.type ? [opportunity.type] : null,
+    { enabled: !!opportunity.type },
+  );
+
+  // The money facts, worked out once: Incentive words its pay line from them, and the sticky
+  // bar's badge shows them. Its ZLTO pill reads the raw `zltoReward`, while Incentive and the
+  // header's Reward tile read the estimate, so the two ZLTO figures can differ.
+  const money = useMemo(
+    () => moneyFactsOf(opportunity, currencies ?? []),
+    [opportunity, currencies],
+  );
+
+  // The header chips' facts (`detailBadges`, as `DetailFactBadges` builds them): How, Dates
+  // and Places are sections here, with the detail the chips used to expand (2026-10-12).
+  const badges = useMemo(
+    () =>
+      detailBadges(opportunity, {
+        now,
+        money,
+        effort: effortLabel(opportunity),
+        engagement:
+          getEngagementConfig(
+            typeof opportunity.engagementType === "string"
+              ? opportunity.engagementType
+              : null,
+          )?.label ?? null,
+      }),
+    [opportunity, now, money],
+  );
+
+  // ── the sections: exactly the existing public page's set and conditions ──
+  const sections = useMemo((): SectionDef[] => {
+    const list: SectionDef[] = [];
+    const isJob = opportunity.type === OPPORTUNITY_TYPE_NANE_JOB;
+
+    // Incentive — public once answered or once a reward is stored, the admin pages also "Not
+    // specified". It says what you get, per state (2026-10-05, `incentiveCopy`): "None" is a
+    // static row; a ZLTO reward reads as what you earn, then where you can spend it.
+    const incentive = incentiveCopy(opportunity, {
+      isJob,
+      facts: money,
+      showUnspecified: showUnspecifiedIncentive,
+    });
+    if (incentive?.kind === "static")
+      list.push({
+        id: "incentive",
+        group: "about",
+        icon: <IoGiftOutline className={ICON} />,
+        toneClass: TONE.gold,
+        title: "Pay and rewards",
+        valueHint: incentive.value,
+        note: incentive.note,
+        content: null,
+        static: true,
+      });
+    else if (incentive) {
+      const cashOut = cashOutLine(cashOutClosed);
+      list.push({
+        id: "incentive",
+        group: "about",
+        icon: <IoGiftOutline className={ICON} />,
+        toneClass: TONE.gold,
+        title: "Pay and rewards",
+        preview: incentive.preview,
+        note: "What you could get for taking part.",
+        content: (
+          <div className="flex flex-col gap-1.5">
+            {incentive.amount && (
+              <p className="flex items-center gap-2 text-base font-extrabold">
+                {incentive.amount.zlto && (
+                  <Image
+                    src={iconZlto}
+                    alt=""
+                    width={20}
+                    height={20}
+                    className="h-5 w-5"
+                  />
+                )}
+                {incentive.amount.text}
+              </p>
+            )}
+            <p className="text-sm">{incentive.body}</p>
+            {incentive.cashOut && (
+              <p className="text-gray-dark mt-2 text-sm">
+                {cashOut.before}
+                {preview ? (
+                  // the editor's preview: a link out would lose the unsaved draft
+                  <span className="text-green font-semibold underline">
+                    {cashOut.link}
+                  </span>
+                ) : (
+                  <Link
+                    href="/marketplace"
+                    className="text-green font-semibold underline"
+                  >
+                    {cashOut.link}
+                  </Link>
+                )}
+                {cashOut.after}
+              </p>
+            )}
+          </div>
+        ),
+      });
+    }
+
+    // How, Dates and Places — the header chips' sections (2026-10-12): a chip jumps here and
+    // opens it, so each carries the detail the chip used to expand
+    const how = badges.find((b) => b.id === "how");
+    const dates = badges.find((b) => b.id === "dates");
+    const places = badges.find((b) => b.id === "places");
+
+    // Time needed — one static row (2026-10-05): the interval ("4 minutes"), else the total
+    // hours; an interval given only as a description is shown as it is, without "About". With
+    // a How chip it is the How section instead, the time and the way you take part together.
+    const commitment = getCommitmentDisplay(opportunity);
+    const effort = effortLabel(opportunity);
+    const time = effort ?? commitment?.label ?? null;
+    if (how)
+      list.push({
+        id: "how",
+        group: "about",
+        icon: <IoTimeOutline className={ICON} />,
+        toneClass: TONE.blue,
+        title: "How you take part",
+        preview: how.value,
+        note: how.info,
+        content: <BadgePanel badge={how} />,
+      });
+    else if (time)
+      list.push({
+        id: "time",
+        group: "about",
+        icon: <IoTimeOutline className={ICON} />,
+        toneClass: TONE.blue,
+        title: "Time needed",
+        valueHint: effort ? `About ${effort}` : time,
+        note: "Roughly how long it takes. It's a guide, not a deadline.",
+        content: null,
+        static: true,
+      });
+
+    if (dates)
+      list.push({
+        id: "dates",
+        group: "about",
+        icon: datesIcon(dates),
+        toneClass:
+          dates.tone === "urgent" ? "bg-pink/10 text-pink" : TONE.lilac,
+        title: "Dates",
+        preview: dates.value,
+        note: dates.info,
+        content: <BadgePanel badge={dates} />,
+      });
+
+    if (places)
+      list.push({
+        id: "places",
+        group: "about",
+        icon: <IoPeopleOutline className={ICON} />,
+        toneClass: TONE.green,
+        title: "Places",
+        preview: places.value,
+        note: places.info,
+        content: <BadgePanel badge={places} />,
+      });
+
+    // Skills — a Job's are its requirements (open by default); anyone else's are awarded
+    const skills = (opportunity.skills ?? []).map((s) => ({
+      id: s.id,
+      label: s.name,
+    }));
+    if (skills.length > 0)
+      list.push({
+        id: "skills",
+        group: isJob ? "requirements" : "impact",
+        icon: <IoBulbOutline className={ICON} />,
+        toneClass: isJob ? TONE.lilac : TONE.blue,
+        title: isJob ? "Skills required" : "Skills you will learn",
+        count: skills.length,
+        preview: previewOf(skills.map((s) => s.label)),
+        note: isJob
+          ? "Skills this job asks for. Mention the ones you have when you apply."
+          : "Skills you'll gain by finishing this. They're added to your YoID once it's verified.",
+        content: <ChipList items={skills} />,
+        defaultOpen: isJob,
+      });
+
+    const languages = (opportunity.languages ?? []).map((l) => ({
+      id: l.id,
+      label: l.name,
+    }));
+    if (languages.length > 0)
+      list.push({
+        id: "languages",
+        group: "requirements",
+        icon: <IoLanguageOutline className={ICON} />,
+        toneClass: TONE.lilac,
+        title: "Languages",
+        count: languages.length,
+        preview: previewOf(languages.map((l) => l.label)),
+        note: "The languages you can take part in.",
+        content: <ChipList items={languages} />,
+      });
+
+    // Age range — one static row: the range is the whole answer, there is nothing to open
+    const ageRange = ageRangeLabel(opportunity.ageFrom, opportunity.ageTo);
+    if (ageRange)
+      list.push({
+        id: "age",
+        group: "requirements",
+        icon: <IoPersonOutline className={ICON} />,
+        toneClass: TONE.lilac,
+        title: "Age range",
+        valueHint: ageRange,
+        note: ageRangeNote(opportunity.ageFrom, opportunity.ageTo),
+        content: null,
+        static: true,
+      });
+
+    const support = formatAccessibilitySupport(
+      opportunity.accessibilitySupport,
+    );
+    const accommodations = (opportunity.accommodations ?? []).map((a) => ({
+      id: a.id,
+      label: a.name,
+    }));
+    // Always a row (2026-10-03): a youth whose feed keeps opportunities that haven't said must be
+    // able to tell them from the suitable ones. With nothing to open — no list — it is a static
+    // row like Age range: "Available on request", "No" or "Not specified", each with a note
+    // that says what it means (2026-10-05).
+    const onRequest =
+      opportunity.accessibilitySupport ===
+      AccessibilitySupport.AvailableOnRequest;
+    const closing = accessibilityClosing(opportunity.accessibilitySupport);
+    if (accommodations.length === 0)
+      list.push({
+        id: "accessibility",
+        group: "requirements",
+        icon: <IoAccessibilityOutline className={ICON} />,
+        toneClass: TONE.lilac,
+        title: "Accessibility",
+        valueHint: support ?? "Not specified",
+        note: accessibilityNote(opportunity.accessibilitySupport),
+        content: null,
+        static: true,
+      });
+    else
+      list.push({
+        id: "accessibility",
+        group: "requirements",
+        icon: <IoAccessibilityOutline className={ICON} />,
+        toneClass: TONE.lilac,
+        title: "Accessibility",
+        count: accommodations.length,
+        // An on-request list is what the provider can arrange, never an offer.
+        preview: `${onRequest ? "On request: " : ""}${previewOf(
+          accommodations.map((a) => a.label),
+        )}`,
+        note: onRequest
+          ? "What the provider can arrange if you ask."
+          : "Support this opportunity offers people with disabilities.",
+        // No "Support: …" line: the preview and the note already say it (2026-10-05)
+        content: (
+          <div className="flex flex-col gap-2">
+            <ChipList items={accommodations} />
+            {!!opportunity.accommodationOtherDescription && (
+              <div className="text-gray-dark text-sm">
+                {opportunity.accommodationOtherDescription}
+              </div>
+            )}
+            {closing && <p className="text-gray-dark text-sm">{closing}</p>}
+          </div>
+        ),
+      });
+
+    const groups = (opportunity.targetedGroups ?? []).map((g) => ({
+      id: g.id,
+      label: g.name,
+    }));
+    if (groups.length > 0)
+      list.push({
+        id: "targeted-groups",
+        group: "who",
+        icon: <IoPeopleCircleOutline className={ICON} />,
+        toneClass: TONE.green,
+        title: "Who it's aimed at",
+        count: groups.length,
+        preview: previewOf(groups.map((g) => g.label)),
+        note: "It's aimed at these groups, but others can take part too.",
+        content: <ChipList items={groups} />,
+      });
+
+    // Countries, with the optional place: "South Africa — Cape Town, Western Cape"
+    const countries = (opportunity.countries ?? []).map((country) => {
+      const place = [country.city, country.region].filter(Boolean).join(", ");
+      return {
+        id: country.id,
+        label: place ? `${country.name} — ${place}` : country.name,
+      };
+    });
+    if (countries.length > 0)
+      list.push({
+        id: "countries",
+        group: "who",
+        icon: <IoLocationOutline className={ICON} />,
+        toneClass: TONE.green,
+        title: "Countries",
+        count: countries.length,
+        preview: previewOf(countries.map((c) => c.label)),
+        note: "Where this opportunity is available.",
+        content: <ChipList items={countries} />,
+      });
+
+    const goals = (opportunity.sustainableDevelopmentGoals ?? []).map((g) => ({
+      id: g.id,
+      label: formatSustainableDevelopmentGoal(g),
+    }));
+    if (goals.length > 0)
+      list.push({
+        id: "sdgs",
+        group: "impact",
+        icon: <IoEarthOutline className={ICON} />,
+        toneClass: TONE.blue,
+        title: "Global goals (SDGs)",
+        count: goals.length,
+        preview: previewOf(goals.map((g) => g.label)),
+        note: "The UN global goals this helps with.",
+        content: <ChipList items={goals} />,
+      });
+
+    const topics = (opportunity.categories ?? []).map((c) => ({
+      id: c.id,
+      label: c.name,
+    }));
+    if (topics.length > 0)
+      list.push({
+        id: "topics",
+        group: "impact",
+        icon: <IoPricetagsOutline className={ICON} />,
+        toneClass: TONE.blue,
+        title: "Topics",
+        count: topics.length,
+        preview: previewOf(topics.map((t) => t.label)),
+        note: "What this opportunity is about.",
+        content: <ChipList items={topics} />,
+      });
+
+    // Additional details — the definition-driven custom fields, as CustomFieldsView renders them
+    const defs = definitions ?? [];
+    const valued = (opportunity.customFields ?? []).flatMap((value) => {
+      const definition = defs.find(
+        (d) => d.key.toLowerCase() === value.key.toLowerCase(),
+      );
+      const hasValue = (value.values?.length ?? 0) > 0 || !!value.value?.trim();
+      return definition && hasValue ? [definition.title] : [];
+    });
+    if (valued.length > 0)
+      list.push({
+        id: "additional-details",
+        group: "details",
+        icon: <IoInformationCircleOutline className={ICON} />,
+        toneClass: TONE.grey,
+        title: "Additional details",
+        count: valued.length,
+        preview: previewOf(valued),
+        // A generic section note, never keyed to a field: the values describe the opportunity,
+        // they aren't a verdict on the youth (2026-10-06)
+        note: "Details from the provider. They are not entry rules. The provider decides who can join.",
+        content: (
+          <CustomFieldsView
+            definitions={definitions}
+            values={opportunity.customFields}
+            columns={1}
+            hideGrouping={true}
+            wrapValues
+            // one view on the page, so one request names its skills
+            resolveSkillsById
+          />
+        ),
+      });
+
+    return list;
+  }, [
+    opportunity,
+    definitions,
+    money,
+    badges,
+    showUnspecifiedIncentive,
+    cashOutClosed,
+    preview,
+  ]);
+
+  const provider = providerFacts(opportunity);
+  const visibleGroups = [
+    ...GROUPS.filter(
+      (g) =>
+        g.id === "about" ||
+        (g.id === "provider"
+          ? !!provider
+          : sections.some((s) => s.group === g.id)),
+    ),
+    ...extraGroups.map(({ id, label, tone }) => ({ id, label, tone })),
+  ];
+
+  // ── open state: which disclosures are open, and the one a tab tap focused ──
+  const [open, setOpen] = useState<Set<string>>(
+    () => new Set(sections.filter((s) => s.defaultOpen).map((s) => s.id)),
+  );
+  const [focused, setFocused] = useState<string | null>(null);
+  // The section a header chip just jumped to: ringed for a moment, so the eye finds it.
+  const [flashId, setFlashId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!flashId) return;
+    const timer = window.setTimeout(() => setFlashId(null), 1600);
+    return () => window.clearTimeout(timer);
+  }, [flashId]);
+  const toggle = (id: string): void =>
+    setOpen((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  // ── header visibility → the sticky / bottom bars ──
+  const [headerVisible, setHeaderVisible] = useState(true);
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el || preview) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setHeaderVisible(!!entry?.isIntersecting),
+      { rootMargin: "-80px 0px 0px 0px" }, // the fixed navbar covers the top 80px
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [headerRef, preview]);
+
+  // ── the top offset the tabs and anchors clear: the navbar plus whichever sticky panel this
+  //    viewport shows — the full panel, or the mobile tab pin — measured, since the pill bar
+  //    changed their heights. The one not shown is display: none and measures 0. ──
+  const stickyRef = useRef<HTMLDivElement>(null);
+  const pinRef = useRef<HTMLDivElement>(null);
+  const offsetTop = useCallback(
+    (): number =>
+      NAVBAR_PX +
+      LANDING_GAP_PX +
+      Math.max(
+        stickyRef.current?.offsetHeight ?? 0,
+        pinRef.current?.offsetHeight ?? 0,
+      ),
+    [],
+  );
+
+  // ── scroll-spy: the active tab is the last group whose top has passed the offset line ──
+  const groupRefs = useRef<Partial<Record<GroupId, HTMLElement | null>>>({});
+  const [active, setActive] = useState<GroupId>("about");
+  // A tab tap owns the highlight while its smooth scroll runs — otherwise the scroll events on
+  // the way (or the bottom-of-page rule) would relabel it mid-flight.
+  const tappedRef = useRef<{ group: GroupId; at: number } | null>(null);
+  useEffect(() => {
+    const onScroll = (): void => {
+      const tapped = tappedRef.current;
+      if (tapped && Date.now() - tapped.at < 1200) {
+        setActive(tapped.group);
+        return;
+      }
+      const line = offsetTop() + 8;
+      let current: GroupId = "about";
+      for (const g of visibleGroups) {
+        const el = groupRefs.current[g.id];
+        if (el && el.getBoundingClientRect().top <= line) current = g.id;
+      }
+      // At the very bottom the last groups can never reach the line — the page has run out —
+      // so the last one is the one in view (a tap on "Rewards" must light "Rewards").
+      const atBottom =
+        window.innerHeight + window.scrollY >=
+        document.documentElement.scrollHeight - 4;
+      if (atBottom && visibleGroups.length > 0)
+        current = visibleGroups[visibleGroups.length - 1]!.id;
+      setActive(current);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- group set is stable per opportunity
+  }, [visibleGroups.map((g) => g.id).join(",")]);
+
+  const goTo = useCallback(
+    (group: GroupId): void => {
+      setActive(group);
+      tappedRef.current = { group, at: Date.now() };
+      const first = sections.find((s) => s.group === group);
+      if (first) {
+        setOpen((current) => new Set(current).add(first.id));
+        setFocused(first.id);
+      }
+      const el = groupRefs.current[group];
+      if (el) {
+        const top =
+          el.getBoundingClientRect().top + window.scrollY - offsetTop();
+        window.scrollTo({ top, behavior: "smooth" });
+      }
+      if (!preview) window.history.replaceState(null, "", `#${group}`);
+    },
+    [sections, preview, offsetTop],
+  );
+
+  // A #group in the URL on arrival opens and scrolls to it, like a tab tap.
+  useEffect(() => {
+    if (preview) return;
+    const hash = window.location.hash.replace("#", "");
+    if (visibleGroups.some((g) => g.id === hash))
+      setTimeout(() => goTo(hash), 300);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- arrival only
+  }, []);
+
+  // A header chip's tap (`jumpToDetailSection`): open its section, mark it, and scroll it under
+  // the sticky panel, as a tab tap does for a group. Focus moves to the section's button, so a
+  // keyboard or screen-reader user lands where the page went.
+  useEffect(() => {
+    const onJump = (event: Event): void => {
+      const id = (event as CustomEvent<string>).detail;
+      const section = sections.find((s) => s.id === id);
+      if (!section) return;
+      tappedRef.current = { group: section.group, at: Date.now() };
+      setActive(section.group);
+      setOpen((current) => new Set(current).add(id));
+      setFocused(id);
+      setFlashId(id);
+      // after the open has rendered, so the card is where it will stay
+      requestAnimationFrame(() => {
+        const card = document.getElementById(`section-${id}-body`)
+          ?.parentElement as HTMLElement | null | undefined;
+        if (!card) return;
+        const reduce = window.matchMedia(
+          "(prefers-reduced-motion: reduce)",
+        ).matches;
+        window.scrollTo({
+          top: card.getBoundingClientRect().top + window.scrollY - offsetTop(),
+          behavior: reduce ? "auto" : "smooth",
+        });
+        card.querySelector("button")?.focus({ preventScroll: true });
+      });
+    };
+    window.addEventListener(DETAIL_SECTION_JUMP, onJump);
+    return () => window.removeEventListener(DETAIL_SECTION_JUMP, onJump);
+  }, [sections, offsetTop]);
+
+  const tabs = (
+    <DetailTabs groups={visibleGroups} active={active} onSelect={goTo} />
+  );
+
+  const deadline = now ? closingInfo(opportunity.dateEnd, now) : null;
+  const showBars = !preview && !headerVisible;
+  // The bars slide 8px and fade (round 10); under reduced motion they simply switch. Tailwind
+  // v4's `translate-y-*` sets the `translate` property, not `transform`, so that is what eases.
+  // Shown, it is `none`, not 0: any other value makes the bar the containing block of its
+  // `position: fixed` descendants (the Manage menu's full-screen <Loading/> would shrink to
+  // the panel). Hidden, the bars are inert as well as aria-hidden, so they leave the tab order.
+  const barMotion =
+    "transition-[opacity,translate] duration-180 ease-out motion-reduce:transition-none";
+  const barShown = "translate-none opacity-100";
+
+  return (
+    <>
+      {/* In-flow tabs, under the header card */}
+      {tabs}
+
+      <div className="flex flex-col gap-6 pt-2">
+        {visibleGroups.map((g) => {
+          const groupSections = sections.filter((s) => s.group === g.id);
+          const hostContent = extraGroups.find((x) => x.id === g.id)?.content;
+          const showProvider = g.id === "provider" ? provider : null;
+          return (
+            <section
+              key={g.id}
+              id={preview ? undefined : g.id}
+              ref={(el) => {
+                groupRefs.current[g.id] = el;
+              }}
+              aria-labelledby={`group-${g.id}`}
+            >
+              <h2
+                id={`group-${g.id}`}
+                className="text-gray-dark pb-2 text-[11px] font-bold tracking-widest uppercase"
+              >
+                {g.label}
+              </h2>
+              {/* Two columns from `lg`: the description and host content span both; cards flow
+                  into the next cell (an odd one out, a lone card too, takes the left), and a
+                  closed card never stretches to an open neighbour's height. About stays one
+                  column (2026-10-12): a header chip jumps to one of its cards, and beside a
+                  neighbour the eye landed on the wrong one */}
+              <div
+                className={
+                  g.id === "about"
+                    ? "grid grid-cols-1 gap-3.5"
+                    : "grid grid-cols-1 gap-3.5 lg:grid-cols-2 lg:items-start"
+                }
+              >
+                {g.id === "about" && (
+                  <div className="border-gray rounded-[18px] border bg-white px-5 py-5 md:px-[30px] md:py-[26px]">
+                    <ClampedDescription value={opportunity.description} />
+                  </div>
+                )}
+                {hostContent && (
+                  <div className="lg:col-span-2">{hostContent}</div>
+                )}
+                {showProvider && (
+                  // Provider is a card, not a disclosure — who delivers the opportunity, not
+                  // the owning organisation: its logo, name, where it is based and its website
+                  <div className="border-gray flex items-center gap-3.5 rounded-[18px] border bg-white px-5 py-[18px]">
+                    <ProviderLogo
+                      url={showProvider.logoURL}
+                      name={showProvider.name}
+                    />
+                    <span className="flex min-w-0 flex-col gap-0.5">
+                      {showProvider.name && (
+                        <span className="text-[15px] font-extrabold wrap-break-word text-black">
+                          {showProvider.name}
+                        </span>
+                      )}
+                      {showProvider.basedIn && (
+                        <span className="text-gray-dark flex items-center gap-1 text-sm">
+                          <IoLocationOutline
+                            className="h-3.5 w-3.5 shrink-0"
+                            aria-hidden="true"
+                          />
+                          {showProvider.basedIn}
+                        </span>
+                      )}
+                      {showProvider.website && (
+                        <a
+                          href={showProvider.website.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-green flex min-w-0 items-center gap-1 text-sm font-semibold hover:underline"
+                        >
+                          <span className="truncate">
+                            {showProvider.website.host}
+                          </span>
+                          <IoOpenOutline
+                            className="h-3.5 w-3.5 shrink-0"
+                            aria-hidden="true"
+                          />
+                          <span className="sr-only">(opens in a new tab)</span>
+                        </a>
+                      )}
+                    </span>
+                  </div>
+                )}
+                {groupSections.map((s) => (
+                  <DetailDisclosure
+                    key={s.id}
+                    id={s.id}
+                    icon={s.icon}
+                    toneClass={s.toneClass}
+                    title={s.title}
+                    count={s.count}
+                    valueHint={s.valueHint}
+                    preview={s.preview}
+                    note={s.note}
+                    static={s.static}
+                    open={open.has(s.id)}
+                    focused={focused === s.id}
+                    flash={flashId === s.id}
+                    onToggle={() => {
+                      setFocused(null);
+                      toggle(s.id);
+                    }}
+                  >
+                    {s.content}
+                  </DetailDisclosure>
+                ))}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+
+      {/* Under the last section (2026-10-12): the page runs long, more so on a phone. Not in the
+          editor's preview, where the top is the editor's own. */}
+      {!preview && <JumpToTop />}
+
+      {/* The sticky panel — hangs from the fixed navbar once the header card is gone. Desktop
+          always; mobile too in "full" mode. */}
+      <div
+        ref={stickyRef}
+        aria-hidden={!showBars}
+        inert={!showBars}
+        className={`fixed inset-x-0 top-20 z-30 bg-white shadow-md ${barMotion} ${
+          stickyMode === "full" ? "block" : "hidden md:block"
+        } ${
+          showBars ? barShown : "pointer-events-none -translate-y-2 opacity-0"
+        }`}
+      >
+        <div className="container mx-auto max-w-7xl px-4">
+          <div className="flex items-center gap-3 pt-3">
+            {opportunity.organizationLogoURL && (
+              <Image
+                src={opportunity.organizationLogoURL}
+                alt=""
+                width={36}
+                height={36}
+                className="h-9 w-9 shrink-0 rounded-full object-contain"
+              />
+            )}
+            <div className="min-w-0 grow">
+              <p className="truncate text-base font-bold">
+                {opportunity.title}
+              </p>
+              <p className="text-gray-dark flex items-center gap-2 text-xs">
+                <MoneyBadge compact facts={money} />
+                {deadline && (
+                  // The card's urgency colour (`OpportunityCard`), one rule everywhere.
+                  <span
+                    className={
+                      deadline.urgent ? "text-pink font-semibold" : undefined
+                    }
+                  >
+                    {deadline.label}
+                  </span>
+                )}
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">{barActions}</div>
+          </div>
+          <div className="pt-2 pb-2.5">{tabs}</div>
+        </div>
+      </div>
+
+      {/* Mobile, "split" mode: the tabs pinned under the navbar, the actions in a bottom bar */}
+      {stickyMode === "split" && (
+        <div
+          ref={pinRef}
+          aria-hidden={!showBars}
+          inert={!showBars}
+          className={`fixed inset-x-0 top-20 z-30 bg-white px-4 py-2 shadow-md md:hidden ${barMotion} ${
+            showBars ? barShown : "pointer-events-none -translate-y-2 opacity-0"
+          }`}
+        >
+          {tabs}
+        </div>
+      )}
+      {/* room for the mobile bottom bar, so it never covers the last section or the footer */}
+      {stickyMode === "split" && barActions && !preview && (
+        <div className="h-[74px] md:hidden" />
+      )}
+      {stickyMode === "split" && barActions && (
+        <div
+          aria-hidden={!showBars}
+          inert={!showBars}
+          className={`fixed inset-x-0 bottom-0 z-30 flex items-center gap-2 bg-white px-4 py-3 shadow-[0_-2px_8px_rgba(0,0,0,0.08)] md:hidden ${barMotion} ${
+            showBars ? barShown : "pointer-events-none translate-y-2 opacity-0"
+          }`}
+        >
+          {barActions}
+        </div>
+      )}
+    </>
+  );
+};

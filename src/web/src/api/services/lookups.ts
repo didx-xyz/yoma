@@ -1,12 +1,17 @@
 import ApiClient from "~/lib/axiosClient";
 import type {
+  Accessibility,
   Country,
+  Currency,
   Education,
   EngagementType,
   Gender,
   Language,
+  Skill,
   SkillSearchFilter,
   SkillSearchResults,
+  SustainableDevelopmentGoal,
+  TargetedGroup,
   TimeInterval,
 } from "../models/lookups";
 import type { GetServerSidePropsContext, GetStaticPropsContext } from "next";
@@ -74,6 +79,20 @@ export const getSkills = async (
   return data;
 };
 
+/**
+ * Skills by id — the names behind selected skill values, unpaged. The body is the bare id array;
+ * unknown ids are simply absent from the result. The API rejects an empty array (and any
+ * malformed or empty id), so callers skip the request when there is nothing to resolve.
+ */
+export const getSkillsByIds = async (
+  ids: string[],
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<Skill[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.post<Skill[]>("/lookup/skill/ids", ids);
+  return data;
+};
+
 export const getEducations = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<Education[]> => {
@@ -87,5 +106,42 @@ export const getEngagementTypes = async (
 ): Promise<EngagementType[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.get<EngagementType[]>("/lookup/engagement");
+  return data;
+};
+
+export const getCurrencies = async (
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<Currency[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.get<Currency[]>("/lookup/currency");
+  return data;
+};
+
+export const getTargetedGroups = async (
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<TargetedGroup[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.get<TargetedGroup[]>(
+    "/lookup/targeted/group",
+  );
+  return data;
+};
+
+export const getSustainableDevelopmentGoals = async (
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<SustainableDevelopmentGoal[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.get<SustainableDevelopmentGoal[]>(
+    "/lookup/sustainable/development/goal",
+  );
+  return data;
+};
+
+/** Opportunity accommodations and youth accessibility requirements share this list. */
+export const getAccessibilityOptions = async (
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<Accessibility[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.get<Accessibility[]>("/lookup/accessibility");
   return data;
 };

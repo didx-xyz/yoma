@@ -13,8 +13,9 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public List<string>? Options { get; set; }
 
     /// <summary>
-    /// Represents a specific commitment interval with its ID and maximum count value, adjustable via a slider
-    /// Filter on the specified commitment interval and range, starting from 1 up to the count
+    /// Maximum total commitment, normalized to minutes across all supported units.
+    /// Unknown commitment is included by default; an explicit policy can override it.
+    /// Exact Options and a maximum Interval cannot be specified together.
     /// </summary>
     public OpportunitySearchFilterCommitmentIntervalItem? Interval { get; set; }
 

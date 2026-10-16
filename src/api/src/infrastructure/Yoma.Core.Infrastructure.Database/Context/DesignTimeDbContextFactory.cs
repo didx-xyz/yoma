@@ -15,7 +15,7 @@ namespace Yoma.Core.Infrastructure.Database.Context
 
       var builder = new DbContextOptionsBuilder<ApplicationDbContext>();
       var connectionString = configuration.GetConnectionString("SQLConnection");
-      builder.UseNpgsql(connectionString);
+      builder.UseNpgsql(connectionString, options => options.UseNetTopologySuite());
       return new ApplicationDbContext(builder.Options);
     }
   }

@@ -49,6 +49,7 @@ namespace Yoma.Core.Infrastructure.Database
       {
         options.UseNpgsql(configuration.Configuration_ConnectionString(), npgsqlOptions =>
               {
+                npgsqlOptions.UseNetTopologySuite();
                 npgsqlOptions.EnableRetryOnFailure(
                           maxRetryCount: appSettings.DatabaseRetryPolicy.MaxRetryCount,
                           maxRetryDelay: TimeSpan.FromSeconds(appSettings.DatabaseRetryPolicy.MaxRetryDelayInSeconds),
@@ -97,6 +98,7 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddScoped<IRepository<Domain.Entity.Models.Lookups.OrganizationStatus>, Entity.Repositories.Lookups.OrganizationStatusRepository>();
       services.AddScoped<IRepository<Domain.Entity.Models.Lookups.OrganizationProviderType>, Entity.Repositories.Lookups.OrganizationProviderTypeRepository>();
       services.AddScoped<IRepository<Domain.Entity.Models.Lookups.SettingsDefinition>, Entity.Repositories.Lookups.SettingsDefinitionRepository>();
+      services.AddScoped<IRepository<Domain.Entity.Models.Lookups.UserGoal>, Entity.Repositories.Lookups.UserGoalRepository>();
       #endregion Lookups
       services.AddScoped<IRepository<OrganizationDocument>, OrganizationDocumentRepository>();
       services.AddScoped<IRepository<OrganizationProviderType>, OrganizationProviderTypeRepository>();
@@ -104,17 +106,26 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddScoped<IRepository<OrganizationUser>, OrganizationUserRepository>();
       services.AddScoped<IRepositoryValueContainsWithNavigation<User>, UserRepository>();
       services.AddScoped<IRepository<UserLoginHistory>, UserLoginHistoryRepository>();
+      services.AddScoped<IRepository<UserPreferences>, UserPreferencesRepository>();
+      services.AddScoped<IRepository<UserPreferenceEngagementType>, UserPreferenceEngagementTypeRepository>();
+      services.AddScoped<IRepository<UserPreferenceAccessibilityRequirement>, UserPreferenceAccessibilityRequirementRepository>();
+      services.AddScoped<IRepository<UserPreferenceCategory>, UserPreferenceCategoryRepository>();
+      services.AddScoped<IRepository<UserPreferenceLanguage>, UserPreferenceLanguageRepository>();
       services.AddScoped<IRepository<UserSkill>, UserSkillRepository>();
       services.AddScoped<IRepository<UserSkillOrganization>, UserSkillOrganizationRepository>();
       #endregion Entity
 
       #region Lookups
+      services.AddScoped<IRepository<Accessibility>, AccessibilityRepository>();
       services.AddScoped<IRepository<Country>, CountryRepository>();
+      services.AddScoped<IRepository<Currency>, CurrencyRepository>();
       services.AddScoped<IRepository<Education>, EducationRepository>();
       services.AddScoped<IRepository<EngagementType>, EngagementTypeRepository>();
       services.AddScoped<IRepository<Gender>, GenderRepository>();
       services.AddScoped<IRepository<Language>, LanguageRepository>();
       services.AddScoped<IRepositoryBatchedValueContains<Skill>, SkillRepository>();
+      services.AddScoped<IRepository<SustainableDevelopmentGoal>, SustainableDevelopmentGoalRepository>();
+      services.AddScoped<IRepository<TargetedGroup>, TargetedGroupRepository>();
       services.AddScoped<IRepository<TimeInterval>, TimeIntervalRepository>();
       #endregion Lookups
 
@@ -142,17 +153,20 @@ namespace Yoma.Core.Infrastructure.Database
       #region Opportunity
       #region Lookups
       services.AddScoped<IRepository<Domain.Opportunity.Models.Lookups.OpportunityCategory>, Opportunity.Repositories.Lookups.OpportunityCategoryRepository>();
-      services.AddScoped<IRepository<Domain.Opportunity.Models.Lookups.OpportunityDifficulty>, Opportunity.Repositories.Lookups.OpportunityDifficultyRepository>();
       services.AddScoped<IRepository<Domain.Opportunity.Models.Lookups.OpportunityStatus>, Opportunity.Repositories.Lookups.OpportunityStatusRepository>();
       services.AddScoped<IRepository<Domain.Opportunity.Models.Lookups.OpportunityType>, Opportunity.Repositories.Lookups.OpportunityTypeRepository>();
       services.AddScoped<IRepository<Domain.Opportunity.Models.Lookups.OpportunityVerificationType>, Opportunity.Repositories.Lookups.OpportunityVerificationTypeRepository>();
       #endregion Lookups
 
       services.AddScoped<IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Domain.Opportunity.Models.Opportunity>, OpportunityRepository>();
+      services.AddScoped<IRepository<OpportunityAccommodation>, OpportunityAccommodationRepository>();
       services.AddScoped<IRepository<OpportunityCategory>, OpportunityCategoryRepository>();
       services.AddScoped<IRepository<OpportunityCountry>, OpportunityCountryRepository>();
+      services.AddScoped<IRepositoryPropertyContainsWithSpatial<OpportunityCountry>, OpportunityCountryRepository>();
       services.AddScoped<IRepository<OpportunityLanguage>, OpportunityLanguageRepository>();
       services.AddScoped<IRepository<OpportunitySkill>, OpportunitySkillRepository>();
+      services.AddScoped<IRepository<OpportunitySustainableDevelopmentGoal>, OpportunitySustainableDevelopmentGoalRepository>();
+      services.AddScoped<IRepository<OpportunityTargetedGroup>, OpportunityTargetedGroupRepository>();
       services.AddScoped<IRepository<OpportunityVerificationType>, OpportunityVerificationTypeRepository>();
       #endregion Opportunity
 

@@ -126,13 +126,29 @@ namespace Yoma.Core.Test.PartnerSync
       var languages = new Mock<ILanguageService>();
       languages.Setup(service => service.GetByCodeAlpha2OrNull("en"))
         .Returns(new Domain.Lookups.Models.Language { Id = Guid.Parse("75714f89-369d-4af0-9833-896489fb7213") });
-      var difficulty = new Mock<IOpportunityDifficultyService>();
-      difficulty.Setup(service => service.GetByNameOrNull("Beginner"))
-        .Returns(new Domain.Opportunity.Models.Lookups.OpportunityDifficulty());
+      var definitions = new Mock<ICustomFieldDefinitionService>();
+      definitions.Setup(service => service.GetByKey(
+        Domain.Core.CustomFieldEntityType.Opportunity,
+        Domain.Opportunity.CustomFieldConstants.Difficulty.Keys.Learning, true, true))
+        .Returns(new CustomFieldDefinition
+        {
+          Key = Domain.Opportunity.CustomFieldConstants.Difficulty.Keys.Learning,
+          DataType = Domain.Core.CustomFieldDataType.Option,
+          Options =
+          [
+            new CustomFieldOption
+            {
+              Key = Domain.Opportunity.CustomFieldConstants.Difficulty.Options.Beginner,
+              Name = "Beginner",
+              IsActive = true
+            }
+          ]
+        });
       var intervals = new Mock<ITimeIntervalService>();
       intervals.Setup(service => service.GetByNameOrNull("Week")).Returns(new Domain.Lookups.Models.TimeInterval());
       var engagement = new Mock<IEngagementTypeService>();
-      engagement.Setup(service => service.GetByNameOrNull("Online")).Returns(new Domain.Lookups.Models.EngagementType());
+      engagement.Setup(service => service.GetByNameOrNull(Domain.Core.EngagementTypeOption.Remote.ToString()))
+        .Returns(new Domain.Lookups.Models.EngagementType());
 
       var client = new UmuziClient(
         Mock.Of<ILogger<UmuziClient>>(),
@@ -141,11 +157,11 @@ namespace Yoma.Core.Test.PartnerSync
         Options.Create(new UmuziOptions { OrganizationIdYoma = Guid.Parse("90c1c22e-d734-493b-aa0a-339f63d4ad20") }),
         repository.Object,
         types.Object,
+        definitions.Object,
         categories.Object,
         countries.Object,
         languages.Object,
         Mock.Of<ISkillService>(),
-        difficulty.Object,
         intervals.Object,
         engagement.Object,
         Mock.Of<IUmuziAuthService>(),

@@ -1,4 +1,6 @@
 using FluentValidation;
+using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
@@ -13,7 +15,6 @@ namespace Yoma.Core.Domain.Opportunity.Validators
     #region Class Variables
     private readonly IOpportunityTypeService _opportunityTypeService;
     private readonly IOrganizationService _organizationService;
-    private readonly IOpportunityDifficultyService _opportunityDifficultyService;
     private readonly IEngagementTypeService _engagementTypeService;
     private readonly ITimeIntervalService _timeIntervalService;
     private readonly IOpportunityCategoryService _opportunityCategoryService;
@@ -26,25 +27,33 @@ namespace Yoma.Core.Domain.Opportunity.Validators
     #region Constructor
     public OpportunityRequestValidatorBase(IOpportunityTypeService opportunityTypeService,
         IOrganizationService organizationService,
-        IOpportunityDifficultyService opportunityDifficultyService,
         IEngagementTypeService engagementTypeService,
         ITimeIntervalService timeIntervalService,
         IOpportunityCategoryService opportunityCategoryService,
         ICountryService countryService,
         ILanguageService languageService,
         ISkillService skillService,
-        IOpportunityVerificationTypeService opportunityVerificationTypeService)
+        IOpportunityVerificationTypeService opportunityVerificationTypeService,
+        OpportunityRequestCountryValidator opportunityRequestCountryValidator,
+        ICurrencyService currencyService,
+        IAccessibilityService accessibilityService,
+        ITargetedGroupService targetedGroupService,
+        ISustainableDevelopmentGoalService sustainableDevelopmentGoalService)
     {
-      _opportunityTypeService = opportunityTypeService;
-      _organizationService = organizationService;
-      _opportunityDifficultyService = opportunityDifficultyService;
-      _engagementTypeService = engagementTypeService;
-      _timeIntervalService = timeIntervalService;
-      _opportunityCategoryService = opportunityCategoryService;
-      _countryService = countryService;
-      _languageService = languageService;
-      _skillService = skillService;
-      _opportunityVerificationTypeService = opportunityVerificationTypeService;
+      ArgumentNullException.ThrowIfNull(opportunityRequestCountryValidator);
+      ArgumentNullException.ThrowIfNull(currencyService);
+      ArgumentNullException.ThrowIfNull(accessibilityService);
+      ArgumentNullException.ThrowIfNull(targetedGroupService);
+      ArgumentNullException.ThrowIfNull(sustainableDevelopmentGoalService);
+      _opportunityTypeService = opportunityTypeService ?? throw new ArgumentNullException(nameof(opportunityTypeService));
+      _organizationService = organizationService ?? throw new ArgumentNullException(nameof(organizationService));
+      _engagementTypeService = engagementTypeService ?? throw new ArgumentNullException(nameof(engagementTypeService));
+      _timeIntervalService = timeIntervalService ?? throw new ArgumentNullException(nameof(timeIntervalService));
+      _opportunityCategoryService = opportunityCategoryService ?? throw new ArgumentNullException(nameof(opportunityCategoryService));
+      _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
+      _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
+      _skillService = skillService ?? throw new ArgumentNullException(nameof(skillService));
+      _opportunityVerificationTypeService = opportunityVerificationTypeService ?? throw new ArgumentNullException(nameof(opportunityVerificationTypeService));
 
       RuleFor(x => x.Title)
           .NotEmpty()
@@ -77,6 +86,115 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .When(x => !string.IsNullOrEmpty(x.URL))
           .WithMessage("URL must be between 1 and 2048 characters long and be a valid URL if specified.");
 
+      RuleFor(x => x.Provider)
+          .MaximumLength(OpportunityService.Provider_MaxLength);
+
+      RuleFor(x => x.ProviderURL)
+          .Length(1, 2048)
+          .Must(ValidURL)
+          .When(x => !string.IsNullOrEmpty(x.ProviderURL))
+          .WithMessage("Provider URL must be between 1 and 2048 characters long and be a valid URL if specified.");
+
+      RuleFor(x => x.ProviderLogoURL)
+          .Length(1, 2048)
+          .Must(ValidURL)
+          .When(x => !string.IsNullOrEmpty(x.ProviderLogoURL))
+          .WithMessage("Provider logo URL must be between 1 and 2048 characters long and be a valid URL if specified.");
+
+      RuleFor(x => x.ProviderCountryId)
+          .Must(id => id.HasValue && id.Value != Guid.Empty && _countryService.GetByIdOrNull(id.Value) is { } country &&
+            country.CodeAlpha2 != Country.Worldwide.ToDescription())
+          .When(x => x.ProviderCountryId.HasValue)
+          .WithMessage("Provider country must be a specific country that exists.");
+
+      // Manual capture must make an explicit selection. Import and sync may preserve unknown values.
+      RuleSet("Manual", () =>
+      {
+        RuleFor(x => x.Incentivized)
+            .NotNull()
+            .When(x => !TypeIsEntrepreneurship(x.TypeId))
+            .WithMessage("An incentivized selection is required.");
+      });
+
+      RuleFor(x => x.Incentivized)
+          .Must((request, value) => value != false || request.RewardType == RewardType.None)
+          .WithMessage("An opportunity offering a reward cannot be marked as not incentivized.")
+          .Must((request, value) => TypeIsJob(request.TypeId) || request.RewardType == RewardType.None || value == true)
+          .WithMessage("A rewarded non-Job opportunity must be marked as incentivized.");
+
+      RuleFor(x => x.RewardType)
+          .IsInEnum()
+          .Must((request, value) => !TypeIsJob(request.TypeId) ||
+          value != RewardType.ZLTO && !request.ZltoReward.HasValue && !request.ZltoRewardPool.HasValue)
+          .WithMessage("Jobs do not support ZLTO rewards.")
+          .Must((request, value) => TypeIsJob(request.TypeId) || request.Incentivized != true || value != RewardType.None)
+          .WithMessage("An incentivized non-Job opportunity requires a reward type.");
+
+      RuleFor(x => x.PartnerIncentiveAmount)
+          .Must((request, value) => request.RewardType == RewardType.PartnerIncentive ? value > 0 : value == null)
+          .WithMessage("A positive partner incentive amount is required only for reward type PartnerIncentive.")
+          .LessThan(100000000000000m)
+          .PrecisionScale(18, 4, true);
+
+      RuleFor(x => x.PartnerIncentiveCurrency)
+          .Must((request, value) => request.RewardType == RewardType.PartnerIncentive
+          ? currencyService.List().Any(o => o.Code == value)
+          : value == null)
+          .WithMessage("A valid ISO currency code is required only for reward type PartnerIncentive.");
+
+      RuleFor(x => x.AccessibilitySupport)
+          .IsInEnum()
+          .When(x => x.AccessibilitySupport.HasValue);
+
+      RuleFor(x => x.AccommodationOtherDescription)
+          .MaximumLength(OpportunityService.AccommodationOtherDescription_MaxLength)
+          .Must((request, value) =>
+        {
+          var other = accessibilityService.List().SingleOrDefault(o => o.Name == AccessibilityOption.Other.ToString());
+          var hasOther = other != null && request.Accommodations?.Contains(other.Id) == true;
+          return hasOther == !string.IsNullOrWhiteSpace(value);
+        })
+          .WithMessage("Other description must be provided only when Other is selected.");
+
+      RuleFor(x => x.AgeFrom)
+          .GreaterThanOrEqualTo((short)0);
+
+      RuleFor(x => x.AgeTo)
+          .GreaterThanOrEqualTo((short)0)
+          .Must((request, value) => !request.AgeFrom.HasValue || !value.HasValue || value >= request.AgeFrom)
+          .WithMessage("To age must be greater than or equal to from age.");
+
+      RuleFor(x => x.Accommodations)
+          .Must(values => values == null || values.All(id => accessibilityService.List().Any(o => o.Id == id)))
+          .WithMessage("Specified accommodation does not exist.")
+          .Must((request, values) => request.AccessibilitySupport != AccessibilitySupport.Yes || values?.Count > 0)
+          .WithMessage("Accessibility support Yes requires at least one accommodation.")
+          .Must((request, values) => !(values?.Count > 0) ||
+          request.AccessibilitySupport is AccessibilitySupport.Yes or AccessibilitySupport.AvailableOnRequest)
+          .WithMessage("Accommodations require accessibility support Yes or AvailableOnRequest.");
+
+      RuleFor(x => x.TargetedGroups)
+          .Must(values => values == null || values.All(id => targetedGroupService.List().Any(o => o.Id == id)))
+          .WithMessage("Specified targeted group does not exist.")
+          .Must(values =>
+        {
+          var openToAll = targetedGroupService.List().SingleOrDefault(o => o.Name == TargetedGroupOption.OpenToAll.ToDescription());
+          return openToAll == null || values?.Contains(openToAll.Id) != true || values.Distinct().Count() == 1;
+        })
+          .WithMessage("Open to all cannot be combined with another targeted group.");
+
+      RuleFor(x => x.SustainableDevelopmentGoals)
+          .Must(values => values == null || values.All(id => sustainableDevelopmentGoalService.List().Any(o => o.Id == id)))
+          .WithMessage("Specified Sustainable Development Goal does not exist.");
+
+      RuleFor(x => x.ZltoReward)
+          .Must((request, value) => request.RewardType == RewardType.ZLTO ? value.HasValue : !value.HasValue)
+          .WithMessage("ZLTO reward is required only for reward type ZLTO.");
+
+      RuleFor(x => x.ZltoRewardPool)
+          .Must((request, value) => request.RewardType == RewardType.ZLTO || !value.HasValue)
+          .WithMessage("ZLTO reward pool is only supported for reward type ZLTO.");
+
       RuleFor(x => x.ZltoReward)
           .GreaterThan(0)
           .When(x => x.ZltoReward.HasValue)
@@ -106,28 +224,15 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .When(x => x.VerificationEnabled)
           .WithMessage("A verification method is required when verification is enabled.");
 
-      // Difficulty is required except for Job opportunities If specified it must exist
-      RuleFor(x => x.DifficultyId)
-          .Cascade(CascadeMode.Stop)
-          .Must((model, difficultyId) =>
-          {
-            if (!TypeExists(model.TypeId)) return true;
-
-            return TypeIsJob(model.TypeId) || difficultyId.HasValue;
-          })
-          .WithMessage("Difficulty is required.")
-          .Must(difficultyId => DifficultyExists(difficultyId))
-          .WithMessage("Specified difficulty is invalid or does not exist.");
-
-      // Commitment interval is required except for Job opportunities If specified it must exist
+      // Jobs and Entrepreneurship may omit commitment; supplied interval and count must stay paired.
       RuleFor(x => x.CommitmentIntervalId)
           .Cascade(CascadeMode.Stop)
           .Must((model, intervalId) =>
           {
             if (!TypeExists(model.TypeId)) return true;
 
-            var isJob = TypeIsJob(model.TypeId);
-            return isJob
+            var optional = TypeAllowsOptionalCommitment(model.TypeId);
+            return optional
               ? intervalId.HasValue == model.CommitmentIntervalCount.HasValue
               : intervalId.HasValue;
           })
@@ -135,15 +240,15 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .Must(intervalId => !intervalId.HasValue || TimeIntervalExists(intervalId))
           .WithMessage("Specified time interval is invalid or does not exist.");
 
-      // Commitment interval count is required except for Job opportunities
+      // Other opportunity types require both commitment fields.
       RuleFor(x => x.CommitmentIntervalCount)
           .Cascade(CascadeMode.Stop)
           .Must((model, count) =>
           {
             if (!TypeExists(model.TypeId)) return true;
 
-            var isJob = TypeIsJob(model.TypeId);
-            return isJob
+            var optional = TypeAllowsOptionalCommitment(model.TypeId);
+            return optional
               ? count.HasValue == model.CommitmentIntervalId.HasValue
               : count.HasValue;
           })
@@ -174,6 +279,14 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .NotEmpty();
 
       // End date can be in the past
+      RuleSet("Manual", () =>
+      {
+        RuleFor(x => x.DateEnd)
+            .NotNull()
+            .When(x => TypeIsJob(x.TypeId))
+            .WithMessage("An application deadline is required for Jobs.");
+      });
+
       RuleFor(model => model.DateEnd)
           .GreaterThanOrEqualTo(model => model.DateStart)
           .When(model => model.DateEnd.HasValue)
@@ -197,22 +310,45 @@ namespace Yoma.Core.Domain.Opportunity.Validators
 
       // Engagement type is optional. If specified it must exist.
       RuleFor(x => x.EngagementTypeId)
-        .Must(EngagementTypeExists)
-        .WithMessage("Specified engagement type is invalid or does not exist.");
+          .Must(EngagementTypeExists)
+          .WithMessage("Specified engagement type is invalid or does not exist.");
 
       RuleFor(x => x.Categories)
           .Must(categories => categories != null && categories.Count != 0 && categories.All(id => id != Guid.Empty && CategoryExists(id)))
           .WithMessage("Categories are required and must exist.");
 
       RuleFor(x => x.Countries)
-          .Must(countries => countries != null && countries.Count != 0 && countries.All(id => id != Guid.Empty && CountryExists(id)))
+          .Must(countries => countries != null && countries.Count != 0 && countries.All(o => o != null && o.CountryId != Guid.Empty && CountryExists(o.CountryId)))
           .WithMessage("Countries are required and must exist.");
+
+      RuleFor(x => x.Countries)
+          .Must(locations => locations == null ||
+        locations.All(o => o != null) && locations.Select(o => o.CountryId).Distinct().Count() == locations.Count)
+          .WithMessage("Locations must contain one non-empty entry per country.");
+
+      RuleForEach(x => x.Countries)
+          .SetValidator(opportunityRequestCountryValidator);
+
+      RuleFor(x => x.Countries)
+          .Must(countries => countries == null || countries.Count <= 1 ||
+            !countries.Any(country => country != null &&
+              _countryService.GetByIdOrNull(country.CountryId)?.CodeAlpha2 == Country.Worldwide.ToDescription()))
+          .WithMessage("Worldwide cannot be combined with specific countries.");
 
       RuleFor(x => x.Languages)
           .Must(languages => languages != null && languages.Count != 0 && languages.All(id => id != Guid.Empty && LanguageExists(id)))
           .WithMessage("Languages are required and must exist.");
 
-      // Skills are optional. If specified, all skills must exist.
+      // Manual Jobs require skills; other capture paths may leave them unspecified.
+      // Every supplied skill must exist regardless of capture path.
+      RuleSet("Manual", () =>
+      {
+        RuleFor(x => x.Skills)
+            .NotEmpty()
+            .When(x => TypeIsJob(x.TypeId))
+            .WithMessage("At least one required skill is required for Jobs.");
+      });
+
       RuleFor(x => x.Skills)
           .Must(skills => skills == null || skills.All(id => id != Guid.Empty && SkillExists(id)))
           .WithMessage("Skills are optional, but must exist if specified.");
@@ -232,9 +368,9 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .WithMessage("An opportunity shared with partners cannot be flagged as hidden.");
 
       RuleFor(x => x.ExternalId)
-        .MaximumLength(OpportunityService.ExternalId_MaxLength)
-        .When(x => !string.IsNullOrEmpty(x.ExternalId))
-        .WithMessage($"External ID must not exceed {OpportunityService.ExternalId_MaxLength} characters.");
+          .MaximumLength(OpportunityService.ExternalId_MaxLength)
+          .When(x => !string.IsNullOrEmpty(x.ExternalId))
+          .WithMessage($"External ID must not exceed {OpportunityService.ExternalId_MaxLength} characters.");
 
       // Hidden opportunities cannot be shared with partners
       RuleFor(opportunity => opportunity.ShareWithPartners)
@@ -242,26 +378,27 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .WithMessage("A hidden opportunity cannot be shared with partners.");
 
       RuleFor(x => x.CustomFields)
-        .Must(CustomFieldKeysUnique)
-        .WithMessage("Custom field keys must be unique.");
+          .Must(CustomFieldKeysUnique)
+          .WithMessage("Custom field keys must be unique.");
 
-      RuleForEach(x => x.CustomFields).ChildRules(field =>
+      RuleForEach(x => x.CustomFields)
+          .ChildRules(field =>
       {
         field.RuleFor(x => x.Key)
-          .NotEmpty()
-          .WithMessage("Custom field key is required.");
+            .NotEmpty()
+            .WithMessage("Custom field key is required.");
 
         field.RuleFor(x => x)
-          .Must(CustomFieldValueSpecified)
-          .WithMessage("Custom field must specify exactly one of value or values; values must contain at least one item.");
+            .Must(CustomFieldValueSpecified)
+            .WithMessage("Custom field must specify exactly one of value or values; values must contain at least one item.");
 
         field.RuleFor(x => x.Value)
-          .Must(value => string.IsNullOrWhiteSpace(value) || !value.Contains(CustomFieldValue.Value_Delimiter))
-          .WithMessage("Custom field value contains an invalid delimiter character.");
+            .Must(value => string.IsNullOrWhiteSpace(value) || !value.Contains(CustomFieldValue.Value_Delimiter))
+            .WithMessage("Custom field value contains an invalid delimiter character.");
 
         field.RuleFor(x => x.Values)
-          .Must(values => values == null || values.All(value => !string.IsNullOrWhiteSpace(value) && !value.Contains(CustomFieldValue.Value_Delimiter)))
-          .WithMessage("Custom field values contain empty values or invalid delimiter characters.");
+            .Must(values => values == null || values.All(value => !string.IsNullOrWhiteSpace(value) && !value.Contains(CustomFieldValue.Value_Delimiter)))
+            .WithMessage("Custom field values contain empty values or invalid delimiter characters.");
       });
     }
     #endregion
@@ -281,11 +418,22 @@ namespace Yoma.Core.Domain.Opportunity.Validators
       return type != null && type.Name.Equals(Type.Job.ToString(), StringComparison.OrdinalIgnoreCase);
     }
 
-    private bool DifficultyExists(Guid? id)
+    private bool TypeIsEntrepreneurship(Guid typeId)
     {
-      if (!id.HasValue) return true;
-      if (id.Value == Guid.Empty) return false;
-      return _opportunityDifficultyService.GetByIdOrNull(id.Value) != null;
+      if (typeId == Guid.Empty) return false;
+
+      var type = _opportunityTypeService.GetByIdOrNull(typeId);
+      return type != null && type.Name.Equals(Type.Entrepreneurship.ToString(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool TypeAllowsOptionalCommitment(Guid typeId)
+    {
+      if (typeId == Guid.Empty) return false;
+
+      var type = _opportunityTypeService.GetByIdOrNull(typeId);
+      return type != null &&
+        (type.Name.Equals(Type.Job.ToString(), StringComparison.OrdinalIgnoreCase) ||
+        type.Name.Equals(Type.Entrepreneurship.ToString(), StringComparison.OrdinalIgnoreCase));
     }
 
     private bool TimeIntervalExists(Guid? id)

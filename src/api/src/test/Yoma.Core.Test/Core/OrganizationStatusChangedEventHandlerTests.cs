@@ -36,7 +36,7 @@ namespace Yoma.Core.Test.Core
       service.Setup(o => o.Search(It.IsAny<OpportunitySearchFilterAdmin>(), false, false))
         .Returns((OpportunitySearchFilterAdmin filter, bool _, bool __) =>
         {
-          Assert.Equal(organization.Id, Assert.Single(filter.Organizations!));
+          Assert.Equal(organization.Id, Assert.Single(filter.Organizations!.Value!));
           Assert.Equal(100, filter.PageSize);
           Assert.Equal(status == OrganizationStatus.Deleted
             ? DeletedStatuses

@@ -53,7 +53,9 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync
 
       // services
       services.AddSingleton<IIXOAuthService, IXOAuthService>();
-      services.AddScoped<IExecutionStrategyService, ExecutionStrategyService>();
+      // Register concretely so this provider cannot override the application database
+      // IExecutionStrategyService registration used to clear rolled-back CSV probe state.
+      services.AddScoped<ExecutionStrategyService>();
       services.AddScoped<IOpportunityCatalogueBackgroundService, OpportunityCatalogueBackgroundService>();
 
       // clients

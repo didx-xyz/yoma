@@ -70,6 +70,17 @@ namespace Yoma.Core.Domain.PartnerSync.Models
 
     public DateTimeOffset? DateCompleted { get; set; }
 
+    /// <summary>
+    /// Optional participant completion location resolved by the partner mapper, not opportunity/provider origin.
+    /// Yoma accepts it only for On-site/Hybrid participation without Worldwide, excluding Entrepreneurship.
+    /// With no explicit country, eligible submissions default to the youth profile; region/city are never mixed between sources.
+    /// </summary>
+    public Guid? CountryId { get; set; }
+
+    public string? Region { get; set; }
+
+    public string? City { get; set; }
+
     public List<CustomFieldValueRequest>? CustomFields { get; set; }
   }
 

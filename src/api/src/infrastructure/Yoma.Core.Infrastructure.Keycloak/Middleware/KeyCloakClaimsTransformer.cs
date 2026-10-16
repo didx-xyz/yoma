@@ -20,7 +20,8 @@ namespace Yoma.Core.Infrastructure.Keycloak.Middleware
       if (claimsIdentity.IsAuthenticated && claimsIdentity.HasClaim((claim) => claim.Type == ClaimType_RealmAccess))
       {
         var realmAccessClaim = claimsIdentity.FindFirst((claim) => claim.Type == ClaimType_RealmAccess) ?? throw new InvalidOperationException($"Failed to obtain 'claimsIdentity' '{ClaimType_RealmAccess}'");
-        var realmAccessAsDict = JsonConvert.DeserializeObject<Dictionary<string, string[]>>(realmAccessClaim.Value) ?? throw new InvalidOperationException($"Failed to deserialize '{ClaimType_RealmAccess}' as {nameof(Dictionary<string, string[]>)}");
+        var realmAccessAsDict = JsonConvert.DeserializeObject<Dictionary<string, string[]>>(realmAccessClaim.Value)
+          ?? throw new InvalidOperationException($"Failed to deserialize '{ClaimType_RealmAccess}' as {nameof(Dictionary<,>)}");
         if (realmAccessAsDict["roles"] != null)
         {
           foreach (var role in realmAccessAsDict["roles"])
