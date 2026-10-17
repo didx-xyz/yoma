@@ -39,6 +39,45 @@ ingress:
           - path: /auth/resources
           - path: /auth/js
 
+# Traefik Middlewares and IngressRoutes, keyed by name suffix (like `ingress` above).
+# Each entry: enabled, optional name/labels/annotations, and spec. All are templated.
+traefikMiddleware:
+  # Per-client-IP rate limit on the Keycloak SMS endpoints (send and check codes).
+  # Counted per Traefik pod.
+  sms-ratelimit:
+    enabled: false
+    spec:
+      rateLimit:
+        average: 10
+        period: 1m
+        burst: 10
+        sourceCriterion:
+          ipStrategy:
+            # Position of the client IP in X-Forwarded-For, counted from the right.
+            # Behind Vercel and the ALB the header is "<client>, <vercel edge>", so 2.
+            depth: 2
+
+traefikIngressRoute:
+  # Sends the SMS endpoints through the sms-ratelimit Middleware.
+  sms-ratelimit:
+    enabled: false
+    spec:
+      entryPoints:
+        - websecure
+      routes:
+        - kind: Rule
+          match: >-
+            (Host(`{{ .Values.keycloak.ingressDomain }}`) || Host(`keycloak.{{ .Values.keycloak.ingressDomain }}`))
+            && PathPrefix(`/auth/realms/yoma/sms/`)
+          # Must be higher than the router Traefik builds from the external Ingress.
+          priority: 1000
+          middlewares:
+            - name: '{{ include "keycloak.fullname" . }}-sms-ratelimit'
+          services:
+            - name: '{{ include "keycloak.fullname" . }}-http'
+              port: http
+      tls: {}
+
 postInstallHook:
   enabled: false
 

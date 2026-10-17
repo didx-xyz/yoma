@@ -1,0 +1,24 @@
+{{- range $key, $_ := .Values.traefikMiddleware }}
+{{- if eq (tpl (toString .enabled) $) "true" }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  {{- if .name }}
+  name: {{ tpl .name $ }}
+  {{- else }}
+  name: {{ printf "%s-%s" (include "keycloak.fullname" $) $key }}
+  {{- end }}
+  labels:
+    {{- include "keycloak.labels" $ | nindent 4 }}
+    {{- with .labels }}
+    {{- include "common.tplvalues.render" (dict "value" . "context" $) | nindent 4 }}
+    {{- end }}
+  {{- with .annotations }}
+  annotations:
+    {{- include "common.tplvalues.render" (dict "value" . "context" $) | nindent 4 }}
+  {{- end }}
+spec:
+  {{- include "common.tplvalues.render" (dict "value" .spec "context" $) | nindent 2 }}
+{{- end }}
+{{- end }}
