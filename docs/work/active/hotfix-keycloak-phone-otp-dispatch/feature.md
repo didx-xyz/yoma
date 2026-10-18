@@ -7,7 +7,7 @@
 - **Ticket**: none
 - **Owner**: Jason
 - **Areas**: keycloak
-- **Status**: review — reworked after SRE review of #1979; Stage rollout and live Twilio SID check pending
+- **Status**: review — #1979 to master, then Stage verification with real messages; Production hotfix at Robbie's discretion
 - **Started**: 2026-10-16
 
 ## Problem / Goal
@@ -20,7 +20,7 @@ Goal, after SRE review of #1979: a code that may still arrive must work and the 
 
 - OTP matching/expiry and phone-verification rules.
 - International SMS, billing or Twilio configuration.
-- Atomic protection against concurrent sends (needs a lock or DB constraint). Recommended to SRE as a Cloudflare rate-limit rule instead.
+- Atomic protection against concurrent sends (needs a lock or DB constraint). Left to an edge rate limit: Robbie's `fix/keycloak-sms-ratelimit` (Traefik).
 - Asynchronous delivery tracking via Twilio status callbacks.
 - Changing the retry count or delay (8 checks, 2 s), or the limit values (3 per number, 10 per IP, per hour and code type — code defaults; Helm does not set them).
 - The two MFA OTP pages (`login-sms-otp*.ftl`): they have no alert UI and still work from `expires_in`.
@@ -58,11 +58,15 @@ Changes:
 - [x] Rebuild; confirm only the four intended JARs' contents changed
 - [x] Scripted-Twilio harness, 17 sender scenarios
 - [x] Local Keycloak (dummy sender): response shape, failure recording surviving rollback, per-IP and per-number limits at exact values, duplicate live codes → `ALREADY_SENT`, theme renders en/fr
+- [x] Prod hotfix branch `hotfix/keycloak-phone-otp-dispatch` from `v3.13.0`, changes applied uncommitted (2026-10-16). Dropped 2026-10-18 in favour of #1979 to master; its code was identical to #1979
+- [x] Local re-verification on the hotfix branch (2026-10-18): JARs rebuilt from source match, builds on 26.8.1, harness 17/17, dummy-sender endpoint checks, stubbed-endpoint alerts on register/login/reset at 320/390 px in en/fr — [handoffs/2026-10-18-a.md](handoffs/2026-10-18-a.md)
+- [ ] Update #1979's title and description; review and merge to master (merges cleanly onto `520464f2c`, which includes CF `3a5d5f9cd` (#1978))
+- [ ] Stage, after the merge: real-message rows of the checklist in [handoffs/2026-10-16-d.md](handoffs/2026-10-16-d.md) §3, listed in [handoffs/2026-10-18-b.md](handoffs/2026-10-18-b.md)
 - [ ] Native-speaker check of the es/fr/pt/sw `codeSentUnconfirmed` strings
 - [ ] Robbie: confirm the live provider ref/checksum and trace failing message SIDs to their final status and error code (checks the recipient code list)
-- [ ] Stage on **all** Keycloak replicas: non-ZA WhatsApp number shows the unconfirmed warning and its code verifies; non-ZA number not on WhatsApp gets 400; ZA SMS fallback; phone OTP login and reset; email and social sign-in
-- [ ] Production rollout to all replicas, one controlled phone registration smoke, check logs
-- [ ] SRE: Cloudflare rate-limit rule on the `sms/*-code` endpoints
+- [ ] Robbie, if he chooses: Production hotfix by cherry-picking the squashed #1979 commit onto a branch from `v3.13.0` (steps in the 2026-10-18-b handoff), release, rollout to all replicas, production smoke
+- [ ] Agree the order with Robbie's `chore/keycloak-26.8.1`, which rebuilds the same JARs; the second to land rebuilds from merged source
+- [ ] SRE rate limit at the edge: Robbie's `fix/keycloak-sms-ratelimit` (Traefik, 10/min per client IP on `/auth/realms/yoma/sms/`) replaces the Cloudflare suggestion; not merged as of 2026-10-18
 
 ## Decisions
 
@@ -75,9 +79,14 @@ Changes:
 - 2026-10-16: Brought failed-send counting and the `>` → `>=` fix into this hotfix (Adrian's brief had deferred them) at SRE's request. A genuine user hitting a Twilio outage now uses up their 3 attempts per hour.
 - 2026-10-16: Return values (`MessageSendResult`, `TokenCodeSendResult`) rather than an exception for the unconfirmed case, so success is never signalled through the error path. Costs a dummy-provider rebuild.
 - 2026-10-16: Concurrent sends are not made atomic. The duplicate-row 500 is fixed; burst protection is left to a Cloudflare rule.
+- 2026-10-16: Ship to Production as a hotfix from the `v3.13.0` tag, not from master, because Adrian is about to merge the CF branch into master. The tag points at the same commit #1979 was built on (`67c8f90d6`), so the tested JARs apply unchanged. Master gets the same change re-applied after the CF merge.
+- 2026-10-18: Tested the alerts that the dummy sender can't produce (unconfirmed warning, 400, 503) by stubbing the `sms/*-code` response in headless Chrome against the real local pages, instead of waiting for Stage. This proves the theme logic and layout. Whether Twilio actually produces those outcomes is still a real-message check.
+- 2026-10-18: Left out of this hotfix: a ZA send that fails on both WhatsApp and SMS still shows Twilio's raw SMS error to the user. `v3.13.0` behaves the same, and changing it widens a production hotfix. Raised as an open question in the 2026-10-18 handoff.
+- 2026-10-18: Reversed the 2026-10-16 tag decision. #1979 goes to master like any other change (as Adrian's brief said), reaches Stage together with the CF changes, and Robbie can cut a Production hotfix from it if he wants. Reasons: CF has landed and doesn't touch `src/keycloak/providers`, so #1979 merges cleanly and its JARs stay valid; Stage then tests what ships next; one PR instead of a hotfix branch plus a master re-apply. Trade-off: the real-message checks now run on Stage after the merge, not before it.
 
 ## Links
 
 - PRs: [#1979](https://github.com/didx-xyz/yoma/pull/1979)
+- Related: Robbie's `fix/keycloak-sms-ratelimit` (Traefik SMS rate limit) and `chore/keycloak-26.8.1` (rebuilds the provider JARs); CF merge `3a5d5f9cd` (#1978)
 - Related: [YOM-1299 SSO hotfix](../hotfix-keycloak-sso-offline-access/feature.md); `fd0a11b8d` (#1339), `e797cdf83` (#1366), `eeb21bb22` (#1395) introduced and tuned the delivery polling
 - Twilio [Message status values](https://www.twilio.com/docs/messaging/api/message-resource#message-status-values), [error codes](https://www.twilio.com/docs/api/errors)
