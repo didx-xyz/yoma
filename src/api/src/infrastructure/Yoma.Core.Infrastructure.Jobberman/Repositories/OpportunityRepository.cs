@@ -28,6 +28,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Repositories
         CountryCodeAlpha2 = entity.CountryCodeAlpha2,
         SourceId = entity.SourceId,
         Title = entity.Title,
+        Summary = entity.Summary,
         Description = entity.Description,
         URL = entity.URL,
         ImageURL = entity.ImageURL,
@@ -56,6 +57,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Repositories
         CountryCodeAlpha2 = item.CountryCodeAlpha2,
         SourceId = item.SourceId,
         Title = item.Title,
+        Summary = item.Summary,
         Description = item.Description,
         URL = item.URL,
         ImageURL = item.ImageURL,
@@ -93,6 +95,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Repositories
           CountryCodeAlpha2 = item.CountryCodeAlpha2,
           SourceId = item.SourceId,
           Title = item.Title,
+          Summary = item.Summary,
           Description = item.Description,
           URL = item.URL,
           ImageURL = item.ImageURL,
@@ -130,6 +133,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Repositories
       item.DateModified = DateTimeOffset.UtcNow;
 
       entity.Title = item.Title;
+      entity.Summary = item.Summary;
       entity.Description = item.Description;
       entity.URL = item.URL;
       entity.ImageURL = item.ImageURL;
@@ -164,6 +168,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Repositories
         item.DateModified = DateTimeOffset.UtcNow;
 
         entity.Title = item.Title;
+        entity.Summary = item.Summary;
         entity.Description = item.Description;
         entity.URL = item.URL;
         entity.ImageURL = item.ImageURL;

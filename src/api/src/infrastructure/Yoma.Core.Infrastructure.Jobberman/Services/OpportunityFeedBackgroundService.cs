@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Transactions;
 using System.Xml.Linq;
@@ -29,6 +30,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
     private readonly ExecutionStrategyService _executionStrategyService;
 
     private static readonly XNamespace XNamespace_MediaNs = "http://search.yahoo.com/mrss/";
+    private static readonly XNamespace XNamespace_ContentNs = "http://purl.org/rss/1.0/modules/content/";
     #endregion
 
     #region Constructor
@@ -301,33 +303,35 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
         if (string.IsNullOrEmpty(sourceId) || string.IsNullOrEmpty(title))
           continue;
 
-        // Optional / not present in current Jobberman XML samples.
-        // Best-effort mapping if the field appears later; otherwise defaults to sync/import date.
+        // Optional; when omitted the cache retains a stable initial import date.
         var dateStart = x.TryGetElementDate("pubDate", out var dateStartParsed)
           ? dateStartParsed
           : default(DateTimeOffset?);
 
-        // Optional / not present in current Jobberman XML samples.
-        // Best-effort mapping if the field appears later; otherwise treated as open-ended.
+        // Optional; omitted closing dates remain open-ended.
         var dateEnd = x.TryGetElementDate("closing_date", out var dateEndParsed)
           ? dateEndParsed
           : default(DateTimeOffset?);
 
-        // Optional / not present in current Jobberman XML samples.
-        // Best-effort mapping if the field appears later; otherwise defaults to Other.
-        var category = x.GetElementText("job_function");
+        // Enhanced feeds use category/price; retain the legacy names as fallbacks.
+        var category = x.GetElementText("category") ?? x.GetElementText("job_function");
 
-        // Optional / not present in current Jobberman XML samples.
-        // Best-effort mapping if the field appears later; otherwise defaults to English.
+        // Optional; omitted or unrecognised languages still use the existing English default.
         var language = x.GetElementText("language");
 
-        // Optional / not present in current Jobberman XML samples.
-        // Best-effort mapping if the field appears later; otherwise no salary is appended.
-        var salary = x.GetElementText("salary");
+        var summary = x.GetElementContent("description");
+        var description = x.GetElementContent(XNamespace_ContentNs + "encoded");
+        if (string.IsNullOrWhiteSpace(description.HtmlToMarkdown())) description = summary;
 
-        var description = x.GetElementText("description");
-        if (!string.IsNullOrWhiteSpace(salary))
-          description = $"{description}{System.Environment.NewLine}{System.Environment.NewLine}Salary: {salary}";
+        // The non-CF mapping has no dedicated Yoma fields for these values.
+        // Keep their source text in the description, without inventing salary units or working hours.
+        var metadata = new List<string>();
+        AddDescriptionDetail(metadata, "Salary", x.GetElementText("price") ?? x.GetElementText("salary"));
+        AddDescriptionDetail(metadata, "Experience level", x.GetElementText("experience_level"));
+        AddDescriptionDetail(metadata, "Experience length", x.GetElementText("experience_length"));
+        AddDescriptionDetail(metadata, "Minimum qualification", x.GetElementText("minimum_qualification"));
+        if (metadata.Count > 0)
+          description = $"{description}{System.Environment.NewLine}{string.Join(System.Environment.NewLine, metadata)}";
 
         opportunities.Add(new Opportunity
         {
@@ -335,6 +339,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
           CountryCodeAlpha2 = countryCodeAlpha2,
           SourceId = sourceId,
           Title = title,
+          Summary = summary,
           Description = description,
           URL = x.GetElementText("link"),
           ImageURL = x.Element(XNamespace_MediaNs + "content").GetAttribute("url"),
@@ -352,6 +357,13 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
       }
 
       return opportunities;
+    }
+
+    private static void AddDescriptionDetail(List<string> sections, string label, string? value)
+    {
+      value = value?.NormalizeNullableValue();
+      if (!string.IsNullOrEmpty(value))
+        sections.Add($"<p><strong>{label}:</strong> {WebUtility.HtmlEncode(value)}</p>");
     }
 
     private async Task ProcessOpportunities(JobbermanFeedOptions feed, List<Opportunity> opportunities, DateTimeOffset now)
@@ -423,6 +435,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
             CountryCodeAlpha2 = item.CountryCodeAlpha2,
             SourceId = item.SourceId,
             Title = item.Title,
+            Summary = item.Summary,
             Description = item.Description,
             URL = item.URL,
             ImageURL = item.ImageURL,
@@ -454,6 +467,9 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
 
         if (!string.Equals(itemExisting.Title, item.Title, StringComparison.OrdinalIgnoreCase))
         { itemExisting.Title = item.Title; changed = true; }
+
+        if (!string.Equals(itemExisting.Summary, item.Summary, StringComparison.Ordinal))
+        { itemExisting.Summary = item.Summary; changed = true; }
 
         if (!string.Equals(itemExisting.Description, item.Description, StringComparison.Ordinal))
         { itemExisting.Description = item.Description; changed = true; }

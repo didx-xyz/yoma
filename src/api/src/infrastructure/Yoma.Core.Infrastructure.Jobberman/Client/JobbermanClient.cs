@@ -138,7 +138,9 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
         throw new InvalidOperationException($"Jobberman opportunity title expected for external id '{item.ExternalId}'");
 
       var description = BuildDescription(item, title);
-      var summary = title;
+      var summary = item.Summary.HtmlDecode()?.RemoveHtmlTags();
+      if (string.IsNullOrWhiteSpace(summary)) summary = title;
+      summary = summary.ReplaceLineEndings(" ").TrimToLengthWithEllipsis(OpportunityService.Summary_MaxLength);
 
       var feed = _options.Feeds.SingleOrDefault(o => string.Equals(o.CountryCodeAlpha2, item.CountryCodeAlpha2, StringComparison.OrdinalIgnoreCase))
         ?? throw new InvalidOperationException($"Feed config for country '{item.CountryCodeAlpha2}': Not found");
@@ -251,6 +253,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
       if (string.IsNullOrWhiteSpace(description)) description = fallback;
 
       var metadata = new List<string>();
+      AddDescriptionDetail(metadata, "Location", item.Location);
       if (!WorkScheduleMappings.ContainsKey(item.WorkType?.Trim() ?? string.Empty))
         AddDescriptionDetail(metadata, "Contract type", item.WorkType?.TitleCase(onlyWhenAllCaps: true));
 

@@ -30,6 +30,9 @@ namespace Yoma.Core.Infrastructure.Jobberman.Entities
     public string Title { get; set; } = null!;
 
     [Column(TypeName = "text")]
+    public string? Summary { get; set; }
+
+    [Column(TypeName = "text")]
     public string? Description { get; set; }
 
     [Column(TypeName = "varchar(2048)")]
