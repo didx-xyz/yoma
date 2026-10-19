@@ -7,7 +7,7 @@
 - **Ticket**: none
 - **Owner**: Jason
 - **Areas**: keycloak
-- **Status**: review — #1979 merged as `f21d66802` and smoke-checked on Stage; send-button fix in review; Production after both are confirmed on Stage
+- **Status**: shipped — Production in `v3.13.2` (2026-10-19); post-release log review pending
 - **Started**: 2026-10-16
 
 ## Problem / Goal
@@ -63,13 +63,14 @@ Changes:
 - [x] Local re-verification on the hotfix branch (2026-10-18): JARs rebuilt from source match, builds on 26.8.1, harness 17/17, dummy-sender endpoint checks, stubbed-endpoint alerts on register/login/reset at 320/390 px in en/fr — [handoffs/2026-10-18-a.md](handoffs/2026-10-18-a.md)
 - [x] Update #1979's title and description; review (Robbie approved) and squash-merge to master as `f21d66802` (2026-10-19)
 - [x] Stage smoke checks without real messages (2026-10-19): new theme served on 6 of 6 fetches, test number returns `delivery_confirmed`, 14/14 stubbed alert scenarios at 320/390 px in en/fr — [handoffs/2026-10-19-a.md](handoffs/2026-10-19-a.md)
-- [ ] Stage real-message rows of the checklist in [handoffs/2026-10-16-d.md](handoffs/2026-10-16-d.md) §3. No non-ZA phone is available, so the non-ZA rows (2, 3, 6) stay unverified until Production logs. For the ZA SMS backup (row 4), request the code from a laptop while the phone is in airplane mode
+- [ ] Real-message checks. No non-ZA phone is available, so the non-ZA rows (2, 3, 6) of [handoffs/2026-10-16-d.md](handoffs/2026-10-16-d.md) §3 are checked from Production logs instead (next task). For the ZA SMS backup (row 4), request the code from a laptop while the phone is in airplane mode
+- [ ] Post-release log review with `src/keycloak/scripts/otp-dispatch-report.mjs` (Datadog), daily for a few days. First run 2026-10-19, 1.3 h after the release: new code live, no 503s yet, too little traffic to conclude — see [handoffs/2026-10-19-b.md](handoffs/2026-10-19-b.md)
 - [x] Send-button fix: disable "Send OTP" while its request is in flight on register, login, reset password and update phone number (2026-10-19, local)
-- [ ] Send-button fix: PR to master, merge, re-run the double-click check on Stage
+- [x] Send-button fix: #1986, merged as `8ad828f47`; double-click check passes on Stage (2026-10-19)
 - [ ] Native-speaker check of the es/fr/pt/sw `codeSentUnconfirmed` strings
 - [ ] Robbie: confirm the live provider ref/checksum and trace failing message SIDs to their final status and error code (checks the recipient code list)
-- [ ] Production: cherry-pick `f21d66802` and then the send-button squash commit onto a hotfix branch from the latest Production tag (`v3.13.1` if Adrian releases it first), release, rollout to all replicas, production smoke
-- [ ] Agree the order with Robbie's `chore/keycloak-26.8.1`, which rebuilds the same JARs; the second to land rebuilds from merged source
+- [x] Production: Robbie released `v3.13.2` on top of `v3.13.1`, with #1979 and #1986 cherry-picked; its provider source and JARs are identical to master `8ad828f47`. Production pages serve the new theme and pass the double-click check (2026-10-19)
+- [ ] Robbie's `chore/keycloak-26.8.1` (not merged; Keycloak stays on 26.4.0 for now) is rebased onto #1979 but not #1986. Before it merges, it must rebuild the JARs from master, or its resources JAR drops the send-button fix
 - [ ] SRE rate limit at the edge: Robbie's `fix/keycloak-sms-ratelimit` (Traefik, 10/min per client IP on `/auth/realms/yoma/sms/`) replaces the Cloudflare suggestion; not merged as of 2026-10-18
 
 ## Decisions
@@ -89,10 +90,13 @@ Changes:
 - 2026-10-18: Reversed the 2026-10-16 tag decision. #1979 goes to master like any other change (as Adrian's brief said), reaches Stage together with the CF changes, and Robbie can cut a Production hotfix from it if he wants. Reasons: CF has landed and doesn't touch `src/keycloak/providers`, so #1979 merges cleanly and its JARs stay valid; Stage then tests what ships next; one PR instead of a hotfix branch plus a master re-apply. Trade-off: the real-message checks now run on Stage after the merge, not before it.
 - 2026-10-19: Disable "Send OTP" while its request is in flight. The request now takes up to ~14 s (delivery polling, then the ZA SMS backup), and the button stayed clickable: a click while the first request was still waiting sent a second WhatsApp message with a different code, and only the code saved last verifies. Theme-only fix (`isSending` flag, "Loading..." label, an early return for a click that lands before the button re-renders); only `keycloak-phone-provider.resources.jar` changes. The two MFA OTP pages are left as they are.
 - 2026-10-19: Production order agreed with Jason: send-button fix to master and Stage first; once both changes are confirmed on Stage, cherry-pick `f21d66802` and the send-button commit, in that order, onto Adrian's hotfix branch or a new hotfix branch from his release tag.
+- 2026-10-19: Keycloak stays on 26.4.0. Robbie's 26.8.1 branch is not part of this release, so the JARs are not rebuilt for it.
+- 2026-10-19: Production effect is measured from Keycloak's own log lines in Datadog (`src/keycloak/scripts/otp-dispatch-report.mjs`), comparing a window before `v3.13.2` with the time since. The script prints counts and Twilio codes only, because the log lines contain phone numbers. It lives under `src/keycloak/scripts` rather than this folder because it stays useful after the hotfix is archived.
 
 ## Links
 
-- PRs: [#1979](https://github.com/didx-xyz/yoma/pull/1979) (merged as `f21d66802`); send-button fix PR to follow
+- PRs: [#1979](https://github.com/didx-xyz/yoma/pull/1979) (merged as `f21d66802`), [#1986](https://github.com/didx-xyz/yoma/pull/1986) (merged as `8ad828f47`)
+- Release: `v3.13.2` (2026-10-19)
 - Related: Robbie's `fix/keycloak-sms-ratelimit` (Traefik SMS rate limit) and `chore/keycloak-26.8.1` (rebuilds the provider JARs); CF merge `3a5d5f9cd` (#1978)
 - Related: [YOM-1299 SSO hotfix](../hotfix-keycloak-sso-offline-access/feature.md); `fd0a11b8d` (#1339), `e797cdf83` (#1366), `eeb21bb22` (#1395) introduced and tuned the delivery polling
 - Twilio [Message status values](https://www.twilio.com/docs/messaging/api/message-resource#message-status-values), [error codes](https://www.twilio.com/docs/api/errors)
