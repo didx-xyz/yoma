@@ -235,7 +235,7 @@ releases:
       - ./helm/yoma-web/conf/{{ .Environment.Name }}/secrets.yaml
 ---
 helmDefaults:
-  timeout: 300
+  timeout: 600
   wait: true
   atomic: true
   cleanupOnFail: true

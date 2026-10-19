@@ -155,7 +155,7 @@ keycloak:
   replicas: 1
 
   image:
-    tag: 26.4.0
+    tag: 26.8.1
 
   ingressDomain: yoma.world
 
@@ -168,7 +168,6 @@ keycloak:
   command:
     - /opt/keycloak/bin/kc.sh
     - start
-    - --features=preview,declarative-ui
     - --http-port=8080
     - --hostname-strict=false
     - --spi-events-listener-jboss-logging-success-level=info # log login/out events
@@ -238,7 +237,6 @@ keycloak:
         -XX:+UseContainerSupport
         -XX:MaxRAMPercentage=75.0
         -Djava.awt.headless=true
-        -Dkeycloak.profile.feature.upload_scripts=enabled
     - name: KC_CACHE
       value: ispn
     - name: KC_CACHE_STACK
@@ -374,7 +372,7 @@ keycloak:
     admission.datadoghq.com/enabled: "false" # disabled by default (for now)
   podAnnotations:
     # gcr.io/datadoghq/dd-lib-java-init
-    admission.datadoghq.com/java-lib.version: v1.63.0
+    admission.datadoghq.com/java-lib.version: v1.67.1
     ad.datadoghq.com/keycloak.logs: '[{ "service": "keycloak", "source": "jboss_wildfly" }]'
 
   lifecycleHooks: |-
@@ -464,7 +462,7 @@ config-cli:
   enabled: false
 
   image:
-    tag: 6.4.0-26.1.0
+    tag: 6.5.1-26.5.5
 
   env:
     KEYCLOAK_URL: https://keycloak.example.com/auth
