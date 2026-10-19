@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -149,6 +150,245 @@ namespace Yoma.Core.Test.SSI
       Assert.Equal("Simulated provider outage", fixture.Item.ErrorReason);
       fixture.Lock.Verify(service => service.ReleaseLockAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
+
+    [Fact]
+    public async Task ScopeCreationFailureStopsDispatchWithoutStrandingTheProducer()
+    {
+      var scopes = new Mock<IServiceScopeFactory>();
+      scopes.Setup(factory => factory.CreateScope()).Throws(new InvalidOperationException("Scope creation failed"));
+      using var fixture = new Fixture(Domain.Opportunity.Type.Job, scopes.Object);
+      fixture.AddPendingItems(20);
+
+      var error = await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.Background.ProcessCredentialIssuance()
+        .WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));
+
+      Assert.Equal("Scope creation failed", error.Message);
+      Assert.All(fixture.Items, item => Assert.Equal(CredentialIssuanceStatus.Pending, item.Status));
+      Assert.Empty(fixture.Requests);
+      scopes.Verify(factory => factory.CreateScope(), Times.Once);
+      fixture.Lock.Verify(service => service.ReleaseLockAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task DependencyResolutionFailureDisposesItsScopeAndStopsDispatch()
+    {
+      var services = new Mock<IServiceProvider>();
+      services.Setup(provider => provider.GetService(It.IsAny<Type>()))
+        .Throws(new InvalidOperationException("Dependency resolution failed"));
+      var scope = new Mock<IServiceScope>();
+      scope.SetupGet(value => value.ServiceProvider).Returns(services.Object);
+      var scopes = new Mock<IServiceScopeFactory>();
+      scopes.Setup(factory => factory.CreateScope()).Returns(scope.Object);
+      using var fixture = new Fixture(Domain.Opportunity.Type.Job, scopes.Object);
+      fixture.AddPendingItems(20);
+
+      var error = await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.Background.ProcessCredentialIssuance()
+        .WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));
+
+      Assert.Equal("Dependency resolution failed", error.Message);
+      scope.Verify(value => value.Dispose(), Times.Once);
+      Assert.All(fixture.Items, item => Assert.Null(item.RetryCount));
+      fixture.Repository.Verify(repository => repository.Update(It.IsAny<SSICredentialIssuance>()), Times.Never);
+      fixture.Lock.Verify(service => service.ReleaseLockAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ScopeDisposalFailureStopsTheRunWithoutLosingAnAlreadySavedCredential()
+    {
+      Fixture? current = null;
+      var disposedCount = 0;
+      var scopes = new Mock<IServiceScopeFactory>();
+      scopes.Setup(factory => factory.CreateScope()).Returns(() =>
+      {
+        var inner = current!.CreateWorkerScope();
+        var scope = new Mock<IServiceScope>();
+        scope.SetupGet(value => value.ServiceProvider).Returns(inner.ServiceProvider);
+        scope.Setup(value => value.Dispose()).Callback(() =>
+        {
+          inner.Dispose();
+          Interlocked.Increment(ref disposedCount);
+          throw new InvalidOperationException("Scope disposal failed");
+        });
+        return scope.Object;
+      });
+      using var fixture = current = new Fixture(Domain.Opportunity.Type.Job, scopes.Object);
+      fixture.AddPendingItems(20);
+
+      var error = await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.Background.ProcessCredentialIssuance()
+        .WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));
+
+      Assert.Equal("Scope disposal failed", error.Message);
+      Assert.Equal(1, disposedCount);
+      Assert.Equal(CredentialIssuanceStatus.Issued, fixture.Item.Status);
+      Assert.Equal(fixture.IssuedCredential!.Id, fixture.Item.CredentialId);
+      Assert.Equal(1, fixture.SignatureCount);
+      Assert.All(fixture.Items.Where(item => item != fixture.Item), item => Assert.Equal(CredentialIssuanceStatus.Pending, item.Status));
+      fixture.Repository.Verify(repository => repository.Update(It.IsAny<SSICredentialIssuance>()), Times.Once);
+      fixture.Lock.Verify(service => service.ReleaseLockAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task DisposedInfrastructureFailsTheRunWithoutConsumingCredentialRetries()
+    {
+      using var fixture = new Fixture(Domain.Opportunity.Type.Job);
+      fixture.AddPendingItems(20);
+      fixture.Provider.Setup(provider => provider.IssueCredential(It.IsAny<CredentialIssuanceRequest>()))
+        .ThrowsAsync(new ObjectDisposedException("MemoryCache"));
+
+      await Assert.ThrowsAsync<ObjectDisposedException>(() => fixture.Background.ProcessCredentialIssuance()
+        .WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));
+
+      fixture.Provider.Verify(provider => provider.IssueCredential(It.IsAny<CredentialIssuanceRequest>()), Times.Once);
+      fixture.Repository.Verify(repository => repository.Update(It.IsAny<SSICredentialIssuance>()), Times.Never);
+      Assert.All(fixture.Items, item => Assert.Equal(CredentialIssuanceStatus.Pending, item.Status));
+      fixture.Lock.Verify(service => service.ReleaseLockAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ErrorPersistenceFailureFailsTheRunRatherThanHangingOrReportingSuccess()
+    {
+      using var fixture = new Fixture(Domain.Opportunity.Type.Job);
+      fixture.AddPendingItems(20);
+      fixture.Provider.Setup(provider => provider.IssueCredential(It.IsAny<CredentialIssuanceRequest>()))
+        .ThrowsAsync(new InvalidOperationException("Provider unavailable"));
+      fixture.Repository.Setup(repository => repository.Update(It.IsAny<SSICredentialIssuance>()))
+        .ThrowsAsync(new InvalidOperationException("Database unavailable"));
+
+      var error = await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.Background.ProcessCredentialIssuance()
+        .WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));
+
+      Assert.Equal("Database unavailable", error.Message);
+      fixture.Provider.Verify(provider => provider.IssueCredential(It.IsAny<CredentialIssuanceRequest>()), Times.Once);
+      fixture.Lock.Verify(service => service.ReleaseLockAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ShutdownStopsDispatchButDrainsAndPersistsAnAlreadySuccessfulProviderCall()
+    {
+      using var stopping = new CancellationTokenSource();
+      using var fixture = new Fixture(Domain.Opportunity.Type.Job, stopping: stopping.Token);
+      fixture.AddPendingItems(20);
+      var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+      var finish = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+      fixture.Provider.Setup(provider => provider.IssueCredential(It.IsAny<CredentialIssuanceRequest>()))
+        .Returns(async (CredentialIssuanceRequest request) =>
+        {
+          started.SetResult();
+          await finish.Task;
+          return new Credential { Id = "issued-during-shutdown", SchemaId = request.SchemaId, Attributes = request.Attributes };
+        });
+
+      var run = fixture.Background.ProcessCredentialIssuance();
+      await started.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+      stopping.Cancel();
+      Assert.False(run.IsCompleted);
+      fixture.Lock.Verify(service => service.ReleaseLockAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+      finish.SetResult();
+
+      await Assert.ThrowsAnyAsync<OperationCanceledException>(() => run.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));
+
+      var issued = Assert.Single(fixture.Items, item => item.Status == CredentialIssuanceStatus.Issued);
+      Assert.Equal("issued-during-shutdown", issued.CredentialId);
+      Assert.All(fixture.Items.Where(item => item != issued), item =>
+      {
+        Assert.Equal(CredentialIssuanceStatus.Pending, item.Status);
+        Assert.Null(item.ErrorReason);
+        Assert.Null(item.RetryCount);
+      });
+      fixture.Provider.Verify(provider => provider.IssueCredential(It.IsAny<CredentialIssuanceRequest>()), Times.Once);
+      fixture.Lock.Verify(service => service.ReleaseLockAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ShutdownInfrastructureFailureLeavesPendingWithoutAnErrorRetry()
+    {
+      using var stopping = new CancellationTokenSource();
+      using var fixture = new Fixture(Domain.Opportunity.Type.Job, stopping: stopping.Token);
+      fixture.Provider.Setup(provider => provider.IssueCredential(It.IsAny<CredentialIssuanceRequest>()))
+        .Returns((CredentialIssuanceRequest _) =>
+        {
+          stopping.Cancel();
+          throw new ObjectDisposedException("MemoryCache");
+        });
+
+      await Assert.ThrowsAnyAsync<OperationCanceledException>(() => fixture.Background.ProcessCredentialIssuance());
+
+      fixture.Repository.Verify(repository => repository.Update(It.IsAny<SSICredentialIssuance>()), Times.Never);
+      Assert.Equal(CredentialIssuanceStatus.Pending, fixture.Item.Status);
+      Assert.Null(fixture.Item.RetryCount);
+      fixture.Lock.Verify(service => service.ReleaseLockAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task AlreadyStoppingHostDoesNotStartAnyWorkers()
+    {
+      using var stopping = new CancellationTokenSource();
+      stopping.Cancel();
+      var scopes = new Mock<IServiceScopeFactory>(MockBehavior.Strict);
+      using var fixture = new Fixture(Domain.Opportunity.Type.Job, scopes.Object, stopping.Token);
+
+      await Assert.ThrowsAnyAsync<OperationCanceledException>(() => fixture.Background.ProcessCredentialIssuance());
+
+      scopes.Verify(factory => factory.CreateScope(), Times.Never);
+      Assert.Equal(CredentialIssuanceStatus.Pending, fixture.Item.Status);
+    }
+
+    [Fact]
+    public async Task TenantDisappearingAfterSelectionRemainsPendingAndIsNotRetriedWithinTheRun()
+    {
+      using var fixture = new Fixture(Domain.Opportunity.Type.Job);
+      fixture.Tenants.Setup(service => service.GetTenantIdOrNull(EntityType.User, It.IsAny<Guid>())).Returns((string?)null);
+
+      await fixture.Background.ProcessCredentialIssuance();
+
+      Assert.Equal(CredentialIssuanceStatus.Pending, fixture.Item.Status);
+      Assert.Null(fixture.Item.RetryCount);
+      Assert.Empty(fixture.Requests);
+      fixture.Repository.Verify(repository => repository.Update(It.IsAny<SSICredentialIssuance>()), Times.Never);
+      fixture.Tenants.Verify(service => service.GetTenantIdOrNull(EntityType.User, It.IsAny<Guid>()), Times.Once);
+      fixture.Lock.Verify(service => service.ReleaseLockAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(5)]
+    public async Task ParallelIssuanceRemainsBoundedAndProcessesEverySelectedItem(int parallelism)
+    {
+      using var fixture = new Fixture(Domain.Opportunity.Type.Job, parallelism: parallelism);
+      fixture.AddPendingItems(24);
+      var active = 0;
+      var maximumActive = 0;
+      var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+      var finish = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+      fixture.Provider.Setup(provider => provider.IssueCredential(It.IsAny<CredentialIssuanceRequest>()))
+        .Returns(async (CredentialIssuanceRequest request) =>
+        {
+          var current = Interlocked.Increment(ref active);
+          int observed;
+          do
+          {
+            observed = Volatile.Read(ref maximumActive);
+          }
+          while (current > observed && Interlocked.CompareExchange(ref maximumActive, current, observed) != observed);
+          if (current == parallelism) started.TrySetResult();
+          await finish.Task;
+          Interlocked.Decrement(ref active);
+          return new Credential { Id = request.ClientReferent.Value, SchemaId = request.SchemaId, Attributes = request.Attributes };
+        });
+
+      var run = fixture.Background.ProcessCredentialIssuance();
+      await started.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+      Assert.False(run.IsCompleted);
+      finish.SetResult();
+      await run.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+
+      Assert.Equal(parallelism, maximumActive);
+      Assert.Equal(0, active);
+      Assert.All(fixture.Items, item => Assert.Equal(CredentialIssuanceStatus.Issued, item.Status));
+      fixture.Provider.Verify(provider => provider.IssueCredential(It.IsAny<CredentialIssuanceRequest>()), Times.Exactly(25));
+      fixture.Lock.Verify(service => service.ReleaseLockAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+    }
     #endregion Tests
 
     #region Fixture
@@ -159,8 +399,10 @@ namespace Yoma.Core.Test.SSI
       private readonly List<SSISchema> _versions = [];
 
       public SSICredentialIssuance Item { get; }
+      public List<SSICredentialIssuance> Items { get; } = [];
       public Mock<ISSISchemaService> Schemas { get; } = new(MockBehavior.Strict);
       public Mock<ISSIProviderClient> Provider { get; } = new(MockBehavior.Strict);
+      public Mock<ISSITenantService> Tenants { get; } = new();
       public Mock<IRepository<SSICredentialIssuance>> Repository { get; } = new();
       public Mock<IDistributedLockService> Lock { get; } = new();
       public List<CredentialIssuanceRequest> Requests { get; } = [];
@@ -172,19 +414,22 @@ namespace Yoma.Core.Test.SSI
       #endregion Class Variables
 
       #region Constructor
-      public Fixture(Domain.Opportunity.Type? type)
+      public Fixture(Domain.Opportunity.Type? type, IServiceScopeFactory? scopeFactory = null,
+        CancellationToken stopping = default, int parallelism = 1)
       {
         var settings = new AppSettings
         {
           SSIEnabledEnvironments = "Local",
           YomaOrganizationName = "Yoma",
           SSIMaximumRetryAttempts = 2,
-          SSIParallelism = new AppSettingsSSIParallelism { CredentialIssuance = 1 }
+          SSIParallelism = new AppSettingsSSIParallelism { CredentialIssuance = parallelism }
         };
         var statusIds = Enum.GetValues<CredentialIssuanceStatus>().ToDictionary(status => status, _ => Guid.NewGuid());
+        var schemaTypeIds = Enum.GetValues<SchemaType>().ToDictionary(schemaType => schemaType, _ => Guid.NewGuid());
         Item = new SSICredentialIssuance
         {
           Id = Guid.NewGuid(),
+          SchemaTypeId = schemaTypeIds[type.HasValue ? SchemaType.Opportunity : SchemaType.YoID],
           SchemaType = type.HasValue ? SchemaType.Opportunity : SchemaType.YoID,
           ArtifactType = type.HasValue ? ArtifactType.JWS : ArtifactType.ACR,
           SchemaName = type.HasValue ? SSISSchemaHelper.ToDefaultFullName(type.Value) : "YoID|Default",
@@ -193,6 +438,7 @@ namespace Yoma.Core.Test.SSI
           UserId = type.HasValue ? null : Guid.NewGuid(),
           MyOpportunityId = type.HasValue ? Guid.NewGuid() : null
         };
+        Items.Add(Item);
         AddVersion(new Version(1, 0));
         Schemas.Setup(service => service.GetByFullName(Item.SchemaName)).ReturnsAsync(() => LatestSchema);
         Schemas.Setup(service => service.GetById(It.IsAny<string>()))
@@ -201,16 +447,43 @@ namespace Yoma.Core.Test.SSI
         var statuses = new Mock<ISSICredentialIssuanceStatusService>();
         statuses.Setup(service => service.GetByName(It.IsAny<string>()))
           .Returns((string name) => new SSICredentialIssuanceStatus { Id = statusIds[Enum.Parse<CredentialIssuanceStatus>(name)] });
-        Repository.Setup(repository => repository.Query()).Returns(() => new[] { Item }.AsQueryable());
+        Repository.Setup(repository => repository.Query()).Returns(() => Items.AsQueryable());
         Repository.Setup(repository => repository.Update(It.IsAny<SSICredentialIssuance>()))
           .ReturnsAsync((SSICredentialIssuance item) => item);
+        var participation = new Domain.MyOpportunity.Models.MyOpportunity
+        {
+          Id = Item.MyOpportunityId ?? Guid.NewGuid(),
+          OpportunityId = Guid.NewGuid(),
+          OrganizationId = Guid.NewGuid(),
+          UserId = Guid.NewGuid(),
+          UserDisplayName = "Test youth"
+        };
+        var schemaTypes = new Mock<ISSISchemaTypeService>();
+        schemaTypes.Setup(service => service.GetByName(It.IsAny<string>()))
+          .Returns((string name) => new SSISchemaType { Id = schemaTypeIds[Enum.Parse<SchemaType>(name)] });
+        var tenantStatusId = Guid.NewGuid();
+        var tenantStatuses = new Mock<ISSITenantCreationStatusService>();
+        tenantStatuses.Setup(service => service.GetByName(TenantCreationStatus.Created.ToString()))
+          .Returns(new SSITenantCreationStatus { Id = tenantStatusId });
+        var tenantRepository = new Mock<IRepository<SSITenantCreation>>();
+        tenantRepository.Setup(repository => repository.Query()).Returns(new[]
+        {
+          new SSITenantCreation { EntityType = EntityType.User.ToString(), UserId = participation.UserId, StatusId = tenantStatusId, TenantId = "holder" },
+          new SSITenantCreation { EntityType = EntityType.Organization.ToString(), OrganizationId = participation.OrganizationId, StatusId = tenantStatusId, TenantId = "issuer" }
+        }.AsQueryable());
+        var participationRepository = new Mock<IRepositoryBatchedWithNavigationAndCustomFieldFilter<Domain.MyOpportunity.Models.MyOpportunity>>();
+        participationRepository.Setup(repository => repository.Query()).Returns(new[] { participation }.AsQueryable());
         var credentialService = new SSICredentialService(
           Options.Create(settings),
           Schemas.Object,
           statuses.Object,
-          Repository.Object);
+          Repository.Object,
+          schemaTypes.Object,
+          tenantStatuses.Object,
+          tenantRepository.Object,
+          participationRepository.Object);
 
-        var tenants = new Mock<ISSITenantService>();
+        var tenants = Tenants;
         tenants.Setup(service => service.GetTenantIdOrNull(It.IsAny<EntityType>(), It.IsAny<Guid>())).Returns("tenant");
         var users = new Mock<IUserService>();
         users.Setup(service => service.GetById(It.IsAny<Guid>(), true, true))
@@ -220,14 +493,7 @@ namespace Yoma.Core.Test.SSI
           .Returns(new Organization { Id = Guid.NewGuid(), Name = "Yoma" });
         var myOpportunities = new Mock<IMyOpportunityService>();
         myOpportunities.Setup(service => service.GetById(It.IsAny<Guid>(), true, true, false))
-          .Returns(new Domain.MyOpportunity.Models.MyOpportunity
-          {
-            Id = Item.MyOpportunityId ?? Guid.NewGuid(),
-            OpportunityId = Guid.NewGuid(),
-            OrganizationId = Guid.NewGuid(),
-            UserId = Guid.NewGuid(),
-            UserDisplayName = "Test youth"
-          });
+          .Returns(participation);
         var opportunities = new Mock<IOpportunityService>();
         opportunities.Setup(service => service.GetById(It.IsAny<Guid>(), true, true, false))
           .Returns(new Domain.Opportunity.Models.Opportunity { Type = type ?? Domain.Opportunity.Type.Other, Title = "Test opportunity" });
@@ -268,6 +534,8 @@ namespace Yoma.Core.Test.SSI
 
         var environment = new Mock<IEnvironmentProvider>();
         environment.SetupGet(provider => provider.Environment).Returns(Domain.Core.Environment.Local);
+        var lifetime = new Mock<IHostApplicationLifetime>();
+        lifetime.SetupGet(value => value.ApplicationStopping).Returns(stopping);
         Lock.Setup(service => service.TryAcquireLockAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<string>())).ReturnsAsync(true);
         Background = new SSIBackgroundService(
           Mock.Of<ILogger<SSIBackgroundService>>(),
@@ -278,16 +546,37 @@ namespace Yoma.Core.Test.SSI
             SSICredentialIssuanceScheduleBatchSize = 10,
             SSICredentialIssuanceScheduleMaxIntervalInHours = 1
           }),
-          _services.GetRequiredService<IServiceScopeFactory>(),
+          scopeFactory ?? _services.GetRequiredService<IServiceScopeFactory>(),
           Schemas.Object,
           Mock.Of<ISSISchemaEntityService>(),
           tenants.Object,
           credentialService,
-          Lock.Object);
+          Lock.Object,
+          lifetime.Object);
       }
       #endregion Constructor
 
       #region Public Members
+      public IServiceScope CreateWorkerScope() => _services.CreateScope();
+
+      public void AddPendingItems(int count)
+      {
+        for (var index = 0; index < count; index++)
+          Items.Add(new SSICredentialIssuance
+          {
+            Id = Guid.NewGuid(),
+            SchemaTypeId = Item.SchemaTypeId,
+            SchemaType = Item.SchemaType,
+            ArtifactType = Item.ArtifactType,
+            SchemaName = Item.SchemaName,
+            StatusId = Item.StatusId,
+            Status = Item.Status,
+            UserId = Item.UserId,
+            MyOpportunityId = Item.MyOpportunityId,
+            DateModified = DateTimeOffset.UtcNow.AddMinutes(1)
+          });
+      }
+
       public SSISchema AddVersion(Version version)
       {
         var schema = new SSISchema

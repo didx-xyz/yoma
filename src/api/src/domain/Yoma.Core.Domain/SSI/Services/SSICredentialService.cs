@@ -13,7 +13,11 @@ namespace Yoma.Core.Domain.SSI.Services
     private readonly AppSettings _appSettings;
     private readonly ISSISchemaService _ssiSchemaService;
     private readonly ISSICredentialIssuanceStatusService _ssiCredentialIssuanceStatusService;
+    private readonly ISSISchemaTypeService _ssiSchemaTypeService;
+    private readonly ISSITenantCreationStatusService _ssiTenantCreationStatusService;
     private readonly IRepository<SSICredentialIssuance> _ssiCredentialIssuanceRepository;
+    private readonly IRepository<SSITenantCreation> _ssiTenantCreationRepository;
+    private readonly IRepositoryBatchedWithNavigationAndCustomFieldFilter<MyOpportunity.Models.MyOpportunity> _myOpportunityRepository;
 
     public const string CredentialAttribute_OfTypeList_Delimiter = ", ";
     #endregion
@@ -22,12 +26,20 @@ namespace Yoma.Core.Domain.SSI.Services
     public SSICredentialService(IOptions<AppSettings> appSettings,
         ISSISchemaService ssiSchemaService,
         ISSICredentialIssuanceStatusService ssiCredentialIssuanceStatusService,
-        IRepository<SSICredentialIssuance> ssiCredentialIssuanceRepository)
+        IRepository<SSICredentialIssuance> ssiCredentialIssuanceRepository,
+        ISSISchemaTypeService ssiSchemaTypeService,
+        ISSITenantCreationStatusService ssiTenantCreationStatusService,
+        IRepository<SSITenantCreation> ssiTenantCreationRepository,
+        IRepositoryBatchedWithNavigationAndCustomFieldFilter<MyOpportunity.Models.MyOpportunity> myOpportunityRepository)
     {
       _appSettings = appSettings.Value;
       _ssiSchemaService = ssiSchemaService;
       _ssiCredentialIssuanceStatusService = ssiCredentialIssuanceStatusService;
       _ssiCredentialIssuanceRepository = ssiCredentialIssuanceRepository;
+      _ssiSchemaTypeService = ssiSchemaTypeService ?? throw new ArgumentNullException(nameof(ssiSchemaTypeService));
+      _ssiTenantCreationStatusService = ssiTenantCreationStatusService ?? throw new ArgumentNullException(nameof(ssiTenantCreationStatusService));
+      _ssiTenantCreationRepository = ssiTenantCreationRepository ?? throw new ArgumentNullException(nameof(ssiTenantCreationRepository));
+      _myOpportunityRepository = myOpportunityRepository ?? throw new ArgumentNullException(nameof(myOpportunityRepository));
     }
     #endregion
 
@@ -69,17 +81,43 @@ namespace Yoma.Core.Domain.SSI.Services
       await _ssiCredentialIssuanceRepository.Create(item);
     }
 
+    /// <summary>
+    /// Selects Pending work in modification order, filtering Opportunity tenant readiness in SQL before paging.
+    /// Unready work stays Pending without a retry or timestamp change; already scheduled schema choices remain intact.
+    /// </summary>
     public List<SSICredentialIssuance> ListPendingIssuanceSchedule(int batchSize, List<Guid> idsToSkip)
     {
       var credentialIssuanceStatusPendingId = _ssiCredentialIssuanceStatusService.GetByName(CredentialIssuanceStatus.Pending.ToString()).Id;
 
       var query = _ssiCredentialIssuanceRepository.Query().Where(o => o.StatusId == credentialIssuanceStatusPendingId);
 
-      // skipped if tenants were not created (see SSIBackgroundService)
+      // Filter before paging/materialization: an old backlog without tenants must not consume
+      // the batch/runtime budget ahead of issuable Opportunity credentials. Do not gate on today's
+      // Opportunity status, issuance setting or selected schema; scheduling committed those choices.
+      // YoID keeps its existing processing path and issuer lookup.
+      var schemaTypeOpportunityId = _ssiSchemaTypeService.GetByName(SchemaType.Opportunity.ToString()).Id;
+      var tenantStatusCreatedId = _ssiTenantCreationStatusService.GetByName(TenantCreationStatus.Created.ToString()).Id;
+      var readyTenants = _ssiTenantCreationRepository.Query()
+        .Where(tenant => tenant.StatusId == tenantStatusCreatedId && !string.IsNullOrEmpty(tenant.TenantId));
+      var participations = _myOpportunityRepository.Query();
+      var userEntityType = Entity.EntityType.User.ToString().ToLowerInvariant();
+      var organizationEntityType = Entity.EntityType.Organization.ToString().ToLowerInvariant();
+
+      query = query.Where(item => item.SchemaTypeId != schemaTypeOpportunityId
+        || participations.Any(participation => participation.Id == item.MyOpportunityId
+          && readyTenants.Any(tenant => tenant.EntityType.ToLower() == userEntityType && tenant.UserId == participation.UserId)
+          && readyTenants.Any(tenant => tenant.EntityType.ToLower() == organizationEntityType && tenant.OrganizationId == participation.OrganizationId)));
+
+      // A tenant can change after selection, or a provider attempt can fail. Do not retry an
+      // already handled item again within this run; pending/error policy itself remains unchanged.
       if (idsToSkip != null && idsToSkip.Count != 0)
         query = query.Where(o => !idsToSkip.Contains(o.Id));
 
-      var results = query.OrderBy(o => o.DateModified).Take(batchSize).ToList();
+      var results = query
+        .OrderBy(o => o.DateModified)
+        .ThenBy(o => o.Id)
+        .Take(batchSize)
+        .ToList();
 
       return results;
     }

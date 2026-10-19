@@ -83,9 +83,18 @@ visual Web sign-off are not inferred from these automated results.
 - [x] Verify all six type-specific/generic selected defaults through real provider issuance and youth wallet list/detail retrieval.
 - [ ] Exercise legacy comma-delimited Skills against a running API; automated compatibility coverage already passes.
 - [ ] Exercise retry and required-value failure scenarios against a running API; automated intercepted coverage already passes.
+- [x] Filter tenant-unready Opportunity issuance in the database before batch selection, without modifying blocked queues or committed schemas.
+- [x] Guard the complete issuance worker lifetime and drain started tasks before releasing the distributed lock.
+- [x] Stop dispatch on application shutdown or fatal infrastructure failure; preserve successful provider results and existing credential retry policy.
+- [x] Add bounded worker-failure/shutdown/concurrency regressions and execute the real PostgreSQL query against the Stage replay backlog shape.
+- [ ] Adrian: review the uncommitted lifecycle/readiness fix, deploy to Stage, then resume the existing replay queue after the previous worker has stopped.
 
 ## Decisions
 
+- 2026-10-19: Adrian prioritized the SSI-only Stage release to resume replay. The subsequent application-stop extension across other background jobs is deferred and preserved outside the checkout as a verified re-applicable patch. It is not part of this release; tenant creation, schema seeding and non-SSI jobs retain their original behavior.
+- 2026-10-19: Opportunity queue selection requires Created holder and issuer tenant mappings with non-empty IDs before paging. The SQL uses the existing most-derived MyOpportunity repository and SSI tenant repository. Missing/unfinished mappings remain Pending and become eligible automatically; current Opportunity status, issuance enablement and schema selection do not override the scheduled commitment. YoID retains its existing issuer-resolution path.
+- 2026-10-19: Keep the parameterless Hangfire method contract. Inject application lifetime to stop new dispatch during shutdown, drain every started worker on all producer exits, and include scope creation/resolution/disposal in semaphore cleanup. Disposed infrastructure and escaping worker/setup/persistence failures fail the job rather than silently completing or consuming credential retries. Normal per-credential failures retain their existing retry handling. Provider calls are not forcibly cancelled; a successful result is still persisted during graceful shutdown.
+- 2026-10-19: The Stage disposed-MemoryCache event proves a disposed dependency was used, not why it was disposed or whether the pod was OOMKilled. The identified worker-setup slot-leak/hang path is independently reproducible. No provider reset, database replay reset, schema change, new migration or Redis mutation is part of this code fix. See the [issuance lifecycle handoff](handoffs/2026-10-19-a.md).
 - 2026-08-12: Full schema name plus version remains the authoritative identity; no additional provider schema ID is persisted.
 - 2026-08-12: Scheduling metadata and required database columns remain backward compatible; successful processing replaces the snapshot with the metadata actually used.
 - 2026-08-12: Retries retain the proven processing flow and resolve the current latest applicable schema until issuance succeeds.
