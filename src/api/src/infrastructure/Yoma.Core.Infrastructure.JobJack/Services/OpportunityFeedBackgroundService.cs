@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
@@ -26,6 +27,7 @@ namespace Yoma.Core.Infrastructure.JobJack.Services
     private readonly IRepositoryBatched<Opportunity> _opportunityRepository;
     private readonly IRepository<FeedSyncTracking> _feedSyncTrackingRepository;
     private readonly IDistributedLockService _distributedLockService;
+    private readonly IHostApplicationLifetime _applicationLifetime;
     private readonly ExecutionStrategyService _executionStrategyService;
     #endregion
 
@@ -40,7 +42,8 @@ namespace Yoma.Core.Infrastructure.JobJack.Services
       IRepositoryBatched<Opportunity> opportunityRepository,
       IRepository<FeedSyncTracking> feedSyncTrackingRepository,
       IDistributedLockService distributedLockService,
-      ExecutionStrategyService executionStrategyService)
+      ExecutionStrategyService executionStrategyService,
+      IHostApplicationLifetime applicationLifetime)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _environmentProvider = environmentProvider ?? throw new ArgumentNullException(nameof(environmentProvider));
@@ -51,6 +54,7 @@ namespace Yoma.Core.Infrastructure.JobJack.Services
       _opportunityRepository = opportunityRepository ?? throw new ArgumentNullException(nameof(opportunityRepository));
       _feedSyncTrackingRepository = feedSyncTrackingRepository ?? throw new ArgumentNullException(nameof(feedSyncTrackingRepository));
       _distributedLockService = distributedLockService ?? throw new ArgumentNullException(nameof(distributedLockService));
+      _applicationLifetime = applicationLifetime ?? throw new ArgumentNullException(nameof(applicationLifetime));
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
     }
     #endregion
@@ -62,12 +66,11 @@ namespace Yoma.Core.Infrastructure.JobJack.Services
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours)
         + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
-      var lockAcquired = false;
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         var syncFromExternalPartners = _appSettings.IsPartnerSyncEnabled(SyncPartner.JobJack, _environmentProvider.Environment);
 
@@ -104,12 +107,10 @@ namespace Yoma.Core.Infrastructure.JobJack.Services
       }
       catch (Exception ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error))
           _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(RefreshFeed), ex.Message);
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion
@@ -320,6 +321,7 @@ namespace Yoma.Core.Infrastructure.JobJack.Services
 
     private async Task ProcessOpportunities(List<Opportunity> opportunities, DateTimeOffset now)
     {
+      _applicationLifetime.ApplicationStopping.ThrowIfCancellationRequested();
       ArgumentNullException.ThrowIfNull(opportunities, nameof(opportunities));
 
       if (opportunities.Count == 0)

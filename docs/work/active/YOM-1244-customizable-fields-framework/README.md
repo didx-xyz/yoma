@@ -261,6 +261,22 @@ type-checks and compiles, then fails the production build with a bare-identifier
 
 ## Shared API Contract
 
+**Background-job application stop (2026-10-19, review):** following the SSI-only fix in PR #1990,
+the fresh master-based `fix/background-jobs-application-stop` branch adds cooperative host-stop
+checks across all 39 Hangfire entry points in 22 services. The reusable Core `BackgroundJobExecutionScope`
+is created through `BackgroundJobExecutionScope.Create` or `CreateWithLock`, retaining the static-factory
+pattern with a private constructor to prevent direct construction. Application lifetime is required;
+logging is optional. All current jobs retain their locks and
+loggers. It uses `await using` for lock cleanup and before/after-acquisition guards;
+`job.ThrowIfStopping()` stays at explicit safe boundaries and its exception overload centralizes
+shutdown reporting/conversion in existing catches. Stop before new work; drain the current
+durable item/batch/snapshot and retain provider-result persistence, notification/event follow-up
+and failed-run checkpoint semantics. Public job signatures, schedules, settings and retries are
+unchanged. Graceful shutdown can release locks through `finally`; hard termination still relies
+on existing lock TTL/recovery. No API/Web contract change, migration or deployment config change.
+The [cross-cutting lifecycle handoff](handoffs/2026-10-19-a.md) owns the job inventory, boundaries,
+test results and rollout cautions. Work remains uncommitted for Adrian's review.
+
 **Jobberman follow-up (2026-10-19, awaiting Adrian's review):** the master-based provider mapping
 reuses existing `JobSalary*`, `JobWorkSchedule`, `JobExperienceLevel` and
 `JobMinimumQualification` definitions. Adrian confirmed the last two remain non-system because
@@ -338,13 +354,17 @@ descriptions on YOM-1244 are stale and should not be trusted over this table.**
 
 ### Credential schema context
 
-**Issuance processing follow-up (2026-10-19, uncommitted review):** the master-based
+**Issuance processing follow-up (2026-10-19, merged in PR #1990 and verified on Stage):** the master-based
 [YOM-1280 lifecycle/readiness fix](YOM-1280-api-opportunity-credential-issuance-with-custom-fields/handoffs/2026-10-19-a.md)
 filters Opportunity holder/issuer tenant readiness in SQL before paging, closes a worker-setup
 semaphore leak and drains active workers on shutdown/fatal failure. Scheduled schemas, normal
 retry policy, YoID processing and Web wallet contracts are preserved. No new migration or Stage
 replay reset is required. The Stage cache-disposal trigger remains a separate, unconfirmed
 operational investigation; do not infer OOM from the exception.
+Adrian's replay completed with 223 issued, zero failed attempts and a normal lock release.
+His Stage query found zero storage/type/schema mismatches and zero tenant-ready Pending records;
+3,991 tenant-blocked rows remain Pending. This live batch covers Event, ImpactAction, Learning
+and Other, not Job/Entrepreneurship. Jason's colour/type presentation remains separate UI work.
 
 Verified by reading `SSISchemaService`, `SSISchemaEntityService`, the schema validators and the
 credential-schema migration, then by starting the API and issuing credentials against the existing

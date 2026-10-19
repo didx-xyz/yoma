@@ -1,5 +1,6 @@
 using Hangfire.Storage;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -34,6 +35,7 @@ namespace Yoma.Core.Domain.Core.Services
     private readonly INotificationDeliveryService _notificationDeliveryService;
     private readonly IExecutionStrategyService _executionStrategyService;
     private readonly IDistributedLockService _distributedLockService;
+    private readonly IHostApplicationLifetime _applicationLifetime;
     #endregion
 
     #region Constructor
@@ -47,7 +49,8 @@ namespace Yoma.Core.Domain.Core.Services
       IUserService userService,
       INotificationDeliveryService notificationDeliveryService,
       IExecutionStrategyService executionStrategyService,
-      IDistributedLockService distributedLockService)
+      IDistributedLockService distributedLockService,
+      IHostApplicationLifetime applicationLifetime)
     {
       _logger = logger;
       _appSettings = appSettings.Value;
@@ -60,6 +63,7 @@ namespace Yoma.Core.Domain.Core.Services
       _notificationDeliveryService = notificationDeliveryService;
       _executionStrategyService = executionStrategyService;
       _distributedLockService = distributedLockService;
+      _applicationLifetime = applicationLifetime ?? throw new ArgumentNullException(nameof(applicationLifetime));
     }
     #endregion
 
@@ -70,18 +74,19 @@ namespace Yoma.Core.Domain.Core.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DownloadScheduleProcessingMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-      var lockAcquired = false;
+
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing download schedule");
 
         var itemIdsToSkip = new List<Guid>();
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          job.ThrowIfStopping();
           var now = DateTimeOffset.UtcNow;
 
           var items = _downloadService.ListPendingSchedule(_scheduleJobOptions.DownloadScheduleProcessingBatchSize, itemIdsToSkip);
@@ -89,6 +94,8 @@ namespace Yoma.Core.Domain.Core.Services
 
           foreach (var item in items)
           {
+            // One download is the safe unit: finish export, upload, schedule persistence and notification together.
+            job.ThrowIfStopping();
             try
             {
               if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing download schedule for item with id '{id}'", item.Id);
@@ -217,7 +224,7 @@ namespace Yoma.Core.Domain.Core.Services
 
               if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed download schedule for item with id '{id}'", item.Id);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!job.IsStopping)
             {
               if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to process download schedule for item with id '{id}': {errorMessage}", item.Id, ex.Message);
 
@@ -236,15 +243,15 @@ namespace Yoma.Core.Domain.Core.Services
       }
       catch (DistributedLockTimeoutException ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(ProcessSchedule), ex.Message);
       }
       catch (Exception ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessSchedule), ex.Message);
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
 
@@ -254,23 +261,25 @@ namespace Yoma.Core.Domain.Core.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-      var lockAcquired = false;
+
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing download schedule deletion");
 
         var itemIdsToSkip = new List<Guid>();
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          job.ThrowIfStopping();
           var items = _downloadService.ListPendingDeletion(_scheduleJobOptions.DownloadScheduleDeletionBatchSize, itemIdsToSkip);
           if (items.Count == 0) break;
 
           foreach (var item in items)
           {
+            job.ThrowIfStopping();
             try
             {
               if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing download schedule deletion for item with id '{id}'", item.Id);
@@ -296,7 +305,7 @@ namespace Yoma.Core.Domain.Core.Services
 
               if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed download schedule deletion for item with id '{id}'", item.Id);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!job.IsStopping)
             {
               if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to process download schedule deletion for item with id '{id}': {errorMessage}", item.Id, ex.Message);
 
@@ -315,11 +324,9 @@ namespace Yoma.Core.Domain.Core.Services
       }
       catch (Exception ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessDeletion), ex.Message);
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion

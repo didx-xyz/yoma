@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Reflection;
@@ -30,6 +31,7 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IRepositoryBatchedValueContainsWithNavigation<Organization> _organizationRepository;
     private readonly IRepository<OrganizationDocument> _organizationDocumentRepository;
     private readonly IDistributedLockService _distributedLockService;
+    private readonly IHostApplicationLifetime _applicationLifetime;
     private readonly IMediator _mediator;
     internal static readonly OrganizationStatus[] Statuses_Declination = [OrganizationStatus.Inactive];
     internal static readonly OrganizationStatus[] Statuses_Deletion = [OrganizationStatus.Declined];
@@ -48,7 +50,8 @@ namespace Yoma.Core.Domain.Entity.Services
         IRepositoryBatchedValueContainsWithNavigation<Organization> organizationRepository,
         IRepository<OrganizationDocument> organizationDocumentRepository,
         IDistributedLockService distributedLockService,
-        IMediator mediator)
+        IMediator mediator,
+        IHostApplicationLifetime applicationLifetime)
     {
       _logger = logger;
       _appSettings = appSettings.Value;
@@ -62,6 +65,7 @@ namespace Yoma.Core.Domain.Entity.Services
       _organizationRepository = organizationRepository;
       _organizationDocumentRepository = organizationDocumentRepository;
       _distributedLockService = distributedLockService;
+      _applicationLifetime = applicationLifetime ?? throw new ArgumentNullException(nameof(applicationLifetime));
       _mediator = mediator;
     }
     #endregion
@@ -73,12 +77,12 @@ namespace Yoma.Core.Domain.Entity.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-      var lockAcquired = false;
+
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing organization declination");
 
@@ -87,6 +91,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          job.ThrowIfStopping();
           var now = DateTimeOffset.UtcNow;
 
           var items = _organizationRepository.Query(true).Where(o => statusDeclinationIds.Contains(o.StatusId) &&
@@ -153,11 +158,9 @@ namespace Yoma.Core.Domain.Entity.Services
 
       catch (Exception ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessDeclination), ex.Message);
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
 
@@ -167,12 +170,12 @@ namespace Yoma.Core.Domain.Entity.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-      var lockAcquired = false;
+
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing organization deletion");
 
@@ -181,6 +184,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          job.ThrowIfStopping();
           var now = DateTimeOffset.UtcNow;
 
           var items = _organizationRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
@@ -210,11 +214,9 @@ namespace Yoma.Core.Domain.Entity.Services
       }
       catch (Exception ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessDeletion), ex.Message);
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
 
@@ -222,12 +224,12 @@ namespace Yoma.Core.Domain.Entity.Services
     {
       const string lockIdentifier = "organization_seed_logos_and_documents";
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-      var lockAcquired = false;
+
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         if (!_appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
         {
@@ -244,11 +246,9 @@ namespace Yoma.Core.Domain.Entity.Services
       }
       catch (Exception ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(SeedLogoAndDocuments), ex.Message);
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion
@@ -256,6 +256,7 @@ namespace Yoma.Core.Domain.Entity.Services
     #region Private Members
     private async Task SeedLogo()
     {
+      _applicationLifetime.ApplicationStopping.ThrowIfCancellationRequested();
       var items = _organizationRepository.Query(true).Where(o => !o.LogoId.HasValue).ToList();
       if (items.Count == 0) return;
 
@@ -275,11 +276,17 @@ namespace Yoma.Core.Domain.Entity.Services
       var fileExtension = Path.GetExtension(fileName)[1..];
 
       foreach (var item in items)
+      {
+        _applicationLifetime.ApplicationStopping.ThrowIfCancellationRequested();
         await _organizationService.UpdateLogo(item.Id, FileHelper.FromByteArray(fileName, $"image/{fileExtension}", resourceBytes), false);
+      }
     }
 
     private async Task SeedDocuments()
     {
+      _applicationLifetime.ApplicationStopping.ThrowIfCancellationRequested();
+      // Complete this document pass once started: the next run excludes organizations with any document,
+      // so stopping between Registration and provider-specific documents would leave those missing.
       var items = _organizationRepository.Query(true).Where(o => !_organizationDocumentRepository.Query().Any(od => od.OrganizationId == o.Id)).ToList();
       if (items.Count == 0) return;
 

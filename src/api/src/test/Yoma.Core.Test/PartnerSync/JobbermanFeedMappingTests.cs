@@ -890,7 +890,8 @@ namespace Yoma.Core.Test.PartnerSync
         repository.Object,
         Mock.Of<IRepository<FeedTracking>>(),
         Mock.Of<IDistributedLockService>(),
-        new ExecutionStrategyService(context));
+        new ExecutionStrategyService(context),
+        Mock.Of<Microsoft.Extensions.Hosting.IHostApplicationLifetime>());
     }
 
     private static Task Process(OpportunityFeedBackgroundService service, List<CachedOpportunity> items)
