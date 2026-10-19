@@ -29,8 +29,8 @@ namespace Yoma.Core.Test.SSI
       var ready = Enumerable.Range(0, 23).Select(_ => fixture.AddOpportunity(true)).ToList();
 
       var first = fixture.Service.ListPendingIssuanceSchedule(10, []);
-      var second = fixture.Service.ListPendingIssuanceSchedule(10, first.Select(item => item.Id).ToList());
-      var last = fixture.Service.ListPendingIssuanceSchedule(10, first.Concat(second).Select(item => item.Id).ToList());
+      var second = fixture.Service.ListPendingIssuanceSchedule(10, [.. first.Select(item => item.Id)]);
+      var last = fixture.Service.ListPendingIssuanceSchedule(10, [.. first.Concat(second).Select(item => item.Id)]);
 
       Assert.Equal(10, first.Count);
       Assert.Equal(10, second.Count);
@@ -232,7 +232,7 @@ namespace Yoma.Core.Test.SSI
       var batch = fixture.Service.ListPendingIssuanceSchedule(1000, []);
       Assert.Equal(223, batch.Count);
       Assert.Equal(ready.Id, batch[0].Id);
-      Assert.Empty(fixture.Service.ListPendingIssuanceSchedule(1000, batch.Select(item => item.Id).ToList()));
+      Assert.Empty(fixture.Service.ListPendingIssuanceSchedule(1000, [.. batch.Select(item => item.Id)]));
       await transaction.RollbackAsync(TestContext.Current.CancellationToken);
     }
     #endregion Tests
@@ -302,13 +302,21 @@ namespace Yoma.Core.Test.SSI
       {
         Tenants.Add(new SSITenantCreation
         {
-          Id = Guid.NewGuid(), EntityType = EntityType.User.ToString(), UserId = participation.UserId,
-          StatusId = _tenantCreatedId, Status = TenantCreationStatus.Created, TenantId = "holder"
+          Id = Guid.NewGuid(),
+          EntityType = EntityType.User.ToString(),
+          UserId = participation.UserId,
+          StatusId = _tenantCreatedId,
+          Status = TenantCreationStatus.Created,
+          TenantId = "holder"
         });
         Tenants.Add(new SSITenantCreation
         {
-          Id = Guid.NewGuid(), EntityType = EntityType.Organization.ToString(), OrganizationId = participation.OrganizationId,
-          StatusId = _tenantCreatedId, Status = TenantCreationStatus.Created, TenantId = "issuer"
+          Id = Guid.NewGuid(),
+          EntityType = EntityType.Organization.ToString(),
+          OrganizationId = participation.OrganizationId,
+          StatusId = _tenantCreatedId,
+          Status = TenantCreationStatus.Created,
+          TenantId = "issuer"
         });
       }
     }
