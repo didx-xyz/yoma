@@ -163,7 +163,7 @@
                       <#-- BUTTON: send code -->
                       <div v-bind:style="{ display: codeSendStatus === 'NOT_SENT' ? 'block' : 'none' }">
                         <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!}"
-                            type="button" value="${msg('sendVerificationCode')}" v-on:click="sendVerificationCode()" />
+                            type="button" v-bind:value="isSending ? sendCodeLoadingText : sendCodeDefaultText" v-bind:disabled="isSending" v-on:click="sendVerificationCode()" />
                       </div>
 
                       <div class="${properties.kcFormGroupClass!}" v-bind:style="{ display: codeSendStatus !== 'NOT_SENT' ? 'block' : 'none' }">
@@ -257,6 +257,9 @@
                   codeSendStatus: <#if codeSendStatus??>'${codeSendStatus}'<#else>'NOT_SENT'</#if>,
                   codeExpiresIn: <#if codeExpiresIn??>${codeExpiresIn}<#else>0</#if>,
                   deliveryUnconfirmed: false,
+                  isSending: false,
+                  sendCodeDefaultText: "${msg('sendVerificationCode')}",
+                  sendCodeLoadingText: "${msg('loading')}",
                   isFormSubmitting: false,
                 },
                 mounted() {
@@ -382,6 +385,7 @@
                   },
                   req(phoneNumber) {
                     const params = { params: { phoneNumber } };
+                    this.isSending = true;
                     axios.get(window.location.origin + this.KC_HTTP_RELATIVE_PATH + '/realms/${realm.name}/sms/authentication-code', params)
                       .then(res =>
                         {
@@ -409,6 +413,9 @@
 
                         // show server error
                         this.messagePhoneNumberError = e.response.data.error;
+                      })
+                      .finally(() => {
+                        this.isSending = false;
                       });
                   },
                   countDownExpiresIn(seconds) {
@@ -426,6 +433,7 @@
                     }
                   },
                   sendVerificationCode() {
+                    if (this.isSending) return;
                     this.messagePhoneNumberError = '';
                     const input = document.querySelector('#phoneNumber');
                     const iti = intlTelInput.getInstance(input);
