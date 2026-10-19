@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Transactions;
@@ -38,6 +39,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     private readonly IMyOpportunityService _myOpportunityService;
     private readonly ISyncProviderClientFactoryResolver _providerClientFactoryResolver;
     private readonly IDistributedLockService _distributedLockService;
+    private readonly IHostApplicationLifetime _applicationLifetime;
     private readonly IExecutionStrategyService _executionStrategyService;
     #endregion
 
@@ -54,7 +56,8 @@ namespace Yoma.Core.Domain.PartnerSync.Services
         IMyOpportunityService myOpportunityService,
         ISyncProviderClientFactoryResolver providerClientFactoryResolver,
         IDistributedLockService distributedLockService,
-        IExecutionStrategyService executionStrategyService)
+        IExecutionStrategyService executionStrategyService,
+        IHostApplicationLifetime applicationLifetime)
     {
       _logger = logger;
       _appSettings = appSettings.Value ?? throw new ArgumentNullException(nameof(appSettings));
@@ -68,6 +71,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       _myOpportunityService = myOpportunityService ?? throw new ArgumentNullException(nameof(myOpportunityService));
       _providerClientFactoryResolver = providerClientFactoryResolver ?? throw new ArgumentNullException(nameof(providerClientFactoryResolver));
       _distributedLockService = distributedLockService ?? throw new ArgumentNullException(nameof(distributedLockService));
+      _applicationLifetime = applicationLifetime ?? throw new ArgumentNullException(nameof(applicationLifetime));
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
     }
     #endregion
@@ -79,14 +83,14 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.PartnerSyncPushScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-      var lockAcquired = false;
 
       var tracking = new Dictionary<(Guid PartnerId, EntityType EntityType), PartnerSyncTrackingRequest>();
 
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
+
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         var organizationYoma = _organizationService.GetByNameOrNull(_appSettings.YomaOrganizationName, true, true);
         if (organizationYoma == null)
@@ -100,6 +104,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
         var itemIdsToSkip = new List<Guid>();
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          job.ThrowIfStopping();
           List<(Guid PartnerId, EntityType EntityType, List<ProcessingLog> Items)> pendingGroups = _processingService.ListPendingPush(_scheduleJobOptions.PartnerSyncPushScheduleBatchSize, itemIdsToSkip);
           if (pendingGroups.Count == 0)
           {
@@ -109,6 +114,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
           foreach (var pendingGroup in pendingGroups)
           {
+            job.ThrowIfStopping();
             if (executeUntil <= DateTimeOffset.UtcNow) break;
 
             var trackingKey = (pendingGroup.PartnerId, pendingGroup.EntityType);
@@ -134,6 +140,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
             {
               foreach (var item in pendingGroup.Items)
               {
+                job.ThrowIfStopping();
                 if (executeUntil <= DateTimeOffset.UtcNow) break;
 
                 try
@@ -300,7 +307,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
                   if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed sync push for '{entityType}' and item with id '{id}'", item.EntityType, item.Id);
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (!job.IsStopping)
                 {
                   if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to process sync push for '{entityType}' and item with id '{id}': {errorMessage}", item.EntityType, item.Id, ex.Message);
 
@@ -314,7 +321,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                 }
               }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!job.IsStopping)
             {
               if (_logger.IsEnabled(LogLevel.Error))
                 _logger.LogError(ex, "Failed to process sync push for partner id '{partnerId}' and entity type '{entityType}': {errorMessage}", pendingGroup.PartnerId, pendingGroup.EntityType, ex.Message);
@@ -330,6 +337,12 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       }
       catch (Exception ex)
       {
+        if (job.IsStopping)
+          foreach (var item in tracking.Values)
+            item.RunFailureReason ??= "Application shutdown interrupted sync push";
+
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessSyncPush), ex.Message);
 
         // Tracking represents the full push run, not individual pages or batches.
@@ -367,8 +380,6 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
           await _processingService.RecordTracking(item);
         }
-
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
 
@@ -378,12 +389,12 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.PartnerSyncPullScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-      var lockAcquired = false;
+
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing partner sync pull");
 
@@ -396,6 +407,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
         foreach (var partnerModel in partners)
         {
+          job.ThrowIfStopping();
           if (executeUntil <= DateTimeOffset.UtcNow) break;
 
           await ProcessSyncPullPartner(partnerModel, executeUntil);
@@ -405,12 +417,10 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       }
       catch (Exception ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error))
           _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessSyncPull), ex.Message);
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
 
@@ -420,12 +430,12 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.PartnerSyncPullVerificationScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-      var lockAcquired = false;
+
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing partner sync pull verification");
 
@@ -438,6 +448,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
         foreach (var partnerModel in partners)
         {
+          job.ThrowIfStopping();
           if (executeUntil <= DateTimeOffset.UtcNow) break;
 
           await ProcessSyncPullVerificationPartner(partnerModel, executeUntil);
@@ -447,12 +458,10 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       }
       catch (Exception ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error))
           _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessSyncPullVerification), ex.Message);
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion
@@ -478,6 +487,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
         foreach (var entityType in entityTypes)
         {
+          _applicationLifetime.ApplicationStopping.ThrowIfCancellationRequested();
           if (executeUntil <= DateTimeOffset.UtcNow) break;
 
           switch (entityType)
@@ -491,7 +501,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
           }
         }
       }
-      catch (Exception ex)
+      catch (Exception ex) when (!_applicationLifetime.ApplicationStopping.IsCancellationRequested)
       {
         if (_logger.IsEnabled(LogLevel.Error))
           _logger.LogError(ex, "Failed to process sync pull for partner '{partnerName}': {errorMessage}", partnerModel.Name, ex.Message);
@@ -529,6 +539,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          _applicationLifetime.ApplicationStopping.ThrowIfCancellationRequested();
           var (Result, Items, PagedByProvider) = await ListSyncPullItems(partner, entityType, pullProviderClient, pageNumber, pageSize, result);
           result = Result;
 
@@ -540,6 +551,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
           foreach (var item in Items)
           {
+            _applicationLifetime.ApplicationStopping.ThrowIfCancellationRequested();
             if (executeUntil <= DateTimeOffset.UtcNow) break;
 
             var action = SyncAction.Create;
@@ -727,7 +739,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
               if (_logger.IsEnabled(LogLevel.Information))
                 _logger.LogInformation("Processed sync pull item for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'", partner, entityType, item.ExternalId);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!_applicationLifetime.ApplicationStopping.IsCancellationRequested)
             {
               // Item-level failures are counted against the completed pull run.
               // The run will be recorded as partial, preventing checkpoint-based syncs from advancing.
@@ -742,7 +754,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
               {
                 await _processingService.RecordPullError(action, partnerModel.Id, entityType, item.ExternalId, entityId, ex.Message);
               }
-              catch (Exception innerEx)
+              catch (Exception innerEx) when (!_applicationLifetime.ApplicationStopping.IsCancellationRequested)
               {
                 if (_logger.IsEnabled(LogLevel.Error))
                   _logger.LogError(innerEx, "Failed to record sync pull error state for partner '{partner}' and entity type '{entityType}': {errorMessage}", partner, entityType, innerEx.Message);
@@ -769,6 +781,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       catch (Exception ex)
       {
         tracking.RunFailureReason = ex.Message;
+        if (_applicationLifetime.ApplicationStopping.IsCancellationRequested) throw;
 
         if (_logger.IsEnabled(LogLevel.Error))
           _logger.LogError(ex, "Failed to process sync pull for partner '{partner}' and entity type '{entityType}': {errorMessage}", partner, entityType, ex.Message);
@@ -856,6 +869,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
         foreach (var entityType in entityTypes)
         {
+          _applicationLifetime.ApplicationStopping.ThrowIfCancellationRequested();
           if (executeUntil <= DateTimeOffset.UtcNow) break;
 
           switch (entityType)
@@ -869,7 +883,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
           }
         }
       }
-      catch (Exception ex)
+      catch (Exception ex) when (!_applicationLifetime.ApplicationStopping.IsCancellationRequested)
       {
         if (_logger.IsEnabled(LogLevel.Error))
           _logger.LogError(ex, "Failed to process sync pull verification for partner '{partnerName}': {errorMessage}", partnerModel.Name, ex.Message);
@@ -912,6 +926,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          _applicationLifetime.ApplicationStopping.ThrowIfCancellationRequested();
           var (Result, Items, PagedByProvider) = await ListSyncPullVerificationItems(partner, entityType, pullProviderClient, pageNumber, pageSize, dateStart, dateEnd, result);
           result = Result;
 
@@ -923,6 +938,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
           foreach (var item in Items)
           {
+            _applicationLifetime.ApplicationStopping.ThrowIfCancellationRequested();
             if (executeUntil <= DateTimeOffset.UtcNow) break;
 
             var action = SyncAction.Create;
@@ -1070,7 +1086,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                 _logger.LogInformation("Processed sync pull verification item for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}', user external id '{userExternalId}'",
                   partner, entityType, item.EntityExternalId, item.UserExternalId);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!_applicationLifetime.ApplicationStopping.IsCancellationRequested)
             {
               IncrementTrackingFailed(tracking);
 
@@ -1084,7 +1100,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                 if (!string.IsNullOrWhiteSpace(item.ExternalId))
                   await _processingService.RecordPullError(action, partnerModel.Id, myOpportunityEntityType, item.ExternalId, myOpportunityId, ex.Message);
               }
-              catch (Exception innerEx)
+              catch (Exception innerEx) when (!_applicationLifetime.ApplicationStopping.IsCancellationRequested)
               {
                 if (_logger.IsEnabled(LogLevel.Error))
                   _logger.LogError(innerEx, "Failed to record sync pull verification error state for partner '{partner}' and entity type '{entityType}': {errorMessage}", partner, myOpportunityEntityType, innerEx.Message);
@@ -1111,6 +1127,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       catch (Exception ex)
       {
         tracking.RunFailureReason = ex.Message;
+        if (_applicationLifetime.ApplicationStopping.IsCancellationRequested) throw;
 
         if (_logger.IsEnabled(LogLevel.Error))
           _logger.LogError(ex, "Failed to process sync pull verification for partner '{partner}' and entity type '{entityType}': {errorMessage}", partner, entityType, ex.Message);

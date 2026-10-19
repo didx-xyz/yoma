@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Net;
@@ -26,6 +27,7 @@ namespace Yoma.Core.Domain.Lookups.Services
     private readonly SkillSearchFilterValidator _searchFilterValidator;
     private readonly IRepositoryBatchedValueContains<Skill> _skillRepository;
     private readonly IDistributedLockService _distributedLockService;
+    private readonly IHostApplicationLifetime _applicationLifetime;
 
     // Reviewed cross-framework aliases shared by all consumers. Targets must exist in
     // the catalogue; arbitrary domain qualifiers must never be discarded to infer a match.
@@ -49,7 +51,8 @@ namespace Yoma.Core.Domain.Lookups.Services
         LookupIdsValidator lookupIdsValidator,
         SkillSearchFilterValidator searchFilterValidator,
         IRepositoryBatchedValueContains<Skill> skillRepository,
-        IDistributedLockService distributedLockService)
+        IDistributedLockService distributedLockService,
+        IHostApplicationLifetime applicationLifetime)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _appSettings = appSettings?.Value ?? throw new ArgumentNullException(nameof(appSettings));
@@ -61,6 +64,7 @@ namespace Yoma.Core.Domain.Lookups.Services
       _searchFilterValidator = searchFilterValidator ?? throw new ArgumentNullException(nameof(searchFilterValidator));
       _skillRepository = skillRepository ?? throw new ArgumentNullException(nameof(skillRepository));
       _distributedLockService = distributedLockService ?? throw new ArgumentNullException(nameof(distributedLockService));
+      _applicationLifetime = applicationLifetime ?? throw new ArgumentNullException(nameof(applicationLifetime));
     }
     #endregion
 
@@ -177,13 +181,13 @@ namespace Yoma.Core.Domain.Lookups.Services
     {
       const string lockIdentifier = "skill_seed";
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-      var lockAcquired = false;
       var cacheClearRequired = false;
+
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         if (onStartupInitialSeeding && _skillRepository.Query().Any())
         {
@@ -198,6 +202,7 @@ namespace Yoma.Core.Domain.Lookups.Services
         int pageIndex = 0;
         do
         {
+          job.ThrowIfStopping();
           var incomingBatch = incomingResults.Skip(pageIndex * batchSize).Take(batchSize).ToList();
           var incomingBatchExternalIds = incomingBatch.Select(o => o.Id).ToList();
 
@@ -256,6 +261,8 @@ namespace Yoma.Core.Domain.Lookups.Services
       }
       catch (Exception ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(SeedSkills), ex.Message);
       }
       finally
@@ -266,8 +273,6 @@ namespace Yoma.Core.Domain.Lookups.Services
           _memoryCache.Remove(CacheHelper.GenerateKey<Skill>());
           _memoryCache.Remove(CacheHelper.GenerateKey<Skill>("normalized"));
         }
-
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion

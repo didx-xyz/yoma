@@ -1,6 +1,8 @@
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core.Exceptions;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Referral.Interfaces;
@@ -17,6 +19,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
     private readonly ILinkUsageStatusService _linkUsageStatusService;
     private readonly IDistributedLockService _distributedLockService;
+    private readonly IHostApplicationLifetime _applicationLifetime;
 
     private readonly IRepositoryBatched<ReferralLinkUsage> _linkUsageRepository;
 
@@ -33,12 +36,14 @@ namespace Yoma.Core.Domain.Referral.Services
       IDistributedLockService distributedLockService,
       ILinkUsageStatusService linkUsageStatusService,
 
-      IRepositoryBatched<ReferralLinkUsage> linkUsageRepository)
+      IRepositoryBatched<ReferralLinkUsage> linkUsageRepository,
+      IHostApplicationLifetime applicationLifetime)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _scheduleJobOptions = scheduleJobOptions.Value ?? throw new ArgumentNullException(nameof(scheduleJobOptions));
 
       _distributedLockService = distributedLockService ?? throw new ArgumentNullException(nameof(distributedLockService));
+      _applicationLifetime = applicationLifetime ?? throw new ArgumentNullException(nameof(applicationLifetime));
       _linkUsageStatusService = linkUsageStatusService ?? throw new ArgumentNullException(nameof(linkUsageStatusService));
 
       _linkUsageRepository = linkUsageRepository ?? throw new ArgumentNullException(nameof(linkUsageRepository));
@@ -52,12 +57,12 @@ namespace Yoma.Core.Domain.Referral.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-      var lockAcquired = false;
+
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing link usage expiration");
 
@@ -66,6 +71,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          job.ThrowIfStopping();
           var now = DateTimeOffset.UtcNow;
 
           var items = _linkUsageRepository.Query().Where(o =>
@@ -107,11 +113,9 @@ namespace Yoma.Core.Domain.Referral.Services
       }
       catch (Exception ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessExpiration), ex.Message);
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
 
@@ -121,12 +125,12 @@ namespace Yoma.Core.Domain.Referral.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-      var lockAcquired = false;
+
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing link usage abandonment");
 
@@ -135,6 +139,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          job.ThrowIfStopping();
           var now = DateTimeOffset.UtcNow;
 
           var items = _linkUsageRepository.Query().Where(o =>
@@ -175,11 +180,9 @@ namespace Yoma.Core.Domain.Referral.Services
       }
       catch (Exception ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessAbandoned), ex.Message);
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion

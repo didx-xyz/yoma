@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
@@ -26,6 +27,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
     private readonly IRepositoryBatched<Opportunity> _opportunityRepository;
     private readonly IRepository<FeedSyncTracking> _feedSyncTrackingRepository;
     private readonly IDistributedLockService _distributedLockService;
+    private readonly IHostApplicationLifetime _applicationLifetime;
     private readonly ExecutionStrategyService _executionStrategyService;
 
     private static readonly XNamespace XNamespace_MediaNs = "http://search.yahoo.com/mrss/";
@@ -43,7 +45,8 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
       IRepositoryBatched<Opportunity> opportunityRepository,
       IRepository<FeedSyncTracking> feedSyncTrackingRepository,
       IDistributedLockService distributedLockService,
-      ExecutionStrategyService executionStrategyService)
+      ExecutionStrategyService executionStrategyService,
+      IHostApplicationLifetime applicationLifetime)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _environmentProvider = environmentProvider ?? throw new ArgumentNullException(nameof(environmentProvider));
@@ -54,6 +57,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
       _opportunityRepository = opportunityRepository ?? throw new ArgumentNullException(nameof(opportunityRepository));
       _feedSyncTrackingRepository = feedSyncTrackingRepository ?? throw new ArgumentNullException(nameof(feedSyncTrackingRepository));
       _distributedLockService = distributedLockService ?? throw new ArgumentNullException(nameof(distributedLockService));
+      _applicationLifetime = applicationLifetime ?? throw new ArgumentNullException(nameof(applicationLifetime));
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
     }
     #endregion
@@ -65,12 +69,11 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours)
         + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
-      var lockAcquired = false;
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         var syncFromExternalPartners = _appSettings.IsPartnerSyncEnabled(SyncPartner.Jobberman, _environmentProvider.Environment);
 
@@ -107,12 +110,10 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
       }
       catch (Exception ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error))
           _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(RefreshFeeds), ex.Message);
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion
@@ -125,6 +126,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
 
       foreach (var feed in _options.Feeds)
       {
+        _applicationLifetime.ApplicationStopping.ThrowIfCancellationRequested();
         try
         {
           if (_logger.IsEnabled(LogLevel.Information))
@@ -139,7 +141,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
           if (_logger.IsEnabled(LogLevel.Information))
             _logger.LogInformation("File-mode Jobberman sync complete: {CountryCodeAlpha2}", feed.CountryCodeAlpha2);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (!_applicationLifetime.ApplicationStopping.IsCancellationRequested)
         {
           if (_logger.IsEnabled(LogLevel.Error))
             _logger.LogError(ex, "Error during file-mode Jobberman sync for country feed {CountryCodeAlpha2}", feed.CountryCodeAlpha2);
@@ -160,6 +162,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
 
       foreach (var feed in _options.Feeds)
       {
+        _applicationLifetime.ApplicationStopping.ThrowIfCancellationRequested();
         try
         {
           if (string.IsNullOrWhiteSpace(feed.CountryCodeAlpha2))
@@ -254,7 +257,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
           if (_logger.IsEnabled(LogLevel.Information))
             _logger.LogInformation("HTTP Jobberman sync complete: {CountryCodeAlpha2}", countryCodeAlpha2);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (!_applicationLifetime.ApplicationStopping.IsCancellationRequested)
         {
           if (_logger.IsEnabled(LogLevel.Error))
             _logger.LogError(ex, "Error during HTTP Jobberman sync for country feed {CountryCodeAlpha2}: {ErrorMessage}", feed.CountryCodeAlpha2, ex.Message);
@@ -354,6 +357,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
 
     private async Task ProcessOpportunities(JobbermanFeedOptions feed, List<Opportunity> opportunities, DateTimeOffset now)
     {
+      _applicationLifetime.ApplicationStopping.ThrowIfCancellationRequested();
       ArgumentNullException.ThrowIfNull(feed, nameof(feed));
       ArgumentNullException.ThrowIfNull(opportunities, nameof(opportunities));
 

@@ -1,5 +1,6 @@
 using Flurl;
 using Flurl.Http;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -24,6 +25,7 @@ namespace Yoma.Core.Infrastructure.Alison.Services
     private readonly ScheduleJobOptions _scheduleJobOptions;
     private readonly IRepositoryBatched<Opportunity> _opportunityRepository;
     private readonly IDistributedLockService _distributedLockService;
+    private readonly IHostApplicationLifetime _applicationLifetime;
     private readonly ExecutionStrategyService _executionStrategyService;
     private readonly IAlisonAuthService _alisonAuthService;
     #endregion
@@ -38,7 +40,8 @@ namespace Yoma.Core.Infrastructure.Alison.Services
       IRepositoryBatched<Opportunity> opportunityRepository,
       IDistributedLockService distributedLockService,
       ExecutionStrategyService executionStrategyService,
-      IAlisonAuthService alisonAuthService)
+      IAlisonAuthService alisonAuthService,
+      IHostApplicationLifetime applicationLifetime)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _environmentProvider = environmentProvider ?? throw new ArgumentNullException(nameof(environmentProvider));
@@ -47,6 +50,7 @@ namespace Yoma.Core.Infrastructure.Alison.Services
       _scheduleJobOptions = scheduleJobOptions.Value ?? throw new ArgumentNullException(nameof(scheduleJobOptions));
       _opportunityRepository = opportunityRepository ?? throw new ArgumentNullException(nameof(opportunityRepository));
       _distributedLockService = distributedLockService ?? throw new ArgumentNullException(nameof(distributedLockService));
+      _applicationLifetime = applicationLifetime ?? throw new ArgumentNullException(nameof(applicationLifetime));
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
       _alisonAuthService = alisonAuthService ?? throw new ArgumentNullException(nameof(alisonAuthService));
     }
@@ -64,12 +68,11 @@ namespace Yoma.Core.Infrastructure.Alison.Services
       var lockDuration = TimeSpan.FromHours(maxIntervalInHours)
         + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
-      var lockAcquired = false;
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         var syncFromExternalPartners = _appSettings.IsPartnerSyncEnabled(SyncPartner.Alison, _environmentProvider.Environment);
 
@@ -106,12 +109,10 @@ namespace Yoma.Core.Infrastructure.Alison.Services
       }
       catch (Exception ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error))
           _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(RefreshCatalogue), ex.Message);
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion
@@ -187,6 +188,7 @@ namespace Yoma.Core.Infrastructure.Alison.Services
 
       while (true)
       {
+        _applicationLifetime.ApplicationStopping.ThrowIfCancellationRequested();
         var response = await GetCoursesPage(pageNumber, Constants.PageSize_Maximum);
 
         total ??= response.Total;
@@ -233,6 +235,7 @@ namespace Yoma.Core.Infrastructure.Alison.Services
 
     private async Task ProcessOpportunities(List<Course> courses, DateTimeOffset now)
     {
+      _applicationLifetime.ApplicationStopping.ThrowIfCancellationRequested();
       ArgumentNullException.ThrowIfNull(courses, nameof(courses));
 
       if (courses.Count == 0)

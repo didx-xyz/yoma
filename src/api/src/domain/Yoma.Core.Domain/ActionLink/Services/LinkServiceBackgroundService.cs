@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.ActionLink.Interfaces;
@@ -19,6 +20,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
     private readonly IUserService _userService;
     private readonly IRepositoryBatchedValueContainsWithUnnested<Link> _linkRepository;
     private readonly IDistributedLockService _distributedLockService;
+    private readonly IHostApplicationLifetime _applicationLifetime;
 
     internal static readonly ActionLinkStatus[] Statuses_Expirable = [ActionLinkStatus.Active];
     internal static readonly ActionLinkStatus[] Statuses_Deletion = [ActionLinkStatus.Inactive];
@@ -30,7 +32,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
         ILinkStatusService linkStatusService,
         IUserService userService,
         IRepositoryBatchedValueContainsWithUnnested<Link> linkRepository,
-        IDistributedLockService distributedLockService)
+        IDistributedLockService distributedLockService,
+        IHostApplicationLifetime applicationLifetime)
     {
       _logger = logger;
       _scheduleJobOptions = scheduleJobOptions.Value;
@@ -38,6 +41,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
       _userService = userService;
       _linkRepository = linkRepository;
       _distributedLockService = distributedLockService;
+      _applicationLifetime = applicationLifetime ?? throw new ArgumentNullException(nameof(applicationLifetime));
     }
     #endregion
 
@@ -49,12 +53,12 @@ namespace Yoma.Core.Domain.ActionLink.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-      var lockAcquired = false;
+
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing action link expiration");
 
@@ -63,6 +67,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          job.ThrowIfStopping();
           var now = DateTimeOffset.UtcNow;
 
           var items = _linkRepository.Query().Where(o => statusExpirableIds.Contains(o.StatusId) &&
@@ -88,11 +93,9 @@ namespace Yoma.Core.Domain.ActionLink.Services
       }
       catch (Exception ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessExpiration), ex.Message);
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
 
@@ -102,12 +105,12 @@ namespace Yoma.Core.Domain.ActionLink.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-      var lockAcquired = false;
+
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         var statusDeletionIds = Statuses_Deletion.Select(o => _linkStatusService.GetByName(o.ToString()).Id).ToList();
         var statusDeletedId = _linkStatusService.GetByName(ActionLinkStatus.Deleted.ToString()).Id;
@@ -116,6 +119,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          job.ThrowIfStopping();
           var now = DateTimeOffset.UtcNow;
 
           var items = _linkRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
@@ -142,11 +146,9 @@ namespace Yoma.Core.Domain.ActionLink.Services
       }
       catch (Exception ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessDeletion), ex.Message);
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion
