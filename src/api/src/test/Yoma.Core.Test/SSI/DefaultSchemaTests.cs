@@ -296,7 +296,9 @@ namespace Yoma.Core.Test.SSI
       status.Setup(value => value.GetByName(CredentialIssuanceStatus.Pending.ToString()))
         .Returns(new SSICredentialIssuanceStatus { Id = Guid.NewGuid() });
       var service = new SSICredentialService(Options.Create(fixture.Settings), fixture.Service,
-        status.Object, repository.Object);
+        status.Object, repository.Object, Mock.Of<ISSISchemaTypeService>(), Mock.Of<ISSITenantCreationStatusService>(),
+        Mock.Of<IRepository<SSITenantCreation>>(),
+        Mock.Of<IRepositoryBatchedWithNavigationAndCustomFieldFilter<Domain.MyOpportunity.Models.MyOpportunity>>());
 
       await service.ScheduleIssuance("Opportunity|Default", Guid.NewGuid());
       var original = Assert.Single(schedules);
@@ -1527,7 +1529,8 @@ namespace Yoma.Core.Test.SSI
         Lock.Setup(service => service.TryAcquireLockAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<string>())).ReturnsAsync(true);
         Background = new SSIBackgroundService(_logger.Object, Options.Create(Settings), environment.Object,
           Options.Create(new ScheduleJobOptions()), Mock.Of<IServiceScopeFactory>(), Service, EntityService,
-          Mock.Of<ISSITenantService>(), Mock.Of<ISSICredentialService>(), Lock.Object);
+          Mock.Of<ISSITenantService>(), Mock.Of<ISSICredentialService>(), Lock.Object,
+          Mock.Of<Microsoft.Extensions.Hosting.IHostApplicationLifetime>());
       }
 
       public void Map<T>(CredentialIssuanceRequest request, SSISchema schema, T entity) where T : class

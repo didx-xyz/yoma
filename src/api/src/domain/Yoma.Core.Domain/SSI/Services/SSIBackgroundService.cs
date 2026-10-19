@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -37,6 +38,7 @@ namespace Yoma.Core.Domain.SSI.Services
     private readonly ISSITenantService _ssiTenantService;
     private readonly ISSICredentialService _ssiCredentialService;
     private readonly IDistributedLockService _distributedLockService;
+    private readonly IHostApplicationLifetime _applicationLifetime;
     #endregion
 
     #region Constructor
@@ -49,7 +51,8 @@ namespace Yoma.Core.Domain.SSI.Services
         ISSISchemaEntityService ssiSchemaEntityService,
         ISSITenantService ssiTenantService,
         ISSICredentialService ssiCredentialService,
-        IDistributedLockService distributedLockService)
+        IDistributedLockService distributedLockService,
+        IHostApplicationLifetime applicationLifetime)
     {
       _logger = logger;
       _appSettings = appSettings.Value;
@@ -61,6 +64,7 @@ namespace Yoma.Core.Domain.SSI.Services
       _ssiTenantService = ssiTenantService;
       _ssiCredentialService = ssiCredentialService;
       _distributedLockService = distributedLockService;
+      _applicationLifetime = applicationLifetime ?? throw new ArgumentNullException(nameof(applicationLifetime));
     }
     #endregion
 
@@ -368,6 +372,11 @@ namespace Yoma.Core.Domain.SSI.Services
       }
     }
 
+    /// <summary>
+    /// Processes eligible Pending credentials with bounded, independently scoped workers.
+    /// Shutdown/fatal infrastructure failure stops dispatch and drains started workers before releasing the lock.
+    /// Keep the parameterless signature so previously enqueued Hangfire invocations remain executable.
+    /// </summary>
     public async Task ProcessCredentialIssuance()
     {
       const string lockIdentifier = "ssi_process_credential_issuance";
@@ -375,6 +384,8 @@ namespace Yoma.Core.Domain.SSI.Services
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.SSICredentialIssuanceScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
       var lockAcquired = false;
+      using var stopDispatch = CancellationTokenSource.CreateLinkedTokenSource(_applicationLifetime.ApplicationStopping);
+      var cancellationToken = stopDispatch.Token;
 
       try
       {
@@ -390,218 +401,262 @@ namespace Yoma.Core.Domain.SSI.Services
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing SSI credential issuance");
 
         var itemIdsToSkip = new ConcurrentBag<Guid>();
+        var issuedCount = 0;
+        var failedCount = 0;
         using var throttler = new SemaphoreSlim(_appSettings.SSIParallelism.CredentialIssuance, _appSettings.SSIParallelism.CredentialIssuance);
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          cancellationToken.ThrowIfCancellationRequested();
           var now = DateTimeOffset.UtcNow;
 
           var items = _ssiCredentialService.ListPendingIssuanceSchedule(_scheduleJobOptions.SSICredentialIssuanceScheduleBatchSize, [.. itemIdsToSkip]);
           if (items.Count == 0) break;
 
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing SSI credential issuance batch with {count} eligible pending items", items.Count);
+
           var tasks = new List<Task>();
-          foreach (var item in items)
+          try
           {
-            if (executeUntil <= DateTimeOffset.UtcNow) break;
-
-            await throttler.WaitAsync();
-
-            tasks.Add(Task.Run(async () =>
+            foreach (var item in items)
             {
-              await using var scope = _scopeFactory.CreateAsyncScope();
-              var credentialService = scope.ServiceProvider.GetRequiredService<ISSICredentialService>();
-              var schemaService = scope.ServiceProvider.GetRequiredService<ISSISchemaService>();
-              var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
-              var organizationService = scope.ServiceProvider.GetRequiredService<IOrganizationService>();
-              var myOpportunityService = scope.ServiceProvider.GetRequiredService<IMyOpportunityService>();
-              var opportunityService = scope.ServiceProvider.GetRequiredService<IOpportunityService>();
-              var customFieldDefinitionService = scope.ServiceProvider.GetRequiredService<ICustomFieldDefinitionService>();
-              var customFieldValueService = scope.ServiceProvider.GetRequiredService<ICustomFieldValueService>();
-              var tenantService = scope.ServiceProvider.GetRequiredService<ISSITenantService>();
-              var providerClientFactory = scope.ServiceProvider.GetRequiredService<ISSIProviderClientFactory>();
-              var providerClient = providerClientFactory.CreateClient();
+              if (executeUntil <= DateTimeOffset.UtcNow) break;
 
-              try
+              await throttler.WaitAsync(cancellationToken);
+
+              tasks.Add(Task.Run(async () =>
               {
-                if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing SSI credential issuance for schema type '{schemaType}' and item with id '{id}'", item.SchemaType, item.Id);
-
-                var request = new CredentialIssuanceRequest
+                // Scope creation/resolution can fail too. Always return the slot, and stop
+                // dispatching on infrastructure failure rather than stranding the producer.
+                try
                 {
-                  ClientReferent = new KeyValuePair<string, string>(SSISchemaService.SchemaAttribute_Internal_ReferentClient, item.Id.ToString()),
-                  SchemaType = item.SchemaType.ToString(),
-                  Attributes = new Dictionary<string, string>()
-                                {
+                  cancellationToken.ThrowIfCancellationRequested();
+                  await using var scope = _scopeFactory.CreateAsyncScope();
+                  var credentialService = scope.ServiceProvider.GetRequiredService<ISSICredentialService>();
+                  var schemaService = scope.ServiceProvider.GetRequiredService<ISSISchemaService>();
+                  var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+                  var organizationService = scope.ServiceProvider.GetRequiredService<IOrganizationService>();
+                  var myOpportunityService = scope.ServiceProvider.GetRequiredService<IMyOpportunityService>();
+                  var opportunityService = scope.ServiceProvider.GetRequiredService<IOpportunityService>();
+                  var customFieldDefinitionService = scope.ServiceProvider.GetRequiredService<ICustomFieldDefinitionService>();
+                  var customFieldValueService = scope.ServiceProvider.GetRequiredService<ICustomFieldValueService>();
+                  var tenantService = scope.ServiceProvider.GetRequiredService<ISSITenantService>();
+                  var providerClientFactory = scope.ServiceProvider.GetRequiredService<ISSIProviderClientFactory>();
+                  var providerClient = providerClientFactory.CreateClient();
+
+                  try
+                  {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing SSI credential issuance for schema type '{schemaType}' and item with id '{id}'", item.SchemaType, item.Id);
+
+                    var request = new CredentialIssuanceRequest
+                    {
+                      ClientReferent = new KeyValuePair<string, string>(SSISchemaService.SchemaAttribute_Internal_ReferentClient, item.Id.ToString()),
+                      SchemaType = item.SchemaType.ToString(),
+                      Attributes = new Dictionary<string, string>()
+                                  {
                                     { SSISchemaService.SchemaAttribute_Internal_DateIssued, now.ToString("O", CultureInfo.InvariantCulture)},
                                     { SSISchemaService.SchemaAttribute_Internal_ReferentClient, item.Id.ToString()}
-                                }
-                };
+                                  }
+                    };
 
-                SSISchema schema;
-                User user;
-                (bool proceed, string tenantId) tenantIssuer;
-                (bool proceed, string tenantId) tenantHolder;
-                switch (item.SchemaType)
-                {
-                  case SchemaType.YoID:
-                    if (!item.UserId.HasValue)
-                      throw new InvalidOperationException($"Schema type '{item.SchemaType}': 'User id is null");
-                    user = userService.GetById(item.UserId.Value, true, true);
-                    user.DisplayName ??= user.Username; //default display name to username if null
-
-                    var organization = organizationService.GetByNameOrNull(_appSettings.YomaOrganizationName, true, true);
-                    if (organization == null)
+                    SSISchema schema;
+                    User user;
+                    (bool proceed, string tenantId) tenantIssuer;
+                    (bool proceed, string tenantId) tenantHolder;
+                    switch (item.SchemaType)
                     {
-                      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing of SSI credential issuance for schema type '{schemaType}' and item with id '{id}' " +
-                          "was skipped as the '{orgName}' organization could not be found", item.SchemaType, item.Id, _appSettings.YomaOrganizationName);
-                      itemIdsToSkip.Add(item.Id);
-                      return;
+                      case SchemaType.YoID:
+                        if (!item.UserId.HasValue)
+                          throw new InvalidOperationException($"Schema type '{item.SchemaType}': 'User id is null");
+                        user = userService.GetById(item.UserId.Value, true, true);
+                        user.DisplayName ??= user.Username; //default display name to username if null
+
+                        var organization = organizationService.GetByNameOrNull(_appSettings.YomaOrganizationName, true, true);
+                        if (organization == null)
+                        {
+                          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing of SSI credential issuance for schema type '{schemaType}' and item with id '{id}' " +
+                            "was skipped as the '{orgName}' organization could not be found", item.SchemaType, item.Id, _appSettings.YomaOrganizationName);
+                          itemIdsToSkip.Add(item.Id);
+                          return;
+                        }
+
+                        tenantIssuer = GetTenantId(tenantService, item, EntityType.Organization, organization.Id);
+                        if (!tenantIssuer.proceed)
+                        {
+                          itemIdsToSkip.Add(item.Id);
+                          return;
+                        }
+                        request.TenantIdIssuer = tenantIssuer.tenantId;
+
+                        tenantHolder = GetTenantId(tenantService, item, EntityType.User, user.Id);
+                        if (!tenantHolder.proceed)
+                        {
+                          itemIdsToSkip.Add(item.Id);
+                          return;
+                        }
+                        request.TenantIdHolder = tenantHolder.tenantId;
+
+                        schema = await schemaService.GetByFullName(item.SchemaName);
+                        AssertIssuanceSchemaApplicable(schema, item);
+
+                        request.SchemaId = schema.Id;
+                        request.SchemaName = schema.Name;
+                        request.ArtifactType = schema.ArtifactType;
+
+                        foreach (var entity in schema.Entities)
+                        {
+                          var entityType = Type.GetType(entity.TypeName)
+                            ?? throw new InvalidOperationException($"Failed to get the entity of type '{entity.TypeName}'");
+
+                          switch (entityType)
+                          {
+                            case Type t when t == typeof(User):
+                              ReflectEntityValues(request, entity, t, user, customFieldDefinitionService, customFieldValueService);
+                              break;
+
+                            case Type t when t == typeof(Organization):
+                              ReflectEntityValues(request, entity, t, organization, customFieldDefinitionService, customFieldValueService);
+                              break;
+
+                            default:
+                              throw new InvalidOperationException($"Entity of type '{entity.TypeName}' not supported");
+                          }
+                        }
+                        break;
+
+                      case SchemaType.Opportunity:
+                        if (!item.MyOpportunityId.HasValue)
+                          throw new InvalidOperationException($"Schema type '{item.SchemaType}': 'My' opportunity id is null");
+                        var myOpportunity = myOpportunityService.GetById(item.MyOpportunityId.Value, true, true, false);
+                        var opportunity = opportunityService.GetById(myOpportunity.OpportunityId, true, true, false);
+
+                        opportunity.Difficulty = ResolveLegacyDifficulty(opportunity, customFieldDefinitionService, customFieldValueService);
+
+                        tenantIssuer = GetTenantId(tenantService, item, EntityType.Organization, myOpportunity.OrganizationId);
+                        if (!tenantIssuer.proceed)
+                        {
+                          itemIdsToSkip.Add(item.Id);
+                          return;
+                        }
+                        request.TenantIdIssuer = tenantIssuer.tenantId;
+
+                        tenantHolder = GetTenantId(tenantService, item, EntityType.User, myOpportunity.UserId);
+                        if (!tenantHolder.proceed)
+                        {
+                          itemIdsToSkip.Add(item.Id);
+                          return;
+                        }
+                        request.TenantIdHolder = tenantHolder.tenantId;
+
+                        // Scheduling commits the schema name. Later Opportunity changes must not cancel or redirect an
+                        // already scheduled credential; processing resolves only the latest version of that schema.
+                        schema = await schemaService.GetByFullName(item.SchemaName);
+                        AssertIssuanceSchemaApplicable(schema, item);
+                        request.SchemaId = schema.Id;
+                        request.SchemaName = schema.Name;
+                        request.ArtifactType = schema.ArtifactType;
+
+                        foreach (var entity in schema.Entities)
+                        {
+                          var entityType = Type.GetType(entity.TypeName)
+                            ?? throw new InvalidOperationException($"Failed to get the entity of type '{entity.TypeName}'");
+
+                          switch (entityType)
+                          {
+                            case Type t when t == typeof(Opportunity.Models.Opportunity):
+                              ReflectEntityValues(request, entity, t, opportunity, customFieldDefinitionService, customFieldValueService);
+                              break;
+
+                            case Type t when t == typeof(MyOpportunity.Models.MyOpportunity):
+                              ReflectEntityValues(request, entity, t, myOpportunity, customFieldDefinitionService, customFieldValueService);
+                              break;
+
+                            default:
+                              throw new InvalidOperationException($"Entity of type '{entity.TypeName}' not supported");
+                          }
+                        }
+                        break;
+
+                      default:
+                        throw new InvalidOperationException($"Schema type '{item.SchemaType}' not supported");
                     }
 
-                    tenantIssuer = GetTenantId(tenantService, item, EntityType.Organization, organization.Id);
-                    if (!tenantIssuer.proceed)
-                    {
-                      itemIdsToSkip.Add(item.Id);
-                      return;
-                    }
-                    request.TenantIdIssuer = tenantIssuer.tenantId;
+                    cancellationToken.ThrowIfCancellationRequested();
+                    var credential = await providerClient.IssueCredential(request);
+                    ArgumentNullException.ThrowIfNull(credential);
+                    ArgumentException.ThrowIfNullOrWhiteSpace(credential.Id);
+                    ArgumentException.ThrowIfNullOrWhiteSpace(credential.SchemaId);
 
-                    tenantHolder = GetTenantId(tenantService, item, EntityType.User, user.Id);
-                    if (!tenantHolder.proceed)
-                    {
-                      itemIdsToSkip.Add(item.Id);
-                      return;
-                    }
-                    request.TenantIdHolder = tenantHolder.tenantId;
+                    // A provider-success/local-failure retry can recover a credential issued against an older
+                    // version. Record that credential's schema, not the latest version used to prepare this attempt.
+                    if (credential.SchemaId != schema.Id)
+                      schema = await schemaService.GetById(credential.SchemaId);
 
-                    schema = await schemaService.GetByFullName(item.SchemaName);
                     AssertIssuanceSchemaApplicable(schema, item);
 
-                    request.SchemaId = schema.Id;
-                    request.SchemaName = schema.Name;
-                    request.ArtifactType = schema.ArtifactType;
+                    item.CredentialId = credential.Id;
+                    item.SchemaVersion = schema.Version.ToString();
+                    item.Status = CredentialIssuanceStatus.Issued;
+                    await credentialService.UpdateScheduleIssuance(item);
+                    Interlocked.Increment(ref issuedCount);
 
-                    foreach (var entity in schema.Entities)
-                    {
-                      var entityType = Type.GetType(entity.TypeName)
-                          ?? throw new InvalidOperationException($"Failed to get the entity of type '{entity.TypeName}'");
+                    if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed SSI credential issuance for schema type '{schemaType}' and item with id '{id}'", item.SchemaType, item.Id);
+                  }
+                  catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                  {
+                    throw;
+                  }
+                  // A disposed dependency is a worker/host failure, not a bad credential. Let the outer
+                  // guard stop dispatch rather than exhausting the queue's per-credential retries.
+                  catch (Exception ex) when (!_applicationLifetime.ApplicationStopping.IsCancellationRequested && ex is not ObjectDisposedException)
+                  {
+                    if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to issue SSI credential for schema type '{schemaType}' and item with id '{id}': {errorMessage}", item.SchemaType, item.Id, ex.Message);
 
-                      switch (entityType)
-                      {
-                        case Type t when t == typeof(User):
-                          ReflectEntityValues(request, entity, t, user, customFieldDefinitionService, customFieldValueService);
-                          break;
+                    item.Status = CredentialIssuanceStatus.Error;
+                    item.ErrorReason = ex.Message;
+                    await credentialService.UpdateScheduleIssuance(item);
+                    Interlocked.Increment(ref failedCount);
 
-                        case Type t when t == typeof(Organization):
-                          ReflectEntityValues(request, entity, t, organization, customFieldDefinitionService, customFieldValueService);
-                          break;
-
-                        default:
-                          throw new InvalidOperationException($"Entity of type '{entity.TypeName}' not supported");
-                      }
-                    }
-                    break;
-
-                  case SchemaType.Opportunity:
-                    if (!item.MyOpportunityId.HasValue)
-                      throw new InvalidOperationException($"Schema type '{item.SchemaType}': 'My' opportunity id is null");
-                    var myOpportunity = myOpportunityService.GetById(item.MyOpportunityId.Value, true, true, false);
-                    var opportunity = opportunityService.GetById(myOpportunity.OpportunityId, true, true, false);
-
-                    opportunity.Difficulty = ResolveLegacyDifficulty(opportunity, customFieldDefinitionService, customFieldValueService);
-
-                    tenantIssuer = GetTenantId(tenantService, item, EntityType.Organization, myOpportunity.OrganizationId);
-                    if (!tenantIssuer.proceed)
-                    {
-                      itemIdsToSkip.Add(item.Id);
-                      return;
-                    }
-                    request.TenantIdIssuer = tenantIssuer.tenantId;
-
-                    tenantHolder = GetTenantId(tenantService, item, EntityType.User, myOpportunity.UserId);
-                    if (!tenantHolder.proceed)
-                    {
-                      itemIdsToSkip.Add(item.Id);
-                      return;
-                    }
-                    request.TenantIdHolder = tenantHolder.tenantId;
-
-                    // Scheduling commits the schema name. Later Opportunity changes must not cancel or redirect an
-                    // already scheduled credential; processing resolves only the latest version of that schema.
-                    schema = await schemaService.GetByFullName(item.SchemaName);
-                    AssertIssuanceSchemaApplicable(schema, item);
-                    request.SchemaId = schema.Id;
-                    request.SchemaName = schema.Name;
-                    request.ArtifactType = schema.ArtifactType;
-
-                    foreach (var entity in schema.Entities)
-                    {
-                      var entityType = Type.GetType(entity.TypeName)
-                          ?? throw new InvalidOperationException($"Failed to get the entity of type '{entity.TypeName}'");
-
-                      switch (entityType)
-                      {
-                        case Type t when t == typeof(Opportunity.Models.Opportunity):
-                          ReflectEntityValues(request, entity, t, opportunity, customFieldDefinitionService, customFieldValueService);
-                          break;
-
-                        case Type t when t == typeof(MyOpportunity.Models.MyOpportunity):
-                          ReflectEntityValues(request, entity, t, myOpportunity, customFieldDefinitionService, customFieldValueService);
-                          break;
-
-                        default:
-                          throw new InvalidOperationException($"Entity of type '{entity.TypeName}' not supported");
-                      }
-                    }
-                    break;
-
-                  default:
-                    throw new InvalidOperationException($"Schema type '{item.SchemaType}' not supported");
+                    itemIdsToSkip.Add(item.Id);
+                  }
                 }
-
-                var credential = await providerClient.IssueCredential(request);
-                ArgumentNullException.ThrowIfNull(credential);
-                ArgumentException.ThrowIfNullOrWhiteSpace(credential.Id);
-                ArgumentException.ThrowIfNullOrWhiteSpace(credential.SchemaId);
-
-                // A provider-success/local-failure retry can recover a credential issued against an older
-                // version. Record that credential's schema, not the latest version used to prepare this attempt.
-                if (credential.SchemaId != schema.Id)
-                  schema = await schemaService.GetById(credential.SchemaId);
-
-                AssertIssuanceSchemaApplicable(schema, item);
-
-                item.CredentialId = credential.Id;
-                item.SchemaVersion = schema.Version.ToString();
-                item.Status = CredentialIssuanceStatus.Issued;
-                await credentialService.UpdateScheduleIssuance(item);
-
-                if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed SSI credential issuance for schema type '{schemaType}' and item with id '{id}'", item.SchemaType, item.Id);
-              }
-              catch (Exception ex)
-              {
-                if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to issue SSI credential for schema type '{schemaType}' and item with id '{id}': {errorMessage}", item.SchemaType, item.Id, ex.Message);
-
-                item.Status = CredentialIssuanceStatus.Error;
-                item.ErrorReason = ex.Message;
-                await credentialService.UpdateScheduleIssuance(item);
-
-                itemIdsToSkip.Add(item.Id);
-              }
-              finally
-              {
-                throttler.Release();
-              }
-            }));
+                catch (Exception ex) when (_applicationLifetime.ApplicationStopping.IsCancellationRequested)
+                {
+                  stopDispatch.Cancel();
+                  throw new OperationCanceledException("SSI credential issuance interrupted by application shutdown", ex, _applicationLifetime.ApplicationStopping);
+                }
+                catch
+                {
+                  stopDispatch.Cancel();
+                  throw;
+                }
+                finally
+                {
+                  throttler.Release();
+                }
+              }));
+            }
           }
-
-          await Task.WhenAll(tasks).FlattenAggregateException();
+          finally
+          {
+            // Even a producer cancellation/exception must drain every started worker before
+            // disposing the semaphore, releasing the distributed lock or ending the job scope.
+            await Task.WhenAll(tasks).FlattenAggregateException();
+          }
         }
 
-        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed SSI credential issuance");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed SSI credential issuance: {issuedCount} issued and {failedCount} failed attempts", issuedCount, failedCount);
+      }
+      catch (OperationCanceledException) when (_applicationLifetime.ApplicationStopping.IsCancellationRequested)
+      {
+        if (_logger.IsEnabled(LogLevel.Warning)) _logger.LogWarning("{Process} interrupted by application shutdown; unfinished issuance remains pending", nameof(ProcessCredentialIssuance));
+        throw;
       }
       catch (Exception ex)
       {
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessCredentialIssuance), ex.Message);
+        throw;
       }
       finally
       {

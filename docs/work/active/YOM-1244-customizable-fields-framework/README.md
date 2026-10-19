@@ -338,6 +338,14 @@ descriptions on YOM-1244 are stale and should not be trusted over this table.**
 
 ### Credential schema context
 
+**Issuance processing follow-up (2026-10-19, uncommitted review):** the master-based
+[YOM-1280 lifecycle/readiness fix](YOM-1280-api-opportunity-credential-issuance-with-custom-fields/handoffs/2026-10-19-a.md)
+filters Opportunity holder/issuer tenant readiness in SQL before paging, closes a worker-setup
+semaphore leak and drains active workers on shutdown/fatal failure. Scheduled schemas, normal
+retry policy, YoID processing and Web wallet contracts are preserved. No new migration or Stage
+replay reset is required. The Stage cache-disposal trigger remains a separate, unconfirmed
+operational investigation; do not infer OOM from the exception.
+
 Verified by reading `SSISchemaService`, `SSISchemaEntityService`, the schema validators and the
 credential-schema migration, then by starting the API and issuing credentials against the existing
 generic schema.
