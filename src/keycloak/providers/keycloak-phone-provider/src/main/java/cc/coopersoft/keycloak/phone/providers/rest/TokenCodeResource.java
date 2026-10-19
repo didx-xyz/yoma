@@ -6,6 +6,7 @@ import org.keycloak.services.validation.Validation;
 import cc.coopersoft.keycloak.phone.Utils;
 import cc.coopersoft.keycloak.phone.providers.constants.TokenCodeType;
 import cc.coopersoft.keycloak.phone.providers.exception.PhoneNumberInvalidException;
+import cc.coopersoft.keycloak.phone.providers.representations.TokenCodeSendResult;
 import cc.coopersoft.keycloak.phone.providers.spi.PhoneProvider;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.ws.rs.BadRequestException;
@@ -66,9 +67,10 @@ public class TokenCodeResource {
         }
 
         logger.info(String.format("Requested %s code to %s", tokenCodeType.label, phoneNumber));
-        int tokenExpiresIn = phoneProvider.sendTokenCode(phoneNumber, session.getContext().getConnection().getRemoteAddr(), tokenCodeType, kind);
+        TokenCodeSendResult result = phoneProvider.sendTokenCode(phoneNumber, session.getContext().getConnection().getRemoteAddr(), tokenCodeType, kind);
 
-        String response = String.format("{\"expires_in\":%s}", tokenExpiresIn);
+        String response = String.format("{\"expires_in\":%s,\"delivery_confirmed\":%s}",
+                result.expiresIn(), result.deliveryConfirmed());
 
         return Response.ok(response, APPLICATION_JSON_TYPE).build();
     }

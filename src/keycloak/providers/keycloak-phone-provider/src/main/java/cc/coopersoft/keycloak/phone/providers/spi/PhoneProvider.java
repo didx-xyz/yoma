@@ -1,6 +1,7 @@
 package cc.coopersoft.keycloak.phone.providers.spi;
 
 import cc.coopersoft.keycloak.phone.providers.constants.TokenCodeType;
+import cc.coopersoft.keycloak.phone.providers.representations.TokenCodeSendResult;
 import org.keycloak.provider.Provider;
 
 import java.util.Optional;
@@ -25,7 +26,7 @@ public interface PhoneProvider extends Provider {
 
     Optional<String> phoneNumberRegex();
 
-    int sendTokenCode(String phoneNumber, String sourceAddr, TokenCodeType type, String kind);
+    TokenCodeSendResult sendTokenCode(String phoneNumber, String sourceAddr, TokenCodeType type, String kind);
 
 
 

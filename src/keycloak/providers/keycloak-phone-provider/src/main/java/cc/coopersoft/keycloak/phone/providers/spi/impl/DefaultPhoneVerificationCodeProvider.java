@@ -11,7 +11,6 @@ import cc.coopersoft.keycloak.phone.providers.jpa.TokenCode;
 import cc.coopersoft.keycloak.phone.providers.representations.TokenCodeRepresentation;
 import cc.coopersoft.keycloak.phone.providers.spi.PhoneVerificationCodeProvider;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.NoResultException;
 import jakarta.persistence.TemporalType;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
@@ -22,17 +21,21 @@ import org.keycloak.credential.CredentialProvider;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
+import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.services.validation.Validation;
 import org.keycloak.util.JsonSerialization;
 
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class DefaultPhoneVerificationCodeProvider implements PhoneVerificationCodeProvider {
 
     private static final Logger logger = Logger.getLogger(DefaultPhoneVerificationCodeProvider.class);
+    // Fits the six-character CODE column
+    private static final String FAILED_SEND_CODE = "FAILED";
     private final KeycloakSession session;
 
     DefaultPhoneVerificationCodeProvider(KeycloakSession session) {
@@ -53,29 +56,32 @@ public class DefaultPhoneVerificationCodeProvider implements PhoneVerificationCo
     @Override
     public TokenCodeRepresentation ongoingProcess(String phoneNumber, TokenCodeType tokenCodeType) {
 
-        try {
-            TokenCode entity = getEntityManager()
-                    .createNamedQuery("ongoingProcess", TokenCode.class)
-                    .setParameter("realmId", getRealm().getId())
-                    .setParameter("phoneNumber", phoneNumber)
-                    .setParameter("now", new Date(), TemporalType.TIMESTAMP)
-                    .setParameter("type", tokenCodeType.name())
-                    .getSingleResult();
+        // Concurrent sends can leave more than one live code; the newest wins
+        List<TokenCode> entities = getEntityManager()
+                .createNamedQuery("ongoingProcess", TokenCode.class)
+                .setParameter("realmId", getRealm().getId())
+                .setParameter("phoneNumber", phoneNumber)
+                .setParameter("now", new Date(), TemporalType.TIMESTAMP)
+                .setParameter("type", tokenCodeType.name())
+                .setMaxResults(1)
+                .getResultList();
 
-            TokenCodeRepresentation tokenCodeRepresentation = new TokenCodeRepresentation();
-
-            tokenCodeRepresentation.setId(entity.getId());
-            tokenCodeRepresentation.setPhoneNumber(entity.getPhoneNumber());
-            tokenCodeRepresentation.setCode(entity.getCode());
-            tokenCodeRepresentation.setType(entity.getType());
-            tokenCodeRepresentation.setCreatedAt(entity.getCreatedAt());
-            tokenCodeRepresentation.setExpiresAt(entity.getExpiresAt());
-            tokenCodeRepresentation.setConfirmed(entity.getConfirmed());
-
-            return tokenCodeRepresentation;
-        } catch (NoResultException e) {
+        if (entities.isEmpty()) {
             return null;
         }
+        TokenCode entity = entities.get(0);
+
+        TokenCodeRepresentation tokenCodeRepresentation = new TokenCodeRepresentation();
+
+        tokenCodeRepresentation.setId(entity.getId());
+        tokenCodeRepresentation.setPhoneNumber(entity.getPhoneNumber());
+        tokenCodeRepresentation.setCode(entity.getCode());
+        tokenCodeRepresentation.setType(entity.getType());
+        tokenCodeRepresentation.setCreatedAt(entity.getCreatedAt());
+        tokenCodeRepresentation.setExpiresAt(entity.getExpiresAt());
+        tokenCodeRepresentation.setConfirmed(entity.getConfirmed());
+
+        return tokenCodeRepresentation;
     }
 
     @Override
@@ -92,7 +98,7 @@ public class DefaultPhoneVerificationCodeProvider implements PhoneVerificationCo
                     .setParameter("date", oneHourAgo, TemporalType.TIMESTAMP)
                     .setParameter("type", tokenCodeType.name())
                     .getSingleResult());
-            if (targetCount > targetHourMaximum) {
+            if (targetCount >= targetHourMaximum) {
                 throw new ForbiddenException(String.format("You have sent your maximum (%d) OTPs to this number, please wait one hour before trying again.", targetHourMaximum));
             }
         }
@@ -105,7 +111,7 @@ public class DefaultPhoneVerificationCodeProvider implements PhoneVerificationCo
                     .setParameter("date", oneHourAgo, TemporalType.TIMESTAMP)
                     .setParameter("type", tokenCodeType.name())
                     .getSingleResult());
-            if (sourceCount > sourceHourMaximum) {
+            if (sourceCount >= sourceHourMaximum) {
                 throw new ForbiddenException(String.format("This device has sent it's maximum (%d) OTPs, please wait an hour before trying again.", sourceHourMaximum));
             }
         }
@@ -132,6 +138,27 @@ public class DefaultPhoneVerificationCodeProvider implements PhoneVerificationCo
             entity.setPort(session.getContext().getConnection().getRemotePort());
             entity.setHost(session.getContext().getConnection().getRemoteHost());
         }
+
+        getEntityManager().persist(entity);
+    }
+
+    @Override
+    public void persistFailedSend(String phoneNumber, TokenCodeType tokenCodeType, String sourceAddr) {
+
+        TokenCode entity = new TokenCode();
+        Instant now = Instant.now();
+
+        entity.setId(KeycloakModelUtils.generateId());
+        entity.setRealmId(getRealm().getId());
+        entity.setPhoneNumber(phoneNumber);
+        // Not a numeric code, so it can never match user input
+        entity.setCode(FAILED_SEND_CODE);
+        entity.setType(tokenCodeType.name());
+        entity.setCreatedAt(Date.from(now));
+        // Already expired, so ongoingProcess and validation never return it
+        entity.setExpiresAt(Date.from(now.minusSeconds(1)));
+        entity.setConfirmed(false);
+        entity.setIp(sourceAddr);
 
         getEntityManager().persist(entity);
     }
