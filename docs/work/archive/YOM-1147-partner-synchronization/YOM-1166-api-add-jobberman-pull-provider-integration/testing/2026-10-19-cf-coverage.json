@@ -1,0 +1,465 @@
+{
+  "RetrievedUtc": "2026-10-19T09:04:45.5745258+00:00",
+  "Method": "100 SHA-256-ordered distinct-title eligible records per country; actual parser, dedupe, mapper and CF validation via existing test fixture; no database writes",
+  "Reports": [
+    {
+      "Country": "GH",
+      "Url": "https://cde-console-production.s3.eu-west-1.amazonaws.com/jobs_rss_listings_3620.xml",
+      "SourceSha256": "5AB32728E745B03582E7750E42E50E98D670C9587295E5631F25EE7429E94659",
+      "FeedItems": 238,
+      "EligibleDistinctTitles": 228,
+      "SampleSize": 100,
+      "SampleExternalIds": [
+        "GH:1141229",
+        "GH:1140938",
+        "GH:1139730",
+        "GH:1139897",
+        "GH:1140127",
+        "GH:1141413",
+        "GH:1140749",
+        "GH:1139956",
+        "GH:1141228",
+        "GH:1141294",
+        "GH:1139734",
+        "GH:1140182",
+        "GH:1140936",
+        "GH:1141287",
+        "GH:1141410",
+        "GH:1139855",
+        "GH:1140070",
+        "GH:1141226",
+        "GH:1141420",
+        "GH:1139908",
+        "GH:1141029",
+        "GH:1140181",
+        "GH:1139685",
+        "GH:1139858",
+        "GH:1140068",
+        "GH:1139713",
+        "GH:1141031",
+        "GH:1140108",
+        "GH:1139923",
+        "GH:1139899",
+        "GH:1140015",
+        "GH:1139728",
+        "GH:1140743",
+        "GH:1139831",
+        "GH:1141281",
+        "GH:1139657",
+        "GH:1140010",
+        "GH:1139909",
+        "GH:1140798",
+        "GH:1141415",
+        "GH:1140186",
+        "GH:1140078",
+        "GH:1141032",
+        "GH:1140018",
+        "GH:1141280",
+        "GH:1141423",
+        "GH:1141282",
+        "GH:1141291",
+        "GH:1141369",
+        "GH:1139729",
+        "GH:1140746",
+        "GH:1139896",
+        "GH:1140103",
+        "GH:1140082",
+        "GH:1140626",
+        "GH:1140071",
+        "GH:1139854",
+        "GH:1140795",
+        "GH:1141371",
+        "GH:1140107",
+        "GH:1140740",
+        "GH:1139826",
+        "GH:1140104",
+        "GH:1139658",
+        "GH:1140628",
+        "GH:1140639",
+        "GH:1141125",
+        "GH:1140012",
+        "GH:1139827",
+        "GH:1139828",
+        "GH:1139824",
+        "GH:1141331",
+        "GH:1141332",
+        "GH:1140168",
+        "GH:1140174",
+        "GH:1140799",
+        "GH:1140011",
+        "GH:1141292",
+        "GH:1139727",
+        "GH:1139900",
+        "GH:1139898",
+        "GH:1140974",
+        "GH:1140101",
+        "GH:1139895",
+        "GH:1141330",
+        "GH:1140640",
+        "GH:1140105",
+        "GH:1140636",
+        "GH:1139687",
+        "GH:1140969",
+        "GH:1141079",
+        "GH:1139830",
+        "GH:1140185",
+        "GH:1141370",
+        "GH:1139921",
+        "GH:1141030",
+        "GH:1140171",
+        "GH:1141289",
+        "GH:1140170",
+        "GH:1139957"
+      ],
+      "Fields": [
+        {
+          "Field": "Salary amounts/currency",
+          "Total": 100,
+          "Supplied": 21,
+          "Missing": 79,
+          "Structured": 21,
+          "DescriptionFallback": 0
+        },
+        {
+          "Field": "Work schedule",
+          "Total": 100,
+          "Supplied": 100,
+          "Missing": 0,
+          "Structured": 98,
+          "DescriptionFallback": 2
+        },
+        {
+          "Field": "Experience level",
+          "Total": 100,
+          "Supplied": 100,
+          "Missing": 0,
+          "Structured": 59,
+          "DescriptionFallback": 41
+        },
+        {
+          "Field": "Qualification",
+          "Total": 100,
+          "Supplied": 100,
+          "Missing": 0,
+          "Structured": 97,
+          "DescriptionFallback": 3
+        }
+      ],
+      "UnmappedValues": [
+        {
+          "Field": "Experience level",
+          "Source": "Mid level / 3 years",
+          "Count": 28
+        },
+        {
+          "Field": "Experience level",
+          "Source": "Senior level / 5 years",
+          "Count": 8
+        },
+        {
+          "Field": "Experience level",
+          "Source": "Senior level / 6 years",
+          "Count": 2
+        },
+        {
+          "Field": "Experience level",
+          "Source": "Senior level / 2 years",
+          "Count": 1
+        },
+        {
+          "Field": "Experience level",
+          "Source": "Senior level / 3 years",
+          "Count": 1
+        },
+        {
+          "Field": "Experience level",
+          "Source": "Internship & Graduate / 1 year",
+          "Count": 1
+        },
+        {
+          "Field": "Qualification",
+          "Source": "Vocational",
+          "Count": 3
+        },
+        {
+          "Field": "Work schedule",
+          "Source": "Contract",
+          "Count": 2
+        }
+      ],
+      "RowsWithAnyUnmappedSuppliedField": 45,
+      "SuppliedSalaryCurrencies": [
+        {
+          "Value": "GHS",
+          "Count": 21
+        }
+      ]
+    },
+    {
+      "Country": "NG",
+      "Url": "https://cde-console-production.s3.eu-west-1.amazonaws.com/jobs_rss_listings_5224.xml",
+      "SourceSha256": "1419A1BE62CC5291232A78983A21D1F18240F5E7EA0271F0F0E763303F4BE3AE",
+      "FeedItems": 3736,
+      "EligibleDistinctTitles": 2526,
+      "SampleSize": 100,
+      "SampleExternalIds": [
+        "NG:1253597",
+        "NG:1255036",
+        "NG:1257860",
+        "NG:1259380",
+        "NG:1268970",
+        "NG:1267270",
+        "NG:1256991",
+        "NG:1260149",
+        "NG:1261661",
+        "NG:1255549",
+        "NG:1256118",
+        "NG:1259353",
+        "NG:1256668",
+        "NG:1264613",
+        "NG:1269040",
+        "NG:1264616",
+        "NG:1260056",
+        "NG:1260055",
+        "NG:1262898",
+        "NG:1255751",
+        "NG:1261917",
+        "NG:1257769",
+        "NG:1258819",
+        "NG:1267584",
+        "NG:1269312",
+        "NG:1264632",
+        "NG:1257349",
+        "NG:1258809",
+        "NG:1268537",
+        "NG:1269944",
+        "NG:1260790",
+        "NG:1269279",
+        "NG:1266387",
+        "NG:1259781",
+        "NG:1267949",
+        "NG:1258496",
+        "NG:1261245",
+        "NG:1266547",
+        "NG:1262927",
+        "NG:1259370",
+        "NG:1256117",
+        "NG:1249077",
+        "NG:1263539",
+        "NG:1249583",
+        "NG:1260781",
+        "NG:1264655",
+        "NG:1248025",
+        "NG:1260061",
+        "NG:1268637",
+        "NG:1260089",
+        "NG:1262686",
+        "NG:1267895",
+        "NG:1263000",
+        "NG:1265336",
+        "NG:1260088",
+        "NG:1269253",
+        "NG:1269248",
+        "NG:1255745",
+        "NG:1258847",
+        "NG:1262460",
+        "NG:1258381",
+        "NG:1260151",
+        "NG:1259325",
+        "NG:1261243",
+        "NG:1259834",
+        "NG:1257560",
+        "NG:1255545",
+        "NG:1260714",
+        "NG:1256715",
+        "NG:1264452",
+        "NG:1257502",
+        "NG:1268370",
+        "NG:1256389",
+        "NG:1257766",
+        "NG:1260114",
+        "NG:1267909",
+        "NG:1256728",
+        "NG:1263273",
+        "NG:1266610",
+        "NG:1267229",
+        "NG:1255286",
+        "NG:1261320",
+        "NG:1261576",
+        "NG:1262968",
+        "NG:1256135",
+        "NG:1262933",
+        "NG:1256986",
+        "NG:1258095",
+        "NG:1261618",
+        "NG:1263234",
+        "NG:1268541",
+        "NG:1263855",
+        "NG:1250003",
+        "NG:1265348",
+        "NG:1256405",
+        "NG:1260757",
+        "NG:1265264",
+        "NG:1262994",
+        "NG:1256994",
+        "NG:1267350"
+      ],
+      "Fields": [
+        {
+          "Field": "Salary amounts/currency",
+          "Total": 100,
+          "Supplied": 95,
+          "Missing": 5,
+          "Structured": 94,
+          "DescriptionFallback": 1
+        },
+        {
+          "Field": "Work schedule",
+          "Total": 100,
+          "Supplied": 100,
+          "Missing": 0,
+          "Structured": 96,
+          "DescriptionFallback": 4
+        },
+        {
+          "Field": "Experience level",
+          "Total": 100,
+          "Supplied": 100,
+          "Missing": 0,
+          "Structured": 56,
+          "DescriptionFallback": 44
+        },
+        {
+          "Field": "Qualification",
+          "Total": 100,
+          "Supplied": 100,
+          "Missing": 0,
+          "Structured": 95,
+          "DescriptionFallback": 5
+        }
+      ],
+      "UnmappedValues": [
+        {
+          "Field": "Experience level",
+          "Source": "Mid level / 3 years",
+          "Count": 27
+        },
+        {
+          "Field": "Experience level",
+          "Source": "Senior level / 5 years",
+          "Count": 8
+        },
+        {
+          "Field": "Experience level",
+          "Source": "Internship & Graduate / No Experience/Less than 1 year",
+          "Count": 2
+        },
+        {
+          "Field": "Experience level",
+          "Source": "Executive level / 10 years",
+          "Count": 1
+        },
+        {
+          "Field": "Experience level",
+          "Source": "Executive level / 12 years",
+          "Count": 1
+        },
+        {
+          "Field": "Experience level",
+          "Source": "Senior level / 6 years",
+          "Count": 1
+        },
+        {
+          "Field": "Experience level",
+          "Source": "Entry level / No Experience/Less than 1 year",
+          "Count": 1
+        },
+        {
+          "Field": "Experience level",
+          "Source": "Executive level / More than 20 years",
+          "Count": 1
+        },
+        {
+          "Field": "Experience level",
+          "Source": "Internship & Graduate / 1 year",
+          "Count": 1
+        },
+        {
+          "Field": "Experience level",
+          "Source": "Internship & Graduate / 2 years",
+          "Count": 1
+        },
+        {
+          "Field": "Qualification",
+          "Source": "N.C.E",
+          "Count": 3
+        },
+        {
+          "Field": "Qualification",
+          "Source": "Vocational",
+          "Count": 2
+        },
+        {
+          "Field": "Salary amounts/currency",
+          "Source": "NGN Above 5,000,000",
+          "Count": 1
+        },
+        {
+          "Field": "Work schedule",
+          "Source": "Contract",
+          "Count": 4
+        }
+      ],
+      "RowsWithAnyUnmappedSuppliedField": 49,
+      "SuppliedSalaryCurrencies": [
+        {
+          "Value": "NGN",
+          "Count": 95
+        }
+      ]
+    }
+  ],
+  "CombinedSampleSize": 200,
+  "CombinedFields": [
+    {
+      "Field": "Salary amounts/currency",
+      "Total": 200,
+      "Supplied": 116,
+      "Missing": 84,
+      "Structured": 115,
+      "DescriptionFallback": 1
+    },
+    {
+      "Field": "Work schedule",
+      "Total": 200,
+      "Supplied": 200,
+      "Missing": 0,
+      "Structured": 194,
+      "DescriptionFallback": 6
+    },
+    {
+      "Field": "Experience level",
+      "Total": 200,
+      "Supplied": 200,
+      "Missing": 0,
+      "Structured": 115,
+      "DescriptionFallback": 85
+    },
+    {
+      "Field": "Qualification",
+      "Total": 200,
+      "Supplied": 200,
+      "Missing": 0,
+      "Structured": 192,
+      "DescriptionFallback": 8
+    }
+  ],
+  "CombinedRowsWithAnyUnmappedSuppliedField": 94,
+  "Notes": [
+    "Equal allocation (100 GH and 100 NG): pooled percentages describe this sample, not the country-volume-weighted entire catalogue.",
+    "Deduplication used the production helper with an empty existing-canonical set, not production database state.",
+    "Actual parser/mapper and seeded CF validation ran through the existing test fixture. No database was queried or changed; currency/education reference services were test doubles.",
+    "All supplied sample currencies were GHS or NGN, both configured by the fixture.",
+    "DescriptionFallback counts supplied metadata without a structured mapping, not intentionally retained detail such as exact experience length, location or OND/HND wording."
+  ]
+}

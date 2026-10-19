@@ -30,6 +30,9 @@ namespace Yoma.Core.Infrastructure.Jobberman.Entities
     public string Title { get; set; } = null!;
 
     [Column(TypeName = "text")]
+    public string? Summary { get; set; }
+
+    [Column(TypeName = "text")]
     public string? Description { get; set; }
 
     [Column(TypeName = "varchar(2048)")]
@@ -43,6 +46,18 @@ namespace Yoma.Core.Infrastructure.Jobberman.Entities
 
     [Column(TypeName = "varchar(100)")]
     public string? WorkType { get; set; }
+
+    [Column(TypeName = "text")]
+    public string? Salary { get; set; }
+
+    [Column(TypeName = "text")]
+    public string? ExperienceLevel { get; set; }
+
+    [Column(TypeName = "text")]
+    public string? ExperienceLength { get; set; }
+
+    [Column(TypeName = "text")]
+    public string? MinimumQualification { get; set; }
 
     public DateTimeOffset? DateStart { get; set; }
 

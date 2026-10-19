@@ -1,3 +1,4 @@
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.PartnerSync.Models;
 
 namespace Yoma.Core.Domain.PartnerSync.Extensions
@@ -5,6 +6,31 @@ namespace Yoma.Core.Domain.PartnerSync.Extensions
   public static class SyncExtensions
   {
     #region Public Methods
+    /// <summary>
+    /// Completes an authoritative snapshot of the provider's declared custom-field keys.
+    /// Missing mapped values become key-only PATCH deletions; keys outside this ownership set
+    /// remain omitted and preserved. Use only when an absent/unmappable source value withdraws
+    /// the provider's previous value, never for partial payloads or an inferred list of all CFs.
+    /// Normalization, validation and persistence remain in the common custom-field framework.
+    /// </summary>
+    public static List<CustomFieldValueRequest> CompleteCustomFieldSnapshot(
+      this List<CustomFieldValueRequest> fields,
+      params string[] ownedKeys)
+    {
+      ArgumentNullException.ThrowIfNull(fields);
+      ArgumentNullException.ThrowIfNull(ownedKeys);
+
+      var existingKeys = fields.Select(o => o.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+      foreach (var key in ownedKeys)
+      {
+        ArgumentException.ThrowIfNullOrWhiteSpace(key);
+
+        if (existingKeys.Add(key)) fields.Add(new CustomFieldValueRequest { Key = key });
+      }
+
+      return fields;
+    }
+
     public static SyncAction ResolveSyncAction<TItem>(
       this SyncItemEntity<TItem> item,
       EntityType entityType,

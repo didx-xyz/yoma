@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Moq;
 using Newtonsoft.Json;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Xunit;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
@@ -148,6 +149,51 @@ namespace Yoma.Core.Test.Core
     }
 
     [Fact]
+    public void AlisonAlwaysEmitsDifficultyIncludingItsDefaultWhenSourceLevelIsWithdrawn()
+    {
+      var client = RuntimeHelpers.GetUninitializedObject(typeof(Infrastructure.Alison.Client.AlisonClient));
+      SetDifficultyMetadata(client);
+      var method = client.GetType().GetMethod("GetDifficulty", BindingFlags.Instance | BindingFlags.NonPublic)!;
+      var previous = Assert.IsType<CustomFieldValueRequest>(method.Invoke(client,
+        [new Infrastructure.Alison.Models.Course { CourseLevel = "Advanced" }]));
+      var current = Assert.IsType<CustomFieldValueRequest>(method.Invoke(client,
+        [new Infrastructure.Alison.Models.Course { CourseLevel = null }]));
+
+      Assert.Equal(Domain.Opportunity.CustomFieldConstants.Difficulty.Keys.Learning, current.Key);
+      Assert.Equal(Domain.Opportunity.Difficulty.AnyLevel.ToString(), Assert.Single(current.Values!));
+      Assert.NotEqual(Assert.Single(previous.Values!), Assert.Single(current.Values!));
+    }
+
+    [Theory]
+    [InlineData("IXO", Domain.Opportunity.Type.Learning, "AnyLevel")]
+    [InlineData("IXO", Domain.Opportunity.Type.Other, "AnyLevel")]
+    [InlineData("IXO", Domain.Opportunity.Type.ImpactAction, "EntryLevel")]
+    [InlineData("IXO", Domain.Opportunity.Type.Event, "OpenToAll")]
+    [InlineData("Umuzi", Domain.Opportunity.Type.Learning, "AnyLevel")]
+    [InlineData("Umuzi", Domain.Opportunity.Type.Other, "AnyLevel")]
+    [InlineData("Umuzi", Domain.Opportunity.Type.ImpactAction, "EntryLevel")]
+    [InlineData("Umuzi", Domain.Opportunity.Type.Event, "OpenToAll")]
+    public void PartnerDifficultyAlwaysReplacesPriorValuesWithTheConfiguredDefault(
+      string partner, Domain.Opportunity.Type opportunityType, string expected)
+    {
+      var type = partner switch
+      {
+        "IXO" => typeof(Infrastructure.IXO.PartnerSync.Client.IXOClient),
+        "Umuzi" => typeof(Infrastructure.Umuzi.Client.UmuziClient),
+        _ => throw new InvalidOperationException($"Partner '{partner}' is not supported")
+      };
+      var client = RuntimeHelpers.GetUninitializedObject(type);
+      SetDifficultyMetadata(client);
+      var method = type.GetMethod("ResolveDifficulty", BindingFlags.Instance | BindingFlags.NonPublic)!;
+      var previous = Assert.IsType<CustomFieldValueRequest>(method.Invoke(client, [opportunityType, "Advanced"]));
+      var current = Assert.IsType<CustomFieldValueRequest>(method.Invoke(client, [opportunityType, null]));
+
+      Assert.Equal(previous.Key, current.Key);
+      Assert.Equal(expected, Assert.Single(current.Values!));
+      Assert.NotEqual(Assert.Single(previous.Values!), Assert.Single(current.Values!));
+    }
+
+    [Fact]
     public void LegacyProjectionIsHiddenAndIssuerResolvesTheCurrentOptionLabel()
     {
       var definition = Assert.Single(Definitions(), o => o.EntityContext == "Learning");
@@ -177,6 +223,15 @@ namespace Yoma.Core.Test.Core
     #endregion
 
     #region Private Members
+    private static void SetDifficultyMetadata(object client)
+    {
+      var metadata = new Mock<ICustomFieldDefinitionService>();
+      metadata.Setup(service => service.GetByKey(CustomFieldEntityType.Opportunity, It.IsAny<string>(), true, true))
+        .Returns((CustomFieldEntityType _, string key, bool _, bool _) => Definitions().Single(definition => definition.Key == key));
+      client.GetType().GetField("_customFieldDefinitionService", BindingFlags.Instance | BindingFlags.NonPublic)!
+        .SetValue(client, metadata.Object);
+    }
+
     private static CustomFieldValueService CreateValueService(ICustomFieldDefinitionService definitions)
     {
       return new CustomFieldValueService(definitions, Mock.Of<ICountryService>(), Mock.Of<ILanguageService>(),

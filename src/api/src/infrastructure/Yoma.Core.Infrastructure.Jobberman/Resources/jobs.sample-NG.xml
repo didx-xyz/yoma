@@ -1,169 +1,528 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" version="2.0">
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" version="2.0">
   <channel>
     <title>Jobberman Nigeria and Yoma</title>
     <description>Jobberman Nigeria and Yoma job listing to be shared via their website</description>
     <link>https://www.jobberman.com</link>
-    <atom:link rel="self" href="https://cde-console-production.s3.eu-west-1.amazonaws.com/jobs_rss_listings_5224.xml" type="application/rss+xml" />
     <item>
-      <title>Account Relationship Manager in Rest of Nigeria</title>
-      <link>https://www.jobberman.com/listings/account-relationship-manager-8m4edj?utm_campaign=Job_Listing_Yoma_ng&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-nigeria-and-yoma-5224</link>
-      <guid isPermaLink="false">1223330</guid>
-      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/ng/og-template-600w-315h/4c8e2d725c4c0f14998d2984aedbf4e0/-/eyJ0ZW1wbGF0ZSI6ImpvYi0wOS0yMDI0IiwicmVwbGFjZW1lbnRzIjp7ImpvYlRpdGxlIjoiQWNjb3VudCBSZWxhdGlvbnNoaXAgTWFuYWdlciIsImpvYkZ1bmN0aW9uIjoiU2FsZXMiLCJzYWxhcnkiOiJDb25maWRlbnRpYWwiLCJsb2NhdGlvbiI6IkNyb3NzIFJpdmVyIiwid29ya1R5cGUiOiJGdWxsIFRpbWUifSwiaW1hZ2VzIjp7ImJhY2tncm91bmQiOnsiZmlsZSI6InMzOlwvXC9zaGFyZWQtZm9sZGVyLXByb2RcLzIwMjUtMDlcL3JlY3RhbmdsZVwvam9iZnVuY3Rpb25cL3NhbGVzLnBuZyJ9fX0=/account-relationship-manager-8m4edj.jpg" />
-      <location>Cross River, Nigeria</location>
-      <description>Company Description The Alternative Bank, established in 2014 as an Islamic Finance window within Sterling Bank, became a licensed Non-Interest Bank by the Central Bank of Nigeria in 2023. Committed to ethical banking principles, we provide inclusive financial solutions to help customers achieve per...</description>
-      <work_type>Full Time</work_type>
-    </item>
-    <item>
-      <title>Program Officer in Rest of Nigeria</title>
-      <link>https://www.jobberman.com/listings/program-officer-8m4j2r?utm_campaign=Job_Listing_Yoma_ng&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-nigeria-and-yoma-5224</link>
-      <guid isPermaLink="false">1223852</guid>
-      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/ng/og-template-600w-315h/18369e36fc59bdb7051276a44e1f2144/-/eyJ0ZW1wbGF0ZSI6ImpvYi0wOS0yMDI0IiwicmVwbGFjZW1lbnRzIjp7ImpvYlRpdGxlIjoiUHJvZ3JhbSBPZmZpY2VyIiwiam9iRnVuY3Rpb24iOiJVbnNwZWNpZmllZCIsInNhbGFyeSI6IkNvbmZpZGVudGlhbCIsImxvY2F0aW9uIjoiT3N1biIsIndvcmtUeXBlIjoiRnVsbCBUaW1lIn0sImltYWdlcyI6eyJiYWNrZ3JvdW5kIjp7ImZpbGUiOiJzMzpcL1wvc2hhcmVkLWZvbGRlci1wcm9kXC8yMDI1LTA5XC9yZWN0YW5nbGVcL2pvYmZ1bmN0aW9uXC9kZWZhdWx0LnBuZyJ9fX0=/program-officer-8m4j2r.jpg" />
-      <location>Osun, Nigeria</location>
-      <description>
-        About Value Female Network Africa
-
-
-
-        Value Female Network Africa is a public health and social impact organisation committed to advancing the health, protection, and agency of women, girls and young people. The organisation delivers population-level interventions addressing harmful practices, gend...
-      </description>
-      <work_type>Full Time</work_type>
-    </item>
-    <item>
-      <title>General Manager in Lagos</title>
-      <link>https://www.jobberman.com/listings/general-manager-9j49w0-v2?utm_campaign=Job_Listing_Yoma_ng&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-nigeria-and-yoma-5224</link>
-      <guid isPermaLink="false">1162304</guid>
-      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/ng/og-template-600w-315h/e2c38a1a249fa73d1163d04d96498a6d/-/eyJ0ZW1wbGF0ZSI6ImpvYi0wOS0yMDI0IiwicmVwbGFjZW1lbnRzIjp7ImpvYlRpdGxlIjoiR2VuZXJhbCBNYW5hZ2VyIiwiam9iRnVuY3Rpb24iOiJNYW5hZ2VtZW50ICYgQnVzaW5lc3MgRGV2ZWxvcG1lbnQiLCJzYWxhcnkiOiJDb25maWRlbnRpYWwiLCJsb2NhdGlvbiI6IkxhZ29zIiwid29ya1R5cGUiOiJGdWxsIFRpbWUifSwiaW1hZ2VzIjp7ImJhY2tncm91bmQiOnsiZmlsZSI6InMzOlwvXC9zaGFyZWQtZm9sZGVyLXByb2RcLzIwMjUtMDlcL3JlY3RhbmdsZVwvam9iZnVuY3Rpb25cL21hbmFnZW1lbnQtYW5kLWJ1c2luZXNzLWRldmVsb3BtZW50LnBuZyJ9fX0=/general-manager-9j49w0-v2.jpg" />
+      <title>Sales &amp; Customer Service Officer in Lagos</title>
+      <link>https://www.jobberman.com/listings/sales-customer-service-officer-rr6pk4?utm_campaign=Job_Listing_Yoma_ng&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-nigeria-and-yoma-5224</link>
+      <guid isPermaLink="false">1255310</guid>
+      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/ng/og-template-600w-315h/fjrrEzvlO64cPlWX8J2Hlg/-/_1Iy99gktUYMHpXFpckp-bWqQQnFpUBoxGaIFbhJF-MRSqKQSXFhTkF5Ugp2w_dz8FcwMdUHmnq2BoCmahpnafxPT8YtQkDy-BiQ0doso3oPPToM7XT4Y6XrcY4nhdYHtOtxjifHCJVVtbCwA/sales-customer-service-officer-rr6pk4.jpg" />
       <location>Lagos, Nigeria</location>
-      <description>
-        Company: African Naturalistas
+      <price>NGN 70,000 - 150,000</price>
+      <description>We are currently seeking a Sales &amp; Customer Service Officer to manage customer engagement, drive sales, and maintain positive client relationships. This role requires a proactive, organized, and customer-focused individual who can also manage online sales interactions and digital engagement.</description>
+      <content:encoded>&lt;p&gt;&lt;strong&gt;Responsibilities:&lt;/strong&gt;&lt;/p&gt;
 
-        Location: Ikota Lekki, Lagos, Nigeria.
+&lt;ul&gt;&lt;li&gt;Respond to customer inquiries via phone, chat, and social media platforms&lt;/li&gt;&lt;li&gt;Manage in-store and online sales while building strong customer relationships&lt;/li&gt;&lt;li&gt;Create and publish sales-driven content for social media and digital platforms&lt;/li&gt;&lt;li&gt;Handle day-to-day management of the brand’s social media accounts&lt;/li&gt;&lt;/ul&gt;
 
-        Work Mode: Full Time, Onsite
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
-        Reports to: Founder/CEO
+&lt;p&gt;&lt;strong&gt;Requirements:&lt;/strong&gt;&lt;/p&gt;
 
-        Leads: Production Team, Sales Team, Administrative Team (plus dotted line to Supply Chain/Procurement, Quality/Regulatory, Customer Experience, HR, IT/ERP, E‑commerce)
+&lt;ul&gt;&lt;li&gt;Excellent communication skills, both written and verbal&lt;/li&gt;&lt;li&gt;Strong customer service orientation&lt;/li&gt;&lt;li&gt;Professional demeanor and interpersonal skills&lt;/li&gt;&lt;li&gt;Ability to manage social media engagement&lt;/li&gt;&lt;li&gt;The required qualification is SSCE/ND&lt;/li&gt;&lt;li&gt;Must reside within Ikeja or its environs&lt;/li&gt;&lt;/ul&gt;
 
+&lt;p&gt;&lt;strong&gt;&lt;br&gt;&lt;/strong&gt;&lt;/p&gt;
 
+&lt;p&gt;&lt;strong&gt;Location:&lt;/strong&gt; Opebi, Ikeja&lt;/p&gt;
 
-        R...
-      </description>
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;</content:encoded>
       <work_type>Full Time</work_type>
+      <category>Customer Service &amp; Support</category>
+      <experience_level>Entry level</experience_level>
+      <experience_length>1 year</experience_length>
+      <minimum_qualification>High School (S.S.C.E)</minimum_qualification>
     </item>
     <item>
-      <title>Business Strategist in Abuja</title>
-      <link>https://www.jobberman.com/listings/business-strategist-wrpvjg?utm_campaign=Job_Listing_Yoma_ng&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-nigeria-and-yoma-5224</link>
-      <guid isPermaLink="false">1223294</guid>
-      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/ng/og-template-600w-315h/3e937fffa1a0e9c22fa12148eb2e8354/-/eyJ0ZW1wbGF0ZSI6ImpvYi0wOS0yMDI0IiwicmVwbGFjZW1lbnRzIjp7ImpvYlRpdGxlIjoiQnVzaW5lc3MgU3RyYXRlZ2lzdCIsImpvYkZ1bmN0aW9uIjoiU2FsZXMiLCJzYWxhcnkiOiJDb25maWRlbnRpYWwiLCJsb2NhdGlvbiI6IkFidWphIiwid29ya1R5cGUiOiJGdWxsIFRpbWUifSwiaW1hZ2VzIjp7ImJhY2tncm91bmQiOnsiZmlsZSI6InMzOlwvXC9zaGFyZWQtZm9sZGVyLXByb2RcLzIwMjUtMDlcL3JlY3RhbmdsZVwvam9iZnVuY3Rpb25cL3NhbGVzLnBuZyJ9fX0=/business-strategist-wrpvjg.jpg" />
-      <location>Abuja, Nigeria</location>
-      <description>
-        Company Description
-
-        Rizoka is an innovative Fintech Company focusing on financial services, flight booking and utility needs for individuals and businesses.
-
-
-
-        Role Description
-
-        We are seeking a full-time Business Strategist to join our team in Abuja. The Business Strategist will play a pivotal r...
-      </description>
-      <work_type>Full Time</work_type>
-    </item>
-    <item>
-      <title>Sales Associate in Ibadan &amp; Oyo State</title>
-      <link>https://www.jobberman.com/listings/sales-associate-5pdjjp?utm_campaign=Job_Listing_Yoma_ng&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-nigeria-and-yoma-5224</link>
-      <guid isPermaLink="false">1222985</guid>
-      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/ng/og-template-600w-315h/fec8077931126e625bd8a58a793051db/-/eyJ0ZW1wbGF0ZSI6ImpvYi0wOS0yMDI0IiwicmVwbGFjZW1lbnRzIjp7ImpvYlRpdGxlIjoiU2FsZXMgQXNzb2NpYXRlIiwiam9iRnVuY3Rpb24iOiJTYWxlcyIsInNhbGFyeSI6IkNvbmZpZGVudGlhbCIsImxvY2F0aW9uIjoiSWJhZGFuICYgT3lvIFN0YXRlIiwid29ya1R5cGUiOiJGdWxsIFRpbWUifSwiaW1hZ2VzIjp7ImJhY2tncm91bmQiOnsiZmlsZSI6InMzOlwvXC9zaGFyZWQtZm9sZGVyLXByb2RcLzIwMjUtMDlcL3JlY3RhbmdsZVwvam9iZnVuY3Rpb25cL3NhbGVzLnBuZyJ9fX0=/sales-associate-5pdjjp.jpg" />
+      <title>Driver in Ibadan &amp; Oyo State</title>
+      <link>https://www.jobberman.com/listings/driver-k70rz2?utm_campaign=Job_Listing_Yoma_ng&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-nigeria-and-yoma-5224</link>
+      <guid isPermaLink="false">1267958</guid>
+      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/ng/og-template-600w-315h/1-BYYnwYdtLDNuSupty3qQ/-/_1Iy99uhRlAosejFSKVNAjJ1g_dz8FcwMdUDGmq2BoCmahJmLPpMSURHCBXZmvEFwCcg1KsoaXssSGAFFlGNDxaVDHA5sVaYmlOSXgAqi2thYA/driver-k70rz2.jpg" />
       <location>Ibadan &amp; Oyo State, Nigeria</location>
-      <description>
-        About the role
+      <price>NGN 70,000 - 150,000</price>
+      <description>We are seeking to hire a Driver to join our Team</description>
+      <content:encoded>
 
-        We are a reputable management development company with a strong reputation in coaching, learning and development, assessments, public sector solutions, business management consulting, and HR advisory. Looking for a proactive Sales &amp;amp; Business Development Associate to help expan...
-      </description>
+&lt;p&gt;&lt;b&gt;Responsibilities:&lt;/b&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;&lt;b&gt;Operation: &lt;/b&gt;Drive vehicles carefully, following all road rules, speed limits, and safety regulations. &lt;br&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Route Planning: &lt;/b&gt;Use GPS and navigation tools to find the fastest and safest routes, avoiding traffic and delays. &lt;br&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Loading and Unloading:&lt;/b&gt; Handle cargo, lift packages, or assist passengers with their luggage. &lt;/li&gt;&lt;li&gt;&lt;b&gt;Vehicle Maintenance:&lt;/b&gt; Check fuel, oil, tires, and fluid levels daily, and report mechanical issues or arrange for repairs.&lt;/li&gt;&lt;li&gt;&lt;b&gt;Record Keeping:&lt;/b&gt; Log trip details, mileage, fuel use, and delivery signatures.&lt;/li&gt;&lt;li&gt;&lt;b&gt;Customer Service:&lt;/b&gt; Communicate politely with clients, passengers, or dispatchers&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Requirements:&lt;/b&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Minimum qualification of SSCE&lt;/li&gt;&lt;li&gt;3 years of previous experience in a similar role&lt;br&gt;&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;b&gt;Remuneration: NGN &lt;/b&gt;80,000&lt;/p&gt;</content:encoded>
       <work_type>Full Time</work_type>
+      <category>Unspecified</category>
+      <experience_level>Mid level</experience_level>
+      <experience_length>3 years</experience_length>
+      <minimum_qualification>High School (S.S.C.E)</minimum_qualification>
     </item>
     <item>
-      <title>Senior Legal Counsel, Operations, Technology &amp; Projects in Lagos</title>
-      <link>https://www.jobberman.com/listings/senior-legal-counsel-operations-technology-projects-6qkrd7-v1?utm_campaign=Job_Listing_Yoma_ng&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-nigeria-and-yoma-5224</link>
-      <guid isPermaLink="false">1206700</guid>
-      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/ng/og-template-600w-315h/d362d4b7a3cf7ff83aa975c7d0bce140/-/eyJ0ZW1wbGF0ZSI6ImpvYi0wOS0yMDI0IiwicmVwbGFjZW1lbnRzIjp7ImpvYlRpdGxlIjoiU2VuaW9yIExlZ2FsIENvdW5zZWwsIE9wZXJhdGlvbnMsIFRlY2hub2xvZ3kgJiBQcm9qZWN0cyIsImpvYkZ1bmN0aW9uIjoiTGVnYWwgU2VydmljZXMiLCJzYWxhcnkiOiJDb25maWRlbnRpYWwiLCJsb2NhdGlvbiI6IkxhZ29zIiwid29ya1R5cGUiOiJGdWxsIFRpbWUifSwiaW1hZ2VzIjp7ImJhY2tncm91bmQiOnsiZmlsZSI6InMzOlwvXC9zaGFyZWQtZm9sZGVyLXByb2RcLzIwMjUtMDlcL3JlY3RhbmdsZVwvam9iZnVuY3Rpb25cL2xlZ2FsLXNlcnZpY2VzLnBuZyJ9fX0=/senior-legal-counsel-operations-technology-projects-6qkrd7-v1.jpg" />
-      <location>Lagos, Nigeria</location>
-      <description>Who We AreMoniepoint is an all-in-one financial services platform for emerging markets and the second-fastest growing company in Africa.Since 2019, Moniepoint’s technology has powered over 3 million people, offering personal and business banking, payment, credit and business management tools to help...</description>
+      <title>Accountant in Rest of Nigeria</title>
+      <link>https://www.jobberman.com/listings/accountant-2kw2pp?utm_campaign=Job_Listing_Yoma_ng&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-nigeria-and-yoma-5224</link>
+      <guid isPermaLink="false">1263239</guid>
+      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/ng/og-template-600w-315h/zx445GCHYu7yzoByovqWOw/-/_1Iy99QktlYKGJkVLxF9jI6Ri5LkBN0y6pOUCfoyRseDlLbBgQVYoBnZ4Gdbp-ItzhuolQd-sCG27AQAS7HFw01dbWAgA/accountant-2kw2pp.jpg" />
+      <location>Delta, Nigeria</location>
+      <description>We are seeking a detail-oriented and analytical Accountant to join our finance team. The ideal candidate will have a solid foundation in accounting principles, strong Excel and Google Sheets skills, and an interest in developing practical experience across financial reporting, cash flow management, invoicing, collections, and financial projections. This role is suitable for an entry-level accounting professional who is eager to learn, analytical, and ready to grow within a dynamic work environment.</description>
+      <content:encoded>&lt;p&gt;&lt;b&gt;Responsibilities:&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Assist with the preparation and maintenance of accurate financial records.&lt;/li&gt;&lt;li&gt;Support the preparation of financial reports, statements, and management reports.&lt;/li&gt;&lt;li&gt;Monitor and update cash flow records and assist with cash flow forecasting.&lt;/li&gt;&lt;li&gt;Prepare and process invoices and support accounts receivable activities.&lt;/li&gt;&lt;li&gt;Assist with tracking and following up on outstanding customer payments and collections.&lt;/li&gt;&lt;li&gt;Support the preparation of financial projections and basic financial analysis.&lt;/li&gt;&lt;li&gt;Maintain and update financial data using Microsoft Excel and Google Sheets.&lt;/li&gt;&lt;li&gt;Reconcile financial records and identify discrepancies where necessary.&lt;/li&gt;&lt;li&gt;Assist with other accounting and finance-related activities as assigned.&lt;/li&gt;&lt;li&gt;Ensure financial information is properly organized, accurate, and up to date.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Requirements:&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;HND in accounting or a related discipline.&lt;/li&gt;&lt;li&gt;0–1 year of relevant experience; fresh graduates with strong accounting fundamentals are encouraged to apply.&lt;/li&gt;&lt;li&gt;Strong proficiency in Microsoft Excel and Google Sheets.&lt;/li&gt;&lt;li&gt;Basic understanding or practical exposure to financial reporting, cash flow management, invoicing, collections/accounts receivable, and financial projections&lt;/li&gt;&lt;li&gt;Strong analytical and numerical skills.&lt;/li&gt;&lt;li&gt;Excellent communication and problem-solving abilities.&lt;/li&gt;&lt;li&gt;High level of attention to detail and accuracy.&lt;/li&gt;&lt;li&gt;Willingness and ability to learn and develop professionally.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Key Competencies:&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Analytical thinking&lt;/li&gt;&lt;li&gt;Attention to detail&lt;/li&gt;&lt;li&gt;Numerical proficiency&lt;/li&gt;&lt;li&gt;Problem-solving&lt;/li&gt;&lt;li&gt;Communication skills&lt;/li&gt;&lt;li&gt;Organization and time management&lt;/li&gt;&lt;li&gt;Proficiency in spreadsheets&lt;/li&gt;&lt;li&gt;Willingness to learn&lt;/li&gt;&lt;li&gt;Integrity and confidentiality&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;What We Offer:&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Practical exposure to diverse accounting and finance functions.&lt;/li&gt;&lt;li&gt;Opportunity to develop technical and professional accounting skills.&lt;/li&gt;&lt;li&gt;Supportive environment for learning and career growth.&lt;/li&gt;&lt;/ul&gt;</content:encoded>
       <work_type>Full Time</work_type>
+      <category>Accounting, Auditing &amp; Finance</category>
+      <experience_level>No Experience</experience_level>
+      <experience_length>No Experience/Less than 1 year</experience_length>
+      <minimum_qualification>HND</minimum_qualification>
     </item>
     <item>
-      <title>Human Resources Executive in Rest of Nigeria</title>
-      <link>https://www.jobberman.com/listings/human-resources-executive-k784d8?utm_campaign=Job_Listing_Yoma_ng&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-nigeria-and-yoma-5224</link>
-      <guid isPermaLink="false">1223358</guid>
-      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/ng/og-template-600w-315h/0eadc2c09882ce4635dd708722a8bb27/-/eyJ0ZW1wbGF0ZSI6ImpvYi0wOS0yMDI0IiwicmVwbGFjZW1lbnRzIjp7ImpvYlRpdGxlIjoiSHVtYW4gUmVzb3VyY2VzIEV4ZWN1dGl2ZSIsImpvYkZ1bmN0aW9uIjoiSHVtYW4gUmVzb3VyY2VzIiwic2FsYXJ5IjoiQ29uZmlkZW50aWFsIiwibG9jYXRpb24iOiJBa3dhIElib20iLCJ3b3JrVHlwZSI6IkZ1bGwgVGltZSJ9LCJpbWFnZXMiOnsiYmFja2dyb3VuZCI6eyJmaWxlIjoiczM6XC9cL3NoYXJlZC1mb2xkZXItcHJvZFwvMjAyNS0wOVwvcmVjdGFuZ2xlXC9qb2JmdW5jdGlvblwvaHVtYW4tcmVzb3VyY2VzLnBuZyJ9fX0=/human-resources-executive-k784d8.jpg" />
-      <location>Akwa Ibom, Nigeria</location>
-      <description>Job Title: HR ExecutiveCompany: Crowness Solutions Ltd (On Behalf of Oil &amp;amp; Gas Client)Location: Akwa Ibom State (Site-Based)Employment Type: Full-Time🔥 Job SummaryWe are hiring an experienced HR Executive for an Oil &amp;amp; Gas operation in Akwa Ibom.The ideal candidate will be responsible for man...</description>
+      <title>Medical Representative in Rest of Nigeria</title>
+      <link>https://www.jobberman.com/listings/medical-representative-d92054?utm_campaign=Job_Listing_Yoma_ng&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-nigeria-and-yoma-5224</link>
+      <guid isPermaLink="false">1259818</guid>
+      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/ng/og-template-600w-315h/M2lmUYf6xWxzDZwMvwb2CA/-/_1Iy99-gL9nJyYAywpC4CZFNQuKcksS8VItTBlagoBwDIlF2hYaQlIADk1-7n7KZgYGOiACjldBTMICzWJOyWWAktF1IQOL3eJDROiSjWg89OgztfPhTheF9h40y1AcT64lKqtrQUA/medical-representative-d92054.jpg" />
+      <location>Bauchi, Nigeria</location>
+      <price>NGN 400,000 - 600,000</price>
+      <description>We are seeking professionals who are passionate about pharmaceutical sales, experienced in territory management, and capable of building strong relationships with doctors, pharmacists, hospitals, distributors, and other healthcare stakeholders.</description>
+      <content:encoded>&lt;p&gt;&lt;b&gt;Responsibilities:&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Promote pharmaceutical products to healthcare professionals and institutions&lt;/li&gt;&lt;li&gt;Drive prescription generation and product uptake&lt;br&gt;&lt;/li&gt;&lt;li&gt;Achieve monthly and quarterly sales targets&lt;br&gt;&lt;/li&gt;&lt;li&gt;Build and maintain strong customer relationships&lt;br&gt;&lt;/li&gt;&lt;li&gt;Conduct regular market visits and ensure territory coverage&lt;br&gt;&lt;/li&gt;&lt;li&gt;Organise product presentations and promotional activities&lt;br&gt;&lt;/li&gt;&lt;li&gt;Monitor competitor activities and market trends&lt;br&gt;&lt;/li&gt;&lt;li&gt;Submit timely activity and sales reports&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Requirements:&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Minimum of 5+ years of pharmaceutical sales experience in Nigeria&lt;/li&gt;&lt;li&gt;HND in life sciences, pharmacy, biochemistry, microbiology, or related field&lt;/li&gt;&lt;li&gt;Strong understanding of distributor engagement and doctor call processes &lt;br&gt;&lt;/li&gt;&lt;li&gt;Proven sales track record within the region&lt;br&gt;&lt;/li&gt;&lt;li&gt;Excellent communication and relationship management skills&lt;br&gt;&lt;/li&gt;&lt;li&gt;Ability to work independently and meet targets&lt;br&gt;&lt;/li&gt;&lt;li&gt;Proficiency in Microsoft Excel and reporting tools&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;What We Offer:&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Competitive salary with performance incentives&lt;/li&gt;&lt;li&gt;Career growth opportunities&lt;br&gt;&lt;/li&gt;&lt;li&gt;Ongoing sales and product training&lt;br&gt;&lt;/li&gt;&lt;li&gt;Opportunity to work with a respected pharmaceutical brand&lt;br&gt;&lt;/li&gt;&lt;li&gt;High-performance and growth-driven culture&lt;/li&gt;&lt;/ul&gt;
+
+&lt;div&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;b&gt;Location: &lt;/b&gt;Bauchi&lt;/p&gt;&lt;p&gt;&lt;b&gt;Remuneration: NGN&lt;/b&gt; 500,000 Monthly Net &lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;/div&gt;</content:encoded>
       <work_type>Full Time</work_type>
+      <category>Medical &amp; Pharmaceutical</category>
+      <experience_level>Senior level</experience_level>
+      <experience_length>5 years</experience_length>
+      <minimum_qualification>HND</minimum_qualification>
     </item>
     <item>
-      <title>Graduate Developer in Lagos</title>
-      <link>https://www.jobberman.com/listings/graduate-developer-45nxz5?utm_campaign=Job_Listing_Yoma_ng&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-nigeria-and-yoma-5224</link>
-      <guid isPermaLink="false">1223975</guid>
-      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/ng/og-template-600w-315h/3964a8690fa9644198dc9e2c634eaa3c/-/eyJ0ZW1wbGF0ZSI6ImpvYi0wOS0yMDI0IiwicmVwbGFjZW1lbnRzIjp7ImpvYlRpdGxlIjoiR3JhZHVhdGUgRGV2ZWxvcGVyIiwiam9iRnVuY3Rpb24iOiJFbmdpbmVlcmluZyAmIFRlY2hub2xvZ3kiLCJzYWxhcnkiOiJDb25maWRlbnRpYWwiLCJsb2NhdGlvbiI6IkxhZ29zIiwid29ya1R5cGUiOiJGdWxsIFRpbWUifSwiaW1hZ2VzIjp7ImJhY2tncm91bmQiOnsiZmlsZSI6InMzOlwvXC9zaGFyZWQtZm9sZGVyLXByb2RcLzIwMjUtMDlcL3JlY3RhbmdsZVwvam9iZnVuY3Rpb25cL2VuZ2luZWVyaW5nLWFuZC10ZWNobm9sb2d5LnBuZyJ9fX0=/graduate-developer-45nxz5.jpg" />
-      <location>Lagos, Nigeria</location>
-      <description>
-        About Joveo:
+      <title>Plant Manager Part-Time in Remote (Work From Home)</title>
+      <link>https://www.jobberman.com/listings/plant-manager-part-time-6q5kd8?utm_campaign=Job_Listing_Yoma_ng&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-nigeria-and-yoma-5224</link>
+      <guid isPermaLink="false">1268666</guid>
+      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/ng/og-template-600w-315h/T0YCG291cJOZnfuLl8Lghw/-/_1Iy99BuQAy0to4V2kACrwdUFlIEayBRb3xaU50DIb2PABVZWVyGk5NNhFwdDUQEFXwdjAADVhB6XmAhtbChrhwNStAGqWKXjk56ZqoqZ3eF1DbNAQVbgBPZEG9YR-MtwLusBmHLCtA_EEuKSqra0FAA/plant-manager-part-time-6q5kd8.jpg" />
+      <location>Remote (Work From Home), Nigeria</location>
+      <price>USD 150 - 300</price>
+      <description>The Part-Time Plant Manager will direct day-to-day hybrid manufacturing operations while acting as the primary operational stakeholder for mapping physical shop floor processes, work centers, and inventory flows into the&#xD;
+ERP system.</description>
+      <content:encoded>&lt;p&gt;&lt;b&gt;Responsibilities:&lt;/b&gt;&lt;/p&gt;
 
-        Every company says they're "AI-first." We actually are. Joveo's recruitment
+&lt;ul&gt;&lt;li&gt;Serve as the subject matter expert to translate real-world discrete and process manufacturing workflows into
+digital ERP functional operations.&lt;/li&gt;&lt;li&gt;Define physical stock locations, warehouses, virtual locations, and automated inventory reordering points
+inside the software.&lt;/li&gt;&lt;li&gt;Collaboratively test production scheduling modules, capacity planning tools, and real-time inventory tracking
+alongside the software support specialist.&lt;/li&gt;&lt;li&gt;Drive change management on the factory floor, ensuring line staff are adequately trained to log operational
+data into the system correctly. &lt;/li&gt;&lt;li&gt;Drive daily plant operations across both discrete assembly and process-batch production lines.
+• Maintain stringent occupational health, safety, quality control, and facility compliance standards.&lt;/li&gt;&lt;/ul&gt;
 
-        advertising platform processes millions of hiring decisions through machine
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
-        learning, real-time bidding, and predictive analytics — helping the world's
+&lt;p&gt;&lt;b&gt;Requirements:&lt;/b&gt;&lt;/p&gt;
 
-        largest employers find the right people, faster an...
-      </description>
-      <work_type>Full Time</work_type>
-    </item>
-    <item>
-      <title>Community Lead in Lagos</title>
-      <link>https://www.jobberman.com/listings/community-lead-d9757r?utm_campaign=Job_Listing_Yoma_ng&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-nigeria-and-yoma-5224</link>
-      <guid isPermaLink="false">1223640</guid>
-      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/ng/og-template-600w-315h/d3758de8f43876d5c91bd63a6e770dd2/-/eyJ0ZW1wbGF0ZSI6ImpvYi0wOS0yMDI0IiwicmVwbGFjZW1lbnRzIjp7ImpvYlRpdGxlIjoiQ29tbXVuaXR5IExlYWQiLCJqb2JGdW5jdGlvbiI6IlVuc3BlY2lmaWVkIiwic2FsYXJ5IjoiQ29uZmlkZW50aWFsIiwibG9jYXRpb24iOiJMYWdvcyIsIndvcmtUeXBlIjoiUGFydCBUaW1lIn0sImltYWdlcyI6eyJiYWNrZ3JvdW5kIjp7ImZpbGUiOiJzMzpcL1wvc2hhcmVkLWZvbGRlci1wcm9kXC8yMDI1LTA5XC9yZWN0YW5nbGVcL2pvYmZ1bmN0aW9uXC9kZWZhdWx0LnBuZyJ9fX0=/community-lead-d9757r.jpg" />
-      <location>Lagos, Nigeria</location>
-      <description>
-        Company Description
-
-        At TYB - The Young &amp;amp; Becoming, we build young people for the real world.
-
-
-
-        Over 80% of young graduates and early-career professionals we surveyed said the same thing: “I feel lost about my direction.”
-
-
-
-        They have degrees. They have talent.
-
-
-
-        But no one taught them how t...
-      </description>
+&lt;ul&gt;&lt;li&gt;Bachelor’s degree in Engineering or Operations&lt;/li&gt;&lt;li&gt;4 years of plant leadership across discrete
+and process industries&lt;/li&gt;&lt;li&gt;Clear understanding of MRP data logic.&lt;/li&gt;&lt;/ul&gt;</content:encoded>
       <work_type>Part Time</work_type>
+      <category>Consulting &amp; Strategy</category>
+      <experience_level>Mid level</experience_level>
+      <experience_length>4 years</experience_length>
+      <minimum_qualification>Degree</minimum_qualification>
     </item>
     <item>
-      <title>Manager in Lagos</title>
-      <link>https://www.jobberman.com/listings/manager-qz2jr6?utm_campaign=Job_Listing_Yoma_ng&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-nigeria-and-yoma-5224</link>
-      <guid isPermaLink="false">1223429</guid>
-      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/ng/og-template-600w-315h/366a856cc343c5d70dd170fced05b524/-/eyJ0ZW1wbGF0ZSI6ImpvYi0wOS0yMDI0IiwicmVwbGFjZW1lbnRzIjp7ImpvYlRpdGxlIjoiTWFuYWdlciIsImpvYkZ1bmN0aW9uIjoiVW5zcGVjaWZpZWQiLCJzYWxhcnkiOiJDb25maWRlbnRpYWwiLCJsb2NhdGlvbiI6IkxhZ29zIiwid29ya1R5cGUiOiJGdWxsIFRpbWUifSwiaW1hZ2VzIjp7ImJhY2tncm91bmQiOnsiZmlsZSI6InMzOlwvXC9zaGFyZWQtZm9sZGVyLXByb2RcLzIwMjUtMDlcL3JlY3RhbmdsZVwvam9iZnVuY3Rpb25cL2RlZmF1bHQucG5nIn19fQ==/manager-qz2jr6.jpg" />
-      <location>Lagos, Nigeria</location>
-      <description>
-        JOB TITLE: HUMAN RESOURCE OFFICER
+      <title>Cost Estimating Lead 111 in Nigeria</title>
+      <link>https://www.jobberman.com/listings/cost-estimating-lead-111-rrjd5n?utm_campaign=Job_Listing_Yoma_ng&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-nigeria-and-yoma-5224</link>
+      <guid isPermaLink="false">1266854</guid>
+      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/ng/og-template-600w-315h/rE2EUThiTX4LsWrwtPcTYg/-/_1Iy99OucXlyi4FgMLwERwgeyTmpiiYGhoiJFucRXQyOnZz91PwTEJ2HdQMNUBFnUgjJrE_TLTgSYkoqZ0eMFLbKAQVawBXZ8GdT2wwQN3uy6wBQcMP5jrwcVUbW0tAA/cost-estimating-lead-111-rrjd5n.jpg" />
+      <location>Nigeria, Nigeria</location>
+      <price>NGN Above 5,000,000</price>
+      <description>The Cost Estimating Lead 111 will serve as a strategic pillar in our project delivery framework, providing high-level oversight for complex cost planning and scheduling initiatives. This onsite role directly impacts organizational profitability by ensuring precise budget management and technical accuracy across all large-scale projects within the oil and gas sector.</description>
+      <content:encoded>&lt;p&gt;&lt;b&gt;Responsibilities:&lt;/b&gt;&lt;/p&gt;
 
+&lt;ul&gt;&lt;li&gt;Spearhead the development and implementation of advanced project cost planning, scheduling, and reporting frameworks to ensure rigorous financial control.&lt;/li&gt;&lt;li&gt;Apply expert-level analytical and computing skills to evaluate complex project datasets, identifying risks and opportunities for cost optimization.&lt;/li&gt;&lt;li&gt;Lead negotiations and influence cross-functional project teams to resolve intricate project issues and align stakeholders on budgetary requirements.&lt;/li&gt;&lt;li&gt;Provide high-level consulting to senior management regarding process efficiency improvements, quality assurance protocols, and long-term project budget strategies.&lt;/li&gt;&lt;li&gt;Offer mentorship and professional guidance to supervisory staff, fostering a culture of technical excellence and adherence to industry best practices.&lt;/li&gt;&lt;li&gt;Communicate strategic cost advice directly to internal project management teams and external clients, ensuring transparency and alignment on project fiscal health.&lt;/li&gt;&lt;/ul&gt;
 
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
-        Company Description
+&lt;p&gt;&lt;b&gt;Requirements:&lt;/b&gt;&lt;/p&gt;
 
+&lt;ul&gt;&lt;li&gt;Minimum of 10+ years of professional experience in project cost and schedule estimating roles within the engineering or oil and gas sectors.&lt;/li&gt;&lt;li&gt;Hold a Bachelor’s degree in Engineering or a closely related technical field from an accredited institution.&lt;/li&gt;&lt;li&gt;Proven mastery in the use of advanced cost estimating software and project management tools to produce accurate, data-driven forecasts.&lt;/li&gt;&lt;li&gt;Demonstrated history of providing strategic leadership and executive-level consulting on large-scale capital projects.&lt;/li&gt;&lt;li&gt;Expert ability to adapt to shifting project priorities in an onsite, high-pressure environment while maintaining strict quality standards.&lt;/li&gt;&lt;li&gt;Strong track record of successfully influencing cross-functional stakeholders and delivering effective, high-level technical mentorship to staff.&lt;/li&gt;&lt;/ul&gt;
 
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
-        The Startup Place Limited is a Business Consulting firm specializing in startup development, digital marketing, and business growth. Our team is composed of passionate entrepreneurs and consultants dedicated to helping businesses start,...
-      </description>
+&lt;p&gt;&lt;b&gt;Benefits:&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Opportunity to shape the cost management strategy of major projects within the Nigerian oil and gas landscape.&lt;/li&gt;&lt;li&gt;Professional development and exposure to industry-leading project management methodologies.&lt;/li&gt;&lt;li&gt;A stable, on-site working environment with no requirement for business travel.&lt;/li&gt;&lt;/ul&gt;</content:encoded>
       <work_type>Full Time</work_type>
+      <category>Engineering &amp; Technology</category>
+      <experience_level>Executive level</experience_level>
+      <experience_length>10 years</experience_length>
+      <minimum_qualification>Degree</minimum_qualification>
+    </item>
+    <item>
+      <title>Vendor Acquisition Officer in Lagos</title>
+      <link>https://www.jobberman.com/listings/vendor-acquisition-officer-wrwpjp?utm_campaign=Job_Listing_Yoma_ng&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-nigeria-and-yoma-5224</link>
+      <guid isPermaLink="false">1269272</guid>
+      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/ng/og-template-600w-315h/OJ3hUVpLFze8_7h7LxHGVQ/-/_1Iy99hgE9nl-k4JhcWJoJbIqDCk1IUVuEkXLBhS9y8vVz91MwN9ABFWq6CoamYBZqkvZJTM8vRk3XsKoEUoAX5BeBzCIyNIgqz4COToM6Wr8Y5GRwUVRbWwsA/vendor-acquisition-officer-wrwpjp.jpg" />
+      <location>Lagos, Nigeria</location>
+      <price>NGN 70,000 - 150,000</price>
+      <description>Luna Fortis is a marketplace that connects travelers in Lagos with short let apartments, car hire and licensed security. We launch on 1st December 2026 to catch the December rush, so we need a small team of field officers to bring in vendors before then.</description>
+      <content:encoded>&lt;p&gt;&lt;b&gt;Responsibilities:&lt;/b&gt;&lt;/p&gt;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+&lt;ul&gt;&lt;li&gt;Find and approach short let owners/managers
+and car hire operators in your assigned area.&lt;/li&gt;&lt;li&gt;Explain the Luna Fortis value proposition:
+position the platform as an open digital marketplace where independent
+providers list and manage their own services. Emphasize that Luna Fortis acts
+strictly as an intermediary facilitator and does not own assets, properties, or
+fleets.&lt;/li&gt;&lt;li&gt;Offer the Founding Vendor deal: 0%
+commission until 28 February 2027 for any vendor who is live before 1st
+December.&lt;/li&gt;&lt;li&gt;Help vendors register, complete their
+documentation, and set up their listing.&lt;/li&gt;&lt;li&gt;Walk each vendor through KYC and adding a
+payout account, then get their first listing live.&lt;/li&gt;&lt;li&gt;Collect the business, property and vehicle
+information needed for verification.&lt;/li&gt;&lt;li&gt;Ensure every listing has accurate
+information, approved photos, pricing and availability.&lt;/li&gt;&lt;li&gt;Keep a daily record of prospects,
+follow-ups and completed activations in the team tracker.&lt;/li&gt;&lt;li&gt;Send a weekly performance report to the
+team lead.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Requirements:&lt;/b&gt;&lt;/p&gt;
+
+
+
+
+
+
+
+
+
+
+
+&lt;ul&gt;&lt;li&gt;A minimum of SSCE.or higher
+qualification is an advantage.&lt;/li&gt;&lt;li&gt;Prior experience in field sales, direct marketing, retail banking, insurance, telecommunications, or merchant acquisition is highly advantageous.&lt;/li&gt;&lt;li&gt;A background in shortlet management, real estate, vehicle rentals, or the hospitality sector is also preferred.&lt;/li&gt;&lt;li&gt;Strong communication, persuasion and
+people skills.&lt;/li&gt;&lt;li&gt;Comfortable working outdoors and
+travelling around Lagos for field visits.&lt;/li&gt;&lt;li&gt;Target-driven, honest, organised and
+self-motivated.&lt;/li&gt;&lt;li&gt;Comfortable with WhatsApp, smartphones and
+basic online forms.&lt;/li&gt;&lt;/ul&gt;
+
+
+
+&lt;p&gt; &lt;/p&gt;</content:encoded>
+      <work_type>Contract &amp; Temporary</work_type>
+      <category>Sales</category>
+      <experience_level>Entry level</experience_level>
+      <experience_length>2 years</experience_length>
+      <minimum_qualification>High School (S.S.C.E)</minimum_qualification>
+    </item>
+    <item>
+      <title>Interview &amp; Onboarding Scheduling Coordinator Intern in Remote (Work From Home)</title>
+      <link>https://www.jobberman.com/listings/interview-onboarding-scheduling-coordinator-intern-m0jz86?utm_campaign=Job_Listing_Yoma_ng&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-nigeria-and-yoma-5224</link>
+      <guid isPermaLink="false">1266612</guid>
+      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/ng/og-template-600w-315h/DJqTpB1WaQXGrszQBrdjpg/-/_1Iy99gsv9sszUclAZm5eUn1iUAiqCg5MzUlNKc0BM5_x8kFhiSX6RAqSWwEjTHsDiF1TYFueXFiWnFiMncT93PwVzAx1QwaerYGgKZqEm-6DUXGBTTEEjHJj2FUCNNgWP_NxUTdTcgLV6IjYQiSoGgT5Kg_pIPwPkH2D7AOofcFlWW1sLAA/interview-onboarding-scheduling-coordinator-intern-m0jz86.jpg" />
+      <location>Remote (Work From Home), Nigeria</location>
+      <price>NGN 70,000 - 150,000</price>
+      <description>You will be the scheduling and coordination hub for our Recruitment Managers and Employee Success Managers. You'll schedule interviews and coordinate onboarding meetings across several managers' calendars at once, so every candidate and new hire is booked correctly, on time and with no conflicts. This is for someone who enjoys calendar management.</description>
+      <content:encoded>&lt;p&gt;&lt;b&gt;Responsibilities:&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Interview Scheduling:&lt;/b&gt;&lt;/p&gt;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+&lt;ul&gt;&lt;li&gt;Schedule interviews on the hiring
+managers' calendars, with no conflicts or double bookings.&lt;/li&gt;&lt;li&gt;Send interview invitations,
+meeting links, preparation instructions and reminders to candidates and
+interviewers.&lt;/li&gt;&lt;li&gt;Confirm candidate attendance, and
+handle reschedules and cancellations quickly and professionally.&lt;/li&gt;&lt;li&gt;Prepare candidates before their
+interview: check their connection and audio, and explain the format and what to
+expect.&lt;/li&gt;&lt;li&gt;Make sure each interviewer has the
+candidate's complete file before the interview.&lt;/li&gt;&lt;li&gt;Record interview attendance,
+no-shows and outcomes in the HR system on the same day.&lt;/li&gt;&lt;/ul&gt;
+
+
+
+&lt;p&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Onboarding Coordination:&lt;/b&gt;&lt;/p&gt;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+&lt;ul&gt;&lt;li&gt;Schedule and coordinate onboarding
+meetings between new hires and their assigned Employee Success Manager, within
+the required timelines.&lt;/li&gt;&lt;li&gt;Book follow-up onboarding sessions
+and make sure every new hire finishes the full onboarding sequence.&lt;/li&gt;&lt;li&gt;Send confirmations, agendas and
+reminders to new hires and managers.&lt;/li&gt;&lt;li&gt;Track onboarding progress and flag
+any missed or delayed meetings straight away.&lt;/li&gt;&lt;/ul&gt;
+
+
+
+&lt;p&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Calendar and Manager Support:&lt;/b&gt;&lt;/p&gt;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+&lt;ul&gt;&lt;li&gt;Manage and coordinate the
+calendars of several Recruitment and Employee Success Managers at the same
+time.&lt;/li&gt;&lt;li&gt;Prioritise urgent bookings and
+resolve scheduling conflicts between managers, candidates and new hires.&lt;/li&gt;&lt;li&gt;Keep managers updated on schedule
+changes, late arrivals, withdrawals and cancellations.&lt;/li&gt;&lt;li&gt;Act as the main scheduling contact
+between candidates, new hires and managers.&lt;/li&gt;&lt;/ul&gt;
+
+
+
+&lt;p&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Records and Reporting:&lt;/b&gt;&lt;/p&gt;
+
+
+
+
+
+
+
+
+
+
+
+&lt;ul&gt;&lt;li&gt;Keep all candidate and new-hire
+records accurate and up to date in our HR platforms.&lt;/li&gt;&lt;li&gt;Prepare a weekly scheduling report
+covering interviews booked, completed, rescheduled and missed, and onboarding
+meetings held.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Requirements:&lt;/b&gt;&lt;/p&gt;
+
+
+
+&lt;ul&gt;&lt;li&gt;Very strong Microsoft Outlook skills for calendar management, shared calendars, meeting invitations, scheduling
+assistants, and email organisation&lt;/li&gt;&lt;li&gt;Experience with HR platforms for applicant tracking systems (ATS), HRIS, or CRM tools&lt;br&gt;&lt;/li&gt;&lt;li&gt;Very strong computer skills such as Microsoft Office (Excel, Word), Microsoft Teams, Google Workspace, and video
+conferencing tools&lt;br&gt;&lt;/li&gt;&lt;li&gt;Proven ability to handle
+several competing priorities and switch quickly between tasks without
+dropping anything&lt;br&gt;&lt;/li&gt;&lt;li&gt;Able to support several
+managers at once and manage their schedules efficiently&lt;/li&gt;&lt;li&gt;Excellent attention to detail. You
+catch errors before they happen.&lt;/li&gt;&lt;li&gt;Clear, professional written and
+spoken English&lt;/li&gt;&lt;li&gt;Strong follow-up habits and the
+ability to work to tight deadlines&lt;/li&gt;&lt;li&gt;Able to keep candidate and
+employee information confidential&lt;/li&gt;&lt;li&gt;Own laptop, reliable internet, and
+a smartphone with WhatsApp&lt;/li&gt;&lt;li&gt;Available during business hours,
+Monday to Friday&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;What You'll Gain:&lt;/b&gt;&lt;/p&gt;
+
+
+
+
+
+
+
+
+
+
+
+&lt;ul&gt;&lt;li&gt;Hands-on experience in recruitment
+and employee onboarding operations&lt;/li&gt;&lt;li&gt;Direct work with recruitment and employee success managers&lt;/li&gt;&lt;li&gt;Training, mentorship, and regular
+feedback&lt;/li&gt;&lt;/ul&gt;
+
+
+
+
+
+&lt;p&gt; &lt;/p&gt;</content:encoded>
+      <work_type>Internship &amp; Graduate</work_type>
+      <category>Human Resources</category>
+      <experience_level>Internship &amp; Graduate</experience_level>
+      <experience_length>1 year</experience_length>
+      <minimum_qualification>Degree</minimum_qualification>
+    </item>
+    <item>
+      <title>Business Development / Sales Associate in Remote (Work From Home)</title>
+      <link>https://www.jobberman.com/listings/business-development-sales-associate-data-analytics-6qvne6?utm_campaign=Job_Listing_Yoma_ng&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-nigeria-and-yoma-5224</link>
+      <guid isPermaLink="false">1259788</guid>
+      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/ng/og-template-600w-315h/dlb-r0xol3lWC521XjlqeA/-/_1Iy99YiupFfQVwAUtsDQtzk_OBJmInooJlvbIydzPHViQ5ufmZhYXgwpl_zxg-wgl5Qel5gJbYwoa4cDkrwBqtyl45OemaqJmCFgdRGzQEVX4AX2VBvWVfi7cT7rAZp4urEjQTUH4Clyq1dbWAgA/business-development-sales-associate-data-analytics-6qvne6.jpg" />
+      <location>Remote (Work From Home), Nigeria</location>
+      <price>NGN Commission Only</price>
+      <description>We are seeking consultative Business Development / Sales Associates (data &amp; analytics) to build our client acquisition engine. You will identify prospective business clients, open conversations with senior decision-makers, diagnose their business and data challenges, and convert qualified opportunities into paying clients.</description>
+      <content:encoded>&lt;p&gt;&lt;b&gt;Responsibilities:&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Research and identify prospective business clients and their decision-makers&lt;/li&gt;&lt;li&gt;Build and maintain a qualified prospect pipeline&lt;/li&gt;&lt;li&gt;Initiate contact via LinkedIn, email, telephone, referral, and professional networking&lt;/li&gt;&lt;li&gt;Conduct discovery to understand each prospect's business and data challenges&lt;/li&gt;&lt;li&gt;Articulate where analytics can create measurable commercial value&lt;/li&gt;&lt;li&gt;Schedule discovery meetings and solution presentations&lt;/li&gt;&lt;li&gt;Work with the consulting team to shape scope and proposals&lt;/li&gt;&lt;li&gt;Manage follow-up, objection handling, and negotiation through to close&lt;/li&gt;&lt;li&gt;Maintain accurate records of all prospects and conversations&lt;/li&gt;&lt;li&gt;Develop long-term client relationships and identify further opportunities&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Requirements:&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Strong written and spoken communication&lt;/li&gt;&lt;li&gt;Confidence engaging business owners, executives, and finance professionals&lt;/li&gt;&lt;li&gt;Commercial awareness and understanding of how businesses make and lose money&lt;/li&gt;&lt;li&gt;Ability to connect a business problem to an appropriate solution&lt;/li&gt;&lt;li&gt;Strong research skills and consistent prospecting discipline&lt;/li&gt;&lt;li&gt;Ability to explain analytical concepts in plain business language&lt;/li&gt;&lt;li&gt;Resilience, professionalism, integrity, and self-motivation&lt;/li&gt;&lt;li&gt;Willingness to work to measurable performance targets&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Advantageous (not required):&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Experience or study in business development, B2B sales, financial services, accounting, consulting, technology or SaaS sales, data analytics, business intelligence, digital transformation, corporate services, FinTech, or management consulting.&lt;/li&gt;&lt;li&gt;A technical background is not mandatory.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Benefit:&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt; Commission-only; 10% of collected contract value, 5% residual on renewals within 12 months, plus milestone bonuses.&lt;/li&gt;&lt;li&gt; Structured training and a defined path to a retained position for strong performers.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;div&gt;&lt;br&gt;&lt;/div&gt;</content:encoded>
+      <work_type>Contract</work_type>
+      <category>Management &amp; Business Development</category>
+      <experience_level>Entry level</experience_level>
+      <experience_length>No Experience/Less than 1 year</experience_length>
+      <minimum_qualification>Degree</minimum_qualification>
+    </item>
+    <item>
+      <title>AI Adoption Intern in Lagos</title>
+      <link>https://www.jobberman.com/listings/ai-adoption-intern-d9n975?utm_campaign=Job_Listing_Yoma_ng&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-nigeria-and-yoma-5224</link>
+      <guid isPermaLink="false">1269640</guid>
+      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/ng/og-template-600w-315h/BRfM4J23hdhE4GAUX4UWUg/-/_1Iy99OnoqOKbkF4CSoAKkDsBIscH5aSXlwPgGFq8uiUB_ICVg5EoANTH7JKbnF6OmaJQqJiw_B1gZAAt8YkOCqLIM6PA0qMP1i6HO1gW22YCZpCQRXCTV1tYCAA/ai-adoption-intern-d9n975.jpg" />
+      <location>Lagos, Nigeria</location>
+      <description>We are looking for curious, creative, and technically minded individuals who want to explore how Artificial Intelligence can transform the way businesses operate. If you enjoy coding, experimenting with new technologies, and building practical solutions, this internship is an opportunity to develop your skills while contributing to meaningful AI adoption projects. This internship focuses on exploring, testing, and applying AI tools and technologies to improve software development, automate tasks, and solve real-world business problems. Interns will research emerging AI solutions, experiment with AI powered development tools, and identify&#xD;
+opportunities to help SMEs and startups work more efficiently.</description>
+      <content:encoded>&lt;p&gt;&lt;b&gt;Responsibilities:&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Research and identify AI tools, platforms, and technologies relevant to software development and business operations.&lt;/li&gt;&lt;li&gt;Test AI-powered coding assistants, application builders, automation tools, and other developer-focused solutions.&lt;/li&gt;&lt;li&gt;Explore how AI can support software development, debugging, testing, documentation, and workflow automation.&lt;/li&gt;&lt;li&gt;Build simple prototypes, experiment with AI integrations, and demonstrate practical use cases where applicable.&lt;/li&gt;&lt;li&gt;Document findings, tool capabilities, limitations, and potential business applications.&lt;/li&gt;&lt;li&gt;Collaborate with team members and contribute to assigned projects and research activities.&lt;/li&gt;&lt;li&gt;Share progress updates and complete assigned tasks within agreed deadlines.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Requirements&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Basic knowledge of at least one programming language, such as Python, JavaScript, Java, C++, PHP, or another relevant language.&lt;/li&gt;&lt;li&gt;A genuine interest in artificial intelligence, software development, and emerging technologies.&lt;/li&gt;&lt;li&gt;Willingness to learn, research, test tools, and experiment with new ideas.&lt;/li&gt;&lt;li&gt;Good analytical, problem-solving, and critical-thinking skills.&lt;/li&gt;&lt;li&gt;Ability to work independently and collaborate effectively with a remote team.&lt;/li&gt;&lt;li&gt;Good written communication and documentation skills.&lt;/li&gt;&lt;li&gt;Access to a laptop and a reliable internet connection, with dependable power supply.&lt;/li&gt;&lt;li&gt;You do not need to be an AI expert! We welcome beginners and aspiring builders who have basic coding knowledge, a willingness to learn, and an interest in exploring what AI can make possible.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;What You Will Gain:&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Practical exposure to AI tools and their applications in software development.&lt;/li&gt;&lt;li&gt;Experience evaluating AI technologies and identifying useful business solutions.&lt;/li&gt;&lt;li&gt;Opportunities to experiment with AI-powered coding, automation, and application-building tools.&lt;/li&gt;&lt;li&gt;Improved technical research, problem-solving, teamwork, and documentation skills.&lt;/li&gt;&lt;li&gt;Experience contributing to real-world AI adoption projects.&lt;/li&gt;&lt;li&gt;A certificate of completion for interns who successfully fulfil the programme requirements.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Internship Details:&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;&lt;b&gt;Duration: &lt;/b&gt;3 months, with the possibility of renewal.&lt;/li&gt;&lt;li&gt;&lt;b&gt;Work Arrangement:&lt;/b&gt; Fully remote&lt;b&gt;.&lt;/b&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Compensation: &lt;/b&gt;This is an unpaid internship. However, data support will be provided to assist interns with their assigned responsibilities&lt;b&gt;.&lt;/b&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Work Environment: &lt;/b&gt;Collaborative, task-oriented, and focused on learning, research, and practical application.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Who Should Apply:&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Software developers, aspiring programmers, no-code/low-code builders with coding knowledge, technology enthusiasts, students, and recent graduates who want to explore the intersection of AI and software development.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Ready to Build with AI: &lt;/b&gt;If you are excited about technology and want to contribute to the future of AI adoption, we would love to hear from you!&lt;/p&gt;</content:encoded>
+      <work_type>Internship &amp; Volunteer</work_type>
+      <category>Software &amp; Data</category>
+      <experience_level>Internship &amp; Graduate</experience_level>
+      <experience_length>No Experience/Less than 1 year</experience_length>
+      <minimum_qualification>Vocational</minimum_qualification>
+    </item>
+    <atom:link rel="self" href="https://cde-console-production.s3.eu-west-1.amazonaws.com/jobs_rss_listings_5224.xml" type="application/rss+xml" />
+    <!-- Synthetic local/stage mapping case. The 10 live-derived source items above remain unchanged. -->
+    <item>
+      <title>[Mapping fixture] NG maximum-only salary</title>
+      <link>https://example.com/yoma-mapping-fixtures/ng-maximum-salary</link>
+      <guid isPermaLink="false">test-mapping-maximum-salary</guid>
+      <description>Local test case: maximum-only salary with structured mid-level experience and a part-time schedule.</description>
+      <content:encoded>&lt;p&gt;&lt;b&gt;Working Arrangements:&lt;/b&gt;&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Verify that the salary displays as Up to, not an exact amount.&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/p&gt;&lt;p&gt;&lt;b&gt;Benefits:&lt;/b&gt;&lt;/p&gt;&lt;p&gt;The original salary qualifier remains visible in the description.&lt;/p&gt;</content:encoded>
+      <location>Lagos, Nigeria</location>
+      <price>NGN Up to 400,000</price>
+      <work_type>Part Time</work_type>
+      <category>Software &amp; Data</category>
+      <experience_level>Mid level</experience_level>
+      <experience_length>5 years</experience_length>
+      <minimum_qualification>Degree</minimum_qualification>
     </item>
   </channel>
 </rss>

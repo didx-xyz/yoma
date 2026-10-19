@@ -23,6 +23,8 @@ namespace Yoma.Core.Infrastructure.Jobberman.Models
 
     public string Title { get; set; } = null!;
 
+    public string? Summary { get; set; }
+
     public string? Description { get; set; }
 
     public string? URL { get; set; }
@@ -32,6 +34,14 @@ namespace Yoma.Core.Infrastructure.Jobberman.Models
     public string? Location { get; set; }
 
     public string? WorkType { get; set; }
+
+    public string? Salary { get; set; }
+
+    public string? ExperienceLevel { get; set; }
+
+    public string? ExperienceLength { get; set; }
+
+    public string? MinimumQualification { get; set; }
 
     /// <summary>
     /// Partner-supplied start, published, created, or posted date.

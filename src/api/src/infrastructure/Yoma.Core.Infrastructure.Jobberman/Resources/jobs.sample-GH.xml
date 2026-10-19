@@ -1,135 +1,433 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" version="2.0">
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" version="2.0">
   <channel>
     <title>Jobberman Ghana and Yoma</title>
     <description>Jobberman Ghana and Yoma job listing to be shared via their website</description>
     <link>https://www.jobberman.com.gh</link>
-    <atom:link rel="self" href="https://cde-console-production.s3.eu-west-1.amazonaws.com/jobs_rss_listings_3620.xml" type="application/rss+xml" />
     <item>
-      <title>Embroidery Operator in Accra &amp; Tema Region</title>
-      <link>https://www.jobberman.com.gh/listings/embroidery-operator-xprmvz?utm_campaign=Job_Listing_Yoma+&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-ghana-and-yoma-3620</link>
-      <guid isPermaLink="false">1136333</guid>
-      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/gh/og-template-600w-315h/2e28fe406b6aac6c040076172a75c1dd/-/eyJ0ZW1wbGF0ZSI6ImpvYi0wOS0yMDI0IiwicmVwbGFjZW1lbnRzIjp7ImpvYlRpdGxlIjoiRW1icm9pZGVyeSBPcGVyYXRvciIsImpvYkZ1bmN0aW9uIjoiTWFuYWdlbWVudCAmIEJ1c2luZXNzIERldmVsb3BtZW50Iiwic2FsYXJ5IjoiQ29uZmlkZW50aWFsIiwibG9jYXRpb24iOiJBY2NyYSAmIFRlbWEgUmVnaW9uIiwid29ya1R5cGUiOiJGdWxsIFRpbWUifSwiaW1hZ2VzIjp7ImJhY2tncm91bmQiOnsiZmlsZSI6InMzOlwvXC9zaGFyZWQtZm9sZGVyLXByb2RcLzIwMjUtMDlcL3JlY3RhbmdsZVwvam9iZnVuY3Rpb25cL21hbmFnZW1lbnQtYW5kLWJ1c2luZXNzLWRldmVsb3BtZW50LnBuZyJ9fX0=/embroidery-operator-xprmvz.jpg" />
+      <title>Inventory Control Clerk in Accra &amp; Tema Region</title>
+      <link>https://www.jobberman.com.gh/listings/inventory-control-clerk-7wewpe?utm_campaign=Job_Listing_Yoma+&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-ghana-and-yoma-3620</link>
+      <guid isPermaLink="false">1141423</guid>
+      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/gh/og-template-600w-315h/bTZSUYcZdsJYyES0O-NZ2Q/-/_1Iy99euaVAUWBlZ4CuIzPz1FwBlbK2RjJFn_pjZyokSsG1ASOpeBGTfPwIpjY4CGqgAN6JA3qEf1EuDd0E6G-0AW26YDhC_YHuNSqra0FAA/inventory-control-clerk-7wewpe.jpg" />
       <location>Accra &amp; Tema Region, Ghana</location>
-      <description>
-        Role Summary
+      <description>The Inventory Control Clerk is responsible for maintaining the daily digital and physical accuracy of our integrated digital platform. Working directly on the warehouse floor, you will serve as the administrative bridge between our physical stock handlers and the accounting department.</description>
+      <content:encoded>&lt;div&gt;&lt;b&gt;Key Responsibilities:&lt;/b&gt;&lt;/div&gt;
 
-        The Embroidery Machine Operator is responsible for setting up, operating, and maintaining industrial embroidery machines to produce high-quality embroidered products. The role involves digitizing design files into machine-readable formats, ensuring precise execution of designs, and m...
-      </description>
+&lt;div&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/div&gt;
+
+&lt;ul&gt;&lt;li&gt;Record all incoming wholesale and retail stock into integrated digital platform ensuring zero lag in syncing data downstream.&lt;/li&gt;&lt;li&gt;Work with Colleagues warehouse staff by issuing paper-based counting sheets, verifying their physical counts, and preparing final data for the Accounts Officer.&lt;/li&gt;&lt;li&gt;Print and apply product, shelf, and pallet barcode labels using thermal printers.&lt;/li&gt;&lt;li&gt;Prepare daily delivery manifests for the company driver and ensure all outbound wholesale items are transferred out of the system to the receiving outlet/agent before vehicle departure.&lt;/li&gt;&lt;li&gt;Conduct daily spot-checks and weekly cycle counts, compiling variance reports directly for the Accounts Officer’s review and approval.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;b&gt;Qualification:&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Higher National Diploma (HND) in Purchasing &amp; Supply, Accounting, or Statistics&lt;/li&gt;&lt;li&gt;DBS (Diploma in Business Studies) in Accounting or Secretarial Duties&lt;/li&gt;&lt;li&gt;Non-Negotiable Practical Skills&lt;/li&gt;&lt;li&gt;Intermediate Microsoft Excel Skills&lt;/li&gt;&lt;li&gt;They must know how to filter data, sort columns alphabetically/numerically, and use basic formulas (SUM, AVERAGE).&lt;/li&gt;&lt;li&gt;Digital Native / Tech Comfort&lt;/li&gt;&lt;li&gt;They should be someone who uses smartphones and apps naturally&lt;/li&gt;&lt;/ul&gt;
+
+&lt;div&gt;&lt;b&gt; Basic Bookkeeping Awareness:&lt;/b&gt;&lt;/div&gt;
+
+&lt;div&gt;&lt;br&gt;&lt;/div&gt;
+
+&lt;ul&gt;&lt;li&gt;They must understand the concepts of Inbound (Debits/Additions to stock) and Outbound (Credits/Reductions to stock)&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Location:&lt;/b&gt; Lashibi (Tema Community 17).&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Salary: &lt;/b&gt;Attractive.&lt;/p&gt;</content:encoded>
       <work_type>Full Time</work_type>
+      <category>Accounting, Auditing &amp; Finance</category>
+      <experience_level>Entry level</experience_level>
+      <experience_length>1 year</experience_length>
+      <minimum_qualification>HND</minimum_qualification>
     </item>
     <item>
-      <title>Circuit Court Judge in Accra &amp; Tema Region</title>
-      <link>https://www.jobberman.com.gh/listings/circuit-court-judge-q20xdp-v1?utm_campaign=Job_Listing_Yoma+&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-ghana-and-yoma-3620</link>
-      <guid isPermaLink="false">1135529</guid>
-      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/gh/og-template-600w-315h/ea6f543f9fb2ea70233bacac629515ec/-/eyJ0ZW1wbGF0ZSI6ImpvYi0wOS0yMDI0IiwicmVwbGFjZW1lbnRzIjp7ImpvYlRpdGxlIjoiQ2lyY3VpdCBDb3VydCBKdWRnZSIsImpvYkZ1bmN0aW9uIjoiTGVnYWwgU2VydmljZXMiLCJzYWxhcnkiOiJDb25maWRlbnRpYWwiLCJsb2NhdGlvbiI6IkFjY3JhICYgVGVtYSBSZWdpb24iLCJ3b3JrVHlwZSI6IkZ1bGwgVGltZSJ9LCJpbWFnZXMiOnsiYmFja2dyb3VuZCI6eyJmaWxlIjoiczM6XC9cL3NoYXJlZC1mb2xkZXItcHJvZFwvMjAyNS0wOVwvcmVjdGFuZ2xlXC9qb2JmdW5jdGlvblwvbGVnYWwtc2VydmljZXMucG5nIn19fQ==/circuit-court-judge-q20xdp-v1.jpg" />
+      <title>Multimedia Designer in Accra &amp; Tema Region</title>
+      <link>https://www.jobberman.com.gh/listings/graphic-and-motion-designer-xp0pgw?utm_campaign=Job_Listing_Yoma+&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-ghana-and-yoma-3620</link>
+      <guid isPermaLink="false">1141411</guid>
+      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/gh/og-template-600w-315h/980xbS8Mgkwjz-sbS6J7og/-/_1Iy99-pbmgAo_oMeBZXVxZjqw7Y6RZJ2LUoFptCwVWL5C1CCnYVDZb6YDKth0Fcx1jAwMUBM1lsIaNZ3DqhaImoL8IpCxRIYOUeUb0C9pUL_oJ0N9ogtsx-mmgP0CLqhqa2sB/graphic-and-motion-designer-xp0pgw.jpg" />
       <location>Accra &amp; Tema Region, Ghana</location>
-      <description>
-        The Judicial Service of Ghana invites applications from qualified Magistrates and Lawyers for the position of Circuit Court Judge.Qualification Required &amp;amp; Experience
+      <price>GHS 6,000 - 7,200</price>
+      <description>Publicis West Africa is looking for a Multimedia Designer to join its creative team in Accra and report to the Creative Director. You will create strong static and motion designs that carry brand messages across digital, social, print, outdoor and video. You'll take ideas from the creative brief through to finished graphics, animations.</description>
+      <content:encoded>&lt;div&gt;&lt;b&gt;Responsibilities:&lt;/b&gt;&lt;/div&gt;
 
-        Applicants must be Ghanaians enrolled on the Roll of Lawyers in Ghana Must be not of less than 5 years standing at the Bar Must...
-      </description>
-      <work_type>Full Time</work_type>
+&lt;div&gt;&lt;br&gt;&lt;/div&gt;
+
+&lt;ul&gt;&lt;li&gt;You will turn creative briefs into high-quality design work across print and digital. &lt;/li&gt;&lt;li&gt;This includes layouts, campaign visuals, social content, billboards, motion graphics, storyboards, animations and short-form video.&lt;/li&gt;&lt;li&gt; You'll work closely with copywriters, account managers, strategists and production teams to deliver consistent, on-brand campaigns. &lt;/li&gt;&lt;li&gt;You'll also make sure every asset fits the technical needs of its channel. &lt;/li&gt;&lt;li&gt;You will be responsible for quality control, including accuracy, timing, legibility, resolution and export standards. &lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Requirements:&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Candidates should have a degree in Graphic Design, Visual Arts or a related field, or equivalent experience. &lt;/li&gt;&lt;li&gt;You'll also need proven experience as a Multimedia Designer or in a similar role, plus a strong portfolio covering digital, print and video work.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Location&lt;/b&gt;: Accra&lt;/p&gt;</content:encoded>
+      <work_type>Contract &amp; Temporary</work_type>
+      <category>Creative &amp; Design</category>
+      <experience_level>Mid level</experience_level>
+      <experience_length>3 years</experience_length>
+      <minimum_qualification>Degree</minimum_qualification>
     </item>
     <item>
-      <title>Project Coordinator At Planned Parenthood Association Of Ghana (ppag) ? (kotoso, Kwahu East) in Rest of Ghana</title>
-      <link>https://www.jobberman.com.gh/listings/project-coordinator-at-planned-parenthood-association-of-ghana-ppag-kotoso-kwahu-east-vw8j4v?utm_campaign=Job_Listing_Yoma+&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-ghana-and-yoma-3620</link>
-      <guid isPermaLink="false">1136468</guid>
-      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/gh/og-template-600w-315h/e698bd5cf604bff36537fa8738b58ef0/-/eyJ0ZW1wbGF0ZSI6ImpvYi0wOS0yMDI0IiwicmVwbGFjZW1lbnRzIjp7ImpvYlRpdGxlIjoiUHJvamVjdCBDb29yZGluYXRvciBBdCBQbGFubmVkIFBhcmVudGhvb2QgQXNzb2NpYXRpb24gT2YgR2hhbmEgKHBwYWcpID8gKGtvdG9zbywgS3dhaHUgRWFzdCkiLCJqb2JGdW5jdGlvbiI6IlVuc3BlY2lmaWVkIiwic2FsYXJ5IjoiQ29uZmlkZW50aWFsIiwibG9jYXRpb24iOiJFYXN0ZXJuIFJlZ2lvbiIsIndvcmtUeXBlIjoiRnVsbCBUaW1lIn0sImltYWdlcyI6eyJiYWNrZ3JvdW5kIjp7ImZpbGUiOiJzMzpcL1wvc2hhcmVkLWZvbGRlci1wcm9kXC8yMDI1LTA5XC9yZWN0YW5nbGVcL2pvYmZ1bmN0aW9uXC9kZWZhdWx0LnBuZyJ9fX0=/project-coordinator-at-planned-parenthood-association-of-ghana-ppag-kotoso-kwahu-east-vw8j4v.jpg" />
+      <title>ServiceNow Certified Professional Training in Ghana</title>
+      <link>https://www.jobberman.com.gh/listings/servicenow-certified-professional-training-4nzn48?utm_campaign=Job_Listing_Yoma+&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-ghana-and-yoma-3620</link>
+      <guid isPermaLink="false">1141297</guid>
+      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/gh/og-template-600w-315h/TTbMfeVn_JiMoNJlo-1r5w/-/_1Iy99BqcWlQFjDeQyZ1BNDSraFQKK8tOAmQGYLBOBRWJRIrB9AXQyekoOzk8rKQemA2Cx65II9B9SwkauHFATuTuwfE5ETenwWobYQCGqWAO6NQ3qVv1iqEt1gc03YH4pSQSXTrW1tQA/servicenow-certified-professional-training-4nzn48.jpg" />
+      <location>Ghana, Ghana</location>
+      <description>Tech Guard Solutions is a cybersecurity, data, digital, technology and AI consulting firm dedicated to technology excellence and digital safety. In partnership with Hippowize Canada we are providing this opportunity to become a ServiceNow Certified Professional with 4 globally recognized certifications. ServiceNow is one of the world's fastest-growing enterprise platforms. Banks, telecoms, governments and global consultancies run their IT, HR and customer operations on it — and certified ServiceNow professionals are in short supply worldwide.  You do not need ServiceNow experience to apply, just the right IT foundation.</description>
+      <content:encoded>&lt;p&gt;&lt;b&gt;The Offer&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;A structured 6-month programme: platform training, hands-on labs and real project work&lt;/li&gt;&lt;li&gt;Two days per week in an office, with the remaining days completed remotely&lt;/li&gt;&lt;li&gt;Opportunity to complete 4 globally recognised ServiceNow certifications&lt;/li&gt;&lt;li&gt;The possibility of placement with one of our partner organisations in Canada, USA, UK or Europe serving international clients, based on your performance&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Cost and Outcomes&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;The programme fee for all 4 certifications, training, hands on labs and job preparation is USD 3000 plus VAT (USD 3600 in total), payable in Ghana Cedis at the prevailing rate — only if you are selected. You do not pay anything to apply. This fee will be paid to our training partner, an established ServiceNow affiliate, whose details will be shared with shortlisted candidates. It is our goal to place every candidate who successfully completes the certification programme, but this is not guaranteed; it depends on performance and available positions. Even if you are not placed initially, a ServiceNow qualification is highly sought after.&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Why It's Worth It&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;Certified ServiceNow professionals command strong salaries and are increasingly desired by consultancies and enterprises worldwide. ServiceNow work is largely remote-friendly and English-based, so certified specialists in Ghana can compete on equal terms.&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Mandatory: &lt;/b&gt;JavaScript Developer, Front End and Back End, REST API's.  5+ years overall IT experience, including 5 years + in JavaScript development (mandatory). REST APIs, JSON and Git proficiency required.&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Nice To Have: &lt;/b&gt;Automated and Manual Testers, Business and Technical analyst skills. &lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Eligibility&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;You must meet the minimum criteria for at least one track&lt;/li&gt;&lt;li&gt;Legally able to work in Ghana, with strong written and spoken English&lt;/li&gt;&lt;li&gt;Minimum HND or Bachelor's degree in a relevant field, or a recognised professional certification plus the required years of experience for your chosen track. &lt;/li&gt;&lt;li&gt;Able to attend our office 1-2 days per week for six months&lt;/li&gt;&lt;li&gt;Able to fund the programme fee if selected&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;How Selection Works&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Apply online — one form covers all six tracks&lt;/li&gt;&lt;li&gt;Screening against your chosen track's minimum criteria&lt;/li&gt;&lt;li&gt;Tests and interviews for shortlisted candidates. Candidates are assessed through four stages, with both technical and business case stages&lt;/li&gt;&lt;li&gt;Selection — Only a maximum of 10 candidates in total will be offered a place&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Note&lt;/b&gt;: Only shortlisted candidates will be contacted.&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;</content:encoded>
+      <work_type>Part Time</work_type>
+      <category>Software &amp; Data</category>
+      <experience_level>Mid level</experience_level>
+      <experience_length>3 years</experience_length>
+      <minimum_qualification>HND</minimum_qualification>
+    </item>
+    <item>
+      <title>TikTok Live Dancer / Performer &amp; Creator – No Experience Needed in Accra &amp; Tema Region</title>
+      <link>https://www.jobberman.com.gh/listings/tiktok-live-host-performer-no-experience-required-wpv2dm?utm_campaign=Job_Listing_Yoma+&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-ghana-and-yoma-3620</link>
+      <guid isPermaLink="false">1141228</guid>
+      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/gh/og-template-600w-315h/eOyPH3meNnM_tO6KxuwHLQ/-/_1Iy99hmRmh-RnK_hklqUquIAK4iIFfYWA1KK0_KJcIFtNwbkoNbEkv0jhUcNkBb98BdcKYMABK_7kVAW_1NQUYO5GT-C-wPSYCi3cnfNzc0vzMiFJvBg56SNXH6jZAEvxjpoz4AU1sYFIVDEI9EQa1BP6uTAv6ALbe8A0guwJcMFWW1sLAA/tiktok-live-host-performer-no-experience-required-wpv2dm.jpg" />
+      <location>Accra &amp; Tema Region, Ghana</location>
+      <description>We are a professional TikTok LIVE entertainment company based in Accra and are currently recruiting male and female performers aged 18–28 to join our growing live-streaming teams. Do you enjoy TikTok, dancing, performing, or being in front of the camera? We are hiring male and female TikTok Live Performers aged 18–28 in Accra. No experience is requested</description>
+      <content:encoded>&lt;p&gt;&lt;b&gt;What You Will Do&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Participate in TikTok team live streams and performances&lt;/li&gt;&lt;li&gt;Learn and perform team dances and individual dance routines&lt;/li&gt;&lt;li&gt; Interact naturally and confidently with viewers during live streams&lt;/li&gt;&lt;li&gt;Attend company training, rehearsals and performance assessments&lt;/li&gt;&lt;li&gt;Work closely with other performers, trainers and the live-streaming team&lt;/li&gt;&lt;li&gt;Maintain good energy, appearance and professionalism during work&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Who We Are Looking For&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Male or female, 18–28 years old&lt;/li&gt;&lt;li&gt;Confident, energetic, positive and comfortable appearing on camera&lt;/li&gt;&lt;li&gt;Interested in TikTok, dancing, entertainment, performance or social media&lt;/li&gt;&lt;li&gt;Good sense of rhythm and body coordination is an advantage&lt;/li&gt;&lt;li&gt;Dance or performance experience is an advantage, but NOT required&lt;/li&gt;&lt;li&gt;Willing to learn and participate in company training&lt;/li&gt;&lt;li&gt;Responsible, punctual and a good team player&lt;/li&gt;&lt;li&gt; Able to work full-time in Accra&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Working Schedule&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Full-time position, 8 working hours per day&lt;/li&gt;&lt;li&gt;Working hours are arranged according to the company’s live-streaming schedule&lt;/li&gt;&lt;li&gt;Specific working hours may be adjusted as the company develops&lt;/li&gt;&lt;li&gt;Applicants should be flexible and able to follow the company’s work schedule&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;What We Offer&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Fixed monthly salary&lt;/li&gt;&lt;li&gt;Performance incentives / commission&lt;/li&gt;&lt;li&gt;Professional TikTok LIVE and dance training&lt;/li&gt;&lt;li&gt;No previous live-streaming experience required&lt;/li&gt;&lt;li&gt;Opportunities for growth based on performance&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Note: &lt;/b&gt;We are looking for candidates who are genuinely interested in this opportunity and can work consistently.&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Please apply only if you can attend the interview on time and are available to work full-time in Accra.&lt;/p&gt;</content:encoded>
+      <work_type>Full Time</work_type>
+      <category>Marketing &amp; Communications</category>
+      <experience_level>No Experience</experience_level>
+      <experience_length>No Experience/Less than 1 year</experience_length>
+      <minimum_qualification>High School (S.S.C.E)</minimum_qualification>
+    </item>
+    <item>
+      <title>Poultry Farm Supervisor in Rest of Ghana</title>
+      <link>https://www.jobberman.com.gh/listings/poultry-farm-supervisor-4nz8de?utm_campaign=Job_Listing_Yoma+&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-ghana-and-yoma-3620</link>
+      <guid isPermaLink="false">1140853</guid>
+      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/gh/og-template-600w-315h/XPhpI0I1Dq-oAr51haiKgQ/-/_1Iy99BuSX5pQUVSq4JRblKgSXAkOlLLMYmMXQky1IHlI2O6YDoxmoqRSSAmBpGbk-QE3XronFoLoFWhijpnJ4oUtsgBBVpAGdngZ1un4axOG6wJabbiLC6eDyqba2FgA/poultry-farm-supervisor-4nz8de.jpg" />
       <location>Eastern Region, Ghana</location>
-      <description>The Planned Parenthood Association of Ghana (PPAG). An NGO and a Member of the International Planned Parenthood Federation (IPPF), and a Leading Provider of Sexual and Reproductive Health (SRH) Education and Services.Job SummaryThe Planned Parenthood Association of Ghana (PPAG), an NGO working in th...</description>
-      <work_type>Full Time</work_type>
-    </item>
-    <item>
-      <title>Quality Assurance Officer in Rest of Ghana</title>
-      <link>https://www.jobberman.com.gh/listings/quality-assurance-officer-vw8vv8?utm_campaign=Job_Listing_Yoma+&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-ghana-and-yoma-3620</link>
-      <guid isPermaLink="false">1135790</guid>
-      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/gh/og-template-600w-315h/03060a433ce9594c6ea4111a0dd74713/-/eyJ0ZW1wbGF0ZSI6ImpvYi0wOS0yMDI0IiwicmVwbGFjZW1lbnRzIjp7ImpvYlRpdGxlIjoiUXVhbGl0eSBBc3N1cmFuY2UgT2ZmaWNlciIsImpvYkZ1bmN0aW9uIjoiUXVhbGl0eSBDb250cm9sICYgQXNzdXJhbmNlIiwic2FsYXJ5IjoiQ29uZmlkZW50aWFsIiwibG9jYXRpb24iOiJDZW50cmFsIFJlZ2lvbiIsIndvcmtUeXBlIjoiRnVsbCBUaW1lIn0sImltYWdlcyI6eyJiYWNrZ3JvdW5kIjp7ImZpbGUiOiJzMzpcL1wvc2hhcmVkLWZvbGRlci1wcm9kXC8yMDI1LTA5XC9yZWN0YW5nbGVcL2pvYmZ1bmN0aW9uXC9xdWFsaXR5LWNvbnRyb2wtYW5kLWFzc3VyYW5jZS5wbmcifX19/quality-assurance-officer-vw8vv8.jpg" />
-      <location>Central Region, Ghana</location>
-      <description>
-        Company Description
+      <description>We are seeking an experienced and responsible Poultry Farm Supervisor to oversee daily poultry operations, manage farm workers, and ensure the health, feeding, and productivity of the birds.</description>
+      <content:encoded>&lt;div&gt;&lt;b&gt;Key Responsibilities:&lt;/b&gt;&lt;/div&gt;
 
-        Aglow Farms is a leading company in the poultry industry in Ghana, dedicated to producing high-quality poultry products. From farming to processing, Aglow Farms ensures strict adherence to quality and safety standards, offering well-prepared, wholesome, and affordable products...
-      </description>
+&lt;ul&gt;&lt;li&gt;Supervise daily poultry farm operations and farm workers.&lt;/li&gt;&lt;li&gt;Monitor feeding, watering, vaccination, medication, and general bird health.&lt;/li&gt;&lt;li&gt;Track egg production, mortality rates, growth, and overall flock performance.&lt;/li&gt;&lt;li&gt;Maintain strict hygiene, biosecurity, and sanitation standards.&lt;/li&gt;&lt;li&gt;Manage inventory for poultry feed, medications, equipment, and farm supplies.&lt;/li&gt;&lt;li&gt;Maintain accurate records of farm activities, production, and inventory.&lt;/li&gt;&lt;li&gt;Promptly identify and report signs of disease or operational issues.&lt;/li&gt;&lt;li&gt;Ensure poultry houses and equipment are clean and properly maintained.&lt;/li&gt;&lt;li&gt;Report farm performance and challenges to management.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;div&gt;&lt;br&gt;&lt;/div&gt;
+
+&lt;div&gt;&lt;b&gt;Requirements:&lt;/b&gt;&lt;/div&gt;
+
+&lt;ul&gt;&lt;li&gt;Diploma, HND, or Degree in Agriculture, Animal Science, Poultry Science, or a related field.&lt;/li&gt;&lt;li&gt;2–3 years of experience in poultry farm supervision or management.&lt;/li&gt;&lt;li&gt;Practical knowledge of poultry production and flock management.&lt;/li&gt;&lt;li&gt;Strong leadership abilities and worker supervision skills.&lt;/li&gt;&lt;li&gt;Excellent record-keeping and organizational skills.&lt;/li&gt;&lt;li&gt;Valid driver’s license and ability to drive.&lt;/li&gt;&lt;li&gt;Willingness to work flexible hours on-site at the farm.&lt;/li&gt;&lt;li&gt;Responsible, hardworking, and detail-oriented.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;div&gt;&lt;br&gt;&lt;/div&gt;
+
+&lt;div&gt;&lt;b&gt;Location&lt;/b&gt;: Koforidua&lt;/div&gt;
+
+&lt;div&gt;&lt;b&gt;Salary&lt;/b&gt;: Attractive&lt;/div&gt;</content:encoded>
       <work_type>Full Time</work_type>
+      <category>Farming &amp; Agriculture</category>
+      <experience_level>Entry level</experience_level>
+      <experience_length>2 years</experience_length>
+      <minimum_qualification>Diploma</minimum_qualification>
     </item>
     <item>
-      <title>Volunteer in Accra &amp; Tema Region</title>
-      <link>https://www.jobberman.com.gh/listings/volunteer-wp4065?utm_campaign=Job_Listing_Yoma+&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-ghana-and-yoma-3620</link>
-      <guid isPermaLink="false">1135828</guid>
-      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/gh/og-template-600w-315h/3e5954fb11c4b374e1369f36b2052760/-/eyJ0ZW1wbGF0ZSI6ImpvYi0wOS0yMDI0IiwicmVwbGFjZW1lbnRzIjp7ImpvYlRpdGxlIjoiVm9sdW50ZWVyIiwiam9iRnVuY3Rpb24iOiJVbnNwZWNpZmllZCIsInNhbGFyeSI6IkNvbmZpZGVudGlhbCIsImxvY2F0aW9uIjoiQWNjcmEgJiBUZW1hIFJlZ2lvbiIsIndvcmtUeXBlIjoiQ29udHJhY3QifSwiaW1hZ2VzIjp7ImJhY2tncm91bmQiOnsiZmlsZSI6InMzOlwvXC9zaGFyZWQtZm9sZGVyLXByb2RcLzIwMjUtMDlcL3JlY3RhbmdsZVwvam9iZnVuY3Rpb25cL2RlZmF1bHQucG5nIn19fQ==/volunteer-wp4065.jpg" />
+      <title>Administration Officer, Mathematics &amp; Science Teacher, Primary Teacher in Accra &amp; Tema Region</title>
+      <link>https://www.jobberman.com.gh/listings/administration-officer-mathematics-and-science-teacher-primary-teacher-6dek74?utm_campaign=Job_Listing_Yoma+&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-ghana-and-yoma-3620</link>
+      <guid isPermaLink="false">1140800</guid>
+      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/gh/og-template-600w-315h/kh2q5WpVFDxGi7i2tOBg9g/-/_1Iy99gstXYEOgCJwKocVskQ6wOC_JAJavwEZIMbBYDU4G1vXJqcASNDE5AyQdUAR0fVElTAAjlQelFqcmFiVn6EBUQEv1okSgXUDPI2UBUNVhrAMqF3WBtJmBAWqewFLWo2YTeKlNbIgSVSYCPZMG9QxQFOIVYKhDfKILbATqlkD9Ai7namtrAQ/administration-officer-mathematics-and-science-teacher-primary-teacher-6dek74.jpg" />
       <location>Accra &amp; Tema Region, Ghana</location>
-      <description>Company Description The AMR Dialogue Series is a youth-led advocacy platform aiming to address the global challenge of Antimicrobial Resistance (AMR). It brings together pharmacy students, early career pharmacists, and public health officials to discuss practical strategies in combating AMR. This in...</description>
+      <price>GHS 3,000 - 3,600</price>
+      <description>We are seeking a dedicated and versatile professional to deliver engaging lessons, prepare students for examinations and assessments, and support their overall academic development. The role involves preparing lesson plans, assignments, and practice materials, monitoring students’ progress, identifying learning gaps, and providing targeted academic support and constructive feedback. The successful candidate will also support administrative duties, including basic accounting and general office responsibilities, as required.</description>
+      <content:encoded>&lt;div&gt;&lt;b&gt;Responsibilities:&lt;/b&gt;&lt;br&gt;&lt;/div&gt;
+
+&lt;ul&gt;&lt;li&gt;Degree in a related field.&lt;/li&gt;&lt;li&gt;Strong knowledge of the Cambridge curriculum.&lt;/li&gt;&lt;li&gt;Previous teaching or tutoring experience at A-Level or equivalent level.&lt;/li&gt;&lt;li&gt;Excellent subject knowledge and problem-solving skills.&lt;/li&gt;&lt;li&gt;Ability to prepare students effectively for examinations.&lt;/li&gt;&lt;li&gt;Good written and verbal communication skills.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;We are also looking for someone who is:&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Patient and approachable&lt;/li&gt;&lt;li&gt;Confident and articulate&lt;/li&gt;&lt;li&gt;Organized and reliable&lt;/li&gt;&lt;li&gt;Adaptable and resourceful&lt;/li&gt;&lt;li&gt;Passionate about teaching and student development&lt;/li&gt;&lt;li&gt;Able to motivate and build strong relationships with learners.&lt;/li&gt;&lt;li&gt;A good team player with a professional attitude.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Location&lt;/b&gt;: Accra&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Salary&lt;/b&gt;: GHS3,000.00 - GHS3,600.00&lt;/p&gt;</content:encoded>
+      <work_type>Full Time</work_type>
+      <category>Research, Teaching &amp; Training</category>
+      <experience_level>Internship &amp; Graduate</experience_level>
+      <experience_length>1 year</experience_length>
+      <minimum_qualification>Degree</minimum_qualification>
+    </item>
+    <item>
+      <title>Sales Call Center Operator – Telesales in Ghana</title>
+      <link>https://www.jobberman.com.gh/listings/sales-call-center-operator-telesales-4nz8jp?utm_campaign=Job_Listing_Yoma+&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-ghana-and-yoma-3620</link>
+      <guid isPermaLink="false">1140797</guid>
+      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/gh/og-template-600w-315h/ZI3-QFQLFn_hQF6b_kKV4w/-/_1Iy99gktUBedEYNnnnAqqAxT8gSGTWJJfpPCoYTKwyARKg5RgpONgqCg8MYMqASMdE2AJp6tgrAMs6VBTtzuwYE5ETeKwWoXYwCCqOAO6Mg3qSn2wy8ElUW1tLQA/sales-call-center-operator-telesales-4nz8jp.jpg" />
+      <location>Ghana, Ghana</location>
+      <price>GHS 2,400 - 3,000</price>
+      <description>The Sales Call Center Operator – Telesales is responsible for engaging prospective and existing customers over the phone to promote products and services, generate sales, and build strong customer relationships. The role involves making outbound calls, responding to customer inquiries, identifying customer needs, processing orders, following up on leads, and achieving assigned sales targets. The ideal candidate should have excellent communication and persuasion skills, a customer-focused approach, and the ability to work effectively in a target-driven environment.</description>
+      <content:encoded>&lt;p&gt;&lt;b&gt;Your Responsibilities&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Close sales and confirm customer orders.&lt;/li&gt;&lt;li&gt;Upsell and cross-sell health products.&lt;/li&gt;&lt;li&gt;Follow up with interested customers.&lt;/li&gt;&lt;li&gt;Handle objections and customer inquiries professionally.&lt;/li&gt;&lt;li&gt;Maintain accurate CRM records.&lt;/li&gt;&lt;li&gt;Consistently meet sales and call-quality KPIs.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;What We Need&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;2+ years of telesales, call center sales, or outbound sales experience.&lt;/li&gt;&lt;li&gt;Proven track record of hitting sales targets.&lt;/li&gt;&lt;li&gt;Strong phone-based closing and objection-handling skills.&lt;/li&gt;&lt;li&gt;Fluent English + at least one major Ghanaian local language.&lt;/li&gt;&lt;li&gt;CRM experience.&lt;/li&gt;&lt;li&gt;Laptop/desktop, smartphone, headset, reliable internet, and mandatory backup power.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Important:&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;This is not an entry-level or training position.&lt;/li&gt;&lt;li&gt;Do not apply if you're looking to learn telesales, test the waters, or work part-time. &lt;/li&gt;&lt;li&gt;We need proven sales professionals who can deliver from Day One.&lt;/li&gt;&lt;li&gt;If you can sell, close, and hit targets - apply now.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Salary:&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;GHS 2,500 – GHS 6,000/month&lt;/li&gt;&lt;li&gt;Performance-based earning structure with higher income tied to results.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;</content:encoded>
       <work_type>Contract</work_type>
+      <category>Sales</category>
+      <experience_level>Entry level</experience_level>
+      <experience_length>2 years</experience_length>
+      <minimum_qualification>OND</minimum_qualification>
     </item>
     <item>
-      <title>Manager / Middle Zone At Planned Parenthood Association Of Ghana (ppag) ? (suame, Kumasi) in Accra &amp; Tema Region</title>
-      <link>https://www.jobberman.com.gh/listings/manager-middle-zone-at-planned-parenthood-association-of-ghana-ppag-suame-kumasi-np6v4e?utm_campaign=Job_Listing_Yoma+&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-ghana-and-yoma-3620</link>
-      <guid isPermaLink="false">1136405</guid>
-      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/gh/og-template-600w-315h/d44a180ec3408cede9f55e03e2c299ea/-/eyJ0ZW1wbGF0ZSI6ImpvYi0wOS0yMDI0IiwicmVwbGFjZW1lbnRzIjp7ImpvYlRpdGxlIjoiTWFuYWdlciBcLyBNaWRkbGUgWm9uZSBBdCBQbGFubmVkIFBhcmVudGhvb2QgQXNzb2NpYXRpb24gT2YgR2hhbmEgKHBwYWcpID8gKHN1YW1lLCBLdW1hc2kpIiwiam9iRnVuY3Rpb24iOiJVbnNwZWNpZmllZCIsInNhbGFyeSI6IkNvbmZpZGVudGlhbCIsImxvY2F0aW9uIjoiQWNjcmEgJiBUZW1hIFJlZ2lvbiIsIndvcmtUeXBlIjoiRnVsbCBUaW1lIn0sImltYWdlcyI6eyJiYWNrZ3JvdW5kIjp7ImZpbGUiOiJzMzpcL1wvc2hhcmVkLWZvbGRlci1wcm9kXC8yMDI1LTA5XC9yZWN0YW5nbGVcL2pvYmZ1bmN0aW9uXC9kZWZhdWx0LnBuZyJ9fX0=/manager-middle-zone-at-planned-parenthood-association-of-ghana-ppag-suame-kumasi-np6v4e.jpg" />
-      <location>Accra &amp; Tema Region, Ghana</location>
-      <description>The Planned Parenthood Association of Ghana (PPAG), An NGO and a Member of the International Planned Parenthood Federation (IPPF), and a leading provider of Sexual and Reproductive Health (SRH) Education and Services, hereby invites result-oriented, dedicated and committed persons to apply for the f...</description>
-      <work_type>Full Time</work_type>
+      <title>Independent Delivery Operations Partner in Ghana</title>
+      <link>https://www.jobberman.com.gh/listings/independent-delivery-operations-partner-xp02dz?utm_campaign=Job_Listing_Yoma+&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-ghana-and-yoma-3620</link>
+      <guid isPermaLink="false">1140799</guid>
+      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/gh/og-template-600w-315h/nPQ-o9ROogExO3_o8_BBFQ/-/_1Iy99eualpBYAPQ8qhVxSczKB5VClgj8wcMCpslgBVAUA2_MYydilCKQUVAqDmzT5wIoiOLWoDJgAipFTOKhmMNSxABZ7ugpGOoYGBqhJ3h1YWieipntYVUNsCBFVxgHdngZ1u34K2OW6wJacbgnM7brFULeDi63a2loA/independent-delivery-operations-partner-xp02dz.jpg" />
+      <location>Ghana, Ghana</location>
+      <price>GHS 1,800 - 2,100</price>
+      <description>We’re looking for reliable and professional independent delivery partners across Ghana to deliver exceptional customer experiences, handle packages responsibly, and maintain strict chain-of-custody standards from pickup to delivery. If you’re dependable, customer-focused, and ready to grow with a fast-moving logistics network, please apply. As a key representative in the field, you will be responsible for driving customer satisfaction and maintaining strict chain-of-custody standards. We aim to collaborate with independent delivery professionals across Ghana to expand our logistics network.</description>
+      <content:encoded>&lt;div&gt;&lt;b&gt;You will:&lt;/b&gt;&lt;/div&gt;
+
+&lt;ul&gt;&lt;li&gt;Conduct customer verifications prior to delivery, ensuring all necessary contact and documentation are completed.&lt;/li&gt;&lt;li&gt;Manage the handover of packages efficiently and securely to customers at designated locations.&lt;/li&gt;&lt;li&gt;Collect COD payments from customers and ensure timely remittance within specified deadlines.&lt;/li&gt;&lt;li&gt;Coordinate with the operations team to update delivery status and resolve any logistical issues promptly.&lt;/li&gt;&lt;li&gt;Maintain professional communication with customers, providing updates and addressing inquiries with professionalism and courtesy.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Compensation &amp; Performance Evaluation:&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Compensation is based on the number of completed orders and is tiered according to your Delivery Success Rate (DSR). &lt;/li&gt;&lt;li&gt;Higher performance levels unlock increased payout rates per successfully delivered package. &lt;/li&gt;&lt;li&gt;There is no upper limit to your earning potential—the more deliveries you complete, the more you earn.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Additional Operational Performance Pillars:&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Customer Contact Rate: Achieve a target of 100% pre-delivery verification, with a minimum of three documented calls for unreached clients.&lt;/li&gt;&lt;li&gt;System Latency: Provide immediate status updates in the CRM system upon assignment and handover, and ensure cash remittance is completed within 24 hours.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Position Prerequisites &amp; Requirements:&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Transport &amp; Logistics: Must own a personal vehicle (motorcycle or car) with valid licensing.&lt;/li&gt;&lt;li&gt;Technical Equipment: Android or iOS smartphone, with access to Telegram, Google Maps, and browser-based CRM applications, all with stable data connectivity.&lt;/li&gt;&lt;li&gt;Communication Skills: Display a calm, professional demeanor in customer interactions, with strong verbal confirmation habits.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Additional Attributes:&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Ready to learn European business standards &lt;/li&gt;&lt;li&gt;Ready to take on the responsibility for goods we provide in the form of caution fee&lt;/li&gt;&lt;li&gt;Experience in the logistics and/or delivery sector (huge advantage)&lt;/li&gt;&lt;li&gt;Have your own courier company (huge advantage!)&lt;/li&gt;&lt;li&gt;Should have the personality and mentality to grow their own business&lt;/li&gt;&lt;li&gt;Should be available&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Work Location:&lt;/strong&gt; On the road, completing deliveries within your location in Ghana.&lt;/p&gt;</content:encoded>
+      <work_type>Contract</work_type>
+      <category>Driver &amp; Transport Services</category>
+      <experience_level>No Experience</experience_level>
+      <experience_length>No Experience/Less than 1 year</experience_length>
+      <minimum_qualification>Vocational</minimum_qualification>
     </item>
     <item>
-      <title>Maintenance Supvr. in Accra &amp; Tema Region</title>
-      <link>https://www.jobberman.com.gh/listings/maintenance-supvr-q20rw6?utm_campaign=Job_Listing_Yoma+&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-ghana-and-yoma-3620</link>
-      <guid isPermaLink="false">1136595</guid>
-      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/gh/og-template-600w-315h/bf3fbf6d2b90043a1f1f4a2687b7cbb9/-/eyJ0ZW1wbGF0ZSI6ImpvYi0wOS0yMDI0IiwicmVwbGFjZW1lbnRzIjp7ImpvYlRpdGxlIjoiTWFpbnRlbmFuY2UgU3VwdnIuIiwiam9iRnVuY3Rpb24iOiJNYW5hZ2VtZW50ICYgQnVzaW5lc3MgRGV2ZWxvcG1lbnQiLCJzYWxhcnkiOiJDb25maWRlbnRpYWwiLCJsb2NhdGlvbiI6IkFjY3JhICYgVGVtYSBSZWdpb24iLCJ3b3JrVHlwZSI6IkZ1bGwgVGltZSJ9LCJpbWFnZXMiOnsiYmFja2dyb3VuZCI6eyJmaWxlIjoiczM6XC9cL3NoYXJlZC1mb2xkZXItcHJvZFwvMjAyNS0wOVwvcmVjdGFuZ2xlXC9qb2JmdW5jdGlvblwvbWFuYWdlbWVudC1hbmQtYnVzaW5lc3MtZGV2ZWxvcG1lbnQucG5nIn19fQ==/maintenance-supvr-q20rw6.jpg" />
+      <title>Practice Lead, Corporate Support Services in Accra &amp; Tema Region</title>
+      <link>https://www.jobberman.com.gh/listings/practice-lead-corporate-support-services-07e2qw?utm_campaign=Job_Listing_Yoma+&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-ghana-and-yoma-3620</link>
+      <guid isPermaLink="false">1140747</guid>
+      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/gh/og-template-600w-315h/qAjjYLURdVw0o5qaqjVuEg/-/_1Iy99BoCKdWC0KfikJqboKDjnFxXkFwHNUAguLQCyShSCU4vKgPLFGAkZtWRGTtbIVQNqEsdSdKOmenghTGwAEVXEAR2eBnU4sJ0BdLYusB2nmw92OLigqq2tBQA/practice-lead-corporate-support-services-07e2qw.jpg" />
       <location>Accra &amp; Tema Region, Ghana</location>
-      <description>
-        Company Description
+      <description>The Practice Lead, Corporate Support Services is responsible for overseeing and managing the operations of the Corporate Support Services Practice Area. This involves the delivery of comprehensive corporate support, spanning finance, administration, and support services to the Firm to drive the firm's operational excellence and competitive positioning in the industry. Working collaboratively with the Board, Consulting Leadership, and key stakeholders, the Practice Lead will shape operational strategies and ensure all corporate support functions are delivered with efficiency, integrity, and in alignment with the Firm’s strategic objectives. The Practice Lead will ensure that the Firm's corporate support operations&#xD;
+remain financially sound, administratively efficient, and compliant with relevant regulatory frameworks and industry standards through the development and enforcement of effective policies and procedures. The role is structured around Finance Operations, Administration Operations, Support Services, Business/Consulting Development Support, and Practice Team/Organisational Development related functions.</description>
+      <content:encoded>&lt;p&gt;&lt;b&gt;Key Responsibilities:&lt;/b&gt;&lt;/p&gt;
 
-        PC TRUCK is a transportation, trucking, and railroad company headquartered in Gignac-la-Nerthe, France. The company specializes in delivering reliable and efficient transport solutions to meet various logistical needs. Known for its professionalism and commitment to excellence,...
-      </description>
+&lt;p&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Finance Operations&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;The Finance Operations role of the Practice Lead, Corporate Support Services include;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Provide oversight and leadership for all financial reporting functions, including invoicing, receipting, bank payments, and statement reconciliations, ensuring accuracy, timeliness, and compliance with applicable accounting standards.&lt;/li&gt;&lt;li&gt;Lead the preparation, review, and analysis of financial reports, budgets, and forecasts to support informed decision-making and the Firm’s short and long-term strategic planning.&lt;/li&gt;&lt;li&gt;Establish, monitor, and report on financial Key Performance Indicators (KPIs) for all Practice Areas and the Firm as a whole, providing actionable insights to the Executive Leadership to inform strategic decision-making.&lt;/li&gt;&lt;li&gt;Oversee the preparation of payroll and statutory tax returns, ensuring full compliance with relevant regulatory and statutory obligations.&lt;/li&gt;&lt;li&gt;Coordinate and liaise with external auditors/accounting consultants to facilitate the timely preparation of Annual Financial Statements.&lt;/li&gt;&lt;li&gt;Provide technical advisory on prudent investment opportunities and maintain oversight of the Firm’s investment portfolio to optimise returns.&lt;/li&gt;&lt;li&gt;Drive effective cash flow management, cost control initiatives, and financial planning to ensure the Firm’s long-term financial sustainability.&lt;/li&gt;&lt;li&gt;Coordinate statutory filings and ensure regulatory compliance in collaboration with other Practice Leads, maintaining the Firm’s obligations to all relevant statutory and regulatory bodies.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Administration Operations&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;The Administration Operations role of the Practice Lead, Corporate Support Services include;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Oversee the provision and management of organisational resources, including office supplies, equipment, and consumables, ensuring adequate availability to support the Firm’s day-to-day operations.&lt;/li&gt;&lt;li&gt; Lead the Firm’s procurement functions, ensuring all procurement activities are conducted transparently, efficiently, and in accordance with the Firm’s procurement policies and relevant regulatory requirements.&lt;/li&gt;&lt;li&gt;Manage vendor relationships and contracts including vendor selection, performance monitoring, and contract renewals to ensure the Firm receives optimal value from its service providers.&lt;/li&gt;&lt;li&gt;Oversee the Firm’s logistics functions, including meeting and event coordination as well as travel arrangements, catering, ensuring seamless execution, cost-effectiveness, and consistent professional experience for staff, clients, and stakeholders.&lt;/li&gt;&lt;li&gt;Oversee correspondence management and the Firm’s registry, ensuring efficient record-keeping and timely distribution of correspondence.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Support Services&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;The Support Services role of the Practice Lead, Corporate Support Services include;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Provide oversight for the day-to-day operations, maintenance, and management of the Firm’s office complex, ensuring a safe, functional and well-maintained working environment at all times.&lt;/li&gt;&lt;li&gt;Oversee the timely execution of maintenance and repair works across facilities, equipment, and infrastructure, minimising downtime and ensuring operational continuity.&lt;/li&gt;&lt;li&gt;Oversee the effective management of daily facility operations, including utilities management, in a cost-efficient and environmentally responsible manner.&lt;/li&gt;&lt;li&gt;Source, contract and manage vendors for facilities-related services, ensuring quality delivery, value for money, and adherence to agreed service standards.&lt;/li&gt;&lt;li&gt;Manage the facilities budget effectively, tracking expenditure against allocations and proactively identifying areas for cost savings and operational efficiency.&lt;/li&gt;&lt;li&gt;Ensure that repairs and servicing of official vehicles are carried out promptly by qualified mechanics and repairers in accordance with the Firm’s Vehicle Usage Policy.&lt;/li&gt;&lt;li&gt; Oversee the timely registration, roadworthiness certification, and insurance renewal of all official vehicles in compliance with statutory requirements and organisational schedules.&lt;/li&gt;&lt;li&gt;Provide oversight for Command Centre operations and Guest Services management, and work closely with the Firm’s Security Coordinator to ensure appropriate access controls, visitor management protocols and a professional impression for guests, clients and stakeholders.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Business/Consulting Development Support&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;The Business/Consulting Development Support role of the Practice Lead, Corporate Support Services include;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Business development and revenue growth responsibilities including opportunity identification and lead generation as well as responsibilities over revenue generation of a Business Cluster.&lt;/li&gt;&lt;li&gt;Proposal, bidding &amp; commercial support including inputs into RFP/RFQ response, business proposal and presentation development, pricing and commercial documentation support as well as contracting and procurement process support.&lt;/li&gt;&lt;li&gt;Consulting &amp; project delivery support including support with consulting engagements, workshop and stakeholder meetings support as well as support with respect to resource and operational coordination for projects and consulting engagements/deliverables.&lt;/li&gt;&lt;li&gt;Knowledge management and consulting engagement, including thought leadership and consulting contents development, participation in event, conferences, etc. in support of the business and consulting development of the Firm.&lt;/li&gt;&lt;li&gt;Clients and stakeholder relationship management responsibilities, including supporting the development and maintenance of strategic client and stakeholder relationships, monitoring clients’ satisfaction and supporting partnership development, among others.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Practice Team/Organisational Development &amp; Practice Area Risk Responsibilities&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;The Practice Team/Organisational Development &amp; Practice Area Risk Responsibilities role of the Lead, Corporate Support Services includes:&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Oversee the growth and professional development of the practice team, ensuring a fit for purpose team to deliver the Corporate Support mandate of the Firm.&lt;/li&gt;&lt;li&gt;Liaise with the Lead, People &amp; Culture to identify and deliver training programmes to enhance the team’s expertise and maintain industry best practices.&lt;/li&gt;&lt;li&gt;Improve operational efficiency by refining workflows, methodologies, improving teamwork and collaborations as well as best practices to deliver quality tasks/projects in a timely manner.&lt;/li&gt;&lt;li&gt;Support and contribute to the Firm’s organisational development initiatives and to promote collaboration between internal teams and external partners to strengthen organisational effectiveness for business growth.&lt;/li&gt;&lt;li&gt;Responsible for the operational risk management for the Corporate Support Services Practice Area, ensuring financial integrity, regulatory compliance, risk mitigation, and reputational risk management in all consulting engagements and interactions with staff, clients, partners, and stakeholders.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Job Requirements&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;A postgraduate degree (MBA or equivalent) in Accounting/Finance/Banking/Human Resource Management/Corporate Governance, or a related administration discipline, with a minimum of eight (8) years of relevant work experience, at least six (6) of which must have been in a supervisory or consulting role.&lt;/li&gt;&lt;li&gt;Membership of a relevant professional body (ICAG, ACCA, CIMA) will be an added advantage.&lt;/li&gt;&lt;li&gt;Demonstrable competence in financial accounting, reporting, and administration, with a strong understanding of statutory compliance and regulatory requirements.&lt;/li&gt;&lt;li&gt;Experience in professional services consulting is recommended.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Specific Competencies&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Demonstrable commitment to the Firm’s core values with a consistent track record of ethical conduct and professional integrity in all interactions and decisions.&lt;/li&gt;&lt;li&gt;Strong financial management competency, including financial reporting, budget development, expenditure control, and the ability to interpret financial data to guide strategic planning.&lt;/li&gt;&lt;li&gt;Sound knowledge and hands-on experience in procurement, logistics, and vendor management, with the ability to drive value-for-money outcomes.&lt;/li&gt;&lt;li&gt;Demonstrable competence in corporate governance, regulatory compliance and adherence to consulting standards and industry best practices.&lt;/li&gt;&lt;li&gt;Strong leadership and people management skills, with the ability to motivate, develop, and manage a multidisciplinary team to deliver high-quality outcomes.&lt;/li&gt;&lt;li&gt;Excellent verbal and written communication skills, with strong negotiation and interpersonal abilities to engage effectively with internal teams, clients, vendors, and key stakeholders.&lt;/li&gt;&lt;li&gt;Strong analytical and problem-solving skills, with the ability to identify operational and financial challenges, assess risks, and develop practical, timely solutions.&lt;/li&gt;&lt;li&gt;High level of initiative and results-orientation, with the ability to manage competing priorities, meet tight deadlines, and perform effectively under pressure.&lt;/li&gt;&lt;li&gt;Proficiency in relevant business and financial management tools and systems, with an aptitude for leveraging technology to improve operational efficiency.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Location&lt;/b&gt;: Accra&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Salary&lt;/b&gt;: Attractive&lt;/p&gt;</content:encoded>
       <work_type>Full Time</work_type>
+      <category>Admin &amp; Office</category>
+      <experience_level>Senior level</experience_level>
+      <experience_length>8 years</experience_length>
+      <minimum_qualification>MBA / MSc</minimum_qualification>
     </item>
     <item>
-      <title>Senior Manager – Procurement &amp; Supply Advisory Services in Accra &amp; Tema Region</title>
-      <link>https://www.jobberman.com.gh/listings/senior-manager-procurement-supply-advisory-services-6dp49p?utm_campaign=Job_Listing_Yoma+&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-ghana-and-yoma-3620</link>
-      <guid isPermaLink="false">1134888</guid>
-      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/gh/og-template-600w-315h/f2dcf70093bf8cc7dc7c367a218ace8d/-/eyJ0ZW1wbGF0ZSI6ImpvYi0wOS0yMDI0IiwicmVwbGFjZW1lbnRzIjp7ImpvYlRpdGxlIjoiU2VuaW9yIE1hbmFnZXIgXHUyMDEzIFByb2N1cmVtZW50ICYgU3VwcGx5IEFkdmlzb3J5IFNlcnZpY2VzIiwiam9iRnVuY3Rpb24iOiJTdXBwbHkgQ2hhaW4gJiBQcm9jdXJlbWVudCIsInNhbGFyeSI6IkNvbmZpZGVudGlhbCIsImxvY2F0aW9uIjoiQWNjcmEgJiBUZW1hIFJlZ2lvbiIsIndvcmtUeXBlIjoiRnVsbCBUaW1lIn0sImltYWdlcyI6eyJiYWNrZ3JvdW5kIjp7ImZpbGUiOiJzMzpcL1wvc2hhcmVkLWZvbGRlci1wcm9kXC8yMDI1LTA5XC9yZWN0YW5nbGVcL2pvYmZ1bmN0aW9uXC9zdXBwbHktY2hhaW4tYW5kLXByb2N1cmVtZW50LnBuZyJ9fX0=/senior-manager-procurement-supply-advisory-services-6dp49p.jpg" />
-      <location>Accra &amp; Tema Region, Ghana</location>
-      <description>
-        Company Description
+      <title>Sales Account Representative - SaaS ERP and Business Phone VOIP Solutions in Remote (Work From Home)</title>
+      <link>https://www.jobberman.com.gh/listings/sales-account-representative-saas-erp-and-business-phone-voip-solutions-pmzd42?utm_campaign=Job_Listing_Yoma+&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-ghana-and-yoma-3620</link>
+      <guid isPermaLink="false">1140182</guid>
+      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/gh/og-template-600w-315h/FKd2RHSOFTU9CU3YLN0a1A/-/_1Iy99gktUBWjZDCwvC4BZFdQ6KcksS1XQVQhOTAxWUHANClAAtnwQxXpARn5eqkKYv2eAQnB-TikoARdjpHSw0cjJHbnKQE36Qam5wOaYgkY4MP0rgBpuCh75uamaqDkCXhsRG3hEFX9AN6dB3axfDHIxuOSqra0FAA/sales-account-representative-saas-erp-and-business-phone-voip-solutions-pmzd42.jpg" />
+      <location>Remote (Work From Home), Ghana</location>
+      <description>We are looking for a competitive, tech-savvy, and self-motivated Sales Account Representative to drive growth for our SaaS software solutions and Business Phone VoIP services. In this fully remote role, you will be responsible for identifying, nurturing, and converting leads into long-term clients. Your primary channels will be inbound emails leads</description>
+      <content:encoded>&lt;p&gt;&lt;b&gt;Requirements&lt;/b&gt;&lt;/p&gt;
 
-        Harley Reed is a professional services company established in 1991, with a presence in the UK and multiple regions across Africa, including Anglophone and Francophone countries. The organisation specializes in advisory services, knowledge services, and assurance services, cate...
-      </description>
+&lt;ul&gt;&lt;li&gt;Proven experience as a Sales Account Representative, ideally selling SaaS software, cloud-based solutions, or telecommunications/VoIP products.&lt;/li&gt;&lt;li&gt;Demonstrated expertise in lead nurturing — including multi-touch outreach sequences combining calls, email, and social media engagement.&lt;/li&gt;&lt;li&gt;Hands-on proficiency with a CRM system (e.g. HubSpot, Salesforce, Zoho, or equivalent) — required, not optional; must be comfortable logging activity, managing pipelines, and pulling reports.&lt;/li&gt;&lt;li&gt;Strong understanding of SaaS technology concepts (subscriptions, cloud delivery, integrations) and Business Phone / VoIP solutions, with the ability to explain technical features in plain business language.&lt;/li&gt;&lt;li&gt;Experience running email marketing outreach campaigns — writing subject lines, body copy, and calls-to-action that drive opens and replies.&lt;/li&gt;&lt;li&gt; Active and confident social media presence — ability to prospect, connect, and engage with decision-makers on LinkedIn and other platforms.&lt;/li&gt;&lt;li&gt;Excellent verbal and written communication skills in English, with strong phone presence for outbound calling and virtual meetings.&lt;/li&gt;&lt;li&gt;Ability to articulate ROI and total cost of ownership clearly to business owners, operations managers, and IT stakeholders.&lt;/li&gt;&lt;li&gt;Thorough understanding of modern sales and marketing techniques, including consultative selling and challenger sales methodologies.&lt;/li&gt;&lt;li&gt;Proficiency with Microsoft Office / Google Workspace and comfortable using video conferencing tools (Zoom, Google Meet, MS Teams).&lt;/li&gt;&lt;li&gt;Self-motivated, results-driven, and able to manage time independently in a fully remote environment without day-to-day supervision.&lt;/li&gt;&lt;li&gt;College / University Degree.&lt;/li&gt;&lt;li&gt;Strong business acumen and a fast learner with genuine passion for technology sales.&lt;/li&gt;&lt;/ul&gt;
+
+
+
+&lt;p&gt; &lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Remote Work Requirements&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;Customer call shift: 12 noon – 8 PM GMT.&lt;/li&gt;&lt;li&gt;Mandatory broadband internet connection capable of stable, high-quality video conferencing throughout the shift.&lt;/li&gt;&lt;li&gt;Dedicated, quiet home workspace free from external noise (street noise, background voices, or other distractions) — required for professional client calls and video meetings.&lt;/li&gt;&lt;li&gt;A reliable computer with a working webcam and headset/microphone for video conferencing.&lt;/li&gt;&lt;li&gt;Stable power supply or backup power solution to ensure uninterrupted availability during scheduled work hours.&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Salary&lt;/b&gt;: Attractive&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;</content:encoded>
+      <work_type>Part Time</work_type>
+      <category>Sales</category>
+      <experience_level>Senior level</experience_level>
+      <experience_length>2 years</experience_length>
+      <minimum_qualification>Degree</minimum_qualification>
+    </item>
+    <atom:link rel="self" href="https://cde-console-production.s3.eu-west-1.amazonaws.com/jobs_rss_listings_3620.xml" type="application/rss+xml" />
+    <!-- Synthetic local/stage mapping cases. The 10 live-derived source items above remain unchanged. -->
+    <item>
+      <title>[Mapping fixture] GH exact salary</title>
+      <link>https://example.com/yoma-mapping-fixtures/gh-exact-salary</link>
+      <guid isPermaLink="false">test-mapping-exact-salary</guid>
+      <description>Local test case: exact salary, structured experience and qualification, and empty rich-text formatting.</description>
+      <content:encoded>&lt;p&gt;&lt;b&gt;Responsibilities:&lt;/b&gt;&lt;/p&gt;&lt;p&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Verify that the exact salary displays as one amount.&lt;/li&gt;&lt;li&gt;Verify that headings stay bold without stray asterisks.&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;&lt;b&gt;Location&lt;/b&gt;: Accra&lt;/p&gt;</content:encoded>
+      <location>Accra, Ghana</location>
+      <price>GHS 2,500</price>
       <work_type>Full Time</work_type>
+      <category>Software &amp; Data</category>
+      <experience_level>Entry level</experience_level>
+      <experience_length>2 years</experience_length>
+      <minimum_qualification>Degree</minimum_qualification>
     </item>
     <item>
-      <title>Midwife At Ghana Armed Forces Medical Services (gafms) ? Accra, Kumasi, Sunyani, Takoradi, Ho, Tema And Tamale in Accra &amp; Tema Region</title>
-      <link>https://www.jobberman.com.gh/listings/midwife-at-ghana-armed-forces-medical-services-gafms-accra-kumasi-sunyani-takoradi-ho-tema-and-tamale-gwx6g9?utm_campaign=Job_Listing_Yoma+&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-ghana-and-yoma-3620</link>
-      <guid isPermaLink="false">1136479</guid>
-      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/gh/og-template-600w-315h/70b56a175813c957eb953e49a52e466e/-/eyJ0ZW1wbGF0ZSI6ImpvYi0wOS0yMDI0IiwicmVwbGFjZW1lbnRzIjp7ImpvYlRpdGxlIjoiTWlkd2lmZSBBdCBHaGFuYSBBcm1lZCBGb3JjZXMgTWVkaWNhbCBTZXJ2aWNlcyAoZ2FmbXMpID8gQWNjcmEsIEt1bWFzaSwgU3VueWFuaSwgVGFrb3JhZGksIEhvLCBUZW1hIEFuZCBUYW1hbGUiLCJqb2JGdW5jdGlvbiI6IkhlYWx0aCAmIFNhZmV0eSIsInNhbGFyeSI6IkNvbmZpZGVudGlhbCIsImxvY2F0aW9uIjoiQWNjcmEgJiBUZW1hIFJlZ2lvbiIsIndvcmtUeXBlIjoiRnVsbCBUaW1lIn0sImltYWdlcyI6eyJiYWNrZ3JvdW5kIjp7ImZpbGUiOiJzMzpcL1wvc2hhcmVkLWZvbGRlci1wcm9kXC8yMDI1LTA5XC9yZWN0YW5nbGVcL2pvYmZ1bmN0aW9uXC9oZWFsdGgtYW5kLXNhZmV0eS5wbmcifX19/midwife-at-ghana-armed-forces-medical-services-gafms-accra-kumasi-sunyani-takoradi-ho-tema-and-tamale-gwx6g9.jpg" />
-      <location>Accra &amp; Tema Region, Ghana</location>
-      <description>The Ghana Armed Forces Medical Services (GAFMS) with the state of the art medical facilities is looking for the following experienced and competent professional to fill the above open vacancy in 37 Military Hospital, Medical Centres in Accra, Kumasi, Sunyani, Takoradi, Ho, Tema and Tamale;PurposeTo...</description>
-      <work_type>Full Time</work_type>
-    </item>
-    <item>
-      <title>Manager Investment Banking in Accra &amp; Tema Region</title>
-      <link>https://www.jobberman.com.gh/listings/manager-investment-banking-9j7vg7?utm_campaign=Job_Listing_Yoma+&amp;utm_medium=affiliate&amp;utm_source=Yoma&amp;utm_term=cde-jobberman-ghana-and-yoma-3620</link>
-      <guid isPermaLink="false">1136648</guid>
-      <media:content medium="image" url="https://i.roamcdn.net/t/kazi/gh/og-template-600w-315h/dc98c29ee92414ccdc4a88dbd136aa4f/-/eyJ0ZW1wbGF0ZSI6ImpvYi0wOS0yMDI0IiwicmVwbGFjZW1lbnRzIjp7ImpvYlRpdGxlIjoiTWFuYWdlciBJbnZlc3RtZW50IEJhbmtpbmciLCJqb2JGdW5jdGlvbiI6IkFjY291bnRpbmcsIEF1ZGl0aW5nICYgRmluYW5jZSIsInNhbGFyeSI6IkNvbmZpZGVudGlhbCIsImxvY2F0aW9uIjoiQWNjcmEgJiBUZW1hIFJlZ2lvbiIsIndvcmtUeXBlIjoiRnVsbCBUaW1lIn0sImltYWdlcyI6eyJiYWNrZ3JvdW5kIjp7ImZpbGUiOiJzMzpcL1wvc2hhcmVkLWZvbGRlci1wcm9kXC8yMDI1LTA5XC9yZWN0YW5nbGVcL2pvYmZ1bmN0aW9uXC9hY2NvdW50aW5nLWF1ZGl0aW5nLWFuZC1maW5hbmNlLnBuZyJ9fX0=/manager-investment-banking-9j7vg7.jpg" />
-      <location>Accra &amp; Tema Region, Ghana</location>
-      <description>
-        Department:                        SASIM
-
-        Reports Directly to:             HEAD, ASSET MANAGEMENT
-
-
-
-        1.0    PURPOSE
-
-        To manage the portfolio of individual clients and institutions of the company.
-
-
-
-        2.0   DUTIES
-
-        § Manage investment portfolios, including making buy or sell decisions based on resea...
-      </description>
-      <work_type>Full Time</work_type>
+      <title>[Mapping fixture] GH missing optional metadata</title>
+      <link>https://example.com/yoma-mapping-fixtures/gh-missing-metadata</link>
+      <guid isPermaLink="false">test-mapping-missing-metadata</guid>
+      <description>Local test case: use this summary as the description when the full body and optional metadata are absent.</description>
     </item>
   </channel>
 </rss>

@@ -17,7 +17,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Migrations
     {
 #pragma warning disable 612, 618
       modelBuilder
-          .HasAnnotation("ProductVersion", "10.0.8")
+          .HasAnnotation("ProductVersion", "10.0.13")
           .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
       NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -86,6 +86,12 @@ namespace Yoma.Core.Infrastructure.Jobberman.Migrations
             b.Property<bool?>("Duplicate")
                       .HasColumnType("boolean");
 
+            b.Property<string>("ExperienceLength")
+                      .HasColumnType("text");
+
+            b.Property<string>("ExperienceLevel")
+                      .HasColumnType("text");
+
             b.Property<string>("ExternalId")
                       .IsRequired()
                       .HasColumnType("varchar(50)");
@@ -99,9 +105,18 @@ namespace Yoma.Core.Infrastructure.Jobberman.Migrations
             b.Property<string>("Location")
                       .HasColumnType("varchar(512)");
 
+            b.Property<string>("MinimumQualification")
+                      .HasColumnType("text");
+
+            b.Property<string>("Salary")
+                      .HasColumnType("text");
+
             b.Property<string>("SourceId")
                       .IsRequired()
                       .HasColumnType("varchar(50)");
+
+            b.Property<string>("Summary")
+                      .HasColumnType("text");
 
             b.Property<string>("Title")
                       .IsRequired()

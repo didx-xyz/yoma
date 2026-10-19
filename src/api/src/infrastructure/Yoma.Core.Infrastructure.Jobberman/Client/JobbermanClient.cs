@@ -1,6 +1,8 @@
 using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Globalization;
+using System.Text.RegularExpressions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
@@ -8,6 +10,7 @@ using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Services;
+using Yoma.Core.Domain.PartnerSync.Extensions;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Provider;
 using Yoma.Core.Domain.PartnerSync.Models;
 using Yoma.Core.Domain.PartnerSync.Validators;
@@ -15,7 +18,7 @@ using Yoma.Core.Infrastructure.Jobberman.Models;
 
 namespace Yoma.Core.Infrastructure.Jobberman.Client
 {
-  public sealed class JobbermanClient : ISyncProviderClientPullEntity<Domain.Opportunity.Models.OpportunityRequestCreate>
+  public sealed partial class JobbermanClient : ISyncProviderClientPullEntity<Domain.Opportunity.Models.OpportunityRequestCreate>
   {
     #region Class Variables
     private readonly ILogger<JobbermanClient> _logger;
@@ -24,6 +27,8 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
     private readonly IOpportunityCategoryService _opportunityCategoryService;
     private readonly ICountryService _countryService;
     private readonly ILanguageService _languageService;
+    private readonly ICurrencyService _currencyService;
+    private readonly IEducationService _educationService;
     private readonly ICustomFieldDefinitionService _customFieldDefinitionService;
     private readonly IRepositoryBatched<Opportunity> _opportunityRepository;
 
@@ -36,6 +41,35 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
       { "Part Time", CustomFieldConstants.Job.Employment.ScheduleOptions.PartTime },
       { "Part-time", CustomFieldConstants.Job.Employment.ScheduleOptions.PartTime }
     };
+
+    // Yoma Education id -> Jobberman qualifications.
+    // Use stable identities; do not depend on editable display labels.
+    private static readonly Dictionary<Guid, string[]> QualificationMappings = new()
+    {
+      // Secondary (Grade 8–12, Matric or equivalent)
+      { new Guid("5642e521-34b9-4dc8-bffa-b975f5c95d99"), ["High School (S.S.C.E)"] },
+      // Tertiary - Diploma
+      { new Guid("411fa393-9a65-41f1-9901-8e7ba39bc06c"), ["Diploma", "OND", "HND"] },
+      // Tertiary - Bachelor’s Degree
+      { new Guid("d5fc0367-9d17-4dc2-a7d4-77d17e3c02af"), ["Degree"] },
+      // Tertiary - Master’s Degree
+      { new Guid("28e84f2c-ee70-4e88-883e-eafaec396216"), ["MBA / MSc"] },
+      // Tertiary - PhD
+      { new Guid("f78d77cf-83a4-46df-b145-8c0742cb9d09"), ["PhD"] }
+    };
+
+    // The complete feed owns only these CFs; missing/unmappable values withdraw prior mappings.
+    private static readonly string[] CustomField_Snapshot_Keys =
+    [
+      CustomFieldConstants.Job.Salary.Disclosed,
+      CustomFieldConstants.Job.Salary.Minimum,
+      CustomFieldConstants.Job.Salary.Maximum,
+      CustomFieldConstants.Job.Salary.Currency,
+      CustomFieldConstants.Job.Employment.Type,
+      CustomFieldConstants.Job.Employment.Schedule,
+      CustomFieldConstants.Job.Experience.Level,
+      CustomFieldConstants.Job.MinimumQualification
+    ];
 
     // Yoma category id -> Jobberman job functions.
     // Keep in code for now because the mapping is small, partner-specific, and version-controlled.
@@ -77,6 +111,8 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
       IOpportunityCategoryService opportunityCategoryService,
       ICountryService countryService,
       ILanguageService languageService,
+      ICurrencyService currencyService,
+      IEducationService educationService,
       ICustomFieldDefinitionService customFieldDefinitionService,
       IRepositoryBatched<Opportunity> opportunityRepository,
       SyncFilterPullEntityValidator syncFilterPullEntityValidator)
@@ -87,6 +123,8 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
       _opportunityCategoryService = opportunityCategoryService ?? throw new ArgumentNullException(nameof(opportunityCategoryService));
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
+      _currencyService = currencyService ?? throw new ArgumentNullException(nameof(currencyService));
+      _educationService = educationService ?? throw new ArgumentNullException(nameof(educationService));
       _customFieldDefinitionService = customFieldDefinitionService ?? throw new ArgumentNullException(nameof(customFieldDefinitionService));
       _opportunityRepository = opportunityRepository ?? throw new ArgumentNullException(nameof(opportunityRepository));
       _syncFilterPullEntityValidator = syncFilterPullEntityValidator ?? throw new ArgumentNullException(nameof(syncFilterPullEntityValidator));
@@ -137,8 +175,11 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
       if (string.IsNullOrWhiteSpace(title))
         throw new InvalidOperationException($"Jobberman opportunity title expected for external id '{item.ExternalId}'");
 
-      var description = BuildDescription(item, title);
-      var summary = title;
+      var customFields = MapCustomFields(item);
+      var description = BuildDescription(item, title, customFields);
+      var summary = item.Summary.HtmlDecode()?.RemoveHtmlTags();
+      if (string.IsNullOrWhiteSpace(summary)) summary = title;
+      summary = summary.ReplaceLineEndings(" ").TrimToLengthWithEllipsis(OpportunityService.Summary_MaxLength);
 
       var feed = _options.Feeds.SingleOrDefault(o => string.Equals(o.CountryCodeAlpha2, item.CountryCodeAlpha2, StringComparison.OrdinalIgnoreCase))
         ?? throw new InvalidOperationException($"Feed config for country '{item.CountryCodeAlpha2}': Not found");
@@ -159,6 +200,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
         Summary = summary,
         URL = item.URL,
         VerificationEnabled = false,
+        Incentivized = customFields.Any(field => field.Key == CustomFieldConstants.Job.Salary.Disclosed && field.Value == bool.TrueString) ? true : null,
         PostAsActive = item.Deleted != true,
         Keywords = BuildKeywords(item),
         DateStart = item.DateStart ?? item.DateCreated,
@@ -170,7 +212,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
 
         // Populate when available. Partner sync uses PatchAllowMissingRequired:
         // omitted fields are preserved and key-only fields delete existing values.
-        CustomFields = MapCustomFields(item)
+        CustomFields = customFields
 
         // ExternalId: Opportunity.ExternalId is used by CSV imports; pull synchronization must set the external identifier on the SyncItem.
       };
@@ -183,15 +225,85 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
       };
     }
 
-    private List<CustomFieldValueRequest>? MapCustomFields(Opportunity item)
+    private List<CustomFieldValueRequest> MapCustomFields(Opportunity item)
     {
-      if (!WorkScheduleMappings.TryGetValue(item.WorkType?.Trim() ?? string.Empty, out var schedule))
-        return null;
+      var result = new List<CustomFieldValueRequest>();
 
-      // The feed's broad job-function labels do not uniquely identify ISCO occupations or
-      // employer industries. Only map explicit schedule information, never infer from prose.
-      return [_customFieldDefinitionService.GetByKey(Domain.Core.CustomFieldEntityType.Opportunity,
-        CustomFieldConstants.Job.Employment.Schedule, true, true).ToOptionRequest(schedule)];
+      // No supplied salary means no published salary, not an unpaid job. Supplied but
+      // unmappable text remains unknown and is retained in the description instead.
+      if (string.IsNullOrWhiteSpace(item.Salary))
+        result.Add(new CustomFieldValueRequest { Key = CustomFieldConstants.Job.Salary.Disclosed, Value = bool.FalseString });
+
+      var salary = SalaryPattern().Match(item.Salary?.Trim() ?? string.Empty);
+      if (salary.Success &&
+        decimal.TryParse(salary.Groups["minimum"].Value, NumberStyles.AllowThousands | NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var minimum) &&
+        decimal.TryParse(salary.Groups["maximum"].Success ? salary.Groups["maximum"].Value : salary.Groups["minimum"].Value,
+          NumberStyles.AllowThousands | NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var maximum) &&
+        minimum > 0 && maximum >= minimum &&
+        (!(salary.Groups["lower"].Success || salary.Groups["upper"].Success) || !salary.Groups["maximum"].Success))
+      {
+        var currency = _currencyService.GetByCodeOrNull(salary.Groups["currency"].Value.ToUpperInvariant());
+        if (currency != null)
+        {
+          result.Add(new CustomFieldValueRequest { Key = CustomFieldConstants.Job.Salary.Disclosed, Value = bool.TrueString });
+          if (!salary.Groups["upper"].Success)
+            result.Add(new CustomFieldValueRequest { Key = CustomFieldConstants.Job.Salary.Minimum, Value = minimum.ToString(CultureInfo.InvariantCulture) });
+          if (!salary.Groups["lower"].Success)
+            result.Add(new CustomFieldValueRequest { Key = CustomFieldConstants.Job.Salary.Maximum, Value = maximum.ToString(CultureInfo.InvariantCulture) });
+          result.Add(new CustomFieldValueRequest { Key = CustomFieldConstants.Job.Salary.Currency, Values = [currency.Id.ToString()] });
+        }
+      }
+
+      if (WorkScheduleMappings.TryGetValue(item.WorkType?.Trim() ?? string.Empty, out var schedule))
+        result.Add(_customFieldDefinitionService.GetByKey(Domain.Core.CustomFieldEntityType.Opportunity,
+          CustomFieldConstants.Job.Employment.Schedule, true, true).ToOptionRequest(schedule));
+
+      // Contract describes the relationship, not its duration or full-/part-time schedule.
+      if (string.Equals(item.WorkType?.Trim(), EmploymentType.Contract.ToString(), StringComparison.OrdinalIgnoreCase))
+        result.Add(_customFieldDefinitionService.GetByKey(Domain.Core.CustomFieldEntityType.Opportunity,
+          CustomFieldConstants.Job.Employment.Type, true, true).ToOptionRequest(EmploymentType.Contract.ToString()));
+
+      var experience = ResolveExperience(item);
+      if (experience != null)
+        result.Add(_customFieldDefinitionService.GetByKey(Domain.Core.CustomFieldEntityType.Opportunity,
+          CustomFieldConstants.Job.Experience.Level, true, true).ToOptionRequest(experience));
+
+      if (TryResolveJobbermanQualificationId(item.MinimumQualification, out var qualificationId) &&
+        _educationService.GetByIdOrNull(qualificationId) != null)
+        result.Add(new CustomFieldValueRequest { Key = CustomFieldConstants.Job.MinimumQualification, Values = [qualificationId.ToString()] });
+
+      return result.CompleteCustomFieldSnapshot(CustomField_Snapshot_Keys);
+    }
+
+    private static string? ResolveExperience(Opportunity item)
+    {
+      var level = item.ExperienceLevel?.Trim();
+      if (string.Equals(level, "No Experience", StringComparison.OrdinalIgnoreCase))
+      {
+        var length = item.ExperienceLength?.Trim();
+        if (string.IsNullOrEmpty(length) ||
+          string.Equals(length, "No Experience/Less than 1 year", StringComparison.OrdinalIgnoreCase))
+          return CustomFieldConstants.Job.Experience.Options.None;
+
+        // A positive or unrecognised requirement must not become "no experience required".
+        var requiredYears = ExperienceYearsPattern().Match(length);
+        return requiredYears.Success && int.Parse(requiredYears.Groups["years"].Value, CultureInfo.InvariantCulture) == 0
+          ? CustomFieldConstants.Job.Experience.Options.None : null;
+      }
+
+      var yearsMatch = ExperienceYearsPattern().Match(item.ExperienceLength?.Trim() ?? string.Empty);
+      if (!yearsMatch.Success || !int.TryParse(yearsMatch.Groups["years"].Value, out var years)) return null;
+
+      // Yoma's options explicitly include year ranges. Do not turn a conflicting source
+      // label/year pair (e.g. Senior level / 2 years) into a stronger requirement.
+      if (string.Equals(level, "Entry level", StringComparison.OrdinalIgnoreCase) && years is >= 1 and <= 3)
+        return CustomFieldConstants.Job.Experience.Options.EntryJunior;
+      if (string.Equals(level, "Mid level", StringComparison.OrdinalIgnoreCase) && years is >= 4 and <= 6)
+        return CustomFieldConstants.Job.Experience.Options.Mid;
+      if (string.Equals(level, "Senior level", StringComparison.OrdinalIgnoreCase) && years >= 7)
+        return CustomFieldConstants.Job.Experience.Options.Senior;
+
+      return null;
     }
 
     private Domain.Lookups.Models.Language ResolveLanguage(string? nameSource)
@@ -235,6 +347,25 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
       return false;
     }
 
+    private static bool TryResolveJobbermanQualificationId(string? nameSource, out Guid qualificationId)
+    {
+      qualificationId = default;
+
+      nameSource = nameSource?.Trim();
+      if (string.IsNullOrEmpty(nameSource)) return false;
+
+      foreach (var mapping in QualificationMappings)
+      {
+        if (mapping.Value.Contains(nameSource, StringComparer.OrdinalIgnoreCase))
+        {
+          qualificationId = mapping.Key;
+          return true;
+        }
+      }
+
+      return false;
+    }
+
     private static string? NormalizeLookupKey(string? value)
     {
       value = value?.NormalizeNullableValue();
@@ -245,13 +376,29 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
         .NormalizeTrim();
     }
 
-    private static string BuildDescription(Opportunity item, string fallback)
+    private static string BuildDescription(Opportunity item, string fallback, List<CustomFieldValueRequest> customFields)
     {
       var description = item.Description.HtmlToMarkdown();
       if (string.IsNullOrWhiteSpace(description)) description = fallback;
 
       var metadata = new List<string>();
-      if (!WorkScheduleMappings.ContainsKey(item.WorkType?.Trim() ?? string.Empty))
+      // Bounds cannot express strict Above/Below qualifiers; keep the source wording as well.
+      var salaryDisclosed = customFields.Single(field => field.Key == CustomFieldConstants.Job.Salary.Disclosed).Value;
+      var salaryOneSided = salaryDisclosed == bool.TrueString && customFields.Any(field =>
+        (field.Key == CustomFieldConstants.Job.Salary.Minimum || field.Key == CustomFieldConstants.Job.Salary.Maximum) && field.Value == null);
+      if (salaryDisclosed == null || salaryOneSided)
+        AddDescriptionDetail(metadata, "Salary", item.Salary);
+      if (!customFields.Any(field => field.Key == CustomFieldConstants.Job.Experience.Level && field.Values?.Count > 0))
+        AddDescriptionDetail(metadata, "Experience level", item.ExperienceLevel);
+      AddDescriptionDetail(metadata, "Experience length", item.ExperienceLength);
+      // HND/OND map to the broader Diploma lookup; preserve their exact source distinction.
+      if (!customFields.Any(field => field.Key == CustomFieldConstants.Job.MinimumQualification && field.Values?.Count > 0) ||
+        string.Equals(item.MinimumQualification?.Trim(), "HND", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(item.MinimumQualification?.Trim(), "OND", StringComparison.OrdinalIgnoreCase))
+        AddDescriptionDetail(metadata, "Minimum qualification", item.MinimumQualification);
+      AddDescriptionDetail(metadata, "Location", item.Location);
+      if (!customFields.Any(field => (field.Key == CustomFieldConstants.Job.Employment.Schedule ||
+        field.Key == CustomFieldConstants.Job.Employment.Type) && field.Values?.Count > 0))
         AddDescriptionDetail(metadata, "Contract type", item.WorkType?.TitleCase(onlyWhenAllCaps: true));
 
       if (metadata.Count > 0)
@@ -304,6 +451,14 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
       if (projectedLength <= OpportunityService.Keywords_CombinedMaxLength)
         keywords.Add(value);
     }
+    #endregion
+
+    #region Regular Expressions
+    [GeneratedRegex(@"\A(?<currency>[A-Za-z]{3})\s+(?:(?:(?<lower>Above|Over|From|At least)|(?<upper>Below|Under|Up to|At most))\s+)?(?<minimum>(?:[0-9]+|[0-9]{1,3}(?:,[0-9]{3})+)(?:\.[0-9]{1,2})?)(?:\s*[-–]\s*(?<maximum>(?:[0-9]+|[0-9]{1,3}(?:,[0-9]{3})+)(?:\.[0-9]{1,2})?))?\z", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex SalaryPattern();
+
+    [GeneratedRegex(@"\A(?<years>[0-9]{1,3})\s+years?\z", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex ExperienceYearsPattern();
     #endregion
   }
 }

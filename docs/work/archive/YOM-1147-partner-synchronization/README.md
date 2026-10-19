@@ -69,7 +69,7 @@ Production integrations include Jobberman, Alison, JobJack Phase 1 and IXO; thes
 
 | Folder | Ticket | Area | Status |
 | ------ | ------ | ---- | ------ |
-| [`YOM-1166-api-add-jobberman-pull-provider-integration/`](./YOM-1166-api-add-jobberman-pull-provider-integration/feature.md) | [YOM-1166](https://linear.app/didx/issue/YOM-1166) | api | shipped |
+| [`YOM-1166-api-add-jobberman-pull-provider-integration/`](./YOM-1166-api-add-jobberman-pull-provider-integration/feature.md) | [YOM-1166](https://linear.app/didx/issue/YOM-1166) | api | review — October CF follow-up; original delivery shipped |
 | [`YOM-1167-api-add-alison-pull-provider-integration/`](./YOM-1167-api-add-alison-pull-provider-integration/feature.md) | [YOM-1167](https://linear.app/didx/issue/YOM-1167) | api | shipped |
 | [`YOM-1202-partner-synchronization-verification/`](./YOM-1202-partner-synchronization-verification/feature.md) | [YOM-1202](https://linear.app/didx/issue/YOM-1202) | api | shipped |
 | [`YOM-1203-api-add-partnersync-scope-support-to-partner-capability-configuration/`](./YOM-1203-api-add-partnersync-scope-support-to-partner-capability-configuration/feature.md) | [YOM-1203](https://linear.app/didx/issue/YOM-1203) | api | shipped |
@@ -133,6 +133,15 @@ breakdown belongs in the parent feature checklist rather than new class/endpoint
 
 ## Shared Contract
 
+**CF snapshot consistency follow-up (2026-10-19, review pending):** Jobberman and JobJack use
+the common `CompleteCustomFieldSnapshot` extension for their authoritative field subsets.
+Each declares `CustomField_Snapshot_Keys` using shared constants; absent/unmappable values become
+explicit key-only PATCH deletions. Unrelated keys remain omitted/preserved. Alison, IXO and
+Umuzi currently emit their difficulty value/default explicitly, so no equivalent omission gap
+exists; verification responses supplying no CFs do not claim ownership. See the
+[current implementation/review handoff](./YOM-1166-api-add-jobberman-pull-provider-integration/handoffs/2026-10-19-b.md).
+This is not part of the non-CF production release.
+
 **Umuzi visibility follow-up (2026-10-15, merged #1974; Stage smoke unconfirmed):** initial creation now maps the feed's optional
 boolean `hidden` (omitted defaults to false). Existing pull updates continue to preserve Yoma's
 stored visibility and exclude Hidden from their effective payload hashes. Other providers are
@@ -176,11 +185,21 @@ IXO Learning and Job opportunities were confirmed through the Web UI.
 
 ### Cross-epic Custom Fields dependency
 
-Partner requests already accept custom-field values with patch semantics, but provider mappings do
-not yet populate them. Once the BA-approved definitions are available under
-[YOM-1244](../../active/YOM-1244-customizable-fields-framework/README.md), review Jobberman, Alison, JobJack
-IXO and Umuzi together. Mappings must use stable definition keys, preserve omitted values, and use a
-key-only item only for deliberate deletion. No provider may hardcode temporary `[Sample]` keys.
+Master-based requests/mappings use stable CF keys and the shared PATCH framework under
+[YOM-1244](../../active/YOM-1244-customizable-fields-framework/README.md). Preserve omitted values
+unless the provider explicitly owns an authoritative field snapshot. For that case, complete the
+mapped collection using `CompleteCustomFieldSnapshot(CustomField_Snapshot_Keys)`; the common CF
+normalizer/upsert performs the actual validation/deletion. Do not duplicate the deletion loop,
+derive ownership from all configured/system/schema-mapped fields, or apply snapshot clearing to
+partial/delta payloads. Catalogue-level completeness alone is not a blanket field-ownership rule.
+
+When adding an optional mapped field, add its shared key to that provider's ownership set only if
+absence/unmappability withdraws the previous mapped value. Cover populated -> missing/unmappable,
+unrelated-value preservation, and unchanged-repeat hashing. If the source contract defines a
+replacement/default, emit it explicitly instead. Changes to provider-owned values never authorize
+clearing unrelated CFs. Neither `IsSystem` nor `IsSchemaMapped` determines synchronization ownership.
+No provider may hardcode temporary `[Sample]` keys. Other historical provider notes above remain
+delivery history, not proof of CF deployment.
 
 ## Out of Scope (whole epic)
 

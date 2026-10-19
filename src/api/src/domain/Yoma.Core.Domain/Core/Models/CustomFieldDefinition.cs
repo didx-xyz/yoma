@@ -59,7 +59,8 @@ namespace Yoma.Core.Domain.Core.Models
     public bool IsActive { get; set; }
 
     /// <summary>
-    /// Indicates that the field is required by code, a partner mapping or another developer-controlled business process.
+    /// Indicates that the field's stable structure or options are required by a developer-controlled business process.
+    /// Mapping informational partner data into a field does not by itself require system protection.
     /// This persisted flag is managed through development and seeding only; credential schema management must not set or clear it.
     /// </summary>
     public bool IsSystem { get; set; }
