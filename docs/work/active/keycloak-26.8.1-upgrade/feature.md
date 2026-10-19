@@ -17,7 +17,7 @@ Upgrade the Keycloak server from 26.4.0 to 26.8.1 in Helm and local compose. Reb
 - [x] Local smoke test: fresh install, and a 26.4.0 database upgraded in place.
 - [x] Helm upgrade of an existing 26.4.0 deployment on a local kind cluster, deployed the way CI does it (see "Helm upgrade test" below).
 - [x] Rollout plan: keep `replicas: 2` and the normal rolling update; raise the `helmDefaults` timeout in `helmfile.yaml.gotmpl` from 300 to 600 seconds for every release.
-- [ ] Before merging, search the Keycloak logs in Datadog for `type="TOKEN_EXCHANGE"` in each environment (see the feature flags decision). The `jboss-logging` listener logs every event type at `info`. The admin console's saved events won't show them, because `TOKEN_EXCHANGE` isn't in the realm's `enabledEventTypes`.
+- [x] Before merging, search the Keycloak logs in Datadog for `type="TOKEN_EXCHANGE"` in each environment (see the feature flags decision). Done on 2026-10-19 by Robbie: no occurrences in any environment. Datadog keeps 7 days of logs, so this covers only that window; something that exchanges tokens less than weekly would not show up.
 - [ ] Deploy to Dev, then Stage. Register with phone (real SMS), log in with Google and Facebook, and check SendGrid email.
 - [ ] Prod rollout.
 
