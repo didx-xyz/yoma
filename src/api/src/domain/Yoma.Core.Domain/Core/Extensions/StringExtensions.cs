@@ -239,6 +239,17 @@ namespace Yoma.Core.Domain.Core.Extensions
       result = HtmlBlockStart().Replace(result, "\n\n");
       result = HtmlBlockEnd().Replace(result, "\n\n");
 
+      // Rich-text editors emit empty emphasis around line breaks. Preserve their spacing,
+      // but do not turn the empty tags into visible Markdown delimiters. Repeat for nesting.
+      string previous;
+      do
+      {
+        previous = result;
+        result = HtmlEmptyEmphasis().Replace(result, "${spacing}");
+        result = HtmlEmphasisLeadingWhitespace().Replace(result, "${spacing}${tag}");
+        result = HtmlEmphasisTrailingWhitespace().Replace(result, "${tag}${spacing}");
+      } while (!string.Equals(previous, result, StringComparison.Ordinal));
+
       result = HtmlStrongStart().Replace(result, "**");
       result = HtmlStrongEnd().Replace(result, "**");
       result = MarkdownStrongWhitespace().Replace(result, "${leading}**${content}**${trailing}");
@@ -306,7 +317,7 @@ namespace Yoma.Core.Domain.Core.Extensions
     [GeneratedRegex(@"(?:\[\s*)?<a\b[^>]*\bhref\s*=\s*(?:""(?<url>[^""]*)""|'(?<url>[^']*)')[^>]*>(?<text>.*?)</a\s*>(?:\s*\])?", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
     private static partial Regex HtmlAnchors();
 
-    [GeneratedRegex(@"<br\s*/?>", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"<br\b[^>]*>", RegexOptions.IgnoreCase)]
     private static partial Regex HtmlLineBreaks();
 
     [GeneratedRegex(@"<(p|div|section|article|h[1-6])[^>]*>", RegexOptions.IgnoreCase)]
@@ -315,16 +326,25 @@ namespace Yoma.Core.Domain.Core.Extensions
     [GeneratedRegex(@"</(p|div|section|article|h[1-6])\s*>", RegexOptions.IgnoreCase)]
     private static partial Regex HtmlBlockEnd();
 
-    [GeneratedRegex(@"<(strong|b)[^>]*>", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"<(?<tag>strong|b|em|i)\b[^>]*>(?<spacing>(?:\s|</?(?:span|u)\b[^>]*>)*)</\k<tag>\s*>", RegexOptions.IgnoreCase)]
+    private static partial Regex HtmlEmptyEmphasis();
+
+    [GeneratedRegex(@"(?<tag><(?:strong|b|em|i)\b[^>]*>)(?<spacing>\s+)", RegexOptions.IgnoreCase)]
+    private static partial Regex HtmlEmphasisLeadingWhitespace();
+
+    [GeneratedRegex(@"(?<spacing>\s+)(?<tag></(?:strong|b|em|i)\s*>)", RegexOptions.IgnoreCase)]
+    private static partial Regex HtmlEmphasisTrailingWhitespace();
+
+    [GeneratedRegex(@"<(strong|b)\b[^>]*>", RegexOptions.IgnoreCase)]
     private static partial Regex HtmlStrongStart();
 
-    [GeneratedRegex(@"</(strong|b)>", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"</(strong|b)\s*>", RegexOptions.IgnoreCase)]
     private static partial Regex HtmlStrongEnd();
 
-    [GeneratedRegex(@"\*\*(?<leading>\s*)(?<content>[^*\r\n]*?[^\s*])(?<trailing>\s*)\*\*")]
+    [GeneratedRegex(@"\*\*(?<leading>[^\S\r\n]*)(?<content>[^*\r\n]*?[^\s*])(?<trailing>[^\S\r\n]*)\*\*")]
     private static partial Regex MarkdownStrongWhitespace();
 
-    [GeneratedRegex(@"<(em|i)[^>]*>", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"<(em|i)\b[^>]*>", RegexOptions.IgnoreCase)]
     private static partial Regex HtmlEmphasisStart();
 
     [GeneratedRegex(@"<u\b[^>]*>", RegexOptions.IgnoreCase)]
@@ -333,7 +353,7 @@ namespace Yoma.Core.Domain.Core.Extensions
     [GeneratedRegex(@"</u\s*>", RegexOptions.IgnoreCase)]
     private static partial Regex HtmlUnderlineEnd();
 
-    [GeneratedRegex(@"</(em|i)>", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"</(em|i)\s*>", RegexOptions.IgnoreCase)]
     private static partial Regex HtmlEmphasisEnd();
 
     [GeneratedRegex(@"<li[^>]*>", RegexOptions.IgnoreCase)]
