@@ -69,7 +69,7 @@ Production integrations include Jobberman, Alison, JobJack Phase 1 and IXO; thes
 
 | Folder | Ticket | Area | Status |
 | ------ | ------ | ---- | ------ |
-| [`YOM-1166-api-add-jobberman-pull-provider-integration/`](./YOM-1166-api-add-jobberman-pull-provider-integration/feature.md) | [YOM-1166](https://linear.app/didx/issue/YOM-1166) | api | shipped |
+| [`YOM-1166-api-add-jobberman-pull-provider-integration/`](./YOM-1166-api-add-jobberman-pull-provider-integration/feature.md) | [YOM-1166](https://linear.app/didx/issue/YOM-1166) | api | review — production formatting backport; original integration/enhanced-feed release shipped |
 | [`YOM-1167-api-add-alison-pull-provider-integration/`](./YOM-1167-api-add-alison-pull-provider-integration/feature.md) | [YOM-1167](https://linear.app/didx/issue/YOM-1167) | api | shipped |
 | [`YOM-1202-partner-synchronization-verification/`](./YOM-1202-partner-synchronization-verification/feature.md) | [YOM-1202](https://linear.app/didx/issue/YOM-1202) | api | shipped |
 | [`YOM-1203-api-add-partnersync-scope-support-to-partner-capability-configuration/`](./YOM-1203-api-add-partnersync-scope-support-to-partner-capability-configuration/feature.md) | [YOM-1203](https://linear.app/didx/issue/YOM-1203) | api | shipped |

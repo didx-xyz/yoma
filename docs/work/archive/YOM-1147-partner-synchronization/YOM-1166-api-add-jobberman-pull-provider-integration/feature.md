@@ -7,7 +7,7 @@
 - **Ticket**: [YOM-1166](https://linear.app/didx/issue/YOM-1166/api-add-jobberman-pull-provider-integration)
 - **Owner**: Adrian
 - **Areas**: api
-- **Status**: shipped
+- **Status**: review — production formatting-only backport; original integration/enhanced-feed release shipped
 - **Started**: 2026-04-28
 
 ## Problem / Goal
@@ -39,7 +39,9 @@ actions.
 
 ### October 2026 feed enhancement follow-up
 
-The shipped status above describes the original integration. This hotfix follow-up is not released.
+The original integration and enhanced-feed hotfix are shipped. The enhanced mappings were released
+through #1985 in v3.13.1 and are retained in the verified latest production baseline, v3.13.2.
+The separate description-formatting backport below is not yet released.
 
 - [x] Refresh both embedded RSS samples from representative, unmodified live-feed subsets (10 records per country), covering the enhanced schema and omitted salary values.
 - [x] Validate XML, exact source-item fidelity, full observed field coverage and the Jobberman project build.
@@ -49,10 +51,24 @@ The shipped status above describes the original integration. This hotfix follow-
 - [ ] Deletion of old embedded records cannot be validated from the fresh local database; check during Stage replacement or via the lifecycle regression tests. Adrian waived another manual unchanged-repeat pull because the shared behaviour is already established; do not claim that rerun occurred.
 - [x] Execute Jobberman's regression suite using the direct xUnit runner after the local execution block was resolved: all 27 tests passed, including hashes, lifecycle, migration SQL and model/snapshot consistency. The wider PartnerSync namespace also passed all 50 tests. Build passed with zero warnings/errors.
 - [x] Complete final Jobberman diff review and restore SSI schema validation unchanged. No commit/push was made by Codex; Adrian requested commit wording and will push.
-- [ ] Release via `current` without waiting for Jason's separate hotfix, then merge `current` back into `master` after release. Start a new working branch from the updated `master` to adapt Jobberman to CF mappings and structured provider-cache storage.
+- [x] Release the enhanced mappings through `current` (#1985, v3.13.1). The subsequent CF adaptation was imported selectively and merged to master separately in #1988; do not merge the whole newer master into the production branch.
 - [x] Remove the temporary Debug/Local-only `OpportunityService.AssertSSISchemaApplicable` bypass after local validation and before any hotfix commit. Schema validation is restored unchanged; credential/schema correctness was not validated by the bypassed local run.
 
 See [sample preparation handoff](./handoffs/2026-10-19-a.md) for source URLs, coverage and mapping observations.
+
+### October 2026 production description-formatting hotfix
+
+- [x] Fetch remote refs and verify `origin/current` exactly equals v3.13.2 (`5fcefdc699f00e322601ab464a60d8781a424f89`), whose release workflow and Deploy job completed successfully. Robbie also confirmed current is up to date through Adrian.
+- [x] Fast-forward local `current` and create `fix/jobberman-description-formatting` from that verified baseline, preserving the later release/API/Keycloak/Web hotfixes.
+- [x] Surgically port only the shared HTML-to-Markdown correction and its standalone regression tests from master #1988. Both files exactly match the source commit; no CF mappings, seeds, migrations, fixtures, Web, Helm or CI changes are included.
+- [x] Rebuild the API/test dependency graph (zero warnings/errors), verify formatting and run 76 converter/PartnerSync cases (all passed, zero skips/failures). Existing Jobberman enhanced-feed/cache/lifecycle tests remain unchanged and pass.
+- [x] At Adrian's instruction, retain the tested regex despite its supported SYSLIB1044 informational generator fallback. No rewrite/suppression is part of this hotfix; generator-only cleanup is deferred to master/Stage for a later ordinary release.
+- [ ] Adrian reviews the uncommitted diff, then commits/pushes, opens a PR into `current` and cuts a patch release after review. Codex has not committed, pushed, merged, published or deployed this hotfix.
+- [ ] After production deployment, run the normal shared pull and verify the two reported production descriptions. No hash/error reset, SQL repair or migration is needed for this formatting correction.
+
+See [formatting-only production backport handoff](./handoffs/2026-10-19-c.md) for release provenance,
+the exact scope, Stage evidence, test commands and production validation links. The `-b` handoff
+belongs to the separate CF work on master and is intentionally not copied into this release branch.
 
 ## Decisions
 
@@ -61,6 +77,7 @@ See [sample preparation handoff](./handoffs/2026-10-19-a.md) for source URLs, co
 - 2026-10-19: Prepare live-derived embedded fixtures before changing mappings. Preserve complete source items, HTML text, XML namespaces and omitted fields; do not invent language, working hours or unavailable metadata. Keep provider schema/mapping work separate from the newer CF branch.
 - 2026-10-19: Use existing Yoma fields before appending description metadata. RSS `description` maps to the existing 150-character Yoma Summary (plain text, bounded, title fallback); `content:encoded` provides the full Description with short-description fallback. RSS `category` uses the existing category/keyword map, with `job_function` fallback. Append salary (`price`, then legacy `salary`), experience level/length, qualification, detailed location and work type only when supplied. Keep country/language/lifecycle rules and CF usage unchanged. The only new column is nullable `Jobberman.Opportunity.Summary`, needed across the cache-to-domain boundary; no new Yoma domain fields or CF definitions are introduced.
 - 2026-10-19: Latest release direction supersedes the earlier cherry-pick/Jason-wait plan: Adrian will commit/push, let checks run and proceed without Jason's not-yet-ready change. After the hotfix release from `current`, merge `current` back into `master`, then use a new master-based working branch for the structured-storage/CF version. Do not start that conversion on the release hotfix branch.
+- 2026-10-19 (formatting backport): current is verified against the successful v3.13.2 production deployment before branching. Port only the converter/test hunks from #1988 rather than cherry-picking its mixed CF commit. The same code already exists on master, so no duplicate fix or whole-current merge back into master is required for this backport. Different commit identities are expected; retain source-PR provenance rather than claiming identical histories.
 
 ## Links
 
