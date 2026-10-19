@@ -1,4 +1,7 @@
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -15,6 +18,7 @@ using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Services;
 using Yoma.Core.Infrastructure.Database.Migrations;
+using Yoma.Core.Infrastructure.Database.Context;
 
 namespace Yoma.Core.Test.Core
 {
@@ -115,9 +119,81 @@ namespace Yoma.Core.Test.Core
 
       Assert.Equal(expected, result.Item.Incentivized);
       Assert.DoesNotContain(result.Item.CustomFields!, field => field.Key == CustomFieldConstants.Job.Salary.Currency);
-      Assert.Equal(expected == true, result.Item.CustomFields!.Any(field => field.Key == CustomFieldConstants.Job.Salary.Disclosed));
+      Assert.Equal(expected == true, result.Item.CustomFields!.Any(field =>
+        field.Key == CustomFieldConstants.Job.Salary.Disclosed && field.Value == bool.TrueString));
       Assert.Null(result.Item.ZltoReward);
       Assert.False(result.Item.VerificationEnabled);
+    }
+
+    [Fact]
+    public void JobJackSnapshotMapsAndOwnsEverySupportedCustomField()
+    {
+      var fields = MapJobJackCustomFields(new()
+      {
+        SalaryLow = 100,
+        SalaryHigh = 200,
+        SalaryFrequency = "per hour",
+        ContractType = "Full time contract",
+        Category = "Retail"
+      });
+
+      Assert.Equal(6, fields.Count);
+      Assert.Equal(bool.TrueString, fields.Single(field => field.Key == CustomFieldConstants.Job.Salary.Disclosed).Value);
+      Assert.Equal("100", fields.Single(field => field.Key == CustomFieldConstants.Job.Salary.Minimum).Value);
+      Assert.Equal("200", fields.Single(field => field.Key == CustomFieldConstants.Job.Salary.Maximum).Value);
+      Assert.Equal([CustomFieldConstants.Job.Salary.PayIntervalOptions.PerHour],
+        fields.Single(field => field.Key == CustomFieldConstants.Job.Salary.PayInterval).Values!);
+      Assert.Equal([CustomFieldConstants.Job.Employment.ScheduleOptions.FullTime],
+        fields.Single(field => field.Key == CustomFieldConstants.Job.Employment.Schedule).Values!);
+      Assert.Equal([CustomFieldConstants.Job.IndustryOptions.Retail],
+        fields.Single(field => field.Key == CustomFieldConstants.Job.Industry).Values!);
+
+      var ownedKeys = Assert.IsType<string[]>(typeof(Infrastructure.JobJack.Client.JobJackClient)
+        .GetField("CustomField_Snapshot_Keys", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null));
+      Assert.Equal(ownedKeys.Order(), fields.Select(field => field.Key).Order());
+    }
+
+    [Theory]
+    [InlineData(null, null, null)]
+    [InlineData("Unknown schedule", "Unknown interval", "Unknown industry")]
+    public void JobJackSnapshotClearsUnavailableOwnedValuesWithoutTouchingUnmappedFields(
+      string? schedule, string? interval, string? industry)
+    {
+      var fields = MapJobJackCustomFields(new()
+      {
+        SalaryLow = 0,
+        SalaryHigh = 0,
+        SalaryFrequency = interval,
+        ContractType = schedule,
+        Category = industry
+      });
+
+      Assert.Equal(6, fields.Count);
+      Assert.All(fields, field =>
+      {
+        Assert.Null(field.Value);
+        Assert.Null(field.Values);
+      });
+      Assert.DoesNotContain(fields, field => field.Key == CustomFieldConstants.Job.Salary.Currency);
+      Assert.DoesNotContain(fields, field => field.Key == CustomFieldConstants.Job.Employment.Type);
+      Assert.DoesNotContain(fields, field => field.Key == CustomFieldConstants.Job.MinimumQualification);
+    }
+
+    [Fact]
+    public void JobJackSnapshotClearsWithdrawnUpperAmountAndIntervalWhileKeepingAvailableValues()
+    {
+      var fields = MapJobJackCustomFields(new()
+      {
+        SalaryLow = 100,
+        ContractType = "Part time contract",
+        Category = "Retail"
+      });
+
+      Assert.Equal("100", fields.Single(field => field.Key == CustomFieldConstants.Job.Salary.Minimum).Value);
+      Assert.Null(fields.Single(field => field.Key == CustomFieldConstants.Job.Salary.Maximum).Value);
+      Assert.Null(fields.Single(field => field.Key == CustomFieldConstants.Job.Salary.PayInterval).Values);
+      Assert.Equal([CustomFieldConstants.Job.Employment.ScheduleOptions.PartTime],
+        fields.Single(field => field.Key == CustomFieldConstants.Job.Employment.Schedule).Values!);
     }
 
     [Fact]
@@ -213,6 +289,63 @@ namespace Yoma.Core.Test.Core
         [Option(CustomFieldConstants.Job.Employment.Type, "Permanent|FixedTerm")], false));
     }
 
+    [Fact]
+    public void ContractAloneAllowsUnknownTermButDoesNotWaiveOtherEmploymentRules()
+    {
+      Validate([Option(CustomFieldConstants.Job.Employment.Type, EmploymentType.Contract.ToString())], true);
+      var duration = Scalar(CustomFieldConstants.Job.Employment.Duration, "6", CustomFieldDataType.Integer);
+      var unit = Option(CustomFieldConstants.Job.Employment.DurationUnit, "Months");
+      var contract = Option(CustomFieldConstants.Job.Employment.Type, EmploymentType.Contract.ToString());
+      Validate([contract, duration, unit], true);
+      Assert.Throws<ValidationException>(() => Validate([contract, duration], true));
+      Assert.Throws<ValidationException>(() => Validate([contract, unit], true));
+      Validate([contract, duration], false); // Partial external term remains supported.
+
+      foreach (var type in new[] { EmploymentType.FixedTerm.ToString(), "Internship", "TemporarySeasonal" })
+      {
+        var types = Option(CustomFieldConstants.Job.Employment.Type, $"{EmploymentType.Contract}|{type}");
+        Assert.Throws<ValidationException>(() => Validate([types], true));
+        Validate([types, duration, unit], true);
+      }
+
+      var permanent = Option(CustomFieldConstants.Job.Employment.Type, $"{EmploymentType.Contract}|{EmploymentType.Permanent}");
+      Validate([permanent], true);
+      Assert.Throws<ValidationException>(() => Validate([permanent, duration, unit], false));
+    }
+
+    [Fact]
+    public void ContractMigrationIsAdditiveAndClarifiesMetadataWithoutChangingExistingIdentities()
+    {
+      var migration = new ApplicationDb_Job_Employment_Contract();
+      var option = Assert.Single(migration.UpOperations.OfType<InsertDataOperation>());
+      Assert.Equal("CustomFieldOption", option.Table);
+      Assert.Equal(EmploymentType.Contract.ToString(), option.Values[0, Array.IndexOf(option.Columns, "Key")]);
+      Assert.Equal(new Guid("cf0b0001-0929-4cf0-a100-000000000006"),
+        option.Values[0, Array.IndexOf(option.Columns, "CustomFieldDefinitionId")]);
+      var historical = new ApplicationDb_CF_Configuration().UpOperations.OfType<InsertDataOperation>()
+        .Where(operation => operation.Table == "CustomFieldOption");
+      Assert.DoesNotContain(historical.SelectMany(operation => Enumerable.Range(0, operation.Values.GetLength(0))
+        .Select(row => operation.Values[row, Array.IndexOf(operation.Columns, "Id")])),
+        id => Equals(id, option.Values[0, Array.IndexOf(option.Columns, "Id")]));
+      var updates = migration.UpOperations.OfType<UpdateDataOperation>().ToList();
+      Assert.All(updates, update => Assert.Equal(["Description"], update.Columns));
+      var descriptions = updates.SelectMany(update => update.Values.Cast<string>()).ToList();
+      Assert.All(descriptions, description => Assert.InRange(description.Length, 1, 500));
+      Assert.Contains(descriptions, description => description.Contains("Contract alone"));
+      Assert.Throws<NotSupportedException>(() => migration.DownOperations); // Never delete captured selections on rollback.
+
+      using var context = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>()
+        .UseNpgsql("Host=localhost;Database=not_contacted;Username=not_used;Password=not_used",
+          options => options.UseNetTopologySuite()).Options);
+      var script = context.GetService<IMigrator>().GenerateScript(
+        "20261015090000_ApplicationDb_Treasury_CashOut_Release_Defaults",
+        "20261019110000_ApplicationDb_Job_Employment_Contract");
+      Assert.Contains("INSERT INTO \"Core\".\"CustomFieldOption\"", script);
+      Assert.Contains("'Contract'", script);
+      Assert.DoesNotContain("DELETE FROM", script);
+      Assert.False(context.Database.HasPendingModelChanges());
+    }
+
     [Theory]
     [InlineData("JobSalaryMinimum", CustomFieldDataType.Decimal)]
     [InlineData("JobSalaryMaximum", CustomFieldDataType.Decimal)]
@@ -225,6 +358,25 @@ namespace Yoma.Core.Test.Core
     #endregion
 
     #region Private Members
+    private static List<CustomFieldValueRequest> MapJobJackCustomFields(Infrastructure.JobJack.Models.Opportunity source)
+    {
+      var metadata = new Mock<ICustomFieldDefinitionService>();
+      metadata.Setup(service => service.GetByKey(CustomFieldEntityType.Opportunity, It.IsAny<string>(), true, true))
+        .Returns((CustomFieldEntityType _, string key, bool _, bool _) => Definitions().Single(definition => definition.Key == key));
+      var client = new Infrastructure.JobJack.Client.JobJackClient(
+        Mock.Of<ILogger<Infrastructure.JobJack.Client.JobJackClient>>(),
+        Options.Create(new Infrastructure.JobJack.Models.JobJackOptions()),
+        Mock.Of<IOpportunityTypeService>(), Mock.Of<IOpportunityCategoryService>(),
+        Mock.Of<ICountryService>(), Mock.Of<ILanguageService>(), metadata.Object,
+        Mock.Of<IRepositoryBatched<Infrastructure.JobJack.Models.Opportunity>>(),
+        new Domain.PartnerSync.Validators.SyncFilterPullEntityValidator());
+      var fields = Assert.IsType<List<CustomFieldValueRequest>>(typeof(Infrastructure.JobJack.Client.JobJackClient)
+        .GetMethod("MapCustomFields", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(client, [source]));
+      fields.NormalizeForPatch();
+      CreateValueService().Validate(CustomFieldEntityType.Opportunity, "Job", fields, CustomFieldUpsertMode.PatchAllowMissingRequired);
+      return fields;
+    }
+
     private static void Validate(List<CustomFieldValueItem> fields, bool required, bool? incentivized = true)
     {
       var method = typeof(OpportunityService).GetMethod("AssertCrossFieldRules", BindingFlags.NonPublic | BindingFlags.Static)!;
@@ -302,6 +454,14 @@ namespace Yoma.Core.Test.Core
           IsActive = (bool)Value("IsActive")
         });
       }
+
+      var contract = Assert.Single(new ApplicationDb_Job_Employment_Contract().UpOperations.OfType<InsertDataOperation>());
+      result.Single(o => o.Id == (Guid)contract.Values[0, Array.IndexOf(contract.Columns, "CustomFieldDefinitionId")]!).Options!.Add(new CustomFieldOption
+      {
+        Key = (string)contract.Values[0, Array.IndexOf(contract.Columns, "Key")]!,
+        Name = (string)contract.Values[0, Array.IndexOf(contract.Columns, "Name")]!,
+        IsActive = true
+      });
 
       return result;
     }

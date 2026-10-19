@@ -2333,8 +2333,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (permanent && (duration.HasValue || unit.Count > 0))
               throw new ValidationException("Permanent employment cannot specify an employment duration or unit.");
 
-            if (enforceRequired && types.Count > 0 && !permanent && (!duration.HasValue || unit.Count == 0))
-              throw new ValidationException("Non-permanent employment requires a duration and unit.");
+            // Generic Contract does not establish a term. Other non-permanent selections keep
+            // their existing manual duration requirement; optional duration still needs its unit.
+            var requiresDuration = !permanent && types.Any(type => type != EmploymentType.Contract.ToString());
+            if (enforceRequired && (requiresDuration || duration.HasValue || unit.Count > 0) &&
+              (!duration.HasValue || unit.Count == 0))
+              throw new ValidationException("Employment duration and unit are required together for a specified term.");
 
             break;
           }

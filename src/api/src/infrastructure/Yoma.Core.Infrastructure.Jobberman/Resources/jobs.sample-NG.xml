@@ -509,5 +509,20 @@ opportunities to help SMEs and startups work more efficiently.</description>
       <minimum_qualification>Vocational</minimum_qualification>
     </item>
     <atom:link rel="self" href="https://cde-console-production.s3.eu-west-1.amazonaws.com/jobs_rss_listings_5224.xml" type="application/rss+xml" />
+    <!-- Synthetic local/stage mapping case. The 10 live-derived source items above remain unchanged. -->
+    <item>
+      <title>[Mapping fixture] NG maximum-only salary</title>
+      <link>https://example.com/yoma-mapping-fixtures/ng-maximum-salary</link>
+      <guid isPermaLink="false">test-mapping-maximum-salary</guid>
+      <description>Local test case: maximum-only salary with structured mid-level experience and a part-time schedule.</description>
+      <content:encoded>&lt;p&gt;&lt;b&gt;Working Arrangements:&lt;/b&gt;&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Verify that the salary displays as Up to, not an exact amount.&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/p&gt;&lt;p&gt;&lt;b&gt;Benefits:&lt;/b&gt;&lt;/p&gt;&lt;p&gt;The original salary qualifier remains visible in the description.&lt;/p&gt;</content:encoded>
+      <location>Lagos, Nigeria</location>
+      <price>NGN Up to 400,000</price>
+      <work_type>Part Time</work_type>
+      <category>Software &amp; Data</category>
+      <experience_level>Mid level</experience_level>
+      <experience_length>5 years</experience_length>
+      <minimum_qualification>Degree</minimum_qualification>
+    </item>
   </channel>
 </rss>

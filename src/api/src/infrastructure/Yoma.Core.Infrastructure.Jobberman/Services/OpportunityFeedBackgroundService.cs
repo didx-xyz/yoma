@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Net;
 using System.Net.Http.Headers;
 using System.Transactions;
 using System.Xml.Linq;
@@ -323,16 +322,6 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
         var description = x.GetElementContent(XNamespace_ContentNs + "encoded");
         if (string.IsNullOrWhiteSpace(description.HtmlToMarkdown())) description = summary;
 
-        // The non-CF mapping has no dedicated Yoma fields for these values.
-        // Keep their source text in the description, without inventing salary units or working hours.
-        var metadata = new List<string>();
-        AddDescriptionDetail(metadata, "Salary", x.GetElementText("price") ?? x.GetElementText("salary"));
-        AddDescriptionDetail(metadata, "Experience level", x.GetElementText("experience_level"));
-        AddDescriptionDetail(metadata, "Experience length", x.GetElementText("experience_length"));
-        AddDescriptionDetail(metadata, "Minimum qualification", x.GetElementText("minimum_qualification"));
-        if (metadata.Count > 0)
-          description = $"{description}{System.Environment.NewLine}{string.Join(System.Environment.NewLine, metadata)}";
-
         opportunities.Add(new Opportunity
         {
           ExternalId = $"{countryCodeAlpha2}:{sourceId}",
@@ -345,6 +334,10 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
           ImageURL = x.Element(XNamespace_MediaNs + "content").GetAttribute("url"),
           Location = x.GetElementText("location"),
           WorkType = x.GetElementText("work_type"),
+          Salary = x.GetElementText("price") ?? x.GetElementText("salary"),
+          ExperienceLevel = x.GetElementText("experience_level"),
+          ExperienceLength = x.GetElementText("experience_length"),
+          MinimumQualification = x.GetElementText("minimum_qualification"),
           DateStart = dateStart,
           DateEnd = dateEnd,
           Category = category,
@@ -357,13 +350,6 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
       }
 
       return opportunities;
-    }
-
-    private static void AddDescriptionDetail(List<string> sections, string label, string? value)
-    {
-      value = value?.NormalizeNullableValue();
-      if (!string.IsNullOrEmpty(value))
-        sections.Add($"<p><strong>{label}:</strong> {WebUtility.HtmlEncode(value)}</p>");
     }
 
     private async Task ProcessOpportunities(JobbermanFeedOptions feed, List<Opportunity> opportunities, DateTimeOffset now)
@@ -441,6 +427,10 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
             ImageURL = item.ImageURL,
             Location = item.Location,
             WorkType = item.WorkType,
+            Salary = item.Salary,
+            ExperienceLevel = item.ExperienceLevel,
+            ExperienceLength = item.ExperienceLength,
+            MinimumQualification = item.MinimumQualification,
 
             // Jobberman confirmed DateStart should use posted/publish date when supplied.
             // Until the XML property name is confirmed, default once to the current sync/import time.
@@ -470,6 +460,18 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
 
         if (!string.Equals(itemExisting.Summary, item.Summary, StringComparison.Ordinal))
         { itemExisting.Summary = item.Summary; changed = true; }
+
+        if (!string.Equals(itemExisting.Salary, item.Salary, StringComparison.Ordinal))
+        { itemExisting.Salary = item.Salary; changed = true; }
+
+        if (!string.Equals(itemExisting.ExperienceLevel, item.ExperienceLevel, StringComparison.Ordinal))
+        { itemExisting.ExperienceLevel = item.ExperienceLevel; changed = true; }
+
+        if (!string.Equals(itemExisting.ExperienceLength, item.ExperienceLength, StringComparison.Ordinal))
+        { itemExisting.ExperienceLength = item.ExperienceLength; changed = true; }
+
+        if (!string.Equals(itemExisting.MinimumQualification, item.MinimumQualification, StringComparison.Ordinal))
+        { itemExisting.MinimumQualification = item.MinimumQualification; changed = true; }
 
         if (!string.Equals(itemExisting.Description, item.Description, StringComparison.Ordinal))
         { itemExisting.Description = item.Description; changed = true; }

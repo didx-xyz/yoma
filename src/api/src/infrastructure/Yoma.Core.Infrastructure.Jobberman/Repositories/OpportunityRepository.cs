@@ -34,6 +34,10 @@ namespace Yoma.Core.Infrastructure.Jobberman.Repositories
         ImageURL = entity.ImageURL,
         Location = entity.Location,
         WorkType = entity.WorkType,
+        Salary = entity.Salary,
+        ExperienceLevel = entity.ExperienceLevel,
+        ExperienceLength = entity.ExperienceLength,
+        MinimumQualification = entity.MinimumQualification,
         DateStart = entity.DateStart,
         DateEnd = entity.DateEnd,
         Category = entity.Category,
@@ -63,6 +67,10 @@ namespace Yoma.Core.Infrastructure.Jobberman.Repositories
         ImageURL = item.ImageURL,
         Location = item.Location,
         WorkType = item.WorkType,
+        Salary = item.Salary,
+        ExperienceLevel = item.ExperienceLevel,
+        ExperienceLength = item.ExperienceLength,
+        MinimumQualification = item.MinimumQualification,
         DateStart = item.DateStart,
         DateEnd = item.DateEnd,
         Category = item.Category,
@@ -101,6 +109,10 @@ namespace Yoma.Core.Infrastructure.Jobberman.Repositories
           ImageURL = item.ImageURL,
           Location = item.Location,
           WorkType = item.WorkType,
+          Salary = item.Salary,
+          ExperienceLevel = item.ExperienceLevel,
+          ExperienceLength = item.ExperienceLength,
+          MinimumQualification = item.MinimumQualification,
           DateStart = item.DateStart,
           DateEnd = item.DateEnd,
           Category = item.Category,
@@ -139,6 +151,10 @@ namespace Yoma.Core.Infrastructure.Jobberman.Repositories
       entity.ImageURL = item.ImageURL;
       entity.Location = item.Location;
       entity.WorkType = item.WorkType;
+      entity.Salary = item.Salary;
+      entity.ExperienceLevel = item.ExperienceLevel;
+      entity.ExperienceLength = item.ExperienceLength;
+      entity.MinimumQualification = item.MinimumQualification;
       entity.DateStart = item.DateStart;
       entity.DateEnd = item.DateEnd;
       entity.Category = item.Category;
@@ -174,6 +190,10 @@ namespace Yoma.Core.Infrastructure.Jobberman.Repositories
         entity.ImageURL = item.ImageURL;
         entity.Location = item.Location;
         entity.WorkType = item.WorkType;
+        entity.Salary = item.Salary;
+        entity.ExperienceLevel = item.ExperienceLevel;
+        entity.ExperienceLength = item.ExperienceLength;
+        entity.MinimumQualification = item.MinimumQualification;
         entity.DateStart = item.DateStart;
         entity.DateEnd = item.DateEnd;
         entity.Category = item.Category;

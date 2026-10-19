@@ -1,9 +1,10 @@
 namespace Yoma.Core.Domain.Opportunity
 {
   /// <summary>
-  /// Stable contracts for system-controlled opportunity fields used by integrations.
+  /// Stable keys and mapping targets for opportunity fields referenced by code or integrations.
   /// These identify metadata; resolution and validation remain in the common CF framework.
-  /// Do not duplicate ordinary configurable fields or their display labels here.
+  /// A shared mapping constant does not make a field system-controlled. Do not duplicate
+  /// the configurable catalogue or its display labels here.
   /// </summary>
   public static class CustomFieldConstants
   {
@@ -53,6 +54,21 @@ namespace Yoma.Core.Domain.Opportunity
       }
 
       public const string Industry = "JobIndustry";
+
+      public const string MinimumQualification = "JobMinimumQualification";
+
+      public static class Experience
+      {
+        public const string Level = "JobExperienceLevel";
+
+        public static class Options
+        {
+          public const string None = "None";
+          public const string EntryJunior = "EntryJunior";
+          public const string Mid = "Mid";
+          public const string Senior = "Senior";
+        }
+      }
 
       public static class IndustryOptions
       {

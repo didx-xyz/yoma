@@ -115,7 +115,8 @@ namespace Yoma.Core.Domain.Opportunity
   public enum EmploymentType
   {
     Permanent,
-    FixedTerm
+    FixedTerm,
+    Contract
   }
 
   /// <summary>

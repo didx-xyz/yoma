@@ -10,6 +10,7 @@ using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Services;
+using Yoma.Core.Domain.PartnerSync.Extensions;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Provider;
 using Yoma.Core.Domain.PartnerSync.Models;
 using Yoma.Core.Domain.PartnerSync.Validators;
@@ -29,6 +30,18 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
     private readonly ICustomFieldDefinitionService _customFieldDefinitionService;
     private readonly IRepositoryBatched<Opportunity> _opportunityRepository;
     private readonly SyncFilterPullEntityValidator _validator;
+
+    // The complete feed owns only these CFs; missing/unmappable values withdraw prior mappings.
+    // Currency and precise employment classification are not supplied and remain outside this set.
+    private static readonly string[] CustomField_Snapshot_Keys =
+    [
+      CustomFieldConstants.Job.Salary.Disclosed,
+      CustomFieldConstants.Job.Salary.Minimum,
+      CustomFieldConstants.Job.Salary.Maximum,
+      CustomFieldConstants.Job.Salary.PayInterval,
+      CustomFieldConstants.Job.Employment.Schedule,
+      CustomFieldConstants.Job.Industry
+    ];
 
     // Partner vocabulary is translated here, not accepted as aliases by ordinary CF/CSV capture.
     private static readonly Dictionary<string, string> WorkScheduleMappings = new(StringComparer.OrdinalIgnoreCase)
@@ -224,7 +237,7 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
 
       // Piece work and free-form duration/requirements do not establish a precise employment
       // type, qualification or ISCO occupation. Preserve those details rather than guessing.
-      return result;
+      return result.CompleteCustomFieldSnapshot(CustomField_Snapshot_Keys);
     }
 
     private Domain.Opportunity.Models.Lookups.OpportunityCategory ResolveCategory(string? source)

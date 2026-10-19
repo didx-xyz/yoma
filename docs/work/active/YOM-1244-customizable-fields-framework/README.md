@@ -191,12 +191,14 @@ options, groups and ordering returned by the API; do not hardcode a field-specif
 the configured CF sections use one metadata-driven `group` level with null `subGroup`.
 This does not permit hardcoded field controls or field/option labels.
 
-Domain rules and partner mappings may depend on explicitly protected CF contracts.
-Use shared constants for the stable keys they reference, and an enum only for values
-code actually selects or interprets. Resolve options through the common CF extensions;
-never compare display labels in business logic. Set `IsSystem` when such a dependency
-exists, not merely because a definition was seeded. Ordinary CFs remain configurable.
-Tests must verify these contracts against the seeded metadata.
+Use shared constants for stable CF keys/mapping targets, and enums for values interpreted by
+business-process decisions (for example conditional validation). Data-only partner mappings
+remain metadata-driven and use the common CF extensions; do not introduce a separate enum
+catalogue for configured options or compare display labels in business logic. An informational
+mapping alone does not automatically justify `IsSystem`. Protect fields whose stable structure
+or options are required by developer-controlled processes, not merely because a definition was
+seeded or mapped. Ordinary CFs remain configurable. Tests verify mapped keys/options against
+the seeded metadata; enum/constant names do not track database-only edits automatically.
 
 Seeds reuse existing enums and constants (including Opportunity Type and CF data/entity
 types); ordinary seed-only labels/values remain literals. Persisted enum/key
@@ -258,6 +260,52 @@ When adding a gate: never write `...(CUSTOM_FIELDS_ENABLED ? [x] : [])` at modul
 type-checks and compiles, then fails the production build with a bare-identifier `ReferenceError`.
 
 ## Shared API Contract
+
+**Jobberman follow-up (2026-10-19, awaiting Adrian's review):** the master-based provider mapping
+reuses existing `JobSalary*`, `JobWorkSchedule`, `JobExperienceLevel` and
+`JobMinimumQualification` definitions. Adrian confirmed the last two remain non-system because
+they are informational mappings, not business-process rules; the proposed protection migration
+was removed before commit/application. Existing metadata-driven mapping constants/lookup IDs
+are retained, with seed-contract tests rather than new mapping-only enums. No new CF definitions,
+UI payload shapes or CF persistence rules are introduced. The later approved follow-up adds a
+Contract employment option and updates its API term validation; Web alignment is pending Jason. Existing option keys/IDs
+are preserved and field help text clarifies their meanings. Jobberman's eight
+owned CF keys and JobJack's six now use the shared `CompleteCustomFieldSnapshot` extension to
+emit key-only deletions when an authoritative field snapshot withdraws/cannot map those values.
+Each provider declares `CustomField_Snapshot_Keys` using the shared constants; unrelated keys stay
+omitted/preserved. Alison/IXO/Umuzi emit their current difficulty/default explicitly and need no
+artificial clearing entries. Partial/delta payloads must not opt into snapshot completion.
+Raw Jobberman feed metadata is stored separately in its cache. The
+[PartnerSync shared contract](../../archive/YOM-1147-partner-synchronization/README.md#cross-epic-custom-fields-dependency)
+records the forward rule; see the
+[implementation/review handoff](../../archive/YOM-1147-partner-synchronization/YOM-1166-api-add-jobberman-pull-provider-integration/handoffs/2026-10-19-b.md)
+for coverage and remaining runtime validation.
+
+**Jobberman salary default (2026-10-19):** no supplied salary text maps Salary Disclosed to No;
+this does not mark the job unpaid. Supplied-but-unmappable text remains unknown and readable in
+Description. No other defaults were introduced. The [live coverage sample](../../archive/YOM-1147-partner-synchronization/YOM-1166-api-add-jobberman-pull-provider-integration/testing/2026-10-19-cf-coverage.json)
+highlights experience framework differences; its mapping rule is unchanged pending discussion.
+Explicit salary thresholds now map only the supplied bound, while the original qualifier remains
+in Description. The required shared Web salary display is From, Up to, exact and ranged amounts;
+From/Up to wording remains pending Jason, not implemented in this API branch.
+Contract maps Employment Type only, without inferring a schedule or duration. Contract alone may
+have an unknown term; if manually supplied, duration and unit must be paired. Other employment
+requirements remain unchanged. The new additive metadata migration is forward-only, matching the
+existing CF configuration's data-preservation policy. Jason must implement the corresponding shared
+salary presentation and manual Contract-duration rule changes in his domain.
+The user-facing copy audit reviewed all 39 definitions and replaces technical help in 24 of them;
+Web already displays Description directly. The single pending application migration calls separate
+employment/help-text seed classes. Existing keys/IDs/options (apart from the new Contract option),
+requiredness, validation and values are unchanged. The released Jobberman Summary migration is
+untouched; its pending cache-column migration belongs to a separate EF context/history.
+Shared HTML conversion now removes empty emphasis and moves boundary whitespace outside
+formatting tags, retaining real bold/italic content, links, lists and paragraph breaks. Production
+port/release is still separate; local UI validation of this branch remains required.
+**Web ownership clarification (19 October):** Adrian explicitly requested reverting Codex's
+good-faith Web helper/test edits. No `src/web` diff remains. The [dedicated Jason handoff](../../archive/YOM-1147-partner-synchronization/YOM-1166-api-add-jobberman-pull-provider-integration/handoffs/2026-10-19-b.md#handoff-to-jason--ui-implementation-pending)
+specifies the pending implementation and tests. API tasks must hand Web requirements to Jason,
+not edit his source. Current local UI checks cannot certify From/Up to wording or optional Contract
+duration until Jason implements them; do not claim full API/Web parity from the passing API suite.
 
 **Presentation / selected lookup update (2026-10-05):** all 39 configured CFs now use one `group` level and null `subGroup`; Web owns the overarching type heading. Dedicated `POST /api/v3/lookup/skill/ids` resolves a non-empty JSON array of skill IDs and returns all matches without pagination or an application-level ID-count limit. Existing `GET /api/v3/lookup/skill` remains paged name search/catalogue browsing, without an IDs criterion. Other CF reference lists (Country, Language, Education, Currency) are complete, unpaged lists; inline options expose keys/names in their definition. The original development seed migration was edited, so Jason must recreate Local after pulling. The [consolidated review handoff](YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/handoffs/2026-10-05-a.md) records the exact contract, reset warning and seven confirmed decisions; Opportunity search behavior remains unchanged. Contextual reference/search-criteria endpoints are a later enhancement, not batched counts.
 

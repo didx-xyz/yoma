@@ -18,6 +18,8 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
     private readonly IOpportunityCategoryService _opportunityCategoryService;
     private readonly ICountryService _countryService;
     private readonly ILanguageService _languageService;
+    private readonly ICurrencyService _currencyService;
+    private readonly IEducationService _educationService;
     private readonly ICustomFieldDefinitionService _customFieldDefinitionService;
     private readonly IRepositoryBatched<Opportunity> _opportunityRepository;
 
@@ -32,6 +34,8 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
       IOpportunityCategoryService opportunityCategoryService,
       ICountryService countryService,
       ILanguageService languageService,
+      ICurrencyService currencyService,
+      IEducationService educationService,
       ICustomFieldDefinitionService customFieldDefinitionService,
       IRepositoryBatched<Opportunity> opportunityRepository,
       SyncFilterPullEntityValidator syncFilterPullEntityValidator)
@@ -42,6 +46,8 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
       _opportunityCategoryService = opportunityCategoryService ?? throw new ArgumentNullException(nameof(opportunityCategoryService));
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
+      _currencyService = currencyService ?? throw new ArgumentNullException(nameof(currencyService));
+      _educationService = educationService ?? throw new ArgumentNullException(nameof(educationService));
       _customFieldDefinitionService = customFieldDefinitionService ?? throw new ArgumentNullException(nameof(customFieldDefinitionService));
       _opportunityRepository = opportunityRepository ?? throw new ArgumentNullException(nameof(opportunityRepository));
       _syncFilterPullEntityValidator = syncFilterPullEntityValidator ?? throw new ArgumentNullException(nameof(syncFilterPullEntityValidator));
@@ -58,6 +64,8 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
         _opportunityCategoryService,
         _countryService,
         _languageService,
+        _currencyService,
+        _educationService,
         _customFieldDefinitionService,
         _opportunityRepository,
         _syncFilterPullEntityValidator);

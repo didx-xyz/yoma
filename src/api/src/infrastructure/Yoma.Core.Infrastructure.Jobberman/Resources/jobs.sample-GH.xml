@@ -408,5 +408,26 @@ remain financially sound, administratively efficient, and compliant with relevan
       <minimum_qualification>Degree</minimum_qualification>
     </item>
     <atom:link rel="self" href="https://cde-console-production.s3.eu-west-1.amazonaws.com/jobs_rss_listings_3620.xml" type="application/rss+xml" />
+    <!-- Synthetic local/stage mapping cases. The 10 live-derived source items above remain unchanged. -->
+    <item>
+      <title>[Mapping fixture] GH exact salary</title>
+      <link>https://example.com/yoma-mapping-fixtures/gh-exact-salary</link>
+      <guid isPermaLink="false">test-mapping-exact-salary</guid>
+      <description>Local test case: exact salary, structured experience and qualification, and empty rich-text formatting.</description>
+      <content:encoded>&lt;p&gt;&lt;b&gt;Responsibilities:&lt;/b&gt;&lt;/p&gt;&lt;p&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Verify that the exact salary displays as one amount.&lt;/li&gt;&lt;li&gt;Verify that headings stay bold without stray asterisks.&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;&lt;b&gt;Location&lt;/b&gt;: Accra&lt;/p&gt;</content:encoded>
+      <location>Accra, Ghana</location>
+      <price>GHS 2,500</price>
+      <work_type>Full Time</work_type>
+      <category>Software &amp; Data</category>
+      <experience_level>Entry level</experience_level>
+      <experience_length>2 years</experience_length>
+      <minimum_qualification>Degree</minimum_qualification>
+    </item>
+    <item>
+      <title>[Mapping fixture] GH missing optional metadata</title>
+      <link>https://example.com/yoma-mapping-fixtures/gh-missing-metadata</link>
+      <guid isPermaLink="false">test-mapping-missing-metadata</guid>
+      <description>Local test case: use this summary as the description when the full body and optional metadata are absent.</description>
+    </item>
   </channel>
 </rss>
