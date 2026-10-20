@@ -1,5 +1,7 @@
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Treasury.Interfaces;
@@ -13,18 +15,21 @@ namespace Yoma.Core.Domain.Treasury.Services
     private readonly ScheduleJobOptions _scheduleJobOptions;
     private readonly ITreasuryService _treasuryService;
     private readonly IDistributedLockService _distributedLockService;
+    private readonly IHostApplicationLifetime _applicationLifetime;
     #endregion
 
     #region Constructor
     public TreasuryBackgroundService(ILogger<TreasuryBackgroundService> logger,
         IOptions<ScheduleJobOptions> scheduleJobOptions,
         ITreasuryService treasuryService,
-        IDistributedLockService distributedLockService)
+        IDistributedLockService distributedLockService,
+        IHostApplicationLifetime applicationLifetime)
     {
       _logger = logger;
       _scheduleJobOptions = scheduleJobOptions.Value;
       _treasuryService = treasuryService;
       _distributedLockService = distributedLockService;
+      _applicationLifetime = applicationLifetime ?? throw new ArgumentNullException(nameof(applicationLifetime));
     }
     #endregion
 
@@ -33,12 +38,12 @@ namespace Yoma.Core.Domain.Treasury.Services
     {
       const string lockIdentifier = "treasury_process_financial_year_rollover";
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-      var lockAcquired = false;
+
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing treasury financial-year rollover");
 
@@ -48,11 +53,9 @@ namespace Yoma.Core.Domain.Treasury.Services
       }
       catch (Exception ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessFinancialYearRollover), ex.Message);
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion

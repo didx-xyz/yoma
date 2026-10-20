@@ -1,5 +1,7 @@
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Marketplace.Interfaces;
@@ -15,6 +17,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
     private readonly ScheduleJobOptions _scheduleJobOptions;
     private readonly IStoreAccessControlRuleStatusService _storeAccessControlRuleStatusService;
     private readonly IDistributedLockService _distributedLockService;
+    private readonly IHostApplicationLifetime _applicationLifetime;
     private readonly IRepositoryBatchedValueContainsWithNavigation<StoreAccessControlRule> _storeAccessControlRuleRepository;
 
     internal static readonly StoreAccessControlRuleStatus[] Statuses_Deletion = [StoreAccessControlRuleStatus.Inactive];
@@ -26,12 +29,14 @@ namespace Yoma.Core.Domain.Marketplace.Services
       IOptions<ScheduleJobOptions> scheduleJobOptions,
       IStoreAccessControlRuleStatusService storeAccessControlRuleStatusService,
       IDistributedLockService distributedLockService,
-      IRepositoryBatchedValueContainsWithNavigation<StoreAccessControlRule> storeAccessControlRuleRepistory)
+      IRepositoryBatchedValueContainsWithNavigation<StoreAccessControlRule> storeAccessControlRuleRepistory,
+      IHostApplicationLifetime applicationLifetime)
     {
       _logger = logger;
       _scheduleJobOptions = scheduleJobOptions.Value;
       _storeAccessControlRuleStatusService = storeAccessControlRuleStatusService;
       _distributedLockService = distributedLockService;
+      _applicationLifetime = applicationLifetime ?? throw new ArgumentNullException(nameof(applicationLifetime));
       _storeAccessControlRuleRepository = storeAccessControlRuleRepistory;
     }
     #endregion
@@ -43,12 +48,12 @@ namespace Yoma.Core.Domain.Marketplace.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-      var lockAcquired = false;
+
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         var statusDeletionIds = Statuses_Deletion.Select(o => _storeAccessControlRuleStatusService.GetByName(o.ToString()).Id).ToList();
         var statusDeletedId = _storeAccessControlRuleStatusService.GetByName(StoreAccessControlRuleStatus.Deleted.ToString()).Id;
@@ -57,6 +62,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          job.ThrowIfStopping();
           var now = DateTimeOffset.UtcNow;
 
           var items = _storeAccessControlRuleRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
@@ -80,11 +86,9 @@ namespace Yoma.Core.Domain.Marketplace.Services
       }
       catch (Exception ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessDeletion), ex.Message);
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion

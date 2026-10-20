@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Transactions;
@@ -30,6 +31,7 @@ namespace Yoma.Core.Domain.Reward.Services
     private readonly IRewardProviderClient _rewardProviderClient;
     private readonly IExecutionStrategyService _executionStrategyService;
     private readonly IDistributedLockService _distributedLockService;
+    private readonly IHostApplicationLifetime _applicationLifetime;
     #endregion
 
     #region Constructor
@@ -42,7 +44,8 @@ namespace Yoma.Core.Domain.Reward.Services
         ILinkUsageService referralLinkUsageService,
         IRewardProviderClientFactory rewardProviderClientFactory,
         IExecutionStrategyService executionStrategyService,
-        IDistributedLockService distributedLockService)
+        IDistributedLockService distributedLockService,
+        IHostApplicationLifetime applicationLifetime)
     {
       _logger = logger;
       _scheduleJobOptions = scheduleJobOptions.Value;
@@ -54,6 +57,7 @@ namespace Yoma.Core.Domain.Reward.Services
       _rewardProviderClient = rewardProviderClientFactory.CreateClient();
       _executionStrategyService = executionStrategyService;
       _distributedLockService = distributedLockService;
+      _applicationLifetime = applicationLifetime ?? throw new ArgumentNullException(nameof(applicationLifetime));
     }
     #endregion
 
@@ -75,23 +79,25 @@ namespace Yoma.Core.Domain.Reward.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.RewardWalletCreationScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-      var lockAcquired = false;
+
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing reward wallet creation");
 
         var itemIdsToSkip = new List<Guid>();
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          job.ThrowIfStopping();
           var items = _walletService.ListPendingCreationSchedule(_scheduleJobOptions.RewardWalletCreationScheduleBatchSize, itemIdsToSkip);
           if (items.Count == 0) break;
 
           foreach (var item in items)
           {
+            job.ThrowIfStopping();
             var pendingStatus = item.Status;
             try
             {
@@ -138,7 +144,7 @@ namespace Yoma.Core.Domain.Reward.Services
 
               if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed reward wallet creation for item with id '{id}'", item.Id);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!job.IsStopping)
             {
               if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to process reward wallet creation for item with id '{id}': {errorMessage}", item.Id, ex.Message);
 
@@ -163,7 +169,7 @@ namespace Yoma.Core.Domain.Reward.Services
               {
                 await _walletService.UpdateScheduleCreation(item, pendingStatus);
               }
-              catch (Exception updateEx)
+              catch (Exception updateEx) when (!job.IsStopping)
               {
                 if (_logger.IsEnabled(LogLevel.Critical)) _logger.LogCritical(updateEx,
                   "CRITICAL: Failed to persist Error status for wallet creation item '{id}' (user '{userId}', pendingStatus '{pendingStatus}'). Original error: {originalError}",
@@ -181,11 +187,9 @@ namespace Yoma.Core.Domain.Reward.Services
       }
       catch (Exception ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessWalletCreation), ex.Message);
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
 
@@ -195,23 +199,25 @@ namespace Yoma.Core.Domain.Reward.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.RewardTransactionScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-      var lockAcquired = false;
+
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing reward transactions");
 
         var itemIdsToSkip = new List<Guid>();
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          job.ThrowIfStopping();
           var items = _rewardService.ListPendingTransactionSchedule(_scheduleJobOptions.RewardTransactionScheduleBatchSize, itemIdsToSkip);
           if (items.Count == 0) break;
 
           foreach (var item in items)
           {
+            job.ThrowIfStopping();
             try
             {
               if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing reward transaction for item with id '{id}'", item.Id);
@@ -293,7 +299,7 @@ namespace Yoma.Core.Domain.Reward.Services
 
               if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed reward transaction for item with id '{id}'", item.Id);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!job.IsStopping)
             {
               if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to process reward transaction for item with id '{id}': {errorMessage}", item.Id, ex.Message);
 
@@ -312,11 +318,9 @@ namespace Yoma.Core.Domain.Reward.Services
       }
       catch (Exception ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessRewardTransactions), ex.Message);
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion

@@ -8,6 +8,7 @@ using System.Collections.Concurrent;
 using System.Globalization;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity;
@@ -78,12 +79,12 @@ namespace Yoma.Core.Domain.SSI.Services
     {
       const string lockIdentifier = "ssi_seed_schemas";
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-      var lockAcquired = false;
+
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         if (!_appSettings.SSIEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
         {
@@ -232,11 +233,9 @@ namespace Yoma.Core.Domain.SSI.Services
       }
       catch (Exception ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(SeedSchemas), ex.Message);
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
 
@@ -246,12 +245,14 @@ namespace Yoma.Core.Domain.SSI.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.SSITenantCreationScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-      var lockAcquired = false;
+      using var stopDispatch = CancellationTokenSource.CreateLinkedTokenSource(_applicationLifetime.ApplicationStopping);
+      var cancellationToken = stopDispatch.Token;
+
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         if (!_appSettings.SSIEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
         {
@@ -266,109 +267,135 @@ namespace Yoma.Core.Domain.SSI.Services
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          cancellationToken.ThrowIfCancellationRequested();
           var items = _ssiTenantService.ListPendingCreationSchedule(_scheduleJobOptions.SSITenantCreationScheduleBatchSize, [.. itemIdsToSkip]);
           if (items.Count == 0) break;
 
           var tasks = new List<Task>();
-          foreach (var item in items)
+          try
           {
-            if (executeUntil <= DateTimeOffset.UtcNow) break;
-
-            await throttler.WaitAsync();
-
-            tasks.Add(Task.Run(async () =>
+            foreach (var item in items)
             {
-              await using var scope = _scopeFactory.CreateAsyncScope();
-              var tenantService = scope.ServiceProvider.GetRequiredService<ISSITenantService>();
-              var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
-              var organizationService = scope.ServiceProvider.GetRequiredService<IOrganizationService>();
-              var providerClientFactory = scope.ServiceProvider.GetRequiredService<ISSIProviderClientFactory>();
-              var providerClient = providerClientFactory.CreateClient();
+              if (executeUntil <= DateTimeOffset.UtcNow) break;
 
-              try
+              await throttler.WaitAsync(cancellationToken);
+
+              tasks.Add(Task.Run(async () =>
               {
-                if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing SSI tenant creation for '{entityType}' and item with id '{id}'", item.EntityType, item.Id);
-
-                TenantRequest request;
-                var entityType = Enum.Parse<EntityType>(item.EntityType, true);
-                switch (entityType)
+                try
                 {
-                  case EntityType.User:
-                    if (!item.UserId.HasValue)
-                      throw new InvalidOperationException($"Entity type '{item.EntityType}': User id is null");
+                  cancellationToken.ThrowIfCancellationRequested();
+                  await using var scope = _scopeFactory.CreateAsyncScope();
+                  var tenantService = scope.ServiceProvider.GetRequiredService<ISSITenantService>();
+                  var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+                  var organizationService = scope.ServiceProvider.GetRequiredService<IOrganizationService>();
+                  var providerClientFactory = scope.ServiceProvider.GetRequiredService<ISSIProviderClientFactory>();
+                  var providerClient = providerClientFactory.CreateClient();
 
-                    var user = userService.GetById(item.UserId.Value, false, true);
+                  try
+                  {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing SSI tenant creation for '{entityType}' and item with id '{id}'", item.EntityType, item.Id);
 
-                    var displayNameCleaned = user.DisplayName?.RemoveSpecialCharacters();
-                    var displayNameFallback = user.Username.Contains('@')
-                      ? user.Username.Split('@').First()
-                      : user.Username.RemoveSpecialCharacters();
-
-                    request = new TenantRequest
+                    TenantRequest request;
+                    var entityType = Enum.Parse<EntityType>(item.EntityType, true);
+                    switch (entityType)
                     {
-                      // utilize user id, ensuring a consistent tenant reference or name even if the name is altered
-                      Referent = user.Id.ToString(),
-                      Name = string.IsNullOrEmpty(displayNameCleaned) ? displayNameFallback : displayNameCleaned,
-                      ImageUrl = user.PhotoURL,
-                      Roles = [Role.Holder]
-                    };
-                    break;
+                      case EntityType.User:
+                        if (!item.UserId.HasValue)
+                          throw new InvalidOperationException($"Entity type '{item.EntityType}': User id is null");
 
-                  case EntityType.Organization:
-                    if (!item.OrganizationId.HasValue)
-                      throw new InvalidOperationException($"Entity type '{item.EntityType}': Organization id is null");
+                        var user = userService.GetById(item.UserId.Value, false, true);
 
-                    var org = organizationService.GetById(item.OrganizationId.Value, false, true, false);
+                        var displayNameCleaned = user.DisplayName?.RemoveSpecialCharacters();
+                        var displayNameFallback = user.Username.Contains('@')
+                          ? user.Username.Split('@').First()
+                          : user.Username.RemoveSpecialCharacters();
 
-                    request = new TenantRequest
-                    {
-                      //requiring uniqueness for both the name (wallet label) and its corresponding referent (wallet name) as issuers and verifiers are published to the trust registry
-                      Referent = org.NameHashValue, //use hash value of name; name can not be reused (see OrganizationService Create / Update)
-                      Name = org.Name.RemoveSpecialCharacters(),
-                      ImageUrl = org.LogoURL,
-                      Roles = [Role.Holder, Role.Issuer, Role.Verifier]
-                    };
-                    break;
+                        request = new TenantRequest
+                        {
+                          // utilize user id, ensuring a consistent tenant reference or name even if the name is altered
+                          Referent = user.Id.ToString(),
+                          Name = string.IsNullOrEmpty(displayNameCleaned) ? displayNameFallback : displayNameCleaned,
+                          ImageUrl = user.PhotoURL,
+                          Roles = [Role.Holder]
+                        };
+                        break;
 
-                  default:
-                    throw new InvalidOperationException($"Entity type '{item.EntityType}' not supported");
+                      case EntityType.Organization:
+                        if (!item.OrganizationId.HasValue)
+                          throw new InvalidOperationException($"Entity type '{item.EntityType}': Organization id is null");
+
+                        var org = organizationService.GetById(item.OrganizationId.Value, false, true, false);
+
+                        request = new TenantRequest
+                        {
+                          //requiring uniqueness for both the name (wallet label) and its corresponding referent (wallet name) as issuers and verifiers are published to the trust registry
+                          Referent = org.NameHashValue, //use hash value of name; name can not be reused (see OrganizationService Create / Update)
+                          Name = org.Name.RemoveSpecialCharacters(),
+                          ImageUrl = org.LogoURL,
+                          Roles = [Role.Holder, Role.Issuer, Role.Verifier]
+                        };
+                        break;
+
+                      default:
+                        throw new InvalidOperationException($"Entity type '{item.EntityType}' not supported");
+                    }
+
+                    cancellationToken.ThrowIfCancellationRequested();
+                    item.TenantId = await providerClient.EnsureTenant(request);
+                    item.Status = TenantCreationStatus.Created;
+                    await tenantService.UpdateScheduleCreation(item);
+
+                    if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed SSI tenant creation for '{entityType}' and item with id '{id}'", item.EntityType, item.Id);
+                  }
+                  catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                  {
+                    throw;
+                  }
+                  catch (Exception ex) when (!job.IsStopping && ex is not ObjectDisposedException)
+                  {
+                    if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to created SSI tenant for '{entityType}'and item with id '{id}': {errorMessage}", item.EntityType, item.Id, ex.Message);
+
+                    item.Status = TenantCreationStatus.Error;
+                    item.ErrorReason = ex.Message;
+                    await tenantService.UpdateScheduleCreation(item);
+
+                    itemIdsToSkip.Add(item.Id);
+                  }
                 }
-
-                item.TenantId = await providerClient.EnsureTenant(request);
-                item.Status = TenantCreationStatus.Created;
-                await tenantService.UpdateScheduleCreation(item);
-
-                if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed SSI tenant creation for '{entityType}' and item with id '{id}'", item.EntityType, item.Id);
-              }
-              catch (Exception ex)
-              {
-                if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to created SSI tenant for '{entityType}'and item with id '{id}': {errorMessage}", item.EntityType, item.Id, ex.Message);
-
-                item.Status = TenantCreationStatus.Error;
-                item.ErrorReason = ex.Message;
-                await tenantService.UpdateScheduleCreation(item);
-
-                itemIdsToSkip.Add(item.Id);
-              }
-              finally
-              {
-                throttler.Release();
-              }
-            }));
+                catch (Exception ex) when (job.IsStopping)
+                {
+                  stopDispatch.Cancel();
+                  throw new OperationCanceledException("SSI tenant creation interrupted by application shutdown", ex, _applicationLifetime.ApplicationStopping);
+                }
+                catch
+                {
+                  stopDispatch.Cancel();
+                  throw;
+                }
+                finally
+                {
+                  throttler.Release();
+                }
+              }));
+            }
           }
-
-          await Task.WhenAll(tasks).FlattenAggregateException();
+          finally
+          {
+            // Keep scopes, semaphore and distributed lock alive until every started worker has finished.
+            await Task.WhenAll(tasks).FlattenAggregateException();
+          }
         }
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed SSI tenant creation");
       }
       catch (Exception ex)
       {
+        if (ex is OperationCanceledException) job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessTenantCreation), ex.Message);
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+        throw;
       }
     }
 
@@ -383,14 +410,14 @@ namespace Yoma.Core.Domain.SSI.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.SSICredentialIssuanceScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-      var lockAcquired = false;
       using var stopDispatch = CancellationTokenSource.CreateLinkedTokenSource(_applicationLifetime.ApplicationStopping);
       var cancellationToken = stopDispatch.Token;
 
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
+
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         if (!_appSettings.SSIEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
         {
@@ -609,7 +636,7 @@ namespace Yoma.Core.Domain.SSI.Services
                   }
                   // A disposed dependency is a worker/host failure, not a bad credential. Let the outer
                   // guard stop dispatch rather than exhausting the queue's per-credential retries.
-                  catch (Exception ex) when (!_applicationLifetime.ApplicationStopping.IsCancellationRequested && ex is not ObjectDisposedException)
+                  catch (Exception ex) when (!job.IsStopping && ex is not ObjectDisposedException)
                   {
                     if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to issue SSI credential for schema type '{schemaType}' and item with id '{id}': {errorMessage}", item.SchemaType, item.Id, ex.Message);
 
@@ -621,7 +648,7 @@ namespace Yoma.Core.Domain.SSI.Services
                     itemIdsToSkip.Add(item.Id);
                   }
                 }
-                catch (Exception ex) when (_applicationLifetime.ApplicationStopping.IsCancellationRequested)
+                catch (Exception ex) when (job.IsStopping)
                 {
                   stopDispatch.Cancel();
                   throw new OperationCanceledException("SSI credential issuance interrupted by application shutdown", ex, _applicationLifetime.ApplicationStopping);
@@ -648,19 +675,12 @@ namespace Yoma.Core.Domain.SSI.Services
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed SSI credential issuance: {issuedCount} issued and {failedCount} failed attempts", issuedCount, failedCount);
       }
-      catch (OperationCanceledException) when (_applicationLifetime.ApplicationStopping.IsCancellationRequested)
-      {
-        if (_logger.IsEnabled(LogLevel.Warning)) _logger.LogWarning("{Process} interrupted by application shutdown; unfinished issuance remains pending", nameof(ProcessCredentialIssuance));
-        throw;
-      }
       catch (Exception ex)
       {
+        if (ex is OperationCanceledException) job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessCredentialIssuance), ex.Message);
         throw;
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion
@@ -696,6 +716,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
     private async Task SeedSchema(ArtifactType artifactType, string schemaFullName, List<string> attributes)
     {
+      _applicationLifetime.ApplicationStopping.ThrowIfCancellationRequested();
       var schema = await _ssiSchemaService.GetByFullNameOrNull(schemaFullName);
       if (schema == null || schema.ArtifactType != artifactType) //allow switching of artifact stores; version incrementally incremented across stores
       {

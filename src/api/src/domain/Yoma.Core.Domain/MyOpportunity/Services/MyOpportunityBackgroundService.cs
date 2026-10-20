@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.ComponentModel.DataAnnotations;
@@ -32,6 +33,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly INotificationURLFactory _notificationURLFactory;
     private readonly INotificationDeliveryService _notificationDeliveryService;
     private readonly IDistributedLockService _distributedLockService;
+    private readonly IHostApplicationLifetime _applicationLifetime;
     private readonly IRepositoryBatchedWithNavigationAndCustomFieldFilter<Models.MyOpportunity> _myOpportunityRepository;
     private readonly IRepository<MyOpportunityVerification> _myOpportunityVerificationRepository;
 
@@ -51,7 +53,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         INotificationDeliveryService notificationDeliveryService,
         IDistributedLockService distributedLockService,
         IRepositoryBatchedWithNavigationAndCustomFieldFilter<Models.MyOpportunity> myOpportunityRepository,
-        IRepository<MyOpportunityVerification> myOpportunityVerificationRepository)
+        IRepository<MyOpportunityVerification> myOpportunityVerificationRepository,
+        IHostApplicationLifetime applicationLifetime)
     {
       _logger = logger;
       _appSettings = appSettings.Value;
@@ -64,6 +67,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       _notificationURLFactory = notificationURLFactory;
       _notificationDeliveryService = notificationDeliveryService;
       _distributedLockService = distributedLockService;
+      _applicationLifetime = applicationLifetime ?? throw new ArgumentNullException(nameof(applicationLifetime));
       _myOpportunityRepository = myOpportunityRepository;
       _myOpportunityVerificationRepository = myOpportunityVerificationRepository;
     }
@@ -76,12 +80,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-      var lockAcquired = false;
+
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing 'my' opportunity verification pending purge");
 
@@ -92,6 +96,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          job.ThrowIfStopping();
           var now = DateTimeOffset.UtcNow;
           var items = _myOpportunityService.ListVerificationPending(_scheduleJobOptions.MyOpportunityVerificationPendingPurgeBatchSize,
             minAgeInDays, itemIdsToSkip);
@@ -183,7 +188,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                 }
               }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!job.IsStopping)
             {
               itemIdsToSkip.AddRange(itemsToReject.Select(item => item.Id));
 
@@ -194,6 +199,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
           foreach (var item in itemsToCancel)
           {
+            job.ThrowIfStopping();
             if (executeUntil <= DateTimeOffset.UtcNow) break;
 
             try
@@ -203,7 +209,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
               if (_logger.IsEnabled(LogLevel.Information))
                 _logger.LogInformation("'My' opportunity with id '{id}' cancelled due to stale partner-synced pending verification", item.Id);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!job.IsStopping)
             {
               itemIdsToSkip.Add(item.Id);
 
@@ -219,11 +225,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       }
       catch (Exception ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessVerificationPendingPurge), ex.Message);
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
 
@@ -231,12 +235,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     {
       const string lockIdentifier = "myopportunity_seed_pending_verifications]";
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-      var lockAcquired = false;
+
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         if (!_appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
         {
@@ -259,11 +263,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       }
       catch (Exception ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(SeedPendingVerifications), ex.Message);
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion
@@ -275,6 +277,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       foreach (var item in items)
       {
+        _applicationLifetime.ApplicationStopping.ThrowIfCancellationRequested();
         try
         {
           var opportunity = _opportunityService.GetById(item.OpportunityId, true, true, false);

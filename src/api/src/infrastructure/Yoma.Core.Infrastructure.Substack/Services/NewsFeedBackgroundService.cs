@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
@@ -26,6 +27,7 @@ namespace Yoma.Core.Infrastructure.Substack.Services
     private readonly IRepositoryBatchedValueContains<NewsArticle> _newsArticleRepository;
     private readonly IRepository<FeedSyncTracking> _feedSyncTrackingRepository;
     private readonly IDistributedLockService _distributedLockService;
+    private readonly IHostApplicationLifetime _applicationLifetime;
     private readonly ExecutionStrategyService _executionStrategyService;
 
     private static readonly XNamespace XNamespace_MediaNs = "http://search.yahoo.com/mrss/";
@@ -44,7 +46,8 @@ namespace Yoma.Core.Infrastructure.Substack.Services
       IRepositoryBatchedValueContains<NewsArticle> newsArticleRepository,
       IRepository<FeedSyncTracking> feedSyncTrackingRepository,
       IDistributedLockService distributedLockService,
-      ExecutionStrategyService executionStrategyService)
+      ExecutionStrategyService executionStrategyService,
+      IHostApplicationLifetime applicationLifetime)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _environmentProvider = environmentProvider ?? throw new ArgumentNullException(nameof(environmentProvider));
@@ -55,6 +58,7 @@ namespace Yoma.Core.Infrastructure.Substack.Services
       _newsArticleRepository = newsArticleRepository ?? throw new ArgumentNullException(nameof(newsArticleRepository));
       _feedSyncTrackingRepository = feedSyncTrackingRepository ?? throw new ArgumentNullException(nameof(feedSyncTrackingRepository));
       _distributedLockService = distributedLockService ?? throw new ArgumentNullException(nameof(distributedLockService));
+      _applicationLifetime = applicationLifetime ?? throw new ArgumentNullException(nameof(applicationLifetime));
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
     }
     #endregion
@@ -64,12 +68,12 @@ namespace Yoma.Core.Infrastructure.Substack.Services
     {
       const string lockIdentifier = "news_feed_refresh_feeds";
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-      var lockAcquired = false;
+
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         var syncFromExternalProvider = _appSettings.NewsFeedProviderAsSourceEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment);
 
@@ -106,12 +110,10 @@ namespace Yoma.Core.Infrastructure.Substack.Services
       }
       catch (Exception ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error))
           _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(RefreshFeeds), ex.Message);
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion
@@ -123,6 +125,7 @@ namespace Yoma.Core.Infrastructure.Substack.Services
 
       foreach (var (feedType, _) in _options.Feeds)
       {
+        _applicationLifetime.ApplicationStopping.ThrowIfCancellationRequested();
         try
         {
           if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("File-mode sync start: {FeedType}", feedType);
@@ -135,7 +138,7 @@ namespace Yoma.Core.Infrastructure.Substack.Services
 
           if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("File-mode sync complete: {FeedType}", feedType);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (!_applicationLifetime.ApplicationStopping.IsCancellationRequested)
         {
           if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Error during file-mode sync for feed {FeedType}", feedType);
         }
@@ -152,6 +155,7 @@ namespace Yoma.Core.Infrastructure.Substack.Services
 
       foreach (var (feedType, feed) in _options.Feeds)
       {
+        _applicationLifetime.ApplicationStopping.ThrowIfCancellationRequested();
         try
         {
           if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("HTTP sync start: {FeedType}", feedType);
@@ -223,7 +227,7 @@ namespace Yoma.Core.Infrastructure.Substack.Services
 
           if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("HTTP sync complete: {FeedType}", feedType);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (!_applicationLifetime.ApplicationStopping.IsCancellationRequested)
         {
           if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Error during HTTP sync for feed {FeedType}", feedType);
         }
@@ -232,6 +236,7 @@ namespace Yoma.Core.Infrastructure.Substack.Services
 
     private async Task ProcessNewsArticles(FeedType feedType, List<NewsArticleRaw> articles, DateTimeOffset now)
     {
+      _applicationLifetime.ApplicationStopping.ThrowIfCancellationRequested();
       // Retention: -1 means "keep forever" (no cutoff, no deletions)
       var retentionEnabled = _options.RetentionDays >= default(int);
       var cutoffUtc = retentionEnabled ? now.AddDays(-_options.RetentionDays) : (DateTimeOffset?)null;

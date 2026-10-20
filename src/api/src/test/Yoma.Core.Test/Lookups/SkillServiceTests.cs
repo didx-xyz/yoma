@@ -427,7 +427,8 @@ namespace Yoma.Core.Test.Lookups
             CacheSlidingExpirationInHours = 1,
             CacheAbsoluteExpirationRelativeToNowInDays = 1
           }), Options.Create(new ScheduleJobOptions()), _cache, factory.Object,
-          new LookupIdsValidator(), new SkillSearchFilterValidator(), repository.Object, Mock.Of<IDistributedLockService>());
+          new LookupIdsValidator(), new SkillSearchFilterValidator(), repository.Object, Mock.Of<IDistributedLockService>(),
+          Mock.Of<Microsoft.Extensions.Hosting.IHostApplicationLifetime>());
       }
 
       public void Dispose() => _cache.Dispose();

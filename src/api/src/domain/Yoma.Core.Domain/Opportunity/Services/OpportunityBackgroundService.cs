@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core;
@@ -39,6 +40,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Models.Opportunity> _opportunityRepository;
     private readonly IRepositoryBatched<ProcessingLog> _processingLogRepository;
     private readonly IDistributedLockService _distributedLockService;
+    private readonly IHostApplicationLifetime _applicationLifetime;
     private readonly IMediator _mediator;
 
     internal static readonly Status[] Statuses_Expirable = [Status.Active];
@@ -60,7 +62,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Models.Opportunity> opportunityRepository,
         IRepositoryBatched<ProcessingLog> processingLogRepository,
         IDistributedLockService distributedLockService,
-        IMediator mediator)
+        IMediator mediator,
+        IHostApplicationLifetime applicationLifetime)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _scheduleJobOptions = scheduleJobOptions?.Value ?? throw new ArgumentNullException(nameof(scheduleJobOptions));
@@ -75,6 +78,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _opportunityRepository = opportunityRepository ?? throw new ArgumentNullException(nameof(opportunityRepository));
       _processingLogRepository = processingLogRepository ?? throw new ArgumentNullException(nameof(processingLogRepository));
       _distributedLockService = distributedLockService ?? throw new ArgumentNullException(nameof(distributedLockService));
+      _applicationLifetime = applicationLifetime ?? throw new ArgumentNullException(nameof(applicationLifetime));
       _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
     }
     #endregion
@@ -86,12 +90,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-      var lockAcquired = false;
+
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing opportunity published notifications");
 
@@ -120,11 +124,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
       catch (Exception ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessPublishedNotifications), ex.Message);
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
 
@@ -134,12 +136,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-      var lockAcquired = false;
+
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing opportunity expiration");
 
@@ -150,6 +152,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          job.ThrowIfStopping();
           var now = DateTimeOffset.UtcNow;
 
           var items = _opportunityRepository.Query().Where(o => statusExpirableIds.Contains(o.StatusId) &&
@@ -189,11 +192,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
       catch (Exception ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessExpiration), ex.Message);
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
 
@@ -201,12 +202,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       const string lockIdentifier = "opportunity_process_expiration_notifications";
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-      var lockAcquired = false;
+
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing opportunity expiration notifications");
 
@@ -232,11 +233,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
       catch (Exception ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessExpirationNotifications), ex.Message);
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
 
@@ -246,12 +245,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-      var lockAcquired = false;
+
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing opportunity deletion");
 
@@ -262,6 +261,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          job.ThrowIfStopping();
           var now = DateTimeOffset.UtcNow;
 
           var items = _opportunityRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
@@ -289,11 +289,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
       catch (Exception ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessDeletion), ex.Message);
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion
@@ -311,6 +309,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         int pageSize = 1000;
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          _applicationLifetime.ApplicationStopping.ThrowIfCancellationRequested();
           var recipientDataGroups = new List<(List<NotificationRecipient> Recipients, NotificationOpportunityPublished Data)>();
 
           var searchResult = _userService.Search(
@@ -405,7 +404,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
           if (executeUntil <= DateTimeOffset.UtcNow) break;
         }
       }
-      catch (Exception ex)
+      catch (Exception ex) when (!_applicationLifetime.ApplicationStopping.IsCancellationRequested)
       {
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
       }
@@ -413,6 +412,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     private async Task SendNotificationExpiration(List<Models.Opportunity> items, NotificationType type)
     {
+      // Drain notifications for the selected batch; cancellation is checked before the next unit of work.
       var groupedOpportunities = items
         .SelectMany(op => _organizationService.ListAdmins(op.OrganizationId, false, false), (op, admin) => new { Administrator = admin, Opportunity = op })
         .GroupBy(item => item.Administrator, item => item.Opportunity);

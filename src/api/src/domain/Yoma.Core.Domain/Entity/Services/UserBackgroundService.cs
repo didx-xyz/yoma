@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Reflection;
@@ -19,6 +20,7 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IUserService _userService;
     private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
     private readonly IDistributedLockService _distributedLockService;
+    private readonly IHostApplicationLifetime _applicationLifetime;
     #endregion
 
     #region Constructor
@@ -28,7 +30,8 @@ namespace Yoma.Core.Domain.Entity.Services
         IEnvironmentProvider environmentProvider,
         IUserService userService,
         IRepositoryValueContainsWithNavigation<User> userRepository,
-        IDistributedLockService distributedLockService)
+        IDistributedLockService distributedLockService,
+        IHostApplicationLifetime applicationLifetime)
     {
       _logger = logger;
       _appSettings = appSettings.Value;
@@ -37,6 +40,7 @@ namespace Yoma.Core.Domain.Entity.Services
       _userService = userService;
       _userRepository = userRepository;
       _distributedLockService = distributedLockService;
+      _applicationLifetime = applicationLifetime ?? throw new ArgumentNullException(nameof(applicationLifetime));
     }
     #endregion
 
@@ -45,12 +49,12 @@ namespace Yoma.Core.Domain.Entity.Services
     {
       const string lockIdentifier = "user_seed_photos";
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-      var lockAcquired = false;
+
+      await using var job = BackgroundJobExecutionScope.CreateWithLock(_applicationLifetime, _distributedLockService, _logger);
 
       try
       {
-        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
-        if (!lockAcquired) return;
+        if (!await job.TryAcquireLockAsync(lockIdentifier, lockDuration)) return;
 
         if (!_appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
         {
@@ -67,11 +71,9 @@ namespace Yoma.Core.Domain.Entity.Services
       }
       catch (Exception ex)
       {
+        job.ThrowIfStopping(ex);
+
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(SeedPhotos), ex.Message);
-      }
-      finally
-      {
-        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion
@@ -97,7 +99,10 @@ namespace Yoma.Core.Domain.Entity.Services
       var fileExtension = Path.GetExtension(fileName)[1..];
 
       foreach (var item in items)
+      {
+        _applicationLifetime.ApplicationStopping.ThrowIfCancellationRequested();
         await _userService.UpsertPhoto(item.Username, FileHelper.FromByteArray(fileName, $"image/{fileExtension}", resourceBytes));
+      }
     }
     #endregion
   }
