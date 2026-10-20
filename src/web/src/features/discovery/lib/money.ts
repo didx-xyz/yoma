@@ -25,6 +25,7 @@ export interface MoneyFacts {
   zltoReward: number | null;
   /**
    * A disclosed Job salary: range + ISO currency + pay interval, e.g. "ZAR 8 000–12 000 / mo".
+   * Either bound may be missing on its own ("From ZAR 8 000", "Up to ZAR 12 000").
    * Currency and interval are empty when they cannot be labelled (lookup not loaded, unknown key).
    */
   salary: {
@@ -118,14 +119,18 @@ export function resolveMoneyBadge(facts: MoneyFacts): MoneyBadgeModel {
     facts.salary &&
     (facts.salary.from !== null || facts.salary.to !== null)
   ) {
+    // One-sided bounds come from partner thresholds ("Above NGN 5 000 000", 2026-10-19): a lone
+    // minimum reads "From", a lone maximum "Up to", equal bounds one exact amount.
     const { from, to, currency, interval } = facts.salary;
-    const range =
-      from !== null && to !== null && from !== to
-        ? `${amount(from)}–${amount(to)}`
-        : amount(from ?? to ?? 0);
+    const [qualifier, range] =
+      from !== null && to !== null
+        ? ["", from === to ? amount(from) : `${amount(from)}–${amount(to)}`]
+        : from !== null
+          ? ["From", amount(from)]
+          : ["Up to", amount(to ?? 0)];
     return {
       zlto,
-      payLine: [currency, range, interval].filter(Boolean).join(" "),
+      payLine: [qualifier, currency, range, interval].filter(Boolean).join(" "),
       partnerPaid: false,
     };
   }
