@@ -18,7 +18,7 @@ import type {
 // This module MIRRORS those API contracts so the editor can disable and clear
 // dependent fields and explain a conflict before the save is rejected. It:
 //   - keys ONLY on those system-controlled definition keys, plus the option keys
-//     a rule interprets (Job employment Permanent / FixedTerm, Impact Action tool and
+//     a rule interprets (Job employment Permanent / FixedTerm / Contract, Impact Action tool and
 //     Entrepreneurship programme Other); never on titles, labels or other options;
 //   - is INERT when a controlling key is absent from the loaded definitions, so
 //     other types and future definition changes are unaffected;
@@ -70,6 +70,7 @@ export const JOB_PAY_INTERVAL_OPTIONS = {
 export const JOB_EMPLOYMENT_TYPE_OPTIONS = {
   Permanent: "Permanent",
   FixedTerm: "FixedTerm",
+  Contract: "Contract",
 } as const;
 
 const K = JOB_CUSTOM_FIELD_KEYS;
@@ -259,20 +260,37 @@ export function applyCustomFieldRules(
           message: "Employment duration must be greater than zero.",
         });
 
-      if (types.length > 0) {
-        if (scalarOf(input, K.employmentDuration) === null)
+      // Contract alone does not establish a term, so its duration is optional; any other type
+      // still requires one. A duration that is given needs its unit, and the reverse.
+      const hasDuration = scalarOf(input, K.employmentDuration) !== null;
+      const hasUnit = selectionsOf(input, K.employmentDurationUnit).length > 0;
+      const requiresTerm = types.some(
+        (t) => !sameKey(t, JOB_EMPLOYMENT_TYPE_OPTIONS.Contract),
+      );
+
+      if (requiresTerm) {
+        if (!hasDuration)
           errors.push({
             key: K.employmentDuration,
             message:
-              "Employment duration is required unless employment is permanent.",
+              "Employment duration is required for the selected employment type.",
           });
-        if (selectionsOf(input, K.employmentDurationUnit).length === 0)
+        if (!hasUnit)
           errors.push({
             key: K.employmentDurationUnit,
             message:
-              "Employment duration unit is required unless employment is permanent.",
+              "Employment duration unit is required for the selected employment type.",
           });
-      }
+      } else if (hasDuration && !hasUnit)
+        errors.push({
+          key: K.employmentDurationUnit,
+          message: "Choose a unit for the employment duration.",
+        });
+      else if (hasUnit && !hasDuration)
+        errors.push({
+          key: K.employmentDuration,
+          message: "Enter a duration for the chosen unit, or clear the unit.",
+        });
     }
   }
   //#endregion Employment

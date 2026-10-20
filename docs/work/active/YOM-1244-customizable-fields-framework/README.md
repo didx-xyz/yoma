@@ -306,6 +306,11 @@ good-faith Web helper/test edits. No `src/web` diff remains. The [dedicated Jaso
 specifies the pending implementation and tests. API tasks must hand Web requirements to Jason,
 not edit his source. Current local UI checks cannot certify From/Up to wording or optional Contract
 duration until Jason implements them; do not claim full API/Web parity from the passing API suite.
+**Web alignment (2026-10-20, Jason):** both pending items are implemented on
+`fix/cf-salary-bounds-contract-web`: the From / Up to pay line in the shared money helper, and
+Contract's optional, paired term in the editor rules. Unit-tested and browser-checked locally on
+2026-10-20 (no local Jobberman data, so "Up to" is unit-tested only). Detail and tests:
+[YOM-1255 Decisions](./YOM-1255-ui-dynamic-custom-fields-for-opportunities-and-completions/feature.md#decisions).
 
 **Presentation / selected lookup update (2026-10-05):** all 39 configured CFs now use one `group` level and null `subGroup`; Web owns the overarching type heading. Dedicated `POST /api/v3/lookup/skill/ids` resolves a non-empty JSON array of skill IDs and returns all matches without pagination or an application-level ID-count limit. Existing `GET /api/v3/lookup/skill` remains paged name search/catalogue browsing, without an IDs criterion. Other CF reference lists (Country, Language, Education, Currency) are complete, unpaged lists; inline options expose keys/names in their definition. The original development seed migration was edited, so Jason must recreate Local after pulling. The [consolidated review handoff](YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/handoffs/2026-10-05-a.md) records the exact contract, reset warning and seven confirmed decisions; Opportunity search behavior remains unchanged. Contextual reference/search-criteria endpoints are a later enhancement, not batched counts.
 

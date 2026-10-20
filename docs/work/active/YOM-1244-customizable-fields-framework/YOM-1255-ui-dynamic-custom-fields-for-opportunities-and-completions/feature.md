@@ -90,6 +90,12 @@ is `multipart/form-data` with `CustomFields` as one JSON-encoded form field
 - [x] Provider website, logo and country in the editor, the details page and on Worldwide cards;
       the Entrepreneurship business location on the completion form; the completion location
       on the admin completion card and the verifications list (2026-10-12, same handoff).
+- [x] **One-sided salary and Contract employment** (Adrian's Jobberman CF mapping, `ddb36f1ca`
+      / #1988, 2026-10-19): "From" / "Up to" pay line on cards, rows and details; Contract's
+      optional, paired term in the editor rules ([`handoffs/2026-10-20-a.md`](./handoffs/2026-10-20-a.md)).
+- [x] Check the salary line and the Contract rule in a browser against an API that has the
+      `20261019110000_ApplicationDb_Job_Employment_Contract` migration (2026-10-20; "Up to" and
+      Jobberman records not in local data — see the handoff).
 - [ ] Drive the Entrepreneurship editor (Rewards "Not specified", the programme Other rule) and a
       youth completion (the three required venture fields, "Jobs created" = -1) signed in. Not
       done 2026-10-01: that session had no signed-in API or browser access.
@@ -147,6 +153,19 @@ is `multipart/form-data` with `CustomFields` as one JSON-encoded form field
     profile country. The verifications table has a Location column, and its mobile card a row.
     The youth's own list doesn't show it (Jason). The text is built from city, region and
     country (`completionLocation`), because the API's `location` is never filled.
+- 2026-10-20 (Jason): **Salary bounds and Contract employment**, following `ddb36f1ca` (#1988).
+  - **Pay line** (`resolveMoneyBadge`, so cards, rows, the details header, badges and the
+    Rewards section agree): a minimum alone reads "From ZAR 5 000", a maximum alone "Up to
+    ZAR 5 000", equal bounds one amount, different bounds a range. The interval is appended only
+    when supplied. Before this, either one-sided case showed a bare amount, which turned a
+    partner's "Above NGN 5 000 000" into what looked like an exact salary.
+  - **Contract rule** (`applyCustomFieldRules`, mirroring the API's `AssertCrossFieldRules`):
+    Contract alone needs no term; a duration or unit that is given needs the other. Any other
+    non-permanent type still requires both, so Contract never waives Fixed-term's term.
+    Permanent is unchanged. The required-term messages now say "for the selected employment
+    type", because "unless … a contract" misread with Contract + Fixed-term both selected.
+  - **No change needed:** the Contract option and its label, the card's employment fact and
+    the 24 rewritten help texts all come from the definitions.
 
 ## Links
 
