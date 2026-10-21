@@ -37,6 +37,7 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories
         OrganizationId = entity.OrganizationId,
         MyOpportunityId = entity.MyOpportunityId,
         CredentialId = entity.CredentialId,
+        DateIssued = entity.DateIssued,
         ErrorReason = entity.ErrorReason,
         RetryCount = entity.RetryCount,
         DateCreated = entity.DateCreated,
@@ -61,6 +62,7 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories
         OrganizationId = item.OrganizationId,
         MyOpportunityId = item.MyOpportunityId,
         CredentialId = item.CredentialId,
+        DateIssued = item.DateIssued,
         ErrorReason = item.ErrorReason,
         RetryCount = item.RetryCount,
         DateCreated = item.DateCreated,
@@ -81,9 +83,10 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories
 
       item.DateModified = DateTimeOffset.UtcNow;
 
-      // Schema name is immutable after scheduling; version remains null until successful issuance.
+      // Schema name is immutable. Replay retains the old version/identity until confirmed cleanup.
       entity.SchemaVersion = item.SchemaVersion;
       entity.CredentialId = item.CredentialId;
+      entity.DateIssued = item.DateIssued;
       entity.StatusId = item.StatusId;
       entity.ErrorReason = item.ErrorReason;
       entity.RetryCount = item.RetryCount;

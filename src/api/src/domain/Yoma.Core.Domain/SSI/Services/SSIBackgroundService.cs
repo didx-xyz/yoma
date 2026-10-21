@@ -26,6 +26,88 @@ using Yoma.Core.Domain.SSI.Models.Provider;
 
 namespace Yoma.Core.Domain.SSI.Services
 {
+  /// <summary>
+  /// Background processing for provider schemas, tenant creation and credential issuance.
+  /// </summary>
+  /// <remarks>
+  /// <para>
+  /// Replay: same-provider credential cleanup/reissuance scheduled through durable issuance state.
+  /// The capability migration adds the Replay lookup and nullable DateIssued and backfills existing
+  /// Issued rows from DateModified. It does not schedule any Replay. A later deliberate migration
+  /// must pause/drain issuance workers before marking its explicitly reviewed scope Replay.
+  /// Replay is against the same provider; it is not a provider-switch mode or a configuration flag.
+  /// </para>
+  /// <para>
+  /// Scheduling Replay: a deliberate data migration marks the selected existing credential issuance
+  /// rows Replay. Keep their IDs/client referents, CredentialId, SchemaName, SchemaVersion, artifact
+  /// type and entity references so cleanup can identify the original credential. Do not delete and
+  /// recreate these schedules, clear their credential IDs, or set them directly to Pending.
+  /// A genuinely unissued Pending schedule needs no cleanup and remains ordinary Pending work;
+  /// reconcile uncertain provider-success/local-save outcomes before deciding there is no artifact.
+  /// Migrations only schedule database state; never call a provider from a migration transaction.
+  /// Pending with a retained credential ID can represent normal provider-success/local-save recovery;
+  /// it does not request deletion. Only the explicit Replay status authorizes cleanup.
+  /// </para>
+  /// <para>
+  /// Tenant creation during Replay: existing tenant schedules remain Created, with the same TenantId.
+  /// Preserve holder and issuer tenants, connections, schemas and their provider mappings. Replay
+  /// adds no tenant state and performs no tenant deletion or recreation. Credential deletion and
+  /// tenant deletion are separate provider operations; never assume that deleting a tenant is a
+  /// portable way to delete its credentials, or use tenant deletion as a Replay shortcut.
+  /// </para>
+  /// <para>
+  /// Issuance ordering: process Replay cleanup before dispatching ordinary Pending issuance.
+  /// A Replay row is not eligible for issuance. Resolve its existing holder TenantId through the
+  /// entity's tenant mapping, then identify the old credential by that tenant and CredentialId,
+  /// checking the issuance ID/client referent. Opportunity holders resolve through MyOpportunity;
+  /// YoID holders resolve through UserId. Delete only the selected Yoma-managed credential:
+  /// provider-held credentials through the adapter, locally stored JWS artifacts through their
+  /// provider repository. Do not enumerate and delete unrelated credentials from a holder wallet.
+  /// </para>
+  /// <para>
+  /// Preserve the original signed _Date_Issued in a nullable issuance DateIssued before deleting
+  /// an artifact, unless it is already retained. The capability migration deliberately approximates
+  /// legacy Issued dates from DateModified once; runtime processing never infers dates from audit fields.
+  /// If no original date is available, normal issuance uses the current issuance time. Normal first
+  /// issuance and referent-based recovery must also retain the actual credential's issued date;
+  /// a recovered provider success must not be assigned a later retry timestamp. Replacement
+  /// signatures/provider creation metadata are new even when the Yoma issued-date claim is retained.
+  /// </para>
+  /// <para>
+  /// Only after deletion or verified absence succeeds may cleanup atomically clear CredentialId,
+  /// SchemaVersion, ErrorReason and RetryCount and change Replay to Pending, retaining DateIssued.
+  /// Cleanup failures stay Replay with the old identity/date; the normal issuance error/retry path
+  /// must not promote them to Pending. A timeout or authentication failure is not verified absence.
+  /// Cleanup must be idempotent and resumable after remote deletion/local-save failure, use the
+  /// existing job lock/shutdown boundaries and prevent cleanup and issuance racing for one item.
+  /// The provider store and Yoma database remain independent: persist the identity/date checkpoint,
+  /// delete and confirm absence, then commit the Pending transition. Do not span these stores with
+  /// a transaction or couple their connections, even when they currently share one database.
+  /// Clearing queue state alone is insufficient: provider referent recovery would reuse the old
+  /// credential, and wallet retrieval can still return it independently of the issuance status.
+  /// </para>
+  /// <para>
+  /// After cleanup, the existing issuance flow processes Pending only when the required holder
+  /// and issuer tenants are Created with IDs. Missing tenants block issuance until creation succeeds;
+  /// job scheduling order alone is not a dependency guarantee. Resolve the latest version of the
+  /// committed schema name and persist the actual successful/recovered credential metadata.
+  /// The transition is Replay to Pending to Issued; ordinary issuance failures retain the existing
+  /// retry policy. Issued completes the one-off Replay until another migration deliberately schedules
+  /// it again. Do not rerun Opportunity completion, reward, referral or tenant-creation side effects.
+  /// Deleting a wallet artifact does not revoke copies already exported outside the provider.
+  /// </para>
+  /// <para>
+  /// Provider switching is a separate, intentional one-way deployment procedure, not Replay.
+  /// Its migration preserves issuance dates/scheduling commitments, removes retired provider-specific
+  /// storage and resets the relevant domain tenant/issuance state for the new provider. Clear old
+  /// tenant and credential IDs, schema versions and retry/error state; tenant creation starts Pending,
+  /// then becomes Created before dependent Pending issuance can proceed. Configure the new provider
+  /// through DI and seed its schemas before issuance. Domain catalogues and business/completion data
+  /// are not wiped. There is no runtime cleanup against the old provider, legacy-provider factory or
+  /// provider-switch state; SRE retires the old provider separately. Capture any historical dates
+  /// needed from the old provider before cutover, not after its configuration/storage is removed.
+  /// </para>
+  /// </remarks>
   public class SSIBackgroundService : ISSIBackgroundService
   {
     #region Class Variables
@@ -400,7 +482,9 @@ namespace Yoma.Core.Domain.SSI.Services
     }
 
     /// <summary>
-    /// Processes eligible Pending credentials with bounded, independently scoped workers.
+    /// Cleans migration-scheduled Replay credentials before processing eligible Pending issuance.
+    /// Tenants/connections remain intact; cleanup failures block issuance until a later successful run.
+    /// Processes work with bounded, independently scoped workers.
     /// Shutdown/fatal infrastructure failure stops dispatch and drains started workers before releasing the lock.
     /// Keep the parameterless signature so previously enqueued Hangfire invocations remain executable.
     /// </summary>
@@ -430,6 +514,7 @@ namespace Yoma.Core.Domain.SSI.Services
         var itemIdsToSkip = new ConcurrentBag<Guid>();
         var issuedCount = 0;
         var failedCount = 0;
+        var replayCount = 0;
         using var throttler = new SemaphoreSlim(_appSettings.SSIParallelism.CredentialIssuance, _appSettings.SSIParallelism.CredentialIssuance);
 
         while (executeUntil > DateTimeOffset.UtcNow)
@@ -437,10 +522,23 @@ namespace Yoma.Core.Domain.SSI.Services
           cancellationToken.ThrowIfCancellationRequested();
           var now = DateTimeOffset.UtcNow;
 
-          var items = _ssiCredentialService.ListPendingIssuanceSchedule(_scheduleJobOptions.SSICredentialIssuanceScheduleBatchSize, [.. itemIdsToSkip]);
+          var items = _ssiCredentialService.ListReplayIssuanceSchedule(_scheduleJobOptions.SSICredentialIssuanceScheduleBatchSize, [.. itemIdsToSkip]);
+          var replay = items.Count != 0;
+          if (!replay)
+          {
+            // Failed/skipped cleanup remains Replay. Do not let the normal retry flow or job
+            // ordering issue replacements before the complete cleanup phase has finished.
+            if (_ssiCredentialService.HasReplayIssuanceSchedule())
+            {
+              if (_logger.IsEnabled(LogLevel.Warning)) _logger.LogWarning("SSI issuance deferred: Replay cleanup is incomplete");
+              break;
+            }
+
+            items = _ssiCredentialService.ListPendingIssuanceSchedule(_scheduleJobOptions.SSICredentialIssuanceScheduleBatchSize, [.. itemIdsToSkip]);
+          }
           if (items.Count == 0) break;
 
-          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing SSI credential issuance batch with {count} eligible pending items", items.Count);
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing SSI credential {phase} batch with {count} items", replay ? "Replay cleanup" : "issuance", items.Count);
 
           var tasks = new List<Task>();
           try
@@ -474,6 +572,14 @@ namespace Yoma.Core.Domain.SSI.Services
                   try
                   {
                     cancellationToken.ThrowIfCancellationRequested();
+                    if (replay)
+                    {
+                      await ReplayCredential(item, credentialService, tenantService, myOpportunityService, providerClient,
+                        cancellationToken);
+                      Interlocked.Increment(ref replayCount);
+                      return;
+                    }
+
                     if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing SSI credential issuance for schema type '{schemaType}' and item with id '{id}'", item.SchemaType, item.Id);
 
                     var request = new CredentialIssuanceRequest
@@ -482,7 +588,7 @@ namespace Yoma.Core.Domain.SSI.Services
                       SchemaType = item.SchemaType.ToString(),
                       Attributes = new Dictionary<string, string>()
                                   {
-                                    { SSISchemaService.SchemaAttribute_Internal_DateIssued, now.ToString("O", CultureInfo.InvariantCulture)},
+                                    { SSISchemaService.SchemaAttribute_Internal_DateIssued, (item.DateIssued ?? now).ToString("O", CultureInfo.InvariantCulture)},
                                     { SSISchemaService.SchemaAttribute_Internal_ReferentClient, item.Id.ToString()}
                                   }
                     };
@@ -624,6 +730,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
                     item.CredentialId = credential.Id;
                     item.SchemaVersion = schema.Version.ToString();
+                    item.DateIssued = GetCredentialDateIssued(credential) ?? item.DateIssued ?? now;
                     item.Status = CredentialIssuanceStatus.Issued;
                     await credentialService.UpdateScheduleIssuance(item);
                     Interlocked.Increment(ref issuedCount);
@@ -638,9 +745,9 @@ namespace Yoma.Core.Domain.SSI.Services
                   // guard stop dispatch rather than exhausting the queue's per-credential retries.
                   catch (Exception ex) when (!job.IsStopping && ex is not ObjectDisposedException)
                   {
-                    if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to issue SSI credential for schema type '{schemaType}' and item with id '{id}': {errorMessage}", item.SchemaType, item.Id, ex.Message);
+                    if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed SSI credential {phase} for schema type '{schemaType}' and item with id '{id}': {errorMessage}", replay ? "Replay cleanup" : "issuance", item.SchemaType, item.Id, ex.Message);
 
-                    item.Status = CredentialIssuanceStatus.Error;
+                    item.Status = replay ? CredentialIssuanceStatus.Replay : CredentialIssuanceStatus.Error;
                     item.ErrorReason = ex.Message;
                     await credentialService.UpdateScheduleIssuance(item);
                     Interlocked.Increment(ref failedCount);
@@ -674,6 +781,7 @@ namespace Yoma.Core.Domain.SSI.Services
         }
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed SSI credential issuance: {issuedCount} issued and {failedCount} failed attempts", issuedCount, failedCount);
+        if (replayCount != 0 && _logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed SSI Replay cleanup: {count} credentials ready for reissuance", replayCount);
       }
       catch (Exception ex)
       {
@@ -686,6 +794,90 @@ namespace Yoma.Core.Domain.SSI.Services
     #endregion
 
     #region Private Members
+    /// <summary>
+    /// Keep the original identity/date durable until confirmed cleanup. Repeating a successful remote
+    /// deletion after a local failure is safe; ordinary issuance only sees the final Pending transition.
+    /// No tenant creation, deletion, connection or completion side effects belong in this operation.
+    /// </summary>
+    private static async Task ReplayCredential(SSICredentialIssuance item, ISSICredentialService credentialService,
+      ISSITenantService tenantService, IMyOpportunityService myOpportunityService, ISSIProviderClient providerClient,
+      CancellationToken cancellationToken)
+    {
+      var userId = item.SchemaType switch
+      {
+        SchemaType.YoID => item.UserId ?? throw new InvalidOperationException("Replay requires the YoID user ID"),
+        SchemaType.Opportunity => myOpportunityService.GetById(
+          item.MyOpportunityId ?? throw new InvalidOperationException("Replay requires the MyOpportunity ID"), true, true, false).UserId,
+        _ => throw new InvalidOperationException($"Schema type '{item.SchemaType}' not supported")
+      };
+      var tenantId = tenantService.GetTenantId(EntityType.User, userId);
+      var clientReferent = new KeyValuePair<string, string>(SSISchemaService.SchemaAttribute_Internal_ReferentClient, item.Id.ToString());
+
+      Credential? credential = null;
+      if (!string.IsNullOrEmpty(item.CredentialId))
+        credential = await providerClient.GetCredentialByIdOrNull(tenantId, item.ArtifactType, item.CredentialId);
+
+      // Confirm by referent too: a missing ID alone must not conceal a different held artifact.
+      credential ??= await providerClient.GetCredentialByClientReferentOrNull(tenantId, item.ArtifactType, clientReferent);
+      if (credential != null)
+      {
+        ArgumentException.ThrowIfNullOrEmpty(credential.Id);
+        ArgumentException.ThrowIfNullOrEmpty(credential.SchemaId);
+        if (!string.IsNullOrEmpty(item.CredentialId) && item.CredentialId != credential.Id)
+          throw new Core.Exceptions.DataInconsistencyException("Replay credential ID differs from the existing issuance schedule");
+
+        if (!credential.Attributes.TryGetValue(clientReferent.Key, out var referent) || referent != clientReferent.Value)
+          throw new Core.Exceptions.DataInconsistencyException("Replay credential does not match the issuance client referent");
+
+        var schema = await providerClient.GetSchemaById(credential.SchemaId);
+        if (!string.Equals(schema.Name, item.SchemaName, StringComparison.OrdinalIgnoreCase) || schema.ArtifactType != item.ArtifactType)
+          throw new Core.Exceptions.DataInconsistencyException("Replay credential does not match the scheduled schema/artifact type");
+
+        item.CredentialId = credential.Id;
+        item.DateIssued ??= GetCredentialDateIssued(credential);
+        item.ErrorReason = null;
+        // Persist identity/date before any destructive provider call, including recovery when the
+        // original provider success was never recorded locally. Never infer dates from audit fields here.
+        await credentialService.UpdateScheduleIssuance(item);
+
+        cancellationToken.ThrowIfCancellationRequested();
+      }
+
+      var credentialId = item.CredentialId;
+      var schemaVersion = item.SchemaVersion;
+      try
+      {
+        // The provider owns its storage/commit. Keep this resumable, not in a cross-store transaction.
+        if (credential != null)
+        {
+          await providerClient.DeleteCredential(tenantId, item.ArtifactType, credential.Id);
+          if (await providerClient.GetCredentialByIdOrNull(tenantId, item.ArtifactType, credential.Id) != null)
+            throw new Core.Exceptions.DataInconsistencyException("Replay credential is still present after deletion");
+
+          if (await providerClient.GetCredentialByClientReferentOrNull(tenantId, item.ArtifactType, clientReferent) != null)
+            throw new Core.Exceptions.DataInconsistencyException("Replay client referent still has a credential after deletion");
+        }
+
+        // Persist successful cleanup even if host shutdown began during the provider call.
+        item.Status = CredentialIssuanceStatus.Pending;
+        await credentialService.UpdateScheduleIssuance(item);
+      }
+      catch
+      {
+        item.Status = CredentialIssuanceStatus.Replay;
+        item.CredentialId = credentialId;
+        item.SchemaVersion = schemaVersion;
+        throw;
+      }
+    }
+
+    private static DateTimeOffset? GetCredentialDateIssued(Credential credential)
+    {
+      var value = credential.Attributes.SingleOrDefault(attribute =>
+        string.Equals(attribute.Key, SSISchemaService.SchemaAttribute_Internal_DateIssued, StringComparison.OrdinalIgnoreCase)).Value;
+      return DateTimeHelper.TryParse(value);
+    }
+
     private static void AssertIssuanceSchemaApplicable(SSISchema schema, SSICredentialIssuance item)
     {
       if (!string.Equals(schema.Name, item.SchemaName, StringComparison.OrdinalIgnoreCase))

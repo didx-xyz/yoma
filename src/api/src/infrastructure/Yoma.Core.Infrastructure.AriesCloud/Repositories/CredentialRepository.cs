@@ -62,9 +62,13 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Repositories
       throw new NotImplementedException();
     }
 
-    public Task Delete(Credential item)
+    public async Task Delete(Credential item)
     {
-      throw new NotImplementedException();
+      var entity = _context.Credential.SingleOrDefault(credential => credential.Id == item.Id);
+      if (entity == null) return;
+
+      _context.Credential.Remove(entity);
+      await _context.SaveChangesAsync();
     }
     #endregion
   }

@@ -1,5 +1,10 @@
 namespace Yoma.Core.Domain.SSI.Models
 {
+  /// <summary>
+  /// Durable tenant schedule. Same-provider credential Replay preserves Created state, TenantId
+  /// and connections; only a separately planned provider-switch migration resets tenant state.
+  /// See <see cref="Services.SSIBackgroundService"/> for the Replay contract.
+  /// </summary>
   public class SSITenantCreation
   {
     public Guid Id { get; set; }

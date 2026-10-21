@@ -29,6 +29,97 @@ namespace Yoma.Core.Test.SSI
 
     #region Tests
     [Fact]
+    public async Task InvalidProviderListIsNotTreatedAsConfirmedAbsence()
+    {
+      using var fixture = new Fixture();
+      fixture.Http.ForCallsTo("*credentials*").WithVerb(HttpMethod.Get).RespondWithJson(new { });
+
+      await Assert.ThrowsAsync<DataInconsistencyException>(() => fixture.Client.GetCredentialByClientReferentOrNull(
+        "tenant", ArtifactType.ACR, fixture.Request.ClientReferent));
+    }
+
+    [Fact]
+    public async Task MissingLocalReplayCredentialIsConfirmedWithoutAnyProviderRequest()
+    {
+      using var fixture = new Fixture();
+
+      Assert.Null(await fixture.Client.GetCredentialByIdOrNull("tenant", ArtifactType.JWS, Guid.NewGuid().ToString()));
+      Assert.Empty(fixture.Http.CallLog);
+    }
+
+    [Fact]
+    public async Task ReplayDeletesOnlyTheExactLocalHolderCredentialAndCanBeRepeated()
+    {
+      using var fixture = new Fixture();
+      var credential = fixture.AddCredential();
+      var unrelated = fixture.AddCredential();
+      unrelated.ClientReferent = "unrelated";
+
+      await fixture.Client.DeleteCredential("tenant", ArtifactType.JWS, credential.Id.ToString());
+      await fixture.Client.DeleteCredential("tenant", ArtifactType.JWS, credential.Id.ToString());
+
+      Assert.Same(unrelated, Assert.Single(fixture.Credentials));
+      fixture.Repository.Verify(repository => repository.Delete(credential), Times.Once);
+      Assert.Empty(fixture.Http.CallLog);
+    }
+
+    [Fact]
+    public async Task ReplayCannotDeleteAnotherHoldersLocalCredential()
+    {
+      using var fixture = new Fixture();
+      var credential = fixture.AddCredential();
+
+      await Assert.ThrowsAsync<DataInconsistencyException>(() =>
+        fixture.Client.DeleteCredential("other-holder", ArtifactType.JWS, credential.Id.ToString()));
+
+      Assert.Single(fixture.Credentials);
+      fixture.Repository.Verify(repository => repository.Delete(It.IsAny<Infrastructure.AriesCloud.Models.Credential>()), Times.Never);
+      Assert.Empty(fixture.Http.CallLog);
+    }
+
+    [Fact]
+    public async Task ReferentLookupIsScopedToTheHolderAndArtifactType()
+    {
+      using var fixture = new Fixture();
+      var credential = fixture.AddCredential();
+
+      Assert.Null(await fixture.Client.GetCredentialByClientReferentOrNull("other-holder", ArtifactType.JWS, fixture.Request.ClientReferent));
+      Assert.Equal(credential.Id.ToString(), (await fixture.Client.GetCredentialByClientReferentOrNull("tenant", ArtifactType.JWS, fixture.Request.ClientReferent))!.Id);
+      Assert.Empty(fixture.Http.CallLog);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.NoContent)]
+    [InlineData(HttpStatusCode.NotFound)]
+    public async Task AnonCredsDeletionUsesTheTenantClientAndTreatsAbsenceAsSuccess(HttpStatusCode status)
+    {
+      using var fixture = new Fixture();
+      fixture.Http.ForCallsTo("*credentials/*").WithVerb(HttpMethod.Delete).RespondWith(string.Empty, (int)status);
+
+      await fixture.Client.DeleteCredential("tenant", ArtifactType.ACR, "old-holder-credential");
+
+      var deletion = Assert.Single(fixture.Http.CallLog, call => call.Request.Verb == HttpMethod.Delete);
+      Assert.EndsWith("/credentials/old-holder-credential", deletion.Request.Url.Path);
+      Assert.DoesNotContain(fixture.Http.CallLog, call => call.Request.Url.Path.Contains("connections") || call.Request.Url.Path.Contains("definitions"));
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.Unauthorized)]
+    [InlineData(HttpStatusCode.Forbidden)]
+    [InlineData(HttpStatusCode.InternalServerError)]
+    [InlineData(HttpStatusCode.ServiceUnavailable)]
+    public async Task AnonCredsDeletionDoesNotHideProviderFailures(HttpStatusCode status)
+    {
+      using var fixture = new Fixture();
+      fixture.Http.ForCallsTo("*credentials/*").WithVerb(HttpMethod.Delete).RespondWithJson(new { detail = "Provider failure" }, (int)status);
+
+      var error = await Assert.ThrowsAsync<Aries.CloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException>(() =>
+        fixture.Client.DeleteCredential("tenant", ArtifactType.ACR, "old-credential"));
+
+      Assert.Equal(status, error.StatusCode);
+    }
+
+    [Fact]
     public async Task AnonCredsSchemaLookupUsesTheExactIdEndpointAndPreservesItsVersion()
     {
       using var fixture = new Fixture();
@@ -349,6 +440,12 @@ namespace Yoma.Core.Test.SSI
         var schemas = new Mock<IRepository<Infrastructure.AriesCloud.Models.CredentialSchema>>();
         schemas.Setup(repository => repository.Query()).Returns(() => SchemaRows.AsQueryable());
         Repository.Setup(repository => repository.Query()).Returns(() => Credentials.AsQueryable());
+        Repository.Setup(repository => repository.Delete(It.IsAny<Infrastructure.AriesCloud.Models.Credential>()))
+          .Returns((Infrastructure.AriesCloud.Models.Credential credential) =>
+          {
+            Credentials.Remove(credential);
+            return Task.CompletedTask;
+          });
         Repository.Setup(repository => repository.Create(It.IsAny<Infrastructure.AriesCloud.Models.Credential>()))
           .ReturnsAsync((Infrastructure.AriesCloud.Models.Credential credential) =>
           {

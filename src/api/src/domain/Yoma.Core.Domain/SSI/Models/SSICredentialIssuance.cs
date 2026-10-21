@@ -1,7 +1,14 @@
 namespace Yoma.Core.Domain.SSI.Models
 {
+  /// <summary>
+  /// Durable credential schedule. The same-provider Replay contract and migration/job
+  /// ordering are documented on <see cref="Services.SSIBackgroundService"/>.
+  /// </summary>
   public class SSICredentialIssuance
   {
+    /// <summary>
+    /// Also used as the provider client referent for issuance recovery; retain it when scheduling Replay.
+    /// </summary>
     public Guid Id { get; set; }
 
     public Guid SchemaTypeId { get; set; }
@@ -33,7 +40,18 @@ namespace Yoma.Core.Domain.SSI.Models
 
     public Guid? MyOpportunityId { get; set; }
 
+    /// <summary>
+    /// Existing artifact identity, scoped to its holder tenant. Replay cleanup must retain
+    /// this value until deletion or absence is confirmed, then clear it before reissuance.
+    /// </summary>
     public string? CredentialId { get; set; }
+
+    /// <summary>
+    /// Signed Yoma issue date, retained across Replay and provider cutover. Null until the actual
+    /// credential date is known. The capability migration backfills legacy Issued rows from
+    /// DateModified once; runtime processing does not infer it from scheduling/audit timestamps.
+    /// </summary>
+    public DateTimeOffset? DateIssued { get; set; }
 
     public string? ErrorReason { get; set; }
 
