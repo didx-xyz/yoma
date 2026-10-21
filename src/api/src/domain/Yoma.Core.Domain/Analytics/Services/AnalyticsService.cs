@@ -51,6 +51,8 @@ namespace Yoma.Core.Domain.Analytics.Services
     private readonly IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Opportunity.Models.Opportunity> _opportunityRepository;
     private readonly IRepositoryBatchedWithNavigationAndCustomFieldFilter<MyOpportunity.Models.MyOpportunity> _myOpportunityRepository;
     private readonly IRepository<OpportunityCategory> _opportunityCategoryRepository;
+    private readonly IRepository<OpportunitySkill> _opportunitySkillRepository;
+    private readonly IRepositoryBatchedValueContains<Lookups.Models.Skill> _skillRepository;
     private readonly IRepository<UserLoginHistory> _userLoginHistoryRepository;
     private readonly IRepositoryBatchedValueContainsWithNavigation<Organization> _organizationRepository;
     private readonly IRepository<SSICredentialIssuance> _ssiCredentialIssuanceRepository;
@@ -94,6 +96,8 @@ namespace Yoma.Core.Domain.Analytics.Services
         IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Opportunity.Models.Opportunity> opportunityRepository,
         IRepositoryBatchedWithNavigationAndCustomFieldFilter<MyOpportunity.Models.MyOpportunity> myOpportunityRepository,
         IRepository<OpportunityCategory> opportunityCategoryRepository,
+        IRepository<OpportunitySkill> opportunitySkillRepository,
+        IRepositoryBatchedValueContains<Lookups.Models.Skill> skillRepository,
         IRepository<UserLoginHistory> userLoginHistoryRepository,
         IRepositoryBatchedValueContainsWithNavigation<Organization> organizationRepository,
         IRepository<SSICredentialIssuance> ssiCredentialIssuanceRepository,
@@ -124,6 +128,8 @@ namespace Yoma.Core.Domain.Analytics.Services
       _opportunityRepository = opportunityRepository ?? throw new ArgumentNullException(nameof(opportunityRepository));
       _myOpportunityRepository = myOpportunityRepository ?? throw new ArgumentNullException(nameof(myOpportunityRepository));
       _opportunityCategoryRepository = opportunityCategoryRepository ?? throw new ArgumentNullException(nameof(opportunityCategoryRepository));
+      _opportunitySkillRepository = opportunitySkillRepository ?? throw new ArgumentNullException(nameof(opportunitySkillRepository));
+      _skillRepository = skillRepository ?? throw new ArgumentNullException(nameof(skillRepository));
       _userLoginHistoryRepository = userLoginHistoryRepository ?? throw new ArgumentNullException(nameof(userLoginHistoryRepository));
       _organizationRepository = organizationRepository ?? throw new ArgumentNullException(nameof(organizationRepository));
       _ssiCredentialIssuanceRepository = ssiCredentialIssuanceRepository ?? throw new ArgumentNullException(nameof(ssiCredentialIssuanceRepository));
@@ -380,26 +386,12 @@ namespace Yoma.Core.Domain.Analytics.Services
 
     private SearchResultsEngagement SearchOrganizationEngagementInternal(SearchFilterEngagement filter)
     {
-      var queryBase = MyOpportunityQueryBase(filter);
+      var queryBase = MyOpportunityQueryBase(filter, false);
 
       //'my' opportunities: viewed
       var queryViewed = MyOpportunityQueryViewed(filter, queryBase);
 
-      var itemsViewed = queryViewed
-          .Select(opportunity => new { opportunity.DateModified })
-          .ToList() //transition to client-side processing avoiding translation issue : function pg_catalog.timezone(unknown, interval) does not exist
-          .Select(item => new
-          {
-            WeekEnding = item.DateModified.AddDays(-(int)item.DateModified.DayOfWeek).AddDays(7).Date
-          })
-          .GroupBy(x => x.WeekEnding)
-          .Select(group => new
-          {
-            WeekEnding = group.Key,
-            Count = group.Count()
-          })
-          .OrderBy(result => result.WeekEnding)
-          .ToList();
+      var itemsViewed = ListWeeklyEngagementCounts(queryViewed);
 
       var resultsViewed = new List<TimeValueEntry>();
       itemsViewed.ForEach(o => { resultsViewed.Add(new TimeValueEntry(o.WeekEnding, o.Count, default(int), default(int))); });
@@ -407,21 +399,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       //'my' opportunities: navigated external link
       var queryNavigatedExternalLink = MyOpportunityQueryNavigatedExternalLink(filter, queryBase);
 
-      var itemsNavigatedExternalLink = queryNavigatedExternalLink
-          .Select(opportunity => new { opportunity.DateModified })
-          .ToList() //transition to client-side processing avoiding translation issue : function pg_catalog.timezone(unknown, interval) does not exist
-          .Select(item => new
-          {
-            WeekEnding = item.DateModified.AddDays(-(int)item.DateModified.DayOfWeek).AddDays(7).Date
-          })
-          .GroupBy(x => x.WeekEnding)
-          .Select(group => new
-          {
-            WeekEnding = group.Key,
-            Count = group.Count()
-          })
-          .OrderBy(result => result.WeekEnding)
-          .ToList();
+      var itemsNavigatedExternalLink = ListWeeklyEngagementCounts(queryNavigatedExternalLink);
 
       var resultsNavigatedExternalLink = new List<TimeValueEntry>();
       itemsNavigatedExternalLink.ForEach(o => { resultsNavigatedExternalLink.Add(new TimeValueEntry(o.WeekEnding, default(int), o.Count, default(int))); });
@@ -429,21 +407,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       //'my' opportunities: completed
       var queryCompleted = MyOpportunityQueryCompleted(filter, queryBase);
 
-      var itemsCompleted = queryCompleted
-        .Select(opportunity => new { opportunity.DateModified })
-        .ToList() //transition to client-side processing avoiding translation issue : function pg_catalog.timezone(unknown, interval) does not exist
-        .Select(item => new
-        {
-          WeekEnding = item.DateModified.AddDays(-(int)item.DateModified.DayOfWeek).AddDays(7).Date
-        })
-        .GroupBy(x => x.WeekEnding)
-        .Select(group => new
-        {
-          WeekEnding = group.Key,
-          Count = group.Count()
-        })
-        .OrderBy(result => result.WeekEnding)
-        .ToList();
+      var itemsCompleted = ListWeeklyEngagementCounts(queryCompleted);
 
       var resultsCompleted = new List<TimeValueEntry>();
       itemsCompleted.ForEach(o => { resultsCompleted.Add(new TimeValueEntry(o.WeekEnding, default(int), default(int), o.Count)); });
@@ -489,15 +453,10 @@ namespace Yoma.Core.Domain.Analytics.Services
       result.Opportunities.Engaged = new OpportunityEngaged { Legend = "Opportunities engaged", Count = opportunityCountEngaged };
 
       //average time
-      var dates = queryCompleted
-           .Where(o => o.DateStart.HasValue && o.DateEnd.HasValue)
-           .Select(o => new { o.DateStart, o.DateEnd })
-           .ToList();
-
-      var averageCompletionTimeInDays = dates
-          .Select(o => (o.DateEnd!.Value - o.DateStart!.Value).TotalDays)
-          .DefaultIfEmpty(0)
-          .Average();
+      var averageCompletionTimeInDays = queryCompleted
+          .Where(o => o.DateStart.HasValue && o.DateEnd.HasValue)
+          .Select(o => (double?)(o.DateEnd!.Value - o.DateStart!.Value).TotalDays)
+          .Average() ?? 0;
 
       result.Opportunities.Completion = new OpportunityCompletion { Legend = "Average time (days)", AverageTimeInDays = (int)Math.Round(averageCompletionTimeInDays) };
 
@@ -532,25 +491,32 @@ namespace Yoma.Core.Domain.Analytics.Services
       result.Opportunities.Reward = new OpportunityReward { Legend = "ZLTO amount awarded", TotalAmount = totalRewards };
 
       //skills
-      var skills = queryCompleted.Select(o => new { o.DateModified, o.Skills }).ToList();
+      // Flatten and aggregate in SQL; materializing a skill collection per completion caused unbounded buffering.
+      var querySkills = QueryEngagementWeeks(queryCompleted)
+          .Join(_opportunitySkillRepository.Query(), o => o.OpportunityId, skill => skill.OpportunityId,
+            (o, skill) => new { o.DayNumber, Id = skill.SkillId });
 
-      var flattenedSkills = skills
-           .SelectMany(o => o.Skills ?? [])
+      var flattenedSkills = querySkills
            .GroupBy(skill => skill.Id)
-           .Select(g => new { Skill = g.First(), Count = g.Count() })
+           .Select(g => new { Id = g.Key, Count = g.Count() })
+           .Join(_skillRepository.Query(), group => group.Id, skill => skill.Id,
+             (group, skill) => new { skill.Id, skill.Name, skill.InfoURL, group.Count })
            .OrderByDescending(g => g.Count)
+           .ThenBy(g => g.Name)
+           .ThenBy(g => g.Id)
            .ToList();
 
-      var itemSkills = skills
-          .SelectMany(o => (o.Skills ?? []).Select(skill => new { o.DateModified, SkillId = skill.Id }))
-          .GroupBy(x => x.DateModified.AddDays(-(int)x.DateModified.DayOfWeek).AddDays(7).Date)
+      var itemSkills = querySkills
+          .GroupBy(o => o.DayNumber)
           .Select(group => new
           {
-            WeekEnding = group.Key,
-            Count = group.Select(x => x.SkillId).Distinct().Count()
+            DayNumber = group.Key,
+            Count = group.Select(x => x.Id).Distinct().Count()
           })
-          .OrderByDescending(result => result.WeekEnding)
+          .OrderByDescending(result => result.DayNumber)
           .Take(Constants.TimeIntervalSummary_Data_MaxNoOfPoints)
+          .ToList()
+          .Select(item => new { WeekEnding = DateTime.MinValue.AddDays(item.DayNumber), item.Count })
           .Reverse()
           .ToList();
 
@@ -563,9 +529,9 @@ namespace Yoma.Core.Domain.Analytics.Services
           Legend = "Most completed skills",
           TopCompleted = [.. flattenedSkills.Take(Skill_Count).Select(g => new OpportunitySkillCompleted
         {
-          Id = g.Skill.Id,
-          Name = g.Skill.Name,
-          InfoURL = g.Skill.InfoURL,
+          Id = g.Id,
+          Name = g.Name,
+          InfoURL = g.InfoURL,
           CountCompleted = g.Count
         }).OrderByDescending(s => s.CountCompleted)]
         },
@@ -636,18 +602,16 @@ namespace Yoma.Core.Domain.Analytics.Services
                       ((currentDate.Month < o.UserDateOfBirth.Value.Month) || (currentDate.Month == o.UserDateOfBirth.Value.Month && currentDate.Day < o.UserDateOfBirth.Value.Day) ? 1 : 0))
                       : null
               })
-              .ToList()
-              .Select(o =>
+              .Select(o => new
               {
-                var age = o.Age;
-                var bracket = age >= 30 ? "30+" :
-                                    age >= 25 ? "25-29" :
-                                    age >= 20 ? "20-24" :
-                                    age >= 0 ? "0-19" : AgeBracket_Group_Default;
-                return new { AgeBracket = bracket };
+                AgeBracket = o.Age >= 30 ? "30+" :
+                             o.Age >= 25 ? "25-29" :
+                             o.Age >= 20 ? "20-24" :
+                             o.Age >= 0 ? "0-19" : AgeBracket_Group_Default
               })
               .GroupBy(bracket => bracket.AgeBracket)
               .Select(group => new { AgeBracket = group.Key, Count = group.Count() })
+              .ToList()
               .OrderBy(age => age.AgeBracket.ToLower() == AgeBracket_Group_Default.ToLower() ? int.MaxValue : (age.AgeBracket.Contains("30+") ? 30 : int.Parse(age.AgeBracket.Split('-')[0])))
               .ToDictionary(age => age.AgeBracket, age => age.Count)
         }
@@ -655,19 +619,26 @@ namespace Yoma.Core.Domain.Analytics.Services
 #pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
 
       //cumulative data: Monthly completion counts per organization
-      var itemsCumulative = MyOpportunityQueryCompleted(filter, queryBase)
-        .Select(o => new { o.OrganizationName, o.DateModified })
-        .ToList() //transition to client-side processing avoiding translation issue : function pg_catalog.timezone(unknown, interval) does not exist
-        .GroupBy(x => new
+      var itemsCumulative = queryCompleted
+        .GroupBy(o => new
         {
-          x.OrganizationName,
-          MonthEnding = new DateTime(x.DateModified.Year, x.DateModified.Month, 1, 0, 0, 0).AddMonths(1).AddDays(-1)
+          o.OrganizationName,
+          o.DateModified.Year,
+          o.DateModified.Month
         })
         .Select(group => new
         {
           group.Key.OrganizationName,
-          group.Key.MonthEnding,
+          group.Key.Year,
+          group.Key.Month,
           Count = group.Count()
+        })
+        .ToList()
+        .Select(item => new
+        {
+          item.OrganizationName,
+          MonthEnding = new DateTime(item.Year, item.Month, 1).AddMonths(1).AddDays(-1),
+          item.Count
         })
         .OrderBy(result => result.MonthEnding)
         .ThenBy(result => result.OrganizationName)
@@ -1030,10 +1001,44 @@ namespace Yoma.Core.Domain.Analytics.Services
           });
     }
 
-    private IQueryable<MyOpportunity.Models.MyOpportunity> MyOpportunityQueryBase(IOrganizationSearchFilterEngagement filter)
+    /// <summary>
+    /// UTC Gregorian day numbers avoid timestamp-converter coercion, interval translation and session DST arithmetic.
+    /// Day zero (0001-01-01) is Monday; adding prior leap days gives the same ordinal as DateOnly.DayNumber.
+    /// Sunday deliberately belongs to the following Sunday, matching the historical report.
+    /// </summary>
+    private static IQueryable<EngagementWeek> QueryEngagementWeeks(IQueryable<MyOpportunity.Models.MyOpportunity> query)
+    {
+      return query
+        .Select(o => new { o.OpportunityId, PriorYears = o.DateModified.Year - 1, o.DateModified.DayOfYear })
+        .Select(o => new
+        {
+          o.OpportunityId,
+          DayNumber = o.PriorYears * 365 + o.PriorYears / 4 - o.PriorYears / 100 + o.PriorYears / 400 + o.DayOfYear - 1
+        })
+        .Select(o => new EngagementWeek
+        {
+          OpportunityId = o.OpportunityId,
+          DayNumber = (o.DayNumber + 1) / 7 * 7 + 6
+        });
+    }
+
+    /// <summary>
+    /// Aggregate before materialization so report memory grows with weeks, not individual engagements.
+    /// </summary>
+    private static List<(DateTime WeekEnding, int Count)> ListWeeklyEngagementCounts(IQueryable<MyOpportunity.Models.MyOpportunity> query)
+    {
+      return [.. QueryEngagementWeeks(query)
+        .GroupBy(o => o.DayNumber)
+        .Select(group => new { DayNumber = group.Key, Count = group.Count() })
+        .ToList()
+        .Select(item => (WeekEnding: DateTime.MinValue.AddDays(item.DayNumber), item.Count))
+        .OrderBy(item => item.WeekEnding)];
+    }
+
+    private IQueryable<MyOpportunity.Models.MyOpportunity> MyOpportunityQueryBase(IOrganizationSearchFilterEngagement filter, bool includeChildItems = true)
     {
       //organization
-      var query = _myOpportunityRepository.Query(true);
+      var query = _myOpportunityRepository.Query(includeChildItems);
 
       if (filter.Organizations != null && filter.Organizations.Count != 0)
         query = query.Where(o => filter.Organizations.Contains(o.OrganizationId));

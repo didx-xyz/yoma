@@ -603,7 +603,7 @@ namespace Yoma.Core.Domain.Referral.Services
           await _linkMaintenanceService.LimitReachedByProgramId([result.Id], _logger);
 
         scope.Complete();
-      });
+      }, true); //discard tracked intermediate assignments before a transaction retry
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Program {ProgramId} updated. FinalStatus={Status}", result.Id, result.Status);
 
@@ -1183,7 +1183,9 @@ namespace Yoma.Core.Domain.Referral.Services
       //set display order to match request sequence
       for (int i = 0; i < requests.Count; i++) requests[i].OrderDisplay = (short)(i + 1);
 
-      //updates before inserts – prevents unique constraint conflicts
+      await ClearChangedPathwayTaskAssignments(step.Id, requests);
+
+      //apply retained assignments before inserting new tasks
       foreach (var request in requests.Where(o => o.Id.HasValue))
       {
         var resultTask = step.Tasks.Single(t => t.Id == request.Id);
@@ -1215,6 +1217,50 @@ namespace Yoma.Core.Domain.Referral.Services
       //reorder to match final display order
       step.Tasks = [.. resultTasks.OrderBy(s => s.OrderDisplay)];
       return step;
+    }
+
+    /// <summary>
+    /// Free changing unique-index slots before applying retained-task swaps or longer cycles.
+    /// Nullable opportunity assignments are temporary and must remain inside the caller's transaction.
+    /// Read persisted assignments on each attempt; the in-memory pathway may reflect a rolled-back attempt.
+    /// Task identities, creation dates and references are preserved.
+    /// </summary>
+    private async Task ClearChangedPathwayTaskAssignments(Guid stepId, List<ProgramPathwayTaskRequestUpsert> requests)
+    {
+      var retainedRequests = requests.Where(o => o.Id.HasValue).ToDictionary(o => o.Id!.Value);
+      if (retainedRequests.Count == 0) return;
+
+      if (Transaction.Current == null)
+        throw new InvalidOperationException("Retained pathway task assignments require an active transaction");
+
+      var taskIds = retainedRequests.Keys.ToList();
+      var assignments = _programPathwayTaskRepository.Query()
+        .Where(o => o.StepId == stepId && taskIds.Contains(o.Id))
+        .Select(o => new
+        {
+          o.Id,
+          o.EntityType,
+          OpportunityId = o.Opportunity == null ? (Guid?)null : o.Opportunity.Id,
+          o.Order,
+          o.OrderDisplay
+        })
+        .ToList();
+
+      foreach (var assignment in assignments)
+      {
+        var request = retainedRequests[assignment.Id];
+        if (assignment.EntityType == request.EntityType && assignment.OpportunityId == request.EntityId) continue;
+
+        await _programPathwayTaskRepository.Update(new ProgramPathwayTask
+        {
+          Id = assignment.Id,
+          StepId = stepId,
+          EntityType = assignment.EntityType,
+          Opportunity = null,
+          Order = assignment.Order,
+          OrderDisplay = assignment.OrderDisplay
+        });
+      }
     }
 
     private ProgramPathwayTask ParseTaskEntity(ProgramPathwayTask task, ProgramPathwayTaskRequestUpsert request)
