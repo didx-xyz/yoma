@@ -39,28 +39,29 @@ namespace Yoma.Core.Infrastructure.Shared.Services
     {
       ArgumentNullException.ThrowIfNull(transactionBody);
 
-      try
+      async Task ExecuteBody()
       {
-        // IMPORTANT:
-        // If an ambient TransactionScope exists, we are already inside a user-initiated transaction.
-        // EF's execution strategy may retry by re-invoking the delegate, but TransactionScope cannot be safely retried once
-        // it has begun doing work (locks/writes). In this scenario we execute directly and rely on the OUTER strategy/scope
-        // boundary (the top-level unit of work) to handle retries.
-        if (Transaction.Current != null)
+        try
         {
           await transactionBody.Invoke();
-          return;
         }
+        finally
+        {
+          // Rollback probes and opt-in transaction retries must not retain EF's accepted state after
+          // rollback. Clear each attempt, before a retry starts, rather than only after all retries.
+          if (clearTrackedChanges) _context.ChangeTracker.Clear();
+        }
+      }
 
-        var executionStrategy = _context.Database.CreateExecutionStrategy();
-        await executionStrategy.ExecuteAsync(transactionBody.Invoke);
-      }
-      finally
+      // Nested ambient work relies on its outer execution strategy/transaction boundary.
+      if (Transaction.Current != null)
       {
-        // Rolled-back probe transactions leave EF entities in their accepted in-memory state.
-        // Clear tracking when requested so that state cannot leak into a later commit pass.
-        if (clearTrackedChanges) _context.ChangeTracker.Clear();
+        await ExecuteBody();
+        return;
       }
+
+      var executionStrategy = _context.Database.CreateExecutionStrategy();
+      await executionStrategy.ExecuteAsync(ExecuteBody);
     }
 
     public void ExecuteInExecutionStrategy(Action transactionBody)
