@@ -26,6 +26,38 @@ namespace Yoma.Core.Test.SSI
   public class CredentialIssuanceTests
   {
     #region Tests
+    [Fact]
+    public async Task StoredIssueDateControlsTheSignedClaimAndRemainsOnTheSchedule()
+    {
+      using var fixture = new Fixture(Domain.Opportunity.Type.Job);
+      var date = new DateTimeOffset(2024, 5, 1, 8, 0, 0, TimeSpan.Zero);
+      fixture.Item.DateIssued = date;
+
+      await fixture.Background.ProcessCredentialIssuance();
+
+      Assert.Equal(date, DateTimeOffset.Parse(Assert.Single(fixture.Requests).Attributes[SSISchemaService.SchemaAttribute_Internal_DateIssued]));
+      Assert.Equal(date, fixture.Item.DateIssued);
+    }
+
+    [Fact]
+    public async Task RecoveryRetainsTheActualCredentialDateRatherThanTheAttemptTimestamp()
+    {
+      using var fixture = new Fixture(null);
+      var date = new DateTimeOffset(2025, 6, 15, 9, 30, 0, TimeSpan.Zero);
+      fixture.Provider.Setup(provider => provider.IssueCredential(It.IsAny<CredentialIssuanceRequest>()))
+        .ReturnsAsync(new Credential
+        {
+          Id = "recovered-credential",
+          SchemaId = fixture.LatestSchema.Id,
+          Attributes = new Dictionary<string, string> { [SSISchemaService.SchemaAttribute_Internal_DateIssued] = date.ToString("O") }
+        });
+
+      await fixture.Background.ProcessCredentialIssuance();
+
+      Assert.Equal(CredentialIssuanceStatus.Issued, fixture.Item.Status);
+      Assert.Equal(date, fixture.Item.DateIssued);
+    }
+
     [Theory]
     [InlineData(Domain.Opportunity.Type.Other)]
     [InlineData(Domain.Opportunity.Type.Learning)]
@@ -325,7 +357,7 @@ namespace Yoma.Core.Test.SSI
       using var stopping = new CancellationTokenSource();
       stopping.Cancel();
       var scopes = new Mock<IServiceScopeFactory>(MockBehavior.Strict);
-      using var fixture = new Fixture(Domain.Opportunity.Type.Job, scopes.Object, stopping.Token);
+      using var fixture = new Fixture(Domain.Opportunity.Type.Job, scopes.Object, stopping: stopping.Token);
 
       await Assert.ThrowsAnyAsync<OperationCanceledException>(() => fixture.Background.ProcessCredentialIssuance());
 
@@ -415,7 +447,7 @@ namespace Yoma.Core.Test.SSI
 
       #region Constructor
       public Fixture(Domain.Opportunity.Type? type, IServiceScopeFactory? scopeFactory = null,
-        CancellationToken stopping = default, int parallelism = 1)
+        int parallelism = 1, CancellationToken stopping = default)
       {
         var settings = new AppSettings
         {

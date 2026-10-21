@@ -22,6 +22,28 @@ namespace Yoma.Core.Test.SSI
   {
     #region Tests
     [Fact]
+    public void ReplaySelectionIsSeparateFromTenantReadyIssuanceAndHasDeterministicPaging()
+    {
+      var fixture = new Fixture();
+      var first = fixture.AddOpportunity(false);
+      var second = fixture.AddOpportunity(false);
+      fixture.AddOpportunity(true);
+      first.Status = CredentialIssuanceStatus.Replay;
+      first.StatusId = fixture.ReplayId;
+      second.Status = CredentialIssuanceStatus.Replay;
+      second.StatusId = fixture.ReplayId;
+      second.DateModified = first.DateModified;
+      var ordered = new[] { first, second }.OrderBy(item => item.Id).ToList();
+
+      Assert.True(fixture.Service.HasReplayIssuanceSchedule());
+      Assert.Same(ordered[0], Assert.Single(fixture.Service.ListReplayIssuanceSchedule(1, [])));
+      Assert.Same(ordered[1], Assert.Single(fixture.Service.ListReplayIssuanceSchedule(1, [ordered[0].Id])));
+      Assert.Empty(fixture.Service.ListReplayIssuanceSchedule(1, [first.Id, second.Id]));
+      Assert.Single(fixture.Service.ListPendingIssuanceSchedule(10, []));
+      fixture.Repository.Verify(repository => repository.Update(It.IsAny<SSICredentialIssuance>()), Times.Never);
+    }
+
+    [Fact]
     public void TenantReadyItemsAreSelectedBeforePagingPastAnOlderBlockedBacklog()
     {
       var fixture = new Fixture();
@@ -169,7 +191,7 @@ namespace Yoma.Core.Test.SSI
         CREATE TABLE "SSI"."CredentialIssuance" (
           "Id" uuid PRIMARY KEY, "SchemaTypeId" uuid, "StatusId" uuid, "ArtifactType" text,
           "SchemaName" text, "SchemaVersion" text, "UserId" uuid, "OrganizationId" uuid,
-          "MyOpportunityId" uuid, "CredentialId" text, "ErrorReason" text, "RetryCount" smallint,
+          "MyOpportunityId" uuid, "CredentialId" text, "DateIssued" timestamptz, "ErrorReason" text, "RetryCount" smallint,
           "DateCreated" timestamptz, "DateModified" timestamptz);
         CREATE TABLE "SSI"."TenantCreation" (
           "Id" uuid PRIMARY KEY, "EntityType" text, "StatusId" uuid,
@@ -241,6 +263,7 @@ namespace Yoma.Core.Test.SSI
     private sealed class Fixture
     {
       public Guid PendingId { get; } = Guid.NewGuid();
+      public Guid ReplayId { get; } = Guid.NewGuid();
       public Guid OpportunityTypeId { get; } = Guid.NewGuid();
       private readonly Guid _tenantCreatedId = Guid.NewGuid();
       public List<SSICredentialIssuance> Items { get; } = [];
@@ -256,6 +279,8 @@ namespace Yoma.Core.Test.SSI
         var statuses = new Mock<ISSICredentialIssuanceStatusService>();
         statuses.Setup(service => service.GetByName(CredentialIssuanceStatus.Pending.ToString()))
           .Returns(new SSICredentialIssuanceStatus { Id = PendingId });
+        statuses.Setup(service => service.GetByName(CredentialIssuanceStatus.Replay.ToString()))
+          .Returns(new SSICredentialIssuanceStatus { Id = ReplayId });
         var types = new Mock<ISSISchemaTypeService>();
         types.Setup(service => service.GetByName(SchemaType.Opportunity.ToString()))
           .Returns(new SSISchemaType { Id = OpportunityTypeId });

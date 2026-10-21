@@ -103,10 +103,12 @@ namespace Yoma.Core.Domain.SSI.Services
       var userEntityType = Entity.EntityType.User.ToString().ToLowerInvariant();
       var organizationEntityType = Entity.EntityType.Organization.ToString().ToLowerInvariant();
 
+#pragma warning disable CA1862 // Query provider does not translate StringComparison overloads
       query = query.Where(item => item.SchemaTypeId != schemaTypeOpportunityId
         || participations.Any(participation => participation.Id == item.MyOpportunityId
           && readyTenants.Any(tenant => tenant.EntityType.ToLower() == userEntityType && tenant.UserId == participation.UserId)
           && readyTenants.Any(tenant => tenant.EntityType.ToLower() == organizationEntityType && tenant.OrganizationId == participation.OrganizationId)));
+#pragma warning restore CA1862
 
       // A tenant can change after selection, or a provider attempt can fail. Do not retry an
       // already handled item again within this run; pending/error policy itself remains unchanged.
@@ -136,6 +138,28 @@ namespace Yoma.Core.Domain.SSI.Services
 
       switch (item.Status)
       {
+        case CredentialIssuanceStatus.Replay:
+        case CredentialIssuanceStatus.Pending:
+          // Only a deliberately migrated Replay row can checkpoint cleanup or return to Pending.
+          // In particular, ordinary error handling must never turn a cleanup failure into issuance.
+          var existing = _ssiCredentialIssuanceRepository.Query().Single(o => o.Id == item.Id);
+          if (item.Status == CredentialIssuanceStatus.Pending && existing.Status == CredentialIssuanceStatus.Pending
+            && existing.CredentialId == null && existing.SchemaVersion == null && existing.ErrorReason == null
+            && existing.RetryCount == null && existing.DateIssued == item.DateIssued)
+            return; // Commit acknowledgement can fail after successful cleanup; do not repeat its state change.
+
+          if (existing.Status != CredentialIssuanceStatus.Replay)
+            throw new InvalidOperationException($"Replay expected for credential issuance item '{item.Id}'");
+
+          if (item.Status == CredentialIssuanceStatus.Pending)
+          {
+            item.CredentialId = null;
+            item.SchemaVersion = null;
+            item.ErrorReason = null;
+            item.RetryCount = null;
+          }
+          break;
+
         case CredentialIssuanceStatus.Issued:
           if (string.IsNullOrEmpty(item.CredentialId))
             throw new ArgumentNullException(nameof(item), "Credential id required");
@@ -168,6 +192,27 @@ namespace Yoma.Core.Domain.SSI.Services
       }
 
       await _ssiCredentialIssuanceRepository.Update(item);
+    }
+
+    public List<SSICredentialIssuance> ListReplayIssuanceSchedule(int batchSize, List<Guid> idsToSkip)
+    {
+      ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(batchSize, default, nameof(batchSize));
+
+      var statusId = _ssiCredentialIssuanceStatusService.GetByName(CredentialIssuanceStatus.Replay.ToString()).Id;
+      var query = _ssiCredentialIssuanceRepository.Query().Where(item => item.StatusId == statusId);
+      if (idsToSkip != null && idsToSkip.Count != 0)
+        query = query.Where(item => !idsToSkip.Contains(item.Id));
+
+      return [.. query
+        .OrderBy(item => item.DateModified)
+        .ThenBy(item => item.Id)
+        .Take(batchSize)];
+    }
+
+    public bool HasReplayIssuanceSchedule()
+    {
+      var statusId = _ssiCredentialIssuanceStatusService.GetByName(CredentialIssuanceStatus.Replay.ToString()).Id;
+      return _ssiCredentialIssuanceRepository.Query().Any(item => item.StatusId == statusId);
     }
     #endregion
   }

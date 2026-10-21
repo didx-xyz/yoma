@@ -47,6 +47,8 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Entities
     [Column(TypeName = "varchar(50)")]
     public string? CredentialId { get; set; }
 
+    public DateTimeOffset? DateIssued { get; set; }
+
     [Column(TypeName = "text")] //MS SQL: varchar(MAX)
     public string? ErrorReason { get; set; }
 

@@ -138,7 +138,9 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         throw new ArgumentNullException(nameof(id));
       id = id.Trim();
 
-      var resultLocal = _credentialRepository.Query().SingleOrDefault(o => o.Id == Guid.Parse(id));
+      var resultLocal = Guid.TryParse(id, out var localId)
+        ? _credentialRepository.Query().SingleOrDefault(o => o.Id == localId)
+        : null;
       if (resultLocal != null)
       {
         // Local JWS credentials must belong to this wallet, just like tenant-scoped provider credentials.
@@ -148,21 +150,78 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         return resultLocal.ToCredential();
       }
 
-      var client = _clientFactory.CreateTenantClient(tenantId);
-      CredInfo? resultAries = null;
-      try
-      {
-        resultAries = await client.GetCredentialByIdAsync(id);
-      }
-      catch (Aries.CloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
-      {
-        if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
-      }
+      return await GetCredentialByIdOrNull(tenantId, ArtifactType.ACR, id)
+        ?? throw new EntityNotFoundException($"{nameof(Domain.SSI.Models.Provider.Credential)} with id '{id}' does not exist");
+    }
 
-      if (resultAries == null)
-        throw new EntityNotFoundException($"{nameof(Domain.SSI.Models.Provider.Credential)} with id '{id}' does not exist");
+    public async Task<Domain.SSI.Models.Provider.Credential?> GetCredentialByIdOrNull(string tenantId, ArtifactType artifactType, string id)
+    {
+      ArgumentException.ThrowIfNullOrEmpty(tenantId);
+      ArgumentException.ThrowIfNullOrEmpty(id);
 
-      return resultAries.ToCredential();
+      switch (artifactType)
+      {
+        case ArtifactType.JWS:
+          return GetLocalCredentialByIdOrNull(tenantId, id)?.ToCredential();
+
+        case ArtifactType.ACR:
+          try
+          {
+            var credential = await _clientFactory.CreateTenantClient(tenantId).GetCredentialByIdAsync(id);
+            return credential?.ToCredential()
+              ?? throw new DataInconsistencyException("Provider returned an empty credential response instead of confirmed absence");
+          }
+          catch (Aries.CloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
+          {
+            if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
+            return null;
+          }
+
+        default:
+          throw new InvalidOperationException($"Artifact type of '{artifactType}' not supported");
+      }
+    }
+
+    public async Task<Domain.SSI.Models.Provider.Credential?> GetCredentialByClientReferentOrNull(string tenantId,
+      ArtifactType artifactType, KeyValuePair<string, string> clientReferent)
+    {
+      ArgumentException.ThrowIfNullOrEmpty(tenantId);
+      ArgumentException.ThrowIfNullOrEmpty(clientReferent.Key);
+      ArgumentException.ThrowIfNullOrEmpty(clientReferent.Value);
+
+      return await GetCredentialByClientReferentOrNull(_clientFactory.CreateTenantClient(tenantId),
+        tenantId, artifactType, clientReferent, false);
+    }
+
+    public async Task DeleteCredential(string tenantId, ArtifactType artifactType, string id)
+    {
+      ArgumentException.ThrowIfNullOrEmpty(tenantId);
+      ArgumentException.ThrowIfNullOrEmpty(id);
+
+      switch (artifactType)
+      {
+        case ArtifactType.JWS:
+          var credential = GetLocalCredentialByIdOrNull(tenantId, id);
+          if (credential == null) return;
+
+          await _credentialRepository.Delete(credential);
+          break;
+
+        case ArtifactType.ACR:
+          var client = _clientFactory.CreateTenantClient(tenantId);
+          try
+          {
+            await client.DeleteCredentialByIdAsync(id);
+          }
+          catch (Aries.CloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
+          {
+            if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
+          }
+          break;
+
+        default:
+          throw new InvalidOperationException($"Artifact type of '{artifactType}' not supported");
+      }
     }
 
     //[int? start, int? count]: filter and ordered client side; no way to filter on schemaType or orderByDescending:_Date_Issued on Aries
@@ -345,7 +404,8 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
       // Recover provider success before validating this attempt's attributes. A later schema version
       // or changed source values must not turn an already-issued credential into a second issuance.
-      var result = await GetCredentialByClientReferentOrNull(clientHolder, request.ArtifactType, request.ClientReferent, false);
+      var result = await GetCredentialByClientReferentOrNull(clientHolder, request.TenantIdHolder,
+        request.ArtifactType, request.ClientReferent, false);
       if (result != null) return result;
 
       // Claims were mapped against this immutable identity by the domain. Never resolve latest again.
@@ -416,12 +476,24 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
           throw new InvalidOperationException($"Artifact type of '{request.ArtifactType}' not supported");
       }
 
-      return await GetCredentialByClientReferentOrNull(clientHolder, request.ArtifactType, request.ClientReferent, true)
+      return await GetCredentialByClientReferentOrNull(clientHolder, request.TenantIdHolder,
+        request.ArtifactType, request.ClientReferent, true)
         ?? throw new InvalidOperationException($"Credential expected but not found for client referent '{request.ClientReferent}'");
     }
     #endregion
 
     #region Private Members
+    private Models.Credential? GetLocalCredentialByIdOrNull(string tenantId, string id)
+    {
+      if (!Guid.TryParse(id, out var localId))
+        throw new ArgumentException("A local JWS credential ID must be a UUID", nameof(id));
+
+      var credential = _credentialRepository.Query().SingleOrDefault(item => item.Id == localId);
+      if (credential != null && (credential.TargetTenantId != tenantId || credential.ArtifactType != ArtifactType.JWS.ToString()))
+        throw new DataInconsistencyException("Credential does not match the Replay holder/artifact type");
+      return credential;
+    }
+
     private async Task SendAndAcceptCredential(Tenant tenantHolder, ITenantClient clientHolder, ITenantClient clientIssuer, SendCredential sendCredentialRequest)
     {
       //send the credential by issuer
@@ -650,20 +722,25 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
       });
     }
 
-    private async Task<Domain.SSI.Models.Provider.Credential?> GetCredentialByClientReferentOrNull(ITenantClient clientHolder, ArtifactType artifactType,
+    private async Task<Domain.SSI.Models.Provider.Credential?> GetCredentialByClientReferentOrNull(ITenantClient clientHolder, string tenantId, ArtifactType artifactType,
         KeyValuePair<string, string> clientReferent, bool throwNotFound)
     {
       switch (artifactType)
       {
         case ArtifactType.ACR:
-          var wqlQueryString = $"{{\"attr::{clientReferent.Key}::value\":\"{clientReferent.Value}\"}}";
+          var wqlQueryString = JsonConvert.SerializeObject(new Dictionary<string, string>
+          {
+            [$"attr::{clientReferent.Key}::value"] = clientReferent.Value
+          });
 
           var credsAnon = await clientHolder.GetCredentialsAsync(null, null, wqlQueryString);
+          if (credsAnon?.Results == null)
+            throw new DataInconsistencyException("Provider returned an invalid credential list instead of confirmed absence");
 
-          if (credsAnon?.Results?.Count > 1)
+          if (credsAnon.Results.Count > 1)
             throw new InvalidOperationException($"More than one credential found for client referent '{clientReferent}'");
 
-          var credAnon = credsAnon?.Results?.SingleOrDefault();
+          var credAnon = credsAnon.Results.SingleOrDefault();
 
           if (credAnon == null)
           {
@@ -677,7 +754,8 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
           return credAnon.ToCredential();
 
         case ArtifactType.JWS:
-          var credJWS = _credentialRepository.Query().SingleOrDefault(o => o.ClientReferent == clientReferent.Value);
+          var credJWS = _credentialRepository.Query().SingleOrDefault(o => o.ClientReferent == clientReferent.Value
+            && o.TargetTenantId == tenantId && o.ArtifactType == ArtifactType.JWS.ToString());
           if (credJWS == null)
           {
             if (throwNotFound)

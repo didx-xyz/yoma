@@ -33,7 +33,12 @@ namespace Yoma.Core.Domain.SSI
   {
     Pending,
     Issued,
-    Error
+    Error,
+    /// <summary>
+    /// Same-provider credential cleanup scheduled by migration. Tenants/connections are preserved;
+    /// only confirmed cleanup can release the schedule to Pending for normal issuance.
+    /// </summary>
+    Replay
   }
 
   public enum SchemaEntityPropertySystemType

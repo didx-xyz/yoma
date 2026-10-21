@@ -241,7 +241,7 @@ namespace Yoma.Core.Test.Core
       var first = new PayoutTransaction { Id = Guid.NewGuid() };
       var second = new PayoutTransaction { Id = Guid.NewGuid() };
       payouts.Setup(service => service.ListForReconciliation(It.IsAny<int>(), It.IsAny<List<Guid>>()))
-        .Returns((int _, List<Guid> skipped) => new[] { first, second }.Where(item => !skipped.Contains(item.Id)).ToList());
+        .Returns((int _, List<Guid> skipped) => [.. new[] { first, second }.Where(item => !skipped.Contains(item.Id))]);
       payouts.Setup(service => service.Reconcile(first.Id)).ThrowsAsync(new InvalidOperationException("Provider unavailable"));
 
       await fixture.Run(nameof(PayoutBackgroundService.ProcessReconciliation));
@@ -333,8 +333,8 @@ namespace Yoma.Core.Test.Core
       var second = new WalletCreation { Id = Guid.NewGuid(), UserId = Guid.NewGuid(), Status = WalletCreationStatus.Pending };
       var wallets = fixture.Get<IWalletService>();
       wallets.Setup(service => service.ListPendingCreationSchedule(It.IsAny<int>(), It.IsAny<List<Guid>>()))
-        .Returns((int _, List<Guid> skip) => new[] { first, second }.Where(item => !skip.Contains(item.Id)
-          && item.Status != WalletCreationStatus.Created).ToList());
+        .Returns((int _, List<Guid> skip) => [.. new[] { first, second }.Where(item => !skip.Contains(item.Id)
+          && item.Status != WalletCreationStatus.Created)]);
       wallets.Setup(service => service.UpdateWalletUsername(first.UserId)).Returns(() =>
       {
         fixture.Stopping.Cancel();
@@ -364,7 +364,7 @@ namespace Yoma.Core.Test.Core
         Status = RewardTransactionStatus.Pending
       }).ToList();
       fixture.Get<IRewardService>().Setup(service => service.ListPendingTransactionSchedule(It.IsAny<int>(), It.IsAny<List<Guid>>()))
-        .Returns((int _, List<Guid> skip) => items.Where(item => !skip.Contains(item.Id) && item.Status == RewardTransactionStatus.Pending).ToList());
+        .Returns((int _, List<Guid> skip) => [.. items.Where(item => !skip.Contains(item.Id) && item.Status == RewardTransactionStatus.Pending)]);
       fixture.Get<IWalletService>().Setup(service => service.GetWalletIdOrNull(It.IsAny<Guid>())).Returns(("test-user", "test-wallet"));
       fixture.Get<Domain.MyOpportunity.Interfaces.IMyOpportunityService>()
         .Setup(service => service.GetById(It.IsAny<Guid>(), false, false, false))
@@ -746,7 +746,7 @@ namespace Yoma.Core.Test.Core
           Status = TenantCreationStatus.Pending
         }).ToList();
         Get<ISSITenantService>().Setup(service => service.ListPendingCreationSchedule(It.IsAny<int>(), It.IsAny<List<Guid>>()))
-          .Returns((int size, List<Guid> skip) => items.Where(item => item.Status == TenantCreationStatus.Pending && !skip.Contains(item.Id)).Take(size).ToList());
+          .Returns((int size, List<Guid> skip) => [.. items.Where(item => item.Status == TenantCreationStatus.Pending && !skip.Contains(item.Id)).Take(size)]);
         Get<IUserService>().Setup(service => service.GetById(It.IsAny<Guid>(), false, true))
           .Returns((Guid id, bool _, bool _) => new User { Id = id, Username = "test-youth", DisplayName = "Test Youth" });
         Get<IOrganizationService>();
@@ -808,7 +808,7 @@ namespace Yoma.Core.Test.Core
           return mock.Object;
         }
         var constructor = type.GetConstructors().Single();
-        var result = constructor.Invoke(constructor.GetParameters().Select(parameter => Resolve(parameter.ParameterType)).ToArray());
+        var result = constructor.Invoke([.. constructor.GetParameters().Select(parameter => Resolve(parameter.ParameterType))]);
         if (result is IDisposable disposable) _disposables.Add(disposable);
         return result;
       }

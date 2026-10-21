@@ -37,6 +37,25 @@ namespace Yoma.Core.Domain.SSI.Interfaces.Provider
     Task<Credential> GetCredentialById(string tenantId, string id);
 
     /// <summary>
+    /// Resolve an exact holder/artifact-scoped ID for Replay. Null means confirmed absence in that
+    /// store; a missing local JWS must not fall through to a remote AnonCreds lookup.
+    /// </summary>
+    Task<Credential?> GetCredentialByIdOrNull(string tenantId, ArtifactType artifactType, string id);
+
+    /// <summary>
+    /// Resolve a holder-scoped credential by issuance referent, including provider-success/local-save recovery.
+    /// A null result means confirmed absence; provider/authentication failures must propagate.
+    /// </summary>
+    Task<Credential?> GetCredentialByClientReferentOrNull(string tenantId, ArtifactType artifactType,
+      KeyValuePair<string, string> clientReferent);
+
+    /// <summary>
+    /// Delete the exact holder-scoped artifact for Replay; confirmed absence is idempotent success.
+    /// Preserve tenants, connections and schemas. This does not revoke exported copies.
+    /// </summary>
+    Task DeleteCredential(string tenantId, ArtifactType artifactType, string id);
+
+    /// <summary>
     /// List all the credentials for the specified tenant / wallet
     /// </summary>
     Task<List<Credential>?> ListCredentials(string tenantId);

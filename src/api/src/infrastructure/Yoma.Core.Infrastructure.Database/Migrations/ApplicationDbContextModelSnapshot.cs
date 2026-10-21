@@ -18,7 +18,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
     {
 #pragma warning disable 612, 618
       modelBuilder
-        .HasAnnotation("ProductVersion", "10.0.12")
+        .HasAnnotation("ProductVersion", "10.0.13")
         .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
       NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "pg_trgm");
@@ -3564,6 +3564,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             .HasColumnType("varchar(50)");
 
           b.Property<DateTimeOffset>("DateCreated")
+            .HasColumnType("timestamp with time zone");
+
+          b.Property<DateTimeOffset?>("DateIssued")
             .HasColumnType("timestamp with time zone");
 
           b.Property<DateTimeOffset>("DateModified")

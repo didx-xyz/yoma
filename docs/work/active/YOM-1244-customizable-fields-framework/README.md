@@ -359,6 +359,22 @@ descriptions on YOM-1244 are stale and should not be trusted over this table.**
 
 ### Credential schema context
 
+**Replay capability (2026-10-21, implemented for review):** the domain runbook on
+`SSIBackgroundService` specifies migration-scheduled same-provider credential Replay:
+`Replay -> Pending -> Issued`, with holder/artifact-scoped cleanup before reissuance.
+The capability migration adds nullable `DateIssued`, backfills existing Issued rows from
+`DateModified` once, and seeds the Replay lookup. It does not schedule any Replay; a clearly
+labelled future-migration placeholder links to the service runbook. Tenants remain Created
+and tenant IDs/connections/schemas are preserved. A provider switch remains a separate
+intentional migration-led domain reset with no runtime old-provider cleanup; SRE retires
+the old provider. Provider storage and Yoma remain independently configured: cleanup uses durable
+per-item checkpoints and resumes after partial failure, not a transaction spanning both stores.
+Adrian's Local test subsequently replayed six JWS Opportunity credentials and one ACR YoID:
+seven issued, zero failures, dates/holders preserved and twelve controls unchanged. A repeat run
+left all replacement IDs unchanged. The shipped capability migration still schedules no Replay;
+Stage/Prod require a separate deliberate scheduling migration. See the
+[YOM-1280 handoff](YOM-1280-api-opportunity-credential-issuance-with-custom-fields/handoffs/2026-10-21-a.md).
+
 **Issuance processing follow-up (2026-10-19, merged in PR #1990 and verified on Stage):** the master-based
 [YOM-1280 lifecycle/readiness fix](YOM-1280-api-opportunity-credential-issuance-with-custom-fields/handoffs/2026-10-19-a.md)
 filters Opportunity holder/issuer tenant readiness in SQL before paging, closes a worker-setup
