@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
+using Yoma.Core.Api.Middleware;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Referral;
 using Yoma.Core.Domain.Referral.Interfaces;
@@ -291,6 +292,7 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Initiate intent to claim a referral link (Authenticated User)")]
     [HttpPost("link/{id}/claim/initiate")]
+    [UserActionLock(nameof(ClaimAsReferee))]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<ActionResult> ClaimAsRefereeInitiate([FromRoute] Guid id)
     {
@@ -305,6 +307,7 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Claim a referral link (Authenticated User)")]
     [HttpPost("link/{id}/claim")]
+    [UserActionLock(nameof(ClaimAsReferee))]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<ActionResult> ClaimAsReferee([FromRoute] Guid id)
     {

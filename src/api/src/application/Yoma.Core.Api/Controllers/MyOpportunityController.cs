@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Net;
 using System.Net.Mime;
+using Yoma.Core.Api.Middleware;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Models;
@@ -232,6 +233,7 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Track viewing of an opportunity (Authenticated User)")]
     [HttpPut("action/{opportunityId}/view")]
+    [UserActionLock]
     [ProducesResponseType((int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> PerformActionViewed([FromRoute] Guid opportunityId)
@@ -247,6 +249,7 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Save an opportunity (Authenticated User)")]
     [HttpPut("action/{opportunityId}/save")]
+    [UserActionLock(nameof(PerformActionSaved))]
     [ProducesResponseType((int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> PerformActionSaved([FromRoute] Guid opportunityId)
@@ -262,6 +265,7 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Track navigating to the external link of an opportunity (Authenticated User)")]
     [HttpPut("action/{opportunityId}/navigateExternalLink")]
+    [UserActionLock]
     [ProducesResponseType(typeof(SyncInfoEntityPartner), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> PerformActionNavigatedExternalLink([FromRoute] Guid opportunityId)
@@ -292,6 +296,7 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Remove a saved opportunity (Authenticated User)")]
     [HttpDelete("action/{opportunityId}/save/remove")]
+    [UserActionLock(nameof(PerformActionSaved))]
     [ProducesResponseType((int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> PerformActionSavedRemove([FromRoute] Guid opportunityId)
@@ -309,6 +314,7 @@ namespace Yoma.Core.Api.Controllers
       Summary = "Complete an opportunity by applying for verification (Authenticated User)",
       Description = "Expects multipart/form-data. Custom fields must be supplied as a JSON-serialized array in the 'customFields' form field. Verification evidence files are supplied as regular multipart file parts.")]
     [HttpPut("action/{opportunityId}/verify")]
+    [UserActionLock(nameof(PerformActionSendForVerificationManual))]
     [ProducesResponseType((int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> PerformActionSendForVerificationManual([FromRoute] Guid opportunityId, [FromForm] MyOpportunityRequestVerify request)
@@ -324,6 +330,7 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Complete an opportunity via an instant-verify link (Authenticated User)")]
     [HttpPut("action/link/{linkId}/verify")]
+    [UserActionLock(nameof(PerformActionSendForVerificationManual))]
     [ProducesResponseType((int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> PerformActionInstantVerification([FromRoute] Guid linkId)
@@ -339,6 +346,7 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Delete a pending verification request for an opportunity (Authenticated User)")]
     [HttpDelete("action/{opportunityId}/verify/delete")]
+    [UserActionLock(nameof(PerformActionSendForVerificationManual))]
     [ProducesResponseType((int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> PerformActionSendForVerificationManualDelete([FromRoute] Guid opportunityId)
