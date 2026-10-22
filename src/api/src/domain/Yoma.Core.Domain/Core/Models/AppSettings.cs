@@ -180,6 +180,23 @@ namespace Yoma.Core.Domain.Core.Models
 
     public int DistributedLockRetryDelayInMilliseconds { get; set; }
 
+    /// <summary>
+    /// Acquisition retry budget in milliseconds for opt-in per-user API action locks, not the lease or action runtime.
+    /// Zero makes one immediate acquisition attempt without waiting; negative values are invalid.
+    /// A request still busy after this budget receives an HTTP conflict response and does not execute unlocked.
+    /// Redis command latency remains subject to the client's transport timeouts.
+    /// </summary>
+    public int DistributedLockUserActionAcquireTimeoutInMilliseconds { get; set; }
+
+    /// <summary>
+    /// Total Redis lease lifetime in seconds for opt-in per-user API action locks. Must be greater than zero.
+    /// Configure the full duration, including any request/ingress timeout buffer; no buffer is added in code.
+    /// This is the crash/release-failure fallback, not an acquisition wait or an HTTP request timeout.
+    /// Normal completion releases the lock immediately. The lease is not renewed and must cover ongoing work;
+    /// an upstream timeout alone does not guarantee that the API action has stopped.
+    /// </summary>
+    public int DistributedLockUserActionLeaseDurationInSeconds { get; set; }
+
     public int DistributedLockKeycloakEventDurationInSeconds { get; set; }
 
     public int DistributedLockReferralProgressDurationInSeconds { get; set; }

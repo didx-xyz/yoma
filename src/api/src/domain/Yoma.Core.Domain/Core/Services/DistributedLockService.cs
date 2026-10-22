@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -80,6 +81,63 @@ namespace Yoma.Core.Domain.Core.Services
     public async Task<T> RunWithLockAsync<T>(string key, TimeSpan lockDuration, Func<Task<T>> action, [CallerMemberName] string processName = "Unknown")
     {
       return await RunWithLockCoreAsync(key, lockDuration, action, processName);
+    }
+
+    public async Task<bool> TryRunWithLockAsync(string key, TimeSpan lockDuration, TimeSpan acquireTimeout, Func<Task> action,
+      CancellationToken cancellationToken = default, [CallerMemberName] string processName = "Unknown")
+    {
+      ArgumentException.ThrowIfNullOrWhiteSpace(key);
+      key = key.Trim();
+
+      ArgumentNullException.ThrowIfNull(action);
+      ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(lockDuration, TimeSpan.Zero, nameof(lockDuration));
+      ArgumentOutOfRangeException.ThrowIfLessThan(acquireTimeout, TimeSpan.Zero, nameof(acquireTimeout));
+
+      if (_appSettings.DistributedLockRetryDelayInMilliseconds <= 0)
+        throw new InvalidOperationException($"{nameof(AppSettings)}:{nameof(_appSettings.DistributedLockRetryDelayInMilliseconds)} must be greater than zero.");
+
+      var redisKey = $"{LockIdentifier_Prefix}:{key}";
+      var owner = Guid.NewGuid().ToString("N");
+      var db = _connectionMultiplexer.GetDatabase();
+      var retryDelay = TimeSpan.FromMilliseconds(_appSettings.DistributedLockRetryDelayInMilliseconds);
+      var elapsed = Stopwatch.StartNew();
+
+      while (true)
+      {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (await db.LockTakeAsync(redisKey, owner, lockDuration)) break;
+
+        var remaining = acquireTimeout - elapsed.Elapsed;
+        if (remaining <= TimeSpan.Zero) return false;
+
+        await Task.Delay(remaining < retryDelay ? remaining : retryDelay, cancellationToken);
+
+        if (elapsed.Elapsed >= acquireTimeout) return false;
+      }
+
+      try
+      {
+        // Cancellation may have occurred while Redis was acquiring the lock.
+        cancellationToken.ThrowIfCancellationRequested();
+
+        await action();
+        return true;
+      }
+      finally
+      {
+        try
+        {
+          // An expired owner must not delete a successor's lock.
+          if (!await db.LockReleaseAsync(redisKey, owner))
+            _logger.LogWarning("Lock '{lockKey}' no longer owned when releasing for process '{process}'", redisKey, processName);
+        }
+        catch (Exception ex)
+        {
+          // Preserve the action's result or exception; the lease will expire if release fails.
+          _logger.LogWarning(ex, "Failed to release lock '{lockKey}' for process '{process}'. Proceeding", redisKey, processName);
+        }
+      }
     }
     #endregion
 
