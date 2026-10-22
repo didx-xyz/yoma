@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
 using System.Net;
+using Yoma.Core.Api.Middleware;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
@@ -251,6 +252,7 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Update the user's profile (Authenticated User)",
       Description = "Update the user in both Yoma and the identity provider, optionally requesting a email verification and/or password reset")]
     [HttpPatch()]
+    [UserActionLock(nameof(UpdateProfile))]
     [ProducesResponseType(typeof(UserProfile), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> UpdateProfile([FromBody] UserRequestUpdateProfile request)
@@ -311,6 +313,7 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Complete YoID onboarding (Authenticated User)")]
     [HttpPatch("yoId")]
+    [UserActionLock(nameof(UpdateProfile))]
     [ProducesResponseType(typeof(UserProfile), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> YoIDOnboard()

@@ -2,6 +2,7 @@ using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Net;
 using System.Net.Mime;
+using System.Reflection;
 using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Api.Middleware
@@ -40,6 +41,13 @@ namespace Yoma.Core.Api.Middleware
           Content = content
         }
       };
+
+      if (context.MethodInfo.GetCustomAttribute<UserActionLockAttribute>() != null)
+        errorResponses[(int)HttpStatusCode.Conflict] = new OpenApiResponse
+        {
+          Description = "Conflict - Another request is still being processed; retry once it has completed",
+          Content = content
+        };
 
       operation.Responses ??= [];
       foreach (var errorResponse in errorResponses)
