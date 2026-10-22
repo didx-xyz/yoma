@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
 using System.Net;
+using Yoma.Core.Api.Middleware;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
@@ -39,6 +40,7 @@ namespace Yoma.Core.Api.Controllers
     #region Authenticated User Based Actions
     [SwaggerOperation(Summary = "Create a new organization (Authenticated User)")]
     [HttpPost()]
+    [UserActionLock]
     [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> Create([FromForm] OrganizationRequestCreate request)

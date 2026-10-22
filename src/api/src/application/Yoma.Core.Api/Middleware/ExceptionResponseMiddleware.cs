@@ -46,6 +46,10 @@ namespace Yoma.Core.Api.Middleware
           context.Response.StatusCode = (int)HttpStatusCode.NotFound;
           break;
 
+        case RequestInProgressException:
+          context.Response.StatusCode = (int)HttpStatusCode.Conflict;
+          break;
+
         case BusinessException:
         case ValidationException:
           context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
