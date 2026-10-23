@@ -85,7 +85,7 @@ jobs:
             changes:
               - '${{ matrix.dir }}/**'
 
-      - uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
+      - uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
         with:
           install: true
@@ -387,7 +387,7 @@ jobs:
           API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
           YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
 
-      - uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
+      - uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
         if: steps.should-run.outputs.run == 'true'
         with:
           install: true
