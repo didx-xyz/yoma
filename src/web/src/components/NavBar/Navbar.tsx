@@ -6,8 +6,26 @@ import { useRouter } from "next/router";
 import logoPicDark from "public/images/logo-dark.webp";
 import logoPicLight from "public/images/logo-light.webp";
 import { useEffect, useMemo, useState } from "react";
-import { FaChevronDown, FaChevronUp } from "react-icons/fa";
-import { IoMdClose, IoMdMenu, IoMdSettings } from "react-icons/io";
+import {
+  IoBriefcaseOutline,
+  IoBusinessOutline,
+  IoCheckmarkDoneOutline,
+  IoChevronDown,
+  IoClose,
+  IoConstructOutline,
+  IoHeartOutline,
+  IoHomeOutline,
+  IoInformationCircleOutline,
+  IoLinkOutline,
+  IoPeopleOutline,
+  IoSearchOutline,
+  IoSettingsOutline,
+  IoStarOutline,
+  IoStatsChartOutline,
+  IoStorefrontOutline,
+  IoWalletOutline,
+} from "react-icons/io5";
+import { IoMdMenu } from "react-icons/io";
 import type { TabItem } from "~/api/models/common";
 import type { OrganizationInfo } from "~/api/models/user";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
@@ -23,10 +41,25 @@ import { fetchClientEnv } from "~/lib/utils";
 import { AvatarImage } from "../AvatarImage";
 import ScrollableContainer from "../Carousel/ScrollableContainer";
 import { Footer } from "../Footer/Footer";
+import { DIALOG_CLOSE } from "../Opportunity/dialog";
 import { SignInButton } from "../SignInButton";
 import { SignOutButton } from "../SignOutButton";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { NAV_BONE_CLASS } from "./navBone";
 import { UserMenu } from "./UserMenu";
+
+/**
+ * The left drawer's rows (Jason, 2026-10-26, design pass): one height, one font and an icon slot
+ * for every link, organisation and admin row, so the groups line up; the current page sits on
+ * the light grey with its icon in the page theme.
+ */
+const DRAWER_ROW =
+  "font-nunito flex h-11 w-full items-center gap-3 rounded-lg px-3 text-[15px] font-semibold text-black transition-colors";
+const DRAWER_ROW_IDLE = "hover:bg-gray-light";
+const DRAWER_ICON =
+  "flex h-5 w-5 shrink-0 items-center justify-center [&>svg]:h-5 [&>svg]:w-5";
+const DRAWER_EYEBROW =
+  "text-gray-dark px-3 pb-1 text-[11px] font-semibold tracking-wide uppercase";
 
 const getNavBarLinksUser = (
   referralsEnabled: boolean,
@@ -39,6 +72,7 @@ const getNavBarLinksUser = (
       url: "/",
       badgeCount: null,
       selected: false,
+      iconElement: <IoHomeOutline />,
     },
     {
       title: "About Us",
@@ -46,6 +80,7 @@ const getNavBarLinksUser = (
       url: "/about",
       badgeCount: null,
       selected: false,
+      iconElement: <IoInformationCircleOutline />,
     },
     {
       title: "Opportunities",
@@ -54,6 +89,7 @@ const getNavBarLinksUser = (
       url: OPPORTUNITIES_SEARCH_URL,
       badgeCount: null,
       selected: false,
+      iconElement: <IoSearchOutline />,
     },
     {
       title: "Marketplace",
@@ -61,6 +97,7 @@ const getNavBarLinksUser = (
       url: "/marketplace",
       badgeCount: null,
       selected: false,
+      iconElement: <IoStorefrontOutline />,
     },
   ];
 
@@ -73,6 +110,7 @@ const getNavBarLinksUser = (
       badgeCount: null,
       selected: false,
       iconImage: "❤️",
+      iconElement: <IoHeartOutline />,
     });
   }
 
@@ -84,6 +122,7 @@ const getNavBarLinksUser = (
       badgeCount: null,
       selected: false,
       iconImage: "⭐",
+      iconElement: <IoStarOutline />,
       itemClassName: "!bg-purple !text-white hover:!bg-purple-dark",
       orderSideBar: 1,
     });
@@ -99,6 +138,7 @@ const navBarLinksAdmin: TabItem[] = [
     url: `/`,
     badgeCount: null,
     selected: false,
+    iconElement: <IoHomeOutline />,
   },
   {
     title: "Organisations",
@@ -106,6 +146,7 @@ const navBarLinksAdmin: TabItem[] = [
     url: "/organisations",
     badgeCount: null,
     selected: false,
+    iconElement: <IoBusinessOutline />,
   },
   {
     title: "Opportunities",
@@ -113,6 +154,7 @@ const navBarLinksAdmin: TabItem[] = [
     url: "/admin/opportunities",
     badgeCount: null,
     selected: false,
+    iconElement: <IoBriefcaseOutline />,
   },
   {
     title: "Links",
@@ -120,6 +162,7 @@ const navBarLinksAdmin: TabItem[] = [
     url: "/admin/links",
     badgeCount: null,
     selected: false,
+    iconElement: <IoLinkOutline />,
   },
   {
     title: "Marketplace Rules",
@@ -127,6 +170,7 @@ const navBarLinksAdmin: TabItem[] = [
     url: "/admin/stores",
     badgeCount: null,
     selected: false,
+    iconElement: <IoStorefrontOutline />,
   },
   {
     title: "Referrals",
@@ -134,6 +178,7 @@ const navBarLinksAdmin: TabItem[] = [
     url: "/admin/referrals",
     badgeCount: null,
     selected: false,
+    iconElement: <IoPeopleOutline />,
   },
   {
     title: "Treasury",
@@ -141,6 +186,7 @@ const navBarLinksAdmin: TabItem[] = [
     url: "/admin/treasury",
     badgeCount: null,
     selected: false,
+    iconElement: <IoWalletOutline />,
   },
 ];
 
@@ -153,10 +199,15 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
   );
   const { data: session, status: sessionStatus } = useSession();
   const userProfile = useAtomValue(userProfileAtom);
-  const [referralsEnabled, setReferralsEnabled] = useState(false);
+  // null until the runtime env answers: the bar holds "Refer a friend"'s place meanwhile
+  const [referralsEnabled, setReferralsEnabled] = useState<boolean | null>(
+    null,
+  );
   const [isDrawerOpen, setDrawerOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
+  const isOrgAdminView =
+    activeRoleView == RoleView.OrgAdmin && !!currentOrganisationId;
 
   useEffect(() => {
     let isMounted = true;
@@ -165,7 +216,8 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
     const loadReferralSetting = async () => {
       const clientEnv = await fetchClientEnv();
       if (!isMounted) return;
-      setReferralsEnabled(clientEnv.NEXT_PUBLIC_REFERRALS_ENABLED === "true");
+      // a failed fetch resolves `undefined`: no referrals, rather than a bone that never goes
+      setReferralsEnabled(clientEnv?.NEXT_PUBLIC_REFERRALS_ENABLED === "true");
     };
 
     loadReferralSetting();
@@ -201,7 +253,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
     if (activeRoleView == RoleView.Admin) {
       // Admin referral management stays available even when the public referral experience is disabled.
       links = navBarLinksAdmin;
-    } else if (activeRoleView == RoleView.OrgAdmin && currentOrganisationId) {
+    } else if (isOrgAdminView) {
       links = [
         {
           title: "Home",
@@ -209,6 +261,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
           url: `/`,
           badgeCount: null,
           selected: false,
+          iconElement: <IoHomeOutline />,
         },
         {
           title: "Overview",
@@ -216,6 +269,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
           url: `/organisations/dashboard?organisations=${currentOrganisationId}`,
           badgeCount: null,
           selected: false,
+          iconElement: <IoStatsChartOutline />,
         },
         {
           title: "Opportunities",
@@ -223,6 +277,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
           url: `/organisations/${currentOrganisationId}/opportunities`,
           badgeCount: null,
           selected: false,
+          iconElement: <IoBriefcaseOutline />,
         },
         {
           title: "Submissions",
@@ -230,6 +285,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
           url: `/organisations/${currentOrganisationId}/verifications?verificationStatus=Pending`,
           badgeCount: null,
           selected: false,
+          iconElement: <IoCheckmarkDoneOutline />,
         },
         {
           title: "Links",
@@ -237,6 +293,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
           url: `/organisations/${currentOrganisationId}/links`,
           badgeCount: null,
           selected: false,
+          iconElement: <IoLinkOutline />,
         },
         {
           title: "Settings",
@@ -244,12 +301,13 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
           url: `/organisations/${currentOrganisationId}/edit`,
           badgeCount: null,
           selected: false,
+          iconElement: <IoSettingsOutline />,
         },
       ];
     } else {
       // Get user links with conditional referee link
       links = getNavBarLinksUser(
-        referralsEnabled,
+        referralsEnabled === true,
         firstActionableRefereeReferralUrl,
       );
     }
@@ -265,6 +323,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
     activeRoleView,
     currentOrganisationId,
     firstActionableRefereeReferralUrl,
+    isOrgAdminView,
     referralsEnabled,
     router.pathname,
   ]);
@@ -303,10 +362,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
     if (organisation.status == "Deleted") return null;
 
     return (
-      <li
-        key={`userMenu_orgs_${organisation.id}`}
-        className="btn text-gray-dark btn-sm items-start !rounded-md border-none bg-white text-sm shadow-none"
-      >
+      <li key={`userMenu_orgs_${organisation.id}`}>
         <Link
           href={
             organisation.status == "Active"
@@ -315,60 +371,50 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
           }
           onClick={() => setDrawerOpen(false)}
           id={`userMenu_orgs_${organisation.name}`} // e2e
-          className="w-full"
+          className={`${DRAWER_ROW} ${DRAWER_ROW_IDLE}`}
           tabIndex={isDrawerOpen ? 0 : -1}
         >
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center">
+          <span className={DRAWER_ICON}>
             <AvatarImage
               icon={organisation?.logoURL ?? null}
               alt={`${organisation.name} logo`}
               size={20}
             />
           </span>
-          <div className="flex flex-row items-center">
-            <div className="w-[170px] truncate text-sm">
-              {organisation.name}
-            </div>
-            <div className="flex flex-row items-center">
-              {organisation.status == "Active" && (
-                <>
-                  <span
-                    className="tooltip tooltip-left bg-success tooltip-secondary mr-2 h-2 w-2 rounded-full"
-                    data-tip="Active"
-                  ></span>
-                </>
-              )}
-              {organisation.status == "Inactive" && (
-                <span
-                  className="tooltip tooltip-left bg-warning tooltip-secondary mr-2 h-2 w-2 rounded-full"
-                  data-tip="Pending"
-                ></span>
-              )}
-              {organisation.status == "Declined" && (
-                <span
-                  className="tooltip tooltip-left bg-error tooltip-secondary mr-2 h-2 w-2 rounded-full"
-                  data-tip="Declined"
-                ></span>
-              )}
-            </div>
-
-            {/* SETTING BUTTON */}
-            <div className="flex items-center">
-              <button
-                key={organisation.id}
-                className="tooltip tooltip-left tooltip-secondary text-gray-dark hover:bg-gray-dark hover:text-gray-light rounded-full bg-white p-1 shadow duration-300"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setDrawerOpen(false);
-                  router.push(`/organisations/${organisation.id}/edit`);
-                }}
-                data-tip="Settings"
-                tabIndex={isDrawerOpen ? 0 : -1}
-              >
-                <IoMdSettings className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
+          <span className="min-w-0 flex-1 truncate">{organisation.name}</span>
+          {organisation.status == "Active" && (
+            <span
+              className="tooltip tooltip-left bg-success tooltip-secondary h-2 w-2 shrink-0 rounded-full"
+              data-tip="Active"
+            ></span>
+          )}
+          {organisation.status == "Inactive" && (
+            <span
+              className="tooltip tooltip-left bg-warning tooltip-secondary h-2 w-2 shrink-0 rounded-full"
+              data-tip="Pending"
+            ></span>
+          )}
+          {organisation.status == "Declined" && (
+            <span
+              className="tooltip tooltip-left bg-error tooltip-secondary h-2 w-2 shrink-0 rounded-full"
+              data-tip="Declined"
+            ></span>
+          )}
+          {/* SETTING BUTTON */}
+          <button
+            type="button"
+            className="tooltip tooltip-left tooltip-secondary text-gray-dark hover:bg-gray flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+            onClick={(e) => {
+              e.preventDefault();
+              setDrawerOpen(false);
+              router.push(`/organisations/${organisation.id}/edit`);
+            }}
+            data-tip="Settings"
+            aria-label={`${organisation.name} settings`}
+            tabIndex={isDrawerOpen ? 0 : -1}
+          >
+            <IoSettingsOutline className="h-4 w-4" />
+          </button>
         </Link>
       </li>
     );
@@ -428,23 +474,22 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                     className="drawer-overlay"
                   ></label>
                 )}
-                <div className="min-h-screen max-w-[20rem] overflow-y-auto rounded-tl-none rounded-tr-lg rounded-br-lg rounded-bl-none bg-white p-4">
-                  <div className="flex h-full touch-none flex-col gap-2 select-none [-webkit-user-drag:none] [user-drag:none]">
-                    <div className="flex grow-0 flex-row items-center justify-center">
-                      <div className="grow">
-                        <Image
-                          src={logoPicDark}
-                          alt="Logo"
-                          width={85}
-                          className="h-auto"
-                          sizes="100vw"
-                          priority={true}
-                          tabIndex={-1}
-                        />
-                      </div>
+                <div className="flex min-h-screen w-[20rem] max-w-[calc(100vw-2rem)] flex-col overflow-y-auto rounded-r-2xl bg-white">
+                  <div className="flex grow touch-none flex-col select-none [-webkit-user-drag:none] [user-drag:none]">
+                    {/* HEADER — the logo and the close */}
+                    <div className="border-gray flex items-center justify-between border-b px-5 py-4">
+                      <Image
+                        src={logoPicDark}
+                        alt="Logo"
+                        width={85}
+                        className="h-auto"
+                        sizes="100vw"
+                        priority={true}
+                        tabIndex={-1}
+                      />
                       <label
                         htmlFor="nav-drawer"
-                        className="drawer-close btn btn-circle text-gray-dark btn-sm hover:bg-gray !rounded-full border-none shadow-md"
+                        className={`drawer-close ${DIALOG_CLOSE}`}
                         aria-label="close sidebar"
                         tabIndex={isDrawerOpen ? 0 : -1}
                         onKeyDown={(e) => {
@@ -454,18 +499,14 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                         }}
                         title="Close"
                       >
-                        <IoMdClose className="h-5 w-5" />
+                        <IoClose className="h-5 w-5" />
                       </label>
                     </div>
 
-                    <div className="divider !bg-gray my-2 grow-0" />
-
-                    <ul className="menu w-full p-0">
+                    {/* PAGES */}
+                    <ul className="flex flex-col gap-0.5 p-3">
                       {sideBarNavbarLinks.map((link, index) => (
-                        <li
-                          key={`lnkNavbarMenuModal_${index}`}
-                          className={`font-family-nunito text-gray-dark mt-1 flex flex-col gap-2 rounded-md text-sm font-semibold tracking-normal ${link.itemClassName ?? ""}`}
-                        >
+                        <li key={`lnkNavbarMenuModal_${index}`}>
                           <Link
                             href={link.url!}
                             onClick={(e) => {
@@ -477,134 +518,119 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                             }}
                             id={`lnkNavbarMenuModal_${link.title}`}
                             tabIndex={isDrawerOpen ? 0 : -1}
-                            className="w-full"
+                            aria-current={link.selected ? "page" : undefined}
+                            className={`${DRAWER_ROW} ${link.selected ? "bg-gray-light" : DRAWER_ROW_IDLE} ${link.itemClassName ?? ""}`}
                           >
-                            <span>{link.title}</span>
-                            {link.iconImage && (
-                              <span className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/20 p-4 text-sm shadow-md">
-                                {link.iconImage}
-                              </span>
-                            )}
+                            <span
+                              className={`${DRAWER_ICON} ${link.selected ? "text-theme" : ""}`}
+                            >
+                              {link.iconElement}
+                            </span>
+                            <span className="truncate">{link.title}</span>
                           </Link>
                         </li>
                       ))}
                     </ul>
 
-                    <div className="divider !bg-gray my-2 grow-0" />
-
-                    <LanguageSwitcher
-                      className="font-family-nunito hover:bg-gray ml-1 bg-transparent px-3 !py-1"
-                      classNameIcon="text-gray-dark !h-5 !w-5"
-                      classNameSelect="text-gray-dark font-family-nunito text-sm font-semibold tracking-normal"
-                      tabIndex={isDrawerOpen ? 0 : -1}
-                    />
-
-                    <div className="divider !bg-gray my-2 grow-0" />
-
+                    {/* ORGANISATIONS */}
                     {(userProfile?.adminsOf?.length ?? 0) > 0 && (
-                      <>
-                        <div
-                          className="h-full max-h-[140px] overflow-x-hidden overflow-y-scroll py-2"
-                          id="organisations"
-                        >
-                          <ul className="menu -m-2 w-full p-0">
-                            <li
-                              key="userMenu_orgs_all"
-                              className="btn font-family-nunito text-gray-dark btn-sm items-start !rounded-md border-none bg-white text-sm font-semibold tracking-normal shadow-none"
-                            >
-                              <Link
-                                href="/organisations"
-                                onClick={() => setDrawerOpen(false)}
-                                id="userMenu_orgs_all"
-                                tabIndex={isDrawerOpen ? 0 : -1}
-                                className="w-full"
-                              >
-                                <span className="flex h-6 w-6 shrink-0 items-center justify-center">
-                                  🏢
-                                </span>
-                                <span>My organisations</span>
-                              </Link>
-                            </li>
-
-                            {userProfile?.adminsOf?.map((organisation) =>
-                              renderOrganisationMenuItem(organisation),
-                            )}
-                          </ul>
-                        </div>
-                        <div className="divider !bg-gray my-2 grow-0" />
-                      </>
-                    )}
-
-                    {(activeRoleView == RoleView.Admin || isAdmin) && (
-                      <>
-                        <ul className="menu -m-2 w-full p-0">
-                          <li
-                            key="userMenu_admin"
-                            className="btn font-family-nunito text-gray-dark btn-sm items-start !rounded-md border-none bg-white text-sm font-semibold tracking-normal shadow-none"
-                          >
-                            <button
-                              onClick={toggleAdminMenu}
-                              id="userMenu_admin"
+                      <div
+                        className="border-gray border-t p-3"
+                        id="organisations"
+                      >
+                        <p className={DRAWER_EYEBROW}>Organisations</p>
+                        <ul className="flex max-h-[200px] flex-col gap-0.5 overflow-y-auto">
+                          <li key="userMenu_orgs_all">
+                            <Link
+                              href="/organisations"
+                              onClick={() => setDrawerOpen(false)}
+                              id="userMenu_orgs_all"
                               tabIndex={isDrawerOpen ? 0 : -1}
-                              className="flex w-full items-center"
+                              className={`${DRAWER_ROW} ${DRAWER_ROW_IDLE}`}
                             >
-                              <span className="flex h-6 w-6 shrink-0 items-center justify-center">
-                                🛠️
+                              <span className={DRAWER_ICON}>
+                                <IoBusinessOutline />
                               </span>
-                              <span>Administration</span>
-                              <span className="ml-auto">
-                                {isAdminMenuOpen ? (
-                                  <FaChevronUp />
-                                ) : (
-                                  <FaChevronDown />
-                                )}
-                              </span>
-                            </button>
+                              <span>My organisations</span>
+                            </Link>
                           </li>
 
-                          {isAdminMenuOpen && (
-                            <li
-                              key="userMenu_admin_overview"
-                              className="btn font-family-nunito text-gray-dark btn-sm items-start !rounded-md border-none bg-white text-sm font-semibold tracking-normal shadow-none"
-                            >
-                              <Link
-                                href="/organisations/dashboard"
-                                onClick={() => setDrawerOpen(false)}
-                                id="userMenu_admin_overview"
-                                tabIndex={isDrawerOpen ? 0 : -1}
-                                className="w-full"
-                              >
-                                <span className="flex h-6 w-6 shrink-0 items-center justify-center">
-                                  📈
-                                </span>
-                                <span>Overview</span>
-                              </Link>
-                            </li>
+                          {userProfile?.adminsOf?.map((organisation) =>
+                            renderOrganisationMenuItem(organisation),
                           )}
                         </ul>
-
-                        <div className="divider !bg-gray my-2 grow-0" />
-                      </>
+                      </div>
                     )}
 
-                    {!session && (
-                      <SignInButton
-                        className="!btn-sm"
+                    {/* ADMINISTRATION */}
+                    {(activeRoleView == RoleView.Admin || isAdmin) && (
+                      <ul className="border-gray flex flex-col gap-0.5 border-t p-3">
+                        <li key="userMenu_admin">
+                          <button
+                            type="button"
+                            onClick={toggleAdminMenu}
+                            id="userMenu_admin"
+                            tabIndex={isDrawerOpen ? 0 : -1}
+                            aria-expanded={isAdminMenuOpen}
+                            className={`${DRAWER_ROW} ${DRAWER_ROW_IDLE}`}
+                          >
+                            <span className={DRAWER_ICON}>
+                              <IoConstructOutline />
+                            </span>
+                            <span>Administration</span>
+                            <IoChevronDown
+                              aria-hidden
+                              className={`text-gray-dark ml-auto h-4 w-4 transition-transform ${isAdminMenuOpen ? "rotate-180" : ""}`}
+                            />
+                          </button>
+                        </li>
+
+                        {isAdminMenuOpen && (
+                          <li key="userMenu_admin_overview">
+                            <Link
+                              href="/organisations/dashboard"
+                              onClick={() => setDrawerOpen(false)}
+                              id="userMenu_admin_overview"
+                              tabIndex={isDrawerOpen ? 0 : -1}
+                              className={`${DRAWER_ROW} ${DRAWER_ROW_IDLE} pl-11`}
+                            >
+                              <span className={DRAWER_ICON}>
+                                <IoStatsChartOutline />
+                              </span>
+                              <span>Overview</span>
+                            </Link>
+                          </li>
+                        )}
+                      </ul>
+                    )}
+
+                    {/* LANGUAGE, SIGN IN / OUT */}
+                    <div className="border-gray flex flex-col gap-3 border-t p-3">
+                      <LanguageSwitcher
+                        className="hover:bg-gray-light h-11 gap-3 rounded-lg !px-3 !py-0"
+                        classNameIcon="!h-5 !w-5 text-black"
+                        classNameSelect="font-nunito -ml-1 text-[15px] font-semibold text-black"
                         tabIndex={isDrawerOpen ? 0 : -1}
-                        showLabel={true}
                       />
-                    )}
 
-                    {session && (
-                      <SignOutButton
-                        className="!btn-sm"
-                        tabIndex={isDrawerOpen ? 0 : -1}
-                      />
-                    )}
+                      {!session && (
+                        <SignInButton
+                          className="!h-10 !min-h-10 w-full rounded-full !shadow-none"
+                          tabIndex={isDrawerOpen ? 0 : -1}
+                          showLabel={true}
+                        />
+                      )}
 
-                    <div className="divider !bg-gray my-2 grow-0" />
+                      {session && (
+                        <SignOutButton
+                          className="!h-10 !min-h-10 w-full rounded-full !shadow-none"
+                          tabIndex={isDrawerOpen ? 0 : -1}
+                        />
+                      )}
+                    </div>
 
-                    <div className="grow-0">
+                    {/* FOOTER — at the foot of the drawer on a tall screen */}
+                    <div className="border-gray mt-auto border-t px-2 py-3">
                       <Footer
                         tabIndex={isDrawerOpen ? 0 : -1}
                         size="small"
@@ -679,6 +705,25 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                     </Link>
                   </li>
                 ))}
+                {/* "Refer a friend"'s place while the runtime env loads, so the centred links
+                    don't shift when it arrives (signed-in youth view only: no bones for an
+                    anonymous visitor, Jason 2026-10-26) */}
+                {referralsEnabled === null &&
+                  sessionStatus === "authenticated" &&
+                  activeRoleView != RoleView.Admin &&
+                  !isOrgAdminView && (
+                    <li
+                      aria-hidden
+                      className="flex h-full flex-shrink-0 items-center px-4"
+                    >
+                      <span
+                        className={`h-5 w-[102px] rounded-full ${NAV_BONE_CLASS}`}
+                      />
+                      <span
+                        className={`ml-2 h-8 w-8 rounded-full ${NAV_BONE_CLASS}`}
+                      />
+                    </li>
+                  )}
               </ul>
             </ScrollableContainer>
           </div>
@@ -691,9 +736,11 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
               classNameSelect="text-md mobile-select !text-current"
               tabIndex={isDrawerOpen ? -1 : 0}
             />
+            {/* still unknown whether anyone is signed in: hold the avatar's width, no bone (an
+                anonymous visitor gets the sign-in button next) */}
             {sessionStatus === "loading" && (
               <div className="bg-theme flex h-full items-center px-2 md:px-3">
-                <div style={{ width: 44, height: 44 }} />
+                <div className="h-11 w-11" />
               </div>
             )}
             {sessionStatus !== "loading" && !session && (

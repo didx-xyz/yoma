@@ -22,7 +22,9 @@ import {
 } from "~/components/YoID/YoIDSkeletons";
 import YoIDOpportunities from "~/components/Layout/YoIDOpportunities";
 import { OpportunityListItem } from "~/components/MyOpportunity/OpportunityListItem";
-import NoRowsMessage from "~/components/NoRowsMessage";
+import { IoHeartOutline } from "react-icons/io5";
+import { TONE } from "~/components/Opportunity/TabbedDetails/DetailDisclosure";
+import { EmptyState, FIND_OPPORTUNITIES } from "~/components/YoID/EmptyState";
 import { Pager } from "~/components/YoID/Pager";
 import {
   PAGER_SCROLL_MARGIN_CLASS,
@@ -168,14 +170,14 @@ const MyOpportunitiesSaved: NextPageWithLayout<{
         >
           {/* NO ROWS */}
           {!data?.items?.length && (
-            <div className="flex justify-center rounded-lg bg-white p-8 text-center">
-              <NoRowsMessage
-                title={"You don't have any saved opportunities."}
-                description={
-                  "Opportunities you have saved will be listed here for easy access and reference. To save an opportunity, simply click the 'Save' button when viewing the opportunity details. This way, you can quickly find and return to the opportunities that interest you most."
-                }
-              />
-            </div>
+            <EmptyState
+              variant="page"
+              icon={<IoHeartOutline />}
+              toneClass={TONE.blue}
+              title="Nothing saved yet"
+              description="Tap Save on any opportunity to keep it here for later."
+              action={FIND_OPPORTUNITIES}
+            />
           )}
 
           {/* GRID */}

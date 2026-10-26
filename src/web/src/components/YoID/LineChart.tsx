@@ -2,10 +2,9 @@ import { useAtomValue } from "jotai";
 import Link from "next/link";
 import { useEffect, useMemo, useState, type MouseEventHandler } from "react";
 import Chart, { type GoogleChartWrapper } from "react-google-charts";
-import { IoStatsChartOutline } from "react-icons/io5";
 import type { TimeIntervalSummary } from "~/api/models/organizationDashboard";
 import { screenWidthAtom } from "~/lib/store";
-import NoRowsMessage from "../NoRowsMessage";
+import { EmptyState } from "./EmptyState";
 import { YOID_OPPORTUNITY_TABS } from "./yoidTabs";
 
 /**
@@ -38,12 +37,9 @@ const SERIES = [
 
 /**
  * Whether the summary draws a chart: at least two dates with something on them. One date (or
- * none) renders the "Not enough data" note instead, so the sections default to the summary
- * circles then (Jason, 2026-10-22).
+ * none) renders the "Not enough data" note instead.
  */
-export const hasChartData = (
-  summary: TimeIntervalSummary | undefined,
-): boolean => {
+const hasChartData = (summary: TimeIntervalSummary | undefined): boolean => {
   const points = summary?.data ?? [];
   const dates = new Set(points.map((point) => String(point.date)));
   return (
@@ -200,17 +196,10 @@ export const LineChart: React.FC<{
           ]}
         />
       ) : (
-        <div className="bg-gray-light flex h-full items-center justify-center rounded-lg">
-          <NoRowsMessage
-            title={"Not enough data to display."}
-            description={
-              "This chart will display your activities as you engage more with the system by completing opportunities etc."
-            }
-            icon={
-              <IoStatsChartOutline aria-hidden className="text-green h-5 w-5" />
-            }
-          />
-        </div>
+        <EmptyState
+          title="Not enough activity yet"
+          description="The graph fills in as you save and complete opportunities on different days."
+        />
       )}
     </div>
   );

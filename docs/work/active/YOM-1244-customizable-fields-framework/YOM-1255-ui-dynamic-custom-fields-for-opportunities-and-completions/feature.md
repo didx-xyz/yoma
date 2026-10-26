@@ -366,6 +366,25 @@ is `multipart/form-data` with `CustomFields` as one JSON-encoded form field
   chip is at the card's right edge and a top tip clipped there; on mobile it stays on top.
   Shots: `~/.cache/cdp-tools/shots/2026-10-22-detail/` (1440 hover / focus / sticky hover,
   390 tap in the header and bottom bar).
+- 2026-10-26 (Jason, Stage feedback): **The submit overlay covers the whole dialog.** The
+  dialog box keeps a transform from its entry animation (computed `matrix(1, 0, 0, 1, 0, 0)`),
+  which makes it the containing block for anything `position: fixed` inside it, so the
+  "Loading…" overlay was pinned to the box's scrolled content: scrolled 435 px, it started at
+  −411 px and stopped 48 px short of the bottom. `<Loading />` is now portalled to `<body>` from
+  the completion form and the pending dialog (both only render it after a click, so `document`
+  exists); on `<body>` it covers the viewport and sits above the dialog (z-50 over z-40).
+- 2026-10-26 (Jason): **More colour on the upload and submitted dialogs.** Both use
+  `CelebrationIcon`: a warm gradient circle (yellow → orange → pink) with a white ring, the icon
+  in its own colour (yellow trophy / pink balloon) and confetti in the site colours around it;
+  the circle pops and the sparkle wiggles, static under reduced motion. The type tint is gone
+  from these two (the pending dialog keeps it), so `OpportunityCompletionEdit` loses `typeTint`.
+- 2026-10-26 (Jason, second pass, experimental — may be removed): **Only the confetti moves.**
+  The circle and the trophy / balloon stay still; the star and two confetti bits bounce
+  (staggered 0 / 300 / 600 ms), the green square pulses and the sparkle wiggles, all looping and
+  `motion-safe` only. The submitted dialog's Verification step now ends "We'll notify you once
+  it's reviewed."
+- 2026-10-26 (Jason): **Celebration icon animations removed** — supersedes the experimental entry
+  above. The confetti, circle and icon are all static; the colours and shapes stay.
 
 ## Links
 

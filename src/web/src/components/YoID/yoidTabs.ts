@@ -116,7 +116,7 @@ export const opportunitiesPreview = (
 /**
  * The Passport section's closed-row preview: one count per credential family from the totals
  * the section already fetches ("1 YoID Identity · 129 Opportunities"); nothing until they have
- * loaded, and "Your verified credentials" for an empty wallet.
+ * loaded, and the empty state's title for an empty wallet.
  */
 export const passportPreview = (
   rows: { label: string; count: number }[] | undefined,
@@ -125,7 +125,7 @@ export const passportPreview = (
   const some = rows.filter((row) => row.count > 0);
   return some.length
     ? some.map((row) => `${formatNumber(row.count)} ${row.label}`).join(" · ")
-    : "Your verified credentials";
+    : "No credentials yet";
 };
 
 /** How many skill names the Skills section's closed row quotes before "…". */
@@ -139,7 +139,7 @@ export const skillsPreview = (
   skills: UserSkillInfo[] | undefined,
 ): string | null => {
   if (!skills) return null;
-  if (!skills.length) return "Skills you've earned";
+  if (!skills.length) return "No skills yet";
   const names = skills.slice(0, PREVIEW_SKILLS).map((skill) => skill.name);
   return skills.length > PREVIEW_SKILLS
     ? `${names.join(" · ")} …`

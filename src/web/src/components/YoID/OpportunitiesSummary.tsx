@@ -1,9 +1,7 @@
 import Link from "next/link";
 import type { MouseEventHandler } from "react";
 import type { IconType } from "react-icons";
-import { IoArrowForward } from "react-icons/io5";
 import type { TimeIntervalSummary } from "~/api/models/organizationDashboard";
-import { OPPORTUNITIES_SEARCH_URL } from "~/lib/constants";
 import { YOID_OPPORTUNITY_TABS } from "./yoidTabs";
 
 interface MenuItem {
@@ -23,7 +21,7 @@ const [completedTab, pendingTab, declinedTab, savedTab] = YOID_OPPORTUNITY_TABS;
 export const OpportunitiesSummary: React.FC<{
   data: TimeIntervalSummary | undefined;
   showSaved?: boolean;
-  /** Called when a circle or the prompt's link is followed (the drawer closes on a plain click). */
+  /** Called when a circle is followed (the drawer closes on a plain click). */
   onClick?: MouseEventHandler<HTMLAnchorElement>;
 }> = ({ data, showSaved, onClick }) => {
   const [completed = 0, pending = 0, rejected = 0, saved = 0] =
@@ -70,11 +68,6 @@ export const OpportunitiesSummary: React.FC<{
       icon: savedTab.icon,
     });
   }
-
-  // Nothing yet: the circles still show their zeros (the youth sees what will fill them), and a
-  // prompt leads to the search (Jason, 2026-10-21).
-  const nothingYet = menuItems.every((item) => item.count === 0);
-
   return (
     <div className="flex w-full flex-col items-center gap-4">
       {/* Four (with Saved) sit 2 × 2 on a phone and in one row from `sm`; three always fit one row.
@@ -102,22 +95,6 @@ export const OpportunitiesSummary: React.FC<{
           </Link>
         ))}
       </div>
-      {nothingYet && (
-        <div className="flex flex-col items-center gap-2 text-center">
-          <p className="text-gray-dark text-xs md:text-sm">
-            Complete an opportunity and get it verified, or save one for later —
-            it shows up here.
-          </p>
-          <Link
-            href={OPPORTUNITIES_SEARCH_URL}
-            onClick={onClick}
-            className="text-green inline-flex items-center gap-1 text-xs font-semibold underline md:text-sm"
-          >
-            Find opportunities
-            <IoArrowForward aria-hidden className="h-3.5 w-3.5" />
-          </Link>
-        </div>
-      )}
     </div>
   );
 };

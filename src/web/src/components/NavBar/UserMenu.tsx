@@ -54,6 +54,7 @@ import {
   walletPreview,
   YOID_TABS,
 } from "../YoID/yoidTabs";
+import { AvatarBone } from "./navBone";
 
 /**
  * The drawer's sections in the overview's order and tones. Open by default: the two the youth
@@ -202,7 +203,7 @@ export const UserMenu: React.FC = () => {
             {(activeRoleView == RoleView.User ||
               activeRoleView == RoleView.Admin) && (
               <>
-                {userProfile && (
+                {userProfile ? (
                   <div className="rounded-full outline outline-white hover:brightness-90">
                     <UserInitialsAvatar
                       displayName={displayName}
@@ -211,6 +212,8 @@ export const UserMenu: React.FC = () => {
                       alt="User Logo"
                     />
                   </div>
+                ) : (
+                  <AvatarBone />
                 )}
               </>
             )}
@@ -357,7 +360,9 @@ export const UserMenu: React.FC = () => {
                     note: tab.blurb,
                     open: open[id],
                     onToggle: () => toggle(id),
-                    bodyClassName: "px-5 pb-4",
+                    // a column with an 8 px gap: the "Open … →" link sits clear of the body above
+                    // it (Jason, 2026-10-26); links within one row stay together
+                    bodyClassName: "flex flex-col gap-2 px-5 pb-4",
                   };
                   return (
                     <React.Fragment key={id}>
@@ -372,6 +377,7 @@ export const UserMenu: React.FC = () => {
                           >
                             <WalletCard
                               userProfile={userProfile!}
+                              onClick={closeOnFollow}
                               link={
                                 <SectionLink
                                   id={id}
@@ -457,7 +463,10 @@ export const UserMenu: React.FC = () => {
                             error={skillsError}
                             loader={<TileBodySkeleton />}
                           >
-                            <SkillsCard data={skills!} />
+                            <SkillsCard
+                              data={skills!}
+                              onClick={closeOnFollow}
+                            />
                           </Suspense>
                           {/* the chips are dense: a touch more room than the other links */}
                           <SectionLink

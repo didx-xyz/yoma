@@ -31,6 +31,7 @@ import {
   PAGER_SCROLL_MARGIN_CLASS,
   usePagerScroll,
 } from "~/components/YoID/usePagerScroll";
+import { EmptyState } from "~/components/YoID/EmptyState";
 import { WalletCard } from "~/components/YoID/WalletCard";
 import { WalletInfoCard } from "~/components/YoID/WalletInfoCard";
 import {
@@ -339,14 +340,17 @@ const MyWallet: NextPageWithLayout<{
               <>
                 {/* NO ROWS */}
                 {pageNumber === 1 && !data?.items?.length && (
-                  <div className="shadow-custom flex justify-center rounded-xl bg-white p-8 text-center">
-                    <NoRowsMessage
-                      title={"No products found"}
-                      description={
-                        "You have not purchased any products yet. Go to the marketplace to buy some."
-                      }
-                    />
-                  </div>
+                  <EmptyState
+                    variant="page"
+                    icon={<IoBagHandleOutline />}
+                    toneClass={TONE.gold}
+                    title="No products yet"
+                    description="Spend your ZLTO in the marketplace and what you buy shows up here."
+                    action={{
+                      href: "/marketplace",
+                      label: "Go to the marketplace",
+                    }}
+                  />
                 )}
                 {pageNumber > 1 && !data?.items?.length && (
                   <div className="shadow-custom flex flex-col items-center justify-center rounded-xl bg-white p-8 text-center">

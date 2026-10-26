@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import moment from "moment";
 import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Controller, useForm, type FieldErrors } from "react-hook-form";
 import {
   IoArrowDown,
@@ -13,7 +14,6 @@ import {
   IoCloudUploadOutline,
   IoDocumentTextOutline,
   IoEllipseOutline,
-  IoSparkles,
   IoStorefrontOutline,
   IoTrophy,
 } from "react-icons/io5";
@@ -67,13 +67,13 @@ import FormError from "../Common/FormError";
 import FormMessage, { FormMessageType } from "../Common/FormMessage";
 import { ApiErrors } from "../Status/ApiErrors";
 import { Loading } from "../Status/Loading";
+import { CelebrationIcon } from "./CelebrationIcon";
 import { FileUpload, type FileUploadData } from "./FileUpload";
 import LocationPicker from "./LocationPicker";
 import { RequiredMark } from "./RequiredMark";
 import {
   DIALOG_CLOSE,
   DIALOG_HEADING,
-  DIALOG_ICON_CIRCLE,
   DIALOG_PRIMARY,
   DIALOG_SECONDARY,
 } from "./dialog";
@@ -94,8 +94,6 @@ import { DetailDisclosure, TONE } from "./TabbedDetails/DetailDisclosure";
 interface InputProps {
   [id: string]: any;
   opportunityInfo: OpportunityInfo | undefined;
-  /** The type's tint behind the icon circle (`DIALOG_ICON_CIRCLE`), as the dialogs build it. */
-  typeTint: string;
 
   onClose?: () => void;
   onSave?: () => void;
@@ -275,7 +273,6 @@ interface SummaryItem {
 export const OpportunityCompletionEdit: React.FC<InputProps> = ({
   id,
   opportunityInfo,
-  typeTint,
   onClose,
   onSave,
 }) => {
@@ -1190,7 +1187,10 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
 
   return (
     <>
-      {isLoading && <Loading />}
+      {/* On <body>, not inside the dialog: the dialog box keeps a transform from its entry
+          animation, which would pin a fixed overlay to the box and leave the scrolled part of
+          the form uncovered. */}
+      {isLoading && createPortal(<Loading />, document.body)}
 
       <form
         key={`OpportunityComplete_${id}`}
@@ -1212,16 +1212,9 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
           <div className="flex flex-col">
             <div className="flex flex-col gap-3 px-4 pb-6 md:px-6">
               <div className="flex flex-col items-center gap-5 text-center">
-                {/* the yellow trophy (like the rating stars) pops in on its tinted circle, then the orange sparkle wiggles twice */}
-                <div
-                  className={`${DIALOG_ICON_CIRCLE} ${typeTint} motion-safe:animate-bounce-once relative`}
-                >
-                  <IoTrophy aria-hidden className="text-yellow h-10 w-10" />
-                  <IoSparkles
-                    aria-hidden
-                    className="text-orange absolute -top-1 -right-1 h-6 w-6 motion-safe:animate-[wiggle_0.8s_ease-in-out_0.5s_2]"
-                  />
-                </div>
+                <CelebrationIcon
+                  icon={<IoTrophy className="text-yellow h-10 w-10" />}
+                />
                 <div className="flex flex-col gap-2">
                   <h3 className={DIALOG_HEADING}>Completed an opportunity?</h3>
                   <p className="text-gray-dark text-sm md:text-base">

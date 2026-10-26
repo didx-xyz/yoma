@@ -1,11 +1,9 @@
-import Image from "next/image";
-import iconZltoColor from "public/images/icon-zlto-rounded-color.webp";
-import { useState, type ReactNode } from "react";
+import { useState, type MouseEventHandler, type ReactNode } from "react";
 import type { UserProfile } from "~/api/models/user";
 import { CashOutEntry } from "../Payout/CashOutEntry";
 import { CashOutWalletLink } from "../Payout/CashOutWalletLink";
 import { ZltoLedger } from "../Rewards/ZltoLedger";
-import NoRowsMessage from "../NoRowsMessage";
+import { EmptyState, FIND_OPPORTUNITIES } from "./EmptyState";
 import { INTRO_LINK_CLASS } from "./YoIDIntro";
 import { ZltoModal } from "./ZltoModal";
 
@@ -16,7 +14,9 @@ import { ZltoModal } from "./ZltoModal";
 export const WalletCard: React.FC<{
   userProfile: UserProfile;
   link?: ReactNode;
-}> = ({ userProfile, link }) => {
+  /** Called when the empty state's link is followed (the drawer closes on a plain click). */
+  onClick?: MouseEventHandler<HTMLAnchorElement>;
+}> = ({ userProfile, link, onClick }) => {
   const [zltoModalVisible, setZltoModalVisible] = useState(false);
 
   const zlto = userProfile?.zlto;
@@ -33,19 +33,11 @@ export const WalletCard: React.FC<{
   if (!zlto || (zlto.total === 0 && zlto.pendingPayout === 0)) {
     return (
       <>
-        <NoRowsMessage
-          title={""}
-          description={
-            "You will receive ZLTO for completing opportunities, which can be spent on the marketplace."
-          }
-          icon={
-            <Image
-              src={iconZltoColor}
-              alt="ZLTO"
-              width={28}
-              className="h-auto"
-            />
-          }
+        <EmptyState
+          title="No ZLTO yet"
+          description="Earn ZLTO by completing opportunities, then spend it in the marketplace."
+          action={FIND_OPPORTUNITIES}
+          onClick={onClick}
         />
         {link}
       </>
