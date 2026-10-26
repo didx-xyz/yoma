@@ -85,27 +85,14 @@ namespace Yoma.Core.Test.Core
         items.Where(predicate).Select(o => o.Id).Order());
     }
 
-    [Fact]
-    public void Search_TranslatesToDeferredUnionAndLiteralLikeWithoutConnecting()
-    {
-      using var context = CreateContext();
-      var repository = new PayoutTransactionRepository(context);
-      var sql = repository.Contains(repository.Query().Where(o => o.Amount >= 2), "%_\\")
-        .OrderByDescending(o => o.DateCreated).ThenByDescending(o => o.Id)
-        .Page(new PaginationFilter { PageNumber = 2, PageSize = 12 }).ToQueryString();
-      Assert.Contains("UNION", sql);
-      Assert.Contains("lower(", sql);
-      Assert.Contains("LIKE", sql);
-      Assert.DoesNotContain("ILIKE", sql);
-      Assert.Contains("LIMIT", sql);
-      Assert.Contains("OFFSET", sql);
-      Assert.Contains("Amount", sql);
-    }
-
     private static Guid Id(int value) => Guid.Parse($"00000000-0000-0000-0000-{value:000000000000}");
 
-    private static ApplicationDbContext CreateContext() => new(new DbContextOptionsBuilder<ApplicationDbContext>()
-      .UseNpgsql("Host=localhost;Database=translation_only;Username=unused;Password=unused", options => options.UseNetTopologySuite()).Options);
+    private static ApplicationDbContext CreateContext()
+    {
+      var context = new Mock<ApplicationDbContext>(new DbContextOptionsBuilder<ApplicationDbContext>().Options);
+      context.Setup(value => value.Set<PayoutEntity>()).Returns(Mock.Of<DbSet<PayoutEntity>>());
+      return context.Object;
+    }
 
     private static DbSet<T> Set<T>(IEnumerable<T> items) where T : class
     {

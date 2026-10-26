@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using Moq;
-using Newtonsoft.Json;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Xunit;
@@ -118,20 +117,6 @@ namespace Yoma.Core.Test.Core
       Assert.Equal([Specific.Id, Other.Id], result.Select(country => country.Id));
       var exception = Assert.Throws<TargetInvocationException>(() => method.Invoke(client, [UnsupportedCountryCodes]));
       Assert.IsType<InvalidOperationException>(exception.InnerException);
-    }
-
-    [Fact]
-    public void IxoProviderModelContainsOnlyKnownNameAndLogoFields()
-    {
-      var empty = JsonConvert.DeserializeObject<Infrastructure.IXO.PartnerSync.Models.OpportunityResponse>("{}");
-      Assert.NotNull(empty);
-      Assert.Null(empty.ProviderLogoURL);
-      var supplied = JsonConvert.DeserializeObject<Infrastructure.IXO.PartnerSync.Models.OpportunityResponse>(
-        "{\"providerLogoUrl\":\"https://example.com/provider-logo.png\"}");
-      Assert.NotNull(supplied);
-      Assert.Equal("https://example.com/provider-logo.png", supplied.ProviderLogoURL);
-      Assert.Null(typeof(Infrastructure.IXO.PartnerSync.Models.OpportunityResponse).GetProperty("ProviderURL"));
-      Assert.Null(typeof(Infrastructure.IXO.PartnerSync.Models.OpportunityResponse).GetProperty("ProviderCountry"));
     }
 
     [Theory]

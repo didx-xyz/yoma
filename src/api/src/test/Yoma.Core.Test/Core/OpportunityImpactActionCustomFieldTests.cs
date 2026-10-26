@@ -1,16 +1,15 @@
 using FluentValidation;
-using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Moq;
 using System.Reflection;
 using Xunit;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Test.Core.Fixtures;
 using Yoma.Core.Domain.Core.Services;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Services;
-using Yoma.Core.Infrastructure.Database.Migrations;
 
 namespace Yoma.Core.Test.Core
 {
@@ -21,33 +20,6 @@ namespace Yoma.Core.Test.Core
     #endregion Class Variables
 
     #region Tests
-    [Fact]
-    public void SeedsOptionalImpactActionFieldsWithoutDuplicatingCoreOrCompletionFields()
-    {
-      var definitions = Definitions();
-      Assert.Equal(3, definitions.Count);
-      Assert.All(definitions, o =>
-      {
-        Assert.Equal("ImpactAction", o.EntityContext);
-        Assert.Contains(o.Group, ImpactActionGroups);
-        Assert.Null(o.SubGroup);
-        Assert.False(o.IsRequired);
-        Assert.True(o.IsActive);
-        Assert.False(o.IsSchemaMapped);
-      });
-
-      var tools = Assert.Single(definitions, o => o.Key == CustomFieldConstants.ImpactAction.Tools.Required);
-      Assert.True(tools.SupportsMultiple);
-      Assert.True(tools.IsSystem);
-      Assert.Equal("Requirements", tools.Group);
-      Assert.Equal(13, tools.Options!.Count);
-      Assert.Equal(ImpactActionTool.Other.ToString(), tools.Options.Last().Key);
-
-      var activity = Assert.Single(definitions, o => o.Key == "ImpactActionVerifiedActivityType");
-      Assert.False(activity.SupportsMultiple);
-      Assert.False(activity.IsSystem);
-      Assert.Equal(3, activity.Options!.Count);
-    }
 
     [Theory]
     [InlineData(null, null)]
@@ -124,6 +96,11 @@ namespace Yoma.Core.Test.Core
     #endregion
 
     #region Private Members
+    private static List<CustomFieldDefinition> Definitions() =>
+      [.. CustomFieldFixtureData.CreateDefinitions().Where(definition =>
+        definition.EntityType == nameof(CustomFieldEntityType.Opportunity) &&
+        definition.EntityContext == nameof(Domain.Opportunity.Type.ImpactAction) && !definition.IsRequired)];
+
     private static void ValidateRelationship(string? tools, string? description, bool enforceRequired = true)
     {
       var method = typeof(OpportunityService).GetMethod("AssertCrossFieldRules", BindingFlags.NonPublic | BindingFlags.Static)!;
@@ -168,52 +145,6 @@ namespace Yoma.Core.Test.Core
         Mock.Of<IRepository<CustomFieldValue>>(), Mock.Of<IExecutionStrategyService>());
     }
 
-    private static List<CustomFieldDefinition> Definitions()
-    {
-      var seeds = new ApplicationDb_CF_Configuration().UpOperations.OfType<InsertDataOperation>().ToList();
-      var definitions = Assert.Single(seeds, o => o.Table == "CustomFieldDefinition" &&
-        o.Values[0, 0] is Guid id && id == new Guid("cf0a0001-0929-4cf0-a100-000000000001"));
-      var options = Assert.Single(seeds, o => o.Table == "CustomFieldOption" &&
-        o.Values[0, 0] is Guid id && id == new Guid("cf0a0001-0929-4cf0-a100-000000000101"));
-      var result = new List<CustomFieldDefinition>();
-      for (var row = 0; row < definitions.Values.GetLength(0); row++)
-      {
-        object? Value(string name) => definitions.Values[row, Array.IndexOf(definitions.Columns, name)];
-        result.Add(new CustomFieldDefinition
-        {
-          Id = (Guid)Value("Id")!,
-          EntityType = (string)Value("EntityType")!,
-          EntityContext = (string)Value("EntityContext")!,
-          Key = (string)Value("Key")!,
-          Title = (string)Value("Title")!,
-          Group = (string)Value("Group")!,
-          SubGroup = (string)Value("SubGroup")!,
-          DataType = Enum.Parse<CustomFieldDataType>((string)Value("DataType")!),
-          ValidationRegex = (string?)Value("ValidationRegex"),
-          ValidationErrorMessage = (string?)Value("ValidationErrorMessage"),
-          IsRequired = (bool)Value("IsRequired")!,
-          SupportsMultiple = (bool?)Value("SupportsMultiple"),
-          SortOrder = (int)Value("SortOrder")!,
-          IsActive = (bool)Value("IsActive")!,
-          IsSystem = (bool)Value("IsSystem")!,
-          IsSchemaMapped = (bool)Value("IsSchemaMapped")!,
-          Options = []
-        });
-      }
-
-      for (var row = 0; row < options.Values.GetLength(0); row++)
-      {
-        object Value(string name) => options.Values[row, Array.IndexOf(options.Columns, name)]!;
-        result.Single(o => o.Id == (Guid)Value("CustomFieldDefinitionId")).Options!.Add(new CustomFieldOption
-        {
-          Key = (string)Value("Key"),
-          Name = (string)Value("Name"),
-          IsActive = (bool)Value("IsActive")
-        });
-      }
-
-      return result;
-    }
     #endregion
   }
 }

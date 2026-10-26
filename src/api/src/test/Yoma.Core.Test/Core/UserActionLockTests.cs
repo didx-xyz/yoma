@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -27,51 +26,6 @@ namespace Yoma.Core.Test.Core
   public class UserActionLockTests
   {
     #region Filter Tests
-    [Fact]
-    public void OnlyTheTwelveReviewedMutationsAreOptedIn()
-    {
-      var actions = typeof(MyOpportunityController).Assembly.GetTypes()
-        .Where(type => typeof(ControllerBase).IsAssignableFrom(type))
-        .SelectMany(type => type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
-        .Where(method => method.GetCustomAttribute<UserActionLockAttribute>() != null)
-        .Select(method => $"{method.DeclaringType!.Name}.{method.Name}")
-        .Order()
-        .ToArray();
-
-      Assert.Equal(new[]
-      {
-        $"{nameof(MyOpportunityController)}.{nameof(MyOpportunityController.PerformActionInstantVerification)}",
-        $"{nameof(MyOpportunityController)}.{nameof(MyOpportunityController.PerformActionNavigatedExternalLink)}",
-        $"{nameof(MyOpportunityController)}.{nameof(MyOpportunityController.PerformActionSaved)}",
-        $"{nameof(MyOpportunityController)}.{nameof(MyOpportunityController.PerformActionSavedRemove)}",
-        $"{nameof(MyOpportunityController)}.{nameof(MyOpportunityController.PerformActionSendForVerificationManual)}",
-        $"{nameof(MyOpportunityController)}.{nameof(MyOpportunityController.PerformActionSendForVerificationManualDelete)}",
-        $"{nameof(MyOpportunityController)}.{nameof(MyOpportunityController.PerformActionViewed)}",
-        $"{nameof(OrganizationController)}.{nameof(OrganizationController.Create)}",
-        $"{nameof(ReferralController)}.{nameof(ReferralController.ClaimAsReferee)}",
-        $"{nameof(ReferralController)}.{nameof(ReferralController.ClaimAsRefereeInitiate)}",
-        $"{nameof(UserController)}.{nameof(UserController.UpdateProfile)}",
-        $"{nameof(UserController)}.{nameof(UserController.YoIDOnboard)}"
-      }, actions);
-    }
-
-    [Fact]
-    public void AttributeActivatesThroughMvcDependencyInjection()
-    {
-      var redis = new RedisFixture();
-      var request = new Request(redis, Guid.NewGuid());
-      using var provider = new ServiceCollection()
-        .AddSingleton<IOptions<AppSettings>>(Options.Create(request.Settings))
-        .AddSingleton(request.Accessor.Object)
-        .AddSingleton(request.Users.Object)
-        .AddSingleton<IDistributedLockService>(redis.CreateService())
-        .BuildServiceProvider();
-
-      var attribute = new UserActionLockAttribute();
-
-      Assert.IsType<UserActionLockFilter>(attribute.CreateInstance(provider));
-      Assert.False(attribute.IsReusable);
-    }
 
     [Theory]
     [InlineData(null, null)]

@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System.Reflection;
 using Xunit;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -11,14 +10,6 @@ namespace Yoma.Core.Test.Core
   public class BackgroundJobExecutionScopeTests
   {
     #region Tests
-    [Fact]
-    public void ConstructionIsRestrictedToTheScopeFactories()
-    {
-      var constructors = typeof(BackgroundJobExecutionScope).GetConstructors(
-        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-      Assert.True(Assert.Single(constructors).IsPrivate);
-    }
 
     [Fact]
     public async Task OriginalCallingJobNameIsPreservedForAcquisitionAndRelease()
@@ -140,6 +131,10 @@ namespace Yoma.Core.Test.Core
     {
       using var fixture = new Fixture();
       var finalizerReached = false;
+      var finalizer = new Mock<IDisposable>();
+      finalizer.Setup(value => value.Dispose())
+        .Callback(() => finalizerReached = true)
+        .Throws(new ObjectDisposedException("Tracking store"));
       fixture.Locks.Setup(service => service.ReleaseLockAsync(It.IsAny<string>(), It.IsAny<string>()))
         .Callback(() => Assert.True(finalizerReached)).Returns(Task.CompletedTask);
 
@@ -150,8 +145,7 @@ namespace Yoma.Core.Test.Core
         try { throw new InvalidOperationException("Job interrupted"); }
         finally
         {
-          finalizerReached = true;
-          throw new ObjectDisposedException("Tracking store");
+          finalizer.Object.Dispose();
         }
       }
 

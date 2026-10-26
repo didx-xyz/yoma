@@ -378,24 +378,22 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (organizations != null && organizations.Count > 0)
         query = query.Where(o => organizations.Contains(o.OrganizationId));
 
-      var categoryIds = query.Select(o => o.CategoryId).Distinct().ToList();
+      var categoryCounts = query
+        .GroupBy(o => o.CategoryId)
+        .Select(group => new
+        {
+          CategoryId = group.Key,
+          Count = group.Select(o => o.OpportunityId).Distinct().Count()
+        })
+        .ToDictionary(o => o.CategoryId, o => o.Count);
 
       var results = _opportunityCategoryService.List()
-        .Where(o => categoryIds.Contains(o.Id))
+        .Where(o => categoryCounts.ContainsKey(o.Id))
         .OrderBy(o => o.Name == Category.Other.ToString()) //  Move "Other" to the end
         .ThenBy(o => o.Name).ToList();
 
       foreach (var item in results)
-      {
-        var filter = new OpportunitySearchFilterAdmin
-        {
-          Organizations = organizations == null ? null : new() { Value = organizations },
-          Categories = new() { Value = [item.Id] },
-          TotalCountOnly = true
-        };
-
-        item.Count = Search(filter, false).TotalCount;
-      }
+        item.Count = categoryCounts[item.Id];
 
       return results;
     }
@@ -418,25 +416,23 @@ namespace Yoma.Core.Domain.Opportunity.Services
         o => o.OpportunityStatusId, o => o.OpportunityDateStart,
         o => o.OpportunityDateEnd, statusActiveId, statusExpiredId, DateTimeOffset.UtcNow));
 
-      var categoryIds = query.Select(o => o.CategoryId).Distinct().ToList();
+      // Count matching opportunities for all categories in SQL, rather than searching once per category.
+      var categoryCounts = query
+        .GroupBy(o => o.CategoryId)
+        .Select(group => new
+        {
+          CategoryId = group.Key,
+          Count = group.Select(o => o.OpportunityId).Distinct().Count()
+        })
+        .ToDictionary(o => o.CategoryId, o => o.Count);
 
       var results = _opportunityCategoryService.List()
-        .Where(o => categoryIds.Contains(o.Id))
+        .Where(o => categoryCounts.ContainsKey(o.Id))
         .OrderBy(o => o.Name == Category.Other.ToString()) //  Move "Other" to the end
         .ThenBy(o => o.Name).ToList();
 
       foreach (var item in results)
-      {
-        var filter = new OpportunitySearchFilterAdmin
-        {
-          Categories = new() { Value = [item.Id] },
-          PublishedStates = publishedStates,
-          TotalCountOnly = true,
-          ExcludeHidden = true
-        };
-
-        item.Count = Search(filter, false).TotalCount;
-      }
+        item.Count = categoryCounts[item.Id];
 
       return results;
     }
@@ -1012,7 +1008,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
       //pagination
       (result.TotalCount, result.Items) = query.ToPageWithChildren(filter, o => o.Id, hydrationQuery, hydratePageSeparately);
 
-      result.Items.ForEach(o => ParseComputed(o));
+      if (result.Items.Count != 0)
+      {
+        var syncInfoById = _syncStateService.GetSyncInfo(PartnerSync.EntityType.Opportunity,
+          result.Items.ToDictionary(o => o.Id, o => o.URL));
+        result.Items.ForEach(o => ParseComputed(o, syncInfoById: syncInfoById));
+      }
 
       return result;
     }
@@ -2068,11 +2069,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
     ///
     /// When <paramref name="baseOnly"/> is false, all computed properties are populated,
     /// including organization logo URL.
+    /// An optional page-level sync lookup avoids per-item queries, including for unsynced items.
     /// </summary>
-    private void ParseComputed(Models.Opportunity opportunity, bool baseOnly = false)
+    private void ParseComputed(Models.Opportunity opportunity, bool baseOnly = false,
+      Dictionary<Guid, PartnerSync.Models.SyncInfoEntity?>? syncInfoById = null)
     {
       opportunity.SetPublished();
-      opportunity.SyncedInfo = _syncStateService.GetSyncInfo(PartnerSync.EntityType.Opportunity, opportunity.Id, opportunity.URL);
+      opportunity.SyncedInfo = syncInfoById == null
+        ? _syncStateService.GetSyncInfo(PartnerSync.EntityType.Opportunity, opportunity.Id, opportunity.URL)
+        : syncInfoById[opportunity.Id];
 
       if (baseOnly) return;
 

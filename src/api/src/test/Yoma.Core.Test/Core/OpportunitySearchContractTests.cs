@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using Moq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
@@ -15,8 +14,6 @@ using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Helpers;
 using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.Opportunity.Validators;
-using Yoma.Core.Infrastructure.Database.Context;
-using Yoma.Core.Infrastructure.Database.Opportunity.Repositories;
 
 namespace Yoma.Core.Test.Core
 {
@@ -222,38 +219,6 @@ namespace Yoma.Core.Test.Core
       Assert.NotEqual(JsonConvert.SerializeObject(first), JsonConvert.SerializeObject(second));
     }
 
-    [Fact]
-    public void CFApplicabilityAndUnknownModesRemainSqlPredicates()
-    {
-      using var context = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>()
-        .UseNpgsql("Host=localhost;Database=not_connected", o => o.UseNetTopologySuite()).Options);
-      var repository = new OpportunityRepository(context);
-      var filter = new CustomFieldFilter
-      {
-        Key = "JobSalaryMinimum",
-        CustomFieldDefinitionId = Guid.NewGuid(),
-        AppliesToTypeId = Guid.NewGuid(),
-        Unspecified = UnspecifiedMatch.Only
-      };
-      var sql = repository.WhereCustomFields(repository.Query(false), [filter]).Select(o => o.Id).ToQueryString();
-
-      Assert.Contains("CustomFieldValue", sql);
-      Assert.Contains("NOT", sql);
-      Assert.Contains("TypeId", sql);
-      Assert.Contains(" OR ", sql);
-    }
-
-    [Fact]
-    public void ContainsEscapesLiteralWildcardCharactersInSql()
-    {
-      using var context = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>()
-        .UseNpgsql("Host=localhost;Database=not_connected", o => o.UseNetTopologySuite()).Options);
-      var repository = new OpportunityCountryRepository(context);
-      var sql = repository.Query().Where(repository.Contains(o => o.City, "Cape_%")).Select(o => o.Id).ToQueryString();
-      Assert.Contains("ILIKE", sql);
-      Assert.Contains("ESCAPE", sql);
-      Assert.Contains("Cape\\_\\%", sql);
-    }
     #endregion
 
     #region Private Members

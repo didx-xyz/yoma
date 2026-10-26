@@ -726,7 +726,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var (totalCount, items) = query.ToPageWithChildren(filter, o => o.Id, hydrationQuery);
       result.TotalCount = totalCount;
 
-      if (!filter.UnrestrictedQuery) items.ForEach(ParseComputed);
+      if (!filter.UnrestrictedQuery)
+      {
+        var verificationIds = items.Where(o => o.Action == Action.Verification).Select(o => o.Id).ToList();
+        var syncInfoById = verificationIds.Count == 0 ? null : _syncStateService.GetSyncInfoMyOpportunity(verificationIds);
+        items.ForEach(o => ParseComputed(o, syncInfoById));
+      }
 
       result.Items = [.. items.Select(o => o.ToInfo())];
       if (filter.UnrestrictedQuery) return result;
@@ -1542,13 +1547,19 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     /// and should be treated as locked for normal Yoma status changes.
     /// </summary>
     private void ParseComputed(Models.MyOpportunity myOpportunity)
+      => ParseComputed(myOpportunity, null);
+
+    private void ParseComputed(Models.MyOpportunity myOpportunity,
+      Dictionary<Guid, SyncInfoMyOpportunity?>? syncInfoById)
     {
       myOpportunity.UserPhotoURL = GetBlobObjectURL(myOpportunity.UserPhotoStorageType, myOpportunity.UserPhotoKey);
       myOpportunity.OrganizationLogoURL = GetBlobObjectURL(myOpportunity.OrganizationLogoStorageType, myOpportunity.OrganizationLogoKey);
       myOpportunity.Verifications?.ForEach(v => v.FileURL = GetBlobObjectURL(v.FileStorageType, v.FileKey));
 
       if (myOpportunity.Action == Action.Verification)
-        myOpportunity.SyncedInfo = _syncStateService.GetSyncInfoMyOpportunity(myOpportunity.Id);
+        myOpportunity.SyncedInfo = syncInfoById == null
+          ? _syncStateService.GetSyncInfoMyOpportunity(myOpportunity.Id)
+          : syncInfoById[myOpportunity.Id];
     }
 
     private MyOpportunityResponseVerifyStatus GetVerificationStatusInternal(Guid opportunityId, Guid userId)

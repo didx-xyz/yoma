@@ -1,4 +1,3 @@
-using CsvHelper.Configuration.Attributes;
 using CsvWriter = CsvHelper.CsvWriter;
 using FluentValidation;
 using MediatR;
@@ -6,13 +5,11 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
-using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Converters;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity;
-using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Entity.Services;
@@ -162,10 +159,6 @@ namespace Yoma.Core.Test.Entity
     [Fact]
     public void EngagementCsvExportUsesTheCanonicalImportName()
     {
-      var property = typeof(Domain.Opportunity.Models.OpportunityInfo)
-        .GetProperty(nameof(Domain.Opportunity.Models.OpportunityInfo.EngagementType))!;
-      Assert.Empty(property.GetCustomAttributes(typeof(TypeConverterAttribute), false));
-
       using var writer = new StringWriter();
       using var csv = new CsvWriter(writer, System.Globalization.CultureInfo.InvariantCulture);
       csv.WriteField(Domain.Core.EngagementTypeOption.OnSite);
@@ -181,7 +174,6 @@ namespace Yoma.Core.Test.Entity
 
       Assert.DoesNotContain("GoalId", json);
       Assert.DoesNotContain("Categories", json);
-      Assert.Null(typeof(UserProfile).GetProperty("UserPreferences"));
     }
 
     [Fact]

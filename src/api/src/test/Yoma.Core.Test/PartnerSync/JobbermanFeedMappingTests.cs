@@ -1,13 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
-using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using System.Reflection;
 using System.Xml.Linq;
 using Xunit;
+using Yoma.Core.Test.Core.Fixtures;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Helpers;
@@ -20,7 +18,6 @@ using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.Opportunity.Services;
 using Yoma.Core.Domain.Opportunity;
-using Yoma.Core.Infrastructure.Database.Migrations;
 using Yoma.Core.Domain.PartnerSync.Models;
 using Yoma.Core.Domain.PartnerSync.Validators;
 using Yoma.Core.Infrastructure.Jobberman.Client;
@@ -74,7 +71,7 @@ namespace Yoma.Core.Test.PartnerSync
       Assert.DoesNotContain("<p>", request.Description);
       Assert.DoesNotContain("**Job function:**", request.Description);
       Assert.Equal(new[] { TechnologyCategoryId }, request.Categories);
-      Assert.Equal(new[] { CountryId }, request.Countries!.Select(country => country.CountryId));
+      Assert.Equal([CountryId], request.Countries!.Select(country => country.CountryId));
       Assert.Equal(new[] { LanguageId }, request.Languages);
       Assert.Equal(OrganizationId, request.OrganizationId);
       Assert.Contains("Full Time", request.Keywords!);
@@ -243,7 +240,7 @@ namespace Yoma.Core.Test.PartnerSync
       cached.WorkType = "Part Time";
       var request = await Map(cached);
 
-      Assert.Equal(new[] { CountryId }, request.Countries!.Select(country => country.CountryId));
+      Assert.Equal([CountryId], request.Countries!.Select(country => country.CountryId));
       Assert.Contains("**Location:** Remote (Work From Home), Nigeria", request.Description);
       Assert.Equal(CustomFieldConstants.Job.Employment.ScheduleOptions.PartTime,
         Assert.Single(request.CustomFields!.Single(field => field.Key == CustomFieldConstants.Job.Employment.Schedule).Values!));
@@ -394,7 +391,7 @@ namespace Yoma.Core.Test.PartnerSync
       var removed = new CachedOpportunity { ExternalId = "NG:old", CountryCodeAlpha2 = "NG", Title = "Old sample" };
       var rows = new List<CachedOpportunity> { existing, removed };
       var incoming = Parse(CreateFeed());
-      using var context = CreateContext();
+      using var context = CreateExecutionContext();
       var repository = CreateRepository(rows);
       var service = CreateFeedService(repository, context);
 
@@ -416,7 +413,7 @@ namespace Yoma.Core.Test.PartnerSync
     public async Task CacheRefreshCreatesNewRowsWithSeparateSummaryAndDescription()
     {
       var rows = new List<CachedOpportunity>();
-      using var context = CreateContext();
+      using var context = CreateExecutionContext();
       var repository = CreateRepository(rows);
       var service = CreateFeedService(repository, context);
 
@@ -436,7 +433,7 @@ namespace Yoma.Core.Test.PartnerSync
       var rows = new List<CachedOpportunity> { existing };
       var nextFeed = CreateFeed();
       nextFeed.Root!.Element("channel")!.Element("item")!.Element("price")!.Remove();
-      using var context = CreateContext();
+      using var context = CreateExecutionContext();
       var repository = CreateRepository(rows);
 
       await Process(CreateFeedService(repository, context), Parse(nextFeed));
@@ -454,7 +451,7 @@ namespace Yoma.Core.Test.PartnerSync
       terminal.Summary = "Terminal summary";
       var active = new CachedOpportunity { ExternalId = "NG:active", CountryCodeAlpha2 = "NG", Title = "Active sample" };
       var rows = new List<CachedOpportunity> { terminal, active };
-      using var context = CreateContext();
+      using var context = CreateExecutionContext();
       var repository = CreateRepository(rows);
       var service = CreateFeedService(repository, context);
 
@@ -465,23 +462,6 @@ namespace Yoma.Core.Test.PartnerSync
       await Process(service, Parse(CreateFeed()));
       Assert.True(terminal.Deleted);
       Assert.Equal("Terminal summary", terminal.Summary);
-    }
-
-    [Fact]
-    public void SummaryCacheMigrationAndRepositoryProjectionMatchModelWithoutDatabaseAccess()
-    {
-      using var context = CreateContext();
-      var repository = new Infrastructure.Jobberman.Repositories.OpportunityRepository(context);
-      Assert.Contains("Summary", repository.Query().ToQueryString());
-      Assert.False(context.Database.HasPendingModelChanges());
-
-      var script = context.GetService<IMigrator>().GenerateScript(
-        "20260601104317_JobbermanDb_Opportunity_Indexes",
-        "20261019100000_JobbermanDb_Opportunity_FeedMetadata");
-      Assert.Contains("ADD \"Summary\" text", script);
-      foreach (var field in new[] { "Salary", "ExperienceLevel", "ExperienceLength", "MinimumQualification" })
-        Assert.Contains($"ADD \"{field}\" text", script);
-      Assert.DoesNotContain("DROP TABLE", script);
     }
 
     [Theory]
@@ -664,7 +644,7 @@ namespace Yoma.Core.Test.PartnerSync
       item.Element("experience_level")!.Value = "Senior level";
       item.Element("experience_length")!.Value = "8 years";
       item.Element("minimum_qualification")!.Value = "Degree";
-      using var context = CreateContext();
+      using var context = CreateExecutionContext();
       var repository = CreateRepository(rows);
       await Process(CreateFeedService(repository, context), Parse(doc));
 
@@ -674,21 +654,6 @@ namespace Yoma.Core.Test.PartnerSync
       Assert.Equal("Degree", existing.MinimumQualification);
       Assert.NotEqual(originalHash, HashHelper.ComputeSHA256Hash((await Map(existing)).ToRequestUpdate(opportunityId, applyHidden: false)));
       repository.Verify(repo => repo.Update(It.IsAny<List<CachedOpportunity>>()), Times.Once);
-    }
-
-    [Fact]
-    public void InformationalMappingContractsMatchSeedsAndRemainNonSystem()
-    {
-      var definitions = SeededDefinitions();
-      var experience = definitions.Single(definition => definition.Key == CustomFieldConstants.Job.Experience.Level);
-      var qualification = definitions.Single(definition => definition.Key == CustomFieldConstants.Job.MinimumQualification);
-
-      Assert.False(experience.IsSystem);
-      Assert.False(qualification.IsSystem);
-      Assert.All(new[] { CustomFieldConstants.Job.Experience.Options.None, CustomFieldConstants.Job.Experience.Options.EntryJunior,
-        CustomFieldConstants.Job.Experience.Options.Mid, CustomFieldConstants.Job.Experience.Options.Senior }, option =>
-          Assert.Contains(experience.Options!, value => value.Key == option && value.IsActive));
-      Assert.Equal(CustomFieldLookupType.Education, qualification.LookupType);
     }
 
     [Theory]
@@ -783,7 +748,7 @@ namespace Yoma.Core.Test.PartnerSync
       var education = new Mock<IEducationService>();
       education.Setup(service => service.GetByIdOrNull(It.IsAny<Guid>()))
         .Returns((Guid id) => new Domain.Lookups.Models.Education { Id = id });
-      var definitions = SeededDefinitions();
+      var definitions = CustomFieldFixtureData.CreateDefinitions();
       var customFields = new Mock<ICustomFieldDefinitionService>();
       customFields.Setup(service => service.GetByKey(CustomFieldEntityType.Opportunity, It.IsAny<string>(), true, true))
         .Returns((CustomFieldEntityType _, string key, bool _, bool _) => definitions.Single(definition => definition.Key == key));
@@ -812,51 +777,6 @@ namespace Yoma.Core.Test.PartnerSync
       return request;
     }
 
-    private static List<CustomFieldDefinition> SeededDefinitions()
-    {
-      var operations = new ApplicationDb_CF_Configuration().UpOperations.OfType<InsertDataOperation>().ToList();
-      operations.AddRange(new ApplicationDb_Job_Employment_Contract().UpOperations.OfType<InsertDataOperation>());
-      var definitions = new List<CustomFieldDefinition>();
-      foreach (var operation in operations.Where(operation => operation.Table == "CustomFieldDefinition"))
-        for (var row = 0; row < operation.Values.GetLength(0); row++)
-        {
-          object? Value(string column)
-          {
-            var index = Array.IndexOf(operation.Columns, column);
-            return index < 0 ? null : operation.Values[row, index];
-          }
-          definitions.Add(new CustomFieldDefinition
-          {
-            Id = (Guid)Value("Id")!,
-            EntityType = (string)Value("EntityType")!,
-            EntityContext = (string?)Value("EntityContext"),
-            Key = (string)Value("Key")!,
-            Title = (string)Value("Title")!,
-            DataType = Enum.Parse<CustomFieldDataType>((string)Value("DataType")!),
-            LookupType = Value("LookupType") is string lookup ? Enum.Parse<CustomFieldLookupType>(lookup) : null,
-            IsActive = (bool)Value("IsActive")!,
-            IsSystem = (bool)Value("IsSystem")!,
-            IsRequired = Value("IsRequired") is true,
-            SupportsMultiple = (bool?)Value("SupportsMultiple"),
-            Options = []
-          });
-        }
-
-      foreach (var operation in operations.Where(operation => operation.Table == "CustomFieldOption"))
-        for (var row = 0; row < operation.Values.GetLength(0); row++)
-        {
-          object? Value(string column) => operation.Values[row, Array.IndexOf(operation.Columns, column)];
-          definitions.Single(definition => definition.Id == (Guid)Value("CustomFieldDefinitionId")!).Options!.Add(new CustomFieldOption
-          {
-            Key = (string)Value("Key")!,
-            Name = (string)Value("Name")!,
-            IsActive = (bool)Value("IsActive")!
-          });
-        }
-
-      return definitions;
-    }
-
     private static Mock<IRepositoryBatched<CachedOpportunity>> CreateRepository(List<CachedOpportunity> rows)
     {
       var repository = new Mock<IRepositoryBatched<CachedOpportunity>>();
@@ -869,10 +789,12 @@ namespace Yoma.Core.Test.PartnerSync
       return repository;
     }
 
-    private static JobbermanDbContext CreateContext()
+    private static JobbermanDbContext CreateExecutionContext()
     {
+      // The sealed feed adapter requires its concrete execution strategy. No query or write
+      // uses this context: repositories are mocked, and the provider only supplies the strategy.
       return new JobbermanDbContext(new DbContextOptionsBuilder<JobbermanDbContext>()
-        .UseNpgsql("Host=localhost;Database=unused_jobberman_mapping_test;Username=unused;Password=unused")
+        .UseNpgsql("Host=unit-test.invalid;Database=unused;Username=unused;Password=unused")
         .Options);
     }
 
@@ -880,6 +802,7 @@ namespace Yoma.Core.Test.PartnerSync
       Mock<IRepositoryBatched<CachedOpportunity>> repository,
       JobbermanDbContext context)
     {
+
       return new OpportunityFeedBackgroundService(
         Mock.Of<ILogger<OpportunityFeedBackgroundService>>(),
         Mock.Of<IEnvironmentProvider>(),

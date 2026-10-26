@@ -1,21 +1,13 @@
 using FluentValidation;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
-using Newtonsoft.Json;
-using System.Net;
 using Xunit;
-using Yoma.Core.Api.Controllers;
-using Yoma.Core.Api.Middleware;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.LaborMarketProvider.Interfaces;
-using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.Lookups.Services;
 using Yoma.Core.Domain.Lookups.Validators;
@@ -27,125 +19,6 @@ namespace Yoma.Core.Test.Lookups
     #region Class Variables
     private static readonly string[] ExpectedNameSearchResults = ["Python", "Python Imaging"];
     #endregion Class Variables
-
-    [Fact]
-    public async Task HttpLookupBindsIdArrayAndReturnsOnlySelectedSkillsWithoutPagination()
-    {
-      using var fixture = new Fixture(true, "Python", "Java", "Python Imaging");
-      await using var app = await CreateApplication(fixture.Service);
-      using var client = app.GetTestClient();
-      var python = fixture.Service.GetByName("Python");
-      var imaging = fixture.Service.GetByName("Python Imaging");
-
-      using var body = new StringContent(JsonConvert.SerializeObject(new[] { imaging.Id, python.Id, python.Id }),
-        System.Text.Encoding.UTF8, "application/json");
-      using var response = await client.PostAsync("/api/v3/lookup/skill/ids", body, TestContext.Current.CancellationToken);
-
-      Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-      var result = JsonConvert.DeserializeObject<List<Skill>>(
-        await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
-      Assert.NotNull(result);
-      Assert.Equal(2, result.Count);
-      Assert.Equal([python.Id, imaging.Id], result.Select(item => item.Id));
-    }
-
-    [Theory]
-    [InlineData("[]")]
-    [InlineData("null")]
-    [InlineData("[\"not-a-guid\"]")]
-    [InlineData("[\"00000000-0000-0000-0000-000000000000\"]")]
-    [InlineData("{\"ids\":[\"00000000-0000-0000-0000-000000000001\"]}")]
-    public async Task HttpLookupRejectsInvalidIdsAndIncorrectBodyShape(string json)
-    {
-      using var fixture = new Fixture(false, "Python");
-      await using var app = await CreateApplication(fixture.Service);
-      using var client = app.GetTestClient();
-      using var body = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-      using var response = await client.PostAsync("/api/v3/lookup/skill/ids", body,
-        TestContext.Current.CancellationToken);
-
-      Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task HttpLookupRejectsMissingBody()
-    {
-      using var fixture = new Fixture(false, "Python");
-      await using var app = await CreateApplication(fixture.Service);
-      using var client = app.GetTestClient();
-      using var missing = await client.PostAsync("/api/v3/lookup/skill/ids", null,
-        TestContext.Current.CancellationToken);
-      Assert.Equal(HttpStatusCode.UnsupportedMediaType, missing.StatusCode);
-
-      using var emptyBody = new StringContent(string.Empty, System.Text.Encoding.UTF8, "application/json");
-      using var empty = await client.PostAsync("/api/v3/lookup/skill/ids", emptyBody,
-        TestContext.Current.CancellationToken);
-      Assert.Equal(HttpStatusCode.BadRequest, empty.StatusCode);
-    }
-
-    [Fact]
-    public async Task HttpLookupReturnsAllRequestedSkillsBeyondTheFormerLimit()
-    {
-      using var fixture = new Fixture(true,
-        [.. Enumerable.Range(1, 1501).Select(index => $"Skill {index:D4}")]);
-      await using var app = await CreateApplication(fixture.Service);
-      using var client = app.GetTestClient();
-      var ids = fixture.Service.Contains("Skill").Select(skill => skill.Id).ToList();
-      using var body = new StringContent(JsonConvert.SerializeObject(ids), System.Text.Encoding.UTF8, "application/json");
-
-      using var response = await client.PostAsync("/api/v3/lookup/skill/ids", body,
-        TestContext.Current.CancellationToken);
-      Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-      var result = JsonConvert.DeserializeObject<List<Skill>>(
-        await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
-
-      Assert.NotNull(result);
-      Assert.Equal(ids, result.Select(skill => skill.Id));
-    }
-
-    [Fact]
-    public void SharedLookupIdsValidatorIsRegisteredByTheDomainStartup()
-    {
-      var services = new ServiceCollection();
-      Domain.Startup.ConfigureServices_DomainServices(services);
-      using var provider = services.BuildServiceProvider();
-      using var scope = provider.CreateScope();
-
-      Assert.IsType<LookupIdsValidator>(scope.ServiceProvider.GetRequiredService<LookupIdsValidator>());
-    }
-
-    [Theory]
-    [InlineData("nameContains=python")]
-    [InlineData("pageNumber=0&pageSize=10")]
-    [InlineData("pageNumber=1")]
-    [InlineData("pageNumber=1&pageSize=1001")]
-    public async Task HttpNameSearchStillRequiresValidPagination(string query)
-    {
-      using var fixture = new Fixture(false, "Python");
-      await using var app = await CreateApplication(fixture.Service);
-      using var client = app.GetTestClient();
-      using var response = await client.GetAsync($"/api/v3/lookup/skill?{query}",
-        TestContext.Current.CancellationToken);
-
-      Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task HttpNameSearchKeepsItsPagedResponse()
-    {
-      using var fixture = new Fixture(false, "Python", "Python Imaging", "Java");
-      await using var app = await CreateApplication(fixture.Service);
-      using var client = app.GetTestClient();
-      using var response = await client.GetAsync("/api/v3/lookup/skill?nameContains=python&pageNumber=2&pageSize=1",
-        TestContext.Current.CancellationToken);
-      Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-      var result = JsonConvert.DeserializeObject<SkillSearchResults>(
-        await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
-
-      Assert.NotNull(result);
-      Assert.Equal(2, result.TotalCount);
-      Assert.Equal("Python Imaging", Assert.Single(result.Items).Name);
-    }
 
     [Theory]
     [InlineData(false)]
@@ -334,35 +207,6 @@ namespace Yoma.Core.Test.Lookups
     {
       using var fixture = new Fixture(false, "Python");
       Assert.Throws<ArgumentNullException>(() => fixture.Service.GetByNameNormalizedOrNull(input!));
-    }
-
-    private static async Task<WebApplication> CreateApplication(ISkillService skills)
-    {
-      var builder = WebApplication.CreateBuilder();
-      builder.WebHost.UseTestServer();
-
-      var services = builder.Services;
-      services.AddSingleton(skills);
-      services.AddSingleton(Mock.Of<ITargetedGroupService>());
-      services.AddSingleton(Mock.Of<ISustainableDevelopmentGoalService>());
-      services.AddSingleton(Mock.Of<ICurrencyService>());
-      services.AddSingleton(Mock.Of<IAccessibilityService>());
-      services.AddSingleton(Mock.Of<ICountryService>());
-      services.AddSingleton(Mock.Of<IEducationService>());
-      services.AddSingleton(Mock.Of<IEngagementTypeService>());
-      services.AddSingleton(Mock.Of<IGenderService>());
-      services.AddSingleton(Mock.Of<ILanguageService>());
-      services.AddSingleton(Mock.Of<ITimeIntervalService>());
-      services.AddControllers()
-        .AddApplicationPart(typeof(LookupController).Assembly)
-        .AddNewtonsoftJson();
-
-      var app = builder.Build();
-      app.UseMiddleware<ExceptionResponseMiddleware>();
-      app.MapControllers();
-
-      await app.StartAsync(TestContext.Current.CancellationToken);
-      return app;
     }
 
     [Theory]

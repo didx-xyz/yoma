@@ -6,14 +6,9 @@
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
-
-    <!-- Required for Microsoft.AspNetCore.Mvc.Testing -->
-    <PreserveCompilationContext>true</PreserveCompilationContext>
-    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.13" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
     <PackageReference Include="Moq" Version="4.21.0" />
     <PackageReference Include="xunit.v3" Version="4.0.2" />
@@ -32,45 +27,11 @@
     <ProjectReference Include="..\..\domain\Yoma.Core.Domain\Yoma.Core.Domain.csproj" />
   </ItemGroup>
 
-  <!-- ✅ Copy API deps.json -->
-  <Target Name="CopyApiDepsFile" AfterTargets="Build">
-    <ItemGroup>
-      <_ApiDepsFile Include="..\..\application\Yoma.Core.Api\bin\$(Configuration)\$(TargetFramework)\Yoma.Core.Api.deps.json" />
-    </ItemGroup>
-    <Copy SourceFiles="@(_ApiDepsFile)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
-  </Target>
-
-  <!-- ✅ Dynamically resolve and copy testhost.deps.json BEFORE build -->
-  <Target Name="CopyTestHostDepsJson" BeforeTargets="Build">
-    <PropertyGroup>
-      <DotnetRoot Condition="'$(DOTNET_ROOT)' == ''">$(ProgramFiles)\dotnet</DotnetRoot>
-    </PropertyGroup>
-
-    <ItemGroup>
-      <_RuntimeFolders Include="$(DotnetRoot)\shared\Microsoft.NETCore.App\*" />
-    </ItemGroup>
-
-    <PropertyGroup>
-      <LatestRuntimePath>@(_RuntimeFolders-&gt;Reverse()-&gt;Get(0))</LatestRuntimePath>
-      <TesthostDepsPath>$(LatestRuntimePath)\testhost.deps.json</TesthostDepsPath>
-    </PropertyGroup>
-
-    <Message Importance="high" Text="Copying testhost.deps.json from: $(TesthostDepsPath)" />
-
-    <ItemGroup Condition="Exists('$(TesthostDepsPath)')">
-      <_TesthostDeps Include="$(TesthostDepsPath)" />
-    </ItemGroup>
-
-    <Copy SourceFiles="@(_TesthostDeps)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" Condition="Exists('$(TesthostDepsPath)')" />
-  </Target>
-
-  <!-- ✅ Disable xUnit shadow copying -->
+  <!-- Keep runner configuration available to unit tests. -->
   <ItemGroup>
     <None Update="xunit.runner.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <!-- Keep source samples available when test build artifacts are outside the checkout. -->
-    <None Include="..\..\other\*_Sample*.csv" Link="other\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

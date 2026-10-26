@@ -49,42 +49,40 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
       var items = query
         .OrderByDescending(o => o.DateModified)
-        .ToList()
-        .GroupBy(o => new { o.SyncType, o.PartnerId })
-        .Select(g => g.First())
         .ToList();
 
-      if (items.Count == 0) return null;
+      return ToSyncInfoEntity(entityType, entityId, url, items);
+    }
 
-      var syncTypes = items
-        .Select(o => Enum.Parse<SyncType>(o.SyncType, true))
-        .Distinct()
-        .ToList();
+    public Dictionary<Guid, SyncInfoEntity?> GetSyncInfo(EntityType entityType, IReadOnlyDictionary<Guid, string?> entityUrls)
+    {
+      ArgumentNullException.ThrowIfNull(entityUrls);
+      if (entityUrls.Count == 0) return [];
 
-      if (syncTypes.Count > 1)
-        throw new DataInconsistencyException($"Entity '{entityId}' of type '{entityType}' has mixed synchronization types recorded in processing logs");
+      var statusAbortedId = _processingStatusService.GetByName(ProcessingStatus.Aborted.ToString()).Id;
+      var entityIds = entityUrls.Keys.ToList();
+      var query = _processingLogRepository.Query()
+        .Where(o => o.EntityType == entityType.ToString() && o.StatusId != statusAbortedId);
 
-      var syncType = syncTypes.Single();
-
-      var partners = items
-        .Select(o => ToSyncInfoEntityPartner(o, url))
-        .DistinctBy(o => new { o.Partner, o.ExternalId })
-        .ToList();
-
-      if (syncType == SyncType.Pull && partners.Count != 1)
-        throw new DataInconsistencyException($"Pull synchronization requires exactly one partner for entity '{entityId}' of type '{entityType}'");
-
-      return new SyncInfoEntity
+      query = entityType switch
       {
-        SyncType = syncType,
-        Partners = partners
+        EntityType.Opportunity => query.Where(o => o.OpportunityId.HasValue && entityIds.Contains(o.OpportunityId.Value)),
+        _ => throw new InvalidOperationException($"Entity type '{entityType}' not supported")
       };
+
+      // Keep the existing domain-side latest-per-sync-type/partner selection and validation.
+      var itemsByEntity = query
+        .OrderByDescending(o => o.DateModified)
+        .ToList()
+        .ToLookup(o => o.OpportunityId!.Value);
+
+      return entityUrls.ToDictionary(item => item.Key,
+        item => ToSyncInfoEntity(entityType, item.Key, item.Value, itemsByEntity[item.Key]));
     }
 
     public SyncInfoMyOpportunity? GetSyncInfoMyOpportunity(Guid myOpportunityId)
     {
-      if (myOpportunityId == Guid.Empty)
-        throw new ArgumentNullException(nameof(myOpportunityId));
+      ValidateMyOpportunityId(myOpportunityId);
 
       var statusAbortedId = _processingStatusService.GetByName(ProcessingStatus.Aborted.ToString()).Id;
 
@@ -93,39 +91,28 @@ namespace Yoma.Core.Domain.PartnerSync.Services
           && o.MyOpportunityId == myOpportunityId
           && o.StatusId != statusAbortedId)
         .OrderByDescending(o => o.DateModified)
+        .ToList();
+
+      return ToSyncInfoMyOpportunity(myOpportunityId, items);
+    }
+
+    public Dictionary<Guid, SyncInfoMyOpportunity?> GetSyncInfoMyOpportunity(IReadOnlyCollection<Guid> myOpportunityIds)
+    {
+      ArgumentNullException.ThrowIfNull(myOpportunityIds);
+      if (myOpportunityIds.Count == 0) return [];
+
+      var ids = myOpportunityIds.Distinct().ToList();
+      ids.ForEach(ValidateMyOpportunityId);
+      var statusAbortedId = _processingStatusService.GetByName(ProcessingStatus.Aborted.ToString()).Id;
+      var itemsByEntity = _processingLogRepository.Query()
+        .Where(o => o.EntityType == EntityType.MyOpportunity.ToString()
+          && o.MyOpportunityId.HasValue && ids.Contains(o.MyOpportunityId.Value)
+          && o.StatusId != statusAbortedId)
+        .OrderByDescending(o => o.DateModified)
         .ToList()
-        .GroupBy(o => new { o.SyncType, o.PartnerId })
-        .Select(g => g.First())
-        .ToList();
+        .ToLookup(o => o.MyOpportunityId!.Value);
 
-      if (items.Count == 0) return null;
-
-      var syncTypes = items
-        .Select(o => Enum.Parse<SyncType>(o.SyncType, true))
-        .Distinct()
-        .ToList();
-
-      if (syncTypes.Count > 1)
-        throw new DataInconsistencyException($"MyOpportunity '{myOpportunityId}' has mixed synchronization types recorded in processing logs");
-
-      var syncType = syncTypes.Single();
-
-      if (syncType != SyncType.Pull)
-        throw new DataInconsistencyException($"MyOpportunity synchronization only supports pull synchronization for entity '{myOpportunityId}'");
-
-      var partners = items
-        .Select(ToSyncInfoMyOpportunityPartner)
-        .DistinctBy(o => new { o.Partner, o.ExternalId })
-        .ToList();
-
-      if (partners.Count != 1)
-        throw new DataInconsistencyException($"MyOpportunity pull synchronization requires exactly one partner for entity '{myOpportunityId}'");
-
-      return new SyncInfoMyOpportunity
-      {
-        SyncType = syncType,
-        Partners = partners
-      };
+      return ids.ToDictionary(id => id, id => ToSyncInfoMyOpportunity(id, itemsByEntity[id]));
     }
 
     public SyncInfoUser? GetUserSyncInfo(Guid userId)
@@ -227,6 +214,40 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     #endregion
 
     #region Private Members
+    private static SyncInfoEntity? ToSyncInfoEntity(EntityType entityType, Guid entityId, string? url, IEnumerable<ProcessingLog> orderedItems)
+    {
+      var items = orderedItems
+        .GroupBy(o => new { o.SyncType, o.PartnerId })
+        .Select(g => g.First())
+        .ToList();
+
+      if (items.Count == 0) return null;
+
+      var syncTypes = items
+        .Select(o => Enum.Parse<SyncType>(o.SyncType, true))
+        .Distinct()
+        .ToList();
+
+      if (syncTypes.Count > 1)
+        throw new DataInconsistencyException($"Entity '{entityId}' of type '{entityType}' has mixed synchronization types recorded in processing logs");
+
+      var syncType = syncTypes.Single();
+
+      var partners = items
+        .Select(o => ToSyncInfoEntityPartner(o, url))
+        .DistinctBy(o => new { o.Partner, o.ExternalId })
+        .ToList();
+
+      if (syncType == SyncType.Pull && partners.Count != 1)
+        throw new DataInconsistencyException($"Pull synchronization requires exactly one partner for entity '{entityId}' of type '{entityType}'");
+
+      return new SyncInfoEntity
+      {
+        SyncType = syncType,
+        Partners = partners
+      };
+    }
+
     private static SyncInfoEntityPartner ToSyncInfoEntityPartner(ProcessingLog item, string? url)
     {
       ArgumentNullException.ThrowIfNull(item);
@@ -238,6 +259,49 @@ namespace Yoma.Core.Domain.PartnerSync.Services
         EntityType = Enum.Parse<EntityType>(item.EntityType, true),
         ExternalId = item.EntityExternalId,
         URL = url
+      };
+    }
+
+    private static void ValidateMyOpportunityId(Guid myOpportunityId)
+    {
+      if (myOpportunityId == Guid.Empty)
+        throw new ArgumentNullException(nameof(myOpportunityId));
+    }
+
+    private static SyncInfoMyOpportunity? ToSyncInfoMyOpportunity(Guid myOpportunityId, IEnumerable<ProcessingLog> orderedItems)
+    {
+      var items = orderedItems
+        .GroupBy(o => new { o.SyncType, o.PartnerId })
+        .Select(g => g.First())
+        .ToList();
+
+      if (items.Count == 0) return null;
+
+      var syncTypes = items
+        .Select(o => Enum.Parse<SyncType>(o.SyncType, true))
+        .Distinct()
+        .ToList();
+
+      if (syncTypes.Count > 1)
+        throw new DataInconsistencyException($"MyOpportunity '{myOpportunityId}' has mixed synchronization types recorded in processing logs");
+
+      var syncType = syncTypes.Single();
+
+      if (syncType != SyncType.Pull)
+        throw new DataInconsistencyException($"MyOpportunity synchronization only supports pull synchronization for entity '{myOpportunityId}'");
+
+      var partners = items
+        .Select(ToSyncInfoMyOpportunityPartner)
+        .DistinctBy(o => new { o.Partner, o.ExternalId })
+        .ToList();
+
+      if (partners.Count != 1)
+        throw new DataInconsistencyException($"MyOpportunity pull synchronization requires exactly one partner for entity '{myOpportunityId}'");
+
+      return new SyncInfoMyOpportunity
+      {
+        SyncType = syncType,
+        Partners = partners
       };
     }
 
