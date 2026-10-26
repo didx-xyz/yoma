@@ -2,7 +2,9 @@ import {
   CustomFieldFilterOperator,
   type CustomFieldFilter,
 } from "~/api/models/opportunity";
+import { openToAllIdOf } from "~/components/Opportunity/Admin/opportunityCoreFields";
 import { sanitizeCustomFieldFilters } from "~/lib/customFields/customFieldFilterClauses";
+import { withCommitmentBucket } from "./format";
 import { RADIUS_OPTIONS_KM } from "./location";
 import type {
   DiscoveryFilters,
@@ -49,9 +51,25 @@ import { DEFAULT_DISCOVERY_STATE, PREFERENCE_KEYS } from "./types";
  * links and recent searches still carry it. A clause whose operator the API doesn't know goes
  * too, for the same reason. Complete clauses are kept exactly as sent, whatever their operator:
  * a shared link searches what it says.
+ *
+ * 2026-10-21: `group=` (targeted group ids), the "Who it's aimed at" section under More filters.
+ * Open to all is never a selection: the request adds it beside any pick (`searchRequest`), so a
+ * link carrying it is read without it.
+ *
+ * 2026-10-21: `time=` with a count below its bucket's (`<minuteId>:1`, the old "Up to a minute")
+ * reads as the bucket (`withCommitmentBucket`). Both rules need a lookup; until it has loaded the
+ * value is read as written (`ParseLookups`).
  */
 
 type Query = Record<string, string | string[] | undefined>;
+
+/** The lookups two params are read through; each empty until loaded (`DiscoveryLookups`). */
+export interface ParseLookups {
+  timeIntervals: { id: string; name: string }[];
+  targetedGroups: { id: string; name: string }[];
+}
+
+const NO_LOOKUPS: ParseLookups = { timeIntervals: [], targetedGroups: [] };
 
 const single = (query: Query, key: string): string | null => {
   const value = query[key];
@@ -109,10 +127,14 @@ const parseCustomFields = (raw: string | null): CustomFieldFilter[] => {
   }
 };
 
-export function parseDiscoveryQuery(query: Query): DiscoveryState {
+export function parseDiscoveryQuery(
+  query: Query,
+  lookups: ParseLookups = NO_LOOKUPS,
+): DiscoveryState {
   const time = single(query, "time");
   const [intervalId, countRaw] = time?.split(":") ?? [];
   const count = Number(countRaw);
+  const openToAllId = openToAllIdOf(lookups.targetedGroups);
   const reward = single(query, "reward");
   const paid = single(query, "paid");
   const sort = single(query, "sort");
@@ -135,7 +157,7 @@ export function parseDiscoveryQuery(query: Query): DiscoveryState {
       engagementTypes: list(query, "engagement"),
       commitment:
         intervalId && Number.isFinite(count) && count > 0
-          ? { intervalId, count }
+          ? withCommitmentBucket({ intervalId, count }, lookups.timeIntervals)
           : null,
       incentivized: paid === null ? null : paid === "1",
       hasReward: reward === null ? null : reward === "1",
@@ -143,6 +165,7 @@ export function parseDiscoveryQuery(query: Query): DiscoveryState {
       languages: list(query, "lang"),
       accommodations: list(query, "acc"),
       sdgs: list(query, "sdg"),
+      targetedGroups: list(query, "group").filter((id) => id !== openToAllId),
       provider: single(query, "provider"),
       featured: single(query, "featured") === "1" ? true : null,
       all: single(query, "all") === "1" ? true : null,
@@ -180,6 +203,7 @@ export function serializeDiscoveryState(state: DiscoveryState): string {
     ["lang", filters.languages],
     ["acc", filters.accommodations],
     ["sdg", filters.sdgs],
+    ["group", filters.targetedGroups],
   ];
   for (const [key, values] of lists)
     if (values.length > 0) params.set(key, values.join(","));

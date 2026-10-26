@@ -1,9 +1,10 @@
 import { type ReactElement, useRef, useState } from "react";
 import Image from "next/image";
-import { IoMdArrowUp, IoMdClose } from "react-icons/io";
+import { IoArrowUp, IoClose } from "react-icons/io5";
 import { uploadFileWithTus } from "~/api/services/uploads";
 import { toast } from "react-toastify";
 import { MAX_FILE_SIZE, MAX_FILE_SIZE_LABEL } from "~/lib/constants";
+import { BTN_OUTLINE_GREEN } from "../Common/buttonStyles";
 
 const formatFileSize = (bytes: number, decimals = 1): string => {
   if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
@@ -42,6 +43,14 @@ export interface InputProps {
   maxFileSizeLabel?: string; // Custom max file size label (defaults to MAX_FILE_SIZE_LABEL)
   onUploadProgress?: (fileIndex: number, progress: number) => void;
   onUploadError?: (fileIndex: number, error: Error) => void;
+  /**
+   * No grey card and no icon column: a label, one hint line and the outline-green Upload
+   * button, for an item inside the completion form's "Proof of completion" section
+   * (2026-10-21). The default keeps the card for the admin imports.
+   */
+  plain?: boolean;
+  /** Plain mode: the required-status mark beside the label (`RequiredMark`). */
+  mark?: React.ReactNode;
 }
 
 export const FileUpload: React.FC<InputProps> = ({
@@ -60,6 +69,8 @@ export const FileUpload: React.FC<InputProps> = ({
   maxFileSizeLabel = MAX_FILE_SIZE_LABEL,
   onUploadProgress,
   onUploadError,
+  plain = false,
+  mark,
 }) => {
   const [data, setFiles] = useState<FileUploadData[]>(
     files?.map((file) => ({
@@ -69,6 +80,10 @@ export const FileUpload: React.FC<InputProps> = ({
       uploadId: undefined,
     })) ?? [],
   );
+  // The list as of the last render, for the upload callbacks that finish long after the
+  // closure that started them: the TUS progress events already moved the list on by then.
+  const dataRef = useRef(data);
+  dataRef.current = data;
   const inputRef = useRef<HTMLInputElement>(null);
 
   // reset the native input so selecting the same file again triggers onChange
@@ -145,37 +160,35 @@ export const FileUpload: React.FC<InputProps> = ({
           }
 
           // Remove the failed file from the list
-          setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
-
-          // Trigger onUploadComplete with updated file list
-          const updatedFiles = data.filter((_, i) => i !== index);
+          const updatedFiles = dataRef.current.filter((_, i) => i !== index);
+          setFiles(updatedFiles);
           if (onUploadComplete) {
             onUploadComplete(updatedFiles);
           }
         },
       });
 
-      // Update the file with upload ID and mark as complete
-      setFiles((prevFiles) => {
-        const updatedFiles = prevFiles.map((f, i) =>
-          i === index
-            ? {
-                ...f,
-                uploadId: fileId,
-                isUploading: false,
-                progress: 100,
-                abortController: undefined, // Clear abort controller
-              }
-            : f,
-        );
-
-        // Trigger onUploadComplete callback with updated files
-        if (onUploadComplete) {
-          onUploadComplete(updatedFiles);
-        }
-
-        return updatedFiles;
-      });
+      // Update the file with upload ID and mark as complete. The parent's callback runs here,
+      // after the state update is queued — never inside the updater: React runs updater
+      // functions while rendering this component (twice in StrictMode, and again whenever it
+      // rebases a queue), so a parent setState from inside one is a render-phase update of
+      // another component, which React rejects and which cascades into "Maximum update depth
+      // exceeded" once the parent's re-render re-runs the queue (2026-10-21).
+      const updatedFiles = dataRef.current.map((f, i) =>
+        i === index
+          ? {
+              ...f,
+              uploadId: fileId,
+              isUploading: false,
+              progress: 100,
+              abortController: undefined, // Clear abort controller
+            }
+          : f,
+      );
+      setFiles(updatedFiles);
+      if (onUploadComplete) {
+        onUploadComplete(updatedFiles);
+      }
     } catch (error) {
       // Check if this was a cancellation - if so, it's already handled by onError callback
       const err = error as Error;
@@ -247,45 +260,75 @@ export const FileUpload: React.FC<InputProps> = ({
     }
   };
 
+  const uploadButton = (
+    <button
+      type="button"
+      className={
+        plain
+          ? `${BTN_OUTLINE_GREEN} h-10 w-fit px-4`
+          : "md:mr-2x md:scale-100x btn btn-circle border-green text-green btn-sm hover:border-green w-[95px] scale-[1.15x] bg-transparent normal-case"
+      }
+      // plain: several of these sit in one section, so each says which it is
+      aria-label={plain && label ? `Upload ${label}` : undefined}
+      onClick={fileUpload}
+    >
+      <IoArrowUp className="mr-1 h-4 w-4" />
+      <span className="inline">Upload</span>
+    </button>
+  );
+
   return (
     <div
       key={`OpportunityFileUpload_${id}`}
-      className="bg-gray-light flex w-full flex-col rounded-lg border-dotted"
+      className={
+        plain
+          ? "flex w-full flex-col"
+          : "bg-gray-light flex w-full flex-col rounded-lg border-dotted"
+      }
     >
       <div className="flex w-full flex-row">
-        <div className="ml-2 p-4 md:p-6">
-          {icon && (
-            <Image
-              src={icon}
-              alt="Icon Certificate"
-              width={28}
-              className="h-auto"
-              sizes="100vw"
-              priority={true}
-            />
+        {!plain && (
+          <div className="ml-2 p-4 md:p-6">
+            {icon && (
+              <Image
+                src={icon}
+                alt="Icon Certificate"
+                width={28}
+                className="h-auto"
+                sizes="100vw"
+                priority={true}
+              />
+            )}
+            {iconAlt && <div>{iconAlt}</div>}
+          </div>
+        )}
+        <div className={`flex grow flex-col ${plain ? "" : "p-4"}`}>
+          {plain ? (
+            <>
+              <div className="flex items-center gap-1.5 text-sm font-semibold text-black">
+                {mark}
+                <span>{label}</span>
+              </div>
+              <div className="text-gray-dark text-[13px]">
+                {fileTypesLabels} · up to {maxFileSizeLabel}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="font-semibold">{label}</div>
+              <div className="text-gray-dark text-sm">
+                Allowed file types:{" "}
+                <span className="font-bold italic">{fileTypesLabels}</span>
+              </div>
+              <div className="text-gray-dark text-sm">
+                Max file size:{" "}
+                <span className="font-bold italic">{maxFileSizeLabel}</span>
+              </div>
+            </>
           )}
-          {iconAlt && <div>{iconAlt}</div>}
-        </div>
-        <div className="flex grow flex-col p-4">
-          <div className="font-semibold">{label}</div>
-          <div className="text-gray-dark text-sm">
-            Allowed file types:{" "}
-            <span className="font-bold italic">{fileTypesLabels}</span>
-          </div>
-          <div className="text-gray-dark text-sm">
-            Max file size:{" "}
-            <span className="font-bold italic">{maxFileSizeLabel}</span>
-          </div>
 
-          <div className="mt-4 flex flex-col gap-4">
-            <button
-              type="button"
-              className="md:mr-2x md:scale-100x btn btn-circle border-green text-green btn-sm hover:border-green w-[95px] scale-[1.15x] bg-transparent normal-case"
-              onClick={fileUpload}
-            >
-              <IoMdArrowUp className="mr-1 h-4 w-4" />
-              <span className="inline">Upload</span>
-            </button>
+          <div className={`flex flex-col gap-4 ${plain ? "mt-3" : "mt-4"}`}>
+            {uploadButton}
             <input
               hidden
               ref={inputRef}
@@ -344,7 +387,7 @@ export const FileUpload: React.FC<InputProps> = ({
                           fileData.isUploading ? "Cancel upload" : "Remove file"
                         }
                       >
-                        <IoMdClose className="h-6 w-6" />
+                        <IoClose className="h-6 w-6" />
                       </button>
                     </div>
 
@@ -364,7 +407,7 @@ export const FileUpload: React.FC<InputProps> = ({
               </div>
             )}
 
-            {children && <div>{children}</div>}
+            {children && <div className={plain ? "-mt-2" : ""}>{children}</div>}
           </div>
         </div>
       </div>

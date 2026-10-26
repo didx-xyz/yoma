@@ -22,6 +22,7 @@ import {
 import { PAGE_SIZE_MEDIUM } from "~/lib/constants";
 import { skillIdsInValues } from "~/lib/customFields/skillLabels";
 import { dateInputToUTC, debounce, utcToDateInput } from "~/lib/utils";
+import { RequiredMark } from "./RequiredMark";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CustomFields (YOM-1244 / YOM-1255)
@@ -85,6 +86,12 @@ export interface CustomFieldsProps {
    * Must be referentially stable (memoize it). Omitted → purely definition-driven.
    */
   rules?: CustomFieldRules;
+  /**
+   * `"completion"` is the youth's completion form (2026-10-21): no "Additional details" title
+   * (its section header replaces it), "(optional)" after every optional label instead of the
+   * required marker, and full-width controls. `"editor"` (default) is unchanged.
+   */
+  variant?: "editor" | "completion";
 }
 
 export interface CustomFieldRulesResult {
@@ -153,27 +160,54 @@ function groupDefinitions(
   return groups;
 }
 
-function isEmptyEntry(entry: CustomFieldValueRequest | undefined): boolean {
+/** The definitions in the order the fields render: by group, subgroup, sort order, title. */
+export function orderCustomFieldDefinitions(
+  definitions: CustomFieldDefinition[] | null | undefined,
+): CustomFieldDefinition[] {
+  return groupDefinitions(definitions ?? []).flatMap((group) =>
+    group.subGroups.flatMap((subGroup) => subGroup.definitions),
+  );
+}
+
+export function isCustomFieldEntryEmpty(
+  entry: CustomFieldValueRequest | undefined,
+): boolean {
   if (!entry) return true;
   if (entry.values != null) return entry.values.length === 0;
   return entry.value == null || entry.value.trim() === "";
 }
 
 // Validates a non-empty numeric value against the C# API's invariant parsing.
-// Exported so the filter UI (CustomFieldFilters) applies the identical rules.
+// Exported so the filter UI (CustomFieldFilters) applies the identical rules. With the
+// field's `title` the message names the field; without one (the filters) it is generic.
 export function getCustomFieldNumberError(
   dataType: string,
   value: string,
+  title?: string,
 ): string | undefined {
   if (dataType === CustomFieldDataType.Integer) {
-    if (!INTEGER_REGEX.test(value)) return "Please enter a whole number.";
+    if (!INTEGER_REGEX.test(value))
+      return title
+        ? `${title} must be a whole number, like 3.`
+        : "Enter a whole number, like 3.";
     const parsed = Number(value);
-    if (parsed < INT32_MIN || parsed > INT32_MAX)
-      return `Number must be between ${INT32_MIN} and ${INT32_MAX}.`;
+    if (parsed > INT32_MAX)
+      return title
+        ? `${title} is too big a number.`
+        : "That number is too big.";
+    if (parsed < INT32_MIN)
+      return title
+        ? `${title} is too small a number.`
+        : "That number is too small.";
   } else if (dataType === CustomFieldDataType.Decimal) {
-    if (!DECIMAL_REGEX.test(value)) return "Please enter a valid number.";
+    if (!DECIMAL_REGEX.test(value))
+      return title
+        ? `${title} must be a number, like 1500 or 12.5.`
+        : "Enter a number, like 1500 or 12.5.";
     if (exceedsDecimalMax(value))
-      return "Number exceeds the maximum allowed value.";
+      return title
+        ? `${title} is too big a number.`
+        : "That number is too big.";
   }
   return undefined;
 }
@@ -265,17 +299,20 @@ export function getCustomFieldError(
   definition: CustomFieldDefinition,
   entry: CustomFieldValueRequest | undefined,
 ): string | undefined {
-  const empty = isEmptyEntry(entry);
-
-  if (definition.isRequired && empty) return `${definition.title} is required.`;
-
+  const empty = isCustomFieldEntryEmpty(entry);
   const dataType = dataTypeOf(definition);
 
+  if (definition.isRequired && empty) return requiredMessage(definition);
+
   if (!empty && entry?.value) {
-    const numErr = getCustomFieldNumberError(dataType, entry.value);
+    const numErr = getCustomFieldNumberError(
+      dataType,
+      entry.value,
+      definition.title,
+    );
     if (numErr) return numErr;
     if (dataType === CustomFieldDataType.Date && !isValidDateOnly(entry.value))
-      return "Please enter a valid date.";
+      return `Enter a real date for ${definition.title}.`;
   }
 
   const subject =
@@ -288,7 +325,8 @@ export function getCustomFieldError(
         )
       )
         return (
-          definition.validationErrorMessage ?? "Please enter a valid value."
+          definition.validationErrorMessage ??
+          `Check ${definition.title}: it isn't in the format we need.`
         );
     } catch {
       // ignore malformed regex from the definition
@@ -296,6 +334,17 @@ export function getCustomFieldError(
   }
 
   return undefined;
+}
+
+// "Enter {title}." for typed values, "Choose {title}." for options and lookups, and
+// "Choose Yes or No for {title}." for a Boolean (2026-10-21 copy).
+function requiredMessage(definition: CustomFieldDefinition): string {
+  const dataType = dataTypeOf(definition);
+  if (dataType === CustomFieldDataType.Boolean)
+    return `Choose Yes or No for ${definition.title}.`;
+  if (dataType === CustomFieldDataType.Option)
+    return `Choose ${definition.title}.`;
+  return `Enter ${definition.title}.`;
 }
 
 // Validates a full value collection against its definitions (joined by key).
@@ -339,7 +388,11 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
   intro,
   hideDescriptions = false,
   rules,
+  variant = "editor",
 }) => {
+  const completion = variant === "completion";
+  // the editor's controls take half the row; the completion form's section card is narrow
+  const controlWidth = completion ? "" : "md:w-1/2";
   const groups = useMemo(
     () => groupDefinitions(definitions ?? []),
     [definitions],
@@ -405,7 +458,9 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
 
   const applyChange = (edited: ValueMap) => {
     let next = edited;
-    let collection = Object.values(next).filter((e) => !isEmptyEntry(e));
+    let collection = Object.values(next).filter(
+      (e) => !isCustomFieldEntryEmpty(e),
+    );
 
     // host rules may clear dependent values (e.g. an undisclosed salary drops its amounts)
     if (rules) {
@@ -426,20 +481,26 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
     propagate(collection); // debounced parent update
   };
 
-  const setScalar = (definition: CustomFieldDefinition, value: string) =>
+  // a change marks the field touched too, so its inline error keeps pace with the host's
+  // live error count rather than waiting for blur
+  const setScalar = (definition: CustomFieldDefinition, value: string) => {
+    markTouched(definition.key);
     applyChange({
       ...valueMap,
       [definition.key]: { key: definition.key, value },
     });
+  };
 
   const setOptionValues = (
     definition: CustomFieldDefinition,
     optionValues: string[],
-  ) =>
+  ) => {
+    markTouched(definition.key);
     applyChange({
       ...valueMap,
       [definition.key]: { key: definition.key, values: optionValues },
     });
+  };
 
   const markTouched = (key: string) =>
     setTouched((prev) => (prev[key] ? prev : { ...prev, [key]: true }));
@@ -536,7 +597,9 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
   // host rules, evaluated against the live (un-debounced) values
   const ruleResult = useMemo(
     () =>
-      rules?.(Object.values(valueMap).filter((e) => !isEmptyEntry(e))) ?? null,
+      rules?.(
+        Object.values(valueMap).filter((e) => !isCustomFieldEntryEmpty(e)),
+      ) ?? null,
     [rules, valueMap],
   );
   const ruleErrors = useMemo(() => {
@@ -557,19 +620,54 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
       : (getCustomFieldError(definition, valueMap[definition.key]) ??
         ruleErrors.get(definition.key.toLowerCase()));
 
+  // the field's label: the completion form marks a required field with its status (done /
+  // missing, pink once the host shows all errors) to the left and says "(optional)" on the
+  // others
+  const labelOf = (definition: CustomFieldDefinition): React.ReactNode => {
+    if (!completion) return definition.title;
+    if (!definition.isRequired)
+      return (
+        <>
+          {definition.title}
+          <span className="text-gray-dark font-normal"> (optional)</span>
+        </>
+      );
+    return (
+      <>
+        <RequiredMark
+          done={!fieldError(definition)}
+          afterSubmit={!!showErrors}
+        />
+        {definition.title}
+      </>
+    );
+  };
+
+  // the id the field's label points at (the selects already used it as `inputId`); the
+  // required Boolean radiogroup has none, its `aria-label` names it
+  const controlIdOf = (
+    definition: CustomFieldDefinition,
+  ): string | undefined =>
+    dataTypeOf(definition) === CustomFieldDataType.Boolean &&
+    definition.isRequired
+      ? undefined
+      : `input_customfield_${definition.key}`;
+
   const renderControl = (definition: CustomFieldDefinition) => {
     const entry = valueMap[definition.key];
     const dataType = dataTypeOf(definition);
     const key = definition.key;
     const disabled = isDisabled(definition);
+    const id = controlIdOf(definition);
 
     switch (dataType) {
       case CustomFieldDataType.Integer:
       case CustomFieldDataType.Decimal:
         return (
           <FormInput
-            className="md:w-1/2"
+            className={controlWidth}
             inputProps={{
+              id,
               type: "number",
               step: dataType === CustomFieldDataType.Integer ? "1" : "any",
               placeholder: "Enter a number...",
@@ -615,7 +713,8 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
 
         return (
           <select
-            className="select select-bordered border-gray w-full rounded-md focus:outline-none md:w-1/2"
+            id={id}
+            className={`select select-bordered border-gray w-full rounded-md focus:outline-none ${controlWidth}`}
             value={
               BOOLEAN_OPTIONS.some((o) => o.value === current) ? current : ""
             }
@@ -638,8 +737,9 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
       case CustomFieldDataType.DateTime:
         return (
           <FormInput
-            className="md:w-1/2"
+            className={controlWidth}
             inputProps={{
+              id,
               type: "date",
               // API stores/returns UTC ISO; the date input needs YYYY-MM-DD
               value: utcToDateInput(entry?.value),
@@ -655,8 +755,9 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
       case CustomFieldDataType.Date:
         return (
           <FormInput
-            className="md:w-1/2"
+            className={controlWidth}
             inputProps={{
+              id,
               type: "date",
               // Date-only: the input's YYYY-MM-DD IS the wire value — no UTC conversion,
               // which would shift the day for anyone east or west of UTC.
@@ -676,8 +777,9 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
       default:
         return (
           <FormInput
-            className="md:w-1/2"
+            className={controlWidth}
             inputProps={{
+              id,
               type: "text",
               placeholder: "Enter a value...",
               value: entry?.value ?? "",
@@ -709,7 +811,7 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
           instanceId={`customfield_${key}`}
           classNames={{
             control: () =>
-              "input input-xs text-[1rem] h-fit w-full !border-gray md:w-1/2",
+              `input input-xs text-[1rem] h-fit w-full !border-gray ${controlWidth}`,
           }}
           isMulti={isMulti}
           isDisabled={disabled}
@@ -760,7 +862,7 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
         instanceId={`customfield_${key}`}
         classNames={{
           control: () =>
-            "input w-full !border-gray pr-0 pl-2 h-fit py-1 md:w-1/2",
+            `input w-full !border-gray pr-0 pl-2 h-fit py-1 ${controlWidth}`,
         }}
         isMulti={isMulti}
         isClearable={true}
@@ -805,12 +907,46 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
   const subLabelOf = (definition: CustomFieldDefinition): string | undefined =>
     hideDescriptions ? undefined : (definition.description ?? undefined);
 
+  // One field: the label, the control in its keyed wrapper, and the error once the field was
+  // touched or the host shows all errors. `data-completion-error` marks a shown error, so the
+  // completion form can find the first one in document order.
+  const renderField = (
+    definition: CustomFieldDefinition,
+    badge?: React.ReactNode,
+  ) => {
+    const error = fieldError(definition);
+    const showError = !!(touched[definition.key] || showErrors);
+
+    return (
+      <FormField
+        key={definition.key}
+        label={labelOf(definition)}
+        subLabel={subLabelOf(definition)}
+        badge={badge}
+        htmlFor={controlIdOf(definition)}
+        showWarningIcon={!completion && !!error}
+        showError={showError}
+        error={error}
+      >
+        <div
+          data-custom-field-key={definition.key}
+          data-custom-field-datatype={definition.dataType}
+          data-completion-error={error && showError ? "" : undefined}
+        >
+          {renderControl(definition)}
+        </div>
+      </FormField>
+    );
+  };
+
   return (
     <>
-      <div className="mb-4 flex flex-col gap-2">
-        <h5 className="font-bold tracking-wider">Additional details</h5>
-        {intro && <p className="-mt-2 text-sm">{intro}</p>}
-      </div>
+      {!completion && (
+        <div className="mb-4 flex flex-col gap-2">
+          <h5 className="font-bold tracking-wider">Additional details</h5>
+          {intro && <p className="-mt-2 text-sm">{intro}</p>}
+        </div>
+      )}
 
       <div
         className="flex flex-col gap-4"
@@ -820,27 +956,9 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
           <>
             {groups.flatMap((group) =>
               group.subGroups.flatMap((subGroup) =>
-                subGroup.definitions.map((definition) => {
-                  const error = fieldError(definition);
-
-                  return (
-                    <FormField
-                      key={definition.key}
-                      label={definition.title}
-                      subLabel={subLabelOf(definition)}
-                      showWarningIcon={!!error}
-                      showError={!!(touched[definition.key] || showErrors)}
-                      error={error}
-                    >
-                      <div
-                        data-custom-field-key={definition.key}
-                        data-custom-field-datatype={definition.dataType}
-                      >
-                        {renderControl(definition)}
-                      </div>
-                    </FormField>
-                  );
-                }),
+                subGroup.definitions.map((definition) =>
+                  renderField(definition),
+                ),
               ),
             )}
           </>
@@ -848,8 +966,9 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
           <>
             {groups.map((group) => (
               <div key={group.group} className="flex flex-col gap-3">
+                {/* the label wraps before the count is pushed out of a 320px form */}
                 <div className="flex items-center gap-3">
-                  <span className="text-green shrink-0 text-sm font-semibold tracking-[0.2em] uppercase">
+                  <span className="text-green min-w-0 text-sm font-semibold tracking-[0.12em] uppercase">
                     {group.group}
                   </span>
                   <span className="border-gray-light h-px flex-1 border-t"></span>
@@ -869,35 +988,16 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
                     key={`${group.group}-${subGroup.subGroup ?? "default"}`}
                     className="flex flex-col gap-3"
                   >
-                    {subGroup.definitions.map((definition) => {
-                      const error = fieldError(definition);
-                      const badge = subGroup.subGroup;
-
-                      return (
-                        <FormField
-                          key={definition.key}
-                          label={definition.title}
-                          subLabel={subLabelOf(definition)}
-                          badge={
-                            badge ? (
-                              <div className="badge bg-green-light text-green-dark">
-                                {badge}
-                              </div>
-                            ) : undefined
-                          }
-                          showWarningIcon={!!error}
-                          showError={!!(touched[definition.key] || showErrors)}
-                          error={error}
-                        >
-                          <div
-                            data-custom-field-key={definition.key}
-                            data-custom-field-datatype={definition.dataType}
-                          >
-                            {renderControl(definition)}
+                    {subGroup.definitions.map((definition) =>
+                      renderField(
+                        definition,
+                        subGroup.subGroup ? (
+                          <div className="badge bg-green-light text-green-dark">
+                            {subGroup.subGroup}
                           </div>
-                        </FormField>
-                      );
-                    })}
+                        ) : undefined,
+                      ),
+                    )}
                   </div>
                 ))}
               </div>

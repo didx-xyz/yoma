@@ -6,6 +6,7 @@ import type {
   EngagementType,
   Language,
   SustainableDevelopmentGoal,
+  TargetedGroup,
   TimeInterval,
 } from "~/api/models/lookups";
 import { ACCESSIBILITY_NAME_OTHER } from "~/api/models/lookups";
@@ -18,6 +19,7 @@ import {
   getAccessibilityOptions,
   getCurrencies,
   getEngagementTypes,
+  getLanguages,
   getTimeIntervals,
 } from "~/api/services/lookups";
 import {
@@ -26,6 +28,7 @@ import {
   getOpportunityCountries,
   getOpportunityLanguages,
   getOpportunitySustainableDevelopmentGoals,
+  getOpportunityTargetedGroups,
   getOpportunityTypes,
   getZltoRewardRanges,
 } from "~/api/services/opportunities";
@@ -59,6 +62,7 @@ export type LookupKey =
   | "zltoRanges"
   | "accommodations"
   | "sdgs"
+  | "targetedGroups"
   | "currencies";
 
 export interface DiscoveryLookups {
@@ -66,6 +70,12 @@ export interface DiscoveryLookups {
   categories: OpportunityCategory[];
   countries: Country[];
   languages: Language[];
+  /**
+   * The FULL language list — the wizard's search (`useLanguageSearch`), where `languages` is the
+   * facet list of what published opportunities use. Labels a saved or linked language no
+   * opportunity lists (2026-10-21). The same cached query, never a request of its own.
+   */
+  allLanguages: Language[];
   engagementTypes: EngagementType[];
   timeIntervals: TimeInterval[];
   zltoRanges: OpportunitySearchCriteriaZltoRewardRange[];
@@ -77,6 +87,11 @@ export interface DiscoveryLookups {
    */
   accessibility: Accessibility[];
   sdgs: SustainableDevelopmentGoal[];
+  /**
+   * The facet list of targeted groups ("Who it's aimed at", 2026-10-21). The search request
+   * finds Open to all in it by name, to include alongside any picked group.
+   */
+  targetedGroups: TargetedGroup[];
   currencies: Currency[];
   /** Opportunity Type enum name → GUID, for the search request. */
   typeIdByName: Record<string, string>;
@@ -89,10 +104,11 @@ export interface DiscoveryLookups {
   otherAccommodationId: string | null | undefined;
   /**
    * Whether the lookups every search request resolves through have settled: the types loaded (it
-   * sends their ids); the countries and categories loaded or failed once — Worldwide and the
-   * goal's category are found in them. A failed list degrades the request at once rather than
-   * holding it through the retries; one still loading would send a request that is replaced a
-   * moment later.
+   * sends their ids); the countries, categories, targeted groups and time intervals loaded or
+   * failed once — Worldwide, the goal's category and Open to all are found in them, and a `time=`
+   * below its bucket reads through the intervals (`urlCodec`). A failed list degrades the request
+   * at once rather than holding it through the retries; one still loading would send a request
+   * that is replaced a moment later.
    */
   searchReady: boolean;
   /**
@@ -109,6 +125,8 @@ export interface DiscoveryLookups {
 }
 
 const STALE_TIME = 5 * 60 * 1000;
+/** One empty list for every lookup not loaded yet, so a consumer's memo keyed on it holds. */
+const NONE: never[] = [];
 
 export function useDiscoveryLookups(): DiscoveryLookups {
   const options = { staleTime: STALE_TIME };
@@ -157,6 +175,11 @@ export function useDiscoveryLookups(): DiscoveryLookups {
     queryFn: () => getOpportunitySustainableDevelopmentGoals(),
     ...options,
   });
+  const targetedGroupsQuery = useQuery({
+    queryKey: ["discovery", "lookup", "targetedGroups"],
+    queryFn: () => getOpportunityTargetedGroups(),
+    ...options,
+  });
   const currenciesQuery = useQuery({
     queryKey: ["discovery", "lookup", "currencies"],
     queryFn: () => getCurrencies(),
@@ -167,6 +190,12 @@ export function useDiscoveryLookups(): DiscoveryLookups {
   const accessibilityQuery = useQuery({
     queryKey: ["discovery", "lookup", "accessibility"],
     queryFn: () => getAccessibilityOptions(),
+    staleTime: Infinity,
+  });
+  // The FULL language list — the wizard's query (`useLanguageSearch`), one cache entry.
+  const allLanguagesQuery = useQuery({
+    queryKey: ["discovery", "lookup", "allLanguages"],
+    queryFn: () => getLanguages(),
     staleTime: Infinity,
   });
 
@@ -180,6 +209,7 @@ export function useDiscoveryLookups(): DiscoveryLookups {
     zltoRangesQuery,
     accommodationsQuery,
     sdgsQuery,
+    targetedGroupsQuery,
     currenciesQuery,
   ];
   // Presented in the fixed enum-name order (Job · Learning · ImpactAction · Event ·
@@ -198,17 +228,19 @@ export function useDiscoveryLookups(): DiscoveryLookups {
     list?.find((option) => option.name === ACCESSIBILITY_NAME_OTHER)?.id;
 
   return {
-    types: types ?? [],
-    categories: categoriesQuery.data ?? [],
-    countries: countriesQuery.data ?? [],
-    languages: languagesQuery.data ?? [],
-    engagementTypes: engagementTypesQuery.data ?? [],
-    timeIntervals: timeIntervalsQuery.data ?? [],
-    zltoRanges: zltoRangesQuery.data ?? [],
-    accommodations: accommodationsQuery.data ?? [],
-    accessibility: accessibilityQuery.data ?? [],
-    sdgs: sdgsQuery.data ?? [],
-    currencies: currenciesQuery.data ?? [],
+    types: types ?? NONE,
+    categories: categoriesQuery.data ?? NONE,
+    countries: countriesQuery.data ?? NONE,
+    languages: languagesQuery.data ?? NONE,
+    allLanguages: allLanguagesQuery.data ?? NONE,
+    engagementTypes: engagementTypesQuery.data ?? NONE,
+    timeIntervals: timeIntervalsQuery.data ?? NONE,
+    zltoRanges: zltoRangesQuery.data ?? NONE,
+    accommodations: accommodationsQuery.data ?? NONE,
+    accessibility: accessibilityQuery.data ?? NONE,
+    sdgs: sdgsQuery.data ?? NONE,
+    targetedGroups: targetedGroupsQuery.data ?? NONE,
+    currencies: currenciesQuery.data ?? NONE,
     typeIdByName: Object.fromEntries((types ?? []).map((t) => [t.name, t.id])),
     otherAccommodationId: hasSettled(accessibilityQuery)
       ? (otherIn(accessibilityQuery.data) ??
@@ -218,7 +250,9 @@ export function useDiscoveryLookups(): DiscoveryLookups {
     searchReady:
       (types?.length ?? 0) > 0 &&
       hasSettled(countriesQuery) &&
-      hasSettled(categoriesQuery),
+      hasSettled(categoriesQuery) &&
+      hasSettled(targetedGroupsQuery) &&
+      hasSettled(timeIntervalsQuery),
     accessibilitySettled: hasSettled(accessibilityQuery),
     status: {
       types: status(typesQuery),
@@ -230,11 +264,12 @@ export function useDiscoveryLookups(): DiscoveryLookups {
       zltoRanges: status(zltoRangesQuery),
       accommodations: status(accommodationsQuery),
       sdgs: status(sdgsQuery),
+      targetedGroups: status(targetedGroupsQuery),
       currencies: status(currenciesQuery),
     },
     typesFailed: typesQuery.isError,
     retry: () => {
-      for (const query of [...queries, accessibilityQuery])
+      for (const query of [...queries, accessibilityQuery, allLanguagesQuery])
         if (query.isError) void query.refetch();
     },
   };

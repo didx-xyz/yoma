@@ -570,7 +570,7 @@ const OpportunityVerifications: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | ✅ Submissions</title>
+        <title>Yoma | Submissions</title>
       </Head>
 
       {isLoading && <Loading />}

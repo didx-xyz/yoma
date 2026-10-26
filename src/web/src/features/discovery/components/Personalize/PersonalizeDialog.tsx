@@ -12,6 +12,7 @@ import {
 import { ageInYears } from "../../lib/dates";
 import { homeCountryId } from "../../lib/location";
 import { EMPTY_DISCOVERY_FILTERS } from "../../lib/types";
+import { takeWizardDraft } from "../../lib/wizardReturn";
 import { PREFERENCE_STEPS } from "../../registry/preferenceSteps";
 import { useDiscovery } from "../../state/DiscoveryContext";
 import { useDialogDismiss } from "../../state/useDialogDismiss";
@@ -39,11 +40,14 @@ import { WelcomeStep } from "./WelcomeStep";
  * NB: mount this only while open (`{open && <PersonalizeDialog …>}`). The draft is seeded from
  * the stored preferences in the `useState` initializer, which runs at MOUNT — a permanently
  * mounted dialog would seed it while the preferences query is still loading and edit an empty
- * form forever. Mount-on-open also resets the wizard to step 1 each time.
+ * form forever. Mount-on-open also resets the wizard to step 1 each time — unless `initialStep`
+ * names the step to open on (back from the profile page, `lib/wizardReturn.ts`): then the welcome
+ * is skipped and the draft stashed on the way out is picked up instead of the stored preferences.
  */
 export const PersonalizeDialog: React.FC<{
   onClose: () => void;
-}> = ({ onClose }) => {
+  initialStep?: number;
+}> = ({ onClose, initialStep }) => {
   const {
     preferences,
     savePreferences,
@@ -64,7 +68,9 @@ export const PersonalizeDialog: React.FC<{
   const profile = useAtomValue(userProfileAtom);
   // Completed = preferences exist (signed in: saved; anonymous: in the session). Browse on my
   // own and the close button leave it uncompleted, so the welcome shows again next time.
-  const [welcome, setWelcome] = useState(() => preferences === null);
+  const [welcome, setWelcome] = useState(
+    () => preferences === null && initialStep === undefined,
+  );
   // Welcome → step 1 (round 10 follow-ups, F2): the welcome's content fades out for 100ms, then
   // step 1 renders in the SAME frame, which eases to the wizard's size and fill. `cameFromWelcome`
   // is never reset while mounted; a wizard opened directly (preferences exist) never sets it, so
@@ -107,10 +113,16 @@ export const PersonalizeDialog: React.FC<{
     if (!welcome && cameFromWelcome)
       headingRef.current?.focus({ preventScroll: true });
   }, [welcome, cameFromWelcome]);
-  const [step, setStep] = useState(0);
-  const [draft, setDraft] = useState<UserPreferences>(
-    () => preferences ?? EMPTY_USER_PREFERENCES,
-  );
+  const [step, setStep] = useState(initialStep ?? 0);
+  const [draft, setDraft] = useState<UserPreferences>(() => {
+    // Always taken, so a stash left by an abandoned trip never seeds a later opening.
+    const stashed = takeWizardDraft();
+    return (
+      (initialStep === undefined ? null : stashed) ??
+      preferences ??
+      EMPTY_USER_PREFERENCES
+    );
+  });
   const contentRef = useRef<HTMLDivElement>(null);
 
   // Moving between steps starts the new step at the top, not wherever the last one was scrolled.
@@ -132,6 +144,7 @@ export const PersonalizeDialog: React.FC<{
         scope === "user" ? ageInYears(profile?.dateOfBirth, new Date()) : null,
       verifiedSkillIds,
       otherAccommodationId: lookups.otherAccommodationId,
+      timeIntervals: lookups.timeIntervals,
     }),
     false,
     [],

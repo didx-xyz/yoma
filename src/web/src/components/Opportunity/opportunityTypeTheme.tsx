@@ -2,88 +2,55 @@ import { TimeIntervalOption } from "~/api/models/common";
 import type { OpportunityInfo } from "~/api/models/opportunity";
 
 // ---------------------------------------------------------------------------
-// Shared per-opportunity-type theming + small presentational pieces.
-// Used by the opportunity cards (OpportunityPublicSmall) and the opportunity
-// details page (OpportunityPublicDetails) so they share one source of truth.
+// Shared per-opportunity-type copy (labels, CTA text) + small presentational pieces.
+// Used by the opportunity cards, rows and the details page so they share one source of truth.
+// Type COLOURS are not here: every surface takes them from `~/lib/typeColours.ts`
+// (`typeBadgeClass`, `typeBandClass`), the one palette (YOM-1283, 2026-10-21).
 // ---------------------------------------------------------------------------
 
 export interface TypeConfig {
-  label: string; // badge label
-  badgeLabel: string; // badge label
-  badgeClassName: string; // tinted badge background/text
-  bubbleClassName: string; // gradient behind the org logo
-  accentClassName: string; // subtle accent (border colour) for type theming
+  /** The type's name, on the badge too — Other reads "Other", as the discovery card's chip does (2026-10-21). */
+  label: string;
   ctaText: string; // call-to-action label
   ctaTitle: string; // call-to-action title attr
-  ctaClassName: string; // call-to-action background/hover
   gotoExternalLinkButtonText: string; //  "go to oppoortunity" button text
 }
 
 export const TYPE_CONFIG: Record<string, TypeConfig> = {
   Job: {
     label: "Job",
-    badgeLabel: "Job",
-    badgeClassName: "bg-purple text-white",
-    bubbleClassName: "bg-gradient-to-br from-purple-tint to-purple-light/40",
-    accentClassName: "border-purple",
     ctaText: "Apply now →",
     ctaTitle: "Apply for this job opportunity",
-    ctaClassName: "bg-purple hover:bg-purple-shade text-white",
     gotoExternalLinkButtonText: "Apply now",
   },
   Learning: {
     label: "Learning",
-    badgeLabel: "Learning",
-    badgeClassName: "bg-green text-white",
-    bubbleClassName: "bg-gradient-to-br from-green-light to-green-dark/30",
-    accentClassName: "border-green",
     ctaText: "Start learning →",
     ctaTitle: "Start this learning opportunity",
-    ctaClassName: "bg-green hover:bg-green-dark text-white",
     gotoExternalLinkButtonText: "Start learning",
   },
   Event: {
     label: "Event",
-    badgeLabel: "Event",
-    badgeClassName: "bg-blue text-white",
-    bubbleClassName: "bg-gradient-to-br from-blue-light to-blue/30",
-    accentClassName: "border-blue",
     ctaText: "View event →",
     ctaTitle: "View this event",
-    ctaClassName: "bg-blue hover:bg-blue-dark text-white",
     gotoExternalLinkButtonText: "View event",
   },
   ImpactAction: {
     label: "Impact Action",
-    badgeLabel: "Impact Action",
-    badgeClassName: "bg-yellow text-white",
-    bubbleClassName: "bg-gradient-to-br from-yellow-light to-yellow/30",
-    accentClassName: "border-yellow",
     ctaText: "View impact action →",
     ctaTitle: "View this impact action",
-    ctaClassName: "bg-yellow/90 hover:bg-yellow/60 text-white",
     gotoExternalLinkButtonText: "View impact action",
   },
   Entrepreneurship: {
     label: "Entrepreneurship",
-    badgeLabel: "Entrepreneurship",
-    badgeClassName: "bg-blue-dark text-white",
-    bubbleClassName: "bg-gradient-to-br from-blue-light to-blue-dark/30",
-    accentClassName: "border-blue-dark",
     ctaText: "View programme →",
     ctaTitle: "View this entrepreneurship programme",
-    ctaClassName: "bg-blue-dark hover:bg-blue text-white",
     gotoExternalLinkButtonText: "Go to programme",
   },
   Other: {
     label: "Other",
-    badgeLabel: "Opportunity",
-    badgeClassName: "bg-gray-dark text-white",
-    bubbleClassName: "bg-gradient-to-br from-gray-light to-gray/60",
-    accentClassName: "border-gray-dark",
     ctaText: "View opportunity →",
     ctaTitle: "View this opportunity",
-    ctaClassName: "bg-gray-dark hover:bg-black text-white",
     gotoExternalLinkButtonText: "Go to opportunity",
   },
 };
@@ -93,13 +60,8 @@ export const getTypeConfig = (type: string | undefined): TypeConfig => {
   // Fallback for unknown types: behave like a generic opportunity.
   return {
     label: type ?? "Opportunity",
-    badgeLabel: type ?? "Opportunity",
-    badgeClassName: "bg-purple-tint text-purple",
-    bubbleClassName: "bg-gradient-to-br from-purple-tint to-purple-light/40",
-    accentClassName: "border-purple",
     ctaText: "View →",
     ctaTitle: "View this opportunity",
-    ctaClassName: "bg-purple hover:bg-purple-shade text-white",
     gotoExternalLinkButtonText: "Go to opportunity",
   };
 };
@@ -217,7 +179,7 @@ export const OpportunityTypeBadge: React.FC<{
   data: OpportunityInfo;
   className?: string;
 }> = ({ data, className = "" }) => {
-  const type = getTypeConfig(data.type).badgeLabel;
+  const type = getTypeConfig(data.type).label;
 
   if (!type) return null;
 

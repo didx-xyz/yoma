@@ -11,6 +11,7 @@ import {
   settlePushes,
 } from "../lib/discoveryReducer";
 import type { DiscoveryState } from "../lib/types";
+import type { ParseLookups } from "../lib/urlCodec";
 import { parseDiscoveryQuery, serializeDiscoveryState } from "../lib/urlCodec";
 
 /**
@@ -26,15 +27,19 @@ import { parseDiscoveryQuery, serializeDiscoveryState } from "../lib/urlCodec";
  *
  * `attribution` is what the reducer's clause rule needs beyond the URL. A ref the provider keeps
  * current, read at each dispatch, so an async handler holding an older `dispatch` still reduces
- * with the current fragments (and the provider can call this before it knows them).
+ * with the current fragments (and the provider can call this before it knows them). `lookups` is
+ * what the parser reads two params through (`ParseLookups`); the state re-parses when they load.
  *
  * `dispatch` pushes nothing when the action changes nothing (`needsPush`), and nothing once the
  * surface has unmounted: an async handler finishing after the youth left (a save resolving on a
  * detail page) would push them back to discover.
  */
-export function useDiscoveryQuery(attribution: {
-  readonly current: ClauseAttribution;
-}): {
+export function useDiscoveryQuery(
+  attribution: {
+    readonly current: ClauseAttribution;
+  },
+  lookups: ParseLookups,
+): {
   state: DiscoveryState;
   /** Returns the query string pushed, or `null` when nothing was. */
   dispatch: (action: DiscoveryAction) => string | null;
@@ -51,8 +56,8 @@ export function useDiscoveryQuery(attribution: {
   const router = useRouter();
 
   const state = useMemo(
-    () => parseDiscoveryQuery(router.query),
-    [router.query],
+    () => parseDiscoveryQuery(router.query, lookups),
+    [router.query, lookups],
   );
   const rendered = useMemo(() => serializeDiscoveryState(state), [state]);
 
@@ -83,7 +88,7 @@ export function useDiscoveryQuery(attribution: {
       pushed.current = reduceFromLatest(
         pushed.current,
         router.query,
-        parseDiscoveryQuery,
+        (query) => parseDiscoveryQuery(query, lookups),
         action,
         attribution.current,
       );
@@ -101,7 +106,7 @@ export function useDiscoveryQuery(attribution: {
       );
       return queryString;
     },
-    [router, attribution],
+    [router, attribution, lookups],
   );
 
   // Until the router hydrates, `query` is {} and would read as the default state.

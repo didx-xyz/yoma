@@ -137,7 +137,7 @@ Entrepreneurship is now a Yoma Opportunity type, based on Mpho's later confirmat
 | [`YOM-1280-api-opportunity-credential-issuance-with-custom-fields/`](./YOM-1280-api-opportunity-credential-issuance-with-custom-fields/feature.md)               | [YOM-1280](https://linear.app/didx/issue/YOM-1280) | api  | review — six-type Opportunity/CF smoke passed; live history/retry follow-up remains |
 | [`YOM-1281-ui-admin-credential-schema-management-by-type/`](./YOM-1281-ui-admin-credential-schema-management-by-type/feature.md)                                 | [YOM-1281](https://linear.app/didx/issue/YOM-1281) | web  | review — pending live API create/edit                                                 |
 | [`YOM-1282-ui-opportunity-credential-schema-selection/`](./YOM-1282-ui-opportunity-credential-schema-selection/feature.md)                                       | [YOM-1282](https://linear.app/didx/issue/YOM-1282) | web  | review — pending live API create/edit                                                 |
-| [`YOM-1283-ui-youth-opportunity-credential-display/`](./YOM-1283-ui-youth-opportunity-credential-display/feature.md)                                             | [YOM-1283](https://linear.app/didx/issue/YOM-1283) | web  | review — tested against live API                                                      |
+| [`YOM-1283-ui-youth-opportunity-credential-display/`](./YOM-1283-ui-youth-opportunity-credential-display/feature.md)                                             | [YOM-1283](https://linear.app/didx/issue/YOM-1283) | web  | review — 2026-10-20 → 10-22 rounds built; Stage credential field check pending        |
 
 Tickets with no folder yet — add one when work starts:
 
@@ -595,6 +595,53 @@ type**, not the Category. The BA's Category mapping predates the type (API, 2026
 | Credential provider (Aries CloudAPI) — schema create/update failing | Med      | **Narrowed 2026-08-18** (Jason): reads are serving again, so `GET /ssi/schema` and wallet retrieval work — YOM-1283 was verified live on that basis. Only schema **create/update** still fails, which is the one thing keeping YOM-1281 and YOM-1282 in review: YOM-1281 cannot exercise its mutations, and YOM-1282 cannot reach one real type-specific schema. Both stay mocked locally meanwhile |
 
 ## Cross-Area Notes
+
+**For Adrian — passport type grouping (2026-10-20, YOM-1283):** the passport groups credentials by
+type (`schemaType` / `typeContext`) behind filter chips, loading 100 at a time with "Load more".
+`POST /ssi/wallet/user/search` filters by `schemaType` only, so groups and chip counts cover the
+credentials loaded so far. Ask: an optional `typeContext` filter on `SSIWalletSearchFilter` (same
+codes as the response, YoID via `schemaType`), so a chip can request and page its own type. Also
+needed from you: local issuance for `testuser@gmail.com` is all `Pending` (14 issuances, 20
+tenant creations against `cloudapi.test`), so the per-type field check against your 2026-10-20
+reference could not run locally — see the [YOM-1283 handoff](./YOM-1283-ui-youth-opportunity-credential-display/handoffs/2026-10-20-a.md).
+
+**For Adrian — blocks Web: opportunity-type filter on the youth MyOpportunity search (2026-10-20,
+YOM-1283).** Jason wants the YoID opportunity pages (completed / pending / declined / saved)
+grouped by type with filter chips, each chip its own query with its own paging. The youth search
+(`MyOpportunitySearchFilterBase`: `Action`, `VerificationStatuses`, `CustomFields`) has no
+type filter, so Web cannot query per type. Ask: an optional Opportunity Type filter (the type
+`name`s, as `/opportunity/search`'s `types`) on the youth `POST /myopportunity/search`, applied
+with the existing action/status predicates and honoured by paging and `totalCount`. Web work is
+**on hold until it lands** (Jason, 2026-10-20).
+
+**For Adrian — from the BA feedback round (2026-10-21):** three small API asks, none blocking
+Web; details and `file:line` in the [BA testing notes](./testing/2026-10-21-ba-round3-testing-notes.md)
+and the investigation in the YOM-1283 handoff.
+
+1. **`Micro-task` alias in `SSICredentialOpportunityTypeMapper`.** Type `F12A9D90` was named
+   "Micro-task" from 2024-05-22 to 2026-07-01; only `Task` is aliased, so every Impact Action
+   credential signed in that window parses to a null `typeContext` and shows under "Other
+   opportunities" in the passport. Ask: alias `Micro-task` → ImpactAction (+ regression test), and
+   count Stage credentials whose signed Type is neither a current enum name nor `Task`.
+2. **Protect `JobMinimumQualification`** (`isSystem`/`isProtected`, like `JobWorkSchedule`) so the
+   discovery Job card can show "Education level required" (BA R19). Labels resolve through
+   `/lookup/education`, which Web already caches.
+3. **Optional, BA R9:** a skill-overlap sort (`OpportunitySearchOrderField`) so Web can rank by
+   the youth's skills instead of only filtering Jobs by them. Not requested by Jason; recorded as
+   the only way skills could visibly "affect matches".
+
+**For Adrian — completion save 500s on manual opportunities with no verification types
+(2026-10-21, YOM-1255):** `PUT /myopportunity/action/{id}/verify` throws
+`DataInconsistencyException("Manual verification enabled but opportunity has no mapped
+verification types")` → 500 ("An unknown error has occurred" on the web). Locally **2 491 of
+4 947** manual-verification opportunities have no row in `Opportunity.OpportunityVerificationTypes`
+(`post.sql`'s "Verification types" insert does not cover them — e.g. `f4573494…` Job,
+`43480a94…` Impact Action), so half the seeded completions cannot be saved. Two asks: (1) fix the
+Local/Dev seed so every manual opportunity has ≥ 1 type (the admin validator already requires
+it); (2) consider a 4xx with a message rather than a 500 for this state. Web now hides "Upload
+your completion files" when `verificationTypes` is empty (the API's own rule), so there is no
+dead-end button; the earlier "all-optional submit" reading of this error was wrong — the form
+content was never the cause. Not blocking Web.
 
 **Final country/location contract (2026-09-28):** [API handover for Jason](./YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/handoffs/2026-09-28-a.md#country-and-location). Country write/search collections now contain country-scoped objects, with one optional location per country; text and radius filtering run in the database. This supersedes the prototype location asks below. User coordinate storage is PostGIS, not the earlier JSONB design, without a user wire-contract change. [SRE rollout handover](./handoffs/2026-09-28-sre.md) covers PostGIS and Keycloak; Dev provisioning remains outstanding with Robbie, Stage/Prod fixed per Adrian.
 

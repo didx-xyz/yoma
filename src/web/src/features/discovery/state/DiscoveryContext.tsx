@@ -175,9 +175,19 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
     fragments: {},
     typeKeys: () => undefined,
   });
-  const { state, dispatch, ready, rendered, resetEpoch } =
-    useDiscoveryQuery(attribution);
   const lookups = useDiscoveryLookups();
+  // What the URL parser reads `time=` and `group=` through; stable while the lists are.
+  const parseLookups = useMemo(
+    () => ({
+      timeIntervals: lookups.timeIntervals,
+      targetedGroups: lookups.targetedGroups,
+    }),
+    [lookups.timeIntervals, lookups.targetedGroups],
+  );
+  const { state, dispatch, ready, rendered, resetEpoch } = useDiscoveryQuery(
+    attribution,
+    parseLookups,
+  );
   const profile = useAtomValue(userProfileAtom);
   const {
     scope,
@@ -221,7 +231,7 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
   // Signed in, the earned skills join the saved ones (one cached request a session).
   const { ids: verifiedSkillIds, settled: verifiedSkillsSettled } =
     useVerifiedSkillIds();
-  const { otherAccommodationId } = lookups;
+  const { otherAccommodationId, timeIntervals } = lookups;
 
   // The preference layer as saved, which the chips show...
   const savedFragments = useMemo(
@@ -232,9 +242,17 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
             age,
             verifiedSkillIds,
             otherAccommodationId,
+            timeIntervals,
           })
         : {},
-    [preferences, homeCountryId, age, verifiedSkillIds, otherAccommodationId],
+    [
+      preferences,
+      homeCountryId,
+      age,
+      verifiedSkillIds,
+      otherAccommodationId,
+      timeIntervals,
+    ],
   );
   // ...and as this search uses it: without the interests switched off one by one (2026-10-08).
   // Everything that composes a search reads this one.
@@ -264,6 +282,7 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
         age,
         verifiedSkillIds,
         otherAccommodationId,
+        timeIntervals,
       });
     const release = (): void => {
       settling.current = null;
@@ -332,8 +351,15 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
       );
 
   const resolveLabel: ChipLabelResolver = (facet, value) => {
-    const byId = (items: { id: string; name: string }[]): string =>
-      items.find((item) => item.id === value)?.name ?? value;
+    // The first list that has the value: no concatenated copy per chip (languages and needs fall
+    // back from the facet list to the full lookup).
+    const byId = (...lists: { id: string; name: string }[][]): string => {
+      for (const items of lists) {
+        const match = items.find((item) => item.id === value);
+        if (match) return match.name;
+      }
+      return value;
+    };
     switch (facet) {
       case "types":
         // State carries the enum NAME; only the displayName is shown.
@@ -349,15 +375,19 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
       case "commitment":
         return byId(lookups.timeIntervals);
       case "languages":
-        return byId(lookups.languages);
+        // The facet list first, then the full list: a language picked in the wizard's search
+        // that no published opportunity lists still reads as a name, never a GUID.
+        return byId(lookups.languages, lookups.allLanguages);
       case "accommodations":
         // The facet list first, then the full list: a pick of a need no published opportunity
         // lists (a stale or shared `acc=`) still reads as a name, never a GUID.
-        return byId([...lookups.accommodations, ...lookups.accessibility]);
+        return byId(lookups.accommodations, lookups.accessibility);
       case "sdgs": {
         const goal = lookups.sdgs.find((g) => g.id === value);
         return goal ? sdgLabel(goal) : value;
       }
+      case "targetedGroups":
+        return byId(lookups.targetedGroups);
       default:
         return value;
     }

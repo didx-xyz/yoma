@@ -1,5 +1,6 @@
 import type { OpportunityInfo } from "~/api/models/opportunity";
 import { Status } from "~/api/models/opportunity";
+import { OPPORTUNITY_TYPE_NANE_JOB } from "~/lib/constants";
 import type { ClosingInfo } from "./dates";
 import { closingInfo } from "./dates";
 import { formatNumber } from "./format";
@@ -18,6 +19,10 @@ import { formatNumber } from "./format";
  *   full    = the participant limit is reached                  → "No places left"
  *   open    = the closing label from `closingInfo`, and "X places left" when a limit exists
  *             ("1 place left"; the limit itself went on 2026-10-07 — "160 of 160" said it twice)
+ *
+ * A Job counts "positions", not "places" (BA R19, 2026-10-21): "3 positions left",
+ * "No positions left". `placesNoun` is that word, for every surface that counts them (the
+ * detail page's Places badge too); `full` carries the state itself, so nothing reads the wording.
  *
  * `status` arrives as the enum NAME ("Active") — the model's `Status | string` — so both forms
  * are accepted. Places render from exposed fields only (`participantLimit`, counts, and the
@@ -38,11 +43,17 @@ export interface CardStatus {
   closing: ClosingInfo;
   closed: boolean;
   places: string | null;
+  /** The participant limit is reached (`places` says so in the type's word). */
+  full: boolean;
   highlight: CardHighlight | null;
 }
 
 const statusName = (status: OpportunityInfo["status"]): string =>
   typeof status === "number" ? (Status[status] ?? "") : status;
+
+/** "place", or "position" for a Job — singular; callers pluralise. */
+export const placesNoun = (type: string): "place" | "position" =>
+  type === OPPORTUNITY_TYPE_NANE_JOB ? "position" : "place";
 
 export function cardStatus(
   opportunity: OpportunityInfo,
@@ -56,6 +67,7 @@ export function cardStatus(
       closing: { label: "Closed", urgent: false },
       closed,
       places: null,
+      full: false,
       highlight: null,
     };
 
@@ -65,18 +77,21 @@ export function cardStatus(
     highlight = { label: "Featured", tone: "featured" };
 
   if (opportunity.participantLimit === null)
-    return { closing, closed, places: null, highlight };
+    return { closing, closed, places: null, full: false, highlight };
 
+  const noun = placesNoun(opportunity.type);
   const full =
     opportunity.participantLimitReached ||
     opportunity.participantCountTotal >= opportunity.participantLimit;
-  if (full) return { closing, closed, places: "No places left", highlight };
+  if (full)
+    return { closing, closed, places: `No ${noun}s left`, full, highlight };
 
   const left = opportunity.participantLimit - opportunity.participantCountTotal;
   return {
     closing,
     closed,
-    places: `${formatNumber(left)} ${left === 1 ? "place" : "places"} left`,
+    places: `${formatNumber(left)} ${left === 1 ? noun : `${noun}s`} left`,
+    full,
     highlight,
   };
 }

@@ -2,7 +2,7 @@ import type { IconType } from "react-icons";
 import {
   IoAccessibilityOutline,
   IoBriefcaseOutline,
-  IoFlashOutline,
+  IoCashOutline,
   IoGlobeOutline,
   IoLeafOutline,
   IoLocationOutline,
@@ -11,6 +11,7 @@ import {
   IoWifiOutline,
 } from "react-icons/io5";
 import { EngagementTypeOption } from "~/api/models/common";
+import { commitmentBucket } from "../lib/format";
 import { DEFAULT_RADIUS_KM } from "../lib/location";
 import type { DiscoveryFilters } from "../lib/types";
 
@@ -90,7 +91,9 @@ export const QUICK_SEARCHES: QuickSearchDef[] = [
     needs: null,
     resolve: (ctx) => {
       const hour = byName(ctx.commitmentIntervals, ["Hour"]);
-      return hour ? { commitment: { intervalId: hour.id, count: 1 } } : null;
+      if (!hour) return null;
+      const { intervalId, count } = commitmentBucket(hour);
+      return { commitment: { intervalId, count } };
     },
   },
   {
@@ -115,19 +118,15 @@ export const QUICK_SEARCHES: QuickSearchDef[] = [
       return remote ? { engagementTypes: [remote.id] } : null;
     },
   },
-  // Shipped 2026-09-29 with the core `incentivized` field (the BA's "Is Paid").
+  // Shipped 2026-09-29 with the core `incentivized` field (the BA's "Is Paid"); decoupled from
+  // Remote on 2026-10-21 (BA R16/R23): the Pay chip's own wording, and Remote is its own badge.
   {
-    id: "paid-remote",
-    icon: IoFlashOutline,
-    label: "Paid & remote",
+    id: "paid",
+    icon: IoCashOutline,
+    label: "Paid or rewarded",
     status: "shipped",
     needs: null,
-    resolve: (ctx) => {
-      const remote = byName(ctx.engagementTypes, [EngagementTypeOption.Remote]);
-      return remote
-        ? { incentivized: true, engagementTypes: [remote.id] }
-        : null;
-    },
+    resolve: () => ({ incentivized: true }),
   },
   // Renders only when the youth's country is known — the profile's when signed in, or the
   // country an anonymous youth gave in the wizard (2026-09-28); otherwise absent.

@@ -121,7 +121,7 @@ const MySettings: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | ⚙️ Settings</title>
+        <title>Yoma | Settings</title>
       </Head>
 
       <PageBackground />

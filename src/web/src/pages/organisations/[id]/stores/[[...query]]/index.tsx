@@ -297,7 +297,7 @@ const Stores: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | 🛒 Marketplace Store Access Rules</title>
+        <title>Yoma | Marketplace Store Access Rules</title>
       </Head>
 
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}

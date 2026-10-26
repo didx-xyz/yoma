@@ -437,6 +437,16 @@ commitment set; **accessibility excludes** those that have not described their a
       How, Dates and Places are sections in About with the detail the badges used to expand.
       Follow-ups: About is one column and a jump rings its card; "Jump to top" under the details
       page's last section (shared `JumpToTop`, as on discovery).
+- [x] **Jason's 2026-10-22 list** (epic README): the hero no longer grows while loading — bones
+      for the quick searches, the Saved pill and the category pills, a `min-h` on the desktop
+      badge row, and a placeholder for the preference banner (see Decisions 2026-10-22).
+- [x] **Jason's 2026-10-22 feedback (search discovery)**: below md the hero's separate Filters
+      button is gone — the collapsed search pill already opens the filters sheet; the count badge
+      moved inside the pill (see Decisions 2026-10-22, second entry).
+- [x] **Jason's 2026-10-22 todo (search discovery)**: the Language and Where lists lead with the
+      site's five languages / the youth's country and Worldwide while collapsed, and read A–Z
+      once "Show all" is open — dialog, sheet, bar popovers and the wizard (one helper,
+      `lib/optionOrder.ts`; see Decisions 2026-10-22, third entry).
 
 ## Decisions
 
@@ -1711,6 +1721,123 @@ commitment set; **accessibility excludes** those that have not described their a
     stacks its cards; the other groups keep two columns. The description card lost
     `lg:col-span-2`, because a span of 2 in a one-column grid adds an implicit second column.
     The card a chip jumps to also gets a green ring for 1.6s (`DetailDisclosure` `flash`).
+- **2026-10-21 — BA feedback round (Jason's decisions on the "Search and CF Testing" sheet).**
+  - **R14: Featured is the second rail**, right after Picked for you, when any preference
+    applies (`landingRails.ts`; it was last before Latest). It still applies the place only — the
+    BA's reason (bring Yoma's picks forward) stands without personalising it. Without preferences
+    the order is unchanged: Featured · Latest · Done in under an hour.
+  - **R13: "Who it's aimed at" is back, under More filters**, bound to the API's
+    `targetedGroups` with chips from the facet list (`/opportunity/search/filter/targeted/group`)
+    and the hint "It doesn't limit who can take part." — which is why 2026-08-31 removed it.
+    **A pick always brings Open to all with it** (Jason): the request adds the Open to all id
+    beside any picked group (`searchRequest.ts`, found by name), so "Women / girls" shows the
+    opportunities aimed at women AND the ones aimed at everyone, not only the former. Open to
+    all is therefore not offered as a chip: it could never change the results. URL `group=`;
+    chip group "Aimed at". **Profile gender never feeds it** (Q-B11 is still open).
+  - **R10: "Up to a minute" became the curated bucket "A few minutes" = 15 minutes**
+    (`commitmentBuckets` in `lib/format.ts`), the ONE list the wizard pills, the How long
+    section and the commitment rail's title read; every other interval stays `count: 1` ("Up to
+    an hour"). The chips, the bar's Time segment and the section header now label a stored
+    value through the same place (`commitmentLabel`): a bucket reads as its name, an older
+    `{Week, 3}` as "Up to 3 weeks". A side effect: the chip reads "Up to a week", not "Up to
+    1 week". Pay stays single-select (Paid or rewarded / Unpaid / neither): the BA's
+    multi-select would mean "doesn't matter", which leaving both off already is.
+  - **R11: inherited languages go out `Include`**, like engagement and accommodations
+    (`inheritedOnly.languages`, `modeByProvenance`): a saved language no published opportunity
+    lists would otherwise empty every inherited search. A manual pick is `Exclude`, as the API's
+    default already was, so nothing changes for a pick in the dialog. **The Language section
+    gains a search box when its list is long** (20 or more options, `FilterControl`): the facet
+    list stays — it is what finds something today — and the box searches it. Stage's four
+    languages stay plain chips.
+  - **R15: no change** — a quick search keeps combining with the preferences (Jason: keep
+    combining). **R25: no change** — Entrepreneurship is fully supported end to end; an empty
+    type tile on Stage is a content gap, not a feature gap.
+- **2026-10-21 — round-3 fix round (reviewer B1/B2/B6, nits).**
+  - **A language picked from the full list labels everywhere** (B1): `DiscoveryLookups.allLanguages`
+    is the wizard's `allLanguages` query (one cache entry), `resolveLabel` reads the facet list
+    then the full one, and the Language section appends a selected-but-unlisted language as the
+    Accessibility section does (`unlisted`) — a saved Xhosa on a Stage with four facet languages
+    shows its name and a chip to clear, never a GUID.
+  - **`searchReady` also waits for the targeted-group and time-interval facets** (B2 and below):
+    the request finds Open to all in the one, and `time=` is read through the other, so a cold
+    `?group=` or `?time=` load sends ONE request rather than one replaced a moment later.
+  - **A commitment is selected by its bucket, and a count below the bucket reads AS the bucket**
+    (B6): the wizard pill and the How long option are active only when `(intervalId, count)` is
+    the bucket's; a stored `{Minute, 1}` (the pre-R10 "Up to a minute") or an old
+    `time=<minuteId>:1` link reads as `{Minute, 15}` on read (`withCommitmentBucket` in
+    `mapPreferencesToFilters` and `parseDiscoveryQuery`, both through the time-interval lookup),
+    so "A few minutes" is active and the request sends 15. A count ABOVE a bucket ("Up to 3
+    weeks") still reads and filters as saved; it lights no pill, and tapping its interval's pill
+    sets the bucket rather than clearing. `under-an-hour` uses `commitmentBucket(hour)`.
+  - **Open to all is read out of `group=`** (nit): the request adds it anyway, so a link carrying
+    it is parsed without it and it never counts as a selection. Both `searchRequest` and the
+    section find it with `openToAllIdOf` (case-insensitive, the admin editor's helper).
+  - `firstPlus` lives in `chipModel.ts`, shared by the bar's segments and the compact pill; the
+    bar's unreachable `engagement` case is gone. `SearchInput` is the one search-field shell in
+    `FilterControl` (the Provider text filter passes `onCommit`); the wizard's skills and
+    languages blocks share `SearchShell` (field over one pill row).
+- **2026-10-22 — the hero's layout shift (Jason's fix list).** On a cold load the purple hero
+  grew as the lookups and the profile arrived, and the page below moved three times. Measured
+  with a per-frame recorder (`requestAnimationFrame`, first paint → settled, 400ms latency /
+  600KB/s via `Network.emulateNetworkConditions`): the hero's bottom went 372 → 412px at 1440 and
+  the first rail heading's top 496 → 540px (signed in). Fixes, each a placeholder of the final
+  size rather than a later-arriving element:
+  - **Quick searches**: while `lookups.searchReady` is false, bones stand in for the badges not
+    yet resolved (up to four — the two place-bound badges need a country or a city), in the row's
+    own size, so the row never reflows; the desktop wrapper gets `md:min-h-10` (36px badges +
+    4px scroller padding), as the mobile row already had `min-h-8`. The hero bone is
+    `HERO_BONE_CLASS` (`skeleton bg-white/20`): the results' grey bone reads as a smudge on purple.
+  - **Saved pill**: fixed width (`w-20`, `lg:w-36`, `tabular-nums` count), and a bone of the same
+    size while the session is loading or the profile is still on its way; signed out, nothing.
+    Appearing beside the bar it used to shrink the bar and reflow its segments.
+  - **Browse by category**: while the category lookup is `loading`, the label and seven bones in
+    the real pills' widths (`BONE_WIDTHS`, 320/208/256/224/192/288/112px — Stage's names), so they
+    wrap into the same rows (five + two at 1440; three + four at 1024; three rows at 768). The
+    first attempt with narrower bones fit one row and the section still grew by 40px; widths are
+    what decide this, not count. Failed or empty lookup: the section is absent, as before.
+  - **Preference banner**: a blank panel while the preferences load, at the banner's LAST rendered
+    height on this device (`localStorage` `yoma.discovery.bannerHeight`, per width bucket — the
+    chips wrap below md), read in a layout effect before the first client paint; 52px (the invite)
+    with no record. Who is signed in is unknown at first paint — the session is still loading —
+    so a fixed height was wrong for one of the two states (52 vs 96px measured; 88 vs 151 at
+    390). Known residual: the first load after signing in or out on a device uses the other
+    state's height once; in production the server-rendered frame carries the 52px default until
+    hydration.
+  - Result (second load on the device, both scopes, both widths): hero bottom and first heading
+    top constant from first paint to settled — 1440: 412 / 540 (signed in), 412 / 496 (anonymous);
+    390: 393 / 576 and 393 / 513. The welcome and hero `AnimatedText` box (fixed height since
+    2026-10-21) needed nothing. Shots: `~/.cache/cdp-tools/shots/2026-10-22-discovery/hero-*`.
+- **2026-10-22 — the mobile hero's Filters button (Jason's feedback list).** Below md the
+  segmented bar collapses into one white pill that opens the filters sheet itself, so the green
+  Filters button beside it was a second tap target for the same sheet. Removed: the row is the
+  pill and the Saved link; the filter count rides at the pill's right end as the green badge the
+  floating button uses (`IoOptionsOutline` + "N"), and the pill's `aria-label` reads "Search and
+  filters (N)". From md up the segments and the bar's Filters button are unchanged (768 and 1440
+  verified). Shots: `~/.cache/cdp-tools/shots/2026-10-22-disc2/hero-{1440,768,390}.png`,
+  `hero-390-filtered.png` (one filter → badge "1").
+- **2026-10-22 — language and country order (Jason's todo).** One rule, one helper
+  (`lib/optionOrder.ts`, unit-tested), the same in every home — the filters dialog and sheet,
+  the bar's section popovers and the preferences wizard:
+  - **Collapsed** (the rows before "Show all", the wizard's suggestion row): the preferred
+    options first, in their own order, then the rest A–Z. Languages: the five the site offers
+    (`public/scripts/lang-config.js` — English, Spanish, French, Portuguese, Kiswahili), when
+    the facet list has them. Countries: the youth's own country (the profile's, or the
+    session answer — `homeCountryId`), then Worldwide.
+  - **Expanded** ("Show all" open): everything A–Z, nothing pinned — with the whole list on
+    screen a pinned row is noise, and an alphabetical run is where a youth looks for Xhosa.
+  - The lookup's spellings differ from the site's ("Spanish, Castilian", "Swahili" vs Español,
+    Kiswahili), so a language is matched on its ISO code first, then on any comma-separated
+    part of its name, case-insensitively; an unknown one simply sorts by name. A–Z is
+    `localeCompare` with base sensitivity (case- and accent-insensitive).
+  - Carried by `SectionModel.expanded` (the options' order once open, `ChipSet`) and the same
+    `expanded` on the wizard's `PillList` / `SearchShell`. The languages block reads the facet
+    list itself (its `optionsSource` is `null`, like skills) and orders it; typed hits read A–Z
+    too. The anonymous wizard's country `<select>` leads with the country already answered.
+    Picked options stay visible past the cut, as before.
+  - Shots (1440, signed in as the test user, profile country South Africa):
+    `~/.cache/cdp-tools/shots/2026-10-22-disc3/dialog-language-{collapsed,expanded}.png`,
+    `dialog-country-{collapsed,expanded}.png`, `popover-where-{collapsed,expanded}.png`,
+    `wizard-languages{,-expanded,-typed}.png`, `wizard-step5.png`.
 
 ## BA sign-off summary (2026-09-22)
 

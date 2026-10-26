@@ -25,11 +25,13 @@ import { useDiscovery } from "../../state/DiscoveryContext";
 import { engagementDisplayName } from "../../state/useDiscoveryLookups";
 import { MoneyBadge } from "./MoneyBadge";
 import {
-  typeBadgeClass,
-  typeBandClass,
-  typeButtonClass,
-  typeLabel,
-} from "./typeBadge";
+  CARD_ACTION_CLASS,
+  CARD_BAND_CLASS,
+  CARD_CHIP_CLASS,
+  CARD_LOGO_CLASS,
+  CARD_TITLE_CLASS,
+} from "~/lib/card";
+import { typeBadgeClass, typeBandClass, typeLabel } from "~/lib/typeColours";
 
 export const FACT_ICONS: Record<CardFactKind, React.ElementType> = {
   employment: IoBriefcaseOutline,
@@ -213,7 +215,7 @@ export const OpportunityCard: React.FC<{
   return (
     <div className="shadow-custom flex h-74 flex-col overflow-hidden rounded-xl bg-white md:h-88.5">
       <div
-        className={`relative flex h-12 shrink-0 items-center justify-center md:h-20 ${typeBandClass(opportunity.type)}`}
+        className={`${CARD_BAND_CLASS} relative ${typeBandClass(opportunity.type)}`}
       >
         {opportunity.organizationLogoURL && (
           <Image
@@ -221,7 +223,7 @@ export const OpportunityCard: React.FC<{
             alt=""
             width={48}
             height={48}
-            className="h-9 w-9 rounded-full bg-white object-contain md:h-12 md:w-12"
+            className={CARD_LOGO_CLASS}
           />
         )}
         {highlight && (
@@ -237,7 +239,7 @@ export const OpportunityCard: React.FC<{
             clipped (`line-clamp`) row would otherwise give way first and cut its text (2026-10-08). */}
         <div className="flex h-5 shrink-0 items-center justify-between gap-2">
           <span
-            className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wide uppercase ${typeBadgeClass(opportunity.type)}`}
+            className={`${CARD_CHIP_CLASS} ${typeBadgeClass(opportunity.type)}`}
           >
             {typeLabel(lookups.types, opportunity.type)}
           </span>
@@ -246,9 +248,7 @@ export const OpportunityCard: React.FC<{
             facts={moneyFactsOf(opportunity, lookups.currencies)}
           />
         </div>
-        <h3 className="line-clamp-2 h-10 shrink-0 text-sm leading-5 font-semibold tracking-normal md:h-11 md:text-base md:leading-5.5">
-          {opportunity.title}
-        </h3>
+        <h3 className={CARD_TITLE_CLASS}>{opportunity.title}</h3>
         {/* The org name gives way first, so a long one never pushes the place out of view */}
         <p className="text-gray-dark flex h-4 min-w-0 shrink-0 text-xs leading-4 whitespace-nowrap">
           <span className="min-w-0 truncate font-semibold text-black">
@@ -278,7 +278,7 @@ export const OpportunityCard: React.FC<{
           <Link
             href={detailHref(opportunity.id)}
             title={cta.ctaTitle}
-            className={`flex h-10 shrink-0 items-center justify-center rounded-lg px-4 text-sm font-semibold whitespace-nowrap transition hover:brightness-110 motion-reduce:transition-none md:w-full ${typeButtonClass(opportunity.type)}`}
+            className={`${CARD_ACTION_CLASS} shrink-0 md:w-full ${typeBadgeClass(opportunity.type)}`}
           >
             {cta.ctaText}
           </Link>

@@ -27,7 +27,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
     <MainLayout>
       <>
         <Head>
-          <title>Yoma | 🛒 Marketplace</title>
+          <title>Yoma | Marketplace</title>
         </Head>
 
         {/* WHAT IS ZLTO DIALOG */}

@@ -100,6 +100,32 @@ describe("Places badge: the card's rule", () => {
     );
     assert.equal(badge(opportunity({}), "places"), undefined);
   });
+
+  test("a Job counts positions on every line (BA R19, 2026-10-21)", () => {
+    const job = (limit: number, taken: number) =>
+      badge(
+        opportunity({
+          type: "Job",
+          participantLimit: limit,
+          participantCountTotal: taken,
+        }),
+        "places",
+      );
+    assert.deepEqual(
+      [job(20, 20)?.eyebrow, job(20, 20)?.value, job(20, 20)?.info],
+      ["Positions", "No positions left", "All 20 positions are taken"],
+    );
+    assert.equal(
+      job(20, 20)?.panel?.paragraphs[0]?.text,
+      "All 20 positions are taken.",
+    );
+    assert.equal(job(5, 1)?.value, "4 positions left");
+    assert.match(
+      job(5, 1)?.panel?.paragraphs[0]?.text ?? "",
+      /^Up to 5 people can take part\. 1 position is taken so far\. A position is taken/,
+    );
+    assert.equal(places(5, 1)?.eyebrow, "Places");
+  });
 });
 
 describe("How and Reward badges", () => {

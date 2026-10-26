@@ -3,7 +3,7 @@ import FormLabel from "./FormLabel";
 import FormError from "./FormError";
 
 const FormField: React.FC<{
-  label?: string;
+  label?: React.ReactNode;
   subLabel?: string;
   tooltip?: string;
   showWarningIcon?: boolean;

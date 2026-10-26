@@ -1,5 +1,6 @@
 import { useAtomValue } from "jotai";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import React from "react";
 import { EMPTY_LOCATION_PLACE } from "~/api/models/location";
 import type { UserPreferences } from "~/api/models/userPreferences";
@@ -8,6 +9,12 @@ import { LocationInput } from "~/components/Location/LocationInput";
 import { COUNTRY_CODE_WW } from "~/lib/constants";
 import { userProfileAtom } from "~/lib/store";
 import { isStaleUserLocation } from "../../../lib/location";
+import { countryRank, orderOptions } from "../../../lib/optionOrder";
+import {
+  profileHrefFrom,
+  stashWizardDraft,
+  stepIdOfPreference,
+} from "../../../lib/wizardReturn";
 import { useDiscovery } from "../../../state/DiscoveryContext";
 import { Message } from "../../shared/Message";
 
@@ -21,16 +28,24 @@ import { Message } from "../../shared/Message";
  *
  * A stored place picked under a country the profile no longer has is stale: it is not applied,
  * the fields start empty, and the block says why.
+ *
+ * The profile links carry the way back (`lib/wizardReturn.ts`, 2026-10-22): the profile page's
+ * Cancel and Save return to this URL with the wizard open on this step, and the draft is
+ * stashed on the way out so the trip loses no answer.
  */
-const PROFILE_HREF = "/user/profile";
-
 export const LocationBlock: React.FC<{
   draft: UserPreferences;
   onPatch: (patch: Partial<UserPreferences>) => void;
 }> = ({ draft, onPatch }) => {
   const { scope, lookups } = useDiscovery();
+  const router = useRouter();
   const profile = useAtomValue(userProfileAtom);
   const signedIn = scope === "user";
+  const profileHref = profileHrefFrom(
+    router.asPath,
+    stepIdOfPreference("location"),
+  );
+  const leaveForProfile = (): void => stashWizardDraft(draft);
 
   const countryId = signedIn
     ? (profile?.countryId ?? null)
@@ -41,10 +56,12 @@ export const LocationBlock: React.FC<{
     ) ?? null;
   const stale = signedIn && isStaleUserLocation(draft.location, countryId);
   const place = stale ? EMPTY_LOCATION_PLACE : draft.location;
-  // "Worldwide" is a lookup entry for opportunities, not somewhere a youth can be.
-  const choosable = lookups.countries
-    .filter((c) => c.codeAlpha2 !== COUNTRY_CODE_WW)
-    .sort((a, b) => a.name.localeCompare(b.name));
+  // "Worldwide" is a lookup entry for opportunities, not somewhere a youth can be. The country
+  // already answered leads the list, then the rest A–Z (`lib/optionOrder`).
+  const choosable = orderOptions(
+    lookups.countries.filter((c) => c.codeAlpha2 !== COUNTRY_CODE_WW),
+    countryRank(countryId),
+  ).collapsed;
 
   return (
     <div className="flex flex-col gap-3">
@@ -53,7 +70,8 @@ export const LocationBlock: React.FC<{
           <span className="w-28 shrink-0 font-semibold">Country</span>
           <span className="grow">{country?.name ?? "Not set"}</span>
           <Link
-            href={PROFILE_HREF}
+            href={profileHref}
+            onClick={leaveForProfile}
             className="text-green text-xs font-semibold underline"
           >
             {country ? "Change in your profile" : "Add it in your profile"}
@@ -105,7 +123,11 @@ export const LocationBlock: React.FC<{
         renderCountryMismatch={({ countryCode, countryName, place: found }) => {
           if (signedIn)
             return (
-              <Link href={PROFILE_HREF} className="font-semibold underline">
+              <Link
+                href={profileHref}
+                onClick={leaveForProfile}
+                className="font-semibold underline"
+              >
                 Change your profile country
               </Link>
             );

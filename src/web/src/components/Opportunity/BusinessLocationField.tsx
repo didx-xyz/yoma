@@ -22,7 +22,8 @@ export const EMPTY_BUSINESS_LOCATION: BusinessLocation = {
  * Where an Entrepreneurship venture is based, on the youth's completion form (2026-10-11).
  * Optional, and never prefilled from the profile: the API keeps it unknown unless the youth says
  * so. Worldwide isn't a place a business can be, so the country list leaves it out; region and
- * city are searched in the chosen country, and a new country clears them.
+ * city are searched in the chosen country, and a new country clears them. Its title and note are
+ * the section header's (`OpportunityCompletionEdit`, 2026-10-21).
  */
 export const BusinessLocationField: React.FC<{
   value: BusinessLocation | null | undefined;
@@ -42,12 +43,6 @@ export const BusinessLocationField: React.FC<{
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-col gap-1">
-        <span className="font-bold">Where is your business?</span>
-        <span className="text-gray-dark text-sm">
-          Optional. Where your business is based, not where you took part.
-        </span>
-      </div>
       <label className="flex flex-col gap-1">
         <span className="text-gray-dark text-[11px] font-semibold tracking-wide uppercase">
           Country

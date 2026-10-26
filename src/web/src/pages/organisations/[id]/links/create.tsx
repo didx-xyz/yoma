@@ -706,7 +706,7 @@ const ReferrerLinkDetails: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | 🔗 Create Link</title>
+        <title>Yoma | Create Link</title>
       </Head>
 
       <PageBackground />

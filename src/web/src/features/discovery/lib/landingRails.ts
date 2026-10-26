@@ -1,6 +1,6 @@
 import type { UserGoal } from "~/api/models/userPreferences";
 import { QUICK_SEARCHES } from "../registry/quickSearches";
-import { upToIntervalLabel } from "./format";
+import { commitmentLabel } from "./format";
 import type {
   DiscoverySearch,
   InheritedFragment,
@@ -29,15 +29,17 @@ import { serializeDiscoveryState } from "./urlCodec";
  * The approved catalogue, in order:
  * 1. `picked`: Picked for you, while any preference applies. The context's own search, the whole
  *    preference layer.
- * 2. `near`: the place alone, while there is one.
- * 3. `goal`: the surviving goal, with its semantics ("Start a business" also ORs its category).
- * 4. `category:<id>`: one per surviving saved category, in the youth's order, every one of
+ * 2. `featured`, always: second, right after Picked for you, so the opportunities Yoma marks
+ *    out come before the per-preference rails (Jason, 2026-10-21; it was last before Latest).
+ *    It applies the place only, never the other preferences.
+ * 3. `near`: the place alone, while there is one.
+ * 4. `goal`: the surviving goal, with its semantics ("Start a business" also ORs its category).
+ * 5. `category:<id>`: one per surviving saved category, in the youth's order, every one of
  *    them (Jason, 2026-10-08; capped at 3 the day before). Each loads only as it nears the
  *    viewport, so a long list costs nothing until it is scrolled to.
- * 5. `commitment`: the surviving time commitment; without one, `under-an-hour` (the quick search's
+ * 6. `commitment`: the surviving time commitment; without one, `under-an-hour` (the quick search's
  *    filter set).
- * 6. `paid`: while the youth asked for paid opportunities (`incentivized === true`).
- * 7. `featured`, always.
+ * 7. `paid`: while the youth asked for paid opportunities (`incentivized === true`).
  * 8. `latest`, always: the place alone, or everything when there is none.
  *
  * Every rail but Picked for you sits on the PLACE BASE LAYER: the surviving `country` and
@@ -308,6 +310,7 @@ export function landingRails({
 
   const rails: LandingRail[] = [];
   if (personalized && !preferencesOff) rails.push(picked());
+  rails.push(featured);
   if (place) rails.push({ id: "near", kind: "near", ...onPlace({}), place });
 
   const goal = surviving.get("goal");
@@ -345,7 +348,9 @@ export function landingRails({
     rails.push({
       id: "commitment",
       kind: "commitment",
-      intervalLabel: interval ? upToIntervalLabel(interval.name) : null,
+      intervalLabel: interval
+        ? commitmentLabel(commitment, interval.name)
+        : null,
       ...onPlace({ commitment }),
     });
   } else if (underAnHour) rails.push(underAnHour);
@@ -357,7 +362,7 @@ export function landingRails({
       ...onPlace({ incentivized: true }),
     });
 
-  rails.push(featured, latest);
+  rails.push(latest);
   return dedupe(rails, lookups);
 }
 

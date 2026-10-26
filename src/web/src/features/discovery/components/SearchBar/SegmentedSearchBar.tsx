@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { IoOptionsOutline } from "react-icons/io5";
+import { firstPlus } from "../../lib/chipModel";
+import { commitmentLabel } from "../../lib/format";
 import { whereSummary } from "../../lib/location";
 import {
   SEGMENT_TONE_DOT,
@@ -42,15 +44,6 @@ export const SegmentedSearchBar: React.FC<{ onOpenFilters: () => void }> = ({
 }) => {
   const { state, effectiveFilters, filterCount, resolveLabel } = useDiscovery();
 
-  /** "English" · "English +1" — the first value's name, then a count. */
-  const firstPlus = (
-    facet: "engagementTypes" | "languages",
-    values: string[],
-  ): string | null => {
-    if (values.length === 0) return null;
-    const first = resolveLabel(facet, values[0]!);
-    return values.length > 1 ? `${first} +${values.length - 1}` : first;
-  };
   const [openSection, setOpenSection] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -82,10 +75,8 @@ export const SegmentedSearchBar: React.FC<{ onOpenFilters: () => void }> = ({
       case "search":
         return filters.q ?? "Anything";
       case "type": {
-        if (filters.types.length === 0) return "Any type";
-        const first = resolveLabel("types", filters.types[0]!);
-        const more = filters.types.length - 1;
-        const typesText = more > 0 ? `${first} +${more}` : first;
+        const typesText = firstPlus("types", filters.types, resolveLabel);
+        if (typesText === null) return "Any type";
         // Its type-specific filters set from WHAT since 2026-10-09: "Job · 2 filters".
         const clauses = new Set(filters.customFields.map((c) => c.key)).size;
         return clauses > 0
@@ -100,23 +91,15 @@ export const SegmentedSearchBar: React.FC<{ onOpenFilters: () => void }> = ({
         );
       case "time":
         return filters.commitment
-          ? `Up to ${filters.commitment.count} ${resolveLabel("commitment", filters.commitment.intervalId).toLowerCase()}`
+          ? commitmentLabel(
+              filters.commitment,
+              resolveLabel("commitment", filters.commitment.intervalId),
+            )
           : "Any time";
-      case "engagement": {
-        // "Any" · one value · "Remote +1" — through resolveLabel, so the engagement display map
-        // (Online → Remote, Offline → On-site) applies here as everywhere.
-        if (filters.engagementTypes.length === 0) return "Any";
-        const first = resolveLabel(
-          "engagementTypes",
-          filters.engagementTypes[0]!,
-        );
-        const more = filters.engagementTypes.length - 1;
-        return more > 0 ? `${first} +${more}` : first;
-      }
       case "how": {
         const parts = [
           filters.commitment ? summaryFor("time") : null,
-          firstPlus("engagementTypes", filters.engagementTypes),
+          firstPlus("engagementTypes", filters.engagementTypes, resolveLabel),
         ].filter(Boolean);
         return parts.length > 0 ? parts.join(" · ") : "Any";
       }
@@ -134,9 +117,10 @@ export const SegmentedSearchBar: React.FC<{ onOpenFilters: () => void }> = ({
             : own > 0
               ? `${own} ${own === 1 ? "need" : "needs"}`
               : null;
-        const parts = [firstPlus("languages", filters.languages), needs].filter(
-          Boolean,
-        );
+        const parts = [
+          firstPlus("languages", filters.languages, resolveLabel),
+          needs,
+        ].filter(Boolean);
         return parts.length > 0 ? parts.join(" · ") : "Any";
       }
       default:

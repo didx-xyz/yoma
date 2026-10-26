@@ -44,6 +44,11 @@ const LOOKUPS: SearchLookups = {
     { id: "za", codeAlpha2: "ZA" },
     { id: "ke", codeAlpha2: "KE" },
   ],
+  targetedGroups: [
+    { id: "g-all", name: "Open to all" },
+    { id: "g-women", name: "Women / girls" },
+    { id: "g-rural", name: "Rural youth" },
+  ],
 };
 
 const NON_JOB_TYPE_IDS = ["t-learn", "t-impact", "t-event", "t-ent", "t-other"];
@@ -218,6 +223,22 @@ describe("rule 2 — modes by provenance", () => {
     );
   });
 
+  test("languages follow provenance too (2026-10-21): inherited Include, a manual pick Exclude", () => {
+    assert.deepEqual(build(searchOf({ languages: ["en"] })).languages, {
+      value: ["en"],
+      unspecified: "Include",
+    });
+    assert.deepEqual(
+      build(searchOf({ languages: ["en"] }, { languages: ["fr"] })).languages,
+      { value: ["fr", "en"], unspecified: "Exclude" },
+    );
+    assert.deepEqual(
+      build(manualSearch({ ...EMPTY_DISCOVERY_FILTERS, languages: ["fr"] }))
+        .languages,
+      { value: ["fr"], unspecified: "Exclude" },
+    );
+  });
+
   test("every other criterion goes without a mode; nothing sends Only", () => {
     const body = build(
       searchOf(
@@ -240,6 +261,7 @@ describe("rule 2 — modes by provenance", () => {
           categories: ["c-biz"],
           zltoRanges: ["0|100"],
           sdgs: ["sdg-13"],
+          targetedGroups: ["g-women"],
           provider: "KFC",
           featured: true,
           customFields: [
@@ -254,6 +276,7 @@ describe("rule 2 — modes by provenance", () => {
       ),
     );
     assert.deepEqual(modes(body), {
+      languages: "Include",
       engagementTypes: "Include",
       accommodations: "Include",
       "groups.0.anyOf.1.skills": "Include",
@@ -402,6 +425,31 @@ describe("rule 4 — saved skills are one Jobs-only group", () => {
         ),
       false,
     );
+  });
+});
+
+describe('rule 4b — "Who it\'s aimed at" always brings Open to all (2026-10-21)', () => {
+  test("a picked group goes out with Open to all beside it, without a mode", () => {
+    const body = build(searchOf({}, { targetedGroups: ["g-women"] }));
+    assert.deepEqual(body.targetedGroups, { value: ["g-women", "g-all"] });
+  });
+
+  test("Open to all picked by hand is not duplicated", () => {
+    const body = build(searchOf({}, { targetedGroups: ["g-all", "g-rural"] }));
+    assert.deepEqual(body.targetedGroups, { value: ["g-all", "g-rural"] });
+  });
+
+  test("no pick, no criterion; a facet list without Open to all sends the picks alone", () => {
+    assert.equal("targetedGroups" in build(searchOf({})), false);
+    const body = build(
+      searchOf({}, { targetedGroups: ["g-women"] }),
+      "newest",
+      {
+        ...LOOKUPS,
+        targetedGroups: [],
+      },
+    );
+    assert.deepEqual(body.targetedGroups, { value: ["g-women"] });
   });
 });
 
@@ -700,6 +748,7 @@ describe("rule 11 — group limits", () => {
           languages: ["fr"],
           accommodations: ["ramp"],
           sdgs: ["sdg-13"],
+          targetedGroups: ["g-women", "g-rural"],
           provider: "KFC",
           featured: true,
           customFields: [

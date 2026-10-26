@@ -21,8 +21,8 @@ folder or the epic's.
   when, the release kill-switch) unless the lead says Jason asked for it.
 - **Use only data the page already has.** Never add a request per card or tile. Mark anything
   that needs new API data as **API-gated**, with no workaround.
-- **Palette:** Yoma's tokens in `src/web/src/styles/colors.css` (and the type colours in
-  `features/discovery/components/Results/typeBadge.ts` / `components/Opportunity/opportunityTypeTheme.tsx`).
+- **Palette:** Yoma's tokens in `src/web/src/styles/colors.css`; the opportunity / credential type
+  colours are the BA Review's `--color-type-*` tokens, used only through `src/web/src/lib/typeColours.ts`.
   Name tokens, not hex values.
 - **Motion** honours `motion-reduce`.
 - **Copy:** there is no i18n, so cite every string as `file:line`.

@@ -1,4 +1,6 @@
 import type { Session } from "next-auth";
+import type { IconType } from "react-icons";
+import { IoMoonOutline, IoSunnyOutline } from "react-icons/io5";
 import {
   ROLE_ADMIN,
   ROLE_ORG_ADMIN,
@@ -218,23 +220,23 @@ export const debounce = function (
   };
 };
 
-export const getTimeOfDayAndEmoji = (): [string, string] => {
+/** The greeting's time of day, by the local hour. */
+const getTimeOfDay = (): "morning" | "afternoon" | "evening" => {
   const hour = new Date().getHours();
-  let timeOfDay: string;
-  let timeOfDayEmoji: string;
+  if (hour < 12) return "morning";
+  if (hour < 18) return "afternoon";
+  return "evening";
+};
 
-  if (hour < 12) {
-    timeOfDay = "morning";
-    timeOfDayEmoji = "☀️";
-  } else if (hour < 18) {
-    timeOfDay = "afternoon";
-    timeOfDayEmoji = "☀️";
-  } else {
-    timeOfDay = "evening";
-    timeOfDayEmoji = "🌙";
-  }
+export const getTimeOfDayAndEmoji = (): [string, string] => {
+  const timeOfDay = getTimeOfDay();
+  return [timeOfDay, timeOfDay === "evening" ? "🌙" : "☀️"];
+};
 
-  return [timeOfDay, timeOfDayEmoji];
+/** The io5 sibling of `getTimeOfDayAndEmoji`, for the surfaces that use icons, not emoji. */
+export const getTimeOfDayAndIcon = (): [string, IconType] => {
+  const timeOfDay = getTimeOfDay();
+  return [timeOfDay, timeOfDay === "evening" ? IoMoonOutline : IoSunnyOutline];
 };
 
 /**

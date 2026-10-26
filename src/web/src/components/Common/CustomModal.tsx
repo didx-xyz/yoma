@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, type FC, useState } from "react";
 import { createPortal } from "react-dom";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
+import { nunito, openSans } from "~/lib/fonts";
 
 type AnimationStyle =
   | "fade"
@@ -9,7 +10,9 @@ type AnimationStyle =
   | "slide-left"
   | "slide-right"
   | "scale"
-  | "spin";
+  | "spin"
+  /** The sheet rises 8px while fading in (the completion dialogs); fades out. */
+  | "rise";
 
 interface CustomModalProps {
   isOpen: boolean;
@@ -54,9 +57,11 @@ const CustomModal: FC<CustomModalProps> = ({
   }, [isOpen, onRequestClose, shouldCloseOnOverlayClick]);
 
   useEffect(() => {
-    // Create modal container on client side
+    // Create modal container on client side. It sits on <body>, outside `#mainContent`, so it
+    // carries the site fonts itself (`globals.css` names `#modal-root` beside `#mainContent`).
     const div = document.createElement("div");
-    div.setAttribute("id", "modal-root"); // Ensure you have a modal-root in your public/index.html
+    div.setAttribute("id", "modal-root");
+    div.className = `${openSans.variable} ${nunito.variable} font-sans`;
     document.body.appendChild(div);
     setModalContainer(div);
 
@@ -67,6 +72,13 @@ const CustomModal: FC<CustomModalProps> = ({
       }
     };
   }, []);
+
+  // The newest open dialog paints on top: every container is `fixed z-40`, so the later one in
+  // <body> wins. A dialog mounted earlier (e.g. the confirmation context's) moves to the end when
+  // it opens, so it never lands under one opened after it mounted.
+  useEffect(() => {
+    if (isOpen && modalContainer) document.body.appendChild(modalContainer);
+  }, [isOpen, modalContainer]);
 
   // Don't render portal content if modal is closed or container not ready
   if (!modalContainer) return null;
@@ -98,6 +110,9 @@ const CustomModal: FC<CustomModalProps> = ({
       case "spin":
         animationClasses = "motion-safe:animate-spin-once";
         break;
+      case "rise":
+        animationClasses = "motion-safe:animate-rise-in";
+        break;
       case "scale":
       default:
         animationClasses = "motion-safe:animate-enter";
@@ -122,6 +137,9 @@ const CustomModal: FC<CustomModalProps> = ({
         break;
       case "spin":
         animationClasses = ""; // No exit animation for spin
+        break;
+      case "rise":
+        animationClasses = "motion-safe:animate-fade-out";
         break;
       case "scale":
       default:

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { OpportunityInfo } from "~/api/models/opportunity";
+import { typeBadgeClass, typeBandClass } from "~/lib/typeColours";
 import { AvatarImage } from "../AvatarImage";
 import ZltoRewardBadge from "./Badges/ZltoRewardBadge";
 import {
@@ -9,6 +10,10 @@ import {
   OpportunityTitleRow,
   OpportunityTypeBadge,
 } from "./opportunityTypeTheme";
+
+/** The CTA in the type chip's colour (`lib/typeColours.ts`), the discovery card's hover. */
+const ctaClass = (type: string) =>
+  `${typeBadgeClass(type)} transition hover:brightness-110 motion-reduce:transition-none`;
 
 // Skill badges row. Shows up to `maxSkills` badges (the 3rd only from `sm` up)
 // followed by a "+N" overflow badge. Renders nothing when there are no skills.
@@ -116,8 +121,7 @@ const JobCardSmall: React.FC<{ data: OpportunityInfo; preview?: boolean }> = ({
             <div className="flex flex-row items-center gap-2">
               <OpportunityTypeBadge
                 data={data}
-                //label="Job"
-                className="bg-purple text-white"
+                className={typeBadgeClass(data.type)}
               />
 
               {data?.zltoRewardEstimate != null && (
@@ -152,7 +156,7 @@ const JobCardSmall: React.FC<{ data: OpportunityInfo; preview?: boolean }> = ({
             href={`/opportunities/${data.id}`}
             text="Apply now →"
             title="Apply for this job opportunity"
-            className="bg-purple hover:bg-purple-shade text-white"
+            className={ctaClass(data.type)}
             preview={preview}
           />
         </div>
@@ -163,7 +167,7 @@ const JobCardSmall: React.FC<{ data: OpportunityInfo; preview?: boolean }> = ({
 
 // ---------------------------------------------------------------------------
 // NON-JOB CARDS — per-type rendering modes (logo bubble + badge + title +
-// meta + CTA). Each type has its own colour theme (see opportunityTypeTheme).
+// meta + CTA). Colours come from the type palette (lib/typeColours.ts).
 // ---------------------------------------------------------------------------
 const DefaultCard: React.FC<{ data: OpportunityInfo; preview?: boolean }> = ({
   data,
@@ -175,7 +179,7 @@ const DefaultCard: React.FC<{ data: OpportunityInfo; preview?: boolean }> = ({
     <div className="flex h-94 w-80 flex-col rounded-2xl bg-white p-3 max-[370px]:w-64">
       {/* ORG LOGO BUBBLE */}
       <div
-        className={`relative flex h-24 shrink-0 items-center justify-center rounded-xl ${config.bubbleClassName}`}
+        className={`relative flex h-24 shrink-0 items-center justify-center rounded-xl ${typeBandClass(data.type)}`}
       >
         <AvatarImage
           icon={data?.organizationLogoURL ?? null}
@@ -188,7 +192,10 @@ const DefaultCard: React.FC<{ data: OpportunityInfo; preview?: boolean }> = ({
       <div className="flex flex-1 flex-col gap-2 pt-3">
         {/* TYPE BADGE */}
         <div className="flex flex-row items-center justify-between">
-          <OpportunityTypeBadge data={data} className={config.badgeClassName} />
+          <OpportunityTypeBadge
+            data={data}
+            className={typeBadgeClass(data.type)}
+          />
 
           {data?.zltoRewardEstimate != null && (
             <ZltoRewardBadge amount={data.zltoRewardEstimate} />
@@ -211,7 +218,7 @@ const DefaultCard: React.FC<{ data: OpportunityInfo; preview?: boolean }> = ({
             href={`/opportunities/${data.id}`}
             text={config.ctaText}
             title={config.ctaTitle}
-            className={config.ctaClassName}
+            className={ctaClass(data.type)}
             preview={preview}
           />
         </div>
@@ -230,7 +237,7 @@ const JobCard: React.FC<{ data: OpportunityInfo; preview?: boolean }> = ({
     <div className="flex h-94 w-80 flex-col rounded-2xl bg-white p-3 max-[370px]:w-64">
       {/* ORG LOGO BUBBLE */}
       <div
-        className={`relative flex h-24 shrink-0 items-center justify-center rounded-xl ${config.bubbleClassName}`}
+        className={`relative flex h-24 shrink-0 items-center justify-center rounded-xl ${typeBandClass(data.type)}`}
       >
         <AvatarImage
           icon={data?.organizationLogoURL ?? null}
@@ -243,7 +250,10 @@ const JobCard: React.FC<{ data: OpportunityInfo; preview?: boolean }> = ({
       <div className="flex flex-1 flex-col gap-2 pt-3">
         {/* TYPE BADGE */}
         <div className="flex flex-row items-center justify-between">
-          <OpportunityTypeBadge data={data} className={config.badgeClassName} />
+          <OpportunityTypeBadge
+            data={data}
+            className={typeBadgeClass(data.type)}
+          />
 
           {data?.zltoRewardEstimate != null && (
             <ZltoRewardBadge amount={data.zltoRewardEstimate} />
@@ -264,7 +274,7 @@ const JobCard: React.FC<{ data: OpportunityInfo; preview?: boolean }> = ({
             href={`/opportunities/${data.id}`}
             text={config.ctaText}
             title={config.ctaTitle}
-            className={config.ctaClassName}
+            className={ctaClass(data.type)}
             preview={preview}
           />
         </div>

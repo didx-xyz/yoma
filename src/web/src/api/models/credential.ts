@@ -146,6 +146,12 @@ export interface SSICredentialBase {
   id: string;
   artifactType: ArtifactType | string; //NB: string
   schemaType: SchemaType | string; //NB: string
+  /**
+   * The Opportunity Type name (`Learning`, `ImpactAction`, …) normalized from the credential's
+   * signed system claim (YOM-1277). Null for YoID — identified by `schemaType` — and for an
+   * Opportunity credential without a supported signed type, which renders neutral.
+   */
+  typeContext: string | null;
   issuer: string;
   issuerLogoURL: string;
   title: string;

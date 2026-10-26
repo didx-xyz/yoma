@@ -146,6 +146,13 @@ Anonymous visitors get it too — answers held in session, with an offer to keep
 - [ ] **Blocked**: final preference list, pending YOM-1264.
 - [ ] Confirm with the BA whether `Start a business` gets a filter mapping or stays inert.
 - [ ] Confirm the privacy position on Gender before it appears in any visible filter UI.
+- [x] **Jason's 2026-10-22 list** (epic README): step 5 and 6 titles shortened; an icon and a
+      what-it-affects note on every block (`icon` / `note` required on `StepBlockDef`, rendered by
+      `StepBlock`); "Change in your profile" → profile → Cancel/Save returns INTO the wizard on
+      the location step with the draft intact (`lib/wizardReturn.ts`; see Decisions).
+- [x] **Jason's 2026-10-22 feedback (search discovery)**: "Show all N" on the wizard's long pill
+      rows — languages, accessibility, interests, and every `pills` block — the filters dialog's
+      cut (see Decisions 2026-10-22, second entry).
 
 ## Decisions
 
@@ -270,6 +277,70 @@ Anonymous visitors get it too — answers held in session, with an offer to keep
   `GoalId`, and the two decided together to keep it. The same round changed the wizard's count
   panel and step 5's title; see YOM-1262's
   [2026-10-05 handoff](../YOM-1262-ui-apply-user-presets-to-opportunity-discovery/handoffs/2026-10-05-a.md).
+- 2026-10-21 (Jason, BA feedback round): three wizard changes.
+  - **R10: the time pills read "A few minutes" (= 15 minutes), "Up to an hour", "Up to a
+    day"…** from the shared `commitmentBuckets` (`lib/format.ts`), which the filter section and
+    the commitment rail read too. The pill stores the bucket's count, so "A few minutes" saves
+    `{Minute, 15}`; the other buckets keep `count: 1`. Pay stays single-select.
+  - **R11: the languages block is a search over the full `/lookup/language`**, the skills
+    block's pattern (`LanguageSearch`), where the chips only offered the facet list — the
+    languages published opportunities use, four on Stage. With nothing typed the facet list is
+    still the suggestion row. Preferences were already multi-select (the API stores a list);
+    that stays, and the note says so ("Pick as many as you like.").
+  - **R6: the welcome pop-up's headings match the discovery hero** — Open Sans (the platform
+    default), bold for the count and semibold for "opportunities are waiting for you.", instead
+    of Nunito black. The type-tile labels and the step titles were not touched.
+- 2026-10-22 (Jason's fix/feature list, epic README): the wizard's copy and its profile round trip.
+  - **Step titles fit one line on a phone**: step 5 "Where and what language?" (was "Where are
+    you, and what languages do you speak?"), step 6 "Other requirements?" (was "Do you need
+    support to take part?"). Subheadings unchanged.
+  - **Every block carries an icon and one what-it-affects note**, both registry data
+    (`StepBlockDef.icon`, `StepBlockDef.note` — no longer nullable). The icons are the filter
+    sections' own (time, wifi, cash, language, location, shield), so a preference and the filter
+    it feeds read as one thing; Goal, Interests, Skills and the profile block take flag, grid,
+    sparkles and person. `StepBlock` puts the icon before the heading, or — on a block with no
+    heading (Goal, Interests, Skills, where the step title is the heading) — in place of the note's
+    info glyph (`Message icon=…`). Existing notes were kept and given their first sentence where
+    they stated only the null rule ("We hide opportunities that take longer than this. Ones that
+    don't say … still show."); the skills note is unchanged ("Your skills only affect jobs …").
+    New notes: Goal, Interests, Location ("We show opportunities in your country, plus worldwide
+    ones. A region or city narrows them to that place." — the place is a filter on the country
+    entry, never a sort).
+  - **"Change in your profile" → `/user/profile` → Cancel did not always come back**, and never
+    into the wizard. Root causes, reproduced: (1) the profile page's Cancel was `router.back()`
+    with no `returnUrl`; from a fresh tab there was nothing to go back to, so Cancel did nothing.
+    (2) The wizard's Back-button sentinel (`useDialogDismiss`) was a bare
+    `pushState({ discoveryDialog: true })`: Next's popstate handler ignores an entry without its
+    own `__N` state, so Back (and `router.back()`) from the profile page changed the URL to
+    `/opportunities/discover` and left the profile page rendered. (3) `?personalize=1` was
+    stripped on arrival, so even a successful return opened no wizard and lost the draft.
+    Fix (`features/discovery/lib/wizardReturn.ts`): the profile links carry
+    `returnUrl=<discovery URL as it is, filters and all>&personalize=<step id>`; the profile
+    page's Cancel AND Save push the (safe, `getSafeUrl`) `returnUrl` when present — without one
+    Cancel steps back in history when there is any, else to discovery (`/opportunities` while the
+    framework is off), and Save stays as before. `?personalize=<step id>` opens the wizard ON that
+    step, welcome skipped (`PersonalizeDialog initialStep`); `personalize=1` (the user menu) keeps
+    meaning "open as usual". The draft is stashed in `sessionStorage` on the way out and taken
+    (and cleared) on the way back, so no unsaved answer is lost; a changed profile country reads
+    through the existing stale-place rule. The sentinel now copies Next's state and adds its
+    flag, so browser Back from any page the overlay linked to lands on the discovery page proper.
+    Verified signed in (headless, 1440): wizard → link → Cancel ×2 and → Save ×2 each land on
+    `/opportunities/discover` with the wizard open at "Step 5 of 6 · Where and what language?";
+    a direct load of the `returnUrl`-bearing profile URL → Cancel does the same; browser Back
+    from the profile page renders the discovery page. Cause (2) reproduced before the fix: a bare
+    sentinel + `router.push("/user/profile")` + Back left the profile form rendered under the
+    discovery URL. Shots: `~/.cache/cdp-tools/shots/2026-10-22-discovery/roundtrip-*`,
+    `wizard-step*`.
+- 2026-10-22 (Jason's feedback list): **"Show all N" on the wizard's pill rows**, the filters
+  dialog's pattern. A new `blocks/PillList` renders a wrapping pill row cut at the dialog's
+  `VISIBLE_BEFORE_SHOW_ALL` (8, now exported from `FilterControl`), then a green underlined
+  "Show all N" reveals the rest; a picked pill is never hidden behind the cut (the dialog's
+  `ChipSet` rule), wherever it sits in the list. `SearchShell` (skills, languages) takes
+  `pills` + `pinned` (the picks lead the row), `AccessibilityBlock` and `StepBlock`'s `chips`
+  (interests) and `pills` kinds render through it; `rows` (one per line, short lists) do not.
+  Verified anonymous at 390: interests 8 + "Show all 16"; languages 8 suggestions +
+  "Show all 183" → 183; accessibility 8 + "Show all 16" → 16. Shots:
+  `~/.cache/cdp-tools/shots/2026-10-22-disc2/wizard-390-*`.
 
 ## Links
 

@@ -272,6 +272,7 @@ describe("composeSearch — provenance", () => {
     assert.deepEqual(search.inheritedOnly, {
       engagementTypes: true,
       accommodations: true,
+      languages: false,
     });
     assert.equal(search.inheritedCountry, true);
   });
@@ -292,6 +293,7 @@ describe("composeSearch — provenance", () => {
     assert.deepEqual(search.inheritedOnly, {
       engagementTypes: false,
       accommodations: false,
+      languages: false,
     });
   });
 
@@ -407,6 +409,7 @@ describe("composeSearch — provenance", () => {
     assert.deepEqual(search.inheritedOnly, {
       engagementTypes: false,
       accommodations: false,
+      languages: false,
     });
     assert.equal(search.goalCategoryNames, null);
     assert.equal(search.inheritedCountry, false);

@@ -2,7 +2,7 @@ import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
 import type { GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
-import router from "next/router";
+import { useRouter } from "next/router";
 import { type ReactElement } from "react";
 import { toast } from "react-toastify";
 import {
@@ -19,7 +19,10 @@ import {
   UserProfileFilterOptions,
   UserProfileForm,
 } from "~/components/User/UserProfileForm";
+import { OPPORTUNITIES_SEARCH_URL } from "~/lib/constants";
+import { hasPreviousRoute } from "~/lib/previousRoute";
 import { config } from "~/lib/react-query-config";
+import { getSafeUrl } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
 
@@ -67,19 +70,26 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const MyProfile: NextPageWithLayout<{
   error?: string;
 }> = ({ error }) => {
+  const router = useRouter();
   const { data: userProfile, isLoading } = useQuery({
     queryKey: ["userProfile"],
     queryFn: async () => await getUserProfile(),
     enabled: !error,
   });
 
+  // Where Cancel and Save go. A caller that needs the youth back somewhere specific passes
+  // `returnUrl` (the discovery wizard's "Change in your profile", which reopens the wizard on its
+  // step — `features/discovery/lib/wizardReturn.ts`); it wins over history. Without one, Cancel
+  // steps back only when the previous page was in this app (`hasPreviousRoute`; the browser's
+  // `history.length` also counts other sites), else to the youth search; Save stays on the page.
+  const returnUrl =
+    typeof router.query.returnUrl === "string"
+      ? getSafeUrl(router.query.returnUrl, OPPORTUNITIES_SEARCH_URL)
+      : null;
   const handleCancel = () => {
-    const returnUrl = router.query.returnUrl as string | undefined;
-    if (returnUrl) {
-      router.push(returnUrl);
-    } else {
-      router.back();
-    }
+    if (returnUrl) void router.push(returnUrl);
+    else if (hasPreviousRoute()) router.back();
+    else void router.push(OPPORTUNITIES_SEARCH_URL);
   };
 
   if (error) return <Unauthorized />;
@@ -87,7 +97,7 @@ const MyProfile: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | 🕶️ Profile</title>
+        <title>Yoma | Profile</title>
       </Head>
 
       <PageBackground />
@@ -108,6 +118,7 @@ const MyProfile: NextPageWithLayout<{
                   type: "success",
                   toastId: "patchUserProfile",
                 });
+                if (returnUrl) void router.push(returnUrl);
               }}
               onCancel={handleCancel}
               filterOptions={[

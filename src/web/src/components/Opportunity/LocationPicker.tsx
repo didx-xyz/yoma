@@ -1,14 +1,22 @@
 import { GoogleMap, MarkerF } from "@react-google-maps/api";
 import React, { useEffect, useState, type ReactElement } from "react";
-import { FcGlobe } from "react-icons/fc";
+import { IoEarthOutline } from "react-icons/io5";
 import { toast } from "react-toastify";
 import { fetchClientEnv } from "~/lib/utils";
 
 export interface InputProps {
   [id: string]: any;
   label?: string;
-  children: ReactElement | undefined;
+  children?: ReactElement;
   onSelect?: (coords: Location) => void;
+  /**
+   * No grey card and no icon column: the label, the "drop a pin" line and the map in a rounded
+   * frame, for the completion form's "Proof of completion" section (2026-10-21). The default
+   * keeps the card for the admin imports.
+   */
+  plain?: boolean;
+  /** Plain mode: the required-status mark beside the label (`RequiredMark`). */
+  mark?: React.ReactNode;
 }
 
 interface Location {
@@ -21,6 +29,8 @@ const LocationPicker: React.FC<InputProps> = ({
   label = "Select pin",
   children,
   onSelect,
+  plain = false,
+  mark,
 }) => {
   //* Google Maps
   // load the google map script async as the api key needs to be fetched async
@@ -115,11 +125,15 @@ const LocationPicker: React.FC<InputProps> = ({
   const onClick_UseCurrentLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position: any) => {
-          const latitude = position.coords.latitude;
-          const longitude = position.coords.longitude;
-
-          setMarkerPosition({ lat: latitude, lng: longitude });
+        (position: GeolocationPosition) => {
+          const result = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+          setMarkerPosition(result);
+          if (onSelect) {
+            onSelect(result);
+          }
         },
         () => {
           toast.error("Unable to retrieve your location");
@@ -130,6 +144,56 @@ const LocationPicker: React.FC<InputProps> = ({
     }
   };
 
+  const map = (
+    <GoogleMap
+      id="map"
+      mapContainerStyle={{
+        width: "100%",
+        height: "350px",
+      }}
+      center={markerPosition}
+      zoom={16}
+      onClick={handleMapClick}
+    >
+      <MarkerF
+        position={markerPosition}
+        draggable={true}
+        onDragEnd={handleMarkerDragEnd}
+        icon={{
+          strokeColor: "transparent",
+          fillColor: "#41204B",
+          path: iconPath,
+          fillOpacity: 1,
+          scale: 2,
+        }}
+      />
+    </GoogleMap>
+  );
+
+  if (plain)
+    return (
+      <div key={id} className="flex w-full flex-col gap-3">
+        <div className="flex flex-col">
+          <div className="flex items-center gap-1.5 text-sm font-semibold text-black">
+            {mark}
+            <span>{label}</span>
+          </div>
+          <div className="text-gray-dark text-[13px]">
+            Drop a pin on the map, or{" "}
+            <button
+              onClick={onClick_UseCurrentLocation}
+              type="button"
+              className="text-green font-semibold underline"
+            >
+              use your current location
+            </button>
+          </div>
+        </div>
+        <div className="overflow-hidden rounded-xl">{map}</div>
+        {children}
+      </div>
+    );
+
   return (
     <div
       key={id}
@@ -137,7 +201,7 @@ const LocationPicker: React.FC<InputProps> = ({
     >
       <div className="flex w-full flex-row">
         <div className="ml-2 p-4 md:p-6">
-          <FcGlobe className="size-10" />
+          <IoEarthOutline className="text-blue-dark size-10" />
         </div>
         <div className="flex grow flex-col p-4">
           <div className="font-semibold">{label}</div>
@@ -153,31 +217,7 @@ const LocationPicker: React.FC<InputProps> = ({
           </div>
         </div>
       </div>
-      <div className="w-full p-4 pt-0">
-        <GoogleMap
-          id="map"
-          mapContainerStyle={{
-            width: "100%",
-            height: "350px",
-          }}
-          center={markerPosition}
-          zoom={16}
-          onClick={handleMapClick}
-        >
-          <MarkerF
-            position={markerPosition}
-            draggable={true}
-            onDragEnd={handleMarkerDragEnd}
-            icon={{
-              strokeColor: "transparent",
-              fillColor: "#41204B",
-              path: iconPath,
-              fillOpacity: 1,
-              scale: 2,
-            }}
-          />
-        </GoogleMap>
-      </div>
+      <div className="w-full p-4 pt-0">{map}</div>
       <div>{children && children}</div>
     </div>
   );

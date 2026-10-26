@@ -261,11 +261,15 @@ export function useOpportunityLanguagesQuery(options?: { enabled?: boolean }) {
   });
 }
 
-/** Opportunity types lookup (create/edit page). */
+/**
+ * Opportunity types lookup: the create/edit page, and the type labels (`typeLabel`) on the YoID
+ * opportunity cards and the passport. A static lookup, so one request per session.
+ */
 export function useOpportunityTypesQuery(options?: { enabled?: boolean }) {
   return useQuery<OpportunityType[]>({
     queryKey: OPPORTUNITY_QUERY_KEYS.opportunityTypes(),
     queryFn: () => getTypes(),
+    staleTime: Infinity,
     enabled: options?.enabled ?? true,
   });
 }

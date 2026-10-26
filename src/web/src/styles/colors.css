@@ -41,6 +41,18 @@
   --color-gray: #dce0e5;
   --color-gray-light: #f3f6fa;
 
+  /* Opportunity / credential type colours — the BA Review palette ("BA Considerations", Yoma
+     Credentials sheet), revised for AA white text and a distinct Learning / YoID (2026-10-21;
+     see YOM-1283 design/2026-10-21-type-colours.md). Other and unknown types share "Default";
+     YoID is the credential family. Consumed through `~/lib/typeColours.ts` only. */
+  --color-type-job: #cc473d;
+  --color-type-impact-action: #23836a;
+  --color-type-event: #391350;
+  --color-type-entrepreneurship: #a66700;
+  --color-type-learning: #007cb4;
+  --color-type-default: #5a6675;
+  --color-type-yoid: #a3195b;
+
   /* Utility colors */
   --color-overlay: rgba(0, 0, 0, 0.5);
 }

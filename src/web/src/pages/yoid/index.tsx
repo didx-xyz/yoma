@@ -3,40 +3,70 @@ import { useAtom } from "jotai";
 import type { GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import { env } from "process";
-import { useState, type ReactElement } from "react";
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactElement,
+} from "react";
+import { IoConstructOutline, IoDocumentTextOutline } from "react-icons/io5";
 import { searchCredentials } from "~/api/services/credentials";
 import { searchMyOpportunitiesSummary } from "~/api/services/myOpportunities";
 import { UserSkillType } from "~/api/models/user";
 import { getUserSkills } from "~/api/services/user";
-import { Header } from "~/components/Common/Header";
+import {
+  YoIDSectionsRegistrar,
+  type YoIDSectionId,
+} from "~/components/YoID/yoidSections";
+import { SectionLink, SKILLS_LINK_CLASS } from "~/components/YoID/SectionLink";
+import {
+  opportunitiesPreview,
+  passportPreview,
+  skillsPreview,
+  walletPreview,
+  YOID_TABS,
+} from "~/components/YoID/yoidTabs";
 import Suspense from "~/components/Common/Suspense";
 import YoIDLayout from "~/components/Layout/YoID";
 import NoRowsMessage from "~/components/NoRowsMessage";
+import {
+  DetailDisclosure,
+  TONE,
+} from "~/components/Opportunity/TabbedDetails/DetailDisclosure";
 import { InternalServerError } from "~/components/Status/InternalServerError";
-import { LoadingInline } from "~/components/Status/LoadingInline";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { LineChart } from "~/components/YoID/LineChart";
-import { OpportunitiesSummary } from "~/components/YoID/OpportunitiesSummary";
-import { PassportCard } from "~/components/YoID/PassportCard";
+import { OpportunitiesBody } from "~/components/YoID/OpportunitiesBody";
+import { PassportCard, passportRows } from "~/components/YoID/PassportCard";
 import { SkillsCard } from "~/components/YoID/SkillsCard";
 import { WalletCard } from "~/components/YoID/WalletCard";
-import { ZltoModal } from "~/components/YoID/ZltoModal";
+import {
+  LoadingStatus,
+  TileBodySkeleton,
+} from "~/components/YoID/YoIDSkeletons";
 import { MAXINT32 } from "~/lib/constants";
 import { userProfileAtom } from "~/lib/store";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
 
-export interface OrganizationSearchFilterSummaryViewModel {
-  organization: string;
-  opportunities: string[] | null;
-  categories: string[] | null;
-  startDate: string | null;
-  endDate: string | null;
-  pageSelectedOpportunities: number;
-  pageCompletedYouth: number;
-  countries: string[] | null;
-}
+/** The fixed navbar plus the layout's sticky chip bar: what a jumped-to section clears. */
+const STICKY_OFFSET_PX = 80 + 56;
+/** Room between the sticky bar and the section a chip lands on. */
+const LANDING_GAP_PX = 12;
+
+/**
+ * The overview's sections in the chips' order, with their icon tints (the detail page's `TONE`).
+ * From `lg` each row holds two sections — Wallet | Passport, Opportunities | Skills — and only the
+ * static CV row spans the grid (Jason, 2026-10-22, superseding the 2026-10-21 Q3 spans).
+ */
+const SECTIONS: { id: YoIDSectionId; toneClass: string }[] = [
+  { id: "wallet", toneClass: TONE.gold },
+  { id: "passport", toneClass: TONE.lilac },
+  { id: "opportunities", toneClass: TONE.blue },
+  { id: "skills", toneClass: TONE.green },
+];
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
@@ -62,14 +92,16 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   };
 }
 
-// YoID dashboard page
+/**
+ * The Yo-ID overview as the opportunity page's expandable sections (Jason, 2026-10-21): one
+ * `DetailDisclosure` per section, open by default so the dashboard still shows its data, with
+ * the layout's chips opening and scrolling to a section and following the scroll (scroll-spy).
+ */
 const YoIDDashboard: NextPageWithLayout<{
   error?: number;
   passport_enabled: boolean;
 }> = ({ error, passport_enabled }) => {
-  const [zltoModalVisible, setZltoModalVisible] = useState(false);
   const [userProfile] = useAtom(userProfileAtom);
-  const [graphView, setGraphView] = useState(false);
 
   const {
     data: skills,
@@ -109,19 +141,97 @@ const YoIDDashboard: NextPageWithLayout<{
           pageSize: 1,
           schemaType: "YoID",
         }),
-      ]).then(([opportunityResult, yoidResult]) => {
-        const combinedResults = [
-          {
-            schemaType: "Opportunity",
-            totalCount: opportunityResult.totalCount,
-          },
-          { schemaType: "YoID", totalCount: yoidResult.totalCount },
-        ];
-
-        return combinedResults;
-      }),
-    enabled: !error,
+      ]).then(([opportunityResult, yoidResult]) => [
+        {
+          schemaType: "Opportunity",
+          totalCount: opportunityResult.totalCount,
+        },
+        { schemaType: "YoID", totalCount: yoidResult.totalCount },
+      ]),
+    enabled: !error && passport_enabled,
   });
+
+  // ── sections: open state, jump and scroll-spy, published to the layout's chips ──
+  const [open, setOpen] = useState<Record<YoIDSectionId, boolean>>({
+    wallet: true,
+    passport: true,
+    skills: true,
+    opportunities: true,
+  });
+  const [active, setActive] = useState<YoIDSectionId | null>(null);
+  const sectionRefs = useRef<Partial<Record<YoIDSectionId, HTMLElement>>>({});
+  const register = useContext(YoIDSectionsRegistrar);
+  // A chip tap owns the highlight while its scroll runs — on a short page the section may never
+  // reach the spy line, and the scroll events would otherwise hand the highlight back at once.
+  const holdRef = useRef<number | null>(null);
+
+  const jump = useCallback((id: YoIDSectionId | "overview") => {
+    const reduce = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    const behavior: ScrollBehavior = reduce ? "auto" : "smooth";
+    if (holdRef.current) window.clearTimeout(holdRef.current);
+    holdRef.current = window.setTimeout(() => (holdRef.current = null), 900);
+    if (id === "overview") {
+      setActive(null);
+      window.scrollTo({ top: 0, behavior });
+      return;
+    }
+    setActive(id);
+    setOpen((current) => (current[id] ? current : { ...current, [id]: true }));
+    const el = sectionRefs.current[id];
+    if (!el) return;
+    const top =
+      el.getBoundingClientRect().top +
+      window.scrollY -
+      STICKY_OFFSET_PX -
+      LANDING_GAP_PX;
+    window.scrollTo({ top, behavior });
+    el.querySelector<HTMLElement>("button")?.focus({ preventScroll: true });
+  }, []);
+
+  // scroll-spy: the active section is the lowest one whose top has passed the sticky bar. From
+  // `lg` each row's two sections tie on their tops: the active one keeps the highlight while it
+  // is in that row, else the first in `SECTIONS` order.
+  useEffect(() => {
+    let frame = 0;
+    const spy = (): void => {
+      frame = 0;
+      if (holdRef.current) return;
+      const line = STICKY_OFFSET_PX + LANDING_GAP_PX + 1;
+      let row: YoIDSectionId[] = [];
+      let rowTop = -Infinity;
+      for (const { id } of SECTIONS) {
+        const el = sectionRefs.current[id];
+        if (!el) continue;
+        const top = Math.round(el.getBoundingClientRect().top);
+        if (top > line || top < rowTop) continue;
+        if (top > rowTop) {
+          row = [];
+          rowTop = top;
+        }
+        row.push(id);
+      }
+      setActive((current) => {
+        const next = current && row.includes(current) ? current : row[0];
+        return next ?? null;
+      });
+    };
+    const onScroll = (): void => {
+      if (!frame) frame = window.requestAnimationFrame(spy);
+    };
+    spy();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, []);
+
+  useEffect(() => {
+    register({ active, jump });
+    return () => register({ active: null, jump: null });
+  }, [register, active, jump]);
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -129,121 +239,146 @@ const YoIDDashboard: NextPageWithLayout<{
     else return <InternalServerError />;
   }
 
+  const toggle = (id: YoIDSectionId): void =>
+    setOpen((current) => ({ ...current, [id]: !current[id] }));
+  const setRef =
+    (id: YoIDSectionId) =>
+    (el: HTMLElement | null): void => {
+      if (el) sectionRefs.current[id] = el;
+      else delete sectionRefs.current[id];
+    };
+
+  // closed-row previews from data the page already has (shared with the user-menu drawer)
+  const credentialCount = credentials?.reduce(
+    (sum, c) => sum + (c.totalCount ?? 0),
+    0,
+  );
+
   return (
     <>
-      <ZltoModal
-        isOpen={zltoModalVisible}
-        onClose={() => setZltoModalVisible(false)}
+      <LoadingStatus
+        when={
+          !userProfile ||
+          (passport_enabled && credentialsIsLoading) ||
+          skillsIsLoading ||
+          myOpportunitiesSummaryIsLoading
+        }
       />
 
-      {/* DASHBOARD */}
-      <div className="mt-2 flex h-full w-full flex-wrap items-center justify-center gap-4 lg:max-w-7xl">
-        {/* WALLET */}
-        <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
-          <Header title="💸 Wallet" url="/yoid/wallet" />
-          {/* min-h, not h: the wallet ledger grows to five rows plus an offline notice, and a
-              clipped balance is worse than a card that is taller than its neighbours. */}
-          <div className="flex min-h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
-            <Suspense
-              isLoading={!userProfile}
-              loader={
-                <LoadingInline
-                  className="h-[185px] flex-col p-0"
-                  classNameSpinner="h-12 w-12"
-                />
-              }
-            >
-              <WalletCard userProfile={userProfile!} />
-            </Suspense>
-          </div>
-        </div>
-
-        {/* PASSPORT */}
-        <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
-          <Header title="🌐 Passport" url="/yoid/passport" />
-          <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
-            {passport_enabled ? (
-              <Suspense
-                isLoading={credentialsIsLoading}
-                error={credentialsError}
-                loader={
-                  <LoadingInline
-                    className="h-[185px] flex-col p-0"
-                    classNameSpinner="h-12 w-12"
-                  />
-                }
-              >
-                <PassportCard data={credentials!} />
-              </Suspense>
-            ) : (
-              <NoRowsMessage
-                title={"Update in Progress"}
-                description={
-                  "Credentials will begin displaying again soon. Thanks for your patience."
-                }
-                icon={<>⚙️</>}
-              />
-            )}
-          </div>
-        </div>
-
-        {/* SKILLS */}
-        <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
-          <Header title="⚡ Skills" url="/yoid/skills" />
-          <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
-            <div className="flex flex-wrap gap-1 overflow-y-auto">
-              <Suspense isLoading={skillsIsLoading} error={skillsError}>
-                <SkillsCard data={skills!} />
-              </Suspense>
-            </div>
-          </div>
-        </div>
-
-        {/* CV */}
-        <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
-          <Header title="🏦 CV" />
-          <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow xl:h-[300px]">
-            <NoRowsMessage
-              icon="🚧"
-              title={"Coming soon..."}
-              description={
-                "Watch this space! Exciting updates are on the way ;)"
-              }
-            />
-          </div>
-        </div>
-
-        {/* OPPORTUNITIES */}
-        <div className="relative flex h-full w-full flex-col gap-2 sm:w-[616px] md:w-[716px] lg:w-[816px]">
-          <Header
-            title="🏆 Opportunities"
-            url="/yoid/opportunities/completed"
-          />
-          <button
-            onClick={() => setGraphView(!graphView)}
-            className="absolute left-[9rem] flex sm:left-[8.5rem] lg:left-[9rem]"
-          >
-            {graphView ? "📋" : "📈"}&nbsp;
-            <span className="text-gray-dark my-auto text-xs underline">
-              {graphView ? "View Summary" : "View Graph"}
-            </span>
-          </button>
-
-          <div className="flex h-full w-full flex-col items-center justify-center gap-4 rounded-lg bg-white p-4 shadow md:h-[300px]">
-            <Suspense
-              isLoading={myOpportunitiesSummaryIsLoading}
-              error={myOpportunitiesSummaryError}
-            >
-              {graphView ? (
-                <LineChart data={myOpportunitiesSummary!} />
-              ) : (
-                <OpportunitiesSummary
-                  data={myOpportunitiesSummary}
-                  showSaved={true}
-                />
+      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-3 lg:grid-cols-2 lg:items-start">
+        {SECTIONS.map(({ id, toneClass }) => {
+          const tab = YOID_TABS[id];
+          const Icon = tab.icon;
+          const common = {
+            id,
+            icon: <Icon aria-hidden className="h-5 w-5" />,
+            toneClass,
+            title: tab.label,
+            note: tab.blurb,
+            open: open[id],
+            onToggle: () => toggle(id),
+            focused: active === id,
+          };
+          return (
+            <section key={id} id={id} ref={setRef(id)} aria-label={tab.label}>
+              {id === "wallet" && (
+                <DetailDisclosure
+                  {...common}
+                  preview={walletPreview(userProfile)}
+                >
+                  <Suspense
+                    isLoading={!userProfile}
+                    loader={<TileBodySkeleton />}
+                  >
+                    <WalletCard
+                      userProfile={userProfile!}
+                      link={<SectionLink id={id} />}
+                    />
+                  </Suspense>
+                </DetailDisclosure>
               )}
-            </Suspense>
-          </div>
+              {id === "passport" && (
+                <DetailDisclosure
+                  {...common}
+                  count={passport_enabled ? credentialCount : undefined}
+                  preview={
+                    passport_enabled
+                      ? passportPreview(
+                          credentials && passportRows(credentials),
+                        )
+                      : "Update in progress"
+                  }
+                >
+                  {passport_enabled ? (
+                    <Suspense
+                      isLoading={credentialsIsLoading}
+                      error={credentialsError}
+                      loader={<TileBodySkeleton />}
+                    >
+                      <PassportCard data={credentials!} />
+                    </Suspense>
+                  ) : (
+                    <NoRowsMessage
+                      title={"Update in Progress"}
+                      description={
+                        "Credentials will begin displaying again soon. Thanks for your patience."
+                      }
+                      icon={
+                        <IoConstructOutline
+                          aria-hidden
+                          className="text-green h-5 w-5"
+                        />
+                      }
+                    />
+                  )}
+                  <SectionLink id={id} />
+                </DetailDisclosure>
+              )}
+              {id === "skills" && (
+                <DetailDisclosure
+                  {...common}
+                  count={skills?.length}
+                  preview={skillsPreview(skills)}
+                >
+                  <Suspense
+                    isLoading={skillsIsLoading}
+                    error={skillsError}
+                    loader={<TileBodySkeleton />}
+                  >
+                    <SkillsCard data={skills!} />
+                  </Suspense>
+                  <SectionLink id={id} className={SKILLS_LINK_CLASS} />
+                </DetailDisclosure>
+              )}
+              {id === "opportunities" && (
+                <DetailDisclosure
+                  {...common}
+                  preview={opportunitiesPreview(userProfile)}
+                >
+                  <OpportunitiesBody
+                    summary={myOpportunitiesSummary}
+                    isLoading={myOpportunitiesSummaryIsLoading}
+                    error={myOpportunitiesSummaryError}
+                    showSaved
+                  />
+                </DetailDisclosure>
+              )}
+            </section>
+          );
+        })}
+
+        {/* CV — nothing to open yet */}
+        <div className="lg:col-span-2">
+          <DetailDisclosure
+            id="cv"
+            icon={<IoDocumentTextOutline aria-hidden className="h-5 w-5" />}
+            toneClass={TONE.grey}
+            title="CV"
+            note="A CV built from your Yo-ID — coming soon."
+            static
+            open={false}
+            onToggle={() => undefined}
+          />
         </div>
       </div>
     </>

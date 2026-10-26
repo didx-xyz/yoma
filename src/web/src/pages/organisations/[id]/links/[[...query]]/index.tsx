@@ -384,7 +384,7 @@ const Links: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | 🔗 Links</title>
+        <title>Yoma | Links</title>
       </Head>
 
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}

@@ -1,10 +1,10 @@
 import { IoIosInformationCircleOutline } from "react-icons/io";
 import { IoMdAlert } from "react-icons/io";
 import FormTooltip from "./FormTooltip";
-import { Fragment } from "react";
+import { Fragment, type ReactNode } from "react";
 
 const FormLabel: React.FC<{
-  label: string;
+  label: ReactNode;
   subLabel?: string;
   tooltip?: string;
   showWarningIcon: boolean;

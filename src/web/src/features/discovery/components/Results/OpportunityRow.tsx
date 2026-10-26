@@ -15,7 +15,8 @@ import { engagementDisplayName } from "../../state/useDiscoveryLookups";
 import { HIGHLIGHT_CLASSES } from "./OpportunityCard";
 import { LIST_COLUMNS } from "./listColumns";
 import { MoneyBadge } from "./MoneyBadge";
-import { typeBadgeClass, typeLabel, typeOutlineClass } from "./typeBadge";
+import { CARD_CHIP_CLASS } from "~/lib/card";
+import { typeBadgeClass, typeLabel, typeOutlineClass } from "~/lib/typeColours";
 
 /**
  * The compact-list row (round 7, artboard 9a, 2026-09-30) — the card's fields as aligned columns
@@ -86,9 +87,7 @@ export const OpportunityRow: React.FC<{
     </span>
   );
   const chip = (
-    <span
-      className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wide uppercase ${typeBadgeClass(opportunity.type)}`}
-    >
+    <span className={`${CARD_CHIP_CLASS} ${typeBadgeClass(opportunity.type)}`}>
       {type}
     </span>
   );

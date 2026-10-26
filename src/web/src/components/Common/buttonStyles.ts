@@ -29,6 +29,14 @@ export const BTN_SECONDARY =
 export const BTN_DANGER =
   "btn btn-sm min-w-28 rounded-full border border-red-500 bg-white px-6 text-red-500 normal-case hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60";
 
+/**
+ * Outlined green pill for the youth-facing detail page and completion form (Upload your
+ * completion files, Continue, Try again…): Yoma green whatever the page theme. Height and
+ * padding are the caller's (`h-10 px-4` as a rule).
+ */
+export const BTN_OUTLINE_GREEN =
+  "btn btn-sm border-green text-green hover:bg-green-dark rounded-full bg-white normal-case hover:text-white";
+
 /** Circular icon button that dismisses a dialog (the ✕ in the corner). */
 // export const BTN_DIALOG_CLOSE =
 //   "btn btn-sm btn-circle text-gray-dark hover:bg-gray-light border-none bg-transparent";

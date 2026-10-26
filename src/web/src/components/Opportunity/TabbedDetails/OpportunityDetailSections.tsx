@@ -52,7 +52,7 @@ import {
 import { OPPORTUNITY_TYPE_NANE_JOB } from "~/lib/constants";
 import { ClampedDescription } from "./ClampedDescription";
 import { detailBadges, type DetailBadge } from "./detailBadges";
-import { ChipList, DetailDisclosure } from "./DetailDisclosure";
+import { ChipList, DetailDisclosure, TONE } from "./DetailDisclosure";
 import { effortLabel } from "./detailFacts";
 import { DETAIL_SECTION_JUMP } from "./detailSectionJump";
 import {
@@ -129,15 +129,6 @@ interface SectionDef {
 }
 
 const ICON = "h-5 w-5";
-
-/** The section icon squares' tints, per group (round 10). Provider keeps its grey card. */
-const TONE = {
-  gold: "bg-orange-light text-yellow",
-  blue: "bg-blue-light text-blue-dark",
-  lilac: "bg-purple-tint text-purple",
-  green: "bg-green-light text-green",
-  grey: "bg-gray-light text-gray-dark",
-} as const;
 
 /**
  * How, Dates and Places' content: the header chip's detail (`detailBadges`' panel), which used to
@@ -554,7 +545,7 @@ export const OpportunityDetailSections: React.FC<{
         group: "about",
         icon: <IoPeopleOutline className={ICON} />,
         toneClass: TONE.green,
-        title: "Places",
+        title: places.eyebrow,
         preview: places.value,
         note: places.info,
         content: <BadgePanel badge={places} />,
@@ -836,6 +827,18 @@ export const OpportunityDetailSections: React.FC<{
   //    changed their heights. The one not shown is display: none and measures 0. ──
   const stickyRef = useRef<HTMLDivElement>(null);
   const pinRef = useRef<HTMLDivElement>(null);
+  // ── the mobile bottom bar's height, for the spacer that keeps it off the last section ──
+  const bottomBarRef = useRef<HTMLDivElement>(null);
+  const [bottomBarHeight, setBottomBarHeight] = useState(74);
+  useEffect(() => {
+    const el = bottomBarRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() =>
+      setBottomBarHeight(el.offsetHeight),
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
   const offsetTop = useCallback(
     (): number =>
       NAVBAR_PX +
@@ -1084,7 +1087,7 @@ export const OpportunityDetailSections: React.FC<{
         ref={stickyRef}
         aria-hidden={!showBars}
         inert={!showBars}
-        className={`fixed inset-x-0 top-20 z-30 bg-white shadow-md ${barMotion} ${
+        className={`scroll-lock-pad fixed inset-x-0 top-20 z-30 bg-white shadow-md ${barMotion} ${
           stickyMode === "full" ? "block" : "hidden md:block"
         } ${
           showBars ? barShown : "pointer-events-none -translate-y-2 opacity-0"
@@ -1138,15 +1141,17 @@ export const OpportunityDetailSections: React.FC<{
           {tabs}
         </div>
       )}
-      {/* room for the mobile bottom bar, so it never covers the last section or the footer */}
+      {/* room for the mobile bottom bar, so it never covers the last section or the footer;
+          measured, since Upload adds a second line to the bar (2026-10-21) */}
       {stickyMode === "split" && barActions && !preview && (
-        <div className="h-[74px] md:hidden" />
+        <div style={{ height: bottomBarHeight }} className="md:hidden" />
       )}
       {stickyMode === "split" && barActions && (
         <div
+          ref={bottomBarRef}
           aria-hidden={!showBars}
           inert={!showBars}
-          className={`fixed inset-x-0 bottom-0 z-30 flex items-center gap-2 bg-white px-4 py-3 shadow-[0_-2px_8px_rgba(0,0,0,0.08)] md:hidden ${barMotion} ${
+          className={`fixed inset-x-0 bottom-0 z-30 flex flex-wrap items-center gap-2 bg-white px-4 py-3 shadow-[0_-2px_8px_rgba(0,0,0,0.08)] md:hidden ${barMotion} ${
             showBars ? barShown : "pointer-events-none translate-y-2 opacity-0"
           }`}
         >

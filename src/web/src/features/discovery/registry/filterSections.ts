@@ -6,6 +6,7 @@ import {
   IoGridOutline,
   IoLanguageOutline,
   IoLocationOutline,
+  IoPeopleOutline,
   IoSearchOutline,
   IoShapesOutline,
   IoShieldCheckmarkOutline,
@@ -22,18 +23,20 @@ import {
  * between breakpoints.
  *
  * Primary (2026-09-22 BA alignment): Categories · Where · Engagement · How long · Accessibility ·
- * Language. Behind "More filters": Paid and rewards · Skills · SDGs · Provider. Only Skills is
- * still pending: the saved skills narrow jobs through the preference layer (2026-10-03), but
- * there is no manual skills pick yet. Paid moved off
- * the primary list when Engagement took its place on the search bar — one definition, two homes,
- * so the section and the bar segment can never disagree.
+ * Language. Behind "More filters": Paid and rewards · Skills · SDGs · Who it's aimed at ·
+ * Provider. Only Skills is still pending: the saved skills narrow jobs through the preference
+ * layer (2026-10-03), but there is no manual skills pick yet. Paid moved off the primary list
+ * when Engagement took its place on the search bar — one definition, two homes, so the section
+ * and the bar segment can never disagree.
  *
  * Each `nullRule` states the revised search contract (2026-10-03). Engagement and Accessibility
  * state both modes in their one line, because a manual pick turns the whole criterion strict
  * ("the manual mode wins"): the line predicts what the next tap does.
  *
- * "Who it is for" (admin-side targeted groups) is deliberately ABSENT: targeting never restricts
- * who can apply, so offering it to a youth implies a constraint that does not exist.
+ * "Who it's aimed at" (the admin-side targeted groups) was absent from 2026-08-31, because
+ * targeting never restricts who can apply. It is back under More filters since 2026-10-21 (BA
+ * R13, Jason) with that stated in its hint, and a pick always brings the Open to all
+ * opportunities with it (`searchRequest`). Profile gender never feeds it.
  */
 
 /** Closed set of controls; `<FilterControl kind=…>` is the single kind→component switch. */
@@ -58,6 +61,7 @@ export type FilterSectionBinding =
   | "languages"
   | "accommodations"
   | "sdgs"
+  | "targetedGroups"
   | "provider";
 
 /**
@@ -76,6 +80,7 @@ export const FACET_FOR_BINDING = {
   languages: "languages",
   accommodations: "accommodations",
   sdgs: null,
+  targetedGroups: null,
   provider: null,
 } as const satisfies Record<FilterSectionBinding, string | null>;
 
@@ -200,8 +205,9 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     pendingNote: null,
     group: "primary",
   },
-  // Partner opportunities can list no language (four of the local fixtures do), and the search
-  // leaves them out whenever a language is set.
+  // Partner opportunities can list no language (four of the local fixtures do). Since 2026-10-21
+  // (BA R11) the mode follows provenance, as Engagement's does: a manual pick hides them, the
+  // saved languages keep them.
   {
     id: "language",
     label: "Language",
@@ -211,7 +217,7 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     binding: "languages",
     hint: null,
     nullRule:
-      "Shows opportunities in any language you pick. We hide ones that don't list a language.",
+      "Shows opportunities in any language you pick. If you pick here, we hide ones that don't list a language. If it comes from your preferences, they still show.",
     pendingNote: null,
     group: "primary",
   },
@@ -256,6 +262,19 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     binding: "sdgs",
     hint: null,
     nullRule: "Opportunities that don't name a goal still show.",
+    pendingNote: null,
+    group: "more",
+  },
+  {
+    id: "targetedGroups",
+    label: "Who it's aimed at",
+    question: "Who is it aimed at?",
+    icon: IoPeopleOutline,
+    control: "chips",
+    binding: "targetedGroups",
+    hint: "It doesn't limit who can take part.",
+    nullRule:
+      "Opportunities open to all, or that don't say who they're for, still show.",
     pendingNote: null,
     group: "more",
   },

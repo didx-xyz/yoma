@@ -1,7 +1,7 @@
 import React from "react";
 import type { UserGoal, UserPreferences } from "~/api/models/userPreferences";
 import type { StepBlockEntry } from "../../../registry/preferenceSteps";
-import { typeBadgeClass } from "../../Results/typeBadge";
+import { typeBadgeClass } from "~/lib/typeColours";
 
 /**
  * The goal card grid — single-select by design (the sub-heading says so on screen). `comingSoon`

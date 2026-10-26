@@ -10,6 +10,7 @@ import {
   type OpportunitySearchRequest,
   type SearchCriterion,
 } from "~/api/models/opportunity";
+import { openToAllIdOf } from "~/components/Opportunity/Admin/opportunityCoreFields";
 import { COUNTRY_CODE_WW, OPPORTUNITY_TYPE_NANE_JOB } from "~/lib/constants";
 import { LOCATION_SEARCH_LIVE } from "./location";
 import type { DiscoverySearch } from "./preferenceMapping";
@@ -24,8 +25,8 @@ import type { DiscoveryFilters, DiscoverySort } from "./types";
  * untouched.
  *
  * The API applies no preferences, so provenance is decided here:
- * - engagement and accommodations carry their mode — `Include` while inherited only, `Exclude`
- *   once the youth picks one by hand;
+ * - engagement, accommodations and languages (2026-10-21) carry their mode — `Include` while
+ *   inherited only, `Exclude` once the youth picks one by hand;
  * - the "Start a business" goal and the saved skills become OR groups;
  * - the inherited home country brings Worldwide along.
  * Every other criterion goes without a mode, so the API's default applies. `types`,
@@ -54,6 +55,8 @@ export interface SearchLookups {
   typeIdByName: Record<string, string>;
   categories: { id: string; name: string }[];
   countries: { id: string; codeAlpha2: string }[];
+  /** The targeted-group facet list: Open to all is found in it by name. */
+  targetedGroups: { id: string; name: string }[];
 }
 
 /**
@@ -241,6 +244,26 @@ function zltoReward(
   return undefined;
 }
 
+/**
+ * The picked groups PLUS Open to all (Jason, 2026-10-21): targeting is informational, so a youth
+ * picking "Women / girls" still wants the opportunities aimed at everyone; without the addition
+ * those would drop out. Found by name in the facet list; when the list lacks it (nothing is
+ * tagged Open to all, or it failed to load) the picks go alone. Never a duplicate when the youth
+ * picked it too.
+ */
+function targetedGroups(
+  filters: DiscoveryFilters,
+  lookups: SearchLookups,
+): SearchCriterion<string[]> | undefined {
+  if (filters.targetedGroups.length === 0) return undefined;
+  const openToAll = openToAllIdOf(lookups.targetedGroups);
+  const value =
+    openToAll && !filters.targetedGroups.includes(openToAll)
+      ? [...filters.targetedGroups, openToAll]
+      : filters.targetedGroups;
+  return { value };
+}
+
 /** Every criterion — no paging and no order: the results and the count add what they need. */
 function buildCriteria(
   search: DiscoverySearch,
@@ -259,7 +282,10 @@ function buildCriteria(
     types: goal ? undefined : listCriterion(typeIds),
     categories: listCriterion(filters.categories),
     countries: countryEntries(search, lookups),
-    languages: listCriterion(filters.languages),
+    languages: listCriterion(
+      filters.languages,
+      modeByProvenance(inheritedOnly.languages),
+    ),
     engagementTypes: listCriterion(
       filters.engagementTypes,
       modeByProvenance(inheritedOnly.engagementTypes),
@@ -270,6 +296,7 @@ function buildCriteria(
       modeByProvenance(inheritedOnly.accommodations),
     ),
     sustainableDevelopmentGoals: listCriterion(filters.sdgs),
+    targetedGroups: targetedGroups(filters, lookups),
     // A maximum: only the interval goes out, never a null `options` beside it.
     commitmentInterval: filters.commitment
       ? {

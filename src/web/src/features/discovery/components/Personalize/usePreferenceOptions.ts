@@ -4,10 +4,12 @@ import {
   getAccessibilityOptions,
   getEducations,
   getGenders,
+  getLanguages,
   getSkills,
 } from "~/api/services/lookups";
 import { getCategories } from "~/api/services/opportunities";
-import { upToIntervalLabel } from "../../lib/format";
+import { commitmentBuckets } from "../../lib/format";
+import { alphabetical } from "../../lib/optionOrder";
 import type { PreferenceOptionsSource } from "../../registry/preferenceSteps";
 import { useDiscovery } from "../../state/DiscoveryContext";
 
@@ -20,6 +22,8 @@ export interface PreferenceOption {
   label: string;
   /** The category's icon — the one Browse by category shows. Categories only. */
   imageURL?: string;
+  /** The bucket's count, "A few minutes" = 15 (`commitmentBuckets`). Commitment intervals only. */
+  count?: number;
 }
 
 /** The API's minimum for a skill name search (`nameContains`, 3–50 characters). */
@@ -59,17 +63,16 @@ export function usePreferenceOptions(
         imageURL: c.imageURL,
       }));
     case "commitmentIntervals":
-      return lookups.timeIntervals.map((i) => ({
-        id: i.id,
-        label: upToIntervalLabel(i.name),
+      return commitmentBuckets(lookups.timeIntervals).map((b) => ({
+        id: b.intervalId,
+        label: b.label,
+        count: b.count,
       }));
     case "engagementTypes":
       return lookups.engagementTypes.map((e) => ({
         id: e.id,
         label: e.displayName || e.name,
       }));
-    case "languages":
-      return lookups.languages.map((l) => ({ id: l.id, label: l.name }));
     case "accessibility":
       return accessibility.map((a) => ({ id: a.id, label: a.name }));
     case "skills": // searched on demand by the lookupSearch block, not listed up front
@@ -88,6 +91,34 @@ export function useSkillSearch(text: string): PreferenceOption[] {
     enabled: needle.length >= SKILL_SEARCH_MIN_CHARS,
   });
   return (data?.items ?? []).map((s) => ({ id: s.id, label: s.name }));
+}
+
+/**
+ * Language search for the languages block: the FULL `/lookup/language` (hundreds of rows, one
+ * cached query), matched by name on the client — the lookup has no name filter. `all` labels the
+ * stored ids; `results` is the first `limit` matches of `text`, none while it is blank.
+ */
+export function useLanguageSearch(
+  text: string,
+  limit: number,
+): { all: PreferenceOption[]; results: PreferenceOption[] } {
+  const { data } = useQuery({
+    queryKey: ["discovery", "lookup", "allLanguages"],
+    queryFn: () => getLanguages(),
+    staleTime: Infinity,
+  });
+  const all = (data ?? []).map((l) => ({ id: l.id, label: l.name }));
+  const needle = text.trim().toLowerCase();
+  return {
+    all,
+    // Hits read A–Z, like every expanded language list — whatever order the lookup came in.
+    results: needle
+      ? alphabetical(data ?? [])
+          .filter((l) => l.name.toLowerCase().includes(needle))
+          .slice(0, limit)
+          .map((l) => ({ id: l.id, label: l.name }))
+      : [],
+  };
 }
 
 /** Identity lookups for the read-only block — labels only, never written. */

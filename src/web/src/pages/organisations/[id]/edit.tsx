@@ -518,7 +518,7 @@ const OrganisationUpdate: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma Admin | 🏢 Organisation Edit</title>
+        <title>Yoma Admin | Organisation Edit</title>
       </Head>
 
       <PageBackground />

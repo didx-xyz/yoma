@@ -1894,7 +1894,7 @@ const Opportunities: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | 🏆 Opportunities</title>
+        <title>Yoma | Opportunities</title>
       </Head>
 
       <PageBackground className="h-[310px]" />
@@ -1947,7 +1947,7 @@ const Opportunities: NextPageWithLayout<{
             <span className="text-orange mx-2">unlock</span> your future.
           </h3>
 
-          <AnimatedText sentences={oppTypeDescriptions} />
+          <AnimatedText sentences={oppTypeDescriptions} linesBelowMd={2} />
 
           <div className="w-full px-2 md:w-[600px] md:items-center md:justify-center">
             <div className="mt-1 mb-8 flex flex-row items-center justify-center md:mt-8 md:mb-4">
