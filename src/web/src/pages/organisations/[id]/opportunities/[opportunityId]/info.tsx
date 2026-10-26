@@ -40,12 +40,12 @@ import {
 } from "~/components/Opportunity/OpportunityActions";
 import {
   getCommitmentDisplay,
-  getTypeConfig,
   OpportunityEngagementTypeBadge,
   OpportunityMetaTextRow,
   OpportunityOrgCountriesRow,
   OpportunityTypeBadge,
 } from "~/components/Opportunity/opportunityTypeTheme";
+import { typeBadgeClass } from "~/lib/typeColours";
 import { PageBackground } from "~/components/PageBackground";
 import { Editor } from "~/components/RichText/Editor";
 import { InternalServerError } from "~/components/Status/InternalServerError";
@@ -151,7 +151,6 @@ const OpportunityInfoClassic: React.FC<OpportunityInfoPageProps> = ({
   const { data: opportunity } = useOpportunityInfoQuery(opportunityId, {
     enabled: !error,
   });
-  const typeConfig = getTypeConfig(opportunity?.type);
 
   /**
    * The owning organisation, for the reward context block below (T3).
@@ -275,7 +274,7 @@ const OpportunityInfoClassic: React.FC<OpportunityInfoPageProps> = ({
                 <div className="flex flex-row flex-wrap items-center gap-2">
                   <OpportunityTypeBadge
                     data={opportunity}
-                    className={typeConfig.badgeClassName}
+                    className={typeBadgeClass(opportunity.type)}
                   />
                   <OpportunityEngagementTypeBadge
                     data={opportunity}

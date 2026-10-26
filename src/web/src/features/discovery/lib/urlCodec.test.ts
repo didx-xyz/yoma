@@ -86,3 +86,49 @@ describe("urlCodec — the cf param", () => {
     );
   });
 });
+
+describe("urlCodec — the group param (2026-10-21)", () => {
+  test("targeted groups travel as `group=`, comma-joined, and round-trip", () => {
+    const state = {
+      ...DEFAULT_DISCOVERY_STATE,
+      filters: {
+        ...DEFAULT_DISCOVERY_STATE.filters,
+        targetedGroups: ["g-women", "g-rural"],
+      },
+    };
+    const serialized = serializeDiscoveryState(state);
+    assert.equal(serialized, "group=g-women%2Cg-rural");
+    const query = Object.fromEntries(new URLSearchParams(serialized));
+    assert.deepEqual(parseDiscoveryQuery(query).filters.targetedGroups, [
+      "g-women",
+      "g-rural",
+    ]);
+    assert.deepEqual(parseDiscoveryQuery({}).filters.targetedGroups, []);
+  });
+
+  test("Open to all is read out of `group=`; a Minute count below the bucket reads as 15", () => {
+    const lookups = {
+      timeIntervals: [{ id: "t-minute", name: "Minute" }],
+      targetedGroups: [
+        { id: "g-all", name: "Open to all" },
+        { id: "g-women", name: "Women / girls" },
+      ],
+    };
+    const state = parseDiscoveryQuery(
+      { group: "g-all,g-women", time: "t-minute:1" },
+      lookups,
+    );
+    assert.deepEqual(state.filters.targetedGroups, ["g-women"]);
+    assert.deepEqual(state.filters.commitment, {
+      intervalId: "t-minute",
+      count: 15,
+    });
+    // Without the lookups (not loaded yet) both read as written.
+    const raw = parseDiscoveryQuery({ group: "g-all", time: "t-minute:1" });
+    assert.deepEqual(raw.filters.targetedGroups, ["g-all"]);
+    assert.deepEqual(raw.filters.commitment, {
+      intervalId: "t-minute",
+      count: 1,
+    });
+  });
+});

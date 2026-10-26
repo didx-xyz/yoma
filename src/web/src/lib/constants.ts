@@ -134,6 +134,11 @@ export const OPPORTUNITIES_SEARCH_URL = CUSTOM_FIELDS_ENABLED
   ? "/opportunities/discover"
   : "/opportunities";
 
+/** The free-text parameter `OPPORTUNITIES_SEARCH_URL` reads (`q` on discovery, `query` legacy). */
+export const OPPORTUNITIES_SEARCH_QUERY_PARAM = CUSTOM_FIELDS_ENABLED
+  ? "q"
+  : "query";
+
 export const THEME_BLUE = "blue";
 export const THEME_GREEN = "green";
 export const THEME_PURPLE = "purple";

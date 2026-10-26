@@ -14,9 +14,9 @@ import { formatNumber } from "../../lib/format";
 import { useCountUp } from "../../state/useCountUp";
 import { useDiscovery } from "../../state/DiscoveryContext";
 import { QuickSearchRow } from "../Discover/QuickSearchRow";
-import { typeBadgeClass } from "../Results/typeBadge";
+import { typeBadgeClass } from "~/lib/typeColours";
 
-/** Type-tile icons by Opportunity Type enum name — presentation only, as `typeBadge.ts`. */
+/** Type-tile icons by Opportunity Type enum name — presentation only, as `lib/typeColours.ts`. */
 const TYPE_ICONS: Record<string, React.ElementType> = {
   Job: IoBriefcaseOutline,
   Learning: IoSchoolOutline,
@@ -56,7 +56,7 @@ const HALO_DELAY = { animationDelay: "2100ms" };
 const CountFigure: React.FC<{ count: number | null }> = ({ count }) => {
   const shown = useCountUp(count);
   return (
-    <p className="font-nunito grid text-[64px] leading-none font-black tracking-[-0.045em] tabular-nums lg:text-[104px] lg:[@media(max-height:600px)]:text-[84px]">
+    <p className="grid text-[64px] leading-none font-bold tracking-[-0.045em] tabular-nums lg:text-[104px] lg:[@media(max-height:600px)]:text-[84px]">
       {count === null || shown === null ? (
         "…"
       ) : (
@@ -89,7 +89,7 @@ const CountFigure: React.FC<{ count: number | null }> = ({ count }) => {
  * Two columns from `lg`, the right one an inset panel; below `lg` one column above the pinned
  * buttons. From md the dialog takes the content's height; the content scrolls only on a window
  * shorter than that (on desktop, below about 500px). The tiles take the discovery cards' type
- * colours (`typeBadge.ts`), not the detail header's.
+ * colours (`lib/typeColours.ts`, the BA Review palette), not the detail header's.
  *
  * Type tiles carry no counts and the quick searches none either: the API has no per-type count,
  * and a request per tile is exactly what the no-fan-out rule forbids.
@@ -250,7 +250,7 @@ export const WelcomeStep: React.FC<{
                   )}
                 </div>
                 <p
-                  className={`text-orange font-nunito text-xl leading-tight font-black lg:text-[34px] lg:[@media(max-height:600px)]:text-[28px] ${RISE_IN}`}
+                  className={`text-orange text-xl leading-tight font-semibold lg:text-[34px] lg:[@media(max-height:600px)]:text-[28px] ${RISE_IN}`}
                   style={leftDelay(2)}
                 >
                   opportunities are waiting for you.
@@ -302,7 +302,7 @@ export const WelcomeStep: React.FC<{
                       className={`hover:border-orange focus-visible:border-orange flex h-[66px] flex-col items-center justify-center gap-1.5 rounded-xl border border-white/[0.12] bg-white/[0.08] px-1 transition-[background-color,border-color,scale] duration-120 hover:bg-white/[0.14] focus-visible:bg-white/[0.14] active:scale-[0.98] active:duration-80 motion-reduce:transition-none motion-reduce:active:scale-100 max-[359px]:px-0.5 lg:h-[76px] lg:[@media(max-height:600px)]:h-[66px] ${RISE_IN}`}
                       style={rightDelay(i)}
                     >
-                      {/* The inset ring keeps Job's purple square visible on the purple dialog */}
+                      {/* The inset ring keeps Event's deep-purple square visible on the purple dialog */}
                       <span
                         className={`flex h-7 w-7 items-center justify-center rounded-lg ring-1 ring-white/25 ring-inset lg:h-8 lg:w-8 ${typeBadgeClass(type.name)}`}
                       >

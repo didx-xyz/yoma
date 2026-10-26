@@ -225,7 +225,7 @@ const ReferralLinks: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | 🔗 Referral Links</title>
+        <title>Yoma | Referral Links</title>
       </Head>
 
       <PageBackground className="h-[14.3rem] md:h-[18.4rem]" />

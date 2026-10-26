@@ -537,6 +537,7 @@ describe("discovery's request, through the converter", () => {
     typeIdByName: { Job: "type-job" },
     categories: [],
     countries: [],
+    targetedGroups: [],
   };
 
   test("a picked city with Distance sends `radius`, with no flat point or radius", () => {

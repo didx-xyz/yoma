@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import { IoPencilOutline, IoPersonOutline } from "react-icons/io5";
 import { inheritedSummary, tunedToText } from "../../lib/chipModel";
 import {
@@ -29,6 +29,41 @@ import { AppliedChips } from "../Results/AppliedChips";
  * brings the offer back (the dismissal is keyed to a signature of the skipped keys).
  */
 const DISMISSED_KEY = "yoma.discovery.writeBackDismissed";
+/**
+ * The banner's last rendered height on this device, per width bucket (the chips wrap below md),
+ * so the loading placeholder is the right size for the youth who comes back (2026-10-22). Who
+ * is signed in is unknown at first paint — the session is still loading — and the invite (52px)
+ * and the tuned banner (96px+) differ by a chip row.
+ */
+const HEIGHT_KEY = "yoma.discovery.bannerHeight";
+/** With no record yet: the one-line invite, which is what a first visit (anonymous) gets. */
+const DEFAULT_HEIGHT = 52;
+
+const heightBucket = (): "sm" | "md" => (window.innerWidth < 768 ? "sm" : "md");
+const readHeight = (): number | null => {
+  try {
+    const stored = JSON.parse(
+      window.localStorage.getItem(HEIGHT_KEY) ?? "{}",
+    ) as Record<string, unknown>;
+    const value = stored[heightBucket()];
+    return typeof value === "number" && value > 0 ? value : null;
+  } catch {
+    return null;
+  }
+};
+const storeHeight = (height: number): void => {
+  try {
+    const stored = JSON.parse(
+      window.localStorage.getItem(HEIGHT_KEY) ?? "{}",
+    ) as Record<string, unknown>;
+    window.localStorage.setItem(
+      HEIGHT_KEY,
+      JSON.stringify({ ...stored, [heightBucket()]: height }),
+    );
+  } catch {
+    // Storage blocked: the placeholder falls back to the invite's height.
+  }
+};
 
 /** Inherited values named in the banner before it collapses to "+N". */
 const TUNED_TO_SHOWN = 2;
@@ -57,15 +92,42 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
         ? window.sessionStorage.getItem(DISMISSED_KEY)
         : null,
   );
+  // The placeholder's height: the device's last record, read before the first client paint
+  // (the server renders the default). Every real render records its own height.
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [heldHeight, setHeldHeight] = useState(DEFAULT_HEIGHT);
+  const loading = preferences === undefined;
+  useLayoutEffect(() => {
+    if (loading) setHeldHeight(readHeight() ?? DEFAULT_HEIGHT);
+  }, [loading]);
+  // Recorded only when the height changes, not every render (it is a `localStorage` write).
+  const storedRef = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    const height = rootRef.current?.offsetHeight;
+    if (loading || height == null || height === storedRef.current) return;
+    storedRef.current = height;
+    storeHeight(height);
+  });
 
-  // Still loading — render nothing rather than flashing the empty state.
-  if (preferences === undefined) return null;
+  // Still loading — a blank panel where the banner will be (2026-10-22), rather than nothing:
+  // the page below jumped when it appeared.
+  if (preferences === undefined)
+    return (
+      <div
+        aria-hidden
+        style={{ height: heldHeight }}
+        className="skeleton bg-purple-tint/40 rounded-xl motion-reduce:animate-none"
+      />
+    );
 
   // No preferences captured yet (e.g. the dialog was X-closed on first visit). This invite is
   // the re-entry point — without it, a youth who dismissed the wizard has no way back in.
   if (preferences === null)
     return (
-      <div className="bg-purple-tint/40 flex flex-wrap items-center gap-x-2.5 gap-y-2 rounded-xl p-2.5">
+      <div
+        ref={rootRef}
+        className="bg-purple-tint/40 flex flex-wrap items-center gap-x-2.5 gap-y-2 rounded-xl p-2.5"
+      >
         <span className="bg-purple-tint flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
           <IoPersonOutline className="text-purple h-4 w-4" />
         </span>
@@ -157,7 +219,10 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
   };
 
   return (
-    <div className="bg-purple-tint/40 flex flex-col gap-2 rounded-xl p-2.5">
+    <div
+      ref={rootRef}
+      className="bg-purple-tint/40 flex flex-col gap-2 rounded-xl p-2.5"
+    >
       {/* Wraps below sm: text row first, actions beneath — nothing overflows at 390px. */}
       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2">
         <span className="bg-purple-tint flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">

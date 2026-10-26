@@ -10,9 +10,16 @@ import { WhereControl } from "./WhereControl";
  * The ONE kind→control switch. Every section on every breakpoint renders through here; a new
  * control kind is a new case, never a new component tree. Zero-count options grey out with the
  * count still visible — never hidden. "Show all N" is data-driven from the option count, so a
- * lookup that grows (ten categories to sixteen) changes nothing here.
+ * lookup that grows (ten categories to sixteen) changes nothing here. The wizard's pill rows
+ * share the cut (`Personalize/blocks/PillList`, 2026-10-22).
  */
-const VISIBLE_BEFORE_SHOW_ALL = 8;
+export const VISIBLE_BEFORE_SHOW_ALL = 8;
+/**
+ * A chips section this long gets a search box above its chips (BA R11, 2026-10-21): the language
+ * facet list is four rows on Stage and hundreds locally, and "Show all 300" is no way to find
+ * Xhosa. Data-driven, like the cut, and above any category count: a short list stays plain chips.
+ */
+const SEARCH_FROM_OPTIONS = 20;
 
 /**
  * Where a selected option comes from: this search's own pick, or the preferences'. The colour
@@ -116,11 +123,13 @@ const ChipSet: React.FC<{ model: SectionModel; filterText?: string }> = ({
   filterText,
 }) => {
   const [showAll, setShowAll] = useState(false);
+  // Open, a list with its own expanded order (languages, countries) reads alphabetically.
+  const ordered = showAll ? (model.expanded ?? model.options) : model.options;
   const options = filterText
-    ? model.options.filter((o) =>
+    ? ordered.filter((o) =>
         o.label.toLowerCase().includes(filterText.toLowerCase()),
       )
-    : model.options;
+    : ordered;
   // A selected option is never hidden behind "Show all N": pick Kenya from a search, clear the
   // search, and Kenya must still be on screen (and deselectable) — otherwise the chips say one
   // country while the search, the segment and the Where section say two. Selected options past
@@ -159,12 +168,26 @@ const ChipSet: React.FC<{ model: SectionModel; filterText?: string }> = ({
   );
 };
 
+/**
+ * The search-field shell — icon, input, a clear button while there is text — shared by the
+ * chips sections' filter box and the Provider text filter, which differ only in when the text
+ * takes effect (`onCommit`: on Enter and blur) and what clearing is called.
+ */
 const SearchInput: React.FC<{
   text: string;
   onChange: (text: string) => void;
+  onCommit?: (text: string) => void;
   placeholder: string;
   large: boolean;
-}> = ({ text, onChange, placeholder, large }) => (
+  clearLabel?: string;
+}> = ({
+  text,
+  onChange,
+  onCommit,
+  placeholder,
+  large,
+  clearLabel = "Clear search",
+}) => (
   <label
     className={`input input-bordered flex w-full items-center gap-2 ${
       large ? "h-11 rounded-full" : "h-11 md:h-10"
@@ -177,6 +200,8 @@ const SearchInput: React.FC<{
       type="text"
       value={text}
       onChange={(e) => onChange(e.target.value)}
+      onBlur={onCommit && (() => onCommit(text))}
+      onKeyDown={onCommit && ((e) => e.key === "Enter" && onCommit(text))}
       placeholder={placeholder}
       className="min-w-0 grow"
     />
@@ -184,8 +209,11 @@ const SearchInput: React.FC<{
       <button
         type="button"
         onMouseDown={(e) => e.preventDefault()}
-        onClick={() => onChange("")}
-        aria-label="Clear search"
+        onClick={() => {
+          onChange("");
+          onCommit?.("");
+        }}
+        aria-label={clearLabel}
         className="text-gray-dark flex h-8 w-8 shrink-0 items-center justify-center hover:text-black"
       >
         <IoCloseCircleOutline className="h-4 w-4" />
@@ -231,38 +259,14 @@ const TextFilter: React.FC<{
     if (trimmed !== value) onCommit(trimmed);
   };
   return (
-    <label
-      className={`input input-bordered flex w-full items-center gap-2 ${
-        large ? "h-11 rounded-full" : "h-11 md:h-10"
-      }`}
-    >
-      <IoSearchOutline
-        className={`text-gray-dark ${large ? "h-5 w-5" : "h-4 w-4"}`}
-      />
-      <input
-        type="text"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        onBlur={() => commit(text)}
-        onKeyDown={(e) => e.key === "Enter" && commit(text)}
-        placeholder={placeholder}
-        className="min-w-0 grow"
-      />
-      {text !== "" && (
-        <button
-          type="button"
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => {
-            setText("");
-            commit("");
-          }}
-          aria-label="Clear"
-          className="text-gray-dark flex h-8 w-8 shrink-0 items-center justify-center hover:text-black"
-        >
-          <IoCloseCircleOutline className="h-4 w-4" />
-        </button>
-      )}
-    </label>
+    <SearchInput
+      text={text}
+      onChange={setText}
+      onCommit={commit}
+      placeholder={placeholder}
+      large={large}
+      clearLabel="Clear"
+    />
   );
 };
 
@@ -329,8 +333,14 @@ export const FilterControl: React.FC<{
     case "range":
       // The facet lists carry only values published opportunities use, so a new facet (SDGs,
       // accommodations) is empty until opportunities are tagged — say so, not a blank panel.
-      return model.options.length === 0 && model.status === "ok" ? (
-        <Message>No opportunities list any of these yet.</Message>
+      if (model.options.length === 0 && model.status === "ok")
+        return <Message>No opportunities list any of these yet.</Message>;
+      return model.options.length >= SEARCH_FROM_OPTIONS ? (
+        <Searchable
+          model={model}
+          placeholder={`Search ${section.label.toLowerCase()}…`}
+          large={largeSearch}
+        />
       ) : (
         <ChipSet model={model} />
       );

@@ -3,6 +3,7 @@ import {
   EMPTY_USER_ACCESSIBILITY,
   EMPTY_USER_LOCATION,
 } from "~/api/models/userPreferences";
+import { withCommitmentBucket } from "./format";
 import { activeUserLocation, locationFragmentState } from "./location";
 import type { DiscoveryFilters, PreferenceKey } from "./types";
 
@@ -57,6 +58,12 @@ export interface PreferenceProfileContext {
    * then vanishes. `null` when the lists have not got it — the needs then go out as saved.
    */
   otherAccommodationId: string | null | undefined;
+  /**
+   * The time-interval lookup (`DiscoveryLookups.timeIntervals`): a saved commitment below its
+   * bucket — `{Minute, 1}`, the pre-2026-10-21 "Up to a minute" — inherits as the bucket
+   * (`withCommitmentBucket`). Absent or empty (not loaded yet): it inherits as saved.
+   */
+  timeIntervals?: { id: string; name: string }[];
 }
 
 const GOAL_TO_TYPE: Record<UserGoal, string> = {
@@ -142,7 +149,12 @@ export function mapPreferencesToFilters(
     };
 
   if (preferences.maxCommitment)
-    fragments.maxCommitment = { commitment: preferences.maxCommitment };
+    fragments.maxCommitment = {
+      commitment: withCommitmentBucket(
+        preferences.maxCommitment,
+        profile.timeIntervals ?? [],
+      ),
+    };
 
   if (preferences.engagement.length > 0)
     fragments.engagement = { engagementTypes: preferences.engagement };
@@ -292,9 +304,14 @@ export interface DiscoverySearch {
    * manual pick beyond what a surviving preference already supplies (a manual duplicate of an
    * inherited value shows as the inherited chip, so it is not a pick of its own). Inherited
    * only, it is sent `Include`: opportunities that haven't said stay in. Any manual pick makes
-   * the whole criterion `Exclude` — union, and the manual mode wins.
+   * the whole criterion `Exclude` — union, and the manual mode wins. Languages joined on
+   * 2026-10-21 (BA R11): a saved language no published opportunity lists would otherwise
+   * empty every inherited search.
    */
-  inheritedOnly: Record<"engagementTypes" | "accommodations", boolean>;
+  inheritedOnly: Record<
+    "engagementTypes" | "accommodations" | "languages",
+    boolean
+  >;
   /**
    * The surviving goal's category alternative, by name ("Start a business": `GOAL_CATEGORY_NAMES`)
    * — request-only, never a selected category. `null` without such a goal, or with it skipped.
@@ -320,7 +337,7 @@ export function composeSearch(
 ): DiscoverySearch {
   const surviving = survivingFragments(fragments, preferencesOff, skipped);
   const inheritedOnly = (
-    facet: "engagementTypes" | "accommodations",
+    facet: "engagementTypes" | "accommodations" | "languages",
   ): boolean => {
     const inherited = surviving.flatMap(
       ([, fragment]) => fragment[facet] ?? [],
@@ -340,6 +357,7 @@ export function composeSearch(
     inheritedOnly: {
       engagementTypes: inheritedOnly("engagementTypes"),
       accommodations: inheritedOnly("accommodations"),
+      languages: inheritedOnly("languages"),
     },
     goalCategoryNames: (goal && GOAL_CATEGORY_NAMES[goal]) ?? null,
     inheritedCountry: surviving.some(

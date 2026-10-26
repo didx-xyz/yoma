@@ -162,7 +162,7 @@ const ReferralLinkPage: NextPageWithLayout = () => {
   return (
     <>
       <Head>
-        <title>{`Yoma | Refer a friend ❤️ | ${program?.name ?? "Link Details"}`}</title>
+        <title>{`Yoma | Refer a friend | ${program?.name ?? "Link Details"}`}</title>
       </Head>
 
       <ReferralShell

@@ -1,3 +1,4 @@
+import moment from "moment";
 import { useMemo } from "react";
 import {
   CustomFieldDataType,
@@ -14,8 +15,8 @@ import {
   useSkillLabeler,
   useSkillsQuery,
 } from "~/hooks/useOpportunityMutations";
+import { DATE_FORMAT_HUMAN, DATE_FORMAT_SYSTEM } from "~/lib/constants";
 import { skillIdsInValues } from "~/lib/customFields/skillLabels";
-import { utcToDateInput } from "~/lib/utils";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CustomFieldsView (YOM-1244 / YOM-1255)
@@ -213,8 +214,15 @@ export const CustomFieldsView: React.FC<CustomFieldsViewProps> = ({
     if (raw == null || raw.trim() === "") return null;
     if (dataType === CustomFieldDataType.Boolean)
       return raw.trim().toLowerCase() === "true" ? "Yes" : "No";
-    if (dataType === CustomFieldDataType.DateTime)
-      return utcToDateInput(raw) || raw;
+    if (dataType === CustomFieldDataType.DateTime) {
+      const parsed = moment.utc(raw);
+      return parsed.isValid() ? parsed.format(DATE_FORMAT_HUMAN) : raw;
+    }
+    if (dataType === CustomFieldDataType.Date) {
+      // date only, `yyyy-MM-dd` on the wire: read as a calendar day, no UTC shift
+      const parsed = moment(raw, DATE_FORMAT_SYSTEM, true);
+      return parsed.isValid() ? parsed.format(DATE_FORMAT_HUMAN) : raw;
+    }
     return raw;
   };
 
@@ -257,14 +265,9 @@ export const CustomFieldsView: React.FC<CustomFieldsViewProps> = ({
     >
       {fieldsToRender.map((r) =>
         wrapValues ? (
-          <div
-            key={r.key}
-            className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4"
-          >
-            <span className="text-[13px] sm:shrink-0 sm:text-sm">
-              {r.title}:
-            </span>
-            <span className="min-w-0 font-bold wrap-break-word sm:text-right">
+          <div key={r.key} className="flex flex-col gap-0.5">
+            <span className="font-semibold text-black">{r.title}:</span>
+            <span className="text-gray-dark min-w-0 wrap-break-word">
               {r.value}
             </span>
           </div>

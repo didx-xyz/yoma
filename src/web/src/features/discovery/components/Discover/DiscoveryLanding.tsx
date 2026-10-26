@@ -12,10 +12,10 @@ import { tunedToText } from "./railCopy";
  * for landing and results.
  *
  * The rails are generated from the preferences (Jason, 2026-10-07; `landingRails` has the
- * catalogue and its order): Picked for you · near the youth's place · the goal · up to three
- * interests · the time they have · paid · Featured · Latest. With no preference in play, today's
- * three: Featured · Latest opportunities · Done in under an hour. Each rail fetches its ONE search
- * as it nears the viewport and pages sideways (`DiscoveryRail`).
+ * catalogue and its order): Picked for you · Featured (second since 2026-10-21) · near the youth's
+ * place · the goal · every interest · the time they have · paid · Latest. With no preference in
+ * play, today's three: Featured · Latest opportunities · Done in under an hour. Each rail fetches
+ * its ONE search as it nears the viewport and pages sideways (`DiscoveryRail`).
  */
 export const DiscoveryLanding: React.FC<{
   now: Date;

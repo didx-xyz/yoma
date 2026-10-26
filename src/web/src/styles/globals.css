@@ -424,6 +424,15 @@
   --color-gray-dark: var(--color-gray-dark);
   --color-gray-light: var(--color-gray-light);
 
+  /* Opportunity / credential type colours (BA Review) */
+  --color-type-job: var(--color-type-job);
+  --color-type-impact-action: var(--color-type-impact-action);
+  --color-type-event: var(--color-type-event);
+  --color-type-entrepreneurship: var(--color-type-entrepreneurship);
+  --color-type-learning: var(--color-type-learning);
+  --color-type-default: var(--color-type-default);
+  --color-type-yoid: var(--color-type-yoid);
+
   /* Overlay */
   --color-overlay: var(--color-overlay);
 }
@@ -462,7 +471,8 @@ body {
 }
 
 /* Apply fonts from CSS variables set by Next.js font loader */
-#mainContent {
+#mainContent,
+#modal-root {
   font-family:
     var(--font-open-sans), var(--font-nunito), "Open Sans", "Nunito",
     ui-sans-serif, system-ui, sans-serif;
@@ -531,6 +541,15 @@ html {
 }
 html:has(body.content-overflow-y) {
   scrollbar-gutter: stable !important;
+}
+
+/* Scroll lock (`useDisableBodyScroll`): hiding the root's overflow drops a classic scrollbar, so
+   its measured width (`--scrollbar-gap`, set on <html> while locked) stays as right padding on
+   the body and on the fixed chrome (`.scroll-lock-pad`: the navbar's row, the sticky bars), and
+   nothing behind a dialog's overlay moves (2026-10-22). */
+body,
+.scroll-lock-pad {
+  padding-right: var(--scrollbar-gap, 0px);
 }
 
 /* Theme Overrides */

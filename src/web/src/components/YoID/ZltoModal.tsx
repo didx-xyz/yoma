@@ -1,8 +1,28 @@
-import Image from "next/image";
-import iconZlto from "public/images/icon-zlto.svg";
-import { IoMdClose } from "react-icons/io";
+import Link from "next/link";
+import {
+  IoBagHandleOutline,
+  IoCheckmarkCircleOutline,
+  IoClose,
+  IoTimeOutline,
+  IoWalletOutline,
+} from "react-icons/io5";
 import CustomModal from "../Common/CustomModal";
+import { DialogStep } from "../Common/DialogStep";
+import {
+  DIALOG_BODY,
+  DIALOG_CLOSE,
+  DIALOG_EYEBROW,
+  DIALOG_HEADING,
+  DIALOG_ICON_CIRCLE,
+  DIALOG_PRIMARY,
+} from "../Opportunity/dialog";
+import { TONE } from "../Opportunity/TabbedDetails/DetailDisclosure";
 
+/**
+ * "What is ZLTO?" — the wallet card's and the marketplace's link — in the completion dialogs'
+ * chrome (Jason, 2026-10-22): the Wallet section's gold behind an io5 icon, a Nunito heading, one
+ * line of what ZLTO is, then the ledger's three figures as tinted rows.
+ */
 export const ZltoModal = ({
   isOpen,
   onClose,
@@ -11,78 +31,72 @@ export const ZltoModal = ({
   onClose: () => void;
 }) => {
   return (
-    <>
-      {/* WHAT IS ZLTO DIALOG */}
-      <CustomModal
-        isOpen={isOpen}
-        shouldCloseOnOverlayClick={false}
-        onRequestClose={onClose}
-        className={`md:max-h-[700px] md:max-w-[600px]`}
-      >
-        <div className="flex h-full flex-col gap-2 overflow-y-auto pb-12">
-          <div className="flex flex-row p-4">
-            <h1 className="grow"></h1>
-            <button
-              type="button"
-              className="btn btn-circle text-gray-dark hover:bg-gray"
-              onClick={onClose}
-            >
-              <IoMdClose className="h-6 w-6"></IoMdClose>
-            </button>
-          </div>
-          <div className="flex flex-col items-center justify-center gap-4 p-4 md:p-0">
-            <div className="border-green-dark -mt-8 flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-lg">
-              <Image
-                src={iconZlto}
-                alt="Icon Zlto"
-                width={40}
-                className="h-auto"
-                sizes="100vw"
-                priority={true}
-              />
-            </div>
-            <h3>What is Zlto?</h3>
-            <p className="bg-gray-light rounded-lg p-2 text-center text-sm md:w-[450px] md:p-4">
-              Introducing Zlto, a reward system used on Yoma. You can earn Zlto
-              by completing tasks and opportunities listed on our platform. Once
-              your submission has been approved and you receive your Zlto, you
-              can redeem your well-deserved rewards in the marketplace and enjoy
-              the amazing benefits.
-            </p>
-
-            <h3 className="mt-4">How does Zlto balances work?</h3>
-            <ul className="bg-gray-light flex list-disc flex-col gap-4 rounded-lg p-2 text-left md:w-[450px] md:p-4">
-              <li className="ml-6 font-semibold">
-                Pending:
-                <p className="font-normal">
-                  ZLTO is busy transferring to your account. Please give the
-                  system 24 hours to process.
-                </p>
-              </li>
-              <li className="ml-6 font-semibold">
-                Available:
-                <p className="font-normal">
-                  ZLTO available to spend in the marketplace now.
-                </p>
-              </li>
-              <li className="ml-6 font-semibold">
-                Total:
-                <p className="font-normal">Available + Pending</p>
-              </li>
-            </ul>
-
-            <div className="mt-4 flex w-full grow justify-center gap-4">
-              <button
-                type="button"
-                className="btn border-purple text-purple hover:bg-purple w-3/4 max-w-[300px] rounded-full bg-white normal-case hover:text-white"
-                onClick={onClose}
-              >
-                Got it
-              </button>
-            </div>
-          </div>
+    <CustomModal
+      isOpen={isOpen}
+      shouldCloseOnOverlayClick={false}
+      onRequestClose={onClose}
+      className="md:max-h-[600px] md:w-[600px]"
+      animationStyle="rise"
+    >
+      <div className={DIALOG_BODY}>
+        <div className="flex justify-end p-3">
+          <button
+            type="button"
+            aria-label="Close"
+            className={DIALOG_CLOSE}
+            onClick={onClose}
+          >
+            <IoClose className="h-5 w-5" />
+          </button>
         </div>
-      </CustomModal>
-    </>
+        <div className="flex flex-col items-center gap-5 px-6 pb-8 text-center md:px-12">
+          <div className={`${DIALOG_ICON_CIRCLE} ${TONE.gold}`}>
+            <IoWalletOutline aria-hidden className="h-10 w-10" />
+          </div>
+          <div className="flex flex-col gap-2">
+            <h3 className={DIALOG_HEADING}>What is ZLTO?</h3>
+            <p className="text-gray-dark text-sm md:text-base">
+              ZLTO is Yoma&apos;s reward. Complete an opportunity, get it
+              verified, and the ZLTO lands in your wallet — then spend it in the{" "}
+              <Link
+                href="/marketplace"
+                className="text-green font-semibold underline"
+              >
+                marketplace
+              </Link>
+              .
+            </p>
+          </div>
+
+          <div className="w-full text-left">
+            <h4 className={DIALOG_EYEBROW}>How your balance works</h4>
+            <ul className="mt-2 flex flex-col gap-3">
+              <DialogStep
+                icon={<IoTimeOutline className="h-5 w-5" />}
+                toneClass={TONE.blue}
+                title="Pending"
+                note="ZLTO on its way to your wallet. Allow up to 24 hours."
+              />
+              <DialogStep
+                icon={<IoCheckmarkCircleOutline className="h-5 w-5" />}
+                toneClass={TONE.green}
+                title="Available"
+                note="ZLTO you can spend in the marketplace right now."
+              />
+              <DialogStep
+                icon={<IoBagHandleOutline className="h-5 w-5" />}
+                toneClass={TONE.gold}
+                title="Total"
+                note="Available plus pending: everything you have earned so far."
+              />
+            </ul>
+          </div>
+
+          <button type="button" className={DIALOG_PRIMARY} onClick={onClose}>
+            Got it
+          </button>
+        </div>
+      </div>
+    </CustomModal>
   );
 };

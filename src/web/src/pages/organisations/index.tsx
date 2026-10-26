@@ -297,7 +297,7 @@ const Organisations: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | 🏢 Organisations</title>
+        <title>Yoma | Organisations</title>
       </Head>
 
       <ListPageShell>

@@ -10,7 +10,7 @@ import { type Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
 import type { AppProps } from "next/app";
-import { Nunito, Open_Sans } from "next/font/google";
+import { nunito, openSans } from "~/lib/fonts";
 import { useRouter, Router } from "next/router";
 import type { ReactElement, ReactNode } from "react";
 import { useState } from "react";
@@ -25,21 +25,7 @@ import { THEME_PURPLE } from "~/lib/constants";
 import { GoogleAnalytics } from "~/components/GoogleAnalytics";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
-
-// configure fonts for tailwindcss
-const openSans = Open_Sans({
-  subsets: ["latin"],
-  variable: "--font-open-sans",
-  display: "swap",
-  weight: ["300", "400", "500", "600", "700", "800"],
-});
-
-const nunito = Nunito({
-  subsets: ["latin"],
-  variable: "--font-nunito",
-  display: "swap",
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
-});
+import { trackPreviousUrl } from "~/lib/previousRoute";
 
 //#region Configure NProgress
 NProgress.configure({ showSpinner: false });
@@ -47,6 +33,9 @@ Router.events.on("routeChangeStart", () => NProgress.start());
 Router.events.on("routeChangeComplete", () => NProgress.done());
 Router.events.on("routeChangeError", () => NProgress.done());
 //#endregion Configure NProgress
+
+// the opportunity page's back link uses browser back when the youth came from discovery
+trackPreviousUrl();
 
 export type NextPageWithLayout<P = object, IP = P> = NextPage<P, IP> & {
   getLayout?: (page: ReactElement) => ReactNode;

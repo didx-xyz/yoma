@@ -3,6 +3,7 @@ import { ACCESSIBILITY_NAME_OTHER } from "~/api/models/lookups";
 import type { UserPreferences } from "~/api/models/userPreferences";
 import type { PreferenceOption } from "../usePreferenceOptions";
 import { Pill } from "./Pill";
+import { PillList } from "./PillList";
 
 /** The API's limit on the Other description. */
 const OTHER_DESCRIPTION_MAX = 500;
@@ -41,8 +42,9 @@ export const AccessibilityBlock: React.FC<{
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap gap-2">
-        {options.map((option) => (
+      <PillList
+        pinned={(i) => requirements.includes(options[i]?.id ?? "")}
+        pills={options.map((option) => (
           <Pill
             key={option.id}
             label={option.label}
@@ -50,7 +52,7 @@ export const AccessibilityBlock: React.FC<{
             onToggle={() => toggle(option.id)}
           />
         ))}
-      </div>
+      />
       {otherSelected && (
         <label className="flex flex-col gap-1">
           <span className="text-gray-dark text-[11px] font-semibold tracking-wide uppercase">

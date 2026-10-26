@@ -8,12 +8,21 @@ import { useCallback, type ReactElement } from "react";
 import { Action, VerificationStatus } from "~/api/models/myOpportunity";
 import { searchMyOpportunities } from "~/api/services/myOpportunities";
 import Suspense from "~/components/Common/Suspense";
+import {
+  LoadingStatus,
+  OpportunityGridSkeleton,
+} from "~/components/YoID/YoIDSkeletons";
 import YoIDOpportunities from "~/components/Layout/YoIDOpportunities";
 import { OpportunityListItem } from "~/components/MyOpportunity/OpportunityListItem";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { PaginationButtons } from "~/components/PaginationButtons";
+import { Pager } from "~/components/YoID/Pager";
+import {
+  PAGER_SCROLL_MARGIN_CLASS,
+  usePagerScroll,
+} from "~/components/YoID/usePagerScroll";
 import { PaginationInfoComponent } from "~/components/PaginationInfo";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import { CARD_GRID_CLASS } from "~/lib/card";
 import { PAGE_SIZE } from "~/lib/constants";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../../_app";
@@ -71,14 +80,20 @@ const MyOpportunitiesRejected: NextPageWithLayout<{
     enabled: !error,
   });
 
-  // 🔔 pager change event
+  // 🔔 pager change event — the page number goes into the URL; `usePagerScroll` brings the
+  // results back into view once it comes back
+  const resultsRef = usePagerScroll(pageNumber);
   const handlePagerChange = useCallback(
     (value: number) => {
       // redirect
-      void router.push({
-        pathname: `/yoid/opportunities/declined`,
-        query: { ...(query && { query }), ...(value && { page: value }) },
-      });
+      void router.push(
+        {
+          pathname: `/yoid/opportunities/declined`,
+          query: { ...(query && { query }), ...(value && { page: value }) },
+        },
+        undefined,
+        { scroll: false },
+      );
     },
     [query],
   );
@@ -88,69 +103,73 @@ const MyOpportunitiesRejected: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | ❌ Declined Opportunities</title>
+        <title>Yoma | Declined Opportunities</title>
       </Head>
 
-      <Suspense isLoading={dataIsLoading} error={dataError}>
-        {/* NO ROWS */}
-        {!data?.items?.length && (
-          <div className="flex justify-center rounded-lg bg-white p-8 text-center">
-            <NoRowsMessage
-              title={"No declined opportunites found."}
-              description={
-                "Any opportunities that have been declined will be listed here for your reference."
-              }
-            />
-          </div>
-        )}
-
-        {/* GRID */}
-        {!!data?.items?.length && (
-          <div className="flex flex-col gap-4">
-            {/* PAGINATION INFO */}
-            <PaginationInfoComponent
-              currentPage={pageNumber}
-              itemCount={data?.items ? data.items.length : 0}
-              totalItems={data?.totalCount ?? 0}
-              pageSize={PAGE_SIZE}
-              query={null}
-            />
-
-            {/* GRID */}
-            <div className="flex flex-col gap-4">
-              {data.items.map((item) => (
-                <OpportunityListItem
-                  key={item.id}
-                  data={item}
-                  displayDate={item.dateModified ?? ""}
-                  config={{
-                    displayDateLabel: "Declined",
-                    showStatusBadge: true,
-                    showPullSyncBadge: true,
-                    showProgress: false,
-                    showDates: true,
-                    showDownloadFiles: true,
-                    showComment: true,
-                    showSkills: false,
-                  }}
-                />
-              ))}
-            </div>
-
-            {/* PAGINATION BUTTONS */}
-            <div className="mt-2 grid place-items-center justify-center">
-              <PaginationButtons
-                currentPage={pageNumber}
-                totalItems={data?.totalCount ?? 0}
-                pageSize={PAGE_SIZE}
-                onClick={handlePagerChange}
-                showPages={false}
-                showInfo={true}
+      <LoadingStatus when={dataIsLoading} />
+      <div ref={resultsRef} className={PAGER_SCROLL_MARGIN_CLASS}>
+        <Suspense
+          isLoading={dataIsLoading}
+          error={dataError}
+          loader={<OpportunityGridSkeleton />}
+        >
+          {/* NO ROWS */}
+          {!data?.items?.length && (
+            <div className="flex justify-center rounded-lg bg-white p-8 text-center">
+              <NoRowsMessage
+                title={"No declined opportunites found."}
+                description={
+                  "Any opportunities that have been declined will be listed here for your reference."
+                }
               />
             </div>
-          </div>
-        )}
-      </Suspense>
+          )}
+
+          {/* GRID */}
+          {!!data?.items?.length && (
+            <div className="flex flex-col gap-4">
+              {/* PAGINATION INFO */}
+              <PaginationInfoComponent
+                currentPage={pageNumber}
+                itemCount={data?.items ? data.items.length : 0}
+                totalItems={data?.totalCount ?? 0}
+                pageSize={PAGE_SIZE}
+                label="Declined opportunities"
+              />
+
+              {/* GRID */}
+              <div className={CARD_GRID_CLASS}>
+                {data.items.map((item) => (
+                  <OpportunityListItem
+                    key={item.id}
+                    data={item}
+                    displayDate={item.dateModified ?? ""}
+                    config={{
+                      displayDateLabel: "Declined",
+                      showStatusBadge: true,
+                      showPullSyncBadge: true,
+                      showProgress: false,
+                      showDates: true,
+                      showDownloadFiles: true,
+                      showComment: true,
+                      showSkills: false,
+                    }}
+                  />
+                ))}
+              </div>
+
+              {/* PAGER */}
+              <div className="mt-2">
+                <Pager
+                  page={pageNumber}
+                  pages={Math.ceil((data.totalCount ?? 0) / PAGE_SIZE)}
+                  onChange={handlePagerChange}
+                />
+              </div>
+            </div>
+          )}
+        </Suspense>
+      </div>
     </>
   );
 };

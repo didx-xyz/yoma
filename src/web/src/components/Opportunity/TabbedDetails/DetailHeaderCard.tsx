@@ -4,10 +4,10 @@ import { IoMdPerson } from "react-icons/io";
 import { IoChevronDown, IoChevronUp } from "react-icons/io5";
 import type { OpportunityInfo } from "~/api/models/opportunity";
 import {
-  getTypeConfig,
   OpportunityOrgCountriesRow,
   OpportunityTypeBadge,
 } from "~/components/Opportunity/opportunityTypeTheme";
+import { typeBadgeClass } from "~/lib/typeColours";
 import { DetailFactBadges } from "./DetailFactBadges";
 import { clampHidesText, lineHeightPx } from "./lineClamp";
 
@@ -169,7 +169,6 @@ export const DetailHeaderCard: React.FC<{
   /** The host's actions, under the fact strip. */
   children?: React.ReactNode;
 }> = ({ opportunity, ref, leadingChips, trailingChips, children }) => {
-  const typeConfig = getTypeConfig(opportunity.type);
   // With host chips the row may not fit one line: it wraps, and org · location keeps at least
   // 12rem beside the chips or takes the next line. The public row (type chip only) is as it was.
   const hostChips = !!leadingChips || !!trailingChips;
@@ -204,7 +203,7 @@ export const DetailHeaderCard: React.FC<{
           {leadingChips}
           <OpportunityTypeBadge
             data={opportunity}
-            className={`shrink-0 ${typeConfig.badgeClassName}`}
+            className={`shrink-0 ${typeBadgeClass(opportunity.type)}`}
           />
           {trailingChips}
           {/* flex-1: the row's org name is capped at 60% of this box, so it must fill the line */}

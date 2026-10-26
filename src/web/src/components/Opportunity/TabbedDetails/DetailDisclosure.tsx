@@ -11,6 +11,15 @@ import { IoChevronForward } from "react-icons/io5";
 // the title (2026-10-05).
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** The section icon squares' tints, per group (round 10). Provider keeps its grey card. */
+export const TONE = {
+  gold: "bg-orange-light text-yellow",
+  blue: "bg-blue-light text-blue-dark",
+  lilac: "bg-purple-tint text-purple",
+  green: "bg-green-light text-green",
+  grey: "bg-gray-light text-gray-dark",
+} as const;
+
 export const DetailDisclosure: React.FC<{
   id: string;
   icon: React.ReactNode;
@@ -29,6 +38,12 @@ export const DetailDisclosure: React.FC<{
    * always, under the title and without the fade (2026-10-05).
    */
   note?: string | null;
+  /**
+   * A line under the title shown open and closed (the completion form's Done / Needs attention
+   * / Optional, 2026-10-21). When given, it replaces the closed `preview`; the `note` still
+   * shows under it while open.
+   */
+  status?: React.ReactNode;
   /** A value row with nothing to open: no button, no chevron, no body. */
   static?: boolean;
   open: boolean;
@@ -37,6 +52,8 @@ export const DetailDisclosure: React.FC<{
   focused?: boolean;
   /** A header chip just jumped here: a green ring that fades once the page has settled. */
   flash?: boolean;
+  /** The open body's padding; the default indents it under the title from `md`. */
+  bodyClassName?: string;
   children?: React.ReactNode;
 }> = ({
   id,
@@ -47,11 +64,13 @@ export const DetailDisclosure: React.FC<{
   valueHint,
   preview,
   note,
+  status,
   static: isStatic = false,
   open,
   onToggle,
   focused = false,
   flash = false,
+  bodyClassName = "px-5 pb-5 md:pl-[74px]",
   children,
 }) => {
   // The content mounts on the first open and then stays: an unopened section costs nothing
@@ -83,8 +102,11 @@ export const DetailDisclosure: React.FC<{
             <span className="text-gray-dark font-normal">{` · ${valueHint}`}</span>
           )}
         </span>
-        {!open && preview && (
-          <span className="text-gray-dark block truncate text-sm">
+        {status}
+        {!status && !open && preview && (
+          // two lines, not one: the Yo-ID sections' previews quote four counts, which a 352 px
+          // drawer cannot hold on one (2026-10-22)
+          <span className="text-gray-dark line-clamp-2 block text-sm">
             {preview}
           </span>
         )}
@@ -121,6 +143,7 @@ export const DetailDisclosure: React.FC<{
       ) : (
         <>
           <button
+            id={`section-${id}-header`}
             type="button"
             aria-expanded={open}
             aria-controls={`section-${id}-body`}
@@ -129,6 +152,7 @@ export const DetailDisclosure: React.FC<{
           >
             {heading}
             <IoChevronForward
+              aria-hidden
               className={`text-gray-dark mt-3 h-4 w-4 shrink-0 transition-transform duration-220 motion-reduce:transition-none ${
                 open ? "rotate-90" : ""
               }`}
@@ -138,15 +162,15 @@ export const DetailDisclosure: React.FC<{
               1fr); inert while closed, so its links and buttons are out of the tab order. */}
           <div
             id={`section-${id}-body`}
+            role="region"
+            aria-labelledby={`section-${id}-header`}
             inert={!open}
             className={`grid transition-[grid-template-rows] duration-220 ease-out motion-reduce:transition-none ${
               open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
             }`}
           >
             <div className="overflow-hidden">
-              {(open || everOpened) && (
-                <div className="px-5 pb-5 md:pl-[74px]">{children}</div>
-              )}
+              {everOpened && <div className={bodyClassName}>{children}</div>}
             </div>
           </div>
         </>

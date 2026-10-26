@@ -1,9 +1,9 @@
 import React from "react";
 import type { OpportunityInfo } from "~/api/models/opportunity";
+import { typeBadgeClass } from "~/lib/typeColours";
 import { AvatarImage } from "../AvatarImage";
 import ZltoRewardBadge from "./Badges/ZltoRewardBadge";
 import {
-  getTypeConfig,
   OpportunityEngagementTypeBadge,
   OpportunityMetaTextRow,
   OpportunityTypeBadge,
@@ -53,7 +53,7 @@ const SocialPreview: React.FC<{
           <div className="flex min-w-0 flex-row flex-nowrap items-center gap-2 overflow-hidden">
             <OpportunityTypeBadge
               data={opportunity}
-              className={getTypeConfig(opportunity.type).badgeClassName}
+              className={typeBadgeClass(opportunity.type)}
             />
             <OpportunityEngagementTypeBadge
               data={opportunity}

@@ -43,6 +43,10 @@ const DEFINITIONS = [
     ["Internship", "Internship"],
   ]),
   definition("JobEmploymentDurationUnit", [["Months", "Months"]]),
+  definition("JobWorkSchedule", [
+    ["FullTime", "Full-time"],
+    ["PartTime", "Part-time"],
+  ]),
   definition("LearningDifficulty", [["Beginner", "Beginner"]]),
   definition("EventDifficulty", [["OpenToAll", "Open to all"]]),
 ];
@@ -77,12 +81,38 @@ describe("Card facts say what they are (2026-10-07)", () => {
     });
     const [fact] = cardFacts(job, DEFINITIONS, NOW, false);
     assert.equal(fact?.text, "Fixed term · 6 months");
-    assert.equal(fact?.tip, "Employment type: Fixed term · 6 months");
+    assert.equal(fact?.tip, "Employment: Fixed term · 6 months");
     // The accessible name leads with what the card shows (WCAG 2.5.3).
     assert.equal(
       fact?.label,
-      "Fixed term · 6 months (Employment type: Fixed term · 6 months)",
+      "Fixed term · 6 months (Employment: Fixed term · 6 months)",
     );
+  });
+
+  test("the work schedule joins the employment fact, between type and duration (R19)", () => {
+    const job = opportunity({
+      customFields: [
+        { key: "JobEmploymentType", values: ["Permanent"] },
+        { key: "JobWorkSchedule", values: ["FullTime"] },
+      ] as OpportunityInfo["customFields"],
+    });
+    assert.equal(texts(job)[0], "Permanent · Full-time");
+    const fixed = opportunity({
+      customFields: [
+        { key: "JobEmploymentType", values: ["FixedTerm"] },
+        { key: "JobWorkSchedule", values: ["PartTime"] },
+        { key: "JobEmploymentDuration", value: "6" },
+        { key: "JobEmploymentDurationUnit", values: ["Months"] },
+      ] as OpportunityInfo["customFields"],
+    });
+    assert.equal(texts(fixed)[0], "Fixed term · Part-time · 6 months");
+    // A schedule alone still makes the fact.
+    const scheduleOnly = opportunity({
+      customFields: [
+        { key: "JobWorkSchedule", values: ["PartTime"] },
+      ] as OpportunityInfo["customFields"],
+    });
+    assert.equal(texts(scheduleOnly)[0], "Part-time");
   });
 
   test("the tooltip's two lines: the fact's name and its whole value", () => {
@@ -209,7 +239,7 @@ describe("Languages and skills fill the spare slots (2026-10-08)", () => {
     assert.deepEqual(
       facts.map((fact) => [fact.text, fact.tip]),
       [
-        ["Permanent", "Employment type: Permanent"],
+        ["Permanent", "Employment: Permanent"],
         ["1 week effort", "Time commitment: 1 Week"],
         ["English, French +1", "Languages: English, French, isiZulu"],
         ["2 skills to earn", "Skills you earn: Teamwork, Sales"],
@@ -248,16 +278,27 @@ describe("Languages and skills fill the spare slots (2026-10-08)", () => {
 });
 
 describe("Places left", () => {
+  const status = (type: string, left: number) =>
+    cardStatus(
+      opportunity({
+        type,
+        participantLimit: 160,
+        participantCountTotal: 160 - left,
+      }),
+      NOW,
+    );
+
   test("the count only, singular for one", () => {
-    const status = (left: number) =>
-      cardStatus(
-        opportunity({
-          participantLimit: 160,
-          participantCountTotal: 160 - left,
-        }),
-        NOW,
-      ).places;
-    assert.equal(status(160), "160 places left");
-    assert.equal(status(1), "1 place left");
+    assert.equal(status("Event", 160).places, "160 places left");
+    assert.equal(status("Event", 1).places, "1 place left");
+    assert.equal(status("Event", 0).places, "No places left");
+    assert.equal(status("Event", 0).full, true);
+  });
+
+  test("a Job counts positions (R19)", () => {
+    assert.equal(status("Job", 160).places, "160 positions left");
+    assert.equal(status("Job", 1).places, "1 position left");
+    assert.equal(status("Job", 0).places, "No positions left");
+    assert.equal(status("Job", 0).full, true);
   });
 });

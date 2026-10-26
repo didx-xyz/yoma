@@ -1,12 +1,21 @@
 import { useAtom } from "jotai";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect, useState, type ReactElement } from "react";
-import type { TabItem } from "~/api/models/common";
+import { type ReactElement } from "react";
+import { PillRow } from "~/components/Common/PillRow";
+import { YoIDBreadcrumb } from "~/components/YoID/YoIDBreadcrumb";
+import { INTRO_LINK_CLASS, YoIDIntro } from "~/components/YoID/YoIDIntro";
+import { YOID_OPPORTUNITY_TABS, YOID_TABS } from "~/components/YoID/yoidTabs";
+import { formatNumber } from "~/features/discovery/lib/format";
+import {
+  PILL_CLASS,
+  PILL_COUNT_CLASS,
+  PILL_CURRENT_CLASS,
+  PILL_IDLE_CLASS,
+  PILL_TOUCH_CLASS,
+} from "~/lib/pill";
 import { userProfileAtom } from "~/lib/store";
-import Breadcrumb from "../Breadcrumb";
 import YoIDLayout from "./YoID";
-import FormMessage, { FormMessageType } from "../Common/FormMessage";
 
 export type TabProps = ({
   children,
@@ -17,108 +26,66 @@ export type TabProps = ({
 const YoIDOpportunities: TabProps = ({ children }) => {
   const router = useRouter();
   const [userProfile] = useAtom(userProfileAtom);
-  const [tabItems, setTabItems] = useState<TabItem[]>([]);
-  const [selectedTab, setSelectedTab] = useState<TabItem | null>(null);
-
-  // set the tab items based on the current route
-  useEffect(() => {
-    const localData = [
-      {
-        title: "✅ Completed",
-        description: "Opportunities that you have completed",
-        url: "/yoid/opportunities/completed",
-        badgeCount: userProfile?.opportunityCountCompleted,
-        selected: router.asPath.startsWith("/yoid/opportunities/completed"),
-      },
-      {
-        title: "⌚ Pending",
-        description: "Opportunities that are pending verification",
-        url: "/yoid/opportunities/pending",
-        badgeCount: userProfile?.opportunityCountPending,
-        selected: router.asPath.startsWith("/yoid/opportunities/pending"),
-      },
-      {
-        title: "❌ Declined",
-        description: "Opportunities that have been declined",
-        url: "/yoid/opportunities/declined",
-        badgeCount: userProfile?.opportunityCountRejected,
-        selected: router.asPath.startsWith("/yoid/opportunities/declined"),
-      },
-      {
-        title: "💗 Saved",
-        description: "Opportunities that you have saved",
-        url: "/yoid/opportunities/saved",
-        badgeCount: userProfile?.opportunityCountSaved,
-        selected: router.asPath.startsWith("/yoid/opportunities/saved"),
-      },
-    ];
-
-    setTabItems(localData);
-
-    setSelectedTab(localData.find((tab) => tab.selected) || null);
-  }, [router.asPath, setTabItems, setSelectedTab, userProfile]);
+  const current = YOID_OPPORTUNITY_TABS.find((tab) =>
+    router.asPath.startsWith(tab.url),
+  );
 
   return (
     <YoIDLayout>
-      <div className="flex w-full flex-col gap-4 lg:max-w-7xl">
-        {/* BREADCRUMB */}
-        <div className="text-xs font-bold tracking-wider text-black md:text-base">
-          <Breadcrumb
-            items={[
-              { title: "💳 Yo-ID", url: "/yoid" },
-              {
-                title: "🏆 Opportunities",
-                url: "/yoid/opportunities/completed",
-                selected: false,
-              },
+      <>
+        <YoIDBreadcrumb
+          trail={[
+            {
+              title: YOID_TABS.opportunities.label,
+              url: YOID_TABS.opportunities.url,
+            },
+            ...(current ? [{ title: current.label }] : []),
+          ]}
+        />
 
-              ...(selectedTab
-                ? [
-                    {
-                      title: selectedTab.title,
-                      selected: true,
-                    },
-                  ]
-                : []),
-            ]}
-          />
-        </div>
-
-        {/* NAVIGATION BUTTONS */}
-        <div className="-mt-2 flex flex-row flex-wrap items-center justify-start gap-2">
-          {tabItems.map((tab) => (
-            <Link
-              key={tab.title}
-              href={tab.url!}
-              rel="noopener noreferrer"
-              className={`btn border-gray text-gray-dark btn-sm hover:border-gray-dark flex items-center text-xs shadow-md ${
-                tab.selected
-                  ? "!text-gray btn-secondary border-0 hover:text-white"
-                  : ""
-              }`}
-            >
-              {tab.title}
-            </Link>
-          ))}
-        </div>
-
-        <FormMessage
-          messageType={FormMessageType.Info}
-          classNameLabel="!text-xs md:!text-sm"
-        >
-          Just completed an opportunity? Click
-          <Link
-            className="text-green mx-1 font-bold hover:underline"
-            href="/yoid/opportunities/add"
-          >
-            here
+        {/* Above the pills (Jason, 2026-10-21, superseding the day's earlier call): the prompt
+            to add a completion leads, then the sub-pages */}
+        <YoIDIntro>
+          Just completed an opportunity?{" "}
+          <Link className={INTRO_LINK_CLASS} href="/yoid/opportunities/add">
+            Add it to your Yo-ID
           </Link>
-          to add it.
-        </FormMessage>
+        </YoIDIntro>
+
+        {/* SUB-TABS — places, so they take the YoID tabs' tones; counts from the profile */}
+        <nav aria-label="My opportunities">
+          <PillRow
+            shadowFromClassName="from-gray-light"
+            className="md:flex-wrap"
+          >
+            {YOID_OPPORTUNITY_TABS.map((tab) => {
+              const selected = tab === current;
+              const count = userProfile?.[tab.count];
+              return (
+                <Link
+                  key={tab.url}
+                  href={tab.url}
+                  aria-current={selected ? "page" : undefined}
+                  title={tab.description}
+                  draggable={false}
+                  className={`${PILL_CLASS} ${PILL_TOUCH_CLASS} ${selected ? PILL_CURRENT_CLASS : PILL_IDLE_CLASS}`}
+                >
+                  <tab.icon aria-hidden className="h-4 w-4 shrink-0" />
+                  {tab.label}
+                  {count != null && (
+                    <span className={PILL_COUNT_CLASS}>
+                      {formatNumber(count)}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </PillRow>
+        </nav>
 
         {/* CHILDREN */}
         {children}
-      </div>
+      </>
     </YoIDLayout>
   );
 };

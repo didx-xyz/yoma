@@ -6,24 +6,32 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FaExclamationTriangle, FaInfoCircle } from "react-icons/fa";
 import { FcKey } from "react-icons/fc";
 import {
-  IoMdArrowUp,
   IoMdBookmark,
   IoMdCheckmark,
-  IoMdCheckmarkCircle,
   IoMdClose,
   IoMdOpen,
   IoMdShare,
-  IoMdTrash,
   IoMdWarning,
 } from "react-icons/io";
 import {
+  IoAlertCircleOutline,
+  IoArrowUp,
+  IoBalloon,
   IoBulbOutline,
+  IoClose,
+  IoIdCardOutline,
   IoLanguageOutline,
   IoLocationOutline,
   IoPricetagsOutline,
+  IoShieldCheckmarkOutline,
+  IoSparkles,
   IoStorefrontOutline,
   IoTimeOutline,
+  IoTrashOutline,
+  IoWalletOutline,
 } from "react-icons/io5";
+import Link from "next/link";
+import moment from "moment";
 import { toast } from "react-toastify";
 import { SettingType } from "~/api/models/common";
 import type { MyOpportunityResponseVerify } from "~/api/models/myOpportunity";
@@ -38,6 +46,8 @@ import {
 } from "~/api/services/myOpportunities";
 import { updateSettings } from "~/api/services/user";
 import { AvatarImage } from "~/components/AvatarImage";
+import { BTN_OUTLINE_GREEN } from "~/components/Common/buttonStyles";
+import { DialogStep } from "~/components/Common/DialogStep";
 import ZltoRewardBadge from "~/components/Opportunity/Badges/ZltoRewardBadge";
 import {
   getCommitmentDisplay,
@@ -47,9 +57,24 @@ import {
   OpportunityOrgCountriesRow,
   OpportunityTypeBadge,
 } from "~/components/Opportunity/opportunityTypeTheme";
+import {
+  typeBadgeClass,
+  typeBandClass,
+  typeOutlineClass,
+} from "~/lib/typeColours";
 import { OpportunityCompletionEdit } from "~/components/Opportunity/OpportunityCompletionEdit";
+import {
+  DIALOG_BODY,
+  DIALOG_CLOSE,
+  DIALOG_EYEBROW,
+  DIALOG_HEADING,
+  DIALOG_ICON_CIRCLE,
+  DIALOG_PRIMARY,
+  DIALOG_SECONDARY,
+} from "~/components/Opportunity/dialog";
 import { OpportunityCoreDetails } from "~/components/Opportunity/OpportunityCoreDetails";
 import { DetailHeaderCard } from "~/components/Opportunity/TabbedDetails/DetailHeaderCard";
+import { TONE } from "~/components/Opportunity/TabbedDetails/DetailDisclosure";
 import { OpportunityDetailSections } from "~/components/Opportunity/TabbedDetails/OpportunityDetailSections";
 import { isCashOutClosed } from "~/components/Opportunity/TabbedDetails/detailSectionCopy";
 import { OpportunityCustomFieldsSection } from "~/components/Opportunity/OpportunityCustomFieldsSection";
@@ -64,10 +89,12 @@ import { OPPORTUNITY_QUERY_KEYS } from "~/hooks/useOpportunityMutations";
 import analytics from "~/lib/analytics";
 import {
   CUSTOM_FIELDS_ENABLED,
+  DATE_FORMAT_HUMAN,
   OPPORTUNITY_TYPE_NANE_JOB,
   SETTING_USER_POPUP_LEAVINGYOMA,
 } from "~/lib/constants";
 import { userProfileAtom } from "~/lib/store";
+import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
 import { isUserProfileCompleted } from "~/lib/utils/profile";
 import { type User } from "~/server/auth";
 import CustomModal from "../Common/CustomModal";
@@ -120,12 +147,15 @@ const OpportunityPublicDetails: React.FC<{
   layout = CUSTOM_FIELDS_ENABLED ? "tabbed" : "classic",
 }) => {
   const queryClient = useQueryClient();
+  const modalContext = useConfirmationModalContext();
   const router = useRouter();
   const hasTrackedView = useRef(false);
   const hasResumedActionRef = useRef(false);
   const headerCardRef = useRef<HTMLDivElement>(null);
-  // Per-type theming for the new (V2) details design (badge, CTA, accent).
+  // The type's labels and CTA copy; its colours come from `lib/typeColours`.
   const typeConfig = getTypeConfig(opportunityInfo?.type);
+  // The completion dialogs' icon circle: the type's band tint with the icon in the type colour.
+  const typeTint = `${typeBandClass(opportunityInfo?.type)} ${typeOutlineClass(opportunityInfo?.type)}`;
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
   const [loginDialogAction, setLoginDialogAction] =
     useState<LoginRequiredAction | null>(null);
@@ -442,6 +472,9 @@ const OpportunityPublicDetails: React.FC<{
     });
   }, [opportunityInfo.id, opportunityInfo.title, queryClient]);
 
+  // "Delete files" withdraws the pending submission and deletes its uploads (Jason,
+  // 2026-10-22): ask through the shared confirmation dialog first, then run the unchanged
+  // delete path. Cancel in the dialog leaves the pending-verification dialog open.
   const onOpportunityCancel = useCallback(async () => {
     if (isPartnerManagedPendingSubmission) {
       toast.info(
@@ -449,6 +482,30 @@ const OpportunityPublicDetails: React.FC<{
       );
       return;
     }
+
+    const confirmed = await modalContext.showConfirmation(
+      "",
+      <div
+        key="confirm-dialog-content"
+        className="flex h-full flex-col space-y-2 text-gray-500"
+      >
+        <div className="flex flex-row items-center gap-2">
+          <IoMdWarning className="text-warning h-6 w-6" />
+          <p className="text-lg">Delete files?</p>
+        </div>
+
+        <div>
+          <p className="text-sm leading-6">
+            This withdraws your submission and{" "}
+            <strong>permanently deletes</strong> everything you uploaded for
+            this opportunity.
+            <br />
+            This cannot be undone.
+          </p>
+        </div>
+      </div>,
+    );
+    if (!confirmed) return;
 
     setIsLoading(true);
 
@@ -484,6 +541,7 @@ const OpportunityPublicDetails: React.FC<{
     }
   }, [
     isPartnerManagedPendingSubmission,
+    modalContext,
     opportunityInfo.id,
     opportunityInfo.title,
     partnerSourceLabel,
@@ -622,101 +680,119 @@ const OpportunityPublicDetails: React.FC<{
         {externalLinkButtonText}
       </button>
     );
+  // "Upload your completion files": manual verification with at least one verification type
+  // (the API's own admin rule; an opportunity with none is a data inconsistency it rejects with
+  // 500, so no dead-end button — 2026-10-21), started, not yet completed or rejected. Shown in
+  // the header card and, from round 3 (2026-10-21), in the sticky bars too.
+  const canUploadCompletion =
+    opportunityInfo.verificationEnabled &&
+    opportunityInfo.verificationMethod == "Manual" &&
+    (opportunityInfo.verificationTypes?.length ?? 0) > 0 &&
+    new Date(opportunityInfo.dateStart) < new Date() &&
+    (verificationStatus == null ||
+      verificationStatus.status == "None" ||
+      verificationStatus.status == "Rejected") &&
+    !opportunityInfo.participantLimitReached &&
+    !verificationStatusIsLoading;
+  const onUploadCompletionFiles = () => {
+    // 📊 ANALYTICS: track "Upload completion files" button click
+    analytics.trackEvent("opportunity_upload_files_clicked", {
+      opportunityId: opportunityInfo.id,
+      opportunityTitle: opportunityInfo.title,
+    });
+
+    if (user) {
+      setCompleteOpportunityDialogVisible(true);
+    } else {
+      showLoginDialog("complete");
+    }
+  };
+  // "Pending verification": the youth's completion is under review. One control, in the header
+  // card and (from 2026-10-21) both sticky bars; it opens the pending dialog below.
+  const isPendingVerification = verificationStatus?.status == "Pending";
+  const pendingVerificationLabel =
+    isPartnerManagedPendingSubmission &&
+    verificationStatus?.percentComplete != null
+      ? `Pending verification (${verificationStatus.percentComplete}%)`
+      : "Pending verification";
+  const pendingVerificationTitle = isPartnerManagedPendingSubmission
+    ? `This submission is read-only while pending${verificationStatus?.percentComplete != null ? ` and is ${verificationStatus.percentComplete}% complete` : ""}, so Yoma does not offer cancel or delete actions here.`
+    : "Your submission is currently under review. If you would like to cancel your application and delete all uploaded files, click the button to see cancellation options.";
+  const onPendingVerification = () => {
+    // 📊 ANALYTICS: track "Pending verification" button click
+    analytics.trackEvent("opportunity_pending_verification_clicked", {
+      opportunityId: opportunityInfo.id,
+      opportunityTitle: opportunityInfo.title,
+    });
+
+    setCancelOpportunityDialogVisible(true);
+  };
+  // "Completed": the date comes with the verification status, so no extra request
+  const completedOn = verificationStatus?.dateCompleted
+    ? moment(verificationStatus.dateCompleted)
+    : null;
+  const completedTip =
+    completedOn && completedOn.isValid()
+      ? `Well done — you completed this on ${completedOn.format(DATE_FORMAT_HUMAN)}`
+      : "Well done — you completed this opportunity";
+  const isCompleted = verificationStatus?.status == "Completed";
+  // The "Completed" chip: header card and (2026-10-22, beside Upload / Pending) the sticky bars.
+  // Tooltip on hover/focus/tap; tabIndex so keyboard and touch users reach it. Left on md+: in
+  // the header the chip sits at the card's right edge, where a top tip clips.
+  const completedChip = (className: string) => (
+    <span
+      className={`tooltip tooltip-top md:tooltip-left tooltip-secondary before:text-[0.6875rem] ${className}`}
+      data-tip={completedTip}
+    >
+      <div
+        className="border-green text-green flex h-full items-center justify-center rounded-full border bg-white px-4 text-center text-sm font-bold"
+        title={completedTip}
+        aria-label={completedTip}
+        tabIndex={0}
+        role="note"
+      >
+        Completed
+        <IoMdCheckmark
+          strikethroughThickness={2}
+          overlineThickness={2}
+          underlineThickness={2}
+          className="ml-1 h-4 w-4"
+        />
+      </div>
+    </span>
+  );
   const completionButtons = opportunityInfo.verificationEnabled && (
     <>
-      {/* only show completion button if verification is manual, start date has been reached,
-                    and the opportunity is not yet completed or rejected */}
-      {opportunityInfo.verificationMethod == "Manual" &&
-        new Date(opportunityInfo.dateStart) < new Date() &&
-        (verificationStatus == null ||
-          verificationStatus == undefined ||
-          verificationStatus.status == "None" ||
-          verificationStatus.status == "Rejected") &&
-        !opportunityInfo.participantLimitReached &&
-        !verificationStatusIsLoading && (
-          <button
-            type="button"
-            className={
-              tabbed
-                ? "btn bg-gray-light text-purple btn-sm hover:bg-gray h-12 w-full rounded-full border-transparent px-5 text-sm normal-case md:w-auto"
-                : "btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[280px]"
-            }
-            title="Upload your completion files to earn your achievement and have this opportunity added to your CV."
-            onClick={() => {
-              // 📊 ANALYTICS: track "Upload completion files" button click
-              analytics.trackEvent("opportunity_upload_files_clicked", {
-                opportunityId: opportunityInfo.id,
-                opportunityTitle: opportunityInfo.title,
-              });
-
-              if (user) {
-                setCompleteOpportunityDialogVisible(true);
-              } else {
-                showLoginDialog("complete");
-              }
-            }}
-          >
-            <IoMdArrowUp className="mr-1 h-5 w-5" />
-            Upload your completion files
-          </button>
-        )}
-
-      {verificationStatus &&
-        verificationStatus.status == "Pending" &&
-        (isPartnerManagedPendingSubmission ? (
-          <button
-            type="button"
-            className="btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[250px]"
-            title={`This submission is read-only while pending${verificationStatus?.percentComplete != null ? ` and is ${verificationStatus.percentComplete}% complete` : ""}, so Yoma does not offer cancel or delete actions here.`}
-            onClick={() => {
-              // 📊 ANALYTICS: track "Pending verification" button click
-              analytics.trackEvent("opportunity_pending_verification_clicked", {
-                opportunityId: opportunityInfo.id,
-                opportunityTitle: opportunityInfo.title,
-              });
-
-              setCancelOpportunityDialogVisible(true);
-            }}
-          >
-            <FaInfoCircle className="h-4 w-4 shrink-0" />
-            {verificationStatus?.percentComplete != null
-              ? `Pending verification (${verificationStatus.percentComplete}%)`
-              : "Pending verification"}
-          </button>
-        ) : (
-          <button
-            type="button"
-            className="btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[250px]"
-            title="Your submission is currently under review. If you would like to cancel your application and delete all uploaded files, click the button to see cancellation options."
-            onClick={() => {
-              // 📊 ANALYTICS: track "Pending verification" button click
-              analytics.trackEvent("opportunity_pending_verification_clicked", {
-                opportunityId: opportunityInfo.id,
-                opportunityTitle: opportunityInfo.title,
-              });
-
-              setCancelOpportunityDialogVisible(true);
-            }}
-          >
-            <FaInfoCircle className="h-4 w-4 shrink-0" />
-            Pending verification
-          </button>
-        ))}
-
-      {verificationStatus && verificationStatus.status == "Completed" && (
-        <div
-          className="md:text-md border-green text-green flex h-10 items-center justify-center rounded-full border bg-white px-4 text-center text-sm font-bold"
-          title="You have completed this opportunity!"
+      {canUploadCompletion && (
+        <button
+          type="button"
+          className={
+            tabbed
+              ? // outline green like Save and Share, at Go to programme's 48px (H3, 2026-10-21)
+                `${BTN_OUTLINE_GREEN} h-12 w-full px-5 text-sm md:w-auto`
+              : `${BTN_OUTLINE_GREEN} h-10 w-full text-sm md:w-[280px]`
+          }
+          title="Upload your completion files to earn your achievement and have this opportunity added to your CV."
+          onClick={onUploadCompletionFiles}
         >
-          Completed
-          <IoMdCheckmark
-            strikethroughThickness={2}
-            overlineThickness={2}
-            underlineThickness={2}
-            className="ml-1 h-4 w-4"
-          />
-        </div>
+          <IoArrowUp className="mr-1 h-5 w-5" />
+          Upload your completion files
+        </button>
       )}
+
+      {isPendingVerification && (
+        <button
+          type="button"
+          className="btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[250px]"
+          title={pendingVerificationTitle}
+          onClick={onPendingVerification}
+        >
+          <FaInfoCircle className="h-4 w-4 shrink-0" />
+          {pendingVerificationLabel}
+        </button>
+      )}
+
+      {isCompleted && completedChip("md:text-md h-10")}
     </>
   );
   const saveButton = (
@@ -769,9 +845,33 @@ const OpportunityPublicDetails: React.FC<{
     </button>
   );
   // The sticky bar's and the mobile bottom bar's compact set (tabbed layout only): 50px in the
-  // mobile bottom bar, 40px in the desktop sticky panel.
+  // mobile bottom bar, 40px in the desktop sticky panel. Upload — or, once the completion is
+  // under review, Pending verification (Jason, 2026-10-21) — is an outline button beside them
+  // on desktop and a link on its own line under them on mobile (2026-10-21).
   const barActions = (
     <>
+      {canUploadCompletion && (
+        <button
+          type="button"
+          className={`${BTN_OUTLINE_GREEN} hidden h-10 px-4 text-sm md:inline-flex`}
+          onClick={onUploadCompletionFiles}
+        >
+          <IoArrowUp className="mr-1 h-4 w-4" />
+          Upload your completion files
+        </button>
+      )}
+      {isPendingVerification && (
+        <button
+          type="button"
+          className={`${BTN_OUTLINE_GREEN} hidden h-10 px-4 text-sm md:inline-flex`}
+          title={pendingVerificationTitle}
+          onClick={onPendingVerification}
+        >
+          <IoTimeOutline className="mr-1 h-4 w-4" />
+          {pendingVerificationLabel}
+        </button>
+      )}
+      {isCompleted && completedChip("hidden h-10 md:inline-block")}
       {opportunityInfo.url && opportunityInfo.status !== "Expired" && (
         <button
           type="button"
@@ -810,6 +910,28 @@ const OpportunityPublicDetails: React.FC<{
       >
         <IoMdShare className="h-5 w-5" />
       </button>
+      {canUploadCompletion && (
+        <button
+          type="button"
+          className="text-green hover:text-green-dark inline-flex h-8 basis-full items-center justify-center text-sm font-semibold underline md:hidden"
+          onClick={onUploadCompletionFiles}
+        >
+          <IoArrowUp className="mr-1 h-4 w-4" />
+          Upload your completion files
+        </button>
+      )}
+      {isPendingVerification && (
+        <button
+          type="button"
+          className="text-green hover:text-green-dark inline-flex h-8 basis-full items-center justify-center text-sm font-semibold underline md:hidden"
+          title={pendingVerificationTitle}
+          onClick={onPendingVerification}
+        >
+          <IoTimeOutline className="mr-1 h-4 w-4" />
+          {pendingVerificationLabel}
+        </button>
+      )}
+      {isCompleted && completedChip("h-8 basis-full md:hidden")}
     </>
   );
 
@@ -1003,11 +1125,13 @@ const OpportunityPublicDetails: React.FC<{
             onRequestClose={() => {
               setCompleteOpportunityDialogVisible(false);
             }}
-            className={`md:max-h-[900px] md:w-[700px]`}
+            className={`md:max-h-[calc(100vh-3rem)] md:w-[700px]`}
+            animationStyle="rise"
           >
             <OpportunityCompletionEdit
               id="op-complete"
               opportunityInfo={opportunityInfo}
+              typeTint={typeTint}
               onClose={() => {
                 setCompleteOpportunityDialogVisible(false);
               }}
@@ -1015,149 +1139,213 @@ const OpportunityPublicDetails: React.FC<{
             />
           </CustomModal>
 
-          {/* COMPLETE SUCCESS DIALOG */}
+          {/* COMPLETE SUCCESS DIALOG — the detail page's language (Jason, 2026-10-21): the type's
+              tint behind an io5 icon, a Nunito heading, what happens next, one primary button */}
           <CustomModal
             isOpen={completeOpportunitySuccessDialogVisible}
             shouldCloseOnOverlayClick={false}
             onRequestClose={() => {
               setCompleteOpportunitySuccessDialogVisible(false);
             }}
-            className={`md:max-h-[410px] md:w-[600px]`}
+            className={`md:max-h-[600px] md:w-[600px]`}
+            animationStyle="rise"
           >
-            <div className="flex w-full flex-col gap-2">
-              <div className="bg-green flex flex-row p-4 shadow-lg">
-                <h1 className="grow"></h1>
+            <div className={DIALOG_BODY}>
+              <div className="flex justify-end p-3">
                 <button
                   type="button"
-                  className="btn btn-circle text-gray-dark hover:bg-gray"
+                  aria-label="Close"
+                  className={DIALOG_CLOSE}
                   onClick={() => {
                     setCompleteOpportunitySuccessDialogVisible(false);
                   }}
                 >
-                  <IoMdClose className="h-5 w-5"></IoMdClose>
+                  <IoClose className="h-5 w-5" />
                 </button>
               </div>
-              <div className="flex flex-col items-center justify-center gap-4">
-                <div className="border-green-dark -mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-white p-1 shadow-lg">
-                  <IoMdCheckmarkCircle className="text-green h-8 w-8" />
+              <div className="flex flex-col items-center gap-5 px-6 pb-8 text-center md:px-12">
+                {/* the balloon's circle pops in with a soft ring in the type colour, then the
+                    sparkle in the type colour wiggles twice; static under reduced motion */}
+                <div
+                  className={`${DIALOG_ICON_CIRCLE} ${typeOutlineClass(opportunityInfo.type)} bg-orange-light motion-safe:animate-bounce-once relative ring-4 ring-current/20`}
+                >
+                  <IoBalloon aria-hidden className="text-orange h-10 w-10" />
+                  <IoSparkles
+                    aria-hidden
+                    className="absolute -top-1 -right-1 h-6 w-6 motion-safe:animate-[wiggle_0.8s_ease-in-out_0.5s_2]"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <h3 className={DIALOG_HEADING}>Submitted!</h3>
+                  <p className="text-gray-dark text-sm md:text-base">
+                    <strong className="text-black">
+                      {opportunityInfo.organizationName}
+                    </strong>{" "}
+                    will now check your completion of{" "}
+                    <strong className="text-black">
+                      {opportunityInfo.title}
+                    </strong>
+                    .
+                  </p>
                 </div>
 
-                <h3>Your application has been submitted!</h3>
+                <div className="w-full text-left">
+                  <h4 className={DIALOG_EYEBROW}>What happens next</h4>
+                  <ul className="mt-2 flex flex-col gap-3">
+                    <DialogStep
+                      icon={<IoShieldCheckmarkOutline className="h-5 w-5" />}
+                      toneClass={TONE.green}
+                      title="Verification"
+                      note={`${opportunityInfo.organizationName} reviews what you sent. This usually takes 3–4 business days.`}
+                    />
+                    <DialogStep
+                      icon={<IoIdCardOutline className="h-5 w-5" />}
+                      toneClass={TONE.blue}
+                      title="Your credential"
+                      note="Once approved, a credential is added to your Yo-ID Passport and the opportunity to your CV."
+                    />
+                    {(opportunityInfo.zltoRewardEstimate ?? 0) > 0 && (
+                      <DialogStep
+                        icon={<IoWalletOutline className="h-5 w-5" />}
+                        toneClass={TONE.gold}
+                        title="ZLTO"
+                        note={`${opportunityInfo.zltoRewardEstimate} ZLTO goes into your Wallet once it's approved.`}
+                      />
+                    )}
+                  </ul>
+                </div>
 
-                <div className="rounded-lg p-4 text-center">
-                  <strong>{opportunityInfo.organizationName}</strong> is busy
-                  reviewing your submission. Once approved, the opportunity will
-                  be automatically added to your CV. This may take between{" "}
-                  <span className="text-blue decoration-blue font-bold text-nowrap underline decoration-2">
-                    3-4 business days
-                  </span>
-                  .
-                </div>
-                <div className="mt-4 mb-2 flex w-full justify-center px-4">
-                  <button
-                    type="button"
-                    className="btn border-green text-green hover:bg-green-dark w-full bg-white hover:text-white md:w-[200px]"
-                    onClick={() =>
-                      setCompleteOpportunitySuccessDialogVisible(false)
-                    }
-                  >
-                    <IoMdClose className="mr-2 h-5 w-5" />
-                    Close Window
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  className={`${DIALOG_PRIMARY} md:w-[240px]`}
+                  onClick={() =>
+                    setCompleteOpportunitySuccessDialogVisible(false)
+                  }
+                >
+                  Done
+                </button>
               </div>
             </div>
           </CustomModal>
 
-          {/* CANCEL OPPORTUNITY COMPLETION DIALOG */}
+          {/* PENDING VERIFICATION DIALOG — the same treatment: what pending means, when to expect
+              a result, the link to Yo-ID → Opportunities → Pending, and (own submissions only)
+              the way to withdraw it (Jason, 2026-10-21) */}
           <CustomModal
             isOpen={cancelOpportunityDialogVisible}
             shouldCloseOnOverlayClick={false}
             onRequestClose={() => {
               setCancelOpportunityDialogVisible(false);
             }}
-            className={`md:max-h-[500px] md:w-[600px]`}
+            className={`md:max-h-[610px] md:w-[600px]`}
+            animationStyle="rise"
           >
             {isLoading && <Loading />}
 
-            <div className="flex flex-col gap-2">
-              <div className="bg-green flex flex-row p-4 shadow-lg">
-                <h1 className="grow"></h1>
+            <div className={DIALOG_BODY}>
+              <div className="flex justify-end p-3">
                 <button
                   type="button"
-                  className="btn btn-circle text-gray-dark hover:bg-gray"
+                  aria-label="Close"
+                  className={DIALOG_CLOSE}
                   onClick={() => {
                     setCancelOpportunityDialogVisible(false);
                   }}
                 >
-                  <IoMdClose className="h-5 w-5"></IoMdClose>
+                  <IoClose className="h-5 w-5" />
                 </button>
               </div>
-              <div className="flex flex-col items-center justify-center gap-4 px-4 pb-8 md:px-12">
-                <div className="border-green-dark -mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-white shadow-lg">
-                  <FaExclamationTriangle className="text-yellow h-8 w-8" />
+              <div className="flex flex-col items-center gap-5 px-6 pb-8 text-center md:px-12">
+                <div className={`${DIALOG_ICON_CIRCLE} ${typeTint}`}>
+                  <IoTimeOutline aria-hidden className="h-10 w-10" />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <h3 className={DIALOG_HEADING}>Pending verification</h3>
+                  <p className="text-gray-dark text-sm md:text-base">
+                    {isPartnerManagedPendingSubmission ? (
+                      <>
+                        <strong className="text-black">
+                          {partnerSourceLabel}
+                        </strong>{" "}
+                        manages this submission, so it is read-only in Yoma
+                        while it is pending.
+                        {verificationStatus?.percentComplete != null && (
+                          <>
+                            {" "}
+                            Progress reported so far:{" "}
+                            <strong className="text-black">
+                              {verificationStatus.percentComplete}%
+                            </strong>
+                            .
+                          </>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <strong className="text-black">
+                          {opportunityInfo.organizationName}
+                        </strong>{" "}
+                        is reviewing your completion. What you sent can&apos;t
+                        be changed while it is under review.
+                      </>
+                    )}
+                  </p>
                 </div>
 
-                <div className="text-center font-semibold">
-                  Your application is pending verification.
-                </div>
-
-                <div className="w-full text-center">
-                  {isPartnerManagedPendingSubmission ? (
-                    <>
-                      <strong>{partnerSourceLabel}</strong> manages this
-                      submission externally. Your submission is read-only in
-                      Yoma while it is pending, so cancellation and file
-                      deletion are not available here.
-                      {verificationStatus?.percentComplete != null && (
-                        <>
-                          {" "}
-                          Current partner-reported progress:{" "}
-                          <strong>{verificationStatus.percentComplete}%</strong>
-                          .
-                        </>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <strong>{opportunityInfo.organizationName}</strong> is
-                      busy reviewing your submission. Once approved, the
-                      opportunity will be automatically added to your CV. If you
-                      would like to cancel your application and delete all
-                      uploaded files, click the button below.
-                    </>
-                  )}
+                <div className="w-full text-left">
+                  <h4 className={DIALOG_EYEBROW}>What to expect</h4>
+                  <ul className="mt-2 flex flex-col gap-3">
+                    <DialogStep
+                      icon={<IoShieldCheckmarkOutline className="h-5 w-5" />}
+                      toneClass={TONE.green}
+                      title="A result within 3–4 business days"
+                      note="Most reviews finish in that time. Once approved, your credential appears in your Yo-ID Passport and the opportunity on your CV."
+                    />
+                    <DialogStep
+                      icon={<IoTimeOutline className="h-5 w-5" />}
+                      toneClass={TONE.blue}
+                      title="Track it in your Yo-ID"
+                      note={
+                        <Link
+                          href="/yoid/opportunities/pending"
+                          className="text-green font-semibold underline"
+                        >
+                          See your pending opportunities
+                        </Link>
+                      }
+                    />
+                  </ul>
                 </div>
 
                 {!isPartnerManagedPendingSubmission && (
-                  <div className="flex w-full items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-left text-xs">
-                    <IoMdWarning className="text-yellow mt-0.5 h-4 w-4 shrink-0" />
+                  <div className="border-yellow bg-orange-light flex w-full items-start gap-2 rounded-xl border p-3 text-left text-xs">
+                    <IoAlertCircleOutline className="text-yellow mt-0.5 h-4 w-4 shrink-0" />
                     <span>
-                      Clicking <strong>Delete Files</strong> cancels your
-                      submission and permanently <strong>deletes</strong> all
-                      files you uploaded for this opportunity.
+                      <strong>Delete files</strong> withdraws your submission
+                      and permanently deletes everything you uploaded for this
+                      opportunity.
                     </span>
                   </div>
                 )}
 
-                <div className="mt-2 flex w-full flex-col justify-center gap-4 md:flex-row">
+                <div className="flex w-full flex-col-reverse justify-center gap-3 md:flex-row">
+                  {!isPartnerManagedPendingSubmission && (
+                    <button
+                      type="button"
+                      className={`${DIALOG_SECONDARY} md:flex-1`}
+                      onClick={onOpportunityCancel}
+                      disabled={isLoading}
+                    >
+                      <IoTrashOutline className="mr-2 h-5 w-5" />
+                      Delete files
+                    </button>
+                  )}
                   <button
                     type="button"
-                    className="btn border-green text-green hover:bg-green-dark w-full bg-white hover:text-white md:flex-1"
+                    className={`${DIALOG_PRIMARY} md:flex-1`}
                     onClick={() => setCancelOpportunityDialogVisible(false)}
                   >
-                    <IoMdClose className="mr-2 h-5 w-5" />
-                    Close Window
-                  </button>
-
-                  <button
-                    type="button"
-                    className="btn border-green text-green hover:bg-green-dark w-full bg-white hover:text-white md:flex-1"
-                    onClick={onOpportunityCancel}
-                    disabled={isLoading}
-                  >
-                    <IoMdTrash className="mr-2 h-5 w-5" />
-                    Delete Files
+                    Close
                   </button>
                 </div>
               </div>
@@ -1241,7 +1429,7 @@ const OpportunityPublicDetails: React.FC<{
                 <div className="flex flex-row flex-wrap items-center gap-2">
                   <OpportunityTypeBadge
                     data={opportunityInfo}
-                    className={typeConfig.badgeClassName}
+                    className={typeBadgeClass(opportunityInfo.type)}
                   />
                   <OpportunityEngagementTypeBadge
                     data={opportunityInfo}

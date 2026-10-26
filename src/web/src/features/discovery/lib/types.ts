@@ -58,6 +58,12 @@ export interface DiscoveryFilters {
   accommodations: string[];
   /** Sustainable Development Goal ids — any of them, or no goals specified. */
   sdgs: string[];
+  /**
+   * Targeted group ids, "Who it's aimed at" (2026-10-21). Informational: targeting never limits
+   * who can take part. Any of them, or no groups specified; the request always adds Open to all
+   * beside a pick, so a group's opportunities come with the ones aimed at everyone.
+   */
+  targetedGroups: string[];
   /** Provider text, "contains" — the new core field, not the owning organisation. */
   provider: string | null;
   /**
@@ -146,6 +152,7 @@ export const EMPTY_DISCOVERY_FILTERS: DiscoveryFilters = {
   languages: [],
   accommodations: [],
   sdgs: [],
+  targetedGroups: [],
   provider: null,
   featured: null,
   all: null,

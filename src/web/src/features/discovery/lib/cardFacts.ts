@@ -18,7 +18,9 @@ import { calendarDaysUntil } from "./dates";
  * type ends with `languages · skills` (2026-10-08, Jason), so most cards fill the 2 × 2 grid;
  * they are left out of the lines below.
  *
- *   Job       employment · date · effort · a11y*   (qualification is left out:
+ *   Job       employment · date · effort · a11y*   (employment = type · work schedule ·
+ *                                                  duration, "Permanent · Full-time";
+ *                                                  qualification is left out:
  *                                                  `JobMinimumQualification` is not a
  *                                                  system-controlled key — the reason "No
  *                                                  experience needed" is parked too)
@@ -102,7 +104,7 @@ const PRIORITY: Record<string, CardFactKind[]> = {
 const ACCESSIBILITY_ALWAYS = ["Event"];
 
 const NAMES: Record<CardFactKind, string> = {
-  employment: "Employment type",
+  employment: "Employment",
   effort: "Time commitment",
   difficulty: "Difficulty",
   tools: "Tools needed",
@@ -116,6 +118,7 @@ const NAMES: Record<CardFactKind, string> = {
 /** Mirrors `CustomFieldConstants` (API) — persisted contracts, change only with the API. */
 const KEYS = {
   employmentType: "JobEmploymentType",
+  workSchedule: "JobWorkSchedule",
   employmentDuration: "JobEmploymentDuration",
   employmentDurationUnit: "JobEmploymentDurationUnit",
   toolsRequired: "ImpactActionToolsRequired",
@@ -199,12 +202,14 @@ export function cardFacts(
     switch (kind) {
       case "employment": {
         // The type names alone ("Permanent"): "Permanent employment" truncated at 390 (2026-10-07).
+        // The work schedule joins it (BA R19, 2026-10-21): "Permanent · Full-time · 6 months".
         const types = optionNames(KEYS.employmentType).join(", ");
+        const schedule = optionNames(KEYS.workSchedule).join(", ");
         const count = field(KEYS.employmentDuration)?.value;
         const unit = optionNames(KEYS.employmentDurationUnit)[0];
         const duration =
           count && unit ? `${count} ${unit.toLowerCase()}` : null;
-        const text = [types, duration].filter(Boolean).join(" · ");
+        const text = [types, schedule, duration].filter(Boolean).join(" · ");
         return text ? same(text) : null;
       }
       case "effort": {

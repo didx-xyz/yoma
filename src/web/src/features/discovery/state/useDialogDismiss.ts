@@ -11,6 +11,11 @@ import { useEffect, useRef } from "react";
  * closed the overlay the moment it opened. The cost of leaving it is one silent Back press after
  * a non-Back close (same URL, no visible change) — and reopening reuses the entry.
  *
+ * The sentinel COPIES Next's own history state (`__N`, url, as, options) and adds its flag
+ * (2026-10-22). A bare `{ discoveryDialog: true }` was an entry Next's popstate handler ignores:
+ * Back from a page the overlay linked to (the wizard's "Change in your profile") changed the URL
+ * to this page and left the other page rendered.
+ *
  * Filter changes dispatched WHILE an overlay is open sit above the sentinel, so Back first
  * reverts them (the URL is the filter state, by design) and next closes the overlay.
  *
@@ -31,7 +36,10 @@ export function useDialogDismiss(active: boolean, onClose: () => void): void {
     const onPop = (): void => closeRef.current();
 
     if (!window.history.state?.discoveryDialog)
-      window.history.pushState({ discoveryDialog: true }, "");
+      window.history.pushState(
+        { ...window.history.state, discoveryDialog: true },
+        "",
+      );
     document.addEventListener("keydown", onKey);
     window.addEventListener("popstate", onPop);
     return () => {

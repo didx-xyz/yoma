@@ -5,9 +5,18 @@ import ScrollableContainer from "~/components/Carousel/ScrollableContainer";
 import { formatNumber } from "../../lib/format";
 import { owningPreference } from "../../lib/preferenceMapping";
 import { useDiscovery } from "../../state/DiscoveryContext";
+import { HERO_BONE_CLASS } from "./heroSkeleton";
 
 /** Pills shown before "Show all N" reveals the rest inline (10 in round 7; 6 since 2026-10-01). */
 const FIRST_SHOWN = 6;
+/**
+ * Bone widths while the lookup loads — the first six pills and "Show all", sized like the real
+ * ones on Stage ("Agriculture, Food, Environment and Climate 147" is ~325px; the shortest ~200px),
+ * so they wrap into the same rows at every breakpoint (five + two at 1440, three + four at 1024,
+ * three rows at 768) and the section is as tall on first paint as once the categories arrive
+ * (2026-10-22, measured).
+ */
+const BONE_WIDTHS = ["w-80", "w-52", "w-64", "w-56", "w-48", "w-72", "w-28"];
 
 /**
  * Browse by category — compact pills in the purple header (round 7, 2026-09-30; supersedes the
@@ -20,6 +29,8 @@ const FIRST_SHOWN = 6;
  * 2026-10-08), a category this search picked is outlined green, one the preference layer
  * supplies is outlined purple.
  * The lookup carries full names only, so there are no short names here.
+ * Still loading, the section renders its label and bones (`BONE_WIDTHS`); failed or empty, it
+ * is absent.
  */
 export const CategoryCarousel: React.FC<{
   /** Section label — the welcome step says "Categories". */
@@ -38,7 +49,9 @@ export const CategoryCarousel: React.FC<{
     skipPreference,
   } = useDiscovery();
   const [expanded, setExpanded] = useState(false);
-  if (lookups.categories.length === 0) return null;
+  const loading =
+    lookups.categories.length === 0 && lookups.status.categories === "loading";
+  if (lookups.categories.length === 0 && !loading) return null;
 
   // Selection reflects the EFFECTIVE filters, so preference-inherited categories light up on
   // landing. Deselecting an inherited one skips the preference that supplies it — same
@@ -72,86 +85,95 @@ export const CategoryCarousel: React.FC<{
       ? lookups.categories
       : lookups.categories.slice(0, FIRST_SHOWN);
 
-  const pills = [
-    ...shown.map((category, index) => {
-      // Revealed by "Show all" (2026-10-09): rise in one after another, a fade alone under
-      // reduced motion. The first ones were already there.
-      const revealed = expanded && index >= FIRST_SHOWN;
-      const manual = state.filters.categories.includes(category.id);
-      const inherited =
-        !manual && effectiveFilters.categories.includes(category.id);
-      // White, like the quick searches and the search bar (2026-10-08): the icons bring their own
-      // colours, which no tint or fill can be trusted to sit behind. Picked, a pill keeps its
-      // white and is outlined — green for this search, purple from preferences — with the
-      // outline INSIDE its edge (`inset-ring`), so it reads on the purple hero.
-      let tone = "border-gray hover:border-green bg-white text-black";
-      if (manual)
-        tone = "border-green inset-ring inset-ring-green bg-white text-green";
-      else if (inherited)
-        tone =
-          "border-purple inset-ring inset-ring-purple bg-white text-purple";
-      return (
-        <button
-          key={category.id}
-          type="button"
-          aria-pressed={manual || inherited}
-          onClick={() => {
-            toggleCategory(category.id);
-            onPick?.();
-          }}
-          style={
-            revealed
-              ? { animationDelay: `${(index - FIRST_SHOWN) * 30}ms` }
-              : undefined
-          }
-          className={`inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold whitespace-nowrap ${tone} ${
-            revealed
-              ? "motion-safe:animate-[rise-in_220ms_ease-out_both] motion-reduce:animate-[fade-in_150ms_ease-out_both]"
-              : ""
-          }`}
-        >
-          {category.imageURL && (
-            <Image
-              src={category.imageURL}
-              alt=""
-              width={18}
-              height={18}
-              // the lookup's icons are self-contained badges (glyph on their own circle), so
-              // they render as they are — a colour filter turned them into blank discs
-              className="h-4.5 w-4.5 shrink-0"
-            />
-          )}
-          {category.name}
-          <span className="font-normal opacity-70">
-            {formatNumber(category.count ?? 0)}
-          </span>
-        </button>
-      );
-    }),
-    ...(hidden > 0
-      ? [
-          <button
-            key="see-more"
-            type="button"
-            aria-expanded={expanded}
-            onClick={() => setExpanded((e) => !e)}
-            className="border-gray hover:border-green text-gray-dark inline-flex min-h-8 shrink-0 items-center gap-1 rounded-full border bg-white px-3 text-xs font-semibold whitespace-nowrap"
-          >
-            {expanded ? (
-              <>
-                <IoChevronUp className="h-3.5 w-3.5" />
-                Show fewer
-              </>
-            ) : (
-              <>
-                <IoChevronDown className="h-3.5 w-3.5" />
-                Show all {lookups.categories.length}
-              </>
-            )}
-          </button>,
-        ]
-      : []),
-  ];
+  const pills = loading
+    ? BONE_WIDTHS.map((width, index) => (
+        <span
+          key={index}
+          aria-hidden
+          className={`inline-flex min-h-8 shrink-0 rounded-full border border-transparent ${width} ${HERO_BONE_CLASS}`}
+        />
+      ))
+    : [
+        ...shown.map((category, index) => {
+          // Revealed by "Show all" (2026-10-09): rise in one after another, a fade alone under
+          // reduced motion. The first ones were already there.
+          const revealed = expanded && index >= FIRST_SHOWN;
+          const manual = state.filters.categories.includes(category.id);
+          const inherited =
+            !manual && effectiveFilters.categories.includes(category.id);
+          // White, like the quick searches and the search bar (2026-10-08): the icons bring their own
+          // colours, which no tint or fill can be trusted to sit behind. Picked, a pill keeps its
+          // white and is outlined — green for this search, purple from preferences — with the
+          // outline INSIDE its edge (`inset-ring`), so it reads on the purple hero.
+          let tone = "border-gray hover:border-green bg-white text-black";
+          if (manual)
+            tone =
+              "border-green inset-ring inset-ring-green bg-white text-green";
+          else if (inherited)
+            tone =
+              "border-purple inset-ring inset-ring-purple bg-white text-purple";
+          return (
+            <button
+              key={category.id}
+              type="button"
+              aria-pressed={manual || inherited}
+              onClick={() => {
+                toggleCategory(category.id);
+                onPick?.();
+              }}
+              style={
+                revealed
+                  ? { animationDelay: `${(index - FIRST_SHOWN) * 30}ms` }
+                  : undefined
+              }
+              className={`inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold whitespace-nowrap ${tone} ${
+                revealed
+                  ? "motion-safe:animate-[rise-in_220ms_ease-out_both] motion-reduce:animate-[fade-in_150ms_ease-out_both]"
+                  : ""
+              }`}
+            >
+              {category.imageURL && (
+                <Image
+                  src={category.imageURL}
+                  alt=""
+                  width={18}
+                  height={18}
+                  // the lookup's icons are self-contained badges (glyph on their own circle), so
+                  // they render as they are — a colour filter turned them into blank discs
+                  className="h-4.5 w-4.5 shrink-0"
+                />
+              )}
+              {category.name}
+              <span className="font-normal opacity-70">
+                {formatNumber(category.count ?? 0)}
+              </span>
+            </button>
+          );
+        }),
+        ...(hidden > 0
+          ? [
+              <button
+                key="see-more"
+                type="button"
+                aria-expanded={expanded}
+                onClick={() => setExpanded((e) => !e)}
+                className="border-gray hover:border-green text-gray-dark inline-flex min-h-8 shrink-0 items-center gap-1 rounded-full border bg-white px-3 text-xs font-semibold whitespace-nowrap"
+              >
+                {expanded ? (
+                  <>
+                    <IoChevronUp className="h-3.5 w-3.5" />
+                    Show fewer
+                  </>
+                ) : (
+                  <>
+                    <IoChevronDown className="h-3.5 w-3.5" />
+                    Show all {lookups.categories.length}
+                  </>
+                )}
+              </button>,
+            ]
+          : []),
+      ];
 
   return (
     <section aria-label={label}>

@@ -1,17 +1,22 @@
 import Image from "next/image";
 import iconZltoColor from "public/images/icon-zlto-rounded-color.webp";
-import { useState } from "react";
-import { IoIosInformationCircleOutline } from "react-icons/io";
+import { useState, type ReactNode } from "react";
 import type { UserProfile } from "~/api/models/user";
 import { CashOutEntry } from "../Payout/CashOutEntry";
 import { CashOutWalletLink } from "../Payout/CashOutWalletLink";
 import { ZltoLedger } from "../Rewards/ZltoLedger";
 import NoRowsMessage from "../NoRowsMessage";
+import { INTRO_LINK_CLASS } from "./YoIDIntro";
 import { ZltoModal } from "./ZltoModal";
 
+/**
+ * `link`: the section's "Open Wallet →" (overview and drawer). It leads the card's link row, with
+ * "What is ZLTO?" after it on the same line (Jason, 2026-10-22); the wallet page passes none.
+ */
 export const WalletCard: React.FC<{
   userProfile: UserProfile;
-}> = ({ userProfile }) => {
+  link?: ReactNode;
+}> = ({ userProfile, link }) => {
   const [zltoModalVisible, setZltoModalVisible] = useState(false);
 
   const zlto = userProfile?.zlto;
@@ -27,15 +32,23 @@ export const WalletCard: React.FC<{
    */
   if (!zlto || (zlto.total === 0 && zlto.pendingPayout === 0)) {
     return (
-      <NoRowsMessage
-        title={""}
-        description={
-          "You will receive ZLTO for completing opportunities, which can be spent on the marketplace."
-        }
-        icon={
-          <Image src={iconZltoColor} alt="ZLTO" width={28} className="h-auto" />
-        }
-      />
+      <>
+        <NoRowsMessage
+          title={""}
+          description={
+            "You will receive ZLTO for completing opportunities, which can be spent on the marketplace."
+          }
+          icon={
+            <Image
+              src={iconZltoColor}
+              alt="ZLTO"
+              width={28}
+              className="h-auto"
+            />
+          }
+        />
+        {link}
+      </>
     );
   }
 
@@ -47,23 +60,6 @@ export const WalletCard: React.FC<{
       />
 
       <div className="flex h-full flex-col gap-2 text-xs text-black md:text-sm">
-        <div className="text-gray-dark content-center justify-center gap-2">
-          <span className="text-xs">
-            <span className="font-semibold italic">ZLTO</span> - Your digital
-            wallet for rewards.
-          </span>
-
-          {/* TOOLTIP */}
-          <button
-            type="button"
-            onClick={() => setZltoModalVisible(true)}
-            className="ml-2 inline-block align-middle"
-            tabIndex={-1}
-          >
-            <IoIosInformationCircleOutline className="text-green h-5 w-5" />
-          </button>
-        </div>
-
         {/*
           Centred in whatever space the card has left. A wallet with nothing in flight collapses to
           a single "Available" row, and the Yo-ID dashboard cards are a fixed-height grid — pinned
@@ -87,6 +83,18 @@ export const WalletCard: React.FC<{
             </>
           }
         />
+
+        {/* one row: the way to the section first, then the explainer */}
+        <div className="flex flex-wrap items-center justify-between gap-x-4">
+          {link}
+          <button
+            type="button"
+            onClick={() => setZltoModalVisible(true)}
+            className={`${INTRO_LINK_CLASS} inline-flex min-h-8 items-center md:min-h-6`}
+          >
+            What is ZLTO?
+          </button>
+        </div>
       </div>
     </>
   );

@@ -3,31 +3,53 @@ import { useAtom } from "jotai";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
+import Link from "next/link";
 import router from "next/router";
 import { useCallback, useState, type ReactElement } from "react";
 import { IoMdClose, IoMdCopy } from "react-icons/io";
+import {
+  IoBagHandleOutline,
+  IoInformationCircleOutline,
+  IoTimeOutline,
+} from "react-icons/io5";
 import { toast } from "react-toastify";
 import type {
   WalletVoucher,
   WalletVoucherSearchResults,
 } from "~/api/models/marketplace";
+import { WalletCreationStatus } from "~/api/models/user";
 import { searchVouchers } from "~/api/services/marketplace";
-import Breadcrumb from "~/components/Breadcrumb";
 import CustomModal from "~/components/Common/CustomModal";
-import { Header } from "~/components/Common/Header";
 import Suspense from "~/components/Common/Suspense";
 import YoID from "~/components/Layout/YoID";
 import { TransactionItemComponent } from "~/components/Marketplace/TransactionItem";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { PaginationButtons } from "~/components/PaginationButtons";
-import { PaginationInfoComponent } from "~/components/PaginationInfo";
+import { formatNumber } from "~/features/discovery/lib/format";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import { Pager } from "~/components/YoID/Pager";
+import {
+  PAGER_SCROLL_MARGIN_CLASS,
+  usePagerScroll,
+} from "~/components/YoID/usePagerScroll";
 import { WalletCard } from "~/components/YoID/WalletCard";
+import { WalletInfoCard } from "~/components/YoID/WalletInfoCard";
+import {
+  DetailDisclosure,
+  TONE,
+} from "~/components/Opportunity/TabbedDetails/DetailDisclosure";
+import { YoIDBreadcrumb } from "~/components/YoID/YoIDBreadcrumb";
+import { INTRO_LINK_CLASS } from "~/components/YoID/YoIDIntro";
+import {
+  LoadingStatus,
+  OpportunityGridSkeleton,
+  TileBodySkeleton,
+} from "~/components/YoID/YoIDSkeletons";
+import { YOID_TABS, walletPreview } from "~/components/YoID/yoidTabs";
+import { CARD_GRID_CLASS } from "~/lib/card";
 import { PAGE_SIZE } from "~/lib/constants";
 import { userProfileAtom } from "~/lib/store";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
-import { LoadingInline } from "~/components/Status/LoadingInline";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -59,6 +81,21 @@ const MyWallet: NextPageWithLayout<{
   const [currentItem, setCurrentItem] = useState<WalletVoucher | null>(null);
   const [itemDialogVisible, setItemDialogVisible] = useState(false);
   const [userProfile] = useAtom(userProfileAtom);
+  // The products search fails with a validation error until the reward wallet exists; the profile
+  // already says whether it does, so a pending wallet is explained here and never requested
+  // (Jason, 2026-10-21).
+  const walletReady =
+    userProfile?.zlto?.walletCreationStatus === WalletCreationStatus.Created;
+
+  // the two section cards, open by default as on the overview (My Products is a results list,
+  // not a card — Jason, 2026-10-22)
+  type WalletSection = "balance" | "info";
+  const [open, setOpen] = useState<Record<WalletSection, boolean>>({
+    balance: true,
+    info: true,
+  });
+  const toggle = (id: WalletSection): void =>
+    setOpen((current) => ({ ...current, [id]: !current[id] }));
 
   // 👇 use prefetched queries from server
   const {
@@ -72,16 +109,22 @@ const MyWallet: NextPageWithLayout<{
         pageNumber: pageNumber,
         pageSize: PAGE_SIZE,
       }),
-    enabled: !error,
+    enabled: !error && walletReady,
   });
 
-  // 🔔 pager change event
+  // 🔔 pager change event — the page number goes into the URL; `usePagerScroll` brings the
+  // products back into view once it comes back
+  const resultsRef = usePagerScroll(pageNumber);
   const handlePagerChange = useCallback((value: number) => {
     // redirect
-    void router.push({
-      pathname: `/yoid/wallet`,
-      query: { ...(value && { page: value }) },
-    });
+    void router.push(
+      {
+        pathname: `/yoid/wallet`,
+        query: { ...(value && { page: value }) },
+      },
+      undefined,
+      { scroll: false },
+    );
   }, []);
 
   const onItemClick = useCallback(
@@ -115,7 +158,7 @@ const MyWallet: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | 💸 Wallet</title>
+        <title>Yoma | Wallet</title>
       </Head>
 
       {/* ITEM DIALOG */}
@@ -210,112 +253,150 @@ const MyWallet: NextPageWithLayout<{
         )}
       </CustomModal>
 
-      <div className="w-full lg:max-w-7xl">
-        <div className="mb-4 text-xs font-bold tracking-wider text-black md:text-base">
-          <Breadcrumb
-            items={[
-              { title: "Yo-ID", url: "/yoid", iconElement: <>💳</> },
-              {
-                title: "Wallet",
-                iconElement: <>💸</>,
-                selected: true,
-              },
-            ]}
-          />
-        </div>
+      <YoIDBreadcrumb trail={[{ title: YOID_TABS.wallet.label }]} />
+      <LoadingStatus when={!userProfile || (walletReady && dataIsLoading)} />
 
-        <div className="flex flex-col gap-8">
-          <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
-            <Header title="💸 My Wallet" />
-            {/* min-h, not h: the wallet ledger grows to five rows plus an offline notice, and a
-                clipped balance is worse than a taller card. */}
-            <div className="flex min-h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
-              <Suspense
-                isLoading={!userProfile}
-                loader={
-                  <LoadingInline
-                    className="h-[185px] flex-col p-0"
-                    classNameSpinner="h-12 w-12"
-                  />
-                }
-              >
-                <WalletCard userProfile={userProfile!} />
-              </Suspense>
+      {/* The overview's / user menu's expandable section cards (Jason, 2026-10-22): icon square,
+          title, note, chevron; all open by default. From `lg` the balance and the explainer share
+          a row. */}
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:items-start">
+        <DetailDisclosure
+          id="wallet-balance"
+          icon={<YOID_TABS.wallet.icon aria-hidden className="h-5 w-5" />}
+          toneClass={TONE.gold}
+          title="My Wallet"
+          note="Your ZLTO balance and what's on its way."
+          preview={walletPreview(userProfile)}
+          open={open.balance}
+          onToggle={() => toggle("balance")}
+        >
+          <Suspense isLoading={!userProfile} loader={<TileBodySkeleton />}>
+            <WalletCard userProfile={userProfile!} />
+          </Suspense>
+        </DetailDisclosure>
+
+        <DetailDisclosure
+          id="wallet-info"
+          icon={<IoInformationCircleOutline aria-hidden className="h-5 w-5" />}
+          toneClass={TONE.blue}
+          title="How ZLTO works"
+          note="Earn it, then spend it."
+          preview="Earn it, then spend it"
+          open={open.info}
+          onToggle={() => toggle("info")}
+        >
+          <WalletInfoCard />
+        </DetailDisclosure>
+
+        {/* MY PRODUCTS — a list of results under a rail-style heading, not an expandable card */}
+        <section
+          ref={resultsRef}
+          aria-labelledby="wallet-products-heading"
+          className={`flex flex-col gap-2 lg:col-span-2 ${PAGER_SCROLL_MARGIN_CLASS}`}
+        >
+          <h2
+            id="wallet-products-heading"
+            className="font-nunito flex items-center gap-2 pt-3 text-base font-black tracking-normal text-black md:text-lg"
+          >
+            <IoBagHandleOutline aria-hidden className="h-5 w-5 shrink-0" />
+            My Products
+            {/* The API returns no total: the products through this page, "+" while a next page
+                may exist (the passport chips' rule — never a number that could be wrong) */}
+            {walletReady && !!data?.items?.length && (
+              <span className="text-gray-dark text-sm font-semibold">
+                {formatNumber((pageNumber - 1) * PAGE_SIZE + data.items.length)}
+                {data.items.length >= PAGE_SIZE && "+"}
+              </span>
+            )}
+          </h2>
+
+          {/* WALLET PENDING — the products need the reward wallet, which is created in the
+              background after sign-up */}
+          {userProfile && !walletReady && (
+            <div className="shadow-custom flex flex-col items-center gap-2 rounded-xl bg-white p-8 text-center">
+              <IoTimeOutline aria-hidden className="text-green h-8 w-8" />
+              <p className="text-sm font-semibold md:text-base">
+                Your wallet is still being set up
+              </p>
+              <p className="text-gray-dark max-w-md text-xs md:text-sm">
+                It usually takes less than 24 hours. Any ZLTO you earn in the
+                meantime is safe and will show here once it is ready. Until
+                then, have a look at what is in the{" "}
+                <Link href="/marketplace" className={INTRO_LINK_CLASS}>
+                  marketplace
+                </Link>
+                .
+              </p>
             </div>
-          </div>
+          )}
 
-          <div className="flex w-full flex-col gap-2">
-            <Header title="🛒 My Products" />
-
-            <Suspense isLoading={dataIsLoading} error={dataError}>
-              {/* NO ROWS */}
-              {pageNumber === 1 && !data?.items?.length && (
-                <div className="flex justify-center rounded-lg bg-white p-8 text-center">
-                  <NoRowsMessage
-                    title={"No products found"}
-                    description={
-                      "You have not purchased any products yet. Go to the marketplace to buy some."
-                    }
-                  />
-                </div>
-              )}
-              {pageNumber > 1 && !data?.items?.length && (
-                <div className="flex flex-col items-center justify-center rounded-lg bg-white p-8 text-center">
-                  <NoRowsMessage
-                    title={"No products found"}
-                    description={
-                      "There are no more products to display. Click back to see previous products."
-                    }
-                  />
-
-                  <button
-                    type="button"
-                    className="btn bg-purple hover:bg-purple-light w-[150px] rounded-full text-white normal-case hover:text-white"
-                    onClick={() => {
-                      handlePagerChange(pageNumber - 1);
-                    }}
-                  >
-                    Back
-                  </button>
-                </div>
-              )}
-
-              {/* GRID */}
-              {!!data?.items?.length && (
-                <div className="flex flex-col gap-4">
-                  {/* PAGINATION INFO */}
-                  <PaginationInfoComponent
-                    currentPage={pageNumber}
-                    itemCount={data?.items ? data.items.length : 0}
-                    pageSize={PAGE_SIZE}
-                    query={null}
-                  />
-
-                  {/* GRID */}
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    {data.items.map((item, index) => (
-                      <TransactionItemComponent
-                        key={`transaction-${index}`}
-                        data={item}
-                        onClick={() => onItemClick(item)}
-                      />
-                    ))}
-                  </div>
-
-                  {/* PAGINATION BUTTONS */}
-                  <div className="mt-2 grid place-items-center justify-center">
-                    <PaginationButtons
-                      currentPage={pageNumber}
-                      pageSize={PAGE_SIZE}
-                      onClick={handlePagerChange}
-                      showPages={false}
+          <Suspense
+            isLoading={!userProfile || (walletReady && dataIsLoading)}
+            error={dataError}
+            loader={<OpportunityGridSkeleton />}
+          >
+            {walletReady && (
+              <>
+                {/* NO ROWS */}
+                {pageNumber === 1 && !data?.items?.length && (
+                  <div className="shadow-custom flex justify-center rounded-xl bg-white p-8 text-center">
+                    <NoRowsMessage
+                      title={"No products found"}
+                      description={
+                        "You have not purchased any products yet. Go to the marketplace to buy some."
+                      }
                     />
                   </div>
-                </div>
-              )}
-            </Suspense>
-          </div>
-        </div>
+                )}
+                {pageNumber > 1 && !data?.items?.length && (
+                  <div className="shadow-custom flex flex-col items-center justify-center rounded-xl bg-white p-8 text-center">
+                    <NoRowsMessage
+                      title={"No products found"}
+                      description={
+                        "There are no more products to display. Click back to see previous products."
+                      }
+                    />
+
+                    <button
+                      type="button"
+                      className="btn bg-purple hover:bg-purple-light w-[150px] rounded-full text-white normal-case hover:text-white"
+                      onClick={() => {
+                        handlePagerChange(pageNumber - 1);
+                      }}
+                    >
+                      Back
+                    </button>
+                  </div>
+                )}
+
+                {/* GRID */}
+                {!!data?.items?.length && (
+                  <div className="flex flex-col gap-4">
+                    {/* GRID */}
+                    <div className={CARD_GRID_CLASS}>
+                      {data.items.map((item, index) => (
+                        <TransactionItemComponent
+                          key={`transaction-${index}`}
+                          data={item}
+                          onClick={() => onItemClick(item)}
+                        />
+                      ))}
+                    </div>
+
+                    {/* PAGER — the API has no total, so Next is disabled on a short page */}
+                    <div className="mt-2">
+                      <Pager
+                        page={pageNumber}
+                        hasNext={data.items.length >= PAGE_SIZE}
+                        onChange={handlePagerChange}
+                      />
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </Suspense>
+        </section>
       </div>
     </>
   );

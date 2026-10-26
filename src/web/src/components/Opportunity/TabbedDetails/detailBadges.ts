@@ -1,12 +1,13 @@
 import type { OpportunityInfo } from "~/api/models/opportunity";
 import { fullDate, startsText } from "~/features/discovery/lib/cardFacts";
-import { cardStatus } from "~/features/discovery/lib/cardStatus";
+import { cardStatus, placesNoun } from "~/features/discovery/lib/cardStatus";
 import { calendarDaysUntil } from "~/features/discovery/lib/dates";
 import { formatNumber } from "~/features/discovery/lib/format";
 import {
   resolveMoneyBadge,
   type MoneyFacts,
 } from "~/features/discovery/lib/money";
+import { OPPORTUNITY_TYPE_NANE_JOB } from "~/lib/constants";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The tabbed header's fact BADGES (2026-10-09, Jason; spec
@@ -102,7 +103,7 @@ const payBadge = (
     icon: "cash" as const,
   };
   if (pay.payLine === UNDISCLOSED)
-    return opportunity.type === "Job"
+    return opportunity.type === OPPORTUNITY_TYPE_NANE_JOB
       ? {
           ...base,
           info: "Ask about pay when you apply",
@@ -336,8 +337,9 @@ const datesBadge = (
   };
 };
 
-const PLACES_RULE =
-  "A place is taken when someone finishes, or sends proof that's waiting to be verified.";
+/** A Job counts positions (BA R19, 2026-10-21): the noun runs through every line of the badge. */
+const placesRule = (noun: string): string =>
+  `A ${noun} is taken when someone finishes, or sends proof that's waiting to be verified.`;
 
 const placesBadge = (
   opportunity: OpportunityInfo,
@@ -351,24 +353,27 @@ const placesBadge = (
     now ?? new Date(opportunity.dateStart),
   );
   if (status.closed || status.places === null) return null;
+  const noun = placesNoun(opportunity.type);
   const taken = Math.min(Math.max(opportunity.participantCountTotal, 0), limit);
   const left = limit - taken;
   const ratio = limit > 0 ? taken / limit : 1;
   const bar = taken > 0 ? Math.max(ratio, 0.04) : 0;
   const base = {
     id: "places" as const,
-    eyebrow: "Places",
+    eyebrow: noun === "position" ? "Positions" : "Places",
     value: status.places,
     icon: "people" as const,
   };
-  if (status.places === "No places left" || left <= 0)
+  if (status.full || left <= 0)
     return {
       ...base,
-      info: `All ${formatNumber(limit)} places are taken`,
+      info: `All ${formatNumber(limit)} ${noun}s are taken`,
       tone: "full",
       bar: 1,
       panel: {
-        paragraphs: [{ text: `All ${formatNumber(limit)} places are taken.` }],
+        paragraphs: [
+          { text: `All ${formatNumber(limit)} ${noun}s are taken.` },
+        ],
       },
     };
   const almostFull = left <= 10 || ratio >= 0.9;
@@ -386,9 +391,9 @@ const placesBadge = (
         {
           text: `Up to ${formatNumber(limit)} ${limit === 1 ? "person" : "people"} can take part.${
             taken > 0
-              ? ` ${formatNumber(taken)} ${taken === 1 ? "place is" : "places are"} taken so far.`
+              ? ` ${formatNumber(taken)} ${taken === 1 ? `${noun} is` : `${noun}s are`} taken so far.`
               : ""
-          } ${PLACES_RULE}`,
+          } ${placesRule(noun)}`,
         },
       ],
     },

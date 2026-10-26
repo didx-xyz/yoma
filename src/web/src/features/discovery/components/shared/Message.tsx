@@ -25,10 +25,13 @@ const KINDS: Record<
 
 export const Message: React.FC<{
   kind?: "info" | "warning" | "error";
+  /** Replaces the kind's glyph — a wizard block's own icon leading its note (2026-10-22). */
+  icon?: IconType;
   children: React.ReactNode;
   className?: string;
-}> = ({ kind = "info", children, className = "" }) => {
-  const { icon: Icon, className: kindClassName } = KINDS[kind];
+}> = ({ kind = "info", icon, children, className = "" }) => {
+  const { icon: KindIcon, className: kindClassName } = KINDS[kind];
+  const Icon = icon ?? KindIcon;
   return (
     <p
       className={`flex items-start gap-2 rounded-lg p-2.5 text-xs ${kindClassName} ${className}`}

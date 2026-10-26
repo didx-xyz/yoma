@@ -244,7 +244,7 @@ const Treasury: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | 💰Treasury</title>
+        <title>Yoma | Treasury</title>
       </Head>
 
       <ListPageShell>

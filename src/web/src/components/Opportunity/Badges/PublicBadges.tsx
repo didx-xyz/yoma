@@ -31,12 +31,33 @@ import {
   getEngagementConfig,
   getTypeConfig,
 } from "~/components/Opportunity/opportunityTypeTheme";
+import { typeBandClass, typeOutlineClass } from "~/lib/typeColours";
 import ZltoRewardBadge from "./ZltoRewardBadge";
 
 interface BadgesProps {
   opportunity: OpportunityInfo | undefined;
   showToolTips?: boolean;
 }
+
+const TYPE_ICONS: Record<string, React.ReactNode> = {
+  Learning: <IoBookOutline className="h-4 w-4" />,
+  ImpactAction: <IoFlashOutline className="h-4 w-4" />,
+  Event: <IoCalendarOutline className="h-4 w-4" />,
+  Other: <IoBulbOutline className="h-4 w-4" />,
+  [OPPORTUNITY_TYPE_NANE_JOB]: <IoBriefcaseOutline className="h-4 w-4" />,
+  [OPPORTUNITY_TYPE_NAME_ENTREPRENEURSHIP]: (
+    <IoRocketOutline className="h-4 w-4" />
+  ),
+};
+
+const TYPE_TIPS: Record<string, string> = {
+  Learning: "Educational content",
+  ImpactAction: "Quick task",
+  Event: "Live event or activity",
+  Other: "Other opportunity type",
+  [OPPORTUNITY_TYPE_NANE_JOB]: "Job opportunity",
+  [OPPORTUNITY_TYPE_NAME_ENTREPRENEURSHIP]: "Entrepreneurship programme",
+};
 
 const PublicBadges: React.FC<BadgesProps> = ({
   opportunity,
@@ -102,80 +123,24 @@ const PublicBadges: React.FC<BadgesProps> = ({
       )}
 
       {opportunity?.type && (
-        <>
-          {opportunity?.type === "Learning" && (
-            <div
-              className={`${showToolTips ? "tooltip tooltip-secondary cursor-help before:text-[0.6875rem]" : ""}`}
-              {...(showToolTips && { "data-tip": "Educational content" })}
-            >
-              <span className="badge badge-sm border border-blue-200 bg-blue-50 whitespace-nowrap text-blue-700">
-                <IoBookOutline className="h-4 w-4" />
-                <span className="ml-1">{opportunity.type}</span>
-              </span>
-            </div>
-          )}
-          {opportunity?.type === "ImpactAction" && (
-            <div
-              className={`${showToolTips ? "tooltip tooltip-secondary cursor-help before:text-[0.6875rem]" : ""}`}
-              {...(showToolTips && { "data-tip": "Quick task" })}
-            >
-              <span className="badge badge-sm border border-amber-200 bg-amber-50 whitespace-nowrap text-amber-700">
-                <IoFlashOutline className="h-4 w-4" />
-                <span className="ml-1">
-                  {getTypeConfig(opportunity.type).label}
-                </span>
-              </span>
-            </div>
-          )}
-          {opportunity?.type === "Event" && (
-            <div
-              className={`${showToolTips ? "tooltip tooltip-secondary cursor-help before:text-[0.6875rem]" : ""}`}
-              {...(showToolTips && { "data-tip": "Live event or activity" })}
-            >
-              <span className="badge badge-sm border border-purple-200 bg-purple-50 whitespace-nowrap text-purple-700">
-                <IoCalendarOutline className="h-4 w-4" />
-                <span className="ml-1">{opportunity.type}</span>
-              </span>
-            </div>
-          )}
-          {opportunity?.type === "Other" && (
-            <div
-              className={`${showToolTips ? "tooltip tooltip-secondary cursor-help before:text-[0.6875rem]" : ""}`}
-              {...(showToolTips && { "data-tip": "Other opportunity type" })}
-            >
-              <span className="badge badge-sm border border-pink-200 bg-pink-50 whitespace-nowrap text-pink-700">
-                <IoBulbOutline className="h-4 w-4" />
-                <span className="ml-1">{opportunity.type}</span>
-              </span>
-            </div>
-          )}
-          {opportunity?.type === OPPORTUNITY_TYPE_NANE_JOB && (
-            <div
-              className={`${showToolTips ? "tooltip tooltip-secondary cursor-help before:text-[0.6875rem]" : ""}`}
-              {...(showToolTips && { "data-tip": "Job opportunity" })}
-            >
-              <span className="badge badge-sm border border-sky-200 bg-sky-50 whitespace-nowrap text-sky-700">
-                <IoBriefcaseOutline className="h-4 w-4" />
-                <span className="ml-1">{opportunity.type}</span>
-              </span>
-            </div>
-          )}
-          {opportunity?.type === OPPORTUNITY_TYPE_NAME_ENTREPRENEURSHIP && (
-            <div
-              className={`${showToolTips ? "tooltip tooltip-secondary cursor-help before:text-[0.6875rem]" : ""}`}
-              {...(showToolTips && {
-                "data-tip": "Entrepreneurship programme",
-              })}
-            >
-              <span className="badge badge-sm border border-cyan-200 bg-cyan-50 whitespace-nowrap text-cyan-700">
-                <IoRocketOutline className="h-4 w-4" />
-                <span className="ml-1">
-                  {getTypeConfig(opportunity.type).label}
-                </span>
-              </span>
-            </div>
-          )}
-        </>
+        <div
+          className={`${showToolTips ? "tooltip tooltip-secondary cursor-help before:text-[0.6875rem]" : ""}`}
+          {...(showToolTips && {
+            "data-tip": TYPE_TIPS[opportunity.type] ?? "Opportunity type",
+          })}
+        >
+          {/* Tinted outline in the type's palette colour (lib/typeColours.ts) */}
+          <span
+            className={`badge badge-sm border whitespace-nowrap ${typeOutlineClass(opportunity.type)} ${typeBandClass(opportunity.type)}`}
+          >
+            {TYPE_ICONS[opportunity.type] ?? (
+              <IoBulbOutline className="h-4 w-4" />
+            )}
+            <span className="ml-1">
+              {getTypeConfig(opportunity.type).label}
+            </span>
+          </span>
+        </div>
       )}
 
       {opportunity?.engagementType && (

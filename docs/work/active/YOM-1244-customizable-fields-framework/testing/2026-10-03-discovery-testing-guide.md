@@ -386,7 +386,7 @@ All signed out, with the search word **Search fixture** (23 opportunities with n
    - A purple welcome opens by itself, with "NEW", "YOMA SEARCH", a big number counting up and a green "LIVE" dot.
 2. Press "Browse on my own".
    - The title "Find opportunities to unlock your future." shows.
-   - Exactly four badges: "Under an hour", "Climate action", "Remote", "Paid & remote". "BROWSE BY CATEGORY" pills.
+   - Exactly four badges: "Under an hour", "Climate action", "Remote", "Paid or rewarded". "BROWSE BY CATEGORY" pills.
    - Three rails: "Featured", "Latest opportunities", "Done in under an hour". No "Picked for you".
 3. Click the SEARCH segment, type **Search fixture** and press Enter.
    - Heading "23 matches for “Search fixture”", "Sort" with "Newest" selected, 20 cards, then "Page 1 of 2".
@@ -456,7 +456,7 @@ How to read the tests:
 
 **You should see:**
 - **Left side:** "NEW" and "YOMA SEARCH"; a big number counting up to the total (about 1 402 locally) with a green "LIVE" dot; "opportunities are waiting for you." and "Jobs, learning, impact actions, events and programmes to start a business — all in one place."; a tip starting "Don't be overwhelmed!"; the buttons "Get started →" and "Browse on my own".
-- **Right side:** "OR JUMP STRAIGHT IN", then "PICK A TYPE" with six tiles, without counts, in this order: Job · Learning · Impact Action · Event · Entrepreneurship · Other. "QUICK SEARCHES": "Under an hour", "Climate action", "Remote" and "Paid & remote". No category pills.
+- **Right side:** "OR JUMP STRAIGHT IN", then "PICK A TYPE" with six tiles, without counts, in this order: Job · Learning · Impact Action · Event · Entrepreneurship · Other. "QUICK SEARCHES": "Under an hour", "Climate action", "Remote" and "Paid or rewarded". No category pills.
 - Step 2: the welcome does **not** open again. Step 3 opens it again, because nothing is saved yet.
 - Step 4: the dialog closes and results show, for example "N matches for Job". The address has `type=Job`.
 - Step 5: "STEP 1 OF 6", "What brings you to Yoma?".
@@ -505,7 +505,7 @@ How to read the tests:
 1. Click "Show all 16", then "Show fewer". Tap "Technology, AI & Data", then tap it again.
 2. Tap "Under an hour". Check the address, HOW LONG, the chip and the badge colour. Tap it again.
 3. Tap "Climate action", then "Remote", then "Remote" again.
-4. Open `/opportunities/discover?q=Search%20fixture&prefsOff=1` and tap "Paid & remote".
+4. Open `/opportunities/discover?q=Search%20fixture&prefsOff=1` and tap "Paid or rewarded", then "Remote".
 5. In a fresh window, run the wizard with two interests (step 2) and "South Africa" (step 5). Read the pills and badges, then tap a purple pill.
 6. In a fresh window, run the wizard with "Start a business". Look at the "Business, Finance & Marketing" pill.
 
@@ -513,7 +513,7 @@ How to read the tests:
 - Six pills show first, then "Show all 16". A tapped pill turns green, adds the chip "Categories: Technology, AI & Data" and switches the page to results. Tapping again removes it. The number beside each name is the catalogue total and doesn't change when you filter. 390: the pills are one row that scrolls sideways.
 - Exactly four badges, without counts. "Under an hour" turns green, adds "Time: Up to 1 hour", and HOW LONG reads "Up to 1 hour" in green. Its results include fixtures that state no time (every Job and Entrepreneurship fixture, for example 01 and 09).
 - "Climate action" adds "Categories: Agriculture, Food, Environment and Climate". The second tap on "Remote" removes only Remote.
-- "Paid & remote" with "Search fixture": 6 matches (04, 08, 10, 14, 16, 20), with the chips "Engagement: Remote" and "Pay: Paid or rewarded".
+- "Paid or rewarded" adds only the chip "Pay: Paid or rewarded" (no Engagement chip; since 2026-10-21 it no longer sets Remote). The fixtures with an incentive come first, then the incentive divider, then the ones that don't say (every third fixture: 03, 06, 09, …), so the match count does not drop. Tapping "Remote" as well adds "Engagement: Remote" beside it: both badges, both chips.
 - Pills from your interests are purple; tapping one switches that preference off (chip struck through, with undo). With a country known, a fifth badge appears: "Jobs in South Africa".
 - The Business pill is **not** shown as selected because of the goal (4.4).
 - "Jobs near me" appears only when a city with a map point is known. With Cape Town it returns fixtures 01 and 02, the two Jobs within 25 km. Never shown: "No experience needed", "With accommodations", "Climate action + SDG 13" (parked).
@@ -1174,15 +1174,26 @@ These tests prove the rules in section 4. **Who:** signed out (except PV-11) · 
 - A preferred skill the skills list no longer has would read "Skill no longer listed", and "Skill name unavailable" if the lookup itself failed *(not testable on local data: no Job has a Preferred skills value; FI-03 step 7 shows the first label in a filter)*.
 
 **Result:** ☐ Pass ☐ Fail — notes:
-#### DP-08 · Completion details: YoID on phones and the completion form *(new 6 Oct; signed in)*
-**Who:** testuser, looking only: press nothing that saves · **Screens:** 1440, 390 and 320 · **Set up:** fresh private window; sign in as testuser. **Steps:**
+#### DP-08 · Completion details: YoID on phones and the completion form *(new 6 Oct; form redesigned 21 Oct; signed in)*
+**Who:** testuser, looking only: never press Submit with everything filled in · **Screens:** 1440, 390 and 320 · **Set up:** fresh private window; sign in as testuser. Use an Entrepreneurship opportunity testuser hasn't completed that offers "Upload your completion files" (any will do; the ids change at each reseed). **Steps:**
 1. Open `/yoid/opportunities/completed` and find "Search fixture 01 - Job". Read its completion details at 1440, 390 and 320.
-2. Open fixture 20's details page and press "Upload your completion files". Read the form at 1440 and 390, then close it **without** submitting.
+2. On the opportunity's details page, look at "Upload your completion files" in the header card, then scroll down so the sticky bar appears (at 390 the bottom bar).
+3. Press "Upload your completion files". Read the form, then press **Submit** with nothing filled in.
+4. Click "Enter Business Summary." in the red summary. Type a summary, then a name, and choose "Yes" for Business Registered with the mouse. Click an empty part of the dialog.
+5. Open "Before you go", type two letters in the feedback box and delete them. Then press **Close**.
+6. Repeat step 3 at 390 and 320, then close the form.
+7. With reduced motion on (DevTools → Rendering → "Emulate CSS prefers-reduced-motion: reduce"), open and close a section and press Submit once more.
 
 **You should see:**
-- **Step 1:** "Employment start date:" followed by its date (7 days before the seed day), readable at every width. Below 640 px the label sits above the value. (Before 6 October the value was hidden on phones.)
-- **Step 2:** the title "Additional details" with no line of text under it, then the green group headings "OUTCOMES" and "VENTURE", each with its field count. There is no grey help text under the field names: those descriptions are written for admins, and only the editor shows them (ED-02).
-- *(Whether fixture 20 offers "Upload your completion files" is random at each reseed. Any Entrepreneurship opportunity that offers it will do.)*
+- **Step 1:** "Employment start date:" followed by its date (7 days before the seed day), readable at every width. Below 640 px the label sits above the value.
+- **Step 2:** the button is outline green (white, green border and text), the same as Share, 48 px tall; "Go to programme" is the only filled button. In the desktop sticky bar it is an outline button beside Go to programme, Save and Share; in the phone bottom bar it is a green underlined link on its own line under them. At 320 nothing overflows.
+- **Step 3, on open:** every word in the dialog is in the site font (Open Sans), as the page behind it. Under the intro, four white cards: "Proof of completion", "Tell us about it · 12", "Where is your business?" and "Before you go", each with a coloured icon square, a status line and a chevron. Only Proof is open. Its status reads "Needs attention · 4 to do" with a yellow icon; "Tell us about it" reads "Needs attention · 3 to do"; the other two read "Optional". No red text shows anywhere. Inside Proof, four items separated by thin lines: a label, one grey line (file types · up to 10MB) and an outline-green Upload button; the map item says "Drop a pin on the map, or use your current location". The three required questions in "Tell us about it" have no marker; the nine optional ones end in "(optional)"; every box spans the card.
+- **Step 3, after Submit:** Proof and "Tell us about it" are open; the other two unchanged. The form has scrolled to the certificate item and its Upload button has the focus ring. A red summary at the top reads "7 things to fix before you submit" and lists: Upload your certificate. / Upload your picture. / Upload your voice note. / Drop a pin on the map, or use your current location. / Enter Business / Venture Name. / Enter Business Summary. / Choose Yes or No for Business Registered. Each field shows its message in red italics; the statuses read "· 4 to fix" and "· 3 to fix" with red icons. Above the buttons: "Fix the 7 items marked above, then submit again."
+- **Step 4:** the summary click scrolls to the Business Summary box and puts the cursor in it. After the three answers, the card stays open while the radio has focus, its status reads "Done" and a "Continue" button appears at the bottom right. Clicking empty dialog space closes "Tell us about it" and opens "Where is your business?". Reopening "Tell us about it" by hand keeps it open; clearing the name turns it back to "Needs attention" and Continue disappears.
+- **Step 5:** no error, the counter under the box reads "0/500", and the card still reads "Optional". Close leaves the page unchanged and nothing was sent.
+- **Step 6:** the cards fill the width with no sideways scroll; status lines, the summary and every message wrap inside their cards, and "Tell us about it · 12" is not clipped at 320. Submit (above Close on phones) jumps from the bottom to the certificate item with focus on its Upload button.
+- **Step 7:** opening, closing, the auto-advance and the error scrolling are instant.
+- *(Before 21 October the form was one long scroll with grey panels, yellow warnings on open, and a system font.)*
 
 **Result:** ☐ Pass ☐ Fail — notes:
 ### 6.6 Admin and organisation pages (AD)
@@ -1543,7 +1554,7 @@ The old page's own screens did not change. It now follows the server's default r
 |---|---|---|---|---|---|
 | D-29 | The top-menu "Opportunities" link opens discovery. Other links still open the old page. | Moving the rest means translating the old page's addresses. | Jason, 2026-10-01 | Not on the BA sheet | TBC |
 | D-30 | Green = this search, purple = preferences, on chips and search-bar values. Preference chips live in the purple strip, this search's chips in the green panel. | Each colour has one home, so a youth can tell them apart. | Jason, 2026-09-30 / 10-01 | Not on the BA sheet | TBC |
-| D-31 | Quick-search badges show only when they work: no greyed or "coming soon" badges, and no counts. Shipped: Under an hour, Climate action, Remote, Paid & remote, Jobs in {country}, Jobs near me. Parked: No experience needed, With accommodations, Climate action + SDG 13. | Client feedback: show only what works. One request per badge is too costly. | Client feedback + Jason, 2026-09-22 / 09-28 / 09-29 | Not on the BA sheet (canvas). Our BA-summary notes still call "Paid & remote" parked; it shipped on 2026-09-29 | TBC |
+| D-31 | Quick-search badges show only when they work: no greyed or "coming soon" badges, and no counts. Shipped: Under an hour, Climate action, Remote, Paid or rewarded (was "Paid & remote" until 2026-10-21; BA R16/R23 asked for pay on its own), Jobs in {country}, Jobs near me. Parked: No experience needed, With accommodations, Climate action + SDG 13. | Client feedback: show only what works. One request per badge is too costly. | Client feedback + Jason, 2026-09-22 / 09-28 / 09-29 / 10-21 | Not on the BA sheet (canvas). Our BA-summary notes still call "Paid & remote" parked; it shipped on 2026-09-29 | TBC |
 | D-32 | "Jobs in {country}" shows for anyone whose country is known, signed in or not. | It was signed-in only because signed-out youth had no country. | Jason, 2026-09-28 | Not on the BA sheet | TBC |
 | D-33 | At most four landing rails. "See all" opens exactly the set the rail shows; rails other than "Picked for you" ignore preferences. | Jason's cap; "See all" must match the rail. | Jason, 2026-10-02 | Not on the BA sheet | TBC |
 | D-34 | Sort is back: "Newest", "Ending soonest", "Most ZLTO". There is no "Best match". "Copy link" stays hidden. | The server now has a public sort order. Nothing ranks by relevance yet. | Jason, 2026-10-03 | Not on the BA sheet | TBC |
@@ -1750,7 +1761,7 @@ Don't report these as new bugs. If you see one behave differently from what is w
 
 The branch carries more custom-field work than this guide tests. These need their own scripts; ask the web team (Jason) who tests them and when:
 
-- The youth's completion form ("Upload your completion files"): its type-specific questions and saving. DP-08 checks only that admin descriptions are hidden (YOM-1255).
+- The youth's completion form: a real upload (progress, a finished file, the wrong-type and too-big messages), "use your current location", and saving. DP-08 covers the sections, statuses, messages and the empty submit, never a valid one (YOM-1255).
 - Completion answers shown in "My opportunities", beyond DP-08's phone check (YOM-1255).
 - Credentials: the admin schemas page, choosing a schema by type in the editor, issuing, and how the youth sees a credential in their wallet (YOM-1280 to YOM-1283; the API part is Adrian's).
 - The old page's type-specific filters beyond LG-04 (YOM-1260).

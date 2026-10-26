@@ -3,8 +3,18 @@ import {
   IoBookOutline,
   IoBriefcaseOutline,
   IoCalendarOutline,
+  IoCashOutline,
+  IoFlagOutline,
+  IoGridOutline,
   IoHeartOutline,
+  IoLanguageOutline,
+  IoLocationOutline,
+  IoPersonOutline,
   IoRocketOutline,
+  IoShieldCheckmarkOutline,
+  IoSparklesOutline,
+  IoTimeOutline,
+  IoWifiOutline,
 } from "react-icons/io5";
 import type { PreferenceKey } from "../lib/types";
 
@@ -34,7 +44,6 @@ export type PreferenceOptionsSource =
   | "skills"
   | "commitmentIntervals"
   | "engagementTypes"
-  | "languages"
   | "accessibility";
 
 export interface StepBlockEntry {
@@ -58,8 +67,17 @@ export interface StepBlockDef {
   /** The preference this block edits; `null` only for the readonly identity block. */
   prefKey: PreferenceKey | null;
   heading: string | null;
-  /** Stated caveat — null rules, proposed/unconfirmed markers, opt-in warnings. */
-  note: string | null;
+  /**
+   * The block's icon (Jason, 2026-10-22) — the same io5 glyph its filter section carries, so a
+   * preference and the filter it feeds read as one thing. Leads the heading; with no heading it
+   * leads the note.
+   */
+  icon: IconType;
+  /**
+   * One line under the control saying what the preference does to the feed (every block has
+   * one since 2026-10-22): the null rule, a proposed/unconfirmed marker, an opt-in warning.
+   */
+  note: string;
   /** Lookup-fed options, or… */
   optionsSource: PreferenceOptionsSource | null;
   /** …static entries (goal cards, pay pills, readonly rows). */
@@ -92,7 +110,8 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
         kind: "cards",
         prefKey: "goal",
         heading: null,
-        note: null,
+        icon: IoFlagOutline,
+        note: "Your goal sets the kind of opportunity we show: jobs, courses, events, volunteering or business support.",
         optionsSource: null,
         entries: [
           {
@@ -145,7 +164,8 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
         kind: "chips",
         prefKey: "targetCategories",
         heading: null,
-        note: null,
+        icon: IoGridOutline,
+        note: "We show opportunities in the categories you pick. None picked means every category.",
         optionsSource: "categories",
         entries: null,
       },
@@ -162,6 +182,7 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
         kind: "lookupSearch",
         prefKey: "skills",
         heading: null,
+        icon: IoSparklesOutline,
         // The saved skills narrow Jobs only, inclusively (2026-10-03, `searchRequest.ts`).
         note: "Your skills only affect jobs. We hide jobs that need none of your skills. Jobs that don't list skills still show.",
         optionsSource: "skills",
@@ -180,9 +201,10 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
         kind: "pills",
         prefKey: "maxCommitment",
         heading: "Time you have", // matches the filter section's name
+        icon: IoTimeOutline,
         // Matches the section's null rule: a maximum keeps opportunities with no commitment set
         // (the revised search contract, 2026-10-03).
-        note: "Opportunities that don't say how long they take still show.",
+        note: "We hide opportunities that take longer than this. Ones that don't say how long they take still show.",
         optionsSource: "commitmentIntervals",
         entries: null,
       },
@@ -192,7 +214,8 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
         kind: "pills",
         prefKey: "engagement",
         heading: "Online or in person",
-        note: "Pick any that suit you. Opportunities that don't say still show.",
+        icon: IoWifiOutline,
+        note: "Pick any that suit you. We show opportunities offered these ways; ones that don't say still show.",
         optionsSource: "engagementTypes",
         entries: null,
       },
@@ -202,7 +225,8 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
         kind: "pills",
         prefKey: "incentivized",
         heading: "Pay or rewards",
-        note: "Leave both off if it doesn't matter. Opportunities that don't say still show, after the ones that match.",
+        icon: IoCashOutline,
+        note: "We show opportunities that match first. Leave both off if it doesn't matter; ones that don't say still show.",
         optionsSource: null,
         entries: [
           { id: "yes", label: "Paid or rewarded" },
@@ -211,9 +235,11 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
       },
     ],
   },
+  // Titles cut to a line each (Jason, 2026-10-22): "Where are you, and what languages do you
+  // speak?" and "Do you need support to take part?" ran to two on a phone.
   {
     id: "language",
-    title: "Where are you, and what languages do you speak?",
+    title: "Where and what language?",
     subheading: "Where you live, and the languages you understand well.",
     infoNote: null,
     blocks: [
@@ -224,23 +250,28 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
         kind: "location",
         prefKey: "location",
         heading: "Where you are",
-        note: null,
+        icon: IoLocationOutline,
+        note: "We show opportunities in your country, plus worldwide ones. A region or city narrows them to that place.",
         optionsSource: null,
         entries: null,
       },
+      // A search over the full language list since 2026-10-21 (BA R11): the chips only offered
+      // the languages published opportunities use. The facet list is still the suggestion row,
+      // ordered by the block itself (`LanguageSearch`): the site's languages first, then A–Z.
       {
-        kind: "chips",
+        kind: "lookupSearch",
         prefKey: "languages",
         heading: "Language",
-        note: null,
-        optionsSource: "languages",
+        icon: IoLanguageOutline,
+        note: "Pick as many as you like. We show opportunities in these languages; ones that don't say still show.",
+        optionsSource: null,
         entries: null,
       },
     ],
   },
   {
     id: "accessibility-identity",
-    title: "Do you need support to take part?",
+    title: "Other requirements?",
     subheading: "Only if you want to. We keep this private.",
     infoNote: null,
     blocks: [
@@ -252,6 +283,7 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
         kind: "accessibility",
         prefKey: "accessibility",
         heading: "Accessibility",
+        icon: IoShieldCheckmarkOutline,
         note: "We hide opportunities that say they offer no support, or that don't offer something you picked. Ones that haven't said still show. We never share your needs: not with partners, not on your YoID, not in our statistics.",
         optionsSource: "accessibility",
         entries: null,
@@ -260,6 +292,7 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
         kind: "readonly",
         prefKey: null,
         heading: "From your profile",
+        icon: IoPersonOutline,
         note: "We use these to choose what you see. You can change them in your profile.",
         optionsSource: null,
         entries: [

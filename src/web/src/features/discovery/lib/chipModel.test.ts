@@ -51,6 +51,7 @@ const LOOKUPS: SearchLookups = {
     { id: "c-ww", codeAlpha2: "WW" },
     { id: "za", codeAlpha2: "ZA" },
   ],
+  targetedGroups: [],
 };
 
 const chipsFor = (
@@ -354,7 +355,7 @@ describe("private chips and the summaries (Q2)", () => {
   test('"tuned to": named values first, the private one only in the +N', () => {
     const chips = chipsFor(BIZ_WEEK_NEEDS);
     const text = tunedToText(inheritedSummary(chips), 2);
-    assert.equal(text, "Starting a business · Up to 1 week +1 other");
+    assert.equal(text, "Starting a business · Up to a week +1 other");
     assert.equal(leaks(text), false);
   });
 
@@ -386,9 +387,9 @@ describe("private chips and the summaries (Q2)", () => {
       chipsFor(BIZ_WEEK_NEEDS, [], { skipped: ["accessibility"] }),
     );
     assert.deepEqual(summary, {
-      named: ["Starting a business", "Up to 1 week"],
+      named: ["Starting a business", "Up to a week"],
       unnamed: 0,
-      firsts: ["Starting a business", "Up to 1 week"],
+      firsts: ["Starting a business", "Up to a week"],
       more: 0,
     });
   });
@@ -420,7 +421,7 @@ describe("private chips and the summaries (Q2)", () => {
       null,
       filteringSummary(chipsFor(BIZ_WEEK_NEEDS)),
     );
-    assert.equal(label, "Starting a business · Up to 1 week");
+    assert.equal(label, "Starting a business · Up to a week");
     assert.equal(
       recentSearchLabel(null, filteringSummary(chipsFor(WHEELCHAIR))),
       "Your preferences",

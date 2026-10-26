@@ -15,7 +15,7 @@ import { TypeSection } from "./TypeSpecificFilters";
  * Blocks 1–6 of the filter surface, in the one order both breakpoints must render:
  * search input (with recents as a typeahead beneath it) · quick searches · your preferences ·
  * the type with its own filters (one section since 2026-10-09) · the sections (primary six — Categories · Where · Engagement ·
- * How long · Accessibility · Language — then Paid and rewards / Skills / SDGs / Provider behind
+ * How long · Accessibility · Language — then Paid and rewards / Skills / SDGs / Who it's aimed at / Provider behind
  * one "More filters" disclosure). The desktop dialog and the mobile sheet are CONTAINERS
  * around this component — they may differ in chrome and density, never in the set or the order.
  * (Block 7, the sticky footer, is container chrome.)

@@ -3,8 +3,9 @@ import axios from "axios";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Link from "next/link";
+import router from "next/router";
 import { type ParsedUrlQuery } from "querystring";
-import { type ReactElement } from "react";
+import { type MouseEvent, type ReactElement } from "react";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import type { MyOpportunityResponseVerify } from "~/api/models/myOpportunity";
 import { type OpportunityInfo } from "~/api/models/opportunity";
@@ -24,6 +25,8 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { OPPORTUNITY_QUERY_KEYS } from "~/hooks/useOpportunityMutations";
+import { OPPORTUNITIES_SEARCH_URL } from "~/lib/constants";
+import { cameFrom } from "~/lib/previousRoute";
 import { config } from "~/lib/react-query-config";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { type User, authOptions } from "~/server/auth";
@@ -94,6 +97,20 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   };
 }
 
+/**
+ * Back to discovery. When the youth came here from discovery (any query), a plain click goes back
+ * in history so their place in the results is kept; from anywhere else (a new tab, a deep link,
+ * another page) the link navigates to discovery. Modified and middle clicks keep the link's own
+ * behaviour, so "open in new tab" still works.
+ */
+const onBackClick = (e: MouseEvent<HTMLAnchorElement>) => {
+  if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)
+    return;
+  if (!cameFrom(OPPORTUNITIES_SEARCH_URL)) return;
+  e.preventDefault();
+  router.back();
+};
+
 const OpportunityDetails: NextPageWithLayout<{
   user: User;
   opportunityInfo: OpportunityInfo;
@@ -116,7 +133,8 @@ const OpportunityDetails: NextPageWithLayout<{
         <div className="flex flex-row items-center gap-2 py-6 text-xs text-white">
           <Link
             className="hover:text-gray flex max-w-[200px] min-w-0 items-center font-bold"
-            href="/opportunities"
+            href={OPPORTUNITIES_SEARCH_URL}
+            onClick={onBackClick}
           >
             <IoMdArrowRoundBack className="mr-2 inline-block h-4 w-4 shrink-0" />
             <span className="truncate">Opportunities</span>

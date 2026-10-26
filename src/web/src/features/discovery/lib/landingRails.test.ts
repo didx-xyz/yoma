@@ -46,6 +46,7 @@ const LOOKUPS: LandingRailLookups = {
     { id: "week", name: "Week" },
   ],
   engagementTypes: [{ id: "remote", name: "Remote" }],
+  targetedGroups: [],
 };
 
 const CAPE_TOWN: UserPreferences["location"] = {
@@ -158,18 +159,19 @@ const assertSeeAllReusesQuery = (
 };
 
 describe("landingRails — the catalogue and its order", () => {
-  test("every preference: picked, near, goal, a rail per category, commitment, paid, featured", () => {
+  test("every preference: picked, featured, near, goal, a rail per category, commitment, paid", () => {
     const { rails } = setup(FULL);
-    // Latest is the place alone, which Near you already is.
+    // Featured sits second, right after Picked for you (2026-10-21). Latest is the place alone,
+    // which Near you already is.
     assert.deepEqual(ids(rails), [
       "picked",
+      "featured",
       "near",
       "goal",
       "category:c-tech",
       "category:c-env",
       "commitment",
       "paid",
-      "featured",
     ]);
   });
 
@@ -209,7 +211,7 @@ describe("landingRails — the catalogue and its order", () => {
     assert.ok(!ids(withCommitment).includes("under-an-hour"));
 
     const without = setup({ ...FULL, maxCommitment: null }).rails;
-    assert.deepEqual(ids(without).slice(5, 7), ["under-an-hour", "paid"]);
+    assert.deepEqual(ids(without).slice(6, 8), ["under-an-hour", "paid"]);
     const hour = without.find((r) => r.kind === "under-an-hour")!;
     assert.deepEqual(requestOf(hour).commitmentInterval, {
       value: { interval: { id: "hour", count: 1 } },
@@ -243,12 +245,12 @@ describe("landingRails — the catalogue and its order", () => {
     // A category the lookup does not list has no rail.
     assert.deepEqual(ids(rails), [
       "picked",
+      "featured",
       "near",
       "goal",
       ...Array.from({ length: 10 }, (_, i) => `category:c-${i}`),
       "commitment",
       "paid",
-      "featured",
     ]);
   });
 
@@ -260,13 +262,13 @@ describe("landingRails — the catalogue and its order", () => {
     );
     assert.deepEqual(ids(rails), [
       "picked",
+      "featured",
       "goal",
       "category:c-0",
       "category:c-1",
       "category:c-2",
       "commitment",
       "paid",
-      "featured",
       "latest",
     ]);
   });
@@ -353,9 +355,9 @@ describe("landingRails — the place base layer", () => {
     // Picked for you also carries the age and the verified skills, so the goal keeps its rail.
     assert.deepEqual(ids(rails), [
       "picked",
+      "featured",
       "goal",
       "under-an-hour",
-      "featured",
       "latest",
     ]);
     const latest = rails.find((r) => r.kind === "latest")!;
@@ -384,8 +386,8 @@ describe("landingRails — duplicates", () => {
     );
     assert.deepEqual(ids(rails), [
       "picked",
-      "under-an-hour",
       "featured",
+      "under-an-hour",
       "latest",
     ]);
   });

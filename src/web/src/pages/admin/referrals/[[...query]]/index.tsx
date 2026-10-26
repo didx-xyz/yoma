@@ -322,7 +322,7 @@ const ReferralPrograms: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | 🎯 Referral Programs</title>
+        <title>Yoma | Referral Programs</title>
       </Head>
 
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}

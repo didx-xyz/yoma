@@ -6,8 +6,10 @@ import { usePreferenceOptions } from "./usePreferenceOptions";
 import { AccessibilityBlock } from "./blocks/AccessibilityBlock";
 import { GoalCards } from "./blocks/GoalCards";
 import { IdentityReadonly } from "./blocks/IdentityReadonly";
+import { LanguageSearch } from "./blocks/LanguageSearch";
 import { LocationBlock } from "./blocks/LocationBlock";
 import { Pill } from "./blocks/Pill";
+import { PillList } from "./blocks/PillList";
 import { SkillSearch } from "./blocks/SkillSearch";
 
 /**
@@ -33,17 +35,26 @@ export const StepBlock: React.FC<{
     active: (id: string) => boolean;
     toggle: (id: string) => void;
   } => {
-    if (block.prefKey === "maxCommitment")
+    if (block.prefKey === "maxCommitment") {
+      // Active only when the draft IS the pill's bucket — (interval, count), never the interval
+      // alone: an older {Minute, 1} would light "A few minutes" while saving 1.
+      const active = (id: string): boolean =>
+        draft.maxCommitment?.intervalId === id &&
+        draft.maxCommitment.count === options.find((o) => o.id === id)?.count;
       return {
-        active: (id) => draft.maxCommitment?.intervalId === id,
+        active,
+        // The bucket's count ("A few minutes" = 15), never a bare 1.
         toggle: (id) =>
           onPatch({
-            maxCommitment:
-              draft.maxCommitment?.intervalId === id
-                ? null
-                : { intervalId: id, count: 1 },
+            maxCommitment: active(id)
+              ? null
+              : {
+                  intervalId: id,
+                  count: options.find((o) => o.id === id)?.count ?? 1,
+                },
           }),
       };
+    }
     if (block.prefKey === "incentivized")
       return {
         active: (id) =>
@@ -71,47 +82,52 @@ export const StepBlock: React.FC<{
             onPatch={onPatch}
           />
         );
-      case "chips": {
-        const key =
-          block.prefKey === "languages" ? "languages" : "targetCategories";
+      case "chips":
+        // Interests alone since 2026-10-21: the languages block became a search.
         return (
-          <div className="flex flex-wrap gap-2">
-            {options.map((option) => (
+          <PillList
+            pinned={(i) =>
+              draft.targetCategories.includes(options[i]?.id ?? "")
+            }
+            pills={options.map((option) => (
               <Pill
                 key={option.id}
                 label={option.label}
                 imageURL={option.imageURL}
-                active={draft[key].includes(option.id)}
+                active={draft.targetCategories.includes(option.id)}
                 onToggle={() =>
-                  onPatch({ [key]: toggleIn(draft[key], option.id) })
+                  onPatch({
+                    targetCategories: toggleIn(
+                      draft.targetCategories,
+                      option.id,
+                    ),
+                  })
                 }
               />
             ))}
-          </div>
+          />
         );
-      }
       case "rows":
       case "pills": {
         const { active, toggle } = pillSelection();
         const entries =
           block.entries ?? options.map((o) => ({ id: o.id, label: o.label }));
-        return (
-          <div
-            className={
-              block.kind === "rows"
-                ? "flex flex-col items-start gap-2"
-                : "flex flex-wrap gap-2"
-            }
-          >
-            {entries.map((entry) => (
-              <Pill
-                key={entry.id}
-                label={entry.label}
-                active={active(entry.id)}
-                onToggle={() => toggle(entry.id)}
-              />
-            ))}
-          </div>
+        const pills = entries.map((entry) => (
+          <Pill
+            key={entry.id}
+            label={entry.label}
+            active={active(entry.id)}
+            onToggle={() => toggle(entry.id)}
+          />
+        ));
+        // Rows are short lists (one per line); pills get the wrapping row's "Show all N" cut.
+        return block.kind === "rows" ? (
+          <div className="flex flex-col items-start gap-2">{pills}</div>
+        ) : (
+          <PillList
+            pinned={(i) => active(entries[i]?.id ?? "")}
+            pills={pills}
+          />
         );
       }
       case "accessibility":
@@ -123,7 +139,13 @@ export const StepBlock: React.FC<{
           />
         );
       case "lookupSearch":
-        return <SkillSearch draft={draft} onPatch={onPatch} />;
+        // Two searches, one kind: skills hit the EMSI lookup by name; languages search the full
+        // list on the client, with the facet list as the suggestions (read by the block itself).
+        return block.prefKey === "languages" ? (
+          <LanguageSearch draft={draft} onPatch={onPatch} />
+        ) : (
+          <SkillSearch draft={draft} onPatch={onPatch} />
+        );
       case "readonly":
         return <IdentityReadonly entries={block.entries ?? []} />;
       case "location":
@@ -131,15 +153,19 @@ export const StepBlock: React.FC<{
     }
   };
 
+  // The registry's icon leads the heading; a block with no heading (the step's title is its
+  // heading) puts it on the note instead, so every block carries its glyph exactly once.
+  const Icon = block.icon;
   return (
     <div className="flex flex-col gap-2">
       {block.heading && (
-        <h3 className="text-sm font-semibold tracking-normal">
+        <h3 className="flex items-center gap-1.5 text-sm font-semibold tracking-normal">
+          <Icon className="text-purple h-4 w-4 shrink-0" />
           {block.heading}
         </h3>
       )}
       {body()}
-      {block.note && <Message>{block.note}</Message>}
+      <Message icon={block.heading ? undefined : Icon}>{block.note}</Message>
     </div>
   );
 };

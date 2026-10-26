@@ -1,19 +1,30 @@
 import Link from "next/link";
+import type { MouseEventHandler } from "react";
+import type { IconType } from "react-icons";
+import { IoArrowForward } from "react-icons/io5";
 import type { TimeIntervalSummary } from "~/api/models/organizationDashboard";
-import NoRowsMessage from "../NoRowsMessage";
+import { OPPORTUNITIES_SEARCH_URL } from "~/lib/constants";
+import { YOID_OPPORTUNITY_TABS } from "./yoidTabs";
 
 interface MenuItem {
   href: string;
   background: string;
   count: number;
   label: string;
-  emoji: string;
+  icon: IconType;
 }
+
+/** The circle's orange ring: the share of the three verified states this one holds. */
+const ring = (percentage: number): string =>
+  `conic-gradient(from 180deg, var(--color-orange) ${percentage}%, var(--color-green) 0)`;
+
+const [completedTab, pendingTab, declinedTab, savedTab] = YOID_OPPORTUNITY_TABS;
 
 export const OpportunitiesSummary: React.FC<{
   data: TimeIntervalSummary | undefined;
   showSaved?: boolean;
-  onClick?: () => void;
+  /** Called when a circle or the prompt's link is followed (the drawer closes on a plain click). */
+  onClick?: MouseEventHandler<HTMLAnchorElement>;
 }> = ({ data, showSaved, onClick }) => {
   const [completed = 0, pending = 0, rejected = 0, saved = 0] =
     data?.count || [];
@@ -28,73 +39,85 @@ export const OpportunitiesSummary: React.FC<{
 
   const menuItems: MenuItem[] = [
     {
-      href: "/yoid/opportunities/completed",
-      background: `conic-gradient(from 180deg, #F9AB3E ${completedPercentage}%, #387F6A 0)`,
-      count: data?.count[0] || 0,
-      label: "Completed",
-      emoji: "✅",
+      href: completedTab.url,
+      background: ring(completedPercentage),
+      count: completed,
+      label: completedTab.label,
+      icon: completedTab.icon,
     },
     {
-      href: "/yoid/opportunities/pending",
-      background: `conic-gradient(from 180deg, #F9AB3E ${pendingPercentage}%, #387F6A 0)`,
-      count: data?.count[1] || 0,
-      label: "Pending",
-      emoji: "🕑",
+      href: pendingTab.url,
+      background: ring(pendingPercentage),
+      count: pending,
+      label: pendingTab.label,
+      icon: pendingTab.icon,
     },
     {
-      href: "/yoid/opportunities/declined",
-      background: `conic-gradient(from 180deg, #F9AB3E ${rejectedPercentage}%, #387F6A 0)`,
-      count: data?.count[2] || 0,
-      label: "Declined",
-      emoji: "❌",
+      href: declinedTab.url,
+      background: ring(rejectedPercentage),
+      count: rejected,
+      label: declinedTab.label,
+      icon: declinedTab.icon,
     },
   ];
 
   if (showSaved) {
     menuItems.push({
-      href: "/yoid/opportunities/saved",
+      href: savedTab.url,
       background: "",
       count: saved,
-      label: "Saved",
-      emoji: "💖",
+      label: savedTab.label,
+      icon: savedTab.icon,
     });
   }
 
-  // Check if all counts are 0
-  const allCountsZero = menuItems.every((item) => item.count === 0);
-
-  if (allCountsZero) {
-    return (
-      <NoRowsMessage
-        title={""}
-        description={
-          "You are able to complete opportunities, and get them verified. You can find your opportunities here."
-        }
-        icon={`🏆`}
-      />
-    );
-  }
+  // Nothing yet: the circles still show their zeros (the youth sees what will fill them), and a
+  // prompt leads to the search (Jason, 2026-10-21).
+  const nothingYet = menuItems.every((item) => item.count === 0);
 
   return (
-    <div className="flex flex-row gap-3">
-      {menuItems.map((item, index) => (
-        <Link
-          key={index}
-          href={item.href}
-          style={{ background: item.background }}
-          className="border-orange bg-green shadow-custom flex aspect-square w-[30%] min-w-[80px] flex-col items-center justify-center rounded-full border-2 p-2 text-center text-white"
-          onClick={onClick}
-        >
-          <div className="bg-green flex h-full w-full flex-col items-center justify-center rounded-full">
-            <div className="text-sm font-semibold whitespace-nowrap">
-              {item.emoji} {item.count}
+    <div className="flex w-full flex-col items-center gap-4">
+      {/* Four (with Saved) sit 2 × 2 on a phone and in one row from `sm`; three always fit one row.
+          From `sm` the band is capped so the circles cluster rather than spread across a wide card. */}
+      <div
+        className={`mx-auto grid w-full justify-items-center gap-3 sm:max-w-lg ${
+          menuItems.length > 3 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3"
+        }`}
+      >
+        {menuItems.map((item, index) => (
+          <Link
+            key={index}
+            href={item.href}
+            style={{ background: item.background }}
+            className="border-orange bg-green shadow-custom flex aspect-square w-full max-w-24 flex-col items-center justify-center rounded-full border-2 p-2 text-center text-white"
+            onClick={onClick}
+          >
+            <div className="bg-green flex h-full w-full flex-col items-center justify-center rounded-full">
+              <div className="flex items-center gap-1 text-sm font-semibold whitespace-nowrap">
+                <item.icon aria-hidden className="h-4 w-4 shrink-0" />
+                {item.count}
+              </div>
+              <span className="text-[11px] leading-tight">{item.label}</span>
             </div>
-            <span className="text-sx -mt-3x" style={{ fontSize: "0.65rem" }}>
-              {item.label}
-            </span>
-          </div>
-        </Link>
-      ))}
+          </Link>
+        ))}
+      </div>
+      {nothingYet && (
+        <div className="flex flex-col items-center gap-2 text-center">
+          <p className="text-gray-dark text-xs md:text-sm">
+            Complete an opportunity and get it verified, or save one for later —
+            it shows up here.
+          </p>
+          <Link
+            href={OPPORTUNITIES_SEARCH_URL}
+            onClick={onClick}
+            className="text-green inline-flex items-center gap-1 text-xs font-semibold underline md:text-sm"
+          >
+            Find opportunities
+            <IoArrowForward aria-hidden className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      )}
     </div>
   );
 };

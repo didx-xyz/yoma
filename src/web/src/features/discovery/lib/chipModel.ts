@@ -14,6 +14,7 @@ import {
   yourSkillsLabel,
   yourSkillsSummary,
 } from "./chipGroups";
+import { commitmentLabel as bucketLabel } from "./format";
 import type { LocationFragmentState } from "./location";
 import {
   distanceLabel,
@@ -104,11 +105,26 @@ export type ChipLabelResolver = (
   value: string,
 ) => string;
 
+/**
+ * "English" · "English +1" — a list facet's first value by name, then how many follow; `null`
+ * when it is empty. The bar's segments and the compact pill summarise facets with it.
+ */
+export const firstPlus = (
+  facet: keyof DiscoveryFilters,
+  values: string[],
+  resolve: ChipLabelResolver,
+): string | null => {
+  if (values.length === 0) return null;
+  const first = resolve(facet, values[0]!);
+  return values.length > 1 ? `${first} +${values.length - 1}` : first;
+};
+
+/** "A few minutes" / "Up to a week" — the bucket's label, with the interval's name resolved. */
 const commitmentLabel = (
   commitment: NonNullable<DiscoveryFilters["commitment"]>,
   resolve: ChipLabelResolver,
 ): string =>
-  `Up to ${commitment.count} ${resolve("commitment", commitment.intervalId).toLowerCase()}`;
+  bucketLabel(commitment, resolve("commitment", commitment.intervalId));
 
 /** A list fragment's first value, by name, and how many follow it. `null` for a scalar one. */
 function listParts(

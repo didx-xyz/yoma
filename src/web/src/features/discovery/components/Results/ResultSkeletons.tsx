@@ -1,4 +1,5 @@
 import React from "react";
+import { CARD_GRID_CLASS } from "~/lib/card";
 import { LIST_COLUMNS } from "./listColumns";
 
 /**
@@ -9,9 +10,12 @@ import { LIST_COLUMNS } from "./listColumns";
  * facts, status and button) and the list row (`OpportunityRow`, the `LIST_COLUMNS` widths).
  *
  * daisyUI's `skeleton` shimmers; under reduced motion it holds still. Hidden from assistive
- * technology: the heading says the results are loading.
+ * technology: the heading says the results are loading. The YoID pages build their own shapes
+ * from the same bone (`components/YoID/YoIDSkeletons.tsx`).
  */
-const BONE = "skeleton bg-gray motion-reduce:animate-none";
+export const SKELETON_BONE_CLASS =
+  "skeleton bg-gray motion-reduce:animate-none";
+const BONE = SKELETON_BONE_CLASS;
 
 export const CardSkeleton: React.FC<{ className?: string }> = ({
   className = "",
@@ -50,7 +54,7 @@ export const CardSkeleton: React.FC<{ className?: string }> = ({
 
 /** A grid of card skeletons, in the results grid's own columns. */
 export const GridSkeleton: React.FC<{ count?: number }> = ({ count = 8 }) => (
-  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  <div className={CARD_GRID_CLASS}>
     {Array.from({ length: count }, (_, index) => (
       <CardSkeleton key={index} />
     ))}

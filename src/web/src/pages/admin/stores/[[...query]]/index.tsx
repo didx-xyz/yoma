@@ -471,7 +471,7 @@ const Stores: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | 🛒 Marketplace Store Access Rules</title>
+        <title>Yoma | Marketplace Store Access Rules</title>
       </Head>
 
       {isLoading && <Loading />}

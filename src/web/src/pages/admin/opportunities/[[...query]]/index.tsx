@@ -333,7 +333,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | 🏆 Opportunities</title>
+        <title>Yoma | Opportunities</title>
       </Head>
 
       {/* POPUP FILTER */}

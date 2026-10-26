@@ -383,7 +383,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
   return (
     <div className="fixed top-0 right-0 left-0 z-40 shadow-xs">
       <div className={`bg-theme navbar z-40 h-20 min-h-0 !p-0`}>
-        <div className="flex h-full w-full items-stretch">
+        <div className="scroll-lock-pad flex h-full w-full items-stretch">
           {/* HOVER MENU */}
           <div
             className="absolute top-1/5 left-0 h-[100vh] w-[2px] bg-transparent"

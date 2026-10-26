@@ -1,8 +1,10 @@
+import { openToAllIdOf } from "~/components/Opportunity/Admin/opportunityCoreFields";
 import { OPPORTUNITY_TYPE_NANE_JOB } from "~/lib/constants";
 import type { FacetStatus } from "../../lib/apiStatus";
 import { incentivizedLabel } from "../../lib/chipGroups";
-import { upToIntervalLabel } from "../../lib/format";
+import { commitmentBuckets, commitmentLabel } from "../../lib/format";
 import { whereSummary } from "../../lib/location";
+import { countryRank, languageRank, orderOptions } from "../../lib/optionOrder";
 import { owningPreference } from "../../lib/preferenceMapping";
 import type {
   FilterSectionBinding,
@@ -51,6 +53,12 @@ export interface SectionModel {
   /** The free-text value of a `text` control, and how to commit it (`null` clears). */
   text: { value: string | null; commit: (value: string | null) => void } | null;
   /**
+   * The options' order once "Show all" is open, when it differs from `options` — the language
+   * and country lists, whose collapsed rows lead with the preferred options and whose expanded
+   * list is alphabetical throughout (`lib/optionOrder`). `undefined` = one order for both.
+   */
+  expanded?: SectionOption[];
+  /**
    * Stays collapsed until the youth opens it, despite a selection: the selection is the private
    * inherited accessibility needs alone (2026-10-03). The header still says it is active.
    */
@@ -67,6 +75,7 @@ const LOOKUP_FOR_BINDING: Record<FilterSectionBinding, LookupKey | null> = {
   languages: "languages",
   accommodations: "accommodations",
   sdgs: "sdgs",
+  targetedGroups: "targetedGroups",
   provider: null,
 };
 
@@ -82,6 +91,7 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
     effectiveFilters,
     fragments,
     skipPreference,
+    homeCountryId,
   } = useDiscovery();
   const { filters } = state;
   const lookupKey =
@@ -96,7 +106,8 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
     | "engagementTypes"
     | "languages"
     | "accommodations"
-    | "sdgs";
+    | "sdgs"
+    | "targetedGroups";
 
   const listModel = (
     options: SectionOption[],
@@ -192,10 +203,13 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
         "categories",
       );
     case "countries": {
+      // The youth's country and Worldwide lead the collapsed rows; "Show all" is alphabetical.
+      const order = orderOptions(lookups.countries, countryRank(homeCountryId));
       // The header reads the most specific place in play, like the bar segment and the pill.
-      const model = listModel(named(lookups.countries), "countries");
+      const model = listModel(named(order.collapsed), "countries");
       return {
         ...model,
+        expanded: named(order.expanded),
         summary:
           whereSummary(
             effectiveFilters,
@@ -213,8 +227,23 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
         })),
         "engagementTypes",
       );
-    case "languages":
-      return listModel(named(lookups.languages), "languages");
+    case "languages": {
+      // The facet list, then any selected language it lacks — one saved in the wizard's search
+      // over the full list, which no published opportunity lists yet — labelled from that list.
+      // The site's supported languages lead the collapsed rows; "Show all" is alphabetical.
+      const facetIds = new Set(lookups.languages.map((l) => l.id));
+      const unlisted = lookups.allLanguages.filter(
+        (l) => !facetIds.has(l.id) && effectiveFilters.languages.includes(l.id),
+      );
+      const order = orderOptions(
+        [...lookups.languages, ...unlisted],
+        languageRank,
+      );
+      return {
+        ...listModel(named(order.collapsed), "languages"),
+        expanded: named(order.expanded),
+      };
+    }
     case "accommodations": {
       // The facet list, then any selected need it lacks — one no published opportunity lists
       // yet, which still filters — labelled from the full list (the wizard's cached query).
@@ -253,6 +282,15 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
         })),
         "sdgs",
       );
+    case "targetedGroups": {
+      // Open to all is not offered: the request adds it beside any pick (`searchRequest`), so a
+      // chip for it could never change the results.
+      const openToAllId = openToAllIdOf(lookups.targetedGroups);
+      return listModel(
+        named(lookups.targetedGroups.filter((g) => g.id !== openToAllId)),
+        "targetedGroups",
+      );
+    }
     case "provider":
       return {
         options: [],
@@ -273,19 +311,36 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
         },
       };
     case "commitment": {
-      const options = lookups.timeIntervals.map((i) => ({
-        id: i.id,
-        label: upToIntervalLabel(i.name),
+      const buckets = commitmentBuckets(lookups.timeIntervals);
+      const options = buckets.map((b) => ({
+        id: b.intervalId,
+        label: b.label,
         count: null,
       }));
       const manualId = filters.commitment?.intervalId ?? null;
-      const selectedId = effectiveFilters.commitment?.intervalId ?? null;
+      const effective = effectiveFilters.commitment;
+      // Selected only when the stored value IS the bucket — an older "Up to 3 weeks" reads in the
+      // summary and chip but lights no pill (its interval's pill would send a different count).
+      const selectedId =
+        effective &&
+        buckets.some(
+          (b) =>
+            b.intervalId === effective.intervalId &&
+            b.count === effective.count,
+        )
+          ? effective.intervalId
+          : null;
+      const selectedInterval = lookups.timeIntervals.find(
+        (i) => i.id === effective?.intervalId,
+      );
       return {
         options,
         selected: selectedId ? [selectedId] : [],
         inherited: manualId === null && selectedId ? [selectedId] : [],
         toggle: (id) => {
-          if (manualId === id) {
+          // The active pill clears; an interval's pill over a stored count that is not its
+          // bucket ("Up to 3 weeks") sets the bucket instead.
+          if (manualId === id && selectedId === id) {
             dispatch({ kind: "patchFilters", patch: { commitment: null } });
             return;
           }
@@ -294,12 +349,19 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
           else
             dispatch({
               kind: "patchFilters",
-              patch: { commitment: { intervalId: id, count: 1 } },
+              patch: {
+                commitment: {
+                  intervalId: id,
+                  count: buckets.find((b) => b.intervalId === id)?.count ?? 1,
+                },
+              },
             });
         },
-        summary: selectedId
-          ? (options.find((o) => o.id === selectedId)?.label ?? "Any")
-          : "Any",
+        // The stored value's own label: an older "Up to 3 weeks" reads as it is, not as a bucket.
+        summary:
+          effective && selectedInterval
+            ? commitmentLabel(effective, selectedInterval.name)
+            : "Any",
         status,
         notice: null,
         secondary: null,

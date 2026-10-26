@@ -26,6 +26,7 @@ const RESET_PATCHES: Record<FilterSectionBinding, Partial<DiscoveryFilters>> = {
   languages: { languages: [] },
   accommodations: { accommodations: [] },
   sdgs: { sdgs: [] },
+  targetedGroups: { targetedGroups: [] },
   provider: { provider: null },
 };
 

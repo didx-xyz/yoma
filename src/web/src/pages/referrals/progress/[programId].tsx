@@ -204,7 +204,7 @@ const RefereeDashboard: NextPageWithLayout = () => {
   return (
     <>
       <Head>
-        <title>{`Yoma | Refer a friend ❤️ | ${program?.name ?? "Progress"}`}</title>
+        <title>{`Yoma | Refer a friend | ${program?.name ?? "Progress"}`}</title>
       </Head>
 
       <ReferralShell

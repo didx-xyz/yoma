@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { IoCheckmarkCircleOutline, IoSearchOutline } from "react-icons/io5";
+import { IoCheckmarkCircleOutline } from "react-icons/io5";
 import type {
   UserPreferences,
   UserPreferenceSkill,
@@ -7,6 +7,7 @@ import type {
 import { useVerifiedSkillIds } from "../../../state/useVerifiedSkillIds";
 import { useSkillSearch } from "../usePreferenceOptions";
 import { Pill } from "./Pill";
+import { SearchShell } from "./SearchShell";
 
 /**
  * The skills lookup-search block — the youth's SELF-ATTESTED skills. Selections are stored as
@@ -35,27 +36,21 @@ export const SkillSearch: React.FC<{
   };
 
   return (
-    <div className="flex flex-col gap-3">
-      <label className="input input-bordered flex h-11 items-center gap-2 rounded-full">
-        <IoSearchOutline className="text-gray-dark h-4 w-4" />
-        <input
-          type="text"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Search skills (3+ letters)…"
-          className="grow"
-        />
-      </label>
-      <div className="flex flex-wrap gap-2">
-        {selected.map((skill) => (
+    <SearchShell
+      text={text}
+      onChange={setText}
+      placeholder="Search skills (3+ letters)…"
+      pinned={selected.length}
+      pills={[
+        ...selected.map((skill) => (
           <Pill
             key={skill.id}
             label={skill.name}
             active
             onToggle={() => toggle(skill)}
           />
-        ))}
-        {results
+        )),
+        ...results
           .filter((r) => !selected.some((s) => s.id === r.id))
           .map((r) =>
             verified.has(r.id) ? (
@@ -74,8 +69,8 @@ export const SkillSearch: React.FC<{
                 onToggle={() => toggle({ id: r.id, name: r.label })}
               />
             ),
-          )}
-      </div>
-    </div>
+          ),
+      ]}
+    />
   );
 };

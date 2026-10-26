@@ -24,6 +24,12 @@ const config = {
   reactStrictMode: true,
   output: "standalone",
 
+  // Back (browser or the opportunity breadcrumb's router.back) returns to the scroll position the
+  // page was left at, e.g. the discovery results, instead of the top (YOM-1283, 2026-10-20).
+  experimental: {
+    scrollRestoration: true,
+  },
+
   /**NB: for docker-compose, this section is needed in order to pass the server environment variables
    * to nextjs (without using a .env file in the container)
    */

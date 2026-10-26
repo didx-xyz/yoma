@@ -999,7 +999,7 @@ const ReferralsPage: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | Refer a friend ❤️</title>
+        <title>Yoma | Refer a friend</title>
         <meta name="description" content="Yoma Referral Programs" />
       </Head>
 

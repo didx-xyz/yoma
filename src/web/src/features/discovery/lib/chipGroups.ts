@@ -46,6 +46,7 @@ export const FACET_GROUPS: Partial<Record<keyof DiscoveryFilters, string>> = {
   languages: "Language",
   accommodations: "Accessibility",
   sdgs: "Global goal",
+  targetedGroups: "Aimed at",
   provider: "Provider",
   featured: "Picks",
   all: "Showing",
@@ -61,6 +62,7 @@ export const MANUAL_LIST_FACETS = [
   "languages",
   "accommodations",
   "sdgs",
+  "targetedGroups",
 ] as const;
 
 /**

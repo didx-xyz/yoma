@@ -2196,7 +2196,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | 🏆 Opportunity</title>
+        <title>Yoma | Opportunity</title>
       </Head>
 
       {isLoading && <Loading />}

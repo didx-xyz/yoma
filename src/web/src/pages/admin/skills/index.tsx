@@ -204,7 +204,7 @@ const Skills: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | ⚡Skills</title>
+        <title>Yoma | Skills</title>
       </Head>
 
       <ListPageShell>
