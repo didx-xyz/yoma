@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using Moq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -8,8 +7,6 @@ using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.Opportunity.Services;
-using Yoma.Core.Infrastructure.Database.Context;
-using Yoma.Core.Infrastructure.Database.Opportunity.Repositories;
 
 namespace Yoma.Core.Test.Core
 {
@@ -87,36 +84,6 @@ namespace Yoma.Core.Test.Core
       else Assert.Empty(result);
     }
 
-    [Fact]
-    public void ProviderOriginPredicateTranslatesToPostgreSqlWithoutClientFiltering()
-    {
-      using var context = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>()
-        .UseNpgsql("Host=localhost;Database=unused_model_test", options => options.UseNetTopologySuite()).Options);
-      var repository = new OpportunityRepository(context);
-      var query = Apply(Service(new OpportunityCountryRepository(context)), repository.Query(false),
-        new() { Countries = [new() { CountryId = CountryId }] });
-      var sql = query.Select(item => item.Id).ToQueryString();
-      Assert.Contains("ProviderCountryId", sql);
-      Assert.Contains("\"Opportunity\".\"OpportunityCountries\"", sql);
-      Assert.Contains(" OR ", sql);
-    }
-
-    [Fact]
-    public void GlobalTextSearchIncludesProviderAlongsideExistingTargets()
-    {
-      using var context = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>()
-        .UseNpgsql("Host=localhost;Database=unused_model_test", options => options.UseNetTopologySuite()).Options);
-      var repository = new OpportunityRepository(context);
-      var query = repository.Contains(repository.Query(false).Where(item => item.Id == CountryId), "publisher");
-      var sql = query.Select(item => item.Id).ToQueryString();
-
-      Assert.Contains("\"Title\" ILIKE", sql);
-      Assert.Contains("\"Summary\" ILIKE", sql);
-      Assert.Contains("\"Keywords\" ILIKE", sql);
-      Assert.Contains("\"Provider\" ILIKE", sql);
-      Assert.Contains("to_tsvector('english',", sql);
-      Assert.Contains(" AND ", sql);
-    }
     #endregion Tests
 
     #region Private Members

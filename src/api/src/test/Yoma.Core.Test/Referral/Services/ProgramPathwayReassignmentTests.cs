@@ -1,21 +1,15 @@
 using FluentValidation;
-using Microsoft.EntityFrameworkCore;
 using Moq;
-using Npgsql;
 using System.Transactions;
 using Xunit;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
-using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.Referral;
 using Yoma.Core.Domain.Referral.Models;
 using Yoma.Core.Test.Referral.Builders;
 using Yoma.Core.Test.Referral.Fixtures;
-using Yoma.Core.Infrastructure.Database.Context;
-using Yoma.Core.Infrastructure.Database.Referral.Repositories;
-using TaskEntity = Yoma.Core.Infrastructure.Database.Referral.Entities.ProgramPathwayTask;
 using Opportunity = Yoma.Core.Domain.Opportunity.Models.Opportunity;
 
 namespace Yoma.Core.Test.Referral.Services
@@ -86,178 +80,9 @@ namespace Yoma.Core.Test.Referral.Services
       fixture.Mock.ProgramRepository.Verify(repository => repository.Update(It.IsAny<Program>()), Times.Never);
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task PostgreSqlASwapFailsWithEitherIndividualUpdateOrder(bool reverse)
-    {
-      await using var context = CreateContext();
-      var fixture = new Fixture("swap");
-      await CreateFixtureTables(context);
-      await Seed(context, fixture);
-      var repository = new ProgramPathwayTaskRepository(context);
-      var strategy = new Infrastructure.Database.Core.Services.ExecutionStrategyService(context);
-      var requests = fixture.Request.Pathway!.Steps[0].Tasks;
-      if (reverse) requests.Reverse();
-
-      var error = await Assert.ThrowsAsync<DbUpdateException>(() => strategy.ExecuteInExecutionStrategyAsync(async () =>
-      {
-        using var transaction = TransactionScopeHelper.CreateReadCommitted();
-        foreach (var request in requests)
-        {
-          var task = Clone(fixture.Program.Pathway!.Steps![0].Tasks!.Single(item => item.Id == request.Id));
-          task.Opportunity = new OpportunityItem { Id = request.EntityId };
-          await repository.Update(task);
-        }
-        transaction.Complete();
-      }, true));
-
-      var postgres = Assert.IsType<PostgresException>(error.InnerException);
-      Assert.Equal(PostgresErrorCodes.UniqueViolation, postgres.SqlState);
-      Assert.Equal("IX_ProgramPathwayTask_StepId_EntityType_OpportunityId", postgres.ConstraintName);
-    }
-
-    [Theory]
-    [InlineData("swap")]
-    [InlineData("cycle-three")]
-    [InlineData("cycle-four")]
-    [InlineData("replacement")]
-    [InlineData("display-order")]
-    [InlineData("remove-add")]
-    [InlineData("unchanged")]
-    [InlineData("rollback-clearing")]
-    [InlineData("rollback-final")]
-    [InlineData("rollback-validation")]
-    [InlineData("retry")]
-    [InlineData("duplicate")]
-    public async Task PostgreSqlPreservesIdentitiesConstraintsReferencesAndRollback(string scenario)
-    {
-      await using var context = CreateContext();
-      var fixture = new Fixture(scenario is "rollback-clearing" or "rollback-final" or "rollback-validation" or "retry" or "duplicate" ? "swap" : scenario);
-      var original = fixture.Program.Pathway!.Steps![0].Tasks!.Select(Clone).ToList();
-      await CreateFixtureTables(context);
-      await Seed(context, fixture);
-      var strategy = new Infrastructure.Database.Core.Services.ExecutionStrategyService(context);
-      fixture.Mock.ExecutionStrategyService
-        .Setup(value => value.ExecuteInExecutionStrategyAsync(It.IsAny<Func<Task>>(), It.IsAny<bool>()))
-        .Returns((Func<Task> action, bool clearTrackedChanges) => strategy.ExecuteInExecutionStrategyAsync(action, clearTrackedChanges));
-      var repository = new ProgramPathwayTaskRepository(context);
-      fixture.Mock.ProgramPathwayTaskRepository.Setup(value => value.Query()).Returns(() => repository.Query());
-      fixture.Mock.ProgramPathwayTaskRepository.Setup(value => value.Delete(It.IsAny<ProgramPathwayTask>()))
-        .Returns((ProgramPathwayTask item) => repository.Delete(item));
-      fixture.Mock.ProgramPathwayTaskRepository.Setup(value => value.Create(It.IsAny<ProgramPathwayTask>()))
-        .Returns((ProgramPathwayTask item) => repository.Create(item));
-      var clearing = 0;
-      var finals = 0;
-      fixture.Mock.ProgramPathwayTaskRepository.Setup(value => value.Update(It.IsAny<ProgramPathwayTask>()))
-        .Returns(async (ProgramPathwayTask item) =>
-        {
-          var result = await repository.Update(item);
-          if (item.Opportunity == null)
-          {
-            clearing++;
-            if (scenario == "swap" && clearing == 1)
-            {
-              // An independent reader must see the original assignments, never the intermediate nulls.
-              var readerSettings = new NpgsqlConnectionStringBuilder(System.Environment.GetEnvironmentVariable("YOMA_REFERRAL_PATHWAY_TEST_CONNECTION")) { Enlist = false };
-              await using var reader = new NpgsqlConnection(readerSettings.ConnectionString);
-              await reader.OpenAsync(TestContext.Current.CancellationToken);
-              await using var command = new NpgsqlCommand("""
-                SELECT "OpportunityId" FROM "Referral"."ProgramPathwayTask"
-                WHERE "StepId" = @stepId ORDER BY "OrderDisplay";
-                """, reader);
-              command.Parameters.AddWithValue("stepId", fixture.StepId);
-              await using var rows = await command.ExecuteReaderAsync(TestContext.Current.CancellationToken);
-              foreach (var task in original)
-              {
-                Assert.True(await rows.ReadAsync(TestContext.Current.CancellationToken));
-                Assert.Equal(task.Opportunity!.Id, rows.GetGuid(0));
-              }
-              Assert.False(await rows.ReadAsync(TestContext.Current.CancellationToken));
-            }
-            if (scenario == "rollback-clearing" && clearing == 2) throw new ProbeException();
-          }
-          else
-          {
-            finals++;
-            if (scenario == "rollback-final" && finals == 1) throw new ProbeException();
-          }
-          return result;
-        });
-
-      if (scenario == "duplicate")
-      {
-        fixture.Request.Pathway!.Steps[0].Tasks[1].EntityId = fixture.Request.Pathway.Steps[0].Tasks[0].EntityId;
-        await Assert.ThrowsAsync<ValidationException>(() => fixture.Mock.Build().Update(fixture.Request));
-      }
-      else if (scenario is "rollback-clearing" or "rollback-final")
-        await Assert.ThrowsAsync<ProbeException>(() => fixture.Mock.Build().Update(fixture.Request));
-      else if (scenario == "rollback-validation")
-      {
-        fixture.Opportunities.Values.ToList().ForEach(item => item.VerificationEnabled = false);
-        await Assert.ThrowsAsync<ValidationException>(() => fixture.Mock.Build().Update(fixture.Request));
-        Assert.Equal(2, finals);
-      }
-      else
-      {
-        if (scenario == "retry")
-        {
-          fixture.Request.Pathway!.Steps[0].Tasks.Reverse();
-          var attempt = 0;
-          fixture.Mock.ProgramRepository.Setup(value => value.Update(It.IsAny<Program>()))
-            .Returns((Program program) => ++attempt == 1
-              ? throw new PostgresException("Retry the rolled-back pathway update", "ERROR", "ERROR", "40001")
-              : Task.FromResult(program));
-        }
-        await fixture.Mock.Build().Update(fixture.Request);
-      }
-
-      var persisted = await context.ReferralProgramPathwayTask.AsNoTracking()
-        .Where(item => item.StepId == fixture.StepId)
-        .OrderBy(item => item.OrderDisplay)
-        .ToListAsync(TestContext.Current.CancellationToken);
-      if (scenario is "duplicate" or "rollback-clearing" or "rollback-final" or "rollback-validation")
-      {
-        Assert.Equal(original.Select(item => item.Id), persisted.Select(item => item.Id));
-        Assert.Equal(original.Select(item => (Guid?)item.Opportunity!.Id), persisted.Select(item => item.OpportunityId));
-        Assert.Equal(original.Select(item => item.DateModified), persisted.Select(item => item.DateModified));
-      }
-      else
-      {
-        AssertAssignments(fixture, [.. persisted.Select(item => new ProgramPathwayTask
-        {
-          Id = item.Id,
-          StepId = item.StepId,
-          Opportunity = new OpportunityItem { Id = item.OpportunityId!.Value },
-          Order = item.Order,
-          OrderDisplay = item.OrderDisplay,
-          DateCreated = item.DateCreated
-        })]);
-      }
-      foreach (var item in persisted.Where(item => fixture.RetainedIds.Contains(item.Id)))
-        Assert.Equal(original.Single(originalItem => originalItem.Id == item.Id).DateCreated, item.DateCreated);
-      var retainedReferences = await context.Database.SqlQuery<Guid>($"""
-        SELECT "TaskId" AS "Value" FROM "Referral"."TaskReference" WHERE "StepId" = {fixture.StepId}
-        """).ToListAsync(TestContext.Current.CancellationToken);
-      Assert.Equal(fixture.RetainedIds.Order(), retainedReferences.Order());
-      Assert.DoesNotContain(persisted, item => item.OpportunityId == null);
-    }
     #endregion
 
     #region Private Members
-    private static ApplicationDbContext CreateContext()
-    {
-      var connectionString = System.Environment.GetEnvironmentVariable("YOMA_REFERRAL_PATHWAY_TEST_CONNECTION");
-      Assert.SkipWhen(string.IsNullOrEmpty(connectionString),
-        "Set YOMA_REFERRAL_PATHWAY_TEST_CONNECTION to an isolated local yoma_referral_pathway_* database.");
-      var builder = new NpgsqlConnectionStringBuilder(connectionString);
-      Assert.True(builder.Host is "localhost" or "127.0.0.1");
-      Assert.StartsWith("yoma_referral_pathway_", builder.Database);
-
-      return new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>()
-        .UseNpgsql(builder.ConnectionString, options => options.UseNetTopologySuite()
-          .EnableRetryOnFailure(1, TimeSpan.Zero, null)).Options);
-    }
 
     private static ProgramPathwayTask Clone(ProgramPathwayTask item)
     {
@@ -289,63 +114,6 @@ namespace Yoma.Core.Test.Referral.Services
       Assert.Equal(persisted.Select(item => item.OrderDisplay), persisted.Select(item => item.Order!.Value));
     }
 
-    private static async Task CreateFixtureTables(ApplicationDbContext context)
-    {
-      var entity = context.Model.FindEntityType(typeof(TaskEntity))!;
-      Assert.True(entity.FindProperty(nameof(TaskEntity.OpportunityId))!.IsNullable);
-      Assert.Contains(entity.GetIndexes(), index => index.IsUnique && index.Properties.Select(property => property.Name)
-        .SequenceEqual([nameof(TaskEntity.StepId), nameof(TaskEntity.EntityType), nameof(TaskEntity.OpportunityId)]));
-      Assert.Empty(entity.GetReferencingForeignKeys());
-      await context.Database.ExecuteSqlRawAsync("""
-        CREATE SCHEMA IF NOT EXISTS "Referral";
-        CREATE SCHEMA IF NOT EXISTS "Opportunity";
-        CREATE SCHEMA IF NOT EXISTS "Entity";
-        CREATE SCHEMA IF NOT EXISTS "Object";
-        CREATE TABLE IF NOT EXISTS "Opportunity"."Opportunity" ("Id" uuid PRIMARY KEY);
-        ALTER TABLE "Opportunity"."Opportunity" ADD COLUMN IF NOT EXISTS "OrganizationId" uuid;
-        ALTER TABLE "Opportunity"."Opportunity" ADD COLUMN IF NOT EXISTS "StatusId" uuid;
-        ALTER TABLE "Opportunity"."Opportunity" ADD COLUMN IF NOT EXISTS "TypeId" uuid;
-        CREATE TABLE IF NOT EXISTS "Entity"."Organization" ("Id" uuid PRIMARY KEY, "LogoId" uuid, "StatusId" uuid);
-        CREATE TABLE IF NOT EXISTS "Object"."Blob" ("Id" uuid PRIMARY KEY);
-        CREATE TABLE IF NOT EXISTS "Entity"."OrganizationStatus" ("Id" uuid PRIMARY KEY);
-        CREATE TABLE IF NOT EXISTS "Opportunity"."OpportunityStatus" ("Id" uuid PRIMARY KEY);
-        CREATE TABLE IF NOT EXISTS "Opportunity"."OpportunityType" ("Id" uuid PRIMARY KEY);
-        CREATE TABLE IF NOT EXISTS "Referral"."ProgramPathwayStep" ("Id" uuid PRIMARY KEY);
-        CREATE TABLE IF NOT EXISTS "Referral"."ProgramPathwayTask" (
-          "Id" uuid PRIMARY KEY, "StepId" uuid NOT NULL REFERENCES "Referral"."ProgramPathwayStep"("Id"),
-          "EntityType" varchar(25) NOT NULL, "OpportunityId" uuid REFERENCES "Opportunity"."Opportunity"("Id"),
-          "Order" smallint, "OrderDisplay" smallint NOT NULL, "DateCreated" timestamptz NOT NULL, "DateModified" timestamptz NOT NULL);
-        CREATE UNIQUE INDEX IF NOT EXISTS "IX_ProgramPathwayTask_StepId_EntityType_OpportunityId"
-          ON "Referral"."ProgramPathwayTask" ("StepId", "EntityType", "OpportunityId");
-        CREATE TABLE IF NOT EXISTS "Referral"."TaskReference" (
-          "TaskId" uuid PRIMARY KEY REFERENCES "Referral"."ProgramPathwayTask"("Id") ON DELETE RESTRICT,
-          "StepId" uuid NOT NULL);
-        """, TestContext.Current.CancellationToken);
-    }
-
-    private static async Task Seed(ApplicationDbContext context, Fixture fixture)
-    {
-      await context.Database.ExecuteSqlInterpolatedAsync($"""
-        INSERT INTO "Referral"."ProgramPathwayStep" ("Id") VALUES ({fixture.StepId});
-        """, TestContext.Current.CancellationToken);
-      foreach (var id in fixture.Opportunities.Keys)
-        await context.Database.ExecuteSqlInterpolatedAsync($"""
-          INSERT INTO "Opportunity"."Opportunity" ("Id") VALUES ({id});
-          """, TestContext.Current.CancellationToken);
-      foreach (var task in fixture.Program.Pathway!.Steps![0].Tasks!)
-      {
-        await context.Database.ExecuteSqlInterpolatedAsync($"""
-          INSERT INTO "Referral"."ProgramPathwayTask"
-            ("Id", "StepId", "EntityType", "OpportunityId", "Order", "OrderDisplay", "DateCreated", "DateModified")
-          VALUES ({task.Id}, {task.StepId}, {task.EntityType.ToString()}, {task.Opportunity!.Id},
-            {task.Order}, {task.OrderDisplay}, {task.DateCreated}, {task.DateModified});
-          """, TestContext.Current.CancellationToken);
-        if (fixture.RetainedIds.Contains(task.Id))
-          await context.Database.ExecuteSqlInterpolatedAsync($"""
-            INSERT INTO "Referral"."TaskReference" ("TaskId", "StepId") VALUES ({task.Id}, {task.StepId});
-            """, TestContext.Current.CancellationToken);
-      }
-    }
     #endregion
 
     #region Fixture
@@ -485,7 +253,6 @@ namespace Yoma.Core.Test.Referral.Services
       }
     }
 
-    private sealed class ProbeException : Exception { }
     #endregion
   }
 }

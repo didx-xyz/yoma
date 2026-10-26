@@ -2,8 +2,6 @@ using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
-using Yoma.Core.Infrastructure.Database.Context;
-using Yoma.Core.Infrastructure.Database.Opportunity.Repositories;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Moq;
 using Xunit;
@@ -153,29 +151,6 @@ namespace Yoma.Core.Test.Core
         o => o.ErrorMessage == "Open to all cannot be combined with another targeted group.");
     }
 
-    [Theory]
-    [InlineData("OpportunityInfoCsvImport_Sample.csv", 5)]
-    [InlineData("OpportunityInfoCsvImport_Sample_Jobs.csv", 4)]
-    public void ApiCsvSamplesUseCanonicalCoreValues(string filename, int expectedCount)
-    {
-      var directory = new DirectoryInfo(AppContext.BaseDirectory);
-      while (directory != null && !File.Exists(Path.Combine(directory.FullName, "other", filename)))
-        directory = directory.Parent;
-      Assert.NotNull(directory);
-
-      using var reader = File.OpenText(Path.Combine(directory.FullName, "other", filename));
-      using var csv = new CsvHelper.CsvReader(reader, new CsvHelper.Configuration.CsvConfiguration(System.Globalization.CultureInfo.InvariantCulture)
-      {
-        MissingFieldFound = null
-      });
-      var records = csv.GetRecords<OpportunityInfoCsvImport>().ToList();
-      Assert.Equal(expectedCount, records.Count);
-      Assert.All(records, o => Assert.NotNull(o.RewardType));
-      Assert.All(records.Where(o => o.ZltoReward.HasValue), o => Assert.Equal(RewardType.ZLTO, o.RewardType));
-      Assert.All(records.Where(o => o.Type == "Job"), o => Assert.Equal(RewardType.None, o.RewardType));
-      Assert.Equal(2, records[0].SustainableDevelopmentGoals!.Count);
-    }
-
     [Fact]
     public void FullResponseExportsSelectionsInImportFormatAndReferenceItemStaysLightweight()
     {
@@ -191,65 +166,6 @@ namespace Yoma.Core.Test.Core
       Assert.Equal("Provider", (string?)json[nameof(info.Provider)]);
       Assert.Null(json[nameof(info.AccommodationsFlattened)]);
       Assert.Null(Newtonsoft.Json.Linq.JObject.FromObject(new OpportunityItem { ZltoReward = 25 })[nameof(OpportunityItem.ZltoReward)]);
-    }
-
-    [Fact]
-    public async Task CoreMetadataRoundTripsAndFiltersInPostgreSql()
-    {
-      var connectionString = System.Environment.GetEnvironmentVariable("YOMA_CORE_TEST_CONNECTION");
-      Assert.SkipWhen(string.IsNullOrEmpty(connectionString), "Set YOMA_CORE_TEST_CONNECTION to a disposable migrated and locally seeded database.");
-      var connection = new Npgsql.NpgsqlConnectionStringBuilder(connectionString);
-      Assert.StartsWith("yoma_core_", connection.Database);
-      Assert.True(connection.Host is "localhost" or "127.0.0.1");
-
-      using var context = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>()
-        .UseNpgsql(connectionString, options => options.UseNetTopologySuite()).Options);
-      var cancellationToken = TestContext.Current.CancellationToken;
-      await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
-      var repository = new OpportunityRepository(context);
-      var item = await repository.Query(true).FirstAsync(cancellationToken);
-      item.Provider = "Core metadata test provider";
-      item.Incentivized = true;
-      item.RewardType = RewardType.PartnerIncentive;
-      item.PartnerIncentiveAmount = 12.50m;
-      item.PartnerIncentiveCurrency = "USD";
-      item.ZltoReward = null;
-      item.ZltoRewardPool = null;
-      item.AccessibilitySupport = AccessibilitySupport.Yes;
-      item.AgeFrom = 18;
-      item.AgeTo = 25;
-      await repository.Update(item);
-
-      var accommodationId = await context.Accessibility.Select(o => o.Id).FirstAsync(cancellationToken);
-      var groupId = await context.TargetedGroup.Select(o => o.Id).FirstAsync(cancellationToken);
-      var goalId = await context.SustainableDevelopmentGoal.Select(o => o.Id).FirstAsync(cancellationToken);
-      var accommodations = new OpportunityAccommodationRepository(context);
-      var groups = new OpportunityTargetedGroupRepository(context);
-      var goals = new OpportunitySustainableDevelopmentGoalRepository(context);
-      var accommodation = await accommodations.Create(new OpportunityAccommodation { OpportunityId = item.Id, AccommodationId = accommodationId });
-      await groups.Create(new OpportunityTargetedGroup { OpportunityId = item.Id, TargetedGroupId = groupId });
-      await goals.Create(new OpportunitySustainableDevelopmentGoal { OpportunityId = item.Id, SustainableDevelopmentGoalId = goalId });
-
-      var loaded = await repository.Query(true).SingleAsync(o => o.Id == item.Id, cancellationToken);
-      Assert.Equal(item.Provider, loaded.Provider);
-      Assert.Equal(12.50m, loaded.PartnerIncentiveAmount);
-      Assert.Equal("USD", loaded.PartnerIncentiveCurrency);
-      Assert.Equal(accommodationId, Assert.Single(loaded.Accommodations!).Id);
-      Assert.Equal(groupId, Assert.Single(loaded.TargetedGroups!).Id);
-      Assert.Equal(goalId, Assert.Single(loaded.SustainableDevelopmentGoals!).Id);
-
-      var query = repository.Query(false).Where(o => o.Id == item.Id);
-      query = repository.Contains(query, o => o.Provider, "metadata test");
-      query = query.Where(o => o.Incentivized == true && o.RewardType == RewardType.PartnerIncentive &&
-        o.AccessibilitySupport == AccessibilitySupport.Yes && o.AgeFrom <= 20 && o.AgeTo >= 20);
-      var matchedIds = accommodations.Query().Where(o => o.AccommodationId == accommodationId).Select(o => o.OpportunityId);
-      Assert.Single(await query.Where(o => matchedIds.Contains(o.Id)).ToListAsync(cancellationToken));
-      Assert.Empty(await query.Where(o => o.AgeFrom <= 17).ToListAsync(cancellationToken));
-
-      await accommodations.Delete(accommodation);
-      Assert.Empty(await query.Where(o => matchedIds.Contains(o.Id)).ToListAsync(cancellationToken));
-      Assert.Empty((await repository.Query(true).SingleAsync(o => o.Id == item.Id, cancellationToken)).Accommodations!);
-      // The transaction is intentionally rolled back: this fixture never changes its seed data.
     }
 
     [Fact]

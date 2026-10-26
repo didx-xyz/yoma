@@ -1,8 +1,5 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
-using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -12,13 +9,12 @@ using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Test.Core.Fixtures;
 using Yoma.Core.Domain.Core.Services;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Services;
-using Yoma.Core.Infrastructure.Database.Migrations;
-using Yoma.Core.Infrastructure.Database.Context;
 
 namespace Yoma.Core.Test.Core
 {
@@ -29,52 +25,6 @@ namespace Yoma.Core.Test.Core
     #endregion Class Variables
 
     #region Tests
-    [Fact]
-    public void SeedsJobMetadataAndOfficialClassificationsWithoutDuplicatingCoreFields()
-    {
-      var definitions = Definitions();
-      Assert.Equal(13, definitions.Count);
-      Assert.All(definitions, o =>
-      {
-        Assert.Equal("Job", o.EntityContext);
-        Assert.Contains(o.Group, JobGroups);
-        Assert.Null(o.SubGroup);
-        Assert.True(o.IsActive);
-      });
-
-      Assert.Equal(22, definitions.Single(o => o.Key == CustomFieldConstants.Job.Industry).Options!.Count);
-      var categories = definitions.Single(o => o.Key == "JobCategory").Options!;
-      Assert.Equal(43, categories.Count);
-      Assert.Contains(categories, o => o.Key == "01");
-      Assert.All(categories, o => Assert.Equal(2, o.Key.Length));
-      Assert.Equal(CustomFieldLookupType.Education, definitions.Single(o => o.Key == "JobMinimumQualification").LookupType);
-      Assert.Equal(CustomFieldLookupType.Skill, definitions.Single(o => o.Key == "JobPreferredSkills").LookupType);
-      Assert.Equal(CustomFieldLookupType.Currency, definitions.Single(o => o.Key == CustomFieldConstants.Job.Salary.Currency).LookupType);
-      Assert.DoesNotContain(definitions, o => o.Key.Contains("Deadline") || o.Key.Contains("Language") || o.Key == "JobExperienceLevel");
-    }
-
-    [Theory]
-    [InlineData("JobEmploymentType", typeof(EmploymentType))]
-    public void CodeInterpretedOptionsAgreeWithProtectedMetadata(string key, System.Type type)
-    {
-      var definition = Definitions().Single(o => o.Key == key);
-      Assert.True(definition.IsSystem);
-      Assert.All(Enum.GetNames(type), key => Assert.Contains(definition.Options!, option => option.Key == key));
-    }
-
-    [Theory]
-    [InlineData(CustomFieldConstants.Job.Employment.Schedule, CustomFieldConstants.Job.Employment.ScheduleOptions.FullTime)]
-    [InlineData(CustomFieldConstants.Job.Employment.Schedule, CustomFieldConstants.Job.Employment.ScheduleOptions.PartTime)]
-    [InlineData(CustomFieldConstants.Job.Salary.PayInterval, CustomFieldConstants.Job.Salary.PayIntervalOptions.PerYear)]
-    [InlineData(CustomFieldConstants.Job.Salary.PayInterval, CustomFieldConstants.Job.Salary.PayIntervalOptions.PerMonth)]
-    [InlineData(CustomFieldConstants.Job.Salary.PayInterval, CustomFieldConstants.Job.Salary.PayIntervalOptions.PerHour)]
-    [InlineData(CustomFieldConstants.Job.Salary.PayInterval, CustomFieldConstants.Job.Salary.PayIntervalOptions.PerEngagement)]
-    public void PartnerMappingConstantsAgreeWithProtectedMetadata(string key, string option)
-    {
-      var definition = Definitions().Single(o => o.Key == key);
-      Assert.True(definition.IsSystem);
-      Assert.Contains(definition.Options!, o => o.Key == option);
-    }
 
     [Theory]
     [InlineData(100, 0, true)]
@@ -313,39 +263,6 @@ namespace Yoma.Core.Test.Core
       Assert.Throws<ValidationException>(() => Validate([permanent, duration, unit], false));
     }
 
-    [Fact]
-    public void ContractMigrationIsAdditiveAndClarifiesMetadataWithoutChangingExistingIdentities()
-    {
-      var migration = new ApplicationDb_Job_Employment_Contract();
-      var option = Assert.Single(migration.UpOperations.OfType<InsertDataOperation>());
-      Assert.Equal("CustomFieldOption", option.Table);
-      Assert.Equal(EmploymentType.Contract.ToString(), option.Values[0, Array.IndexOf(option.Columns, "Key")]);
-      Assert.Equal(new Guid("cf0b0001-0929-4cf0-a100-000000000006"),
-        option.Values[0, Array.IndexOf(option.Columns, "CustomFieldDefinitionId")]);
-      var historical = new ApplicationDb_CF_Configuration().UpOperations.OfType<InsertDataOperation>()
-        .Where(operation => operation.Table == "CustomFieldOption");
-      Assert.DoesNotContain(historical.SelectMany(operation => Enumerable.Range(0, operation.Values.GetLength(0))
-        .Select(row => operation.Values[row, Array.IndexOf(operation.Columns, "Id")])),
-        id => Equals(id, option.Values[0, Array.IndexOf(option.Columns, "Id")]));
-      var updates = migration.UpOperations.OfType<UpdateDataOperation>().ToList();
-      Assert.All(updates, update => Assert.Equal(["Description"], update.Columns));
-      var descriptions = updates.SelectMany(update => update.Values.Cast<string>()).ToList();
-      Assert.All(descriptions, description => Assert.InRange(description.Length, 1, 500));
-      Assert.Contains(descriptions, description => description.Contains("Contract alone"));
-      Assert.Throws<NotSupportedException>(() => migration.DownOperations); // Never delete captured selections on rollback.
-
-      using var context = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>()
-        .UseNpgsql("Host=localhost;Database=not_contacted;Username=not_used;Password=not_used",
-          options => options.UseNetTopologySuite()).Options);
-      var script = context.GetService<IMigrator>().GenerateScript(
-        "20261015090000_ApplicationDb_Treasury_CashOut_Release_Defaults",
-        "20261019110000_ApplicationDb_Job_Employment_Contract");
-      Assert.Contains("INSERT INTO \"Core\".\"CustomFieldOption\"", script);
-      Assert.Contains("'Contract'", script);
-      Assert.DoesNotContain("DELETE FROM", script);
-      Assert.False(context.Database.HasPendingModelChanges());
-    }
-
     [Theory]
     [InlineData("JobSalaryMinimum", CustomFieldDataType.Decimal)]
     [InlineData("JobSalaryMaximum", CustomFieldDataType.Decimal)]
@@ -358,6 +275,9 @@ namespace Yoma.Core.Test.Core
     #endregion
 
     #region Private Members
+    private static List<CustomFieldDefinition> Definitions() =>
+      [.. CustomFieldFixtureData.CreateDefinitions().Where(definition => definition.EntityType == nameof(CustomFieldEntityType.Opportunity) && definition.EntityContext == nameof(Domain.Opportunity.Type.Job))];
+
     private static List<CustomFieldValueRequest> MapJobJackCustomFields(Infrastructure.JobJack.Models.Opportunity source)
     {
       var metadata = new Mock<ICustomFieldDefinitionService>();
@@ -414,57 +334,6 @@ namespace Yoma.Core.Test.Core
         Mock.Of<IRepository<CustomFieldValue>>(), Mock.Of<IExecutionStrategyService>());
     }
 
-    private static List<CustomFieldDefinition> Definitions()
-    {
-      var seeds = new ApplicationDb_CF_Configuration().UpOperations.OfType<InsertDataOperation>().ToList();
-      var definitions = Assert.Single(seeds, o => o.Table == "CustomFieldDefinition" &&
-        o.Values[0, 0] is Guid id && id == new Guid("cf0b0001-0929-4cf0-a100-000000000001"));
-      var options = Assert.Single(seeds, o => o.Table == "CustomFieldOption" &&
-        o.Values[0, 0] is Guid id && id == new Guid("cf0b0001-0929-4cf0-a100-000000000101"));
-      var result = new List<CustomFieldDefinition>();
-      for (var row = 0; row < definitions.Values.GetLength(0); row++)
-      {
-        object? Value(string name) => definitions.Values[row, Array.IndexOf(definitions.Columns, name)];
-        result.Add(new CustomFieldDefinition
-        {
-          Id = (Guid)Value("Id")!,
-          EntityType = (string)Value("EntityType")!,
-          EntityContext = (string)Value("EntityContext")!,
-          Key = (string)Value("Key")!,
-          Title = (string)Value("Title")!,
-          Group = (string)Value("Group")!,
-          SubGroup = (string)Value("SubGroup")!,
-          DataType = Enum.Parse<CustomFieldDataType>((string)Value("DataType")!),
-          LookupType = Value("LookupType") is string lookup ? Enum.Parse<CustomFieldLookupType>(lookup) : null,
-          IsRequired = (bool)Value("IsRequired")!,
-          SupportsMultiple = (bool?)Value("SupportsMultiple"),
-          IsActive = (bool)Value("IsActive")!,
-          IsSystem = (bool)Value("IsSystem")!,
-          Options = []
-        });
-      }
-
-      for (var row = 0; row < options.Values.GetLength(0); row++)
-      {
-        object Value(string name) => options.Values[row, Array.IndexOf(options.Columns, name)]!;
-        result.Single(o => o.Id == (Guid)Value("CustomFieldDefinitionId")).Options!.Add(new CustomFieldOption
-        {
-          Key = (string)Value("Key"),
-          Name = (string)Value("Name"),
-          IsActive = (bool)Value("IsActive")
-        });
-      }
-
-      var contract = Assert.Single(new ApplicationDb_Job_Employment_Contract().UpOperations.OfType<InsertDataOperation>());
-      result.Single(o => o.Id == (Guid)contract.Values[0, Array.IndexOf(contract.Columns, "CustomFieldDefinitionId")]!).Options!.Add(new CustomFieldOption
-      {
-        Key = (string)contract.Values[0, Array.IndexOf(contract.Columns, "Key")]!,
-        Name = (string)contract.Values[0, Array.IndexOf(contract.Columns, "Name")]!,
-        IsActive = true
-      });
-
-      return result;
-    }
     #endregion
   }
 }

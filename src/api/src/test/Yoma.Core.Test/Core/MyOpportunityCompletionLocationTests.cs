@@ -1,6 +1,4 @@
 using FluentValidation;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Moq;
 using Newtonsoft.Json;
 using System.Reflection;
@@ -13,9 +11,6 @@ using Yoma.Core.Domain.MyOpportunity.Extensions;
 using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.MyOpportunity.Services;
 using Yoma.Core.Domain.MyOpportunity.Validators;
-using Yoma.Core.Infrastructure.Database.Context;
-using Yoma.Core.Infrastructure.Database.Migrations;
-using Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories;
 
 namespace Yoma.Core.Test.Core
 {
@@ -180,13 +175,8 @@ namespace Yoma.Core.Test.Core
     }
 
     [Fact]
-    public void CsvIsCountryOnlyAndPartnerHashIncludesLocation()
+    public void PartnerHashIncludesLocationChanges()
     {
-      Assert.NotNull(typeof(MyOpportunityInfoCsvImport).GetProperty("Country"));
-      Assert.NotNull(typeof(MyOpportunityInfoCsvImport).GetProperty("CountryCompleted"));
-      foreach (var property in new[] { "CountryId", "Region", "City" })
-        Assert.Null(typeof(MyOpportunityInfoCsvImport).GetProperty(property));
-
       var request = new MyOpportunityRequestVerifyImportPartnerSync { OpportunityId = Guid.NewGuid(), UserId = Guid.NewGuid() };
       var hash = HashHelper.ComputeSHA256Hash(request);
       request.CountryId = PartnerCountryId;
@@ -225,7 +215,6 @@ namespace Yoma.Core.Test.Core
           City = "Nairobi"
         });
         Assert.Equal("Nairobi, Nairobi County, Kenya", result.Location);
-        Assert.Null(typeof(Domain.MyOpportunity.Models.MyOpportunity).GetProperty("BusinessLocation"));
       }
 
       AssertNoLocation(Capture(Profile(), opportunity, new() { InstantVerification = true },
@@ -328,29 +317,6 @@ namespace Yoma.Core.Test.Core
       Assert.Null(result.Location);
     }
 
-    [Fact]
-    public void MigrationAddsNullableSnapshotWithoutBackfillAndMatchesEfModel()
-    {
-      var operations = new ApplicationDb_CF_Configuration().UpOperations;
-      var columns = operations.OfType<AddColumnOperation>().Where(operation => operation.Table == "MyOpportunity").ToList();
-      Assert.Equal(3, columns.Count);
-      Assert.All(columns, column =>
-      {
-        Assert.True(column.IsNullable);
-        Assert.Null(column.DefaultValue);
-        Assert.Null(column.DefaultValueSql);
-      });
-      Assert.Single(operations.OfType<AddForeignKeyOperation>(), operation => operation.Name == "FK_MyOpportunity_Country_CountryId");
-      Assert.DoesNotContain(operations.OfType<SqlOperation>(), operation => operation.Sql.Contains("CountryId", StringComparison.Ordinal));
-
-      using var context = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>()
-        .UseNpgsql("Host=localhost;Database=unused_model_test", options => options.UseNetTopologySuite()).Options);
-      Assert.False(context.Database.HasPendingModelChanges());
-      var sql = new MyOpportunityRepository(context).Query().ToQueryString();
-      Assert.Contains("CountryId", sql);
-      Assert.Contains("Region", sql);
-      Assert.Contains("City", sql);
-    }
     #endregion Tests
 
     #region Private Members

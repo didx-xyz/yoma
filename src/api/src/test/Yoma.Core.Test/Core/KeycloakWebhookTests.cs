@@ -1,4 +1,3 @@
-using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
@@ -9,7 +8,6 @@ using Moq;
 using Newtonsoft.Json.Linq;
 using Xunit;
 using Yoma.Core.Api.Controllers;
-using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity;
@@ -116,7 +114,7 @@ namespace Yoma.Core.Test.Core
     {
       using var fixture = new Fixture();
       var existing = fixture.AddUser(linked: true);
-      var snapshot = fixture.Snapshot(existing);
+      var snapshot = Fixture.Snapshot(existing);
       fixture.KeycloakUser.Username = "changed@example.org";
       fixture.KeycloakUser.Email = "changed@example.org";
       fixture.KeycloakUser.PhoneNumber = "+27821234568";
@@ -131,7 +129,7 @@ namespace Yoma.Core.Test.Core
       Assert.Equal("+27821234568", user.PhoneNumber);
       Assert.False(user.EmailConfirmed);
       Assert.False(user.PhoneNumberConfirmed);
-      fixture.AssertProfilePreserved(snapshot, user);
+      Fixture.AssertProfilePreserved(snapshot, user);
       fixture.Country.Verify(o => o.GetByNameOrNull(It.IsAny<string>()), Times.Never);
       fixture.Identity.Verify(o => o.EnsureRoles(It.IsAny<Guid>(), It.IsAny<List<string>>()), Times.Never);
       fixture.Repository.Verify(o => o.Create(It.IsAny<User>()), Times.Never);
@@ -268,14 +266,14 @@ namespace Yoma.Core.Test.Core
       await fixture.Deliver("LOGIN");
       var user = Assert.Single(fixture.Users);
       var lastLogin = user.DateLastLogin;
-      var snapshot = fixture.Snapshot(user);
+      var snapshot = Fixture.Snapshot(user);
       fixture.KeycloakUser.FirstName = "Changed";
       fixture.KeycloakUser.LastName = "Changed";
 
       await fixture.Deliver("REGISTER");
 
       Assert.Equal(lastLogin, user.DateLastLogin);
-      fixture.AssertProfilePreserved(snapshot, user);
+      Fixture.AssertProfilePreserved(snapshot, user);
       fixture.Repository.Verify(o => o.Create(It.IsAny<User>()), Times.Once);
       fixture.VerifyLoginEffects(user.Id, 1);
     }
@@ -360,7 +358,7 @@ namespace Yoma.Core.Test.Core
     {
       using var fixture = new Fixture();
       var existing = fixture.AddUser(linked);
-      var snapshot = fixture.Snapshot(existing);
+      var snapshot = Fixture.Snapshot(existing);
       fixture.Repository.Setup(o => o.Update(It.IsAny<User>()))
         .Returns(async (User user) =>
         {
@@ -379,7 +377,7 @@ namespace Yoma.Core.Test.Core
       Assert.Equal(snapshot.SettingsRaw, user.SettingsRaw);
       Assert.Equal(snapshot.YoIDOnboarded, user.YoIDOnboarded);
       Assert.Equal(snapshot.DateYoIDOnboarded, user.DateYoIDOnboarded);
-      if (linked) fixture.AssertProfilePreserved(snapshot, user);
+      if (linked) Fixture.AssertProfilePreserved(snapshot, user);
 
       fixture.Repository.Verify(o => o.Create(It.IsAny<User>()), Times.Never);
       fixture.Repository.Verify(o => o.Update(It.IsAny<User>()), Times.Exactly(24));
@@ -841,7 +839,7 @@ namespace Yoma.Core.Test.Core
         return user;
       }
 
-      public User Snapshot(User user)
+      public static User Snapshot(User user)
       {
         return new User
         {
@@ -859,7 +857,7 @@ namespace Yoma.Core.Test.Core
         };
       }
 
-      public void AssertProfilePreserved(User snapshot, User user)
+      public static void AssertProfilePreserved(User snapshot, User user)
       {
         Assert.Equal(snapshot.Id, user.Id);
         Assert.Equal(snapshot.FirstName, user.FirstName);
@@ -907,13 +905,12 @@ namespace Yoma.Core.Test.Core
 
       public void VerifyLog(LogLevel level, string message, Times times)
       {
-        Logger.Verify(o => o.Log(
-          level,
-          It.IsAny<EventId>(),
-          It.Is<It.IsAnyType>((state, _) => state != null && state.ToString() != null
-            && state.ToString()!.StartsWith(message, StringComparison.Ordinal)),
-          It.IsAny<Exception?>(),
-          It.IsAny<Func<It.IsAnyType, Exception?, string>>()), times);
+        var count = Logger.Invocations.Count(invocation =>
+          invocation.Method.Name == nameof(ILogger.Log) &&
+          Equals(invocation.Arguments[0], level) &&
+          invocation.Arguments[2]?.ToString()?.StartsWith(message, StringComparison.Ordinal) == true);
+
+        Assert.True(times.Validate(count), $"Expected {times} matching log entries, but found {count}");
       }
 
       public async Task Deliver(string type, string? eventId = null, string? userId = null,

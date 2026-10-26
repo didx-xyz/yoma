@@ -4,7 +4,6 @@ using Moq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Xunit;
-using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;

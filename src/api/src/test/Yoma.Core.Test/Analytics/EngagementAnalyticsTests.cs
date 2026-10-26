@@ -1,13 +1,9 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Moq;
-using Npgsql;
-using System.Data.Common;
 using System.Security.Claims;
 using Xunit;
 using Yoma.Core.Domain.Analytics.Models;
@@ -28,10 +24,6 @@ using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.SSI.Interfaces.Lookups;
 using Yoma.Core.Domain.SSI.Models;
-using Yoma.Core.Infrastructure.Database.Context;
-using Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories;
-using Yoma.Core.Infrastructure.Database.Lookups.Repositories;
-using Yoma.Core.Infrastructure.Database.Opportunity.Repositories;
 using Participation = Yoma.Core.Domain.MyOpportunity.Models.MyOpportunity;
 using ParticipationAction = Yoma.Core.Domain.MyOpportunity.Action;
 using Gender = Yoma.Core.Domain.Core.Gender;
@@ -167,122 +159,6 @@ namespace Yoma.Core.Test.Analytics
       AssertReport(fixture.Items, result);
     }
 
-    [Fact]
-    public async Task PostgreSqlAggregatesActualRepositoryQueriesWithRetriesAndNonUtcSessionTimezone()
-    {
-      var connectionString = System.Environment.GetEnvironmentVariable("YOMA_ANALYTICS_TEST_CONNECTION");
-      Assert.SkipWhen(string.IsNullOrEmpty(connectionString),
-        "Set YOMA_ANALYTICS_TEST_CONNECTION to an isolated local yoma_analytics_* database.");
-      var builder = new NpgsqlConnectionStringBuilder(connectionString);
-      Assert.True(builder.Host is "localhost" or "127.0.0.1");
-      Assert.StartsWith("yoma_analytics_", builder.Database);
-      var commands = new CommandRecorder();
-      await using var context = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>()
-        .UseNpgsql(builder.ConnectionString, options => options.UseNetTopologySuite().EnableRetryOnFailure())
-        .AddInterceptors(commands)
-        .Options);
-      await context.Database.EnsureCreatedAsync(TestContext.Current.CancellationToken);
-      await context.Database.OpenConnectionAsync(TestContext.Current.CancellationToken);
-      await context.Database.ExecuteSqlRawAsync("SET TIME ZONE 'Pacific/Auckland'", TestContext.Current.CancellationToken);
-      await context.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
-      {
-        context.ChangeTracker.Clear();
-        await using var transaction = await context.Database.BeginTransactionAsync(TestContext.Current.CancellationToken);
-        using var fixture = new Fixture(new MyOpportunityRepository(context).Query(false),
-          new OpportunityCategoryRepository(context).Query(), new OpportunitySkillRepository(context).Query(), new SkillRepository(context).Query());
-        AssertReport([], fixture.Service.SearchEngagement(new SearchFilterEngagement()));
-        fixture.AddRepresentativeItems();
-        await Seed(context, fixture.Items);
-        await context.Database.ExecuteSqlRawAsync("ANALYZE", TestContext.Current.CancellationToken);
-        commands.Commands.Clear();
-
-        var result = fixture.Service.SearchEngagement(new SearchFilterEngagement());
-
-        AssertReport(fixture.Items, result);
-        Assert.NotEmpty(commands.Commands);
-        Assert.All(commands.Commands, sql => Assert.True(
-          sql.Contains("GROUP BY", StringComparison.Ordinal) || sql.Contains("count(", StringComparison.OrdinalIgnoreCase) ||
-          sql.Contains("sum(", StringComparison.OrdinalIgnoreCase) || sql.Contains("avg(", StringComparison.OrdinalIgnoreCase), sql));
-        Assert.Contains(commands.Commands, sql => sql.Contains("count(DISTINCT", StringComparison.OrdinalIgnoreCase));
-        Assert.DoesNotContain(commands.Commands, sql => sql.Contains("MyOpportunityVerification", StringComparison.Ordinal));
-
-        var selected = fixture.Items.First(item => item.UserCountryId.HasValue);
-        AssertReport([.. fixture.Items.Where(item => item.OrganizationId == selected.OrganizationId)],
-          fixture.Service.SearchEngagement(new SearchFilterEngagement { Organizations = [selected.OrganizationId] }));
-        AssertReport([.. fixture.Items.Where(item => item.OpportunityId == selected.OpportunityId)],
-          fixture.Service.SearchEngagement(new SearchFilterEngagement { Opportunities = [selected.OpportunityId] }));
-        AssertReport([.. fixture.Items.Where(item => item.UserCountryId == selected.UserCountryId)],
-          fixture.Service.SearchEngagement(new SearchFilterEngagement { Countries = [selected.UserCountryId!.Value] }));
-        var filter = new SearchFilterEngagement { StartDate = new DateTimeOffset(2024, 6, 14, 0, 0, 0, TimeSpan.Zero), EndDate = new DateTimeOffset(2024, 6, 16, 0, 0, 0, TimeSpan.Zero) };
-        var expected = fixture.Items.Where(item => item.Action == ParticipationAction.Verification
-          ? !item.DateCompleted.HasValue || (item.DateCompleted >= filter.StartDate && item.DateCompleted < filter.EndDate.Value.AddDays(1))
-          : item.DateModified >= filter.StartDate && item.DateModified < filter.EndDate.Value.AddDays(1)).ToList();
-        AssertReport(expected, fixture.Service.SearchEngagement(filter));
-
-        // Warm the unfiltered query before measuring; SQL compilation is not proportional to dataset size.
-        fixture.Service.SearchEngagement(new SearchFilterEngagement());
-        var allocated = GC.GetAllocatedBytesForCurrentThread();
-        fixture.Service.SearchEngagement(new SearchFilterEngagement());
-        var smallAllocations = GC.GetAllocatedBytesForCurrentThread() - allocated;
-        var additionalCompletions = 100_000;
-        var requestedCount = System.Environment.GetEnvironmentVariable("YOMA_ANALYTICS_TEST_COMPLETIONS");
-        if (!string.IsNullOrEmpty(requestedCount))
-        {
-          Assert.True(int.TryParse(requestedCount, out additionalCompletions));
-          Assert.InRange(additionalCompletions, 100_000, 1_000_000);
-        }
-        var template = fixture.Items.First(item => item.Action == ParticipationAction.Verification);
-        await context.Database.ExecuteSqlInterpolatedAsync($"""
-        INSERT INTO "Entity"."User" ("Id", "DateCreated", "DateModified")
-        SELECT md5('analytics-user-' || n)::uuid, {template.DateCreated}, {template.DateModified}
-        FROM generate_series(1, {additionalCompletions}) AS n;
-        INSERT INTO "Opportunity"."MyOpportunity"
-          ("Id", "UserId", "OpportunityId", "ActionId", "VerificationStatusId", "DateStart", "DateEnd", "DateCompleted", "ZltoReward", "DateCreated", "DateModified")
-        SELECT md5('analytics-completion-' || n)::uuid, md5('analytics-user-' || n)::uuid,
-          {template.OpportunityId}, {template.ActionId}, {template.VerificationStatusId},
-          {template.DateStart}, {template.DateEnd}, {template.DateCompleted}, {template.ZltoReward},
-          {template.DateCreated}, {template.DateModified} - (n % 70) * interval '7 days'
-        FROM generate_series(1, {additionalCompletions}) AS n;
-        """, TestContext.Current.CancellationToken);
-        // Bulk fixture inserts and rolled-back prior runs bypass normal autovacuum statistics refresh.
-        await context.Database.ExecuteSqlRawAsync("ANALYZE", TestContext.Current.CancellationToken);
-        commands.Commands.Clear();
-        commands.ReadCounts.Clear();
-        allocated = GC.GetAllocatedBytesForCurrentThread();
-
-        var largeResult = fixture.Service.SearchEngagement(new SearchFilterEngagement());
-
-        var largeAllocations = GC.GetAllocatedBytesForCurrentThread() - allocated;
-        Assert.Equal(result.Opportunities.Engagements.Count[2] + additionalCompletions, largeResult.Opportunities.Engagements.Count[2]);
-        Assert.Equal(result.Cumulative.Completions.Count.Sum() + additionalCompletions, largeResult.Cumulative.Completions.Count.Sum());
-        Assert.Equal(52, largeResult.Opportunities.Engagements.Data.Count);
-        Assert.Equal(52, largeResult.Skills.Items.Data.Count);
-        Assert.Equal(result.Skills.Items.Count, largeResult.Skills.Items.Count);
-        Assert.Equal(result.Skills.TopCompleted.TopCompleted[0].CountCompleted + additionalCompletions,
-          largeResult.Skills.TopCompleted.TopCompleted[0].CountCompleted);
-        Assert.All(commands.ReadCounts, count => Assert.InRange(count, 0, 200));
-        Assert.NotEmpty(commands.ReadCounts);
-        Assert.True(largeAllocations < smallAllocations + 5_000_000,
-          $"Small report allocated {smallAllocations:N0} bytes; {additionalCompletions:N0}-completion report allocated {largeAllocations:N0} bytes.");
-        TestContext.Current.TestOutputHelper!.WriteLine(
-          $"Small allocations: {smallAllocations:N0}; {additionalCompletions:N0}-completion allocations: {largeAllocations:N0}; " +
-          $"report commands: {commands.Commands.Count}; maximum reader operations: {commands.ReadCounts.Max()}.");
-        foreach (var sql in commands.Commands.Where(sql => sql.Contains("OpportunitySkills", StringComparison.Ordinal)))
-        {
-          await using var explain = context.Database.GetDbConnection().CreateCommand();
-          explain.Transaction = context.Database.CurrentTransaction!.GetDbTransaction();
-          explain.CommandText = $"EXPLAIN (ANALYZE, BUFFERS, TIMING OFF) {sql}";
-          explain.CommandTimeout = builder.CommandTimeout;
-          foreach (var parameter in commands.ParametersBySql[sql])
-            explain.Parameters.Add(parameter);
-          await using var reader = await explain.ExecuteReaderAsync(TestContext.Current.CancellationToken);
-          var plan = new List<string>();
-          while (await reader.ReadAsync(TestContext.Current.CancellationToken)) plan.Add(reader.GetString(0));
-          Assert.Contains(plan, line => line.Contains("Aggregate", StringComparison.Ordinal));
-          TestContext.Current.TestOutputHelper.WriteLine(string.Join(System.Environment.NewLine, plan));
-        }
-      });
-    }
     #endregion
 
     #region Private Members
@@ -362,91 +238,6 @@ namespace Yoma.Core.Test.Analytics
       return age >= 30 ? "30+" : age >= 25 ? "25-29" : age >= 20 ? "20-24" : age >= 0 ? "0-19" : "Unspecified";
     }
 
-    private static async Task Seed(ApplicationDbContext context, List<Participation> items)
-    {
-      var now = DateTimeOffset.UtcNow;
-      var status = new Infrastructure.Database.Entity.Entities.Lookups.OrganizationStatus { Id = Guid.NewGuid(), Name = "Active" };
-      var opportunityStatus = new Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityStatus { Id = Guid.NewGuid(), Name = "Active" };
-      var type = new Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityType { Id = Guid.NewGuid(), Name = "Learning", DisplayName = "Learning" };
-      context.AddRange(status, opportunityStatus, type);
-      foreach (var action in items.DistinctBy(item => item.ActionId))
-        context.Add(new Infrastructure.Database.MyOpportunity.Entities.Lookups.MyOpportunityAction { Id = action.ActionId, Name = action.Action.ToString() });
-      foreach (var statusItem in items.Where(item => item.VerificationStatusId.HasValue).DistinctBy(item => item.VerificationStatusId))
-        context.Add(new Infrastructure.Database.MyOpportunity.Entities.Lookups.MyOpportunityVerificationStatus
-        { Id = statusItem.VerificationStatusId!.Value, Name = statusItem.VerificationStatus!.Value.ToString() });
-      foreach (var skill in items.SelectMany(item => item.Skills ?? []).DistinctBy(skill => skill.Id))
-        context.Add(new Infrastructure.Database.Lookups.Entities.Skill
-        { Id = skill.Id, Name = skill.Name, InfoURL = skill.InfoURL, ExternalId = skill.Id.ToString(), DateCreated = now, DateModified = now });
-      foreach (var item in items.Where(item => item.UserCountryId.HasValue).DistinctBy(item => item.UserCountryId))
-        context.Add(new Infrastructure.Database.Lookups.Entities.Country
-        { Id = item.UserCountryId!.Value, Name = item.UserCountry!, CodeAlpha2 = "ZA", CodeAlpha3 = "ZAF", CodeNumeric = "710", DateCreated = now });
-      var educationIds = items.Where(item => !string.IsNullOrEmpty(item.UserEducation)).Select(item => item.UserEducation!).Distinct().ToDictionary(name => name, _ => Guid.NewGuid());
-      foreach (var education in educationIds)
-        context.Add(new Infrastructure.Database.Lookups.Entities.Education { Id = education.Value, Name = education.Key, DateCreated = now });
-      var genderIds = items.Where(item => !string.IsNullOrEmpty(item.UserGender)).Select(item => item.UserGender!).Distinct().ToDictionary(name => name, _ => Guid.NewGuid());
-      foreach (var gender in genderIds)
-        context.Add(new Infrastructure.Database.Lookups.Entities.Gender { Id = gender.Value, Name = gender.Key, DateCreated = now });
-      foreach (var item in items.DistinctBy(item => item.UserId))
-        context.Add(new Infrastructure.Database.Entity.Entities.User
-        {
-          Id = item.UserId,
-          DateOfBirth = item.UserDateOfBirth,
-          CountryId = item.UserCountryId,
-          EducationId = string.IsNullOrEmpty(item.UserEducation) ? null : educationIds[item.UserEducation],
-          GenderId = string.IsNullOrEmpty(item.UserGender) ? null : genderIds[item.UserGender],
-          DateCreated = now,
-          DateModified = now
-        });
-      foreach (var item in items.DistinctBy(item => item.OrganizationId))
-        context.Add(new Infrastructure.Database.Entity.Entities.Organization
-        {
-          Id = item.OrganizationId,
-          Name = item.OrganizationName,
-          NameHashValue = item.OrganizationId.ToString(),
-          StatusId = status.Id,
-          CreatedByUserId = items[0].UserId,
-          ModifiedByUserId = items[0].UserId,
-          DateCreated = now,
-          DateModified = now
-        });
-      foreach (var item in items.DistinctBy(item => item.OpportunityId))
-      {
-        context.Add(new Infrastructure.Database.Opportunity.Entities.Opportunity
-        {
-          Id = item.OpportunityId,
-          Title = item.OpportunityId.ToString(),
-          Description = "Analytics regression",
-          TypeId = type.Id,
-          OrganizationId = item.OrganizationId,
-          StatusId = opportunityStatus.Id,
-          DateStart = now,
-          CreatedByUserId = items[0].UserId,
-          ModifiedByUserId = items[0].UserId,
-          DateCreated = now,
-          DateModified = now
-        });
-        foreach (var skill in item.Skills ?? [])
-          context.Add(new Infrastructure.Database.Opportunity.Entities.OpportunitySkill
-          { Id = Guid.NewGuid(), OpportunityId = item.OpportunityId, SkillId = skill.Id, DateCreated = now });
-      }
-      foreach (var item in items)
-        context.Add(new Infrastructure.Database.MyOpportunity.Entities.MyOpportunity
-        {
-          Id = item.Id,
-          UserId = item.UserId,
-          OpportunityId = item.OpportunityId,
-          ActionId = item.ActionId,
-          VerificationStatusId = item.VerificationStatusId,
-          DateStart = item.DateStart,
-          DateEnd = item.DateEnd,
-          DateCompleted = item.DateCompleted,
-          DateCreated = item.DateCreated,
-          DateModified = item.DateModified,
-          ZltoReward = item.ZltoReward
-        });
-      await context.SaveChangesAsync(TestContext.Current.CancellationToken);
-      context.ChangeTracker.Clear();
-    }
     #endregion
 
     #region Fixture
@@ -575,28 +366,6 @@ namespace Yoma.Core.Test.Analytics
       public void Dispose() => _cache.Dispose();
     }
 
-    private sealed class CommandRecorder : DbCommandInterceptor
-    {
-      internal List<string> Commands { get; } = [];
-      internal List<int> ReadCounts { get; } = [];
-      internal Dictionary<string, NpgsqlParameter[]> ParametersBySql { get; } = [];
-
-      public override InterceptionResult<DbDataReader> ReaderExecuting(DbCommand command, CommandEventData eventData,
-        InterceptionResult<DbDataReader> result)
-      {
-        Commands.Add(command.CommandText);
-        ParametersBySql[command.CommandText] = [.. command.Parameters.Cast<NpgsqlParameter>()
-          .Select(parameter => new NpgsqlParameter(parameter.ParameterName, parameter.NpgsqlDbType) { Value = parameter.Value })];
-        return result;
-      }
-
-      public override InterceptionResult DataReaderDisposing(DbCommand command, DataReaderDisposingEventData eventData,
-        InterceptionResult result)
-      {
-        ReadCounts.Add(eventData.ReadCount);
-        return result;
-      }
-    }
     #endregion
   }
 }

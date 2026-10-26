@@ -7,7 +7,6 @@ using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Lookups.Models;
-using Yoma.Core.Domain.Payout;
 using Yoma.Core.Infrastructure.IXO.YellowCard.Client;
 using Yoma.Core.Infrastructure.IXO.YellowCard.Interfaces;
 using Yoma.Core.Infrastructure.IXO.YellowCard.Models;

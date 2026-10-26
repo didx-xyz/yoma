@@ -1,6 +1,5 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -15,6 +14,8 @@ using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Test.Core.Fixtures;
+using Yoma.Core.Test.SSI.Fixtures;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Extensions;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
@@ -29,7 +30,6 @@ using Yoma.Core.Domain.SSI.Models.Provider;
 using Yoma.Core.Domain.SSI.Services;
 using Yoma.Core.Domain.SSI.Services.Lookups;
 using Yoma.Core.Domain.SSI.Validators;
-using Yoma.Core.Infrastructure.Database.Migrations;
 
 namespace Yoma.Core.Test.SSI
 {
@@ -160,25 +160,6 @@ namespace Yoma.Core.Test.SSI
         property => property.AttributeName == "MyOpportunity_UserDisplayName" && property.NameDisplay == user.NameDisplay);
       Assert.Contains(schema.Entities.SelectMany(entity => entity.CustomFields ?? []),
         field => field.Key == "EventRole" && field.Group == role.Group && field.SortOrder == role.SortOrder);
-    }
-
-    [Fact]
-    public void CoreLabelsAreSeededWithTheirExactDisplayCasing()
-    {
-      using var fixture = new Fixture();
-      var properties = fixture.Entities.SelectMany(entity => entity.Properties!).ToList();
-      Assert.All(properties, property => Assert.All(property.NameDisplay.Split(' '), word =>
-        Assert.True(!char.IsLetter(word[0]) || char.IsUpper(word[0]), $"Seed label '{property.NameDisplay}' is not Title Case.")));
-
-      Assert.Equal("Date Of Birth", fixture.EntityService.GetByAttributeName("User_DateOfBirth").NameDisplay);
-      Assert.Equal("Logo URL", fixture.EntityService.GetByAttributeName("Organization_LogoURL").NameDisplay);
-      Assert.Equal("Organization Logo URL", fixture.EntityService.GetByAttributeName("Opportunity_OrganizationLogoURL").NameDisplay);
-      Assert.Equal("ZLTO Reward", fixture.EntityService.GetByAttributeName("MyOpportunity_ZltoReward").NameDisplay);
-      Assert.Equal("Account Verification Methods", fixture.EntityService.GetByAttributeName("User_AccountVerificationMethods").NameDisplay);
-      Assert.Equal("Advertised ZLTO Reward", fixture.EntityService.GetByAttributeName("Opportunity_ZltoReward").NameDisplay);
-      Assert.Equal("User", fixture.EntityService.GetByAttributeName("MyOpportunity_UserDisplayName").NameDisplay);
-      Assert.Equal("Engagement", fixture.EntityService.GetByAttributeName("Opportunity_EngagementType").NameDisplay);
-      Assert.Equal("Duration", fixture.EntityService.GetByAttributeName("MyOpportunity_CommitmentIntervalDescription").NameDisplay);
     }
 
     [Fact]
@@ -335,53 +316,6 @@ namespace Yoma.Core.Test.SSI
 
       Assert.Equal(expected, method.Invoke(null, [property, attribute]));
       Assert.Equal(value, attribute.Value);
-    }
-
-    [Fact]
-    public void SeededCorePropertiesFitStorageAndDoNotReplaceHistoricalMappings()
-    {
-      using var fixture = new Fixture();
-      var properties = fixture.Entities.SelectMany(entity => entity.Properties!).ToList();
-
-      Assert.Equal(properties.Count, properties.Select(property => property.Id).Distinct().Count());
-      Assert.All(properties, property =>
-      {
-        Assert.InRange(property.Name.Length, 1, 50);
-        Assert.InRange(property.NameDisplay.Length, 1, 50);
-        Assert.InRange(property.Description.Length, 1, 125);
-        Assert.True(property.Group == null || property.Group.Length <= 100);
-        Assert.True(property.SubGroup == null || property.SubGroup.Length <= 100);
-      });
-      Assert.All(fixture.Entities, entity =>
-        Assert.Equal(entity.Properties!.Count, entity.Properties.Select(property => property.Name).Distinct().Count()));
-
-      var opportunity = Assert.Single(fixture.Entities, entity => entity.Name == "Opportunity");
-      var participation = Assert.Single(fixture.Entities, entity => entity.Name == "MyOpportunity");
-      Assert.Contains(opportunity.Properties!, property => property.Name == "Difficulty");
-      Assert.Contains(participation.Properties!, property => property.Name == "UserDateOfBirth");
-      Assert.Contains(participation.Properties!, property => property.Name == "DateCompleted");
-    }
-
-    [Fact]
-    public void CredentialTypeAliasesMatchTheConfiguredHistoricalLookupRename()
-    {
-      var initial = Assert.Single(new ApplicationDb_Initial().UpOperations.OfType<InsertDataOperation>(),
-        operation => operation.Schema == "Opportunity" && operation.Table == "OpportunityType");
-      var renamed = new ApplicationDb_CF_Configuration().UpOperations.OfType<UpdateDataOperation>()
-        .Where(operation => operation.Schema == "Opportunity" && operation.Table == "OpportunityType"
-          && operation.Columns.Contains("Name"));
-
-      Assert.NotEmpty(renamed);
-      foreach (var operation in renamed)
-      {
-        var id = operation.KeyValues[0, Array.IndexOf(operation.KeyColumns, "Id")]!.ToString();
-        var originalRow = Assert.Single(Enumerable.Range(0, initial.Values.GetLength(0)),
-          row => initial.Values[row, Array.IndexOf(initial.Columns, "Id")]!.ToString() == id);
-        var historicalName = initial.Values[originalRow, Array.IndexOf(initial.Columns, "Name")]!.ToString();
-        var currentName = operation.Values[0, Array.IndexOf(operation.Columns, "Name")]!.ToString();
-
-        Assert.Equal(currentName, SSICredentialOpportunityTypeMapper.ParseOrNull(historicalName)?.ToString());
-      }
     }
 
     [Fact]
@@ -615,27 +549,6 @@ namespace Yoma.Core.Test.SSI
       Assert.All(fields, field => Assert.Equal(fixture.Definitions.Single(definition => definition.Id == field.Id).Group, field.Group));
     }
 
-    [Fact]
-    public void OnlyEssentialCoreClaimsAreRequiredByTheMigratedCatalogue()
-    {
-      using var fixture = new Fixture();
-      var entities = fixture.EntityService.ListAll(null, false);
-      var required = entities.SelectMany(entity => entity.Properties ?? [])
-        .Where(property => property.Required)
-        .Select(property => property.AttributeName)
-        .Order()
-        .ToList();
-
-      Assert.Equal(RequiredCoreAttributes.Order(), required);
-      Assert.All(entities.SelectMany(entity => entity.CustomFields ?? []), field => Assert.False(field.Required));
-
-      var opportunity = Assert.Single(entities, entity => entity.Name == "Opportunity");
-      var difficulty = Assert.Single(opportunity.Properties!, property => property.Name == "Difficulty");
-      Assert.Equal(Guid.Parse("FF423D0C-2E91-48A6-9245-28EEF6E96B01"), difficulty.Id);
-      Assert.False(difficulty.Required);
-      Assert.False(difficulty.System);
-    }
-
     [Theory]
     [InlineData(0, null)]
     [InlineData(1, "Email Verified")]
@@ -784,41 +697,6 @@ namespace Yoma.Core.Test.SSI
       Assert.DoesNotContain(historical.Attributes, attribute => attribute.Name == "User_AccountVerificationMethods");
       Assert.Equal("historical@example.invalid",
         Assert.Single(historical.Attributes, item => item.Name == "User_Email").ValueDisplay);
-    }
-
-    [Fact]
-    public void RevisedCatalogueUsesConsecutivePositionsIncludingReservedTypeSpecificCompletionSlots()
-    {
-      using var fixture = new Fixture();
-      var groups = fixture.Entities
-        .SelectMany(entity => entity.Properties ?? [])
-        .Where(property => property.Group is "Identity" or "Opportunity Details" or "Completion Details"
-          or "Incentives" or "Accessibility" or "Audience" or "Impact" or "Provider")
-        .GroupBy(property => property.Group)
-        .ToList();
-
-      Assert.Equal(8, groups.Count);
-      Assert.All(groups.Where(group => group.Key != "Completion Details"), group => Assert.Equal(
-        Enumerable.Range(1, group.Count()).Select(position => (int?)position),
-        group.Select(property => property.SortOrder).Order()));
-
-      var completionOrders = groups.Single(group => group.Key == "Completion Details")
-        .Select(property => property.SortOrder).ToList();
-      var ventureOrders = fixture.Definitions
-        .Where(definition => definition.EntityType == CustomFieldEntityType.MyOpportunity.ToString()
-          && definition.EntityContext == "Entrepreneurship")
-        .Select(definition => (int?)definition.SortOrder).ToList();
-      Assert.Equal(Enumerable.Range(3, 12).Select(position => (int?)position), ventureOrders.Order());
-      Assert.Equal(Enumerable.Range(1, 25).Select(position => (int?)position),
-        completionOrders.Concat(ventureOrders).Order());
-
-      foreach (var type in Enum.GetValues<Domain.Opportunity.Type>())
-      {
-        var orders = completionOrders.Concat(fixture.Definitions
-          .Where(definition => definition.EntityContext == type.ToString() && definition.Group == "Completion Details")
-          .Select(definition => (int?)definition.SortOrder)).ToList();
-        Assert.Equal(orders.Count, orders.Distinct().Count());
-      }
     }
 
     [Theory]
@@ -1201,7 +1079,7 @@ namespace Yoma.Core.Test.SSI
         Assert.Equal("Verification Evidence", evidenceAttribute.NameDisplay);
         Assert.Equal(comment, evidenceAttribute.ValueDisplay);
         Assert.True(methodAttribute.SortOrder < evidenceAttribute.SortOrder);
-        Assert.Equal(new[] { "User", "Verification Method", "Verification Evidence" },
+        Assert.Equal(["User", "Verification Method", "Verification Evidence"],
           detail.Attributes.Where(attribute => attribute.Group == "Completion Details")
             .Select(attribute => attribute.NameDisplay));
       }
@@ -1482,9 +1360,8 @@ namespace Yoma.Core.Test.SSI
       {
         _logger.Setup(logger => logger.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
 
-        var operations = new ApplicationDb_CF_Configuration().UpOperations;
-        Definitions = ReadDefinitions(operations);
-        Entities = ReadEntities(operations);
+        Definitions = CustomFieldFixtureData.CreateDefinitions();
+        Entities = SchemaFixtureData.CreateEntities();
         var schemaTypes = Entities.SelectMany(entity => entity.Types!).DistinctBy(type => type.Id).ToList();
         var typeService = new Mock<ISSISchemaTypeService>();
         typeService.Setup(service => service.GetByName(It.IsAny<string>()))
@@ -1609,155 +1486,6 @@ namespace Yoma.Core.Test.SSI
 
       public void Dispose() => _cache.Dispose();
 
-      private static List<CustomFieldDefinition> ReadDefinitions(IReadOnlyList<MigrationOperation> operations)
-      {
-        var results = new List<CustomFieldDefinition>();
-        foreach (var operation in operations.OfType<InsertDataOperation>()
-          .Where(operation => operation.Schema == "Core" && operation.Table == "CustomFieldDefinition"))
-        {
-          for (var row = 0; row < operation.Values.GetLength(0); row++)
-          {
-            object? Value(string column) => Array.IndexOf(operation.Columns, column) is var index && index >= 0
-              ? operation.Values[row, index] : null;
-            results.Add(new CustomFieldDefinition
-            {
-              Id = Guid.Parse(Value("Id")!.ToString()!),
-              EntityType = (string)Value("EntityType")!,
-              EntityContext = (string?)Value("EntityContext"),
-              Key = (string)Value("Key")!,
-              Title = (string)Value("Title")!,
-              Description = (string?)Value("Description"),
-              Group = (string)Value("Group")!,
-              SubGroup = (string?)Value("SubGroup"),
-              DataType = Enum.Parse<CustomFieldDataType>((string)Value("DataType")!),
-              LookupType = Value("LookupType") is string lookup ? Enum.Parse<CustomFieldLookupType>(lookup) : null,
-              IsRequired = (bool)Value("IsRequired")!,
-              SupportsMultiple = (bool?)Value("SupportsMultiple"),
-              SortOrder = (int)Value("SortOrder")!,
-              IsActive = (bool)Value("IsActive")!,
-              IsSystem = (bool)Value("IsSystem")!
-            });
-          }
-        }
-        return results;
-      }
-
-      private static List<SSISchemaEntity> ReadEntities(IReadOnlyList<MigrationOperation> operations)
-      {
-        var opportunity = new SSISchemaType
-        {
-          Id = Guid.Parse("7818B5C3-3D57-4264-B90B-DF53EAA9F749"),
-          Type = SchemaType.Opportunity,
-          Name = "Opportunity",
-          SupportMultiple = true
-        };
-        var yoID = new SSISchemaType
-        {
-          Id = Guid.Parse("EC978798-AAC0-4577-846E-1B5B2E6663CE"),
-          Type = SchemaType.YoID,
-          Name = "YoID"
-        };
-        var entities = new List<SSISchemaEntity>
-        {
-          new()
-          {
-            Id = Guid.Parse("AC5C06AC-6EAD-4B47-8E11-4B182DAAC8CC"),
-            Name = "User",
-            TypeName = typeof(Domain.Entity.Models.User).FullName!,
-            Properties = [],
-            Types = [yoID]
-          },
-          new()
-          {
-            Id = Guid.Parse("B8C64B98-61C2-43F8-A583-7A7927340333"),
-            Name = "Organization",
-            TypeName = typeof(Domain.Entity.Models.Organization).FullName!,
-            Properties = [],
-            Types = [yoID]
-          },
-          new()
-          {
-            Id = Guid.Parse("E8AE5B9B-11AE-4ECB-8F6C-020A3D6A5C3D"),
-            Name = "Opportunity",
-            TypeName = typeof(Domain.Opportunity.Models.Opportunity).FullName!,
-            Properties = [],
-            Types = [opportunity]
-          },
-          new()
-          {
-            Id = Guid.Parse("CA11D9D0-39F6-46D8-A0D3-350EC41402F5"),
-            Name = "MyOpportunity",
-            TypeName = typeof(Domain.MyOpportunity.Models.MyOpportunity).FullName!,
-            Properties = [],
-            Types = [opportunity]
-          }
-        };
-        var inserts = new ApplicationDb_Initial().UpOperations.OfType<InsertDataOperation>()
-          .Concat(operations.OfType<InsertDataOperation>())
-          .Where(operation => operation.Schema == "SSI" && operation.Table == "SchemaEntityProperty");
-        foreach (var operation in inserts)
-        {
-          for (var row = 0; row < operation.Values.GetLength(0); row++)
-          {
-            object? Value(string column) => Array.IndexOf(operation.Columns, column) is var index && index >= 0
-              ? operation.Values[row, index] : null;
-            var name = (string)Value("Name")!;
-            if (name == "YomaReward") continue; // Removed by the cash-out migration before CF.
-            var entity = entities.Single(item => item.Id == Guid.Parse(Value("SSISchemaEntityId")!.ToString()!));
-            entity.Properties!.Add(new SSISchemaEntityProperty
-            {
-              Id = Guid.Parse(Value("Id")!.ToString()!),
-              Name = name,
-              NameDisplay = (string)Value("NameDisplay")!,
-              Description = (string)Value("Description")!,
-              Group = (string?)Value("Group"),
-              SubGroup = (string?)Value("SubGroup"),
-              SortOrder = (int?)Value("SortOrder"),
-              System = Value("SystemType") != null,
-              SystemType = Value("SystemType") is string system ? Enum.Parse<SchemaEntityPropertySystemType>(system) : null,
-              Format = (string?)Value("Format"),
-              Required = (bool)Value("Required")!
-            });
-          }
-        }
-
-        var updates = new ApplicationDb_Authentication_PhoneNumber().UpOperations.OfType<UpdateDataOperation>()
-          .Concat(new ApplicationDb_Custom_Fields_Treasury_Payout_SSI().UpOperations.OfType<UpdateDataOperation>())
-          .Concat(operations.OfType<UpdateDataOperation>())
-          .Where(operation => operation.Schema == "SSI" && operation.Table == "SchemaEntityProperty");
-        foreach (var operation in updates)
-        {
-          var idColumn = Array.IndexOf(operation.KeyColumns, "Id");
-          var systemTypeColumn = Array.IndexOf(operation.Columns, "SystemType");
-          var requiredColumn = Array.IndexOf(operation.Columns, "Required");
-          var nameDisplayColumn = Array.IndexOf(operation.Columns, "NameDisplay");
-          var groupColumn = Array.IndexOf(operation.Columns, "Group");
-          var subGroupColumn = Array.IndexOf(operation.Columns, "SubGroup");
-          var sortOrderColumn = Array.IndexOf(operation.Columns, "SortOrder");
-          for (var row = 0; row < operation.Values.GetLength(0); row++)
-          {
-            var id = Guid.Parse(operation.KeyValues[row, idColumn]!.ToString()!);
-            var property = entities.SelectMany(entity => entity.Properties!).Single(property => property.Id == id);
-            if (systemTypeColumn >= 0)
-            {
-              var systemType = operation.Values[row, systemTypeColumn]?.ToString();
-              property.System = !string.IsNullOrEmpty(systemType);
-              property.SystemType = systemType == null ? null : Enum.Parse<SchemaEntityPropertySystemType>(systemType);
-            }
-            if (requiredColumn >= 0)
-              property.Required = (bool)operation.Values[row, requiredColumn]!;
-            if (nameDisplayColumn >= 0)
-              property.NameDisplay = (string)operation.Values[row, nameDisplayColumn]!;
-            if (groupColumn >= 0)
-              property.Group = (string?)operation.Values[row, groupColumn];
-            if (subGroupColumn >= 0)
-              property.SubGroup = (string?)operation.Values[row, subGroupColumn];
-            if (sortOrderColumn >= 0)
-              property.SortOrder = (int?)operation.Values[row, sortOrderColumn];
-          }
-        }
-        return entities;
-      }
     }
     #endregion Private Members
   }

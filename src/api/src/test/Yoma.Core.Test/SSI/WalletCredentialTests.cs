@@ -22,6 +22,10 @@ namespace Yoma.Core.Test.SSI
 {
   public class WalletCredentialTests
   {
+    #region Class Variables
+    private static readonly string[] SystemAttributeNames = ["issuer"];
+    #endregion Class Variables
+
     #region Tests
     [Fact]
     public void SharedPresentationOrdersCommonSectionsBeforeCustomGroupsWithoutChangingFieldOrder()
@@ -48,7 +52,7 @@ namespace Yoma.Core.Test.SSI
         SortOrder = attribute.SortOrder
       }).ToList();
       properties.Add(new() { AttributeName = "issuer", NameDisplay = "Issuer", System = true });
-      Assert.Equal(new[] { "issuer" }.Concat(expected),
+      Assert.Equal(SystemAttributeNames.Concat(expected),
         SSIAttributePresentationHelper.OrderProperties(properties)!.Select(property => property.AttributeName));
 
       var fields = attributes.Where(attribute => attribute.Group != null).Select(attribute => new SSISchemaEntityCustomField

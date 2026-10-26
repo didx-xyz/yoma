@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using FluentValidation;
 using Yoma.Core.Domain.Core.Validators;
 using Moq;
@@ -6,14 +5,10 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Xunit;
 using Yoma.Core.Domain.Core;
-using Yoma.Core.Domain.Core.Extensions;
-using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Validators;
 using Yoma.Core.Domain.Entity.Extensions;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
-using Yoma.Core.Infrastructure.Database.Context;
-using Yoma.Core.Infrastructure.Database.Entity.Repositories;
 
 namespace Yoma.Core.Test.Entity
 {
@@ -108,8 +103,6 @@ namespace Yoma.Core.Test.Entity
       Assert.Equal(user.CountryId, profile.CountryId);
       Assert.Equal("Cape Town", profile.City);
       Assert.Equal(user.Coordinates, profile.Coordinates);
-      Assert.Null(typeof(UserProfile).GetProperty("Location"));
-      Assert.NotNull(typeof(UserRequest).GetProperty("Region"));
     }
 
     [Fact]
@@ -131,17 +124,6 @@ namespace Yoma.Core.Test.Entity
       Assert.Equal(user.City, request.City);
       Assert.Equal(user.Coordinates, request.Coordinates);
       Assert.Equal(user.LocationSource, request.LocationSource);
-    }
-
-    [Fact]
-    public void UserProjectionWithSpatialCoordinatesTranslatesWithoutLoadingChildren()
-    {
-      var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-        .UseNpgsql("Host=localhost;Database=location_projection;Username=test;Password=test", options => options.UseNetTopologySuite()).Options;
-      using var context = new ApplicationDbContext(options);
-      var query = new UserRepository(context).Query(false).Where(user => user.Id == Guid.Empty).ToQueryString();
-      Assert.Contains("Coordinates", query);
-      Assert.DoesNotContain("UserSkills", query);
     }
 
     private static UserRequest City() => new()

@@ -14,6 +14,10 @@ namespace Yoma.Core.Test.PartnerSync
 {
   public class SyncCustomFieldSnapshotTests
   {
+    #region Class Variables
+    private static readonly string[] SnapshotKeys = ["changed", "withdrawn", "unrelated"];
+    #endregion Class Variables
+
     #region Tests
     [Fact]
     public void SnapshotAddsOnlyMissingOwnedKeysAndPreservesExplicitValues()
@@ -78,7 +82,7 @@ namespace Yoma.Core.Test.PartnerSync
     public async Task CommonPatchPersistenceClearsOnlyExplicitSnapshotsAndPreservesUnrelatedValues(bool authoritativeSnapshot)
     {
       var opportunityId = Guid.NewGuid();
-      var definitions = new[] { "changed", "withdrawn", "unrelated" }.Select(key => new CustomFieldDefinition
+      var definitions = SnapshotKeys.Select(key => new CustomFieldDefinition
       {
         Id = Guid.NewGuid(),
         EntityType = CustomFieldEntityType.Opportunity.ToString(),
