@@ -28,7 +28,7 @@ const SKELETON_COUNT = 4;
 const badgeClassFor = (applied: boolean): string =>
   applied
     ? "border-green bg-green text-white"
-    : "border-gray hover:border-green bg-white text-black";
+    : "border-gray hover:border-green hover:bg-green bg-white text-black hover:text-white";
 
 export const QuickSearchRow: React.FC<{
   wrap?: boolean;

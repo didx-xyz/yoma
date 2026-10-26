@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, useMemo, type ReactElement } from "react";
+import { IoEyeOutline } from "react-icons/io5";
 import { Action } from "~/api/models/myOpportunity";
 import { searchMyOpportunities } from "~/api/services/myOpportunities";
 import { YoIDBreadcrumb } from "~/components/YoID/YoIDBreadcrumb";
@@ -17,11 +18,12 @@ import { YOID_TABS } from "~/components/YoID/yoidTabs";
 import Suspense from "~/components/Common/Suspense";
 import YoIDLayout from "~/components/Layout/YoID";
 import { OpportunityListItem } from "~/components/MyOpportunity/OpportunityListItem";
-import NoRowsMessage from "~/components/NoRowsMessage";
+import { TONE } from "~/components/Opportunity/TabbedDetails/DetailDisclosure";
 import { SearchInputLarge } from "~/components/SearchInputLarge";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import { EmptyState, FIND_OPPORTUNITIES } from "~/components/YoID/EmptyState";
 import { LoadMore } from "~/components/YoID/LoadMore";
 import { formatNumber } from "~/features/discovery/lib/format";
 import { CARD_GRID_CLASS } from "~/lib/card";
@@ -185,12 +187,14 @@ const MyOpportunitiesAdd: NextPageWithLayout<{
             </div>
 
             {viewedLoaded === 0 && (
-              <div className="mt-2 flex justify-center rounded-lg bg-white p-8 text-center">
-                <NoRowsMessage
-                  title={"No recently viewed opportunities"}
-                  description={
-                    "Opportunities you open will be listed here, so you can add them once you have completed them."
-                  }
+              <div className="mt-2">
+                <EmptyState
+                  variant="page"
+                  icon={<IoEyeOutline />}
+                  toneClass={TONE.blue}
+                  title="Nothing viewed yet"
+                  description="Opportunities you open show up here, ready to add once you've completed them."
+                  action={FIND_OPPORTUNITIES}
                 />
               </div>
             )}

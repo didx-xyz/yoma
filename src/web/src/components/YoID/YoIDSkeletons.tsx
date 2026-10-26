@@ -86,10 +86,10 @@ export const TileBodySkeleton: React.FC = () => (
   </div>
 );
 
-/** The overview's Opportunities tile: its four summary circles. */
+/** The Opportunities section's summary while it loads: two circles stand in for the row (Jason, 2026-10-26). */
 export const SummaryCirclesSkeleton: React.FC = () => (
   <div aria-hidden className="flex flex-wrap justify-center gap-4">
-    {Array.from({ length: 4 }, (_, index) => (
+    {Array.from({ length: 2 }, (_, index) => (
       <div key={index} className={`h-24 w-24 rounded-full ${BONE}`} />
     ))}
   </div>

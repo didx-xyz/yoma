@@ -8,8 +8,12 @@ export const PILL_CLASS =
 /** 44 px below `md` (the touch-target rule), 36 px from `md`: a page's own controls. */
 export const PILL_TOUCH_CLASS = "min-h-11 md:min-h-9";
 
+/**
+ * Idle: white, and green filled on hover — a green border alone was lost against some
+ * backgrounds, e.g. the purple hero (Jason, 2026-10-26).
+ */
 export const PILL_IDLE_CLASS =
-  "border-gray hover:border-green bg-white text-black";
+  "border-gray hover:border-green hover:bg-green bg-white text-black hover:text-white";
 
 /** The current place, for navigation pills (`aria-current="page"`). */
 export const PILL_CURRENT_CLASS = "border-green bg-green text-white";

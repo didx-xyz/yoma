@@ -14,7 +14,9 @@ import {
 } from "~/components/YoID/YoIDSkeletons";
 import YoIDOpportunities from "~/components/Layout/YoIDOpportunities";
 import { OpportunityListItem } from "~/components/MyOpportunity/OpportunityListItem";
-import NoRowsMessage from "~/components/NoRowsMessage";
+import { IoCloseCircleOutline } from "react-icons/io5";
+import { TONE } from "~/components/Opportunity/TabbedDetails/DetailDisclosure";
+import { EmptyState } from "~/components/YoID/EmptyState";
 import { Pager } from "~/components/YoID/Pager";
 import {
   PAGER_SCROLL_MARGIN_CLASS,
@@ -115,14 +117,13 @@ const MyOpportunitiesRejected: NextPageWithLayout<{
         >
           {/* NO ROWS */}
           {!data?.items?.length && (
-            <div className="flex justify-center rounded-lg bg-white p-8 text-center">
-              <NoRowsMessage
-                title={"No declined opportunites found."}
-                description={
-                  "Any opportunities that have been declined will be listed here for your reference."
-                }
-              />
-            </div>
+            <EmptyState
+              variant="page"
+              icon={<IoCloseCircleOutline />}
+              toneClass={TONE.grey}
+              title="Nothing declined"
+              description="If an organisation doesn't approve a completion, you'll find it here."
+            />
           )}
 
           {/* GRID */}

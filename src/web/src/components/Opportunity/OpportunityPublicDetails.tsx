@@ -3,6 +3,7 @@ import type { AxiosError } from "axios";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { FaExclamationTriangle, FaInfoCircle } from "react-icons/fa";
 import { FcKey } from "react-icons/fc";
 import {
@@ -24,7 +25,6 @@ import {
   IoLocationOutline,
   IoPricetagsOutline,
   IoShieldCheckmarkOutline,
-  IoSparkles,
   IoStorefrontOutline,
   IoTimeOutline,
   IoTrashOutline,
@@ -62,6 +62,7 @@ import {
   typeBandClass,
   typeOutlineClass,
 } from "~/lib/typeColours";
+import { CelebrationIcon } from "~/components/Opportunity/CelebrationIcon";
 import { OpportunityCompletionEdit } from "~/components/Opportunity/OpportunityCompletionEdit";
 import {
   DIALOG_BODY,
@@ -1139,8 +1140,8 @@ const OpportunityPublicDetails: React.FC<{
             />
           </CustomModal>
 
-          {/* COMPLETE SUCCESS DIALOG — the detail page's language (Jason, 2026-10-21): the type's
-              tint behind an io5 icon, a Nunito heading, what happens next, one primary button */}
+          {/* COMPLETE SUCCESS DIALOG — the detail page's language (Jason, 2026-10-21): the
+              celebration icon, a Nunito heading, what happens next, one primary button */}
           <CustomModal
             isOpen={completeOpportunitySuccessDialogVisible}
             shouldCloseOnOverlayClick={false}
@@ -1164,17 +1165,9 @@ const OpportunityPublicDetails: React.FC<{
                 </button>
               </div>
               <div className="flex flex-col items-center gap-5 px-6 pb-8 text-center md:px-12">
-                {/* the balloon's circle pops in with a soft ring in the type colour, then the
-                    sparkle in the type colour wiggles twice; static under reduced motion */}
-                <div
-                  className={`${DIALOG_ICON_CIRCLE} ${typeOutlineClass(opportunityInfo.type)} bg-orange-light motion-safe:animate-bounce-once relative ring-4 ring-current/20`}
-                >
-                  <IoBalloon aria-hidden className="text-orange h-10 w-10" />
-                  <IoSparkles
-                    aria-hidden
-                    className="absolute -top-1 -right-1 h-6 w-6 motion-safe:animate-[wiggle_0.8s_ease-in-out_0.5s_2]"
-                  />
-                </div>
+                <CelebrationIcon
+                  icon={<IoBalloon className="text-pink h-10 w-10" />}
+                />
                 <div className="flex flex-col gap-2">
                   <h3 className={DIALOG_HEADING}>Submitted!</h3>
                   <p className="text-gray-dark text-sm md:text-base">
@@ -1196,7 +1189,7 @@ const OpportunityPublicDetails: React.FC<{
                       icon={<IoShieldCheckmarkOutline className="h-5 w-5" />}
                       toneClass={TONE.green}
                       title="Verification"
-                      note={`${opportunityInfo.organizationName} reviews what you sent. This usually takes 3–4 business days.`}
+                      note={`${opportunityInfo.organizationName} reviews what you sent, usually within 3–4 business days. We'll notify you once it's reviewed.`}
                     />
                     <DialogStep
                       icon={<IoIdCardOutline className="h-5 w-5" />}
@@ -1240,7 +1233,8 @@ const OpportunityPublicDetails: React.FC<{
             className={`md:max-h-[610px] md:w-[600px]`}
             animationStyle="rise"
           >
-            {isLoading && <Loading />}
+            {/* on <body>: the dialog box's entry transform would pin a fixed overlay to the box */}
+            {isLoading && createPortal(<Loading />, document.body)}
 
             <div className={DIALOG_BODY}>
               <div className="flex justify-end p-3">

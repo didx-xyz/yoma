@@ -79,6 +79,8 @@ export const OpportunityRow: React.FC<{
           alt=""
           width={40}
           height={40}
+          // straight from storage, like `AvatarImage`: the optimizer path failed on Stage
+          unoptimized
           className="h-10 w-10 object-contain"
         />
       ) : (

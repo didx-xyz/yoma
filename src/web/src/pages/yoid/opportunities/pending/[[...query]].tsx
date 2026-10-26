@@ -14,7 +14,9 @@ import {
 } from "~/components/YoID/YoIDSkeletons";
 import YoIDOpportunities from "~/components/Layout/YoIDOpportunities";
 import { OpportunityListItem } from "~/components/MyOpportunity/OpportunityListItem";
-import NoRowsMessage from "~/components/NoRowsMessage";
+import { IoTimeOutline } from "react-icons/io5";
+import { TONE } from "~/components/Opportunity/TabbedDetails/DetailDisclosure";
+import { EmptyState, FIND_OPPORTUNITIES } from "~/components/YoID/EmptyState";
 import { Pager } from "~/components/YoID/Pager";
 import {
   PAGER_SCROLL_MARGIN_CLASS,
@@ -115,14 +117,14 @@ const MyOpportunitiesPending: NextPageWithLayout<{
         >
           {/* NO ROWS */}
           {!data?.items?.length && (
-            <div className="flex justify-center rounded-lg bg-white p-8 text-center">
-              <NoRowsMessage
-                title={"You don't have any pending opportunities."}
-                description={
-                  "Once you've completed an opportunity, it will undergo verification and will be displayed here for your reference."
-                }
-              />
-            </div>
+            <EmptyState
+              variant="page"
+              icon={<IoTimeOutline />}
+              toneClass={TONE.gold}
+              title="Nothing waiting for verification"
+              description="When you submit a completion, it waits here while the organisation checks it, usually 3–4 business days."
+              action={FIND_OPPORTUNITIES}
+            />
           )}
 
           {/* GRID */}

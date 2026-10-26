@@ -14,7 +14,9 @@ import {
 } from "~/components/YoID/YoIDSkeletons";
 import YoIDOpportunities from "~/components/Layout/YoIDOpportunities";
 import { OpportunityListItem } from "~/components/MyOpportunity/OpportunityListItem";
-import NoRowsMessage from "~/components/NoRowsMessage";
+import { IoCheckmarkCircleOutline } from "react-icons/io5";
+import { TONE } from "~/components/Opportunity/TabbedDetails/DetailDisclosure";
+import { EmptyState, FIND_OPPORTUNITIES } from "~/components/YoID/EmptyState";
 import { Pager } from "~/components/YoID/Pager";
 import {
   PAGER_SCROLL_MARGIN_CLASS,
@@ -115,14 +117,14 @@ const MyOpportunitiesCompleted: NextPageWithLayout<{
         >
           {/* NO ROWS */}
           {!data?.items?.length && (
-            <div className="flex justify-center rounded-lg bg-white p-8 text-center">
-              <NoRowsMessage
-                title={"You haven't completed any opportunities yet."}
-                description={
-                  "Once you complete an opportunity, it will be proudly displayed here. Start your journey now and showcase your achievements by completing opportunities!"
-                }
-              />
-            </div>
+            <EmptyState
+              variant="page"
+              icon={<IoCheckmarkCircleOutline />}
+              toneClass={TONE.green}
+              title="No completions yet"
+              description="Complete an opportunity and once it's verified it shows here, in your Passport and on your CV."
+              action={FIND_OPPORTUNITIES}
+            />
           )}
 
           {/* GRID */}

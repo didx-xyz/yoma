@@ -4,13 +4,15 @@ import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Link from "next/link";
 import { type ReactElement } from "react";
+import { IoFlashOutline } from "react-icons/io5";
 import { UserSkillType } from "~/api/models/user";
 import { getUserSkills } from "~/api/services/user";
 import { AvatarImage } from "~/components/AvatarImage";
 import Suspense from "~/components/Common/Suspense";
 import YoID from "~/components/Layout/YoID";
-import NoRowsMessage from "~/components/NoRowsMessage";
+import { TONE } from "~/components/Opportunity/TabbedDetails/DetailDisclosure";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import { EmptyState, FIND_OPPORTUNITIES } from "~/components/YoID/EmptyState";
 import { YoIDBreadcrumb } from "~/components/YoID/YoIDBreadcrumb";
 import { INTRO_LINK_CLASS, YoIDIntro } from "~/components/YoID/YoIDIntro";
 import {
@@ -92,14 +94,14 @@ const MySkills: NextPageWithLayout<{
       >
         {/* NO ROWS */}
         {!data?.length && (
-          <div className="flex justify-center rounded-lg bg-white p-8 text-center">
-            <NoRowsMessage
-              title={"No completed skills found"}
-              description={
-                "Skills that you receive by completing opportunities will be displayed here."
-              }
-            />
-          </div>
+          <EmptyState
+            variant="page"
+            icon={<IoFlashOutline />}
+            toneClass={TONE.green}
+            title="No skills yet"
+            description="Each opportunity you complete adds the skills it taught you."
+            action={FIND_OPPORTUNITIES}
+          />
         )}
 
         {/* GRID — two columns on phones (tiles are two short lines, unlike the card pages'

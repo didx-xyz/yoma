@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import stamp1 from "public/images/stamp-1.png";
 import type { MouseEventHandler } from "react";
-import { IoIdCardOutline } from "react-icons/io5";
 import { formatNumber } from "~/features/discovery/lib/format";
 import {
   PILL_CLASS,
@@ -16,7 +15,7 @@ import {
   credentialTypeLabel,
   typeBadgeClass,
 } from "~/lib/typeColours";
-import NoRowsMessage from "../NoRowsMessage";
+import { EmptyState, FIND_OPPORTUNITIES } from "./EmptyState";
 import { YOID_TABS } from "./yoidTabs";
 
 /**
@@ -67,7 +66,7 @@ export const passportRows = (
 
 export const PassportCard: React.FC<{
   data: { schemaType: string; totalCount: number | null }[];
-  /** Called when a pill is followed (the user menu closes its drawer on a plain click). */
+  /** Called when a pill or the empty state's link is followed (the user menu closes its drawer on a plain click). */
   onClick?: MouseEventHandler<HTMLAnchorElement>;
 }> = ({ data, onClick }) => {
   // Check if data is null, empty, or if all counts are 0 or null
@@ -78,12 +77,11 @@ export const PassportCard: React.FC<{
 
   if (allCountsZero) {
     return (
-      <NoRowsMessage
-        title={""}
-        description={
-          "Every opportunity you complete adds a verified credential here."
-        }
-        icon={<IoIdCardOutline aria-hidden className="text-green h-5 w-5" />}
+      <EmptyState
+        title="No credentials yet"
+        description="Complete an opportunity to get a verified credential: proof of what you did."
+        action={FIND_OPPORTUNITIES}
+        onClick={onClick}
       />
     );
   }
