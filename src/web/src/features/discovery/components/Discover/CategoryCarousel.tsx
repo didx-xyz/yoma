@@ -102,10 +102,13 @@ export const CategoryCarousel: React.FC<{
           const inherited =
             !manual && effectiveFilters.categories.includes(category.id);
           // White, like the quick searches and the search bar (2026-10-08): the icons bring their own
-          // colours, which no tint or fill can be trusted to sit behind. Picked, a pill keeps its
-          // white and is outlined — green for this search, purple from preferences — with the
-          // outline INSIDE its edge (`inset-ring`), so it reads on the purple hero.
-          let tone = "border-gray hover:border-green bg-white text-black";
+          // colours, which no tint or fill can be trusted to sit behind — a green fill was tried and
+          // reverted (Jason, 2026-10-26). Picked, a pill keeps its white and is outlined — green for
+          // this search, purple from preferences — with the outline INSIDE its edge (`inset-ring`),
+          // so it reads on the purple hero. Hover is the light green tint with the green border, not
+          // the quick searches' green fill, for the same reason.
+          let tone =
+            "border-gray hover:border-green hover:bg-green-light bg-white text-black";
           if (manual)
             tone =
               "border-green inset-ring inset-ring-green bg-white text-green";
@@ -157,7 +160,7 @@ export const CategoryCarousel: React.FC<{
                 type="button"
                 aria-expanded={expanded}
                 onClick={() => setExpanded((e) => !e)}
-                className="border-gray hover:border-green text-gray-dark inline-flex min-h-8 shrink-0 items-center gap-1 rounded-full border bg-white px-3 text-xs font-semibold whitespace-nowrap"
+                className="border-gray hover:border-green hover:bg-green text-gray-dark inline-flex min-h-8 shrink-0 items-center gap-1 rounded-full border bg-white px-3 text-xs font-semibold whitespace-nowrap hover:text-white"
               >
                 {expanded ? (
                   <>

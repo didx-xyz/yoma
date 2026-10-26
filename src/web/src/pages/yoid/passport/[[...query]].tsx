@@ -6,7 +6,7 @@ import { useRouter } from "next/router";
 import { env } from "process";
 import { useEffect, useMemo, useState, type ReactElement } from "react";
 import { IoMdClose } from "react-icons/io";
-import { IoConstructOutline } from "react-icons/io5";
+import { IoConstructOutline, IoIdCardOutline } from "react-icons/io5";
 import Moment from "react-moment";
 import { toast } from "react-toastify";
 import {
@@ -27,7 +27,9 @@ import CredentialAttributes from "~/components/Credentials/CredentialAttributes"
 import { PassportCredentials } from "~/components/Credentials/PassportCredentials";
 import YoID from "~/components/Layout/YoID";
 import NoRowsMessage from "~/components/NoRowsMessage";
+import { TONE } from "~/components/Opportunity/TabbedDetails/DetailDisclosure";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import { EmptyState, FIND_OPPORTUNITIES } from "~/components/YoID/EmptyState";
 import { LoadMore } from "~/components/YoID/LoadMore";
 import { YoIDBreadcrumb } from "~/components/YoID/YoIDBreadcrumb";
 import { YoIDIntro } from "~/components/YoID/YoIDIntro";
@@ -348,14 +350,14 @@ const MyPassport: NextPageWithLayout<{
       >
         {/* NO ROWS */}
         {loaded === 0 && (
-          <div className="flex justify-center rounded-lg bg-white p-8 text-center">
-            <NoRowsMessage
-              title={"No credentials found"}
-              description={
-                "Credentials that you receive by completing opportunities will be displayed here. Please be aware credentials will take 24 hours to reflect."
-              }
-            />
-          </div>
+          <EmptyState
+            variant="page"
+            icon={<IoIdCardOutline />}
+            toneClass={TONE.lilac}
+            title="No credentials yet"
+            description="Complete an opportunity to get a verified credential: proof of what you did."
+            action={FIND_OPPORTUNITIES}
+          />
         )}
 
         {loaded > 0 && (

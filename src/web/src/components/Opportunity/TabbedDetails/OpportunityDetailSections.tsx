@@ -1101,6 +1101,8 @@ export const OpportunityDetailSections: React.FC<{
                 alt=""
                 width={36}
                 height={36}
+                // straight from storage, like `AvatarImage`: the optimizer path failed on Stage
+                unoptimized
                 className="h-9 w-9 shrink-0 rounded-full object-contain"
               />
             )}

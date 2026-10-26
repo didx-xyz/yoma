@@ -182,6 +182,8 @@ const OpportunityListItem: React.FC<{
             alt=""
             width={48}
             height={48}
+            // straight from storage, like `AvatarImage`: the optimizer path failed on Stage
+            unoptimized
             className={CARD_LOGO_CLASS}
           />
         )}

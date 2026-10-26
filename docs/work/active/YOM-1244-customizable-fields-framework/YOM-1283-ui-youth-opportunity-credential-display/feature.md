@@ -7,8 +7,8 @@
 - **Ticket**: [YOM-1283](https://linear.app/didx/issue/YOM-1283/ui-youth-opportunity-credential-display)
 - **Owner**: Jason
 - **Areas**: web
-- **Status**: review — 2026-10-20 → 10-22 rounds built and tested locally, uncommitted;
-  credential field check on Stage pending
+- **Status**: review — merged in #2004 (`1c2ee4ed0`) and on Stage; Stage-feedback fixes on
+  `fix/YOM-1283-stage-feedback`, uncommitted; credential field check on Stage pending
 - **Started**: 2026-08-13
 
 ## Problem / Goal
@@ -754,6 +754,65 @@ truncate`, centred, with "Verified Yo-ID" to its right in the same row (`shrink-
   **My Products is not a card** (Jason, same day: it is a list of results): a rail-style Nunito
   heading with its icon over the product grid / pending / empty panels, spanning the row.
   `YoIDTile` / `TileHeader` had no consumer left and are deleted.
+- 2026-10-26 (Jason, Stage feedback): **The Opportunities section opens on the summary
+  circles, whatever the data.** Supersedes 2026-10-22's "graph whenever it can draw one";
+  "See graph" still switches for the session. `hasChartData` is internal to `LineChart` again.
+  Its loading skeleton is two circles, not four (Jason, same day).
+- 2026-10-26 (Jason): **Empty states say what's missing, what fills it, and the next step.**
+  One `EmptyState` (`components/YoID/EmptyState.tsx`): the section's icon on its tint, a short
+  title, one line, and usually "Find opportunities →". `card` variant (dashed outline, icon
+  left) in the overview / drawer cards — Wallet, Passport, Skills and the not-enough-data graph;
+  `page` variant (centred, Nunito title) on Completed, Pending, Declined (no action), Saved,
+  Recently viewed, Skills, Passport and My Products ("Go to the marketplace →"). The collapsed
+  previews of empty Passport / Skills read "No credentials yet" / "No skills yet". Wallet's
+  page-2+ "no more products" panel is unchanged.
+- 2026-10-26 (Jason): **The top bar doesn't shift while it loads.** "Refer a friend" waits on
+  the runtime env, so the youth bar holds its place with a bone of the same width (174 px at
+  1440, measured) until the env answers; the avatar slot shows a 44 px bone while the session
+  or the profile loads. Bones are the bar's text colour at 20% (`navBone.tsx`), so they read on
+  every page theme. Measured under throttling: "Home" stays at x 376.5 through both swaps. Not
+  covered: "New to Yoma?" (referees only) is known only after the profile and the referee query,
+  so it still re-centres the links when it arrives (to 288).
+- 2026-10-26 (Jason): **Left drawer design pass.** One row style for every link, organisation
+  and admin row — Nunito 15 px semibold, 44 px tall, an io5 icon slot (`TabItem.iconElement`;
+  the desktop bar keeps its emoji chips), the current page on light grey with its icon in the
+  page theme; groups split by hairlines instead of daisyUI dividers; the close is the dialogs'
+  `DIALOG_CLOSE`; Logout full width; the footer sits at the drawer's foot. Organisation emoji
+  (🏢 🛠️ 📈) became io5 icons; the admin chevron rotates and the toggle carries
+  `aria-expanded`.
+- 2026-10-26 (Jason, second pass): **No skeletons for anonymous visitors.** The "Refer a friend"
+  bone shows only once the session is authenticated; while the session itself is loading, the
+  avatar slot holds its 44 px width with an empty box instead of a bone (the visitor may get the
+  sign-in button next). The signed-in profile wait keeps its avatar bone. **"New to Yoma?" gets
+  no reserved slot** (Jason): its late re-centring is accepted.
+- 2026-10-26 (Jason, second pass): **Card empty states have no icon** — the card's header
+  already carries the section's tinted icon, so a second one inside was nested; the `page`
+  variant keeps its icon (`EmptyState` props are a union, so a card can't be given one).
+  **The Opportunities section shows neither circles nor graph with no data**: when every count
+  (completed, pending, declined, saved) is zero, `OpportunitiesBody` shows the empty state
+  ("No opportunities yet") and drops the "See graph" toggle; the zero-circles prompt in
+  `OpportunitiesSummary` is gone. Same on the overview and in the drawer.
+- 2026-10-26 (Jason): **Idle chips fill green on hover** (`hover:bg-green`, white text) — the
+  Yo-ID hero tabs, sub-tabs, passport chips and the user menu's Profile / Settings / My
+  preferences (all `PILL_IDLE_CLASS`), and discovery's quick searches, category pills and "Show
+  all". A green border alone was lost on the purple hero. The category icons are self-contained
+  badges on their own circle, so they hold up on green.
+- 2026-10-26 (Jason): **Category pills are not filled green** — supersedes the category part of
+  the entry above. A green fill (tried for picked pills too) made the category icons look poor,
+  so picked stays white with the green inset outline, and hover is the light green tint
+  (`hover:bg-green-light`) with the green border. "Show all" (no icon) keeps the green fill.
+- 2026-10-26 (Jason): **The drawer's "Open … →" links get a little room above.** The drawer's
+  section bodies are a column with an 8 px gap (`bodyClassName`), so every "Open … →" line sits
+  8 px below its content (Skills 16, keeping its extra `mt-2` under the dense chips). Links
+  within one row ("Open Wallet →" / "What is ZLTO?") stay on that row. Measured at 1440.
+- 2026-10-26 (Jason, Stage): **Organisation logos load unoptimized.** On Stage the logos were
+  missing from the opportunity cards (discovery and Yo-ID). #2004 moved the Yo-ID cards from
+  `AvatarImage` (which sets `unoptimized`) to a plain `next/image` that goes through the
+  `/_next/image` optimizer, and the discovery card already did. The optimizer path is the
+  suspected failure (not reproduced locally; the cause on Stage is not confirmed), so every
+  organisation logo — `OpportunityCard`, `OpportunityRow`, `OpportunityListItem`,
+  `DetailHeaderCard`, the detail page's sticky title — now sets `unoptimized`, like
+  `AvatarImage` and the passport's `CredentialCard`. Needs a Stage check after deploy.
 
 ## Links
 
@@ -763,4 +822,5 @@ truncate`, centred, with "Verified Yo-ID" to its right in the same row (`shrink-
 - API contract: [YOM-1280](../YOM-1280-api-opportunity-credential-issuance-with-custom-fields/feature.md)
 - Siblings: [YOM-1281](../YOM-1281-ui-admin-credential-schema-management-by-type/feature.md) ·
   [YOM-1282](../YOM-1282-ui-opportunity-credential-schema-selection/feature.md)
-- Handoffs: [2026-08-18-a](./handoffs/2026-08-18-a.md) · [2026-10-20-a](./handoffs/2026-10-20-a.md)
+- Handoffs: [2026-08-18-a](./handoffs/2026-08-18-a.md) · [2026-10-20-a](./handoffs/2026-10-20-a.md) ·
+  [2026-10-26-a](./handoffs/2026-10-26-a.md)

@@ -68,6 +68,8 @@ const LogoSquare: React.FC<{ url: string | null }> = ({ url }) => (
         alt="Company Logo"
         width={76}
         height={76}
+        // straight from storage, like `AvatarImage`: the optimizer path failed on Stage
+        unoptimized
         className="h-full w-full object-contain"
       />
     ) : (
