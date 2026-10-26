@@ -383,6 +383,8 @@ is `multipart/form-data` with `CustomFields` as one JSON-encoded form field
   (staggered 0 / 300 / 600 ms), the green square pulses and the sparkle wiggles, all looping and
   `motion-safe` only. The submitted dialog's Verification step now ends "We'll notify you once
   it's reviewed."
+- 2026-10-26 (Jason): **Celebration icon animations removed** — supersedes the experimental entry
+  above. The confetti, circle and icon are all static; the colours and shapes stay.
 
 ## Links
 
