@@ -5,9 +5,9 @@
 - **Epic**: [YOM-1306](https://linear.app/didx/issue/YOM-1306)
 - **Owners**: Adrian (api) · Jason (web)
 - **Areas**: both (api-heavy; keycloak realm config; web last)
-- **Status**: planning
+- **Status**: in-progress — Local setup complete; implementation pending
 - **Started**: 2026-10-27
-- **Branch**: `feature/yom-1306-didxme-wallet-integration-wallet-lite` — docs only so far, not load-bearing
+- **Branch**: `feature/yom-1306-didxme-wallet-integration-wallet-lite` — planning, environment handover and API configuration placeholders
 
 ## Why This Epic Exists
 
@@ -22,27 +22,28 @@ the two Keycloaks via a JWT authorization grant). Aries CloudAPI stays as the fa
 per environment.
 
 The technical plan, provider mapping and open decisions are in [`plan.md`](./plan.md).
+The tested Local setup and SRE's once-off provisioning versus deployment configuration/secrets
+are in [`environment.md`](./environment.md). Local mono is currently stopped; data is preserved.
 
 ## Child Features
 
 | Folder | Ticket | Area | Status |
 | ------ | ------ | ---- | ------ |
-| — | — | — | — |
+| [Environment provisioning](./YOM-1307-provision-didxme-environments-for-yoma/feature.md) | [YOM-1307](https://linear.app/didx/issue/YOM-1307) | api / SRE | review |
+| [Identity federation](./YOM-1308-federate-yoma-identities-with-didxme-wallet-lite/feature.md) | [YOM-1308](https://linear.app/didx/issue/YOM-1308) | api + keycloak | in-progress |
+| Folder when implementation starts | [YOM-1309](https://linear.app/didx/issue/YOM-1309) | api | planning |
+| Folder when implementation starts | [YOM-1310](https://linear.app/didx/issue/YOM-1310) | web | planning |
 
-Tickets with no folder yet — create tickets, then folders, when work starts (proposed split, see
-`plan.md` § Phases):
-
-| Ticket | Area | Note |
-| ------ | ---- | ---- |
-| _tbc_ — Provider adapter | api | `Yoma.Core.Infrastructure.DidxMe` implementing `ISSIProviderClient`; provider switch in `Startup.cs`. The bulk of the work. |
-| _tbc_ — Identity federation | api + keycloak | Yoma realm audience mapper; didx:me user onboarding + IdP link per Yoma user; user-token exchange for wallet reads. |
-| _tbc_ — Environment provisioning | ops | One-time didx:me tenant / service registration / clients per Yoma environment; secrets into `appsettings.Local.json` / helm values (helm by request only). |
-| _tbc_ — Wallet view | web | Only if the wallet payload shape changes visibly (e.g. SD-JWT claims, didx:me deep link). May be zero work. |
+YOM-1306 is the canonical root. Adrian deleted the redundant YOM-1305; its early setup checkpoint
+is retained under YOM-1307. YOM-1309 owns the provider adapter and DI switch; YOM-1310 covers
+the participant wallet view if the API work exposes a visible gap.
 
 ## Shared Contract
 
-Everything every child depends on. Verified against mono source at `8ff9fcff` (see `plan.md` for
-file references) — **not yet verified against a running didx:me**, see Blockers.
+Everything every child depends on. Source analysis used mono at `8ff9fcff` (see `plan.md`).
+Local tenant/client provisioning, issuer tokens and the JWT grant were subsequently verified
+against the running stack; see [environment verification](./environment.md#local-federation-contract).
+Participant onboarding, credential issuance and the finished Yoma journey remain unverified.
 
 **Tenant model**
 
@@ -58,11 +59,13 @@ file references) — **not yet verified against a running didx:me**, see Blocker
 
 - Yoma Keycloak (realm `yoma`) is registered in didx:me as a `jwt-authorization-grant` identity
   provider (`yoma-idp`) with client `yoma-federated-lite` in the didx:me `consumers` realm.
-- Yoma access tokens must carry an extra audience: the didx:me consumers realm issuer URL. This
-  is a realm export change in `src/keycloak/exports/01-yoma-realm.yaml` (audience protocol mapper).
+- The assertion must have exactly one audience: the didx:me consumers realm issuer URL.
+  The Local grant rejects multiple audiences, so adding another audience to an ordinary Yoma
+  web token is insufficient. YOM-1308 must settle how Yoma acquires this dedicated assertion;
+  no permanent Yoma realm/client changes were retained from the protocol test.
 - Per user, Yoma onboards the user into didx:me (`externalIdentifier` = Yoma KC `sub`) and enables
-  the IdP link. After that, a Yoma user token can be exchanged (RFC 7523 JWT bearer grant) for a
-  didx:me user token scoped to tenant `yoma`.
+  the IdP link. A correctly scoped, signed Yoma assertion can then be exchanged (RFC 7523 JWT
+  bearer grant) for a didx:me user token scoped to tenant `yoma`.
 
 **Token roles**
 
@@ -89,18 +92,25 @@ file references) — **not yet verified against a running didx:me**, see Blocker
 
 | Blocker | Severity | Note |
 | ------- | -------- | ---- |
-| No didx:me environment to integrate against | High | Local mono stack brought up on 2026-10-27 but the issuer (`me-creds-api`) needs Paradym, which needs 1Password/ECR access or a hosted Paradym API key the Yoma team does not hold. Stack torn down. Unblocks: hosted Paradym key, or a DIDx dev environment with a `yoma` tenant and the four client secrets. |
-| Local-dev networking | Med | didx:me Keycloak must fetch Yoma's JWKS from inside its cluster; local Yoma KC is `http://keycloak:8080` in docker-compose. Needs `host.docker.internal` or similar when both run locally. |
+| Application assertion acquisition | High | Local JWT grant works with a dedicated single-audience assertion; ordinary Yoma web tokens have multiple audiences. Route to be settled in YOM-1308. |
+| Adapter data-model decisions | High | Background Replay operations and issuer/wallet credential IDs remain open in `plan.md` § 5. |
+
+The prior Local environment and JWKS-networking blockers are resolved on Adrian's machine:
+ECR/Paradym, tenant/clients and cross-stack JWKS all passed. The standalone stack is deliberately
+stopped pending the next instruction. Dev still needs SRE provisioning and environment-specific
+Helm values/secret references; no Dev changes have started.
 
 ## Cross-Area Notes
 
 - **API (Adrian)**: new infrastructure project, `AppSettings` field, `TenantRequest` gains the
   Yoma KC user id for holders, provider switch in `Startup.cs`. No change to public API contracts
   is planned; `/ssi/wallet/*` shapes stay as they are unless the SD-JWT claims force it.
-- **Keycloak**: realm export gains one protocol mapper (audience). Must match the `issuer` value
-  registered in didx:me exactly (`http://keycloak:8080/realms/yoma` locally; the public URL in
-  deployed environments).
+- **Keycloak**: preserve the exact Yoma issuer registered in didx:me
+  (`http://keycloak:8080/realms/yoma` locally), and separately ensure the assertion's sole audience
+  equals the consumers issuer. The acquisition/client mapper strategy is still pending.
 - **Web (Jason)**: `/yoid/passport` continues to read from the Yoma API. Revisit only if the
   provider changes the `Credential` attribute set or we want a "open in didx:me" affordance.
 - **Helm / CI**: new secrets (`DidxMe` config section) will be needed per environment — raise
   with whoever owns `helm/`; not edited by this epic unless asked.
+- **Session close**: see [branch consolidation](./handoffs/2026-10-27-c.md). Adrian authorized
+  committing/pushing this setup/planning consolidation; implementation and Dev work are deferred.

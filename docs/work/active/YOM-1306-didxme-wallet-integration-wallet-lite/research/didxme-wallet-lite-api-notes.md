@@ -1,8 +1,9 @@
 # didx:me Wallet-Lite (federated route) — API notes for Yoma
 
-Condensed from reading the `mono` repo at `8ff9fcff` (2026-10-27). Nothing here has been
-exercised against a running didx:me yet; the local stack never got as far as the issuer (see the
-epic README's Blockers). Paths are relative to the mono repo. `H` = ingress base
+Condensed from reading the `mono` repo at `8ff9fcff` (2026-10-27). Subsequent Local setup verified
+tenant/client provisioning, issuer tokens and a dedicated single-audience JWT grant; credential
+issuance/onboarding acceptance remains pending. See [the environment runbook](../environment.md).
+Paths are relative to the mono repo. `H` = ingress base
 (`https://didx.127.0.0.1.nip.io` locally). Every service mounts its OpenAPI at `<base>/api/openapi.json`
 and a generated copy lives in `packages/generated/<service>-client/openapi.json`.
 
@@ -15,11 +16,14 @@ and a generated copy lives in `packages/generated/<service>-client/openapi.json`
 | USER | `POST H/iam/realms/consumers/protocol/openid-connect/token`, `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer`, `client_id=yoma-federated-lite`, `client_secret=…`, `assertion=<Yoma user access token>` | `sub` = didx:me user, `tenantAlias=yoma`, `aud` ⊇ `me-wallet-api` |
 
 Assertion requirements for the USER exchange (`apps/me/consumer-onboarding-api/test/external/jwt-auth-grant-e2e.test.ts`):
-`iss` byte-equal to the IdP `issuer`; `aud` contains the didx:me consumers realm issuer URL
+`iss` byte-equal to the IdP `issuer`; `aud` is exactly the didx:me consumers realm issuer URL
 (`H/iam/realms/consumers`); `sub` equals the `externalIdentifier` stored for the user (the
 federated identity link is `identityProvider=yoma-idp, userId=<externalIdentifier>`); signed by a
 key published at the registered `jwksUrl`. The IdP type is `jwt-authorization-grant`
 (Keycloak feature flag `jwt-authorization-grant`, enabled in mono's Keycloak).
+
+Local verification rejected multi-audience assertions. Ordinary Yoma web tokens cannot be
+forwarded directly; YOM-1308 must settle acquisition of a dedicated single-audience assertion.
 
 ## (a) One-time provisioning per environment — PH-admin
 
@@ -33,7 +37,7 @@ Source: `apps/product-hub/hub-management-api/src/domain/{tenants,service-registr
 4. `POST H/hub-management/api/clients` `{"tenantAlias":"yoma","service":"me-creds"}` → 201 `{clientId:"yoma-me-creds", clientSecret}` → ORG credentials.
 5. `POST H/hub-management/api/federated-lite-clients` `{"tenantAlias":"yoma","issuer":"<Yoma realm issuer URL>","jwksUrl":"<JWKS URL reachable from inside the didx:me cluster>"}` → 201 `{clientId:"yoma-federated-lite", clientSecret, idpAlias:"yoma-idp"}`.
    Creates, in the consumers realm, IdP `yoma-idp` and client `yoma-federated-lite` with mappers `tenantAlias=yoma` and `aud=me-wallet-api`. 409 if it already exists; `GET …?tenantAlias=yoma` to read back, `DELETE /{id}` to remove.
-6. In **Yoma Keycloak**: audience mapper `included.custom.audience = H/iam/realms/consumers` on the client whose tokens will be exchanged.
+6. In **Yoma Keycloak**: the assertion client/route must produce the sole audience `H/iam/realms/consumers`. An additional mapper on an ordinary multi-audience web token is insufficient; application acquisition is still pending.
 
 ## (b) Per Yoma user — ORG token
 

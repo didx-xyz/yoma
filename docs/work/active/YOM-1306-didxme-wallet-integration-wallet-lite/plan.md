@@ -4,6 +4,11 @@ High-level plan for [YOM-1306](./README.md). Decisions that affect every child l
 README's Shared Contract; this file holds the how. Source references: Yoma at `bdba92a10`
 (`master`, 2026-10-27), didx:me `mono` at `8ff9fcff`. All mono paths are relative to that repo.
 
+Local setup and protocol checks are now complete on Adrian's machine; the stack is currently
+stopped with data preserved. See [the environment runbook](./environment.md) and
+[setup handoff](./handoffs/2026-10-27-b.md). The single-audience assertion finding below updates
+the original source-only federation proposal; adapter implementation has not started.
+
 ## 1. What didx:me offers (as far as Yoma cares)
 
 Four HTTP services behind one ingress, two Keycloak realms in one Keycloak:
@@ -17,12 +22,12 @@ Four HTTP services behind one ingress, two Keycloak realms in one Keycloak:
 
 - **ORG token** = client credentials for `yoma-me-creds` (realm `product-hub`). Carries
   `tenantAlias=yoma`, audiences `me-wallet-api` + `me-creds-api`.
-- **USER token** = consumers-realm token obtained by exchanging a Yoma user access token via
+- **USER token** = consumers-realm token obtained by exchanging a dedicated Yoma assertion via
   RFC 7523 (`grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer`, `client_id=yoma-federated-lite`,
-  `assertion=<Yoma access token>`). Carries `tenantAlias=yoma`, `aud=me-wallet-api`, and the
+  `assertion=<single-audience Yoma assertion>`). Carries `tenantAlias=yoma`, `aud=me-wallet-api`, and the
   didx:me user's `sub`. me-wallet-api filters everything by `tenantAlias`, so Yoma only ever sees
   Yoma-issued credentials.
-- The real issuer engine behind `me-creds-api` is **Paradym** (hosted). Credential format is
+- The real issuer engine behind `me-creds-api` is **Paradym** (Local stack or hosted). Credential format is
   **SD-JWT VC** (`vc+sd-jwt`), delivered over OpenID4VCI. There is no AnonCreds here.
 
 Endpoint shapes, payloads and the numbered acceptance sequence are in
@@ -73,10 +78,11 @@ a second column if revocation is needed. Decide in the adapter ticket.
 
 **Keycloak** (`src/keycloak`)
 
-- `exports/01-yoma-realm.yaml`: audience protocol mapper on the client whose user tokens the API
-  exchanges, `included.custom.audience = <didx:me consumers realm issuer URL>`, access token only.
-  The realm `issuer` must byte-match what is registered in didx:me (`http://keycloak:8080/realms/yoma`
-  locally).
+- Assertion acquisition/client configuration must produce exactly one audience, the didx:me
+  consumers realm issuer. Simply adding an audience mapper to existing Yoma web tokens fails
+  the tested grant. YOM-1308 owns the route decision; no realm export change is included yet.
+  The Yoma assertion issuer must match the registered issuer (`http://keycloak:8080/realms/yoma`
+  locally); the separately reachable JWKS URL uses `host.docker.internal` from mono.
 
 **Web** (`src/web`)
 
@@ -89,7 +95,7 @@ a second column if revocation is needed. Decide in the adapter ticket.
 1. **Provider adapter (api)** — `Yoma.Core.Infrastructure.DidxMe`, provider switch, `TenantRequest`
    field, schema seeding against presets, issuance via org-push, unit tests against stubs.
    Deliverable without a live environment.
-2. **Identity federation (api + keycloak)** — audience mapper, onboarding + IdP link in
+2. **Identity federation (api + keycloak)** — dedicated assertion route, onboarding + IdP link in
    `EnsureTenant`, JWT-grant exchange + wallet reads in request context. Needs a live didx:me to
    prove; the Keycloak side can be prepared blind.
 3. **Environment provisioning (ops)** — scripted one-time setup per environment (tenant
@@ -100,7 +106,9 @@ a second column if revocation is needed. Decide in the adapter ticket.
    Replay delete/re-issue.
 5. **Wallet view (web)** — only if phase 4 shows a visible gap.
 
-Phase 1 can start now. Phases 2–4 wait on the environment blocker.
+Local environment provisioning is complete and the JWT grant/issuer token checks passed.
+Phase 1 remains planned; phase 2 still needs the application assertion route and real participant
+journey. Full issuance/Replay validation and deployed Dev provisioning remain future work.
 
 ## 5. Open decisions
 
@@ -111,14 +119,15 @@ Phase 1 can start now. Phases 2–4 wait on the environment blocker.
 | 3 | Schema versioning on write-once presets | version in preset `code` vs `type` URN | `code` suffix `-v<n>`; `type` derived from it |
 | 4 | Mapping SD-JWT `claims{}` back to flat `Credential.Attributes` | flatten nested keys with `.` vs reject nested presets | Yoma schemas are flat today; keep presets flat, no nesting |
 | 5 | One `yoma` tenant vs tenant per Yoma org | — | one tenant (Shared Contract); revisit only if DIDx wants per-org issuer DIDs |
+| 6 | How Yoma acquires a dedicated single-audience assertion | Dedicated client/bridge or another supported Keycloak route, to be evaluated in YOM-1308 | Do not forward ordinary multi-audience web tokens; no route selected yet |
 
 ## 6. Local development
 
-- didx:me local stack: `mono` repo, `mise run tilt:up -- me hub-management-api consumer-onboarding-api ext-kc`.
-  Brought up once on 2026-10-27 on WSL2 (needs `~/.local/bin` shims for `python3`, `unzip`,
-  `rsync`, `envsubst`; no sudo) — everything except the issuer path works without Paradym.
-  Torn down; see handoff for the exact recipe and gotchas.
-- Yoma pointing at it: `DidxMe` section in `appsettings.Local.json` with base URL
-  `https://didx.127.0.0.1.nip.io`, CA `tools/tilt/infra/istio/ca.crt` trusted by the .NET process,
-  and the four secrets from provisioning. Yoma's Keycloak must be reachable from inside the kind
-  cluster for JWKS fetch.
+- Adrian's standalone mono stack runs through a Linux tools container and Tilt/Kind, with source
+  groups `me-platform-backend paradym ext-kc`. Local issuer and shared services passed health
+  checks. It is now stopped with containers/volumes retained. Start/status/stop helpers and exact
+  ports are documented in [environment.md](./environment.md#local-operations).
+- `DidxMe` placeholders are in tracked API settings; the ignored Local settings have direct
+  host-forward API URLs and the two generated client secrets. No provider is activated yet.
+  Future HTTPS ingress use needs explicit CA trust in the API process; Windows trust was not
+  modified. SRE owns once-off Dev setup plus Dev Helm values and secret references.
