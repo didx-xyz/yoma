@@ -33,7 +33,7 @@ the BA field map is approved.
 ## Tasks
 
 - [x] Prepare the Production-first completion-counter hotfix from released `current`: separate metadata writes from completion/reward totals and reuse opt-in tracking cleanup at owning completion transaction boundaries. See [2026-10-28 handoff](./handoffs/2026-10-28-a.md).
-- [ ] Adrian reviews the uncommitted hotfix, completes the current PR/release workflow, and forwards the focused change to master for Stage. Historical aggregate audits/repairs are a separate, explicitly approved operation.
+- [ ] Complete the current release after merged PR #2008: merge the CsvHelper 33.1.0 package correction first, then cut the Production release and forward-port to master/Stage. CsvHelper 34 migration and historical data audit/repair are separate follow-ups.
 
 - [x] Add definition, option and value entities, mappings, indexes and migrations.
 - [x] Add definition discovery for generic and Opportunity-type contexts.
@@ -50,6 +50,8 @@ the BA field map is approved.
 - [ ] Re-run end-to-end API, CSV and partner mapping validation against the final definitions.
 
 ## Decisions
+
+- 2026-10-28 release review: defer the CsvHelper 34 rewrite to separately tested master/Stage work. Its namespaces, generated mapping, reader/writer APIs and behavior differ from 33; the unadapted upgrade does not compile. The Production correction restores only CsvHelper 33.1.0 and preserves all counter fixes and other committed package patches.
 
 - 2026-10-28 review: ordinary metadata batches and dedicated tracking-total batches query tracked entities and rely on EF change detection plus SaveChangesAsync. No UpdateRange or manual IsModified filtering is needed; the existing central transaction-boundary cleanup handles rollback/retry state. Entity-to-domain copy-back keeps returned models aligned with the loaded totals without making metadata saves total writers.
 
