@@ -40,7 +40,7 @@ not repeated here to keep this file stable.
 
 | Method | didx:me realisation | Notes |
 | ------ | ------------------- | ----- |
-| `UpsertSchema`, `ListSchemas`, `GetSchemaBy*` | me-creds **preset** `POST/GET /v1/presets/credentials`, id `yoma:<code>` | Presets are write-once (409 on same `type`). "New version on same name" → encode the version in the preset `code` (`<name>-v<n>`) and keep the Yoma `SSISchema` row as the source of truth for name/version. `ArtifactType` is always `JWS`-equivalent; reject `ACR` requests. |
+| `UpsertSchema`, `ListSchemas`, `GetSchemaBy*` | me-creds **preset** `POST/GET /v1/presets/credentials`, id `yoma:<code>` | Presets are write-once (409 on same `type`). Encode versions in preset `code` (`<name>-v<n>`) while preserving the immutable Yoma schema/version contract. Both YoID and opportunities must issue SD-JWT; simply rejecting today's YoID `ACR` selector is insufficient. Format/preset translation needs an explicit adapter design. |
 | `EnsureTenant` (role `Holder`) | `POST /consumer-onboarding/api/users {username, externalIdentifier}` then `PATCH /users/{username}/idp-link {enabled:true}` | Needs the Yoma KC user id → **`TenantRequest` gains a field for it** (populated from `User.ExternalId` in `SSIBackgroundService.ProcessTenantCreation`). Returns tenant id = `externalIdentifier`. Idempotent. |
 | `EnsureTenant` (roles incl. `Issuer`) | No-op returning the organisation referent | A single `yoma` issuer; org identity lives in claims. |
 | `IssueCredential` | `POST /me-creds/api/v1/issuances {credentials:[{reference:"presetId:yoma:<code>", attributes}]}` → `offerUri` → `POST /me-wallet/api/v2/orgs/credentials {credentialOffer, recipient:<holder tenant id>, identifierType:"externalIdentifier"}` with `x-approve-credential: true` | Org push; no user token needed. Returned `Credential.Id` = me-creds issuance/credential id (issuer side). |
@@ -51,9 +51,10 @@ not repeated here to keep this file stable.
 ### Id namespaces
 
 Two ids exist per credential: the issuer-side me-creds credential id and the wallet-side
-me-wallet credential id. `SSICredentialIssuance.CredentialId` can hold only one. Proposed: store
-the **wallet id** (what the user sees and what delete/accept act on), and keep the me-creds id as
-a second column if revocation is needed. Decide in the adapter ticket.
+me-wallet credential id. `SSICredentialIssuance.CredentialId` can hold only one. Preserve the
+domain's credential identity contract and maintain both provider IDs/correlation in infrastructure.
+No domain column or storage design is selected in this scaffold. Decide this with recovery and
+Replay in YOM-1309.
 
 ## 3. Yoma-side changes
 
@@ -69,9 +70,9 @@ a second column if revocation is needed. Decide in the adapter ticket.
   `Configure_InfrastructureDatabaseSSIProvider()`. Fully-qualify `Infrastructure.X.Startup.*`
   calls (the two Startup classes collide on name).
 - `TenantRequest` gains the Yoma KC user id (holder only). Only the AriesCloud adapter ignores it.
-- Local store: AriesCloud keeps an EF schema for JWS/connections; didx:me needs at most a
-  `CredentialId ↔ me-creds id` map. Prefer a column on `SSICredentialIssuance` over a second
-  DbContext if that suffices.
+- Infrastructure persistence must cover correlation and uncertain issue/delivery outcomes as
+  well as schema/preset mappings. Decide storage before implementing mutations; a local lookup
+  cannot alone recover provider success that was never saved locally.
 - Register in `Yoma.Core.sln` and `Yoma.Core.Api.csproj`. Tests next to
   `src/test/Yoma.Core.Test/SSI/AriesCredentialIssuanceTests.cs` using Flurl `HttpTest` stubs
   hand-written from mono's generated OpenAPI (`packages/generated/*/openapi.json`).
@@ -114,7 +115,7 @@ journey. Full issuance/Replay validation and deployed Dev provisioning remain fu
 
 | # | Question | Options | Leaning |
 | - | -------- | ------- | ------- |
-| 1 | Background jobs that need a user-scoped wallet operation (Replay delete, `GetCredentialByIdOrNull`) | (A) Enable `token-exchange` in Yoma KC and impersonate the user to mint an assertion; (B) issuer-side revoke + a local "superseded" flag instead of wallet delete; (C) ask DIDx for an org-scoped delete on `/v2/orgs/credentials` | B is self-contained; A needs a KC feature flag and a trusted client; C depends on DIDx roadmap |
+| 1 | Background jobs that need a user-scoped wallet operation (Replay delete, `GetCredentialByIdOrNull`) | Supported delegated holder access from infrastructure, or a platform org-scoped operation satisfying the same holder/delete contract | Preserve existing semantics. Revoke plus a local superseded flag is not a transparent deletion replacement. Validate the approved auth/platform route first. |
 | 2 | Which id `SSICredentialIssuance.CredentialId` stores | wallet id vs me-creds id | wallet id (user-facing, what delete acts on); add me-creds id column if revoke is needed |
 | 3 | Schema versioning on write-once presets | version in preset `code` vs `type` URN | `code` suffix `-v<n>`; `type` derived from it |
 | 4 | Mapping SD-JWT `claims{}` back to flat `Credential.Attributes` | flatten nested keys with `.` vs reject nested presets | Yoma schemas are flat today; keep presets flat, no nesting |

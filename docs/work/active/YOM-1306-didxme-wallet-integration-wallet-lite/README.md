@@ -11,7 +11,9 @@
 
 ## Why This Epic Exists
 
-Yoma issues verifiable credentials through Aries CloudAPI. Those wallets are Yoma-internal: a youth
+Yoma currently uses its AriesCloud infrastructure for credential issuance. JWS credentials and
+their schemas are stored in Yoma; Aries provides JWS signing. YoID currently uses AnonCreds.
+The current wallet experience is Yoma-internal: a youth
 can see their credentials on `/yoid/passport` but nowhere else, and no other service can ask for
 them. didx:me gives every participant a real, user-owned wallet (the didx:me app) that other
 ecosystem services already target. This epic makes didx:me a selectable SSI provider behind Yoma's
@@ -31,7 +33,7 @@ are in [`environment.md`](./environment.md). Local mono is currently stopped; da
 | ------ | ------ | ---- | ------ |
 | [Environment provisioning](./YOM-1307-provision-didxme-environments-for-yoma/feature.md) | [YOM-1307](https://linear.app/didx/issue/YOM-1307) | api / SRE | review |
 | [Identity federation](./YOM-1308-federate-yoma-identities-with-didxme-wallet-lite/feature.md) | [YOM-1308](https://linear.app/didx/issue/YOM-1308) | api + keycloak | in-progress |
-| Folder when implementation starts | [YOM-1309](https://linear.app/didx/issue/YOM-1309) | api | planning |
+| [Provider adapter](./YOM-1309-use-didxme-for-yoma-wallets-and-credential-issuance/feature.md) | [YOM-1309](https://linear.app/didx/issue/YOM-1309) | api | in-progress |
 | Folder when implementation starts | [YOM-1310](https://linear.app/didx/issue/YOM-1310) | web | planning |
 
 YOM-1306 is the canonical root. Adrian deleted the redundant YOM-1305; its early setup checkpoint
@@ -80,6 +82,13 @@ Participant onboarding, credential issuance and the finished Yoma journey remain
 - New `AppSettings.SSIProvider` (`AriesCloud` | `DidxMe`), default `AriesCloud`. The three hooks in
   `Yoma.Core.Api/Startup.cs` branch on it. Schemas for the selected provider must be seeded before
   issuance (existing contract in `SSIBackgroundService` remarks).
+- Preserve the domain interfaces, scheduling and Replay semantics. didx:me adapts inside its
+  infrastructure, using Flurl directly with no SDK. Token caches, schema/preset translation,
+  credential ID mappings and recovery state belong there. Extend shared requests only for
+  genuinely missing provider-neutral information. Revocation does not replace holder deletion.
+- The initial project/authentication scaffold is not referenced or called by the API. Aries
+  remains active; provider selection/DI hookup comes later. See the
+  [scaffold handoff](./YOM-1309-use-didxme-for-yoma-wallets-and-credential-issuance/handoffs/2026-10-28-a.md).
 
 ## Out of Scope (whole epic)
 

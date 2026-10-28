@@ -25,6 +25,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\application\Yoma.Core.Api\Yoma.Core.Api.csproj" />
     <ProjectReference Include="..\..\domain\Yoma.Core.Domain\Yoma.Core.Domain.csproj" />
+    <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.DidxMe\Yoma.Core.Infrastructure.DidxMe.csproj" />
   </ItemGroup>
 
   <!-- Keep runner configuration available to unit tests. -->
