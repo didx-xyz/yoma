@@ -960,7 +960,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           await FinalizeVerification(user, opportunity, VerificationStatus.Completed, options);
 
           scope.Complete();
-        });
+        }, true); // Retry the whole instant completion with fresh EF state after rollback.
 
         await _delayedExecutionService.FlushAsync();
       }
@@ -1280,7 +1280,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             await FinalizeVerification(user, opportunity, VerificationStatus.Completed, options);
 
           scope.Complete();
-        });
+        }, true); // Owns the partner-import transaction, including nested completion allocation.
 
         await _delayedExecutionService.FlushAsync();
 
@@ -1412,7 +1412,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             await ProcessImportVerification(request, dto, false);
 
           scope.Complete();
-        });
+        }, true); // The commit pass needs the same retry cleanup as validation probes.
 
         await _delayedExecutionService.FlushAsync();
       }
@@ -1721,6 +1721,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       NotificationType? notificationType = null;
       Models.MyOpportunity item = null!;
       var isNoOp = false;
+      var ownsTransaction = Transaction.Current == null;
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted();
@@ -1796,7 +1797,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         item = await _myOpportunityRepository.Update(item);
 
         scope.Complete();
-      });
+      }, ownsTransaction); // Standalone approvals may roll back and continue with another batch item.
 
       // Idempotent no-op path: nothing changed, no notifications / events
       if (isNoOp) return;

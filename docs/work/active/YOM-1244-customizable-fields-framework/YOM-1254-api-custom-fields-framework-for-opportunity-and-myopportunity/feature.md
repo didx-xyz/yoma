@@ -32,6 +32,9 @@ the BA field map is approved.
 
 ## Tasks
 
+- [x] Prepare the Production-first completion-counter hotfix from released `current`: separate metadata writes from completion/reward totals and reuse opt-in tracking cleanup at owning completion transaction boundaries. See [2026-10-28 handoff](./handoffs/2026-10-28-a.md).
+- [ ] Adrian reviews the uncommitted hotfix, completes the current PR/release workflow, and forwards the focused change to master for Stage. Historical aggregate audits/repairs are a separate, explicitly approved operation.
+
 - [x] Add definition, option and value entities, mappings, indexes and migrations.
 - [x] Add definition discovery for generic and Opportunity-type contexts.
 - [x] Add typed validation, normalization and lookup-backed options.
@@ -47,6 +50,10 @@ the BA field map is approved.
 - [ ] Re-run end-to-end API, CSV and partner mapping validation against the final definitions.
 
 ## Decisions
+
+- 2026-10-28 review: ordinary metadata batches and dedicated tracking-total batches query tracked entities and rely on EF change detection plus SaveChangesAsync. No UpdateRange or manual IsModified filtering is needed; the existing central transaction-boundary cleanup handles rollback/retry state. Entity-to-domain copy-back keeps returned models aligned with the loaded totals without making metadata saves total writers.
+
+- 2026-10-28: Production `v3.13.6` still permits stale metadata snapshots to overwrite counters and retains accepted EF values after rollback in completion paths that do not opt into cleanup. Keep the central handler and its global default unchanged. Use opt-in tracking-total capabilities composed into derived generic repository interfaces; all affected injection, registrations and consumers use the utmost derived type. Base repository contracts stay unchanged, with no default throwing methods or entity-specific repository interfaces. Preserve totals in metadata saves, and enable existing cleanup at the owning transaction boundaries (not nested allocation scopes). The September reconciliation remains a one-time historical repair, not an ongoing safeguard; no new data migration or live repair is included. Master still requires a forward-port after the Production-first hotfix.
 
 - 2026-09-15: Skip only `SeedCustomFields` in the undeployed consolidated migration for the cash-out-first release. Keep all other seeds and the sample helper intact. Existing Local/Dev databases are not cleaned by this edit; newly migrated Stage/Production databases receive no sample definitions. After this migration ships, introduce approved fields through a new migration, not by re-enabling this call.
 - 2026-09-07: The existing CSV rollback/EF-state fix does not repair historical data. Add a separate, data-only migration counting persisted completed verifications across all opportunities, correcting both undercounts and overcounts. Preserve existing null/zero values when no completions exist; leave ZLTO and all other fields unchanged. `Down` must not restore corrupt counters. Production was manually reconciled today and Adrian reported an empty follow-up audit; continue monthly audits and checks immediately after notified CSV imports until CF is deployed. See the [handoff](./handoffs/2026-09-07-a.md).

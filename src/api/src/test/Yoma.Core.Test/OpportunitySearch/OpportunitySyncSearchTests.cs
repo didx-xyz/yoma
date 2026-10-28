@@ -110,7 +110,7 @@ namespace Yoma.Core.Test.OpportunitySearch
       internal List<OpportunityModel> Items { get; } = [];
       internal Dictionary<Guid, SyncInfoEntity?> Info { get; } = [];
       internal Mock<ISyncStateService> Sync { get; } = new();
-      internal Mock<IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<OpportunityModel>> Repository { get; } = new();
+      internal Mock<IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilterAndTrackingTotals<OpportunityModel>> Repository { get; } = new();
       internal OpportunityService Service { get; }
 
       internal Fixture()

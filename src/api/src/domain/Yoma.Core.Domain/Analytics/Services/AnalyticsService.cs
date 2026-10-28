@@ -48,13 +48,13 @@ namespace Yoma.Core.Domain.Analytics.Services
     private readonly OrganizationSearchFilterYouthValidator _organizationSearchFilterYouthValidator;
     private readonly OrganizationSearchFilterSSOValidator _organizationSearchFilterSSOValidator;
 
-    private readonly IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Opportunity.Models.Opportunity> _opportunityRepository;
+    private readonly IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilterAndTrackingTotals<Opportunity.Models.Opportunity> _opportunityRepository;
     private readonly IRepositoryBatchedWithNavigationAndCustomFieldFilter<MyOpportunity.Models.MyOpportunity> _myOpportunityRepository;
     private readonly IRepository<OpportunityCategory> _opportunityCategoryRepository;
     private readonly IRepository<OpportunitySkill> _opportunitySkillRepository;
     private readonly IRepositoryBatchedValueContains<Lookups.Models.Skill> _skillRepository;
     private readonly IRepository<UserLoginHistory> _userLoginHistoryRepository;
-    private readonly IRepositoryBatchedValueContainsWithNavigation<Organization> _organizationRepository;
+    private readonly IRepositoryBatchedValueContainsWithNavigationAndTrackingTotals<Organization> _organizationRepository;
     private readonly IRepository<SSICredentialIssuance> _ssiCredentialIssuanceRepository;
     private readonly IRepository<OpportunityCountry> _opportunityCountryRepository;
 
@@ -93,13 +93,13 @@ namespace Yoma.Core.Domain.Analytics.Services
         OrganizationSearchFilterYouthValidator organizationSearchFilterYouthValidator,
         OrganizationSearchFilterSSOValidator organizationSearchFilterSSOValidator,
 
-        IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Opportunity.Models.Opportunity> opportunityRepository,
+        IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilterAndTrackingTotals<Opportunity.Models.Opportunity> opportunityRepository,
         IRepositoryBatchedWithNavigationAndCustomFieldFilter<MyOpportunity.Models.MyOpportunity> myOpportunityRepository,
         IRepository<OpportunityCategory> opportunityCategoryRepository,
         IRepository<OpportunitySkill> opportunitySkillRepository,
         IRepositoryBatchedValueContains<Lookups.Models.Skill> skillRepository,
         IRepository<UserLoginHistory> userLoginHistoryRepository,
-        IRepositoryBatchedValueContainsWithNavigation<Organization> organizationRepository,
+        IRepositoryBatchedValueContainsWithNavigationAndTrackingTotals<Organization> organizationRepository,
         IRepository<SSICredentialIssuance> ssiCredentialIssuanceRepository,
         IRepository<OpportunityCountry> opportunityCountryRepository)
     {

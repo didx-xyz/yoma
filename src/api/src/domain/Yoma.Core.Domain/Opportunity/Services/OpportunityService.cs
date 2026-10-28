@@ -76,7 +76,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     private readonly IMediator _mediator;
 
-    private readonly IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Models.Opportunity> _opportunityRepository;
+    private readonly IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilterAndTrackingTotals<Models.Opportunity> _opportunityRepository;
     private readonly IRepository<OpportunityCategory> _opportunityCategoryRepository;
     private readonly IRepository<OpportunityCountry> _opportunityCountryRepository;
     private readonly IRepository<OpportunityLanguage> _opportunityLanguageRepository;
@@ -128,7 +128,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         OpportunitySearchFilterValidator opportunitySearchFilterValidator,
         OpportunitySearchFilterCriteriaValidator opportunitySearchFilterCriteriaValidator,
         IMediator mediator,
-        IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Models.Opportunity> opportunityRepository,
+        IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilterAndTrackingTotals<Models.Opportunity> opportunityRepository,
         IRepository<OpportunityCategory> opportunityCategoryRepository,
         IRepository<OpportunityCountry> opportunityCountryRepository,
         IRepository<OpportunityLanguage> opportunityLanguageRepository,
@@ -1505,6 +1505,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       OpportunityAllocateRewardResponse result = null!;
       Models.Opportunity opportunity = null!;
       Organization organization = null!;
+      var ownsTransaction = Transaction.Current == null;
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -1572,10 +1573,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
         if (result.ZltoReward.HasValue)
           opportunity.ZltoRewardCumulative = (opportunity.ZltoRewardCumulative ?? default) + result.ZltoReward.Value;
 
-        await _opportunityRepository.Update(opportunity);
+        await _opportunityRepository.UpdateTrackingTotals(opportunity);
 
         scope.Complete();
-      });
+      }, ownsTransaction); // The outer completion/import boundary owns cleanup when nested.
 
       return result;
     }
