@@ -961,7 +961,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           await FinalizeVerification(user, opportunity, VerificationStatus.Completed, options);
 
           scope.Complete();
-        });
+        }, true); // Retry the whole instant completion with fresh EF state after rollback.
 
         await _delayedExecutionService.FlushAsync();
       }
@@ -1292,7 +1292,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             await FinalizeVerification(user, opportunity, VerificationStatus.Completed, options);
 
           scope.Complete();
-        });
+        }, true); // Owns the partner-import transaction, including nested completion allocation.
 
         await _delayedExecutionService.FlushAsync();
 
@@ -1326,8 +1326,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       using var reader = new CSVTrailingCommaTrimmingTextReader(baseReader);
 
       var errors = new List<CSVImportErrorRow>();
-      using var csv = new CsvHelper.CsvReader(reader, CSVImportHelper.CreateConfig<MyOpportunityInfoCsvImport>(errors));
-      csv.Context.TypeConverterOptionsCache.GetOptions<string>().NullValues.Add(string.Empty);
+      using var csv = CsvHelper.CsvReader.Create(reader, CSVImportHelper.CreateConfig(errors));
 
       // Validate header before reading data rows
       // Stop if errors — prevents invalid column-to-property mapping
@@ -1353,20 +1352,19 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       while (await csv.ReadAsync())
       {
         recordsTotal++;
-        var rowNumber = csv.Context?.Parser?.Row ?? recordsTotal + 1;
+        var rowNumber = checked((int)csv.LineNumber);
 
         MyOpportunityInfoCsvImport dto;
 
         try
         {
-          var rec = csv.Parser.Record;
-          if (rec == null || rec.Length == 0 || rec.All(string.IsNullOrWhiteSpace))
+          if (csv.FieldCount == 0 || Enumerable.Range(0, csv.FieldCount).All(index => string.IsNullOrWhiteSpace(csv.GetString(index))))
           {
             CSVImportHelper.AddError(errors, CSVImportErrorType.ProcessingError, "The record is empty", rowNumber);
             continue;
           }
 
-          dto = csv.GetRecord<MyOpportunityInfoCsvImport>();
+          dto = CSVImportHelper.ReadRecord<MyOpportunityInfoCsvImport>(csv, errors, rowNumber);
           dto.CustomFieldValues = CSVImportHelper.ReadCustomFieldValues(csv, customFieldColumns);
           dto.PhoneNumber = dto.PhoneNumber?.NormalizePhoneNumber(true);
 
@@ -1394,7 +1392,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         }
         catch (Exception ex)
         {
-          CSVImportHelper.HandleExceptions(ex, errors, rowNumber);
+          CSVImportHelper.HandleExceptions(ex, errors, rowNumber, csv);
           if (errors.Count >= _appSettings.CSVImportMaxProbeErrorCount) break;
           continue;
         }
@@ -1424,7 +1422,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             await ProcessImportVerification(request, dto, false);
 
           scope.Complete();
-        });
+        }, true); // The commit pass needs the same retry cleanup as validation probes.
 
         await _delayedExecutionService.FlushAsync();
       }
@@ -1737,6 +1735,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       NotificationType? notificationType = null;
       Models.MyOpportunity item = null!;
       var isNoOp = false;
+      var ownsTransaction = Transaction.Current == null;
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted();
@@ -1812,7 +1811,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         item = await _myOpportunityRepository.Update(item);
 
         scope.Complete();
-      });
+      }, ownsTransaction); // Standalone approvals may roll back and continue with another batch item.
 
       // Idempotent no-op path: nothing changed, no notifications / events
       if (isNoOp) return;

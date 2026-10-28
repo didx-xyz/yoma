@@ -1,28 +1,22 @@
-using CsvHelper.TypeConversion;
-using System.Reflection;
+using CsvHelper;
 using Yoma.Core.Domain.Core.Helpers;
 
 namespace Yoma.Core.Domain.Core.Converters
 {
-  public class CsvDelimitedStringConverter : DefaultTypeConverter
+  public class CsvDelimitedStringConverter : ICsvConverter<List<string>?>
   {
     #region Public Members
-    public override object? ConvertFromString(string? text, CsvHelper.IReaderRow row, CsvHelper.Configuration.MemberMapData memberMapData)
+    public List<string>? Read(CsvReader reader, int index)
     {
-      var propertyInfo = memberMapData.Member as PropertyInfo
-       ?? throw new InvalidOperationException("Could not retrieve property information");
-
-      if (propertyInfo.PropertyType != typeof(List<string>))
-        throw new InvalidOperationException($"The property '{propertyInfo.Name}' must be of type List<string>?");
-
+      var text = reader.GetString(index);
       if (string.IsNullOrWhiteSpace(text)) return null;
 
-      return text.Split(CSVImportHelper.Value_Delimiter).Select(value => value.Trim()).ToList();
+      return [.. text.Split(CSVImportHelper.Value_Delimiter).Select(value => value.Trim())];
     }
 
-    public override string? ConvertToString(object? value, CsvHelper.IWriterRow row, CsvHelper.Configuration.MemberMapData memberMapData)
+    public void Write(CsvWriter writer, List<string>? value)
     {
-      throw new NotImplementedException("Does not support converting from model to CSV");
+      throw new NotSupportedException("Does not support converting from model to CSV");
     }
     #endregion
   }

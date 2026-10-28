@@ -1,4 +1,4 @@
-using CsvHelper.Configuration.Attributes;
+using CsvHelper;
 using Newtonsoft.Json;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Models;
@@ -9,173 +9,172 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 {
   public class MyOpportunityInfo
   {
-    [Ignore]
+    [CsvIgnore]
     public Guid Id { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public Guid UserId { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public string Username { get; set; } = null!;
 
-    [Name("Student Email")]
+    [CsvColumn("Student Email")]
     public string? UserEmail { get; set; }
 
-    [Name("Student Phone Number")]
+    [CsvColumn("Student Phone Number")]
     public string? UserPhoneNumer { get; set; }
 
-    [Name("Student Display Name")]
+    [CsvColumn("Student Display Name")]
     public string UserDisplayName { get; set; } = null!;
 
-    [Name("Student Country")]
+    [CsvColumn("Student Country")]
     public string? UserCountry { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public string? UserEducation { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public Guid? UserPhotoId { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public string? UserPhotoURL { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     [JsonIgnore]
     public string? UserSettings { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public Guid OpportunityId { get; set; }
 
-    [Name("Opportunity Title")]
+    [CsvColumn("Opportunity Title")]
     public string OpportunityTitle { get; set; } = null!;
 
-    [Ignore]
+    [CsvIgnore]
     public string OpportunityDescription { get; set; } = null!;
 
-    [Ignore]
+    [CsvIgnore]
     public string? OpportunitySummary { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public Opportunity.Type OpportunityType { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public string? OpportunityCommitmentIntervalDescription { get; set; }
 
     #region Verification Counts
-    [Ignore]
+    [CsvIgnore]
     public int OpportunityParticipantCountTotal { get; set; }
     #endregion Verification Counts
 
-    [Name("Opportunity Date Start")]
+    [CsvColumn("Opportunity Date Start")]
     public DateTimeOffset OpportunityDateStart { get; set; }
 
-    [Name("Opportunity Date End")]
+    [CsvColumn("Opportunity Date End")]
     public DateTimeOffset? OpportunityDateEnd { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public Guid OrganizationId { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public string OrganizationName { get; set; } = null!;
 
-    [Ignore]
+    [CsvIgnore]
     public string? OrganizationLogoURL { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public Guid ActionId { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public Action Action { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public Guid? VerificationStatusId { get; set; }
 
-    [Name("Status")]
+    [CsvColumn("Status")]
     public VerificationStatus? VerificationStatus { get; set; }
 
-    [Name("Comment")]
+    [CsvColumn("Comment")]
     public string? CommentVerification { get; set; }
 
-    [Name("Completion Interval")]
+    [CsvColumn("Completion Interval")]
     public Core.TimeIntervalOption? CommitmentInterval { get; set; }
 
-    [Name("Completion Interval Count")]
+    [CsvColumn("Completion Interval Count")]
     public short? CommitmentIntervalCount { get; set; }
 
-    [Name("Date Start")]
+    [CsvColumn("Date Start")]
     public DateTimeOffset? DateStart { get; set; }
 
-    [Name("Date End")]
+    [CsvColumn("Date End")]
     public DateTimeOffset? DateEnd { get; set; }
 
-    [Name("Percent Complete")]
+    [CsvColumn("Percent Complete")]
     public decimal? PercentComplete { get; set; }
 
-    [Name("Date Completed")]
+    [CsvColumn("Date Completed")]
     public DateTimeOffset? DateCompleted { get; set; }
 
     /// <summary>
     /// Captured participation or Entrepreneurship business location, not current Student Country or opportunity availability.
     /// Raw components support UI editing; CSV exports contain only Country Completed. Historical submissions are not backfilled.
     /// </summary>
-    [Ignore]
+    [CsvIgnore]
     public Guid? CountryId { get; set; }
 
-    [Name("Country Completed")]
+    [CsvColumn("Country Completed")]
     public string? Country { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public string? Region { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public string? City { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public string? Location { get; set; }
 
-    [Name("Zlto Reward")]
+    [CsvColumn("Zlto Reward")]
     public decimal? ZltoReward { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public bool? Recommendable { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public byte? StarRating { get; set; }
 
-    [Name("Feedback")]
+    [CsvColumn("Feedback")]
     public string? Feedback { get; set; }
 
-    [Name("Date Connected")]
+    [CsvColumn("Date Connected")]
     public DateTimeOffset DateModified { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public SyncInfoMyOpportunity? SyncedInfo { get; set; }
 
     [JsonIgnore]
-    [Name("Externally Managed (Locked)")]
-    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
-    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
+    [CsvColumn("Externally Managed (Locked)")]
+    [CsvBooleanValues(CSVImportHelper.Boolean_Value_True, CSVImportHelper.Boolean_Value_False)]
     public bool SyncedLocked => SyncedInfo?.Locked == true;
 
     [JsonIgnore]
-    [Name("Externally Managed By")]
+    [CsvColumn("Externally Managed By")]
     public string? SyncedPulled => SyncedInfo?.SyncType == Core.SyncType.Pull ? string.Join(", ", SyncedInfo.Partners) : null;
 
-    [Ignore]
+    [CsvIgnore]
     public List<MyOpportunityInfoVerification>? Verifications { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public List<Skill>? Skills { get; set; }
 
     [JsonIgnore]
-    [Name("Skills")]
+    [CsvColumn("Skills")]
     public string? SkillsFlattened => Skills == null || Skills.Count == 0 ? null : string.Join(", ", Skills.Select(o => o.Name));
 
-    [Ignore]
+    [CsvIgnore]
     public List<CustomFieldValueItem>? CustomFields { get; set; }
 
     [JsonIgnore]
-    [Name("Custom Fields")]
+    [CsvColumn("Custom Fields")]
     public string? CustomFieldsFlattened => CustomFields == null || CustomFields.Count == 0
       ? null
       : string.Join("; ", CustomFields.Select(o => o.DataType == Core.CustomFieldDataType.Option ? $"{o.Key}: {string.Join(", ", o.Values ?? [])}" : $"{o.Key}: {o.Value}"));

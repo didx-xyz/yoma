@@ -15,7 +15,7 @@ using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
 {
-  public class OpportunityRepository : BaseRepository<Entities.Opportunity, Guid>, IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Domain.Opportunity.Models.Opportunity>
+  public class OpportunityRepository : BaseRepository<Entities.Opportunity, Guid>, IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilterAndTrackingTotals<Domain.Opportunity.Models.Opportunity>
   {
     #region Constructor
     public OpportunityRepository(ApplicationDbContext context) : base(context) { }
@@ -392,13 +392,11 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
       entity.AgeTo = item.AgeTo;
       entity.ZltoReward = item.ZltoReward;
       entity.ZltoRewardPool = item.ZltoRewardPool;
-      entity.ZltoRewardCumulative = item.ZltoRewardCumulative;
       entity.VerificationEnabled = item.VerificationEnabled;
       entity.VerificationMethod = item.VerificationMethod?.ToString();
       entity.CommitmentIntervalId = item.CommitmentIntervalId;
       entity.CommitmentIntervalCount = item.CommitmentIntervalCount;
       entity.ParticipantLimit = item.ParticipantLimit;
-      entity.ParticipantCount = item.ParticipantCount;
       entity.StatusId = item.StatusId;
       entity.Keywords = item.KeywordsFlattened;
       entity.DateStart = item.DateStart;
@@ -413,6 +411,12 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
       entity.DateModified = item.DateModified;
       entity.ModifiedByUserId = item.ModifiedByUserId;
 
+      // Return the loaded entity's totals to API callers and downstream events, not ignored input values.
+      // This copies into the returned model only; normal updates never write these totals to the entity.
+      // Only UpdateTrackingTotals writes existing totals. This is a loaded snapshot, not a post-save refresh.
+      item.ParticipantCount = entity.ParticipantCount;
+      item.ZltoRewardCumulative = entity.ZltoRewardCumulative;
+
       await _context.SaveChangesAsync();
 
       return item;
@@ -424,7 +428,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         throw new ArgumentNullException(nameof(items));
 
       var itemIds = items.Select(o => o.Id).ToList();
-      var entities = _context.Opportunity.Where(o => itemIds.Contains(o.Id));
+      var entities = _context.Opportunity.Where(o => itemIds.Contains(o.Id)).ToList();
 
       var now = DateTimeOffset.UtcNow;
 
@@ -455,13 +459,11 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         entity.AgeTo = item.AgeTo;
         entity.ZltoReward = item.ZltoReward;
         entity.ZltoRewardPool = item.ZltoRewardPool;
-        entity.ZltoRewardCumulative = item.ZltoRewardCumulative;
         entity.VerificationEnabled = item.VerificationEnabled;
         entity.VerificationMethod = item.VerificationMethod?.ToString();
         entity.CommitmentIntervalId = item.CommitmentIntervalId;
         entity.CommitmentIntervalCount = item.CommitmentIntervalCount;
         entity.ParticipantLimit = item.ParticipantLimit;
-        entity.ParticipantCount = item.ParticipantCount;
         entity.StatusId = item.StatusId;
         entity.Keywords = item.KeywordsFlattened;
         entity.DateStart = item.DateStart;
@@ -475,9 +477,58 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         entity.ExternalId = item.ExternalId;
         entity.DateModified = item.DateModified;
         entity.ModifiedByUserId = item.ModifiedByUserId;
+
+        // Batch results also feed notifications/events; return the loaded entity's totals, not ignored input.
+        // This copies into the returned model only; only UpdateTrackingTotals writes existing totals.
+        // This is a loaded snapshot, not a post-save refresh; EF tracks only the assigned metadata fields.
+        item.ParticipantCount = entity.ParticipantCount;
+        item.ZltoRewardCumulative = entity.ZltoRewardCumulative;
       }
 
-      _context.Opportunity.UpdateRange(entities);
+      await _context.SaveChangesAsync();
+
+      return items;
+    }
+
+    public async Task<Domain.Opportunity.Models.Opportunity> UpdateTrackingTotals(Domain.Opportunity.Models.Opportunity item)
+    {
+      var entity = _context.Opportunity.SingleOrDefault(o => o.Id == item.Id)
+        ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(Entities.Opportunity)} with id '{item.Id}' does not exist");
+
+      item.DateModified = DateTimeOffset.UtcNow;
+
+      entity.ParticipantCount = item.ParticipantCount;
+      entity.ZltoRewardCumulative = item.ZltoRewardCumulative;
+      entity.DateModified = item.DateModified;
+      entity.ModifiedByUserId = item.ModifiedByUserId;
+
+      await _context.SaveChangesAsync();
+
+      return item;
+    }
+
+    public async Task<List<Domain.Opportunity.Models.Opportunity>> UpdateTrackingTotals(List<Domain.Opportunity.Models.Opportunity> items)
+    {
+      if (items == null || items.Count == 0)
+        throw new ArgumentNullException(nameof(items));
+
+      var itemIds = items.Select(o => o.Id).ToList();
+      var entities = _context.Opportunity.Where(o => itemIds.Contains(o.Id)).ToList();
+      var now = DateTimeOffset.UtcNow;
+
+      foreach (var item in items)
+      {
+        var entity = entities.SingleOrDefault(o => o.Id == item.Id)
+          ?? throw new InvalidOperationException($"{nameof(Entities.Opportunity)} with id '{item.Id}' does not exist");
+
+        item.DateModified = now;
+
+        entity.ParticipantCount = item.ParticipantCount;
+        entity.ZltoRewardCumulative = item.ZltoRewardCumulative;
+        entity.DateModified = item.DateModified;
+        entity.ModifiedByUserId = item.ModifiedByUserId;
+      }
+
       await _context.SaveChangesAsync();
 
       return items;

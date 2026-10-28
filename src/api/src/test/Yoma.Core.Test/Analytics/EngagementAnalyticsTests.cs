@@ -283,9 +283,9 @@ namespace Yoma.Core.Test.Analytics
           Mock.Of<ISSICredentialIssuanceStatusService>(), Mock.Of<ISSISchemaTypeService>(), Mock.Of<IOpportunityStatusService>(),
           new OrganizationSearchFilterEngagementValidator(Organizations.Object), new OrganizationSearchFilterOpportunityValidator(Organizations.Object),
           new OrganizationSearchFilterYouthValidator(Organizations.Object), new OrganizationSearchFilterSSOValidator(Organizations.Object),
-          Mock.Of<IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Domain.Opportunity.Models.Opportunity>>(), repository.Object,
+          Mock.Of<IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilterAndTrackingTotals<Domain.Opportunity.Models.Opportunity>>(), repository.Object,
           categoryRepository.Object, opportunitySkillRepository.Object, skillRepository.Object,
-          Mock.Of<IRepository<UserLoginHistory>>(), Mock.Of<IRepositoryBatchedValueContainsWithNavigation<Organization>>(),
+          Mock.Of<IRepository<UserLoginHistory>>(), Mock.Of<IRepositoryBatchedValueContainsWithNavigationAndTrackingTotals<Organization>>(),
           Mock.Of<IRepository<SSICredentialIssuance>>(), Mock.Of<IRepository<OpportunityCountry>>());
       }
 

@@ -282,7 +282,7 @@ namespace Yoma.Core.Test.OpportunitySearch
       internal Mock<IRepository<OpportunityCategory>> Mappings { get; } = new();
       internal Mock<IOrganizationService> Organizations { get; } = new();
       private readonly HttpContextAccessor _http = new() { HttpContext = new DefaultHttpContext() };
-      internal Mock<IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<OpportunityModel>> Opportunities { get; } = new();
+      internal Mock<IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilterAndTrackingTotals<OpportunityModel>> Opportunities { get; } = new();
       internal OpportunityService Service { get; }
 
       internal Fixture()

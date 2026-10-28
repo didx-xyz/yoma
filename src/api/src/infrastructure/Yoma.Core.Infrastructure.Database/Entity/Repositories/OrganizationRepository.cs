@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
 {
-  public class OrganizationRepository : BaseRepository<Organization, Guid>, IRepositoryBatchedValueContainsWithNavigation<Domain.Entity.Models.Organization>
+  public class OrganizationRepository : BaseRepository<Organization, Guid>, IRepositoryBatchedValueContainsWithNavigationAndTrackingTotals<Domain.Entity.Models.Organization>
   {
     #region Constructor
     public OrganizationRepository(ApplicationDbContext context) : base(context) { }
@@ -252,10 +252,14 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
       entity.SSOClientIdInbound = item.SSOClientIdInbound;
       entity.Settings = item.SettingsRaw;
       entity.ZltoRewardPoolCurrentFinancialYear = item.ZltoRewardPoolCurrentFinancialYear;
-      entity.ZltoRewardCumulative = item.ZltoRewardCumulative;
-      entity.ZltoRewardCumulativeCurrentFinancialYear = item.ZltoRewardCumulativeCurrentFinancialYear;
       entity.DateModified = item.DateModified;
       entity.ModifiedByUserId = item.ModifiedByUserId;
+
+      // Return the loaded entity's totals to API callers and downstream events, not ignored input values.
+      // This copies into the returned model only; normal updates never write these totals to the entity.
+      // Only UpdateTrackingTotals writes existing totals. This is a loaded snapshot, not a post-save refresh.
+      item.ZltoRewardCumulative = entity.ZltoRewardCumulative;
+      item.ZltoRewardCumulativeCurrentFinancialYear = entity.ZltoRewardCumulativeCurrentFinancialYear;
 
       await _context.SaveChangesAsync();
 
@@ -268,7 +272,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         throw new ArgumentNullException(nameof(items));
 
       var itemIds = items.Select(o => o.Id).ToList();
-      var entities = _context.Organization.Where(o => itemIds.Contains(o.Id));
+      var entities = _context.Organization.Where(o => itemIds.Contains(o.Id)).ToList();
 
       var now = DateTimeOffset.UtcNow;
 
@@ -302,13 +306,60 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         entity.SSOClientIdInbound = item.SSOClientIdInbound;
         entity.Settings = item.SettingsRaw;
         entity.ZltoRewardPoolCurrentFinancialYear = item.ZltoRewardPoolCurrentFinancialYear;
+        entity.DateModified = item.DateModified;
+        entity.ModifiedByUserId = item.ModifiedByUserId;
+
+        // Batch results also feed notifications/events; return the loaded entity's totals, not ignored input.
+        // This copies into the returned model only; only UpdateTrackingTotals writes existing totals.
+        // This is a loaded snapshot, not a post-save refresh; EF tracks only the assigned metadata fields.
+        item.ZltoRewardCumulative = entity.ZltoRewardCumulative;
+        item.ZltoRewardCumulativeCurrentFinancialYear = entity.ZltoRewardCumulativeCurrentFinancialYear;
+      }
+
+      await _context.SaveChangesAsync();
+
+      return items;
+    }
+
+    public async Task<Domain.Entity.Models.Organization> UpdateTrackingTotals(Domain.Entity.Models.Organization item)
+    {
+      var entity = _context.Organization.SingleOrDefault(o => o.Id == item.Id)
+        ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(Organization)} with id '{item.Id}' does not exist");
+
+      item.DateModified = DateTimeOffset.UtcNow;
+
+      entity.ZltoRewardCumulative = item.ZltoRewardCumulative;
+      entity.ZltoRewardCumulativeCurrentFinancialYear = item.ZltoRewardCumulativeCurrentFinancialYear;
+      entity.DateModified = item.DateModified;
+      entity.ModifiedByUserId = item.ModifiedByUserId;
+
+      await _context.SaveChangesAsync();
+
+      return item;
+    }
+
+    public async Task<List<Domain.Entity.Models.Organization>> UpdateTrackingTotals(List<Domain.Entity.Models.Organization> items)
+    {
+      if (items == null || items.Count == 0)
+        throw new ArgumentNullException(nameof(items));
+
+      var itemIds = items.Select(o => o.Id).ToList();
+      var entities = _context.Organization.Where(o => itemIds.Contains(o.Id)).ToList();
+      var now = DateTimeOffset.UtcNow;
+
+      foreach (var item in items)
+      {
+        var entity = entities.SingleOrDefault(o => o.Id == item.Id)
+          ?? throw new InvalidOperationException($"{nameof(Organization)} with id '{item.Id}' does not exist");
+
+        item.DateModified = now;
+
         entity.ZltoRewardCumulative = item.ZltoRewardCumulative;
         entity.ZltoRewardCumulativeCurrentFinancialYear = item.ZltoRewardCumulativeCurrentFinancialYear;
         entity.DateModified = item.DateModified;
         entity.ModifiedByUserId = item.ModifiedByUserId;
       }
 
-      _context.Organization.UpdateRange(entities);
       await _context.SaveChangesAsync();
 
       return items;

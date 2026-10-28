@@ -1,4 +1,4 @@
-using CsvHelper.Configuration.Attributes;
+using CsvHelper;
 using Newtonsoft.Json;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Models;
@@ -9,7 +9,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
 {
   public class OpportunityInfo
   {
-    [Ignore]
+    [CsvIgnore]
     public Guid Id { get; set; }
 
     public string Title { get; set; } = null!;
@@ -18,13 +18,13 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public Type Type { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public Guid OrganizationId { get; set; }
 
-    [Name("Organization Name")]
+    [CsvColumn("Organization Name")]
     public string OrganizationName { get; set; } = null!;
 
-    [Ignore]
+    [CsvIgnore]
     public string? OrganizationLogoURL { get; set; }
 
     public string? Summary { get; set; }
@@ -41,30 +41,29 @@ namespace Yoma.Core.Domain.Opportunity.Models
     /// <summary>
     /// Optional provider website, distinct from the opportunity's action link.
     /// </summary>
-    [Ignore]
+    [CsvIgnore]
     public string? ProviderURL { get; set; }
 
     /// <summary>
     /// Optional provider logo image URL, distinct from the provider's website and owning organisation's logo.
     /// </summary>
-    [Ignore]
+    [CsvIgnore]
     public string? ProviderLogoURL { get; set; }
 
     /// <summary>
     /// Optional provider origin for discovery, never availability or the youth's participation/business location.
     /// Must be a specific country; Worldwide is not a provider origin.
     /// </summary>
-    [Ignore]
+    [CsvIgnore]
     public Guid? ProviderCountryId { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public string? ProviderCountry { get; set; }
 
     /// <summary>
     /// Whether any incentive is offered. Null means not specified, not unpaid.
     /// </summary>
-    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
-    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
+    [CsvBooleanValues(CSVImportHelper.Boolean_Value_True, CSVImportHelper.Boolean_Value_False)]
     public bool? Incentivized { get; set; }
 
     /// <summary>
@@ -103,190 +102,183 @@ namespace Yoma.Core.Domain.Opportunity.Models
     /// </summary>
     public short? AgeTo { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public List<Accessibility>? Accommodations { get; set; }
 
     [JsonIgnore]
-    [Name("Accommodations")]
+    [CsvColumn("Accommodations")]
     public string? AccommodationsFlattened => Accommodations?.Count > 0 ? string.Join(CSVImportHelper.Value_Delimiter, Accommodations.Select(o => o.Name)) : null;
 
-    [Ignore]
+    [CsvIgnore]
     public List<TargetedGroup>? TargetedGroups { get; set; }
 
     [JsonIgnore]
-    [Name("TargetedGroups")]
+    [CsvColumn("TargetedGroups")]
     public string? TargetedGroupsFlattened => TargetedGroups?.Count > 0 ? string.Join(CSVImportHelper.Value_Delimiter, TargetedGroups.Select(o => o.Name)) : null;
 
-    [Ignore]
+    [CsvIgnore]
     public List<SustainableDevelopmentGoal>? SustainableDevelopmentGoals { get; set; }
 
     [JsonIgnore]
-    [Name("SustainableDevelopmentGoals")]
+    [CsvColumn("SustainableDevelopmentGoals")]
     public string? SustainableDevelopmentGoalsFlattened => SustainableDevelopmentGoals?.Count > 0 ? string.Join(CSVImportHelper.Value_Delimiter, SustainableDevelopmentGoals.Select(o => o.Number.ToString())) : null;
 
-    [Name("Zlto Reward")]
+    [CsvColumn("Zlto Reward")]
     public decimal? ZltoReward { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public decimal? ZltoRewardEstimate { get; set; }
 
-    [Name("Zlto Reward Cumulative")]
+    [CsvColumn("Zlto Reward Cumulative")]
     public decimal? ZltoRewardCumulative { get; set; }
 
-    [Name("Verification Enabled")]
-    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
-    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
+    [CsvColumn("Verification Enabled")]
+    [CsvBooleanValues(CSVImportHelper.Boolean_Value_True, CSVImportHelper.Boolean_Value_False)]
     public bool VerificationEnabled { get; set; }
 
-    [Name("Verification Method")]
+    [CsvColumn("Verification Method")]
     public VerificationMethod? VerificationMethod { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public Core.TimeIntervalOption? CommitmentInterval { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public short? CommitmentIntervalCount { get; set; }
 
-    [Name("Commitment Interval")]
+    [CsvColumn("Commitment Interval")]
     public string? CommitmentIntervalDescription { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public int? CommitmentIntervalTotalHours { get; set; }
 
     #region Engagement
     #region Verification Limits and Counts
-    [Name("Participant Limit")]
+    [CsvColumn("Participant Limit")]
     public int? ParticipantLimit { get; set; }
 
-    [Name("Participant Count Completed")]
+    [CsvColumn("Participant Count Completed")]
     public int ParticipantCountCompleted { get; set; }
 
-    [Name("Participant Count Pending")]
+    [CsvColumn("Participant Count Pending")]
     public int ParticipantCountPending { get; set; }
 
-    [Name("Participant Count Total")]
+    [CsvColumn("Participant Count Total")]
     public int ParticipantCountTotal { get; set; }
 
-    [Name("Participant Limit Reached")]
-    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
-    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
+    [CsvColumn("Participant Limit Reached")]
+    [CsvBooleanValues(CSVImportHelper.Boolean_Value_True, CSVImportHelper.Boolean_Value_False)]
     public bool ParticipantLimitReached { get; set; }
     #endregion Verification Limits and Counts
 
-    [Name("Count Viewed")]
+    [CsvColumn("Count Viewed")]
     public int CountViewed { get; set; }
 
-    [Name("Count Got-To Clicks")]
+    [CsvColumn("Count Got-To Clicks")]
     public int CountNavigatedExternalLink { get; set; }
     #endregion Engagement
 
-    [Ignore]
+    [CsvIgnore]
     public Guid StatusId { get; set; }
 
     public Status Status { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public List<string>? Keywords { get; set; }
 
     [JsonIgnore]
-    [Name("Keywords")]
+    [CsvColumn("Keywords")]
     public string? KeywordsFlattened => Keywords == null || Keywords.Count == 0 ? null : string.Join(", ", Keywords);
 
-    [Name("Start Date")]
+    [CsvColumn("Start Date")]
     public DateTimeOffset DateStart { get; set; }
 
-    [Name("End Date")]
+    [CsvColumn("End Date")]
     public DateTimeOffset? DateEnd { get; set; }
 
-    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
-    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
+    [CsvBooleanValues(CSVImportHelper.Boolean_Value_True, CSVImportHelper.Boolean_Value_False)]
     public bool Featured { get; set; }
 
-    [Name("Engagement Type")]
+    [CsvColumn("Engagement Type")]
     public Core.EngagementTypeOption? EngagementType { get; set; }
 
-    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
-    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
+    [CsvBooleanValues(CSVImportHelper.Boolean_Value_True, CSVImportHelper.Boolean_Value_False)]
     public bool ShareWithPartners { get; set; }
 
-    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
-    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
+    [CsvBooleanValues(CSVImportHelper.Boolean_Value_True, CSVImportHelper.Boolean_Value_False)]
     public bool Hidden { get; set; }
 
     [JsonIgnore]
-    [Name("External Reference / ID")]
+    [CsvColumn("External Reference / ID")]
     public string? ExternalId { get; set; }
 
-    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
-    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
+    [CsvBooleanValues(CSVImportHelper.Boolean_Value_True, CSVImportHelper.Boolean_Value_False)]
     public bool Published { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public string YomaInfoURL { get; set; } = null!;
 
-    [Ignore]
+    [CsvIgnore]
     public bool IsCompletable { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public string? NonCompletableReason { get; set; }
 
-    [Ignore]
+    [CsvIgnore]
     public SyncInfoEntity? SyncedInfo { get; set; }
 
     [JsonIgnore]
-    [Name("Externally Managed (Locked)")]
-    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
-    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
+    [CsvColumn("Externally Managed (Locked)")]
+    [CsvBooleanValues(CSVImportHelper.Boolean_Value_True, CSVImportHelper.Boolean_Value_False)]
     public bool SyncedLocked => SyncedInfo?.Locked == true;
 
     [JsonIgnore]
-    [Name("Externally Managed By")]
+    [CsvColumn("Externally Managed By")]
     public string? SyncedPulled => SyncedInfo?.SyncType == Core.SyncType.Pull ? string.Join(", ", SyncedInfo.Partners) : null;
 
     [JsonIgnore]
-    [Name("Shared With")]
+    [CsvColumn("Shared With")]
     public string? SyncedPushed => SyncedInfo?.SyncType == Core.SyncType.Push ? string.Join(", ", SyncedInfo.Partners) : null;
 
-    [Ignore]
+    [CsvIgnore]
     public List<Lookups.OpportunityCategory>? Categories { get; set; }
 
     [JsonIgnore]
-    [Name("Categories")]
+    [CsvColumn("Categories")]
     public string? CategoriesFlattened => Categories == null || Categories.Count == 0 ? null : string.Join(", ", Categories.Select(o => o.Name));
 
-    [Ignore]
+    [CsvIgnore]
     public List<OpportunityCountryInfo>? Countries { get; set; }
 
     [JsonIgnore]
-    [Name("Countries")]
+    [CsvColumn("Countries")]
     public string? CountriesFlattened => Countries == null || Countries.Count == 0 ? null : string.Join(", ", Countries.Select(o => o.Name));
 
-    [Ignore]
+    [CsvIgnore]
     public List<Language>? Languages { get; set; }
 
     [JsonIgnore]
-    [Name("Languages")]
+    [CsvColumn("Languages")]
     public string? LanguagesFlattened => Languages == null || Languages.Count == 0 ? null : string.Join(", ", Languages.Select(o => o.Name));
 
-    [Ignore]
+    [CsvIgnore]
     public List<Skill>? Skills { get; set; }
 
     [JsonIgnore]
-    [Name("Skills")]
+    [CsvColumn("Skills")]
     public string? SkillsFlattened => Skills == null || Skills.Count == 0 ? null : string.Join(", ", Skills.Select(o => o.Name));
 
-    [Ignore]
+    [CsvIgnore]
     public List<Lookups.OpportunityVerificationType>? VerificationTypes { get; set; }
 
     [JsonIgnore]
-    [Name("Verification Types")]
+    [CsvColumn("Verification Types")]
     public string? VerificationTypesFlattened => VerificationTypes == null || VerificationTypes.Count == 0 ? null : string.Join(", ", VerificationTypes.Select(o => o.Description));
 
-    [Ignore]
+    [CsvIgnore]
     public List<CustomFieldValueItem>? CustomFields { get; set; }
 
     [JsonIgnore]
-    [Name("Custom Fields")]
+    [CsvColumn("Custom Fields")]
     public string? CustomFieldsFlattened => CustomFields == null || CustomFields.Count == 0
       ? null
       : string.Join("; ", CustomFields.Select(o => o.DataType == Core.CustomFieldDataType.Option ? $"{o.Key}: {string.Join(", ", o.Values ?? [])}" : $"{o.Key}: {o.Value}"));

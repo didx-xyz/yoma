@@ -1,8 +1,8 @@
 using CsvHelper;
-using CsvHelper.Configuration;
 using Microsoft.AspNetCore.Http;
 using System.Globalization;
 using System.IO.Compression;
+using System.Reflection;
 using System.Text;
 
 namespace Yoma.Core.Domain.Core.Helpers
@@ -125,13 +125,38 @@ namespace Yoma.Core.Domain.Core.Helpers
       ArgumentException.ThrowIfNullOrWhiteSpace(fileNamePrefix, nameof(fileNamePrefix));
       fileNamePrefix = fileNamePrefix.Trim();
 
-      var config = new CsvConfiguration(CultureInfo.CurrentCulture);
+      var culture = CultureInfo.CurrentCulture;
+      var config = new CsvWriterOptions
+      {
+        FormatProvider = culture,
+        Separator = culture.TextInfo.ListSeparator[0],
+        Quoting = CsvQuoting.WhenNeededOrWhitespace
+      };
 
       using var stream = new MemoryStream();
       using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
       {
-        using var writer = new CsvWriter(streamWriter, config);
-        writer.WriteRecords(records);
+        using var writer = CsvWriter.Create(streamWriter, config);
+
+        // v34's generated record writer omits get-only properties. Our export contracts
+        // deliberately include flattened/computed fields, so retain their declared order,
+        // aliases and culture-specific formatting instead of silently dropping columns.
+        foreach (var (_, name, _) in CsvExportColumns<T>.Columns)
+          writer.WriteField(name);
+        writer.EndRecord();
+
+        foreach (var record in records)
+        {
+          foreach (var (property, _, booleanValues) in CsvExportColumns<T>.Columns)
+          {
+            var value = property.GetValue(record);
+            var text = value is bool boolean && booleanValues != null
+              ? (boolean ? booleanValues.TrueValues : booleanValues.FalseValues)[0]
+              : value is IFormattable formatted ? formatted.ToString(null, culture) : value?.ToString();
+            writer.WriteField(text);
+          }
+          writer.EndRecord();
+        }
       }
 
       var fileName = appendDateStamp
@@ -139,6 +164,16 @@ namespace Yoma.Core.Domain.Core.Helpers
         : $"{fileNamePrefix}.csv";
 
       return (fileName, stream.ToArray());
+    }
+
+    private static class CsvExportColumns<T>
+    {
+      internal static readonly (PropertyInfo Property, string Name, CsvBooleanValuesAttribute? BooleanValues)[] Columns =
+        [.. typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+          .Where(property => property.CanRead && property.GetIndexParameters().Length == 0
+            && !property.IsDefined(typeof(CsvIgnoreAttribute)))
+          .Select(property => (property, property.GetCustomAttribute<CsvColumnAttribute>()?.Name ?? property.Name,
+            property.GetCustomAttribute<CsvBooleanValuesAttribute>()))];
     }
   }
 }

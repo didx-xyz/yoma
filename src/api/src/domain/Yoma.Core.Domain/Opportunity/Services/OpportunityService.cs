@@ -85,7 +85,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     private readonly IMediator _mediator;
 
-    private readonly IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Models.Opportunity> _opportunityRepository;
+    private readonly IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilterAndTrackingTotals<Models.Opportunity> _opportunityRepository;
     private readonly IRepository<OpportunityCategory> _opportunityCategoryRepository;
     private readonly IRepositoryPropertyContainsWithSpatial<OpportunityCountry> _opportunityCountryRepository;
     private readonly IRepository<OpportunityLanguage> _opportunityLanguageRepository;
@@ -145,7 +145,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         OpportunitySearchFilterValidator opportunitySearchFilterValidator,
         OpportunitySearchFilterCriteriaValidator opportunitySearchFilterCriteriaValidator,
         IMediator mediator,
-        IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Models.Opportunity> opportunityRepository,
+        IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilterAndTrackingTotals<Models.Opportunity> opportunityRepository,
         IRepository<OpportunityCategory> opportunityCategoryRepository,
         IRepositoryPropertyContainsWithSpatial<OpportunityCountry> opportunityCountryRepository,
         IRepository<OpportunityLanguage> opportunityLanguageRepository,
@@ -1032,8 +1032,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       using var reader = new CSVTrailingCommaTrimmingTextReader(baseReader);
 
       var errors = new List<CSVImportErrorRow>();
-      using var csv = new CsvHelper.CsvReader(reader, CSVImportHelper.CreateConfig<OpportunityInfoCsvImport>(errors));
-      csv.Context.TypeConverterOptionsCache.GetOptions<string>().NullValues.Add(string.Empty);
+      using var csv = CsvHelper.CsvReader.Create(reader, CSVImportHelper.CreateConfig(errors));
 
       // Validate header before reading data rows
       // Stop if errors — prevents invalid column-to-property mapping
@@ -1060,20 +1059,19 @@ namespace Yoma.Core.Domain.Opportunity.Services
       while (await csv.ReadAsync())
       {
         recordsTotal++;
-        var rowNumber = csv.Context?.Parser?.Row ?? recordsTotal + 1;
+        var rowNumber = checked((int)csv.LineNumber);
 
         OpportunityInfoCsvImport dto;
         try
         {
-          var rec = csv.Parser.Record;
-          if (rec == null || rec.Length == 0 || rec.All(string.IsNullOrWhiteSpace))
+          if (csv.FieldCount == 0 || Enumerable.Range(0, csv.FieldCount).All(index => string.IsNullOrWhiteSpace(csv.GetString(index))))
           {
             CSVImportHelper.AddError(errors, CSVImportErrorType.ProcessingError, "The record is empty", rowNumber);
             continue;
           }
 
-          dto = csv.GetRecord<OpportunityInfoCsvImport>();
-          dto.FieldsPresent = new HashSet<string>(csv.HeaderRecord ?? [], StringComparer.OrdinalIgnoreCase);
+          dto = CSVImportHelper.ReadRecord<OpportunityInfoCsvImport>(csv, errors, rowNumber);
+          dto.FieldsPresent = new HashSet<string>(csv.Headers, StringComparer.OrdinalIgnoreCase);
           dto.CustomFieldValues = CSVImportHelper.ReadCustomFieldValues(csv, customFieldColumns);
           dto.Validate(errors, rowNumber);
 
@@ -1107,7 +1105,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         }
         catch (Exception ex)
         {
-          CSVImportHelper.HandleExceptions(ex, errors, rowNumber);
+          CSVImportHelper.HandleExceptions(ex, errors, rowNumber, csv);
           if (errors.Count >= _appSettings.CSVImportMaxProbeErrorCount) break;
           continue;
         }
@@ -1557,6 +1555,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       OpportunityAllocateRewardResponse result = null!;
       Models.Opportunity opportunity = null!;
       Organization organization = null!;
+      var ownsTransaction = Transaction.Current == null;
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -1624,10 +1623,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
         if (result.ZltoReward.HasValue)
           opportunity.ZltoRewardCumulative = (opportunity.ZltoRewardCumulative ?? default) + result.ZltoReward.Value;
 
-        await _opportunityRepository.Update(opportunity);
+        await _opportunityRepository.UpdateTrackingTotals(opportunity);
 
         scope.Complete();
-      });
+      }, ownsTransaction); // The outer completion/import boundary owns cleanup when nested.
 
       return result;
     }

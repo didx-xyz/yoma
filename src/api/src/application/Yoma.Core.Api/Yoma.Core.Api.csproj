@@ -20,8 +20,8 @@
 	<PackageReference Include="Hangfire.Core" Version="1.8.25" />
 	<PackageReference Include="Hangfire.Dashboard.BasicAuthorization" Version="1.0.2" />
 	<PackageReference Include="Hangfire.PostgreSql" Version="1.21.1" />
-	<PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="10.0.13" />
-	<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.13" />
+	<PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="10.0.14" />
+	<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.14" />
 	<PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
 	<PackageReference Include="Swashbuckle.AspNetCore" Version="10.3.1" />
 	<PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="10.3.1" />
