@@ -70,6 +70,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yoma.Core.Infrastructure.IX
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yoma.Core.Infrastructure.Umuzi", "src\infrastructure\Yoma.Core.Infrastructure.Umuzi\Yoma.Core.Infrastructure.Umuzi.csproj", "{CDD4678A-D725-461F-B593-8CA151B4C619}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yoma.Core.Infrastructure.DidxMe", "src\infrastructure\Yoma.Core.Infrastructure.DidxMe\Yoma.Core.Infrastructure.DidxMe.csproj", "{DD8418BC-45FF-4D09-8009-47DBB45F2FD0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -332,6 +334,18 @@ Global
 		{CDD4678A-D725-461F-B593-8CA151B4C619}.Release|x64.Build.0 = Release|Any CPU
 		{CDD4678A-D725-461F-B593-8CA151B4C619}.Release|x86.ActiveCfg = Release|Any CPU
 		{CDD4678A-D725-461F-B593-8CA151B4C619}.Release|x86.Build.0 = Release|Any CPU
+		{DD8418BC-45FF-4D09-8009-47DBB45F2FD0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DD8418BC-45FF-4D09-8009-47DBB45F2FD0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DD8418BC-45FF-4D09-8009-47DBB45F2FD0}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DD8418BC-45FF-4D09-8009-47DBB45F2FD0}.Debug|x64.Build.0 = Debug|Any CPU
+		{DD8418BC-45FF-4D09-8009-47DBB45F2FD0}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{DD8418BC-45FF-4D09-8009-47DBB45F2FD0}.Debug|x86.Build.0 = Debug|Any CPU
+		{DD8418BC-45FF-4D09-8009-47DBB45F2FD0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD8418BC-45FF-4D09-8009-47DBB45F2FD0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DD8418BC-45FF-4D09-8009-47DBB45F2FD0}.Release|x64.ActiveCfg = Release|Any CPU
+		{DD8418BC-45FF-4D09-8009-47DBB45F2FD0}.Release|x64.Build.0 = Release|Any CPU
+		{DD8418BC-45FF-4D09-8009-47DBB45F2FD0}.Release|x86.ActiveCfg = Release|Any CPU
+		{DD8418BC-45FF-4D09-8009-47DBB45F2FD0}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -362,6 +376,7 @@ Global
 		{F1AF13FE-421C-4F18-90F0-A2C1F59FCC6C} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
 		{301CD6E8-FFBC-431C-B89D-C6F58C237C1C} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
 		{CDD4678A-D725-461F-B593-8CA151B4C619} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
+		{DD8418BC-45FF-4D09-8009-47DBB45F2FD0} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D658A68F-8A10-4EF2-B8C9-F1350399BF58}
