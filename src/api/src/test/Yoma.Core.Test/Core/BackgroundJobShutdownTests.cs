@@ -560,7 +560,7 @@ namespace Yoma.Core.Test.Core
           new() { Name = Domain.Entity.OrganizationProviderType.Marketplace.ToString() }
         ]
       };
-      fixture.Get<IRepositoryBatchedValueContainsWithNavigation<Organization>>().Setup(service => service.Query(true))
+      fixture.Get<IRepositoryBatchedValueContainsWithNavigationAndTrackingTotals<Organization>>().Setup(service => service.Query(true))
         .Returns(new[] { organization }.AsQueryable());
       fixture.Get<IRepository<OrganizationDocument>>().Setup(service => service.Query()).Returns(Array.Empty<OrganizationDocument>().AsQueryable());
       var captured = new List<OrganizationDocumentType>();

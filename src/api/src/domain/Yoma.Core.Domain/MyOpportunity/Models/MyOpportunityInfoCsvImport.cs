@@ -1,3 +1,4 @@
+using CsvHelper;
 using System.ComponentModel.DataAnnotations;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Helpers;
@@ -9,10 +10,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
   /// CSV import model for my opportunities.
   /// NOTE: Every property in this model must have exactly one CSV header alias:
   /// - Either the property name itself, OR
-  /// - A single [Name("HeaderName")] attribute value.
+  /// - A single [CsvColumn("HeaderName")] attribute value.
   /// Multiple aliases are not allowed to keep header-to-property mapping simple.
   /// </summary>
-  public class MyOpportunityInfoCsvImport
+  [CsvRecord]
+  public partial class MyOpportunityInfoCsvImport
   {
     #region Public Members
     public string? Email { get; set; }
@@ -58,6 +60,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     /// Raw values for only the CF columns present in the CSV file. A null value means
     /// the column was present but blank (explicit PATCH deletion); an absent key means preserve.
     /// </summary>
+    [CsvIgnore]
     internal Dictionary<string, string?>? CustomFieldValues { get; set; }
 
     internal void Validate(List<CSVImportErrorRow> errors, int? rowNumber)

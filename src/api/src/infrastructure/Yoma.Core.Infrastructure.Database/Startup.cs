@@ -102,7 +102,7 @@ namespace Yoma.Core.Infrastructure.Database
       #endregion Lookups
       services.AddScoped<IRepository<OrganizationDocument>, OrganizationDocumentRepository>();
       services.AddScoped<IRepository<OrganizationProviderType>, OrganizationProviderTypeRepository>();
-      services.AddScoped<IRepositoryBatchedValueContainsWithNavigation<Organization>, OrganizationRepository>();
+      services.AddScoped<IRepositoryBatchedValueContainsWithNavigationAndTrackingTotals<Organization>, OrganizationRepository>();
       services.AddScoped<IRepository<OrganizationUser>, OrganizationUserRepository>();
       services.AddScoped<IRepositoryValueContainsWithNavigation<User>, UserRepository>();
       services.AddScoped<IRepository<UserLoginHistory>, UserLoginHistoryRepository>();
@@ -158,7 +158,7 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddScoped<IRepository<Domain.Opportunity.Models.Lookups.OpportunityVerificationType>, Opportunity.Repositories.Lookups.OpportunityVerificationTypeRepository>();
       #endregion Lookups
 
-      services.AddScoped<IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Domain.Opportunity.Models.Opportunity>, OpportunityRepository>();
+      services.AddScoped<IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilterAndTrackingTotals<Domain.Opportunity.Models.Opportunity>, OpportunityRepository>();
       services.AddScoped<IRepository<OpportunityAccommodation>, OpportunityAccommodationRepository>();
       services.AddScoped<IRepository<OpportunityCategory>, OpportunityCategoryRepository>();
       services.AddScoped<IRepository<OpportunityCountry>, OpportunityCountryRepository>();

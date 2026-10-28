@@ -1,4 +1,4 @@
-using CsvHelper.Configuration.Attributes;
+using CsvHelper;
 using System.ComponentModel.DataAnnotations;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Converters;
@@ -12,10 +12,11 @@ namespace Yoma.Core.Domain.Opportunity.Models
   /// CSV import model for opportunities.
   /// NOTE: Every property in this model must have exactly one CSV header alias:
   /// - Either the property name itself, OR
-  /// - A single [Name("HeaderName")] attribute value.
+  /// - A single [CsvColumn("HeaderName")] attribute value.
   /// Multiple aliases are not allowed to keep header-to-property mapping simple.
   /// </summary>
-  public class OpportunityInfoCsvImport
+  [CsvRecord]
+  public partial class OpportunityInfoCsvImport
   {
     #region Public Members
     [Required]
@@ -27,10 +28,10 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public string? Engagement { get; set; }
 
     [Required]
-    [TypeConverter(typeof(CsvDelimitedStringConverter))]
+    [CsvConverter(typeof(CsvDelimitedStringConverter))]
     public List<string>? Categories { get; set; }
 
-    [Name("Link")]
+    [CsvColumn("Link")]
     public string? URL { get; set; }
 
     [Required]
@@ -40,18 +41,18 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public string Description { get; set; } = null!;
 
     [Required]
-    [TypeConverter(typeof(CsvDelimitedStringConverter))]
+    [CsvConverter(typeof(CsvDelimitedStringConverter))]
     public List<string>? Languages { get; set; }
 
     [Required]
-    [TypeConverter(typeof(CsvDelimitedStringConverter))]
-    [Name("Location")]
+    [CsvConverter(typeof(CsvDelimitedStringConverter))]
+    [CsvColumn("Location")]
     public List<string>? Countries { get; set; }
 
-    [Name("EffortCount")]
+    [CsvColumn("EffortCount")]
     public short? CommitmentIntervalCount { get; set; }
 
-    [Name("EffortInterval")]
+    [CsvColumn("EffortInterval")]
     public string? CommitmentInterval { get; set; }
 
     [Required]
@@ -79,8 +80,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
     /// </summary>
     public string? ProviderCountry { get; set; }
 
-    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
-    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
+    [CsvConverter(typeof(CsvNullableBooleanConverter))]
     public bool? Incentivized { get; set; }
 
     public RewardType? RewardType { get; set; }
@@ -97,29 +97,28 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public short? AgeTo { get; set; }
 
-    [TypeConverter(typeof(CsvDelimitedStringConverter))]
+    [CsvConverter(typeof(CsvDelimitedStringConverter))]
     public List<string>? Accommodations { get; set; }
 
-    [TypeConverter(typeof(CsvDelimitedStringConverter))]
+    [CsvConverter(typeof(CsvDelimitedStringConverter))]
     public List<string>? TargetedGroups { get; set; }
 
-    [TypeConverter(typeof(CsvDelimitedStringConverter))]
+    [CsvConverter(typeof(CsvDelimitedStringConverter))]
     public List<string>? SustainableDevelopmentGoals { get; set; }
 
     public decimal? ZltoReward { get; set; }
 
     public decimal? ZltoRewardPool { get; set; }
 
-    [TypeConverter(typeof(CsvDelimitedStringConverter))]
+    [CsvConverter(typeof(CsvDelimitedStringConverter))]
     public List<string>? Skills { get; set; }
 
     [Required]
-    [TypeConverter(typeof(CsvDelimitedStringConverter))]
+    [CsvConverter(typeof(CsvDelimitedStringConverter))]
     public List<string>? Keywords { get; set; }
 
     [Required]
-    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
-    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
+    [CsvConverter(typeof(CsvBooleanConverter))]
     public bool Hidden { get; set; }
 
     [Required]
@@ -131,8 +130,10 @@ namespace Yoma.Core.Domain.Opportunity.Models
     /// Raw values for only the CF columns present in the CSV file. A null value means
     /// the column was present but blank (explicit PATCH deletion); an absent key means preserve.
     /// </summary>
+    [CsvIgnore]
     internal HashSet<string> FieldsPresent { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
+    [CsvIgnore]
     internal Dictionary<string, string?>? CustomFieldValues { get; set; }
 
     internal void Validate(List<CSVImportErrorRow> errors, int? rowNumber)

@@ -261,6 +261,13 @@ type-checks and compiles, then fails the production build with a bare-identifier
 
 ## Shared API Contract
 
+**Completion totals / CSV follow-up (2026-10-28):** the released v3.13.7 counter/cumulative
+integrity fix is ported onto latest master with the newer CF/location behavior preserved.
+This review branch also explicitly migrates CsvHelper 34 and refreshes direct API packages;
+Production deliberately retains CsvHelper 33 until Stage validation. No new migration or
+automatic repair is introduced. The [YOM-1254 handoff](YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/handoffs/2026-10-28-b.md)
+owns the repository/cleanup rules, CSV compatibility evidence and pending review/Stage gates.
+
 **Background-job application stop (2026-10-19, review):** following the SSI-only fix in PR #1990,
 the fresh master-based `fix/background-jobs-application-stop` branch adds cooperative host-stop
 checks across all 39 Hangfire entry points in 22 services. The reusable Core `BackgroundJobExecutionScope`

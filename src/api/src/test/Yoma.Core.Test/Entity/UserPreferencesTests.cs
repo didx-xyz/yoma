@@ -160,9 +160,13 @@ namespace Yoma.Core.Test.Entity
     public void EngagementCsvExportUsesTheCanonicalImportName()
     {
       using var writer = new StringWriter();
-      using var csv = new CsvWriter(writer, System.Globalization.CultureInfo.InvariantCulture);
+      using var csv = CsvWriter.Create(writer, new CsvHelper.CsvWriterOptions
+      {
+        FormatProvider = System.Globalization.CultureInfo.InvariantCulture
+      });
       csv.WriteField(Domain.Core.EngagementTypeOption.OnSite);
-      csv.NextRecord();
+      csv.EndRecord();
+      csv.Flush();
 
       Assert.Equal("OnSite", writer.ToString().TrimEnd('\r', '\n'));
     }

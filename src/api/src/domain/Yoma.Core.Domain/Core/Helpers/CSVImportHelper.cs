@@ -1,7 +1,4 @@
 using CsvHelper;
-using CsvHelper.Configuration;
-using CsvHelper.Configuration.Attributes;
-using CsvHelper.TypeConversion;
 using System.Collections.Concurrent;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
@@ -25,56 +22,45 @@ namespace Yoma.Core.Domain.Core.Helpers
     #endregion
 
     #region Public Members
-    public static CsvConfiguration CreateConfig<TModel>(List<CSVImportErrorRow> errors)
+    public static CsvReaderOptions CreateConfig(List<CSVImportErrorRow> errors)
     {
       ArgumentNullException.ThrowIfNull(errors, nameof(errors));
 
-      var modelProps = _propsCache.GetOrAdd(typeof(TModel), t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance));
-
-      return new CsvConfiguration(CultureInfo.InvariantCulture)
+      return new CsvReaderOptions
       {
-        Delimiter = ",",
-        HasHeaderRecord = true,
-        TrimOptions = TrimOptions.Trim,
-        IgnoreBlankLines = true,
-        PrepareHeaderForMatch = args => (args.Header ?? string.Empty).Trim(),
-
-        MissingFieldFound = args =>
-        {
-          // Exactly one alias per property: property name OR single [Name("...")].
-          var fieldName = args.HeaderNames?.FirstOrDefault();
-          if (fieldName == null) return;
-
-          var property = modelProps.FirstOrDefault(
-            p => string.Equals(GetPropertyName(p), fieldName, StringComparison.OrdinalIgnoreCase));
-
-          // Defensive no-op if header name doesn't map to a property.
-          if (property == null) return;
-
-          var isRequired = property.GetCustomAttributes(typeof(RequiredAttribute), true).Length > 0;
-          if (isRequired)
-            AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", args.Context?.Parser?.Row, fieldName);
-        },
-
-        BadDataFound = args =>
-        {
-          var colIndex = args.Context?.Reader?.CurrentIndex;
-          string? fieldName = null;
-
-          if (colIndex.HasValue)
-          {
-            var header = args.Context?.Reader?.HeaderRecord;
-            if (header != null && colIndex.Value < header.Length)
-              fieldName = header[colIndex.Value];
-          }
-
-          var message = "Invalid value";
-          if (string.IsNullOrEmpty(fieldName) && colIndex.HasValue)
-            message = $"Invalid value in column index {colIndex.Value}";
-
-          AddError(errors, CSVImportErrorType.InvalidFieldValue, message, args.Context?.Parser?.Row, fieldName, args.Field);
-        }
+        FormatProvider = CultureInfo.InvariantCulture,
+        Separator = ',',
+        HasHeader = true,
+        TrimWhitespace = true,
+        WhitespaceCharacters = " ",
+        SkipEmptyLines = true,
+        TrackLineNumbers = true,
+        NormalizeHeaderName = header => header.Trim(),
+        NullValues = [string.Empty],
+        OnMalformedRecord = record => AddError(errors, CSVImportErrorType.InvalidFieldValue,
+          "Invalid value", checked((int)record.LineNumber))
       };
+    }
+
+    /// <summary>
+    /// Reports missing required cells before mapping. Optional trailing cells may be absent,
+    /// as with the previous reader; all fixed columns are still required in the header.
+    /// </summary>
+    public static TModel ReadRecord<TModel>(CsvReader csv, List<CSVImportErrorRow> errors, int rowNumber)
+    {
+      ArgumentNullException.ThrowIfNull(csv, nameof(csv));
+      ArgumentNullException.ThrowIfNull(errors, nameof(errors));
+      ArgumentOutOfRangeException.ThrowIfNegativeOrZero(rowNumber);
+
+      var modelProps = _propsCache.GetOrAdd(typeof(TModel), t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance));
+      foreach (var property in modelProps.Where(p => p.IsDefined(typeof(RequiredAttribute))))
+      {
+        var name = GetPropertyName(property);
+        if (csv.TryGetFieldIndex(name, out var index) && index >= csv.FieldCount)
+          AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, name);
+      }
+
+      return csv.GetRecord<TModel>();
     }
 
     /// <summary>
@@ -91,16 +77,14 @@ namespace Yoma.Core.Domain.Core.Helpers
       var modelProps = _propsCache.GetOrAdd(typeof(TModel), t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance));
       var modelHeaders = modelProps.Select(GetPropertyName).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-      if (!csv.Read() || csv.Context?.Reader?.HeaderRecord?.Length == 0)
+      csv.ReadHeader();
+      if (csv.Headers.Count == 0)
       {
         AddError(errors, CSVImportErrorType.HeaderMissing, $"Header row is missing or empty. Expected headers {string.Join(", ", modelHeaders)}", 1);
         return null;
       }
 
-      // Register header mapping before reading data rows.
-      csv.ReadHeader();
-
-      var header = (csv.Context?.Reader?.HeaderRecord) ?? throw new InvalidOperationException("Header is missing after reading the header row");
+      var header = csv.Headers;
       var customFieldHeaders = allowCustomFieldHeaders
         ? header.Where(IsCustomFieldHeader).ToList()
         : null;
@@ -207,7 +191,7 @@ namespace Yoma.Core.Domain.Core.Helpers
       var result = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
       foreach (var column in columns)
       {
-        var value = csv.GetField(column.Key)?.Trim();
+        var value = csv.GetString(column.Key).Trim();
         result.Add(column.Value, string.IsNullOrEmpty(value) ? null : value);
       }
 
@@ -300,50 +284,23 @@ namespace Yoma.Core.Domain.Core.Helpers
       row.Items.Add(new CSVImportErrorItem { Type = type, TypeDescription = type.ToDescription(), Message = message, Field = field, Value = value });
     }
 
-    public static void HandleExceptions(Exception ex, List<CSVImportErrorRow> errors, int rowNumber)
+    public static void HandleExceptions(Exception ex, List<CSVImportErrorRow> errors, int rowNumber, CsvReader csv)
     {
       ArgumentNullException.ThrowIfNull(ex, nameof(ex));
-
       ArgumentNullException.ThrowIfNull(errors, nameof(errors));
-
+      ArgumentNullException.ThrowIfNull(csv, nameof(csv));
       ArgumentOutOfRangeException.ThrowIfNegativeOrZero(rowNumber);
 
-      switch (ex)
+      if (ex is CsvFormatException formatEx)
       {
-        case TypeConverterException typeEx:
-          {
-            var fieldName = typeEx.MemberMapData?.Names?.FirstOrDefault();
-            var fieldValue = typeEx.Text;
-
-            AddError(errors, CSVImportErrorType.InvalidFieldValue, $"Invalid value", rowNumber, fieldName, fieldValue);
-
-            break;
-          }
-
-        case ReaderException readerEx:
-          {
-            var context = readerEx.Context?.Reader;
-            var index = context?.CurrentIndex ?? -1;
-            var header = context?.HeaderRecord;
-
-            var fieldName = (index >= 0 && header != null && index < header.Length)
-                ? header[index]
-                : "Unknown";
-
-            string? fieldValue = null;
-            var record = context?.Parser?.Record;
-            if (record != null && index >= 0 && index < record.Length)
-              fieldValue = record[index];
-
-            AddError(errors, CSVImportErrorType.InvalidFieldValue, "Invalid value", rowNumber, fieldName, fieldValue);
-            break;
-          }
-
-        default:
-          AddError(errors, CSVImportErrorType.ProcessingError, ex.Message, rowNumber);
-
-          break;
+        var index = formatEx.FieldIndex;
+        var fieldName = index >= 0 && index < csv.Headers.Count ? csv.Headers[index] : null;
+        var fieldValue = index >= 0 && index < csv.FieldCount ? csv.GetString(index) : null;
+        AddError(errors, CSVImportErrorType.InvalidFieldValue, "Invalid value", rowNumber, fieldName, fieldValue);
+        return;
       }
+
+      AddError(errors, CSVImportErrorType.ProcessingError, ex.Message, rowNumber);
     }
     #endregion
 
@@ -355,9 +312,7 @@ namespace Yoma.Core.Domain.Core.Helpers
 
     private static string GetPropertyName(PropertyInfo prop)
     {
-      return prop.GetCustomAttributes(typeof(NameAttribute), true)
-        .Cast<NameAttribute>()
-        .FirstOrDefault()?.Names.FirstOrDefault() ?? prop.Name;
+      return prop.GetCustomAttribute<CsvColumnAttribute>()?.Name ?? prop.Name;
     }
     #endregion
   }

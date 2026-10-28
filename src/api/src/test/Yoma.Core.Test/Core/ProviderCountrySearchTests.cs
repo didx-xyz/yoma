@@ -110,7 +110,7 @@ namespace Yoma.Core.Test.Core
         .SetValue(service, countries.Object);
       typeof(OpportunityService).GetField("_opportunityCountryRepository", BindingFlags.Instance | BindingFlags.NonPublic)!
         .SetValue(service, repository);
-      var opportunities = new Mock<IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Opportunity>>();
+      var opportunities = new Mock<IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilterAndTrackingTotals<Opportunity>>();
       opportunities.Setup(value => value.WhereCustomFields(It.IsAny<IQueryable<Opportunity>>(),
           It.IsAny<List<Domain.Core.Models.CustomFieldFilter>?>()))
         .Returns((IQueryable<Opportunity> query, List<Domain.Core.Models.CustomFieldFilter>? _) => query);
