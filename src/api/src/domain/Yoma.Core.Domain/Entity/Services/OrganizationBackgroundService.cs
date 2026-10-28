@@ -27,7 +27,7 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly INotificationDeliveryService _notificationDeliveryService;
     private readonly IUserService _userService;
     private readonly INotificationURLFactory _notificationURLFactory;
-    private readonly IRepositoryBatchedValueContainsWithNavigation<Organization> _organizationRepository;
+    private readonly IRepositoryBatchedValueContainsWithNavigationAndTrackingTotals<Organization> _organizationRepository;
     private readonly IRepository<OrganizationDocument> _organizationDocumentRepository;
     private readonly IDistributedLockService _distributedLockService;
     private readonly IMediator _mediator;
@@ -45,7 +45,7 @@ namespace Yoma.Core.Domain.Entity.Services
         INotificationDeliveryService notificationDeliveryService,
         IUserService userService,
         INotificationURLFactory notificationURLFactory,
-        IRepositoryBatchedValueContainsWithNavigation<Organization> organizationRepository,
+        IRepositoryBatchedValueContainsWithNavigationAndTrackingTotals<Organization> organizationRepository,
         IRepository<OrganizationDocument> organizationDocumentRepository,
         IDistributedLockService distributedLockService,
         IMediator mediator)

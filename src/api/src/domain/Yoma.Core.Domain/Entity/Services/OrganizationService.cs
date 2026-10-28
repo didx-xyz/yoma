@@ -51,7 +51,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
     private readonly IMediator _mediator;
 
-    private readonly IRepositoryBatchedValueContainsWithNavigation<Organization> _organizationRepository;
+    private readonly IRepositoryBatchedValueContainsWithNavigationAndTrackingTotals<Organization> _organizationRepository;
     private readonly IRepository<OrganizationUser> _organizationUserRepository;
     private readonly IRepository<Models.OrganizationProviderType> _organizationProviderTypeRepository;
     private readonly IRepository<OrganizationDocument> _organizationDocumentRepository;
@@ -83,7 +83,7 @@ namespace Yoma.Core.Domain.Entity.Services
         OrganizationRequestUpdateStatusValidator organizationRequestUpdateStatusValidator,
         SettingsRequestValidator settingsRequestValidator,
         IMediator mediator,
-        IRepositoryBatchedValueContainsWithNavigation<Organization> organizationRepository,
+        IRepositoryBatchedValueContainsWithNavigationAndTrackingTotals<Organization> organizationRepository,
         IRepository<OrganizationUser> organizationUserRepository,
         IRepository<Models.OrganizationProviderType> organizationProviderTypeRepository,
         IRepository<OrganizationDocument> organizationDocumentRepository,
@@ -968,7 +968,7 @@ namespace Yoma.Core.Domain.Entity.Services
         organization.ModifiedByUserId = user.Id;
       }
 
-      await _organizationRepository.Update(organizations);
+      await _organizationRepository.UpdateTrackingTotals(organizations);
     }
 
     public async Task AllocateRewards(Organization organization, decimal? zltoReward)
@@ -991,7 +991,7 @@ namespace Yoma.Core.Domain.Entity.Services
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
 
       organization.ModifiedByUserId = user.Id;
-      await _organizationRepository.Update(organization);
+      await _organizationRepository.UpdateTrackingTotals(organization);
     }
 
     public bool IsAdmin(Guid id, bool throwUnauthorized)

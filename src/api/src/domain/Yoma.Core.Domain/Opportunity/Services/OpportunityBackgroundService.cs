@@ -36,7 +36,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly ICountryService _countryService;
     private readonly IProcessingStatusService _processingStatusService;
     private readonly INotificationURLFactory _notificationURLFactory;
-    private readonly IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Models.Opportunity> _opportunityRepository;
+    private readonly IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilterAndTrackingTotals<Models.Opportunity> _opportunityRepository;
     private readonly IRepositoryBatched<ProcessingLog> _processingLogRepository;
     private readonly IDistributedLockService _distributedLockService;
     private readonly IMediator _mediator;
@@ -57,7 +57,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         ICountryService countryService,
         IProcessingStatusService processingStatusService,
         INotificationURLFactory notificationURLFactory,
-        IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Models.Opportunity> opportunityRepository,
+        IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilterAndTrackingTotals<Models.Opportunity> opportunityRepository,
         IRepositoryBatched<ProcessingLog> processingLogRepository,
         IDistributedLockService distributedLockService,
         IMediator mediator)
