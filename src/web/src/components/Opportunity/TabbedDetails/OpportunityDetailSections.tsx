@@ -123,7 +123,6 @@ interface SectionDef {
    */
   note?: string | null;
   content: React.ReactNode;
-  defaultOpen?: boolean;
   /** A value row with nothing to open (Age range, Time needed, Incentive · None). */
   static?: boolean;
 }
@@ -551,7 +550,7 @@ export const OpportunityDetailSections: React.FC<{
         content: <BadgePanel badge={places} />,
       });
 
-    // Skills — a Job's are its requirements (open by default); anyone else's are awarded
+    // Skills — a Job's are its requirements; anyone else's are awarded
     const skills = (opportunity.skills ?? []).map((s) => ({
       id: s.id,
       label: s.name,
@@ -569,7 +568,6 @@ export const OpportunityDetailSections: React.FC<{
           ? "Skills this job asks for. Mention the ones you have when you apply."
           : "Skills you'll gain by finishing this. They're added to your YoID once it's verified.",
         content: <ChipList items={skills} />,
-        defaultOpen: isJob,
       });
 
     const languages = (opportunity.languages ?? []).map((l) => ({
@@ -789,10 +787,19 @@ export const OpportunityDetailSections: React.FC<{
     ...extraGroups.map(({ id, label, tone }) => ({ id, label, tone })),
   ];
 
-  // ── open state: which disclosures are open, and the one a tab tap focused ──
-  const [open, setOpen] = useState<Set<string>>(
-    () => new Set(sections.filter((s) => s.defaultOpen).map((s) => s.id)),
-  );
+  // ── open state: every section starts open (BA, 2026-10-29) — the youth sees the whole picture,
+  //    Additional details most of all, and closes what they are done with. Tracked as the set the
+  //    youth CLOSED, so a section that arrives later (Additional details waits for its definitions)
+  //    is open too. Static rows have nothing to open. ──
+  const [closed, setClosed] = useState<Set<string>>(() => new Set());
+  const isOpen = (id: string): boolean => !closed.has(id);
+  const openSection = (id: string): void =>
+    setClosed((current) => {
+      if (!current.has(id)) return current;
+      const next = new Set(current);
+      next.delete(id);
+      return next;
+    });
   const [focused, setFocused] = useState<string | null>(null);
   // The section a header chip just jumped to: ringed for a moment, so the eye finds it.
   const [flashId, setFlashId] = useState<string | null>(null);
@@ -802,7 +809,7 @@ export const OpportunityDetailSections: React.FC<{
     return () => window.clearTimeout(timer);
   }, [flashId]);
   const toggle = (id: string): void =>
-    setOpen((current) => {
+    setClosed((current) => {
       const next = new Set(current);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -890,7 +897,7 @@ export const OpportunityDetailSections: React.FC<{
       tappedRef.current = { group, at: Date.now() };
       const first = sections.find((s) => s.group === group);
       if (first) {
-        setOpen((current) => new Set(current).add(first.id));
+        openSection(first.id);
         setFocused(first.id);
       }
       const el = groupRefs.current[group];
@@ -923,7 +930,7 @@ export const OpportunityDetailSections: React.FC<{
       if (!section) return;
       tappedRef.current = { group: section.group, at: Date.now() };
       setActive(section.group);
-      setOpen((current) => new Set(current).add(id));
+      openSection(id);
       setFocused(id);
       setFlashId(id);
       // after the open has rendered, so the card is where it will stay
@@ -1060,7 +1067,7 @@ export const OpportunityDetailSections: React.FC<{
                     preview={s.preview}
                     note={s.note}
                     static={s.static}
-                    open={open.has(s.id)}
+                    open={isOpen(s.id)}
                     focused={focused === s.id}
                     flash={flashId === s.id}
                     onToggle={() => {

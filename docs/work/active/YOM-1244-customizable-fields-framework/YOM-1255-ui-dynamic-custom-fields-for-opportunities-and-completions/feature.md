@@ -385,6 +385,12 @@ is `multipart/form-data` with `CustomFields` as one JSON-encoded form field
   it's reviewed."
 - 2026-10-26 (Jason): **Celebration icon animations removed** — supersedes the experimental entry
   above. The confetti, circle and icon are all static; the colours and shapes stay.
+- 2026-10-30 (BA comment on YOM-1260, 2026-10-29): **every detail-page section starts open**,
+  Additional details most of all; the youth closes what they are done with. The open state is now
+  the set of sections the youth has *closed*, not opened, so a section that mounts later —
+  Additional details waits for its custom-field definitions — starts open too. `defaultOpen` is
+  gone (it only ever opened a Job's Skills). Tab taps and header-chip jumps still open their
+  section if the youth had closed it.
 
 ## Links
 

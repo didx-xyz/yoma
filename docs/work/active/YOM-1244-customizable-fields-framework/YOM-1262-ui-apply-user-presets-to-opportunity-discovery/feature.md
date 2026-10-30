@@ -1838,6 +1838,11 @@ commitment set; **accessibility excludes** those that have not described their a
     `~/.cache/cdp-tools/shots/2026-10-22-disc3/dialog-language-{collapsed,expanded}.png`,
     `dialog-country-{collapsed,expanded}.png`, `popover-where-{collapsed,expanded}.png`,
     `wizard-languages{,-expanded,-typed}.png`, `wizard-step5.png`.
+- 2026-10-30 (BA comment on YOM-1260, 2026-10-29): the Provider filter's hint example is
+  "Atingi", an actual partner, not "KFC" (`registry/filterSections.ts`). Her distance question is
+  answered, not changed: a radius search is sent as `radius: { coordinates, radiusKm }` and
+  matches only opportunities with coordinates. The clipped search-bar text is unreproduced (no
+  width given) and stays open.
 
 ## BA sign-off summary (2026-09-22)
 
