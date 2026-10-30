@@ -921,7 +921,7 @@ Unless a test says otherwise: signed out, in a fresh private window, open `/oppo
 - "PAID" heading: "Paid or rewarded" or "Unpaid", one at a time. "ZLTO REWARD" heading: "With ZLTO reward" and ranges such as "Z50 - Z100", then "Show all 11". Rule line: "Opportunities that haven't specified an incentive stay in, listed after the ones that match." Counts: "Paid or rewarded" 15, "Unpaid" 16, "With ZLTO reward" 6. With Job in Type, the ZLTO options are replaced by "Jobs do not carry ZLTO."; the Paid options stay.
 - **Skills** is dimmed, with "Coming soon". It has no arrow and doesn't open. The line under it reads "The skills in your preferences already narrow jobs; jobs that list no skills stay in."
 - **SDGs** offers only "1. No poverty" and "2. Zero hunger" *(seed)*. Rule line: "Opportunities that don't name a goal stay in your results." All 23 stay.
-- **Provider** hint: "The provider named on the opportunity — type part of it, e.g. KFC." Rule line: "Opportunities that don't name a provider are left out." "fixture" and "FIXTURE" both give 15. Nothing searches until you press Enter or leave the box. "zzzz" gives "0 matches".
+- **Provider** hint: "Type part of the provider's name, for example Atingi." Rule line: "We hide opportunities that don't name a provider." "fixture" and "FIXTURE" both give 15. Nothing searches until you press Enter or leave the box. "zzzz" gives "0 matches".
 
 **Result:** ☐ Pass ☐ Fail — notes:
 #### FI-09 · *(Optional)* Code-reading checks: Q-W09, Q-W10, Q-W11

@@ -288,7 +288,7 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     icon: IoBusinessOutline,
     control: "text",
     binding: "provider",
-    hint: "Type part of the provider's name, for example KFC.",
+    hint: "Type part of the provider's name, for example Atingi.",
     nullRule: "We hide opportunities that don't name a provider.",
     pendingNote: null,
     group: "more",
