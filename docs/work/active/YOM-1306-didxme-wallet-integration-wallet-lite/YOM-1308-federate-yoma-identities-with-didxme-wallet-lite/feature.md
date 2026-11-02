@@ -21,7 +21,7 @@ security/configuration and investigation results belong in the private team hand
 - [x] Align full-reset development fixture identity IDs with SQL seeds.
 - [x] Verify automatic Local integration initialization and repeatable local configuration.
 - [ ] Verify browser sign-in, refresh and subsequent wallet access with Jason.
-- [ ] Verify mobile-only identity and later email changes preserve wallet ownership.
+- [x] Adrian verified mobile-only issuance, then listing/detail of the existing YoID after adding email and signing in again through Swagger. Frontend verification remains separate.
 - [ ] Confirm Dev provisioning/configuration privately with SRE before rollout.
 - [ ] Agree supported background-operation requirements with the platform team; see YOM-1309.
 
@@ -32,7 +32,7 @@ security/configuration and investigation results belong in the private team hand
 - Fixture identity IDs are test-data conventions, not runtime identity assumptions.
 - Mono remains independently managed. Public setup is in the [environment guide](../environment.md).
 - 2026-11-02: Remove detailed private platform trust/grant configuration and security probes from
-  public Markdown. Preserve authorized engineering material privately; history cleanup is pending.
+  public Markdown. Preserve authorized engineering material privately; the affected branch history was subsequently cleaned.
 
 ## Links
 

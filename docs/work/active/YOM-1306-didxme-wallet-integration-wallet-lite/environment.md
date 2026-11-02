@@ -136,6 +136,6 @@ The optional `LocalDryRunTests` harness is for adapter diagnostics, **not** Jaso
 
 ## Verification and Next Steps
 
-Local provisioning, issuance, API wallet list/detail and holder caching have been exercised. Browser/mobile identity scenarios, remaining credential detail shapes and deployed multi-instance behavior still need verification. Recovery and Replay remain release blockers.
+Local provisioning, issuance, API wallet list/detail, holder caching and mobile-to-email wallet continuity have been exercised. Frontend/browser journeys and deployed multi-instance behavior still need verification. Recovery and Replay remain release blockers. Dev preparation is next; cutover and rollback planning are deferred until Stage preparation.
 
 Use the [epic](./README.md) for scope/owners and the [adapter feature](./YOM-1309-use-didxme-for-yoma-wallets-and-credential-issuance/feature.md) for current tasks. Historical/private investigation details are not startup instructions.
