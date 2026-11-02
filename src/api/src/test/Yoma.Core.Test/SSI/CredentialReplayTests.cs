@@ -29,6 +29,23 @@ namespace Yoma.Core.Test.SSI
   {
     #region Tests
     [Theory]
+    [InlineData(SchemaType.YoID)]
+    [InlineData(SchemaType.Opportunity)]
+    public async Task SdJwtReplayPreservesFormatAndOriginalDateWithCapableProvider(SchemaType type)
+    {
+      // The domain supports this format. didx:me still rejects background lookup/deletion until
+      // its separate authorization gap is solved; this fixture supplies those capabilities.
+      using var fixture = new Fixture(type, artifactType: ArtifactType.SDJWT);
+
+      await fixture.Background.ProcessCredentialIssuance();
+
+      Assert.Equal(CredentialIssuanceStatus.Issued, fixture.Item.Status);
+      Assert.Equal(ArtifactType.SDJWT, Assert.Single(fixture.Requests).ArtifactType);
+      Assert.Equal(fixture.OriginalDate, fixture.Item.DateIssued);
+      fixture.Provider.Verify(client => client.DeleteCredential("holder", ArtifactType.SDJWT, It.IsAny<string>()), Times.Once);
+    }
+
+    [Theory]
     [InlineData(1)]
     [InlineData(3)]
     public async Task AllReplayBatchesFinishCleanupBeforeAnyIssuanceStarts(int parallelism)
@@ -317,7 +334,7 @@ namespace Yoma.Core.Test.SSI
       #endregion Class Variables
 
       #region Constructor
-      public Fixture(SchemaType type, int parallelism = 1, CancellationToken stopping = default)
+      public Fixture(SchemaType type, int parallelism = 1, CancellationToken stopping = default, ArtifactType? artifactType = null)
       {
         var participation = new Domain.MyOpportunity.Models.MyOpportunity
         {
@@ -333,7 +350,7 @@ namespace Yoma.Core.Test.SSI
           Id = _id,
           SchemaType = type,
           SchemaTypeId = typeId,
-          ArtifactType = type == SchemaType.YoID ? ArtifactType.ACR : ArtifactType.JWS,
+          ArtifactType = artifactType ?? (type == SchemaType.YoID ? ArtifactType.ACR : ArtifactType.JWS),
           SchemaName = type == SchemaType.YoID ? "YoID|Default" : "Opportunity|Default",
           SchemaVersion = "1.0",
           Status = CredentialIssuanceStatus.Replay,
@@ -458,7 +475,7 @@ namespace Yoma.Core.Test.SSI
         Background = new SSIBackgroundService(Mock.Of<ILogger<SSIBackgroundService>>(), Options.Create(settings), environment.Object,
           Options.Create(new ScheduleJobOptions { SSICredentialIssuanceScheduleBatchSize = 10, SSICredentialIssuanceScheduleMaxIntervalInHours = 1 }),
           _services.GetRequiredService<IServiceScopeFactory>(), schemas.Object, Mock.Of<ISSISchemaEntityService>(),
-          Tenants.Object, credentialService, Lock.Object, lifetime.Object);
+          Tenants.Object, credentialService, Lock.Object, lifetime.Object, factory.Object);
       }
       #endregion Constructor
 

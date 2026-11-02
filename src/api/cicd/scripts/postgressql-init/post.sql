@@ -5,7 +5,14 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 SET TIMEZONE='UTC';
 
+-- Credential artifact types: didx:me uses SDJWT for both; AriesCloud uses ACR for YoID and JWS for opportunities.
+-- Keep these seed values aligned with the API's DI registration when switching providers.
+SET yoma.seed_yoid_artifact_type = 'SDJWT';
+SET yoma.seed_opportunity_artifact_type = 'SDJWT';
+
 -- Users & Organizations
+-- Fixed ExternalId values match src/keycloak/scripts/users.sh; Yoma primary keys remain independent.
+-- DateLastLogin is synthetic test data, using the same UTC timestamp as the other seed dates.
 
 -- NOTE (Adrian, 2026-11-02 — web e2e tests, YOM-1311): the three test users, the Yoma organization and the
 -- organization owning the search fixtures now have FIXED ids, and the users carry seeded "Settings" so the
@@ -18,7 +25,8 @@ INSERT INTO "Entity"."User"("Id", "Email", "EmailConfirmed", "FirstName", "Surna
             "PhotoId", "GenderId", "DateOfBirth", "DateLastLogin", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified", "Settings")
 VALUES('00000000-0000-4000-8000-000000000001', 'testuser@gmail.com', TRUE, 'Test', 'User', 'Test User', '+27821234567', TRUE,
         (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2"='ZA'), (SELECT "Id" FROM "Lookup"."Education" ORDER BY RANDOM() LIMIT 1),
-        NULL, (SELECT "Id" FROM "Lookup"."Gender" ORDER BY RANDOM() LIMIT 1), CURRENT_DATE - INTERVAL '20 years', NULL, NULL, TRUE,
+        NULL, (SELECT "Id" FROM "Lookup"."Gender" ORDER BY RANDOM() LIMIT 1), CURRENT_DATE - INTERVAL '20 years',
+        (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), 'bed06c20-e8ce-45d8-b15c-26958c7c2721', TRUE,
         (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), '{"User_Settings_Configured":true,"User_RumConsent":false}');
 
 -- testadminuser@gmail.com (KeyCloak password: P@ssword12)
@@ -26,7 +34,8 @@ INSERT INTO "Entity"."User"("Id", "Email", "EmailConfirmed", "FirstName", "Surna
             "PhotoId", "GenderId", "DateOfBirth", "DateLastLogin", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified", "Settings")
 VALUES('00000000-0000-4000-8000-000000000002', 'testadminuser@gmail.com', TRUE, 'Test Admin', 'User', 'Test Admin User', NULL, NULL,
         (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2"='ZA'), (SELECT "Id" FROM "Lookup"."Education" ORDER BY RANDOM() LIMIT 1),
-        NULL, (SELECT "Id" FROM "Lookup"."Gender" ORDER BY RANDOM() LIMIT 1), CURRENT_DATE - INTERVAL '21 years', NULL, NULL, TRUE,
+        NULL, (SELECT "Id" FROM "Lookup"."Gender" ORDER BY RANDOM() LIMIT 1), CURRENT_DATE - INTERVAL '21 years',
+        (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), '5461f741-ef04-4875-8307-c896175d94d0', TRUE,
         (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), '{"User_Settings_Configured":true,"User_RumConsent":false}');
 
 -- testorgadminuser@gmail.com (KeyCloak password: P@ssword12)
@@ -34,8 +43,16 @@ INSERT INTO "Entity"."User"("Id", "Email", "EmailConfirmed", "FirstName", "Surna
             "PhotoId", "GenderId", "DateOfBirth", "DateLastLogin", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified", "Settings")
 VALUES('00000000-0000-4000-8000-000000000003', 'testorgadminuser@gmail.com', TRUE, 'Test Organization Admin', 'User', 'Test Organization Admin User', NULL, NULL,
         (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2"='ZA'), (SELECT "Id" FROM "Lookup"."Education" ORDER BY RANDOM() LIMIT 1),
-        NULL, (SELECT "Id" FROM "Lookup"."Gender" ORDER BY RANDOM() LIMIT 1), CURRENT_DATE - INTERVAL '22 years', NULL, NULL, TRUE,
+        NULL, (SELECT "Id" FROM "Lookup"."Gender" ORDER BY RANDOM() LIMIT 1), CURRENT_DATE - INTERVAL '22 years',
+        (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), '2a7f48c8-7dfe-41b6-9172-df47cc791303', TRUE,
         (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), '{"User_Settings_Configured":true,"User_RumConsent":false}');
+
+-- The system user is created by the application migration, not by this test-data script.
+-- It does not sign in; leave DateLastLogin unset.
+UPDATE "Entity"."User"
+SET "ExternalId" = '419cde78-352d-4362-bacc-71b327ec984c',
+    "DateModified" = (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+WHERE "Email" = 'system@yoma.world';
 
 -- SSI Tenant Creation (Pending) for YOID onboarded users
 INSERT INTO "SSI"."TenantCreation"("Id", "EntityType", "StatusId", "UserId", "OrganizationId", "TenantId", "ErrorReason", "RetryCount", "DateCreated", "DateModified")
@@ -47,7 +64,7 @@ WHERE U."YoIDOnboarded" = true;
 -- SSI Credential Issuance (Pending) for YOID onboarded users
 INSERT INTO "SSI"."CredentialIssuance"("Id", "SchemaTypeId", "ArtifactType", "SchemaName", "SchemaVersion", "StatusId", "UserId", "OrganizationId",
                                        "MyOpportunityId", "CredentialId", "ErrorReason", "RetryCount", "DateCreated", "DateModified")
-SELECT gen_random_uuid(), ST."Id" AS "SchemaTypeId", 'ACR' AS "ArtifactType", 'YoID|Default' AS "SchemaName", NULL AS "SchemaVersion",
+SELECT gen_random_uuid(), ST."Id" AS "SchemaTypeId", current_setting('yoma.seed_yoid_artifact_type') AS "ArtifactType", 'YoID|Default' AS "SchemaName", NULL AS "SchemaVersion",
        CIS."Id" AS "StatusId", U."Id" AS "UserId", NULL AS "OrganizationId", NULL AS "MyOpportunityId", NULL AS "CredentialId",
        NULL AS "ErrorReason", NULL AS "RetryCount", (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') AS "DateCreated", (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') AS "DateModified"
 FROM "Entity"."User" U
@@ -937,7 +954,7 @@ DROP TABLE "SearchFixtures";
 -- SSI Credential Issuance (Pending) for Verification (Completed) mapped to opportunities with CredentialIssuanceEnabled
 INSERT INTO "SSI"."CredentialIssuance"("Id", "SchemaTypeId", "ArtifactType", "SchemaName", "SchemaVersion", "StatusId", "UserId", "OrganizationId",
            "MyOpportunityId", "CredentialId", "ErrorReason", "RetryCount", "DateCreated", "DateModified")
-SELECT gen_random_uuid(), (SELECT "Id" FROM "SSI"."SchemaType" WHERE "Name" = 'Opportunity'), 'JWS', O."SSISchemaName", NULL, (SELECT "Id" FROM "SSI"."CredentialIssuanceStatus" WHERE "Name" = 'Pending'),
+SELECT gen_random_uuid(), (SELECT "Id" FROM "SSI"."SchemaType" WHERE "Name" = 'Opportunity'), current_setting('yoma.seed_opportunity_artifact_type'), O."SSISchemaName", NULL, (SELECT "Id" FROM "SSI"."CredentialIssuanceStatus" WHERE "Name" = 'Pending'),
 	NULL, NULL, MO."Id", NULL, NULL, NULL, (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 FROM "Opportunity"."MyOpportunity" MO
 INNER JOIN "Opportunity"."Opportunity" O ON MO."OpportunityId" = O."Id"
@@ -1882,3 +1899,6 @@ FROM (
     ) AS "ZltoRewardCumulativeCurrentFinancialYear"
 ) totals
 WHERE TRUE;
+
+RESET yoma.seed_yoid_artifact_type;
+RESET yoma.seed_opportunity_artifact_type;

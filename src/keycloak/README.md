@@ -117,10 +117,55 @@ Common script usage:
 
 ## 🔑 Single Sign-On
 
+### Local/Dev fixture users
+
+`scripts/users.sh` is for test data after a **full reset**, not for managing existing users.
+It uses Keycloak partial import with fixed GUIDs. These match `User.ExternalId` in
+`src/api/cicd/scripts/postgressql-init/post.sql`; Yoma's own primary keys remain independent.
+The normal user-creation API still generates IDs in Keycloak 26.8.1. Its
+[partial-import implementation](https://github.com/keycloak/keycloak/blob/26.8.1/services/src/main/java/org/keycloak/partialimport/UsersPartialImport.java#L101)
+preserves a supplied ID. The script imports credentials, profile attributes and roles together,
+then reads each user back by that ID. It fails on import errors or conflicts without overwriting
+existing identities. Passwords/tokens and HTTP response bodies are not printed.
+
+| Fixture | Keycloak ID / Yoma ExternalId |
+| --- | --- |
+| testuser@gmail.com | `bed06c20-e8ce-45d8-b15c-26958c7c2721` |
+| testadminuser@gmail.com | `5461f741-ef04-4875-8307-c896175d94d0` |
+| testorgadminuser@gmail.com | `2a7f48c8-7dfe-41b6-9172-df47cc791303` |
+| system@yoma.world | `419cde78-352d-4362-bacc-71b327ec984c` |
+
+The three test users receive a synthetic `DateLastLogin` at SQL execution time in UTC.
+The system user already comes from an application migration; the test seed updates its
+ExternalId/modified values, leaving DateLastLogin unset because it does not sign in.
+These GUIDs are fixture data only: runtime onboarding,
+authentication and federation still use each user's normal persisted ExternalId.
+
+Local Compose runs user import after `postgres-init`. Dev requires a separately provisioned seed job with the appropriate import permissions and ordering; SRE must review the existing deployment hook before using this revised script. Supply privileged configuration through the private SRE handoff. Runtime API permissions are not widened. Keep fixture usernames aligned with `post.sql`.
+
+For VS's separate fixed PostgreSQL instance, run migrations and the same `post.sql` against
+the empty database. The fixed ExternalIds then match the shared, freshly seeded Yoma Keycloak
+without depending on its creation webhooks reaching that separate database.
+
+Offline validation on Linux with Python, sh and jq:
+
+```sh
+FIXTURE_POST_SQL=src/api/cicd/scripts/postgressql-init/post.sql python3 src/keycloak/scripts/test_users.py
+```
+
 For partners looking to implement Single Sign-On with Yoma:
 
 - [SSO Integration Guide](../../docs/sso/README.md)
 
 ## 📚 Documentation
+
+### didx:me integration
+
+Yoma's existing realm import owns its side of the integration. Local Compose applies it during
+normal initialization; the standalone platform is managed separately. See the
+[public startup guide](../../docs/work/active/YOM-1306-didxme-wallet-integration-wallet-lite/environment.md).
+
+SRE supplies deployed configuration, permissions and secrets through the approved private handoff.
+Do not document private platform trust settings, privileged workflows or access details here.
 
 For more details on architecture, design decisions, and component guidelines, please refer to our [documentation](../../docs/README.md).

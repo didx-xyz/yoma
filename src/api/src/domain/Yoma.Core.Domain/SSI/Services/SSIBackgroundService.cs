@@ -117,6 +117,7 @@ namespace Yoma.Core.Domain.SSI.Services
     private readonly ScheduleJobOptions _scheduleJobOptions;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ISSISchemaService _ssiSchemaService;
+    private readonly ISSIProviderClient _ssiProviderClient;
     private readonly ISSISchemaEntityService _ssiSchemaEntityService;
     private readonly ISSITenantService _ssiTenantService;
     private readonly ISSICredentialService _ssiCredentialService;
@@ -135,7 +136,8 @@ namespace Yoma.Core.Domain.SSI.Services
         ISSITenantService ssiTenantService,
         ISSICredentialService ssiCredentialService,
         IDistributedLockService distributedLockService,
-        IHostApplicationLifetime applicationLifetime)
+        IHostApplicationLifetime applicationLifetime,
+        ISSIProviderClientFactory ssiProviderClientFactory)
     {
       _logger = logger;
       _appSettings = appSettings.Value;
@@ -143,6 +145,7 @@ namespace Yoma.Core.Domain.SSI.Services
       _scheduleJobOptions = scheduleJobOptions.Value;
       _scopeFactory = scopeFactory;
       _ssiSchemaService = ssiSchemaService;
+      _ssiProviderClient = ssiProviderClientFactory.CreateClient();
       _ssiSchemaEntityService = ssiSchemaEntityService;
       _ssiTenantService = ssiTenantService;
       _ssiCredentialService = ssiCredentialService;
@@ -176,9 +179,12 @@ namespace Yoma.Core.Domain.SSI.Services
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing SSI default schema seeding");
 
+        var opportunityArtifactType = _ssiProviderClient.GetDefaultArtifactType(SchemaType.Opportunity);
+        var yoIDArtifactType = _ssiProviderClient.GetDefaultArtifactType(SchemaType.YoID);
+
         // Learning and Other share the base claim set. Each distinct type adds its own configured CFs;
         // keys identify the definitions, while option labels and presentation come from the CF framework.
-        await SeedSchema(ArtifactType.JWS,
+        await SeedSchema(opportunityArtifactType,
           SSISSchemaHelper.ToDefaultFullName(Opportunity.Type.Learning),
           [
             "Opportunity_OrganizationName",
@@ -195,7 +201,7 @@ namespace Yoma.Core.Domain.SSI.Services
             "MyOpportunity_VerificationEvidence"
           ]);
 
-        await SeedSchema(ArtifactType.JWS,
+        await SeedSchema(opportunityArtifactType,
           SSISSchemaHelper.ToDefaultFullName(Opportunity.Type.ImpactAction),
           [
             "Opportunity_OrganizationName",
@@ -214,7 +220,7 @@ namespace Yoma.Core.Domain.SSI.Services
             "MyOpportunity_ImpactActionImpactAchieved"
           ]);
 
-        await SeedSchema(ArtifactType.JWS,
+        await SeedSchema(opportunityArtifactType,
           SSISSchemaHelper.ToDefaultFullName(Opportunity.Type.Event),
           [
             "Opportunity_OrganizationName",
@@ -232,7 +238,7 @@ namespace Yoma.Core.Domain.SSI.Services
             "MyOpportunity_EventRole"
           ]);
 
-        await SeedSchema(ArtifactType.JWS,
+        await SeedSchema(opportunityArtifactType,
           SSISSchemaHelper.ToDefaultFullName(Opportunity.Type.Job),
           [
             "Opportunity_OrganizationName",
@@ -260,7 +266,7 @@ namespace Yoma.Core.Domain.SSI.Services
             "MyOpportunity_JobEmploymentStartDate"
           ]);
 
-        await SeedSchema(ArtifactType.JWS,
+        await SeedSchema(opportunityArtifactType,
           SSISSchemaHelper.ToDefaultFullName(Opportunity.Type.Entrepreneurship),
           [
             "Opportunity_OrganizationName",
@@ -275,12 +281,12 @@ namespace Yoma.Core.Domain.SSI.Services
             "Opportunity_VerificationMethod",
             "MyOpportunity_VerificationEvidence",
             "Opportunity_EntrepreneurshipProgrammeType",
-            "Opportunity_EntrepreneurshipProgrammeOtherDescription",
+            "Opportunity_EntrepreneurshipProgrammeOther",
             "MyOpportunity_EntrepreneurshipBusinessName",
             "MyOpportunity_EntrepreneurshipBusinessSummary",
             "MyOpportunity_Location",
             "MyOpportunity_EntrepreneurshipBusinessRegistered",
-            "MyOpportunity_EntrepreneurshipRegistrationReference",
+            "MyOpportunity_EntrepreneurshipRegistrationRef",
             "MyOpportunity_EntrepreneurshipSector",
             "MyOpportunity_EntrepreneurshipJobsCreated",
             "MyOpportunity_EntrepreneurshipRevenueBand",
@@ -296,7 +302,7 @@ namespace Yoma.Core.Domain.SSI.Services
         // User_DisplayName is the protected Title attribute, rendered above the credential body.
         // Do not duplicate it as another body attribute merely to match the BA mock-up's row.
         // Email remains available to historical/custom schemas, but is not a default identity claim.
-        await SeedSchema(ArtifactType.ACR,
+        await SeedSchema(yoIDArtifactType,
           _appSettings.SSISchemaFullNameYoID,
           [
             "Organization_Name",
@@ -880,6 +886,9 @@ namespace Yoma.Core.Domain.SSI.Services
 
     private static void AssertIssuanceSchemaApplicable(SSISchema schema, SSICredentialIssuance item)
     {
+      if (!SSISSchemaHelper.ArtifactTypeSupported(item.SchemaType, item.ArtifactType))
+        throw new InvalidOperationException($"Artifact type '{item.ArtifactType}' is not supported for schema type '{item.SchemaType}'");
+
       if (!string.Equals(schema.Name, item.SchemaName, StringComparison.OrdinalIgnoreCase))
         throw new InvalidOperationException($"SSI schema '{schema.Name}' does not match scheduled schema '{item.SchemaName}'");
 
@@ -955,7 +964,7 @@ namespace Yoma.Core.Domain.SSI.Services
     }
 
     /// <summary>
-    /// Maps static schema properties into the signed credential. Required values must be present. JWS credentials
+    /// Maps static schema properties into the signed credential. Required values must be present. JWS and SD-JWT credentials
     /// omit optional values without content; ACR credentials retain an "n/a" placeholder because AnonCreds requires
     /// every schema attribute to have a value. Wallet retrieval supports both representations.
     /// </summary>
@@ -1129,7 +1138,7 @@ namespace Yoma.Core.Domain.SSI.Services
         }
 
         // Custom-field credentials are new, so multi-select values use the structured provider representation from
-        // inception. JWS omits optional fields without values, while the shared ACR rule supplies its required placeholder.
+        // inception. JWS and SD-JWT omit optional fields without values; ACR supplies its required placeholder.
         request.Attributes.Add(customField.AttributeName, valuesDisplay.Count switch
         {
           _ when customField.SupportsMultiple == true => JsonConvert.SerializeObject(
@@ -1140,7 +1149,7 @@ namespace Yoma.Core.Domain.SSI.Services
     }
 
     /// <summary>
-    /// JWS payloads can omit an optional schema attribute. AnonCreds credential definitions cannot, so ACR uses the
+    /// JWS and SD-JWT payloads can omit an optional schema attribute. AnonCreds definitions cannot, so ACR uses the
     /// established "n/a" placeholder while preserving the domain-level distinction that the value is optional.
     /// </summary>
     private static void MapOptionalCredentialAttributeWithoutValue(CredentialIssuanceRequest request, string attributeName)
@@ -1148,6 +1157,7 @@ namespace Yoma.Core.Domain.SSI.Services
       switch (request.ArtifactType)
       {
         case ArtifactType.JWS:
+        case ArtifactType.SDJWT:
           return;
 
         case ArtifactType.ACR:

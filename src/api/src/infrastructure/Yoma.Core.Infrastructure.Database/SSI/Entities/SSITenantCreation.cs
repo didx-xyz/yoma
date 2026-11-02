@@ -28,7 +28,7 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Entities
     public Guid? OrganizationId { get; set; }
     public Organization? Organization { get; set; }
 
-    [Column(TypeName = "varchar(50)")]
+    [Column(TypeName = "varchar(125)")]
     public string? TenantId { get; set; }
 
     [Column(TypeName = "text")] //MS SQL: varchar(MAX)

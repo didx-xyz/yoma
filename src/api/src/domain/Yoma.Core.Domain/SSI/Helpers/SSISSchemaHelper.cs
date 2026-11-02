@@ -15,6 +15,17 @@ namespace Yoma.Core.Domain.SSI.Helpers
 
     #region Public Members
     /// <summary>
+    /// Defines the formats allowed by each domain credential family. The selected infrastructure
+    /// separately enforces its supported formats; compatibility does not authorize conversion.
+    /// </summary>
+    public static bool ArtifactTypeSupported(SchemaType schemaType, ArtifactType artifactType) => schemaType switch
+    {
+      SchemaType.YoID => artifactType is ArtifactType.ACR or ArtifactType.SDJWT,
+      SchemaType.Opportunity => artifactType is ArtifactType.JWS or ArtifactType.SDJWT,
+      _ => throw new NotSupportedException($"Schema type '{schemaType}' is not supported")
+    };
+
+    /// <summary>
     /// Returns the canonical seeded default for an Opportunity type. Learning and Other deliberately
     /// share the generic schema; distinct claim sets use scoped defaults. A missing provider schema
     /// is a readiness error, not permission to silently select a different claim set.

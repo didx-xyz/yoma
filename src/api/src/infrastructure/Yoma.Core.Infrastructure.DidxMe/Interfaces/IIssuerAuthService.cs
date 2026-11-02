@@ -4,8 +4,10 @@ namespace Yoma.Core.Infrastructure.DidxMe.Interfaces
   /// Supplies service authentication for issuer-side operations. Holder wallet access requires
   /// a separately scoped authentication flow and must not reuse this service's token cache.
   /// </summary>
-  public interface IDidxMeIssuerAuthService
+  public interface IIssuerAuthService
   {
     Task<KeyValuePair<string, string>> GetAuthHeader(CancellationToken cancellationToken = default);
+
+    void Invalidate();
   }
 }

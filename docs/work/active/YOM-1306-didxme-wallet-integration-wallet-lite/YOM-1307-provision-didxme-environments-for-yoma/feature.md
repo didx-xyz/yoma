@@ -1,0 +1,36 @@
+# Feature: Provision didx:me environments for Yoma
+
+## Meta
+
+- **Ticket**: YOM-1307
+- **Epic**: [YOM-1306](../README.md)
+- **Owner**: Adrian / SRE
+- **Status**: review — Local setup complete; deployed preparation remains
+
+## Goal and Plan
+
+Run the platform independently and initialize Yoma's Local integration automatically.
+Use the [startup guide](../environment.md). Private platform setup/security instructions are
+provided through the approved team handoff, not this public repository.
+
+## Tasks
+
+- [x] Prepare and verify the standalone Local platform.
+- [x] Integrate readiness checks and Local initialization into Yoma's existing startup pattern.
+- [x] Synchronize only the integration section of ignored Local settings.
+- [x] Verify local initialization and application startup after reset.
+- [ ] Help Jason prepare his supported standalone setup and privately supplied Local settings.
+- [ ] SRE: provision Dev and deliver environment-specific configuration/secrets privately.
+- [ ] SRE: review development-fixture provisioning requirements before Dev rollout.
+
+## Decisions
+
+- Keep the platform independent; no mono source changes or embedded Yoma-stack deployment.
+- Local initialization is not a deployed provisioning mechanism.
+- 2026-11-02: Public docs contain startup steps and ownership only. Private access details,
+  topology and privileged setup procedures are removed and retained outside Git.
+
+## Links
+
+- [Startup / deployment handoff](../environment.md)
+- [Historical setup handoff](./handoffs/2026-10-27-a.md)

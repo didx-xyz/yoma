@@ -87,7 +87,7 @@ namespace Yoma.Core.Domain.Opportunity
       public static class Programme
       {
         public const string Type = "EntrepreneurshipProgrammeType";
-        public const string OtherDescription = "EntrepreneurshipProgrammeOtherDescription";
+        public const string OtherDescription = "EntrepreneurshipProgrammeOther";
       }
     }
     #endregion

@@ -32,7 +32,7 @@ namespace Yoma.Core.Test.Core.Fixtures
       {
         EntityType = "Opportunity",
         EntityContext = "Entrepreneurship",
-        Key = "EntrepreneurshipProgrammeOtherDescription",
+        Key = "EntrepreneurshipProgrammeOther",
         Title = "Other Programme",
         Description = "Required only when Other is selected. Name the programme, up to 255 characters.",
         Group = "Programme",

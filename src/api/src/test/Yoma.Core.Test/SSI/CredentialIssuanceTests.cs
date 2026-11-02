@@ -26,6 +26,37 @@ namespace Yoma.Core.Test.SSI
   public class CredentialIssuanceTests
   {
     #region Tests
+    [Theory]
+    [InlineData(null, ArtifactType.ACR)]
+    [InlineData(null, ArtifactType.SDJWT)]
+    [InlineData(Domain.Opportunity.Type.Job, ArtifactType.JWS)]
+    [InlineData(Domain.Opportunity.Type.Job, ArtifactType.SDJWT)]
+    public async Task IssuancePreservesTheSupportedFamilyFormat(Domain.Opportunity.Type? type, ArtifactType artifactType)
+    {
+      using var fixture = new Fixture(type, artifactType: artifactType);
+
+      await fixture.Background.ProcessCredentialIssuance();
+
+      Assert.Equal(CredentialIssuanceStatus.Issued, fixture.Item.Status);
+      Assert.Equal(artifactType, Assert.Single(fixture.Requests).ArtifactType);
+      Assert.Equal(artifactType, fixture.Item.ArtifactType);
+      Assert.NotNull(fixture.Item.CredentialId);
+    }
+
+    [Theory]
+    [InlineData(null, ArtifactType.JWS)]
+    [InlineData(Domain.Opportunity.Type.Job, ArtifactType.ACR)]
+    public async Task InvalidFamilyFormatDoesNotReachProvider(Domain.Opportunity.Type? type, ArtifactType artifactType)
+    {
+      using var fixture = new Fixture(type, artifactType: artifactType);
+
+      await fixture.Background.ProcessCredentialIssuance();
+
+      Assert.Empty(fixture.Requests);
+      Assert.NotNull(fixture.Item.ErrorReason);
+      Assert.Null(fixture.Item.CredentialId);
+    }
+
     [Fact]
     public async Task StoredIssueDateControlsTheSignedClaimAndRemainsOnTheSchedule()
     {
@@ -447,7 +478,7 @@ namespace Yoma.Core.Test.SSI
 
       #region Constructor
       public Fixture(Domain.Opportunity.Type? type, IServiceScopeFactory? scopeFactory = null,
-        int parallelism = 1, CancellationToken stopping = default)
+        int parallelism = 1, CancellationToken stopping = default, ArtifactType? artifactType = null)
       {
         var settings = new AppSettings
         {
@@ -463,7 +494,7 @@ namespace Yoma.Core.Test.SSI
           Id = Guid.NewGuid(),
           SchemaTypeId = schemaTypeIds[type.HasValue ? SchemaType.Opportunity : SchemaType.YoID],
           SchemaType = type.HasValue ? SchemaType.Opportunity : SchemaType.YoID,
-          ArtifactType = type.HasValue ? ArtifactType.JWS : ArtifactType.ACR,
+          ArtifactType = artifactType ?? (type.HasValue ? ArtifactType.JWS : ArtifactType.ACR),
           SchemaName = type.HasValue ? SSISSchemaHelper.ToDefaultFullName(type.Value) : "YoID|Default",
           StatusId = statusIds[CredentialIssuanceStatus.Pending],
           Status = CredentialIssuanceStatus.Pending,
@@ -584,7 +615,7 @@ namespace Yoma.Core.Test.SSI
           tenants.Object,
           credentialService,
           Lock.Object,
-          lifetime.Object);
+          lifetime.Object, factory.Object);
       }
       #endregion Constructor
 

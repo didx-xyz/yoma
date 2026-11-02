@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Domain.SSI.Helpers;
 using Yoma.Core.Domain.SSI.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces.Lookups;
 using Yoma.Core.Domain.SSI.Models;
@@ -47,6 +48,8 @@ namespace Yoma.Core.Domain.SSI.Services
     public async Task ScheduleIssuance(string schemaName, Guid entityId)
     {
       var schema = await _ssiSchemaService.GetByFullName(schemaName);
+      if (!SSISSchemaHelper.ArtifactTypeSupported(schema.Type, schema.ArtifactType))
+        throw new InvalidOperationException($"Artifact type '{schema.ArtifactType}' is not supported for schema type '{schema.Type}'");
 
       if (entityId == Guid.Empty)
         throw new ArgumentNullException(nameof(entityId));

@@ -34,23 +34,23 @@ RSB is great if you just want to test a single endpoint.
 For example, how many logins per second can we do with IDSv4?
 ```bash
 $ rsb -d 100 -c 3 -m POST \
-  'https://api.stage.yoma.world/api/v1/auth/login' \
+  'https://api.example.invalid/api/v1/auth/login' \
   -H=user-agent:rsb\
   --json-body '{
-    "email": "bombard-1@mail.com",
-    "password": "qqqqqq"
+    "email": "TEST_USER@example.invalid",
+    "password": "<TEST_PASSWORD>"
   }'
 ```
 Or how many logins per second can we do with Keycloak?
 ```bash
 $ rsb -d 100 -c 30 \
-  'https://keycloak.stage.yoma.world/auth/realms/loadtest/protocol/openid-connect/token' \
+  'https://identity.example.invalid/realms/TEST_REALM/protocol/openid-connect/token' \
   -m POST \
   -H=user-agent:rsb \
   -H=content-type:application/x-www-form-urlencoded \
   --form=client_id:account \
-  --form=client_secret:verysecret \
+  --form='client_secret:<TEST_CLIENT_SECRET>' \
   --form=username:test \
-  --form=password:password \
+  --form='password:<TEST_PASSWORD>' \
   --form=grant_type:password
 ```

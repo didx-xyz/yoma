@@ -1,26 +1,32 @@
 using Flurl;
 using Flurl.Http;
-using Flurl.Http.Newtonsoft;
 using Microsoft.Extensions.Options;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Infrastructure.DidxMe.Interfaces;
 using Yoma.Core.Infrastructure.DidxMe.Models;
 
 namespace Yoma.Core.Infrastructure.DidxMe.Services
 {
-  public sealed class DidxMeIssuerAuthService : IDidxMeIssuerAuthService, IDisposable
+  /// <summary>
+  /// Acquires organisation client-credentials tokens independently of participant sessions.
+  /// Registered as a singleton: one in-memory token per API container, with serialized refresh
+  /// and an absolute expiry buffered from the acquisition start time. Replicas acquire their
+  /// own tokens; no distributed cache or token persistence is needed. Issuer HTTP 401 responses
+  /// invalidate this cache without automatically retrying the failed operation.
+  /// </summary>
+  public sealed class IssuerAuthService : IIssuerAuthService, IDisposable
   {
     #region Class Variables
-    private readonly DidxMeOptions _options;
+    private readonly ProviderOptions _options;
     private readonly TimeProvider _timeProvider;
     private readonly SemaphoreSlim _accessTokenLock = new(1, 1);
     private volatile CachedAccessToken? _accessToken;
-
-    private const int RequestTimeoutSeconds = 30;
-    private const int AccessTokenRefreshBufferSeconds = 30;
     #endregion
 
     #region Constructor
-    public DidxMeIssuerAuthService(IOptions<DidxMeOptions> options, TimeProvider timeProvider)
+    public IssuerAuthService(
+      IOptions<ProviderOptions> options,
+      TimeProvider timeProvider)
     {
       ArgumentNullException.ThrowIfNull(options, nameof(options));
 
@@ -57,6 +63,8 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
       }
     }
 
+    public void Invalidate() => _accessToken = null;
+
     public void Dispose()
     {
       _accessTokenLock.Dispose();
@@ -66,7 +74,9 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
     #region Private Members
     private static KeyValuePair<string, string> CreateAuthHeader(CachedAccessToken token)
     {
-      return new KeyValuePair<string, string>("Authorization", $"Bearer {token.Value}");
+      return new KeyValuePair<string, string>(
+        Constants.HeaderAuthorization,
+        $"{Constants.HeaderAuthorizationValuePrefix} {token.Value}");
     }
 
     private async Task<CachedAccessToken> GetAccessToken(CancellationToken cancellationToken)
@@ -77,19 +87,21 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
       ArgumentException.ThrowIfNullOrWhiteSpace(_options.Issuer.ClientId);
       ArgumentException.ThrowIfNullOrWhiteSpace(_options.Issuer.ClientSecret);
 
+      var request = new Dictionary<string, string>
+      {
+        { "grant_type", "client_credentials" },
+        { "client_id", _options.Issuer.ClientId },
+        { "client_secret", _options.Issuer.ClientSecret }
+      };
+
       // Count the lifetime from before the request so transport latency cannot extend the cache
       // beyond the authorization server's expiry. Short-lived tokens retain a usable refresh window.
       var requestedAt = _timeProvider.GetUtcNow();
       var response = await _options.KeycloakBaseUri
         .AppendPathSegments("realms", _options.Issuer.Realm, "protocol", "openid-connect", "token")
-        .WithTimeout(TimeSpan.FromSeconds(RequestTimeoutSeconds))
-        .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer())
-        .PostUrlEncodedAsync(new
-        {
-          grant_type = "client_credentials",
-          client_id = _options.Issuer.ClientId,
-          client_secret = _options.Issuer.ClientSecret
-        }, cancellationToken: cancellationToken)
+        .WithTimeout(TimeSpan.FromSeconds(_options.RequestTimeoutSeconds))
+        .PostUrlEncodedAsync(request, cancellationToken: cancellationToken)
+        .EnsureSuccessStatusCodeAsync()
         .ReceiveJson<AccessTokenResponse>();
 
       if (response == null || string.IsNullOrWhiteSpace(response.AccessToken))
@@ -101,7 +113,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
       if (response.ExpiresIn <= 0)
         throw new InvalidOperationException("didx:me issuer token response expiry must be greater than zero");
 
-      var refreshBuffer = Math.Min(AccessTokenRefreshBufferSeconds, response.ExpiresIn / 10d);
+      var refreshBuffer = Math.Min(_options.AccessTokenRefreshBufferSeconds, response.ExpiresIn / 10d);
       var dateExpire = requestedAt.AddSeconds(response.ExpiresIn - refreshBuffer);
       if (dateExpire <= _timeProvider.GetUtcNow())
         throw new InvalidOperationException("didx:me issuer token expired before it could be cached");

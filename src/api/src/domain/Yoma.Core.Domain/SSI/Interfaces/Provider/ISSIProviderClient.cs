@@ -5,6 +5,12 @@ namespace Yoma.Core.Domain.SSI.Interfaces.Provider
   public interface ISSIProviderClient
   {
     /// <summary>
+    /// Selects the provider's default credential format for a schema family. Seeding follows the
+    /// explicitly registered provider; this does not convert existing credentials or queue state.
+    /// </summary>
+    ArtifactType GetDefaultArtifactType(SchemaType schemaType);
+
+    /// <summary>
     /// Return a list of configured schemas for the client. Optionally only return the latest versions
     /// </summary>
     Task<List<Schema>?> ListSchemas(bool latestVersion);

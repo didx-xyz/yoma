@@ -1,206 +1,90 @@
 #!/bin/sh
+set -eu
 
-# KC_BASE_URL="http://keycloak:8080"
-# KC_REALM="yoma"
+# Local/Dev fixtures for a freshly reset realm. Keep IDs in sync with
+# src/api/cicd/scripts/postgressql-init/post.sql. Application logic must not use them.
+# Partial import preserves supplied IDs; POST /users generates new IDs in Keycloak 26.8.1.
+# Requires a provisioning account with manage-realm, not the runtime API account.
+umask 077
+work_dir=$(mktemp -d)
+trap 'rm -rf "$work_dir"' EXIT
+printf '[]' > "$work_dir/users.json"
 
-# KC_CLIENT_ID="admin-cli"
-# KC_ADMIN_USER="xxxxx@example.com"
-# KC_ADMIN_PASSWORD="xxxxx"
-KC_JWT=$(curl -s -X POST "${KC_BASE_URL}/realms/${KC_ADMIN_REALM:-master}/protocol/openid-connect/token" \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  -d 'grant_type=password' \
-  -d "client_id=${KC_CLIENT_ID}" \
-  -d "username=${KC_ADMIN_USER}" \
-  -d "password=${KC_ADMIN_PASSWORD}" | jq .access_token -r)
+add_user() {
+  user_id=$1
+  username_variable=$2
+  password_variable=$3
+  first_name=$4
+  last_name=$5
+  roles=$6
+  attributes=$7
 
-# Get Realm roles
-roleIDs=$(curl -s -X GET "${KC_BASE_URL}/admin/realms/${KC_REALM}/roles" \
-  -H 'Content-Type: application/json' \
-  -H "Authorization: bearer ${KC_JWT}" | jq -r '
-  map(select(.name == "Admin" or .name == "User" or .name == "OrganisationAdmin")) |
-  {
-    admin: .[] | select(.name == "Admin") | .id,
-    orgAdmin: .[] | select(.name == "OrganisationAdmin") | .id,
-    user: .[] | select(.name == "User") | .id
-  }')
+  # Read credentials inside jq; never print them or put them in jq arguments.
+  jq --arg id "$user_id" --arg username_variable "$username_variable" \
+    --arg password_variable "$password_variable" --arg first_name "$first_name" \
+    --arg last_name "$last_name" --arg realm "$KC_REALM" \
+    --argjson roles "$roles" --argjson attributes "$attributes" '
+    env[$username_variable] as $username |
+    if ($username // "") == "" then .
+    elif (env[$password_variable] // "") == "" then error("Configured fixture user requires a password")
+    else . + [{
+      id: $id, username: $username, email: $username, enabled: true, emailVerified: true,
+      firstName: $first_name, lastName: $last_name, attributes: $attributes,
+      credentials: [{type: "password", value: env[$password_variable], temporary: false}],
+      realmRoles: (["default-roles-" + $realm] + $roles)
+    }] end' "$work_dir/users.json" > "$work_dir/next-users.json"
+  mv "$work_dir/next-users.json" "$work_dir/users.json"
+}
 
-# Test Admin User
-if [ ! -z "${ADMIN_USER}" ]; then
-  echo "Creating Test Admin User: ${ADMIN_USER}"
-  curl -s -X POST "${KC_BASE_URL}/admin/realms/${KC_REALM}/users" \
-    -H 'Content-Type: application/json' \
-    -H "Authorization: bearer ${KC_JWT}" \
-    -d '{
-          "username": "'"${ADMIN_USER}"'",
-          "enabled": true,
-          "emailVerified": true,
-          "firstName": "Test Admin",
-          "lastName": "User",
-          "email": "'"${ADMIN_USER}"'",
-          "attributes": {
-            "dateOfBirth": ["01/01/2001"],
-            "country": ["Afghanistan"],
-            "gender": ["Male"],
-            "education": ["Tertiary (Qualification not specified)"],
-            "terms_and_conditions": ["Yes"]
-          },
-          "credentials": [{
-            "type": "password",
-            "value": "'"${ADMIN_USER_PASSWORD}"'",
-            "temporary": false
-          }],
-          "realmRoles": ["default-roles-yoma", "Admin", "User"]
-        }'
-  # Get Test Admin User ID
-  echo "Geting Test Admin User: ${ADMIN_USER}"
-  adminUserID=$(curl -s -X GET "${KC_BASE_URL}/admin/realms/${KC_REALM}/users?exact=true&username=${ADMIN_USER}" \
-    -H 'Content-Type: application/json' \
-    -H "Authorization: bearer ${KC_JWT}" | jq .[].id -r)
-  # Assign Test Admin User to required roles
-  echo "Assigning Test Admin User: ${ADMIN_USER}"
-  curl -s -X POST "${KC_BASE_URL}/admin/realms/${KC_REALM}/users/${adminUserID}/role-mappings/realm" \
-    -H 'Content-Type: application/json' \
-    -H "Authorization: bearer ${KC_JWT}" \
-    -d "[
-          {
-            \"id\": \"$(echo ${roleIDs} | jq .admin -r)\",
-            \"name\": \"Admin\"
-          },
-          {
-            \"id\": \"$(echo ${roleIDs} | jq .user -r)\",
-            \"name\": \"User\"
-          }
-        ]"
+profile_attributes='{"dateOfBirth":["01/01/2001"],"country":["Afghanistan"],"gender":["Male"],"education":["Tertiary (Qualification not specified)"],"terms_and_conditions":["Yes"]}'
+test_user_attributes=$(printf '%s' "$profile_attributes" | jq '. + {phoneNumber: ["+27821234567"], phoneNumberVerified: ["true"]}')
+
+add_user 'bed06c20-e8ce-45d8-b15c-26958c7c2721' TEST_USER TEST_USER_PASSWORD \
+  'Test' 'User' '["User"]' "$test_user_attributes"
+add_user '5461f741-ef04-4875-8307-c896175d94d0' ADMIN_USER ADMIN_USER_PASSWORD \
+  'Test Admin' 'User' '["Admin","User"]' "$profile_attributes"
+add_user '2a7f48c8-7dfe-41b6-9172-df47cc791303' ORG_ADMIN_USER ORG_ADMIN_USER_PASSWORD \
+  'Test Organization Admin' 'User' '["OrganisationAdmin","User"]' "$profile_attributes"
+add_user '419cde78-352d-4362-bacc-71b327ec984c' YOMA_SYSTEM_USER YOMA_SYSTEM_USER_PASSWORD \
+  'Yoma' 'System' '["OrganisationAdmin","User"]' '{}'
+
+user_count=$(jq 'length' "$work_dir/users.json")
+if [ "$user_count" -eq 0 ]; then
+  echo 'keycloak-users: No test users configured.'
+  exit 0
 fi
 
-# Test Org Admin User
-if [ ! -z "${ORG_ADMIN_USER}" ]; then
-  echo "Creating Test Org Admin User"
-  curl -s -X POST "${KC_BASE_URL}/admin/realms/${KC_REALM}/users" \
-    -H 'Content-Type: application/json' \
-    -H "Authorization: bearer ${KC_JWT}" \
-    -d '{
-          "username": "'"${ORG_ADMIN_USER}"'",
-          "enabled": true,
-          "emailVerified": true,
-          "firstName": "Test Organization Admin",
-          "lastName": "User",
-          "email": "'"${ORG_ADMIN_USER}"'",
-          "attributes": {
-            "dateOfBirth": ["01/01/2001"],
-            "country": ["Afghanistan"],
-            "gender": ["Male"],
-            "education": ["Tertiary (Qualification not specified)"],
-            "terms_and_conditions": ["Yes"]
-          },
-          "credentials": [{
-            "type": "password",
-            "value": "'"${ORG_ADMIN_USER_PASSWORD}"'",
-            "temporary": false
-          }],
-          "realmRoles": ["default-roles-yoma", "OrganisationAdmin", "User"]
-        }'
-  # Get Test Organisation Admin User ID
-  orgAdminUserID=$(curl -s -X GET "${KC_BASE_URL}/admin/realms/${KC_REALM}/users?exact=true&username=${ORG_ADMIN_USER}" \
-    -H 'Content-Type: application/json' \
-    -H "Authorization: bearer ${KC_JWT}" | jq .[].id -r)
-  # Assign Test Organisation Admin User to required roles
-  curl -s -X POST "${KC_BASE_URL}/admin/realms/${KC_REALM}/users/${orgAdminUserID}/role-mappings/realm" \
-    -H 'Content-Type: application/json' \
-    -H "Authorization: bearer ${KC_JWT}" \
-    -d "[
-          {
-            \"id\": \"$(echo ${roleIDs} | jq .orgAdmin -r)\",
-            \"name\": \"OrganisationAdmin\"
-          },
-          {
-            \"id\": \"$(echo ${roleIDs} | jq .user -r)\",
-            \"name\": \"User\"
-          }
-        ]"
-fi
+# Keep form data private and correctly encode passwords containing special characters.
+jq -jn '"grant_type=password&client_id=" + (env.KC_CLIENT_ID | @uri) +
+  "&username=" + (env.KC_ADMIN_USER | @uri) + "&password=" + (env.KC_ADMIN_PASSWORD | @uri)' \
+  > "$work_dir/token-form"
+curl --fail --silent --show-error \
+  --header 'Content-Type: application/x-www-form-urlencoded' \
+  --data-binary "@$work_dir/token-form" --output "$work_dir/token.json" \
+  "${KC_BASE_URL}/realms/${KC_ADMIN_REALM:-master}/protocol/openid-connect/token"
+token=$(jq -er '.access_token | select(type == "string" and length > 0)' "$work_dir/token.json")
+printf 'Authorization: Bearer %s\n' "$token" > "$work_dir/auth-header"
+unset token
 
-# Test User
-if [ ! -z "${TEST_USER}" ]; then
-  echo "Creating Test User"
-  curl -s -X POST "${KC_BASE_URL}/admin/realms/${KC_REALM}/users" \
-    -H 'Content-Type: application/json' \
-    -H "Authorization: bearer ${KC_JWT}" \
-    -d '{
-          "username": "'"${TEST_USER}"'",
-          "enabled": true,
-          "emailVerified": true,
-          "firstName": "Test",
-          "lastName": "User",
-          "email": "'"${TEST_USER}"'",
-          "attributes": {
-            "phoneNumber": ["+27821234567"],
-            "phoneNumberVerified": ["true"],
-            "dateOfBirth": ["01/01/2001"],
-            "country": ["Afghanistan"],
-            "gender": ["Male"],
-            "education": ["Tertiary (Qualification not specified)"],
-            "terms_and_conditions": ["Yes"]
-          },
-          "credentials": [{
-            "type": "password",
-            "value": "'"${TEST_USER_PASSWORD}"'",
-            "temporary": false
-          }],
-          "realmRoles": ["default-roles-yoma", "User"]
-        }'
-  # Get Test User ID
-  userID=$(curl -s -X GET "${KC_BASE_URL}/admin/realms/${KC_REALM}/users?exact=true&username=${TEST_USER}" \
-    -H 'Content-Type: application/json' \
-    -H "Authorization: bearer ${KC_JWT}" | jq .[].id -r)
-  # Assign Test User to required roles
-  curl -s -X POST "${KC_BASE_URL}/admin/realms/${KC_REALM}/users/${userID}/role-mappings/realm" \
-    -H 'Content-Type: application/json' \
-    -H "Authorization: bearer ${KC_JWT}" \
-    -d "[
-          {
-            \"id\": \"$(echo ${roleIDs} | jq .user -r)\",
-            \"name\": \"User\"
-          }
-        ]"
+# Full-reset fixtures only. Fail on conflicts; never overwrite existing identities.
+jq '{ifResourceExists: "FAIL", users: .}' "$work_dir/users.json" > "$work_dir/import.json"
+echo "keycloak-users: Importing $user_count test users with fixed IDs."
+if ! curl --fail --silent --show-error \
+  --header "@$work_dir/auth-header" --header 'Content-Type: application/json' \
+  --data-binary "@$work_dir/import.json" --output "$work_dir/import-result.json" \
+  "${KC_BASE_URL}/admin/realms/${KC_REALM}/partialImport"; then
+  echo 'keycloak-users: Import failed. Requires a reset realm and a provisioning account with manage-realm; response body omitted.' >&2
+  exit 1
 fi
+jq -e --argjson count "$user_count" '.added == $count' "$work_dir/import-result.json" > /dev/null
 
-# Yoma System User
-if [ ! -z "${YOMA_SYSTEM_USER}" ]; then
-  echo "Creating Yoma System User"
-  curl -s -X POST "${KC_BASE_URL}/admin/realms/${KC_REALM}/users" \
-    -H 'Content-Type: application/json' \
-    -H "Authorization: bearer ${KC_JWT}" \
-    -d '{
-          "username": "'"${YOMA_SYSTEM_USER}"'",
-          "enabled": true,
-          "emailVerified": true,
-          "firstName": "Yoma",
-          "lastName": "System",
-          "email": "'"${YOMA_SYSTEM_USER}"'",
-          "credentials": [{
-            "type": "password",
-            "value": "'"${YOMA_SYSTEM_USER_PASSWORD}"'",
-            "temporary": false
-          }],
-          "realmRoles": ["default-roles-yoma", "OrganisationAdmin", "User"]
-        }'
-  # Get Yoma System User ID
-  yomaSystemUserId=$(curl -s -X GET "${KC_BASE_URL}/admin/realms/${KC_REALM}/users?exact=true&username=${YOMA_SYSTEM_USER}" \
-    -H 'Content-Type: application/json' \
-    -H "Authorization: bearer ${KC_JWT}" | jq .[].id -r)
-  # Assign Yoma System User to required roles
-  curl -s -X POST "${KC_BASE_URL}/admin/realms/${KC_REALM}/users/${yomaSystemUserId}/role-mappings/realm" \
-    -H 'Content-Type: application/json' \
-    -H "Authorization: bearer ${KC_JWT}" \
-    -d "[
-          {
-            \"id\": \"$(echo ${roleIDs} | jq .orgAdmin -r)\",
-            \"name\": \"OrganisationAdmin\"
-          },
-          {
-            \"id\": \"$(echo ${roleIDs} | jq .user -r)\",
-            \"name\": \"User\"
-          }
-        ]"
-fi
+# Verify the exact identity seeded by post.sql, not merely a successful HTTP response.
+jq -r '.[].id' "$work_dir/users.json" > "$work_dir/ids"
+while IFS= read -r user_id; do
+  curl --fail --silent --show-error --header "@$work_dir/auth-header" \
+    --output "$work_dir/user.json" "${KC_BASE_URL}/admin/realms/${KC_REALM}/users/${user_id}"
+  jq -e --arg id "$user_id" --slurpfile expected "$work_dir/users.json" '
+    . as $actual | $expected[0][] | select(.id == $id) |
+    .id == $actual.id and .username == $actual.username' "$work_dir/user.json" > /dev/null
+done < "$work_dir/ids"
+echo 'keycloak-users: Test users imported and fixed IDs verified.'

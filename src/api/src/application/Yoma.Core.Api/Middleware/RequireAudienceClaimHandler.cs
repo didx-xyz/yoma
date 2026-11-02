@@ -8,9 +8,8 @@ namespace Yoma.Core.Api.Middleware
 
     protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, RequireAudienceClaimRequirement requirement)
     {
-      var audienceClaim = context.User.FindFirst("aud")?.Value;
-
-      if (audienceClaim != null && audienceClaim.Split(' ').Contains(requirement.Audience))
+      // JWT audience arrays become separate claims; the API audience need not be first.
+      if (context.User.FindAll("aud").Any(claim => claim.Value.Split(' ').Contains(requirement.Audience)))
       {
         context.Succeed(requirement);
       }
