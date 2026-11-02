@@ -73,6 +73,44 @@ Initialization is **Local only**. Dev and later environments use SRE provisionin
 
 Use mono's supported private reset procedure only for a deliberate clean test environment. It can destroy platform test data. Never assume a Yoma reset also resets mono, or vice versa.
 
+### Optional reset helper — existing local setup only
+
+[Reset-Local.ps1](../../../../src/api/src/infrastructure/Yoma.Core.Infrastructure.DidxMe/Tools/Reset-Local.ps1)
+is a Yoma-owned convenience script for an **already prepared standalone Linux development
+container using Kind and Tilt**. It does not install mono or add it to Yoma Compose. Other local
+setups should use their supported reset procedure instead.
+
+Robbie/SRE supplies the container/cluster names, container repository path and bootstrap/start
+script paths privately. Those scripts must already exist in the container: bootstrap must rebuild
+only the named local cluster, and start must run Tilt on the specified port and handle its own
+logging. They are not bundled with Yoma. No credentials are arguments to this helper.
+
+From the Yoma repository root, substitute the placeholders with your local setup values:
+
+```powershell
+$reset = './src/api/src/infrastructure/Yoma.Core.Infrastructure.DidxMe/Tools/Reset-Local.ps1'
+$localSetup = @{
+    DevelopmentContainer = '<local-development-container>'
+    ClusterName = '<local-kind-cluster>'
+    RepositoryPath = '/path/to/standalone/checkout'
+    BootstrapScript = '/path/to/local/bootstrap.sh'
+    StartScript = '/path/to/local/start.sh'
+    TiltPort = 10350
+}
+& $reset @localSetup -WhatIf
+& $reset @localSetup
+```
+
+`-WhatIf` checks prerequisites without changing anything; the real invocation asks for
+confirmation. The helper stops Tilt, deletes only the named Kind cluster, runs bootstrap and
+launches startup. Cluster-local test data is lost; externally stored data/volumes are not cleared.
+It does not touch Yoma, edit mono source, or prove service readiness. Bootstrap logs stay in the
+OS temporary directory and must not be committed or shared unredacted.
+
+After reset, complete standalone service/issuer readiness using the private setup instructions.
+Then start Yoma for a clean test run, or rerun `didxme-init` as described above. If provider data
+was removed, reset/reseed the corresponding Yoma test data too; old mappings cannot be reused.
+
 ## Dev and Later Environments — SRE
 
 Local success does not configure Dev. Robbie/SRE owns both tracks below; detailed platform/security instructions and values are supplied privately.
