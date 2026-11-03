@@ -645,7 +645,7 @@ namespace Yoma.Core.Test.Core
       });
       fixture.Get<IProcessingService>().Setup(service => service.GetPull(It.IsAny<Guid>(), It.IsAny<Domain.PartnerSync.EntityType>(), It.IsAny<string>()))
         .Returns((ProcessingLog?)null);
-      fixture.Get<IExecutionStrategyService>().Setup(service => service.ExecuteInExecutionStrategyAsync(It.IsAny<Func<Task>>(), false))
+      fixture.Get<IExecutionStrategyService>().Setup(service => service.ExecuteInExecutionStrategyAsync(It.IsAny<Func<Task>>(), true))
         .Returns((Func<Task> body, bool _) => body());
       var createdId = Guid.NewGuid();
       fixture.Get<Domain.Opportunity.Interfaces.IOpportunityService>()
