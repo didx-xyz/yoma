@@ -141,3 +141,18 @@ export const ROUTES = {
     `/organisations/dashboard?organisations=${orgId}`,
   adminOpportunities: "/admin/opportunities",
 };
+
+// Keycloak (src/api/docker-compose.yml keycloak service, src/keycloak/exports/01-yoma-realm.yaml).
+export const KEYCLOAK = {
+  // The browser is redirected to this host; it must resolve on the test machine (/etc/hosts).
+  url: process.env.E2E_KEYCLOAK_URL ?? "http://keycloak:8080",
+  realm: "yoma",
+  // Master-realm admin used only to clean up throw-away users and brute-force counters.
+  admin: { username: "admin", password: "password" },
+  // TEST_PHONE_NUMBERS: SMS is skipped and the OTP is always 1234. Abuse limits still apply:
+  // one send per code type per 5 minutes, three per code type per hour.
+  testPhone: "+27123456789",
+  testOtp: "1234",
+  // realm supportedLocales; default en
+  locales: ["en", "fr", "es", "pt", "sw"],
+};

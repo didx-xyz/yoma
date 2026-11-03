@@ -10,7 +10,20 @@ export { expect } from "@playwright/test";
 // Without the flag it is a plain Playwright `test`.
 const coverageEnabled = process.env.E2E_COVERAGE === "1";
 
-export const test = base.extend<{ coverage: void }>({
+export const test = base.extend<{ coverage: void; quietUi: void }>({
+  // Client-only prompts that would otherwise overlay the page under test (components/Global.tsx,
+  // lib/store.tsx atomWithStorage keys): the RUM consent dialog for anonymous visitors and the
+  // referee referral toast. Answered up front so tests never have to dismiss them.
+  quietUi: [
+    async ({ context }, use) => {
+      await context.addInitScript(() => {
+        localStorage.setItem("rumConsent", "false");
+        localStorage.setItem("hasShownRefereePendingToast", "true");
+      });
+      await use();
+    },
+    { auto: true },
+  ],
   coverage: [
     async ({ page }, use, testInfo) => {
       if (!coverageEnabled) {
