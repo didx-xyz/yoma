@@ -66,6 +66,19 @@ Journeys (all on fixed seed data):
 | youth | `youth/yoid.spec.ts` | `/yoid` h1 "Good …, Test" + `section#wallet/passport/opportunities/skills`; `/opportunities/discover?q=01 - Job` shows card h3 `01 - Job`; `/organisations` shows no Organisations heading / Treasury link |
 | org-admin | `org-admin/opportunities.spec.ts` | `/organisations/<yoma id>/opportunities` heading "🏆 Opportunities", `#lnkNavbarMenu_Submissions`, no `#userMenu_admin`, row link `01 - Job` |
 | admin | `admin/organisations.spec.ts` | `/organisations` heading "🏢 Organisations", `#lnkNavbarMenu_Treasury`, `JobJack` in `#results` |
+| anonymous | `public/keycloak/login-page.spec.ts` | theme renders (tabs, fields, OTP toggle, forgot, social, terms); submit gating; OTP/password switch; Register and Forgot pages open; wrong password → `#input-error` (brute-force counter cleared in `afterAll`); site language fr → Keycloak in French (`ui_locales`) |
+| anonymous | `public/keycloak/register.spec.ts` | client password gate blocks submit; existing email → "Email already exists." |
+| anonymous | `public/keycloak/phone.spec.ts` (serial) | register with test phone + OTP `1234` → signed in; OTP login with wrong then right code; reset password by phone OTP → `login-update-password` → new password works. Throw-away user deleted before/after via admin API |
+| anonymous | `public/keycloak/logout.spec.ts` | user-menu Logout → `#btnSignIn`, `/api/auth/session` `{}`, and Login shows the Keycloak form again (SSO session really ended) |
+| youth | `youth/session-expired.spec.ts` | `/api/auth/session` patched with `error: "RefreshAccessTokenError"` → "Session Expired" dialog, `#btnSignIn_sessionExpired`, "Stay logged out" |
+
+Support: `e2e/support/keycloak.ts` — `KeycloakAdmin` (master `admin-cli` token; `deleteUsersByPhone`,
+`clearBruteForce`), `openKeycloakLogin` (closes toasts first), `requestOtp` (waits for
+intl-tel-input's `promise` — CDN utils + geo-IP — before typing). `e2e/support/test.ts` also
+pre-sets `localStorage` `rumConsent=false` and `hasShownRefereePendingToast=true` so the RUM
+consent dialog and referral toast never overlay a test.
+
+Site map / checklist for feature sessions: [`sitemap.md`](./sitemap.md).
 
 Source changes made for testability (web): `SignInButton`/`SignOutButton` take a required `id`
 (navbar `btnSignIn`/`btnSignOut`, drawer `btnSignIn_drawer`/`btnSignOut_drawer`, and one per
@@ -109,6 +122,8 @@ Playwright test under `e2e/`, and `pnpm test:e2e` is part of the pre-commit chec
 - [x] `auth.setup.ts` + per-role projects with storage state
 - [x] One journey per role + a youth gating check — full suite green on a reseeded stack (2026-11-02)
 - [x] Coverage via monocart-reporter (`test:e2e:coverage`) — 269 `src/` files mapped (2026-11-03)
+- [x] Keycloak suite for the SRE upgrade runbook — 14 anonymous tests green (2026-11-03)
+- [x] `sitemap.md` — every route by role with seed needs and status (2026-11-03)
 - [ ] AGENTS.md: require Playwright tests for feature work (deferred — needs Jason's wording)
 - [ ] CI: run `pnpm test:e2e` in the `test-e2e` job (deferred — workflow edits need an explicit ask)
 - [ ] Per-area use-cases per role (deferred)
@@ -151,6 +166,18 @@ Playwright test under `e2e/`, and `pnpm test:e2e` is part of the pre-commit chec
 - 2026-11-03: Coverage by V8 (`page.coverage`) + `monocart-reporter`, not Istanbul. No `.babelrc`
   (would switch the build off SWC), no separate instrumented build, works against the running
   dev server. Trade-off: client-side only. Server coverage, if ever wanted, is the Istanbul route.
+- 2026-11-03: Phone flows use the compose `TEST_PHONE_NUMBERS` number (`+27123456789`, OTP
+  `1234`) and a throw-away user removed via the admin API, not a seeded user: registration needs
+  the number to be free, reset mutates the password. Abuse limits remain (1 send per code type
+  per 5 min, 3 per hour) → at most three runs of `phone.spec.ts` per hour; documented in the file.
+- 2026-11-03: Email registration/reset are asserted only up to the form validation. No mail
+  catcher locally and the realm SMTP is SendGrid with a fake key; adding Mailpit to compose is
+  the way to cover them (Adrian's call).
+- 2026-11-03: Session expiry is tested by patching `/api/auth/session` (`page.route`) rather than
+  waiting out the 300 s token. What matters for the site is its reaction to the refresh error.
+- 2026-11-03: Client-side prompts are pre-answered through `localStorage` in the shared fixture
+  instead of dismissed per test. The app has no ids on those dialogs; text-based dismissal in
+  every spec would be the brittle alternative.
 
 ## Links
 

@@ -1,0 +1,109 @@
+# Site map — what needs a browser test
+
+Every route under `src/web/src/pages/` (63 files, 2026-11-03), grouped by feature area. Each row
+is a checklist item: a feature session owning the area adds a spec under
+`src/web/e2e/<project>/<area>.spec.ts`, ticks the row and names the spec. Rules for writing
+specs: `handoffs/2026-11-03-a.md` "For feature sessions". Only data in `src/web/e2e/seed.ts` may
+be asserted on; "random" below means the seed generates it with random ids and the area needs a
+fixed-id seed addition (`post.sql` + `seed.ts`, note for Adrian) before it can be tested.
+
+Access = Playwright project to put the spec in: `anonymous`, `youth`, `org-admin`, `admin`.
+Access is the SSR gate; where it says "API 403" the page only checks for a session and relies on
+the API to refuse the wrong role (test that too).
+
+Legend: ☐ no spec · ☑ smoke (renders, markers present) · ☑☑ journey (an action completed).
+
+## Public (anonymous)
+
+| Route | Marker | Seed | Status | Spec |
+| --- | --- | --- | --- | --- |
+| `/` | title `Yoma \| Home`, h1 "Building futures…" | none | ☑ | `public/login.spec.ts` (via login) |
+| `/about` | title `Yoma \| About Us` | none | ☐ | |
+| `/terms` | title `Yoma - Terms of Service & Privacy Policy` | none | ☐ | |
+| `/401` `/403` `/404` `/500` | h2 "Welcome Back!" / "Access Restricted" / "Page Not Found" / "Oops!" | none | ☐ | |
+| `/login/return` | SSR redirect only | none | ☐ | |
+| `/marketplace` | h3 "What is your Country?", `#letsGoButton` | countries | ☐ | |
+| `/marketplace/[country]` | `#btnSignIn_marketplaceCountry` (anon); buy needs session | store items (external) | ☐ | |
+
+## Auth / Keycloak (anonymous) — SRE upgrade runbook
+
+| Flow | Status | Spec |
+| --- | --- | --- |
+| Login OK → session + user menu | ☑☑ | `public/login.spec.ts` |
+| Login page renders (tabs, fields, OTP toggle, social, terms) | ☑ | `public/keycloak/login-page.spec.ts` |
+| Wrong password → `#input-error` (brute-force counter reset after) | ☑☑ | `public/keycloak/login-page.spec.ts` |
+| Site language → Keycloak `ui_locales` (fr) | ☑☑ | `public/keycloak/login-page.spec.ts` |
+| Register: client password gate; duplicate email rejected | ☑☑ | `public/keycloak/register.spec.ts` |
+| Register by phone + OTP → signed in | ☑☑ | `public/keycloak/phone.spec.ts` |
+| Login with OTP; wrong code rejected | ☑☑ | `public/keycloak/phone.spec.ts` |
+| Reset password by phone OTP → new password works | ☑☑ | `public/keycloak/phone.spec.ts` |
+| Logout ends site + Keycloak SSO session | ☑☑ | `public/keycloak/logout.spec.ts` |
+| Session expired dialog (refresh failure injected) | ☑☑ | `youth/session-expired.spec.ts` |
+| Email registration / email reset end-to-end | blocked | no mail catcher locally; realm SMTP is SendGrid with a fake key |
+| Social login (Google/Facebook) | blocked | placeholder IdP secrets; presence asserted only |
+| SMS 2FA (`login-sms-otp.ftl`) | ☐ | needs a user with a `phone-otp` credential |
+| Required actions: update profile / update password / verify email pages | ☐ | trigger via admin API `requiredActions` on the throw-away phone user |
+
+## Discovery & opportunity details (anonymous+)
+
+| Route | Marker | Seed | Status | Spec |
+| --- | --- | --- | --- | --- |
+| `/opportunities/discover` (+ `?q=`) | title `Yoma \| Discover opportunities`, card h3 | fixture titles | ☑ (youth) | `youth/yoid.spec.ts` |
+| `/opportunities` (`[[...query]]`) | title `Yoma \| Opportunities` | fixture titles | ☐ | |
+| `/opportunities/[opportunityId]` | `<title>{title}</title>`; save, go-to-opportunity, complete/verify | fixture title → id (look up via search) | ☐ | |
+| `/opportunities/actionLink/verify/[linkId]` | h2 "Almost there…" / "Congratulations!" | instant-verify link (random) | ☐ | |
+| Custom-field filters (CF fields session) | filter panel `data-testid`s | custom field definitions | ☐ | |
+
+## Youth (`youth`)
+
+| Route | Marker | Seed | Status | Spec |
+| --- | --- | --- | --- | --- |
+| `/yoid` | h1 "Good …, Test"; `section#wallet/#passport/#opportunities/#skills` | youth completions | ☑ | `youth/yoid.spec.ts` |
+| `/yoid/opportunities/completed` | title `Yoma \| Completed Opportunities`; `01 - Job` | youth completed `01 - Job` | ☐ | |
+| `/yoid/opportunities/pending` | title `Yoma \| Pending Opportunities`; `04 - Event` | youth pending `04 - Event` | ☐ | |
+| `/yoid/opportunities/saved` `/declined` `/add` | titles | youth | ☐ | |
+| `/yoid/passport` | title `Yoma \| Passport` (or Unavailable) | `passport_enabled` | ☐ | |
+| `/yoid/skills` | title `Yoma \| Skills` | 57 verified skills | ☐ | |
+| `/yoid/wallet` (cash-outs session) | title `Yoma \| Wallet`; vouchers, cash-out | vouchers / ZLTO balance (random) | ☐ | |
+| `/user/profile` | title `Yoma \| Profile`; prefilled `Test`/`testuser@gmail.com` | youth | ☐ | |
+| `/user/settings` | title `Yoma \| Settings`; updateSettings | youth | ☐ | |
+| `/organisations/register` → `/success` | h2 "Organisation details" | none (creates an org!) | ☐ | |
+| `/referrals`, `/referrals/program/[id]`, `/claim/[id]`, `/link/[id]`, `/progress/[id]` | titles `Yoma \| Refer a friend…` | referral program (random) | ☐ | |
+| Gating: `/organisations` as youth → no admin UI | | | ☑ | `youth/yoid.spec.ts` |
+
+## Organisation admin (`org-admin`) — Yoma org `…0100`
+
+| Route | Marker | Seed | Status | Spec |
+| --- | --- | --- | --- | --- |
+| `/organisations/dashboard?organisations=` | title `Yoma \| Dashboard`; "Good … Test Organization Admin User!" | Yoma org | ☐ | |
+| `/organisations/[id]/opportunities` | h3 "🏆 Opportunities", `#lnkNavbarMenu_Submissions`, row link `01 - Job` | fixtures | ☑ | `org-admin/opportunities.spec.ts` |
+| `/organisations/[id]/opportunities/create` → edit → info | title `Yoma \| Opportunity`; create/update | Yoma org | ☐ | |
+| `/organisations/[id]/verifications` | title `Yoma \| Submissions`; approve/reject | youth pending on `04 - Event` | ☐ | |
+| `/organisations/[id]/links`, `/links/create`, `/links/[linkId]` | h3 "🔗 Links"; createLinkInstantVerify | Yoma org + fixture | ☐ | |
+| `/organisations/[id]/stores` | h3 "🛒 Marketplace Rules" (read-only) | rule (random) | ☐ | |
+| `/organisations/[id]/edit`, `/info` | title `Yoma Admin \| Organisation Edit` / `{name}` | Yoma org | ☐ | |
+| Gating: `/admin/*` as org-admin → API 403 | | | ☐ | |
+
+## Admin (`admin`)
+
+| Route | Marker | Seed | Status | Spec |
+| --- | --- | --- | --- | --- |
+| `/organisations` | h3 "🏢 Organisations", `#lnkNavbarMenu_Treasury`, `JobJack` | partner orgs | ☑ | `admin/organisations.spec.ts` |
+| `/organisations/[id]/verify` (approve / decline) | title `Yoma Admin \| Verify Organisation`, `#btnApprove` `#btnReject` | an Inactive org — none seeded | ☐ | |
+| `/admin/opportunities` | h3 "🏆 Opportunities"; active/visible/featured/archive actions | fixtures | ☐ | |
+| `/admin/links` | h3 "🔗 Links" | link (random) | ☐ | |
+| `/admin/referrals/**` (list, create/edit, info, links, usage) | "🎯 Referral Programs" | programs (random) | ☐ | |
+| `/admin/schemas`, `/admin/schemas/[id]` | title `Yoma Admin \| Schemas` | none / create | ☐ | |
+| `/admin/stores`, `/admin/stores/[ruleId]` | "🛒 Marketplace Rules"; create/activate/delete | rule (random) | ☐ | |
+| `/admin/treasury` | h "💰Treasury"; save settings | none | ☐ | |
+| `/admin/skills` | "⚡Skills" — **no role gate, any session** | none | ☐ | |
+| `/admin`, `/admin/connections` | "Under development" — **no auth at all** | none | ☐ | |
+
+## Findings for the owners (not test gaps)
+
+- `/admin` and `/admin/connections` render for anyone; `/admin/skills` for any signed-in user.
+- Session-expired dialog, "Choose your settings", "Complete your profile" and the RUM consent
+  dialog have no ids; tests use text. The referral toast outlives logout and overlays the Login
+  button (`support/keycloak.ts` closes toasts first).
+- `kc_locale` on the Keycloak auth URL is ignored by this realm/theme; only `ui_locales` works.
+- Two `select[title="Language"]` per page (navbar + drawer).
