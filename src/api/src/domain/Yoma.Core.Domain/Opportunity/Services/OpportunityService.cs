@@ -1359,7 +1359,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var result = GetById(request.Id, true, true, false);
       var resultCurrent = ObjectHelper.DeepCopy(result);
 
-      AssertUpdatable(result);
+      // A pull provider can extend an expired opportunity or remove its end date.
+      // This exception does not reopen archived items or activate deliberately inactive items.
+      var reopen = options.SyncTypeActionedBy == SyncType.Pull && result.SyncedInfo?.SyncType == SyncType.Pull &&
+        result.Status == Status.Expired && (!request.DateEnd.HasValue || request.DateEnd.Value > DateTimeOffset.UtcNow);
+      if (!reopen) AssertUpdatable(result);
 
       // Pull mappings supply the canonical default, not an administrator's schema choice.
       // Preserve custom selections and let the existing validation reject incompatible type changes.
@@ -1395,8 +1399,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (request.ZltoReward.HasValue && !organization.ZltoRewardPoolCurrentFinancialYear.HasValue)
         throw new ValidationException($"The opportunity cannot issue Zlto rewards upon completion because the associated organization '{organization.Name}' does not have a Zlto reward pool configured for the current financial year. Please configure an organization-level Zlto reward pool before proceeding");
 
-      //by default, status remains unchanged, except for immediate expiration based on DateEnd (status updated via UpdateStatus)
-      if (request.DateEnd.HasValue && request.DateEnd.Value <= DateTimeOffset.UtcNow)
+      // Preserve status except for provider reopening or immediate expiration based on DateEnd.
+      if (reopen)
+      {
+        result.StatusId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
+        result.Status = Status.Active;
+      }
+      else if (request.DateEnd.HasValue && request.DateEnd.Value <= DateTimeOffset.UtcNow)
       {
         result.StatusId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
         result.Status = Status.Expired;
@@ -1474,6 +1483,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted();
+
+        if (reopen)
+        {
+          // Recheck under the row lock so a concurrent archive/deactivation is not overwritten.
+          var current = GetById(request.Id, false, true, false, LockMode.Wait);
+          if (current.Status != Status.Expired || current.SyncedInfo?.SyncType != SyncType.Pull)
+            throw new ValidationException("Only an expired pull-managed opportunity can be reopened by partner sync");
+        }
 
         //check will abort sync create if possible; rolled back if the update fails
         await AssertUpdatablePartnerSync(UpdateAction.Complete, resultCurrent,
