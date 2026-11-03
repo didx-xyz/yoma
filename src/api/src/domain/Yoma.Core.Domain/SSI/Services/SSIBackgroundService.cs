@@ -98,14 +98,16 @@ namespace Yoma.Core.Domain.SSI.Services
   /// </para>
   /// <para>
   /// Provider switching is a separate, intentional one-way deployment procedure, not Replay.
-  /// Its migration preserves issuance dates/scheduling commitments, removes retired provider-specific
-  /// storage and resets the relevant domain tenant/issuance state for the new provider. Clear old
+  /// Its migration preserves issuance dates/scheduling commitments and leaves retired provider-specific
+  /// storage intact while resetting domain tenant/issuance state for the new provider. Opportunity
+  /// schemas move to the current type-specific default, or generic default where no type-specific
+  /// schema is defined; YoID schema names remain unchanged. Clear old
   /// tenant and credential IDs, schema versions and retry/error state; tenant creation starts Pending,
   /// then becomes Created before dependent Pending issuance can proceed. Configure the new provider
   /// through DI and seed its schemas before issuance. Domain catalogues and business/completion data
   /// are not wiped. There is no runtime cleanup against the old provider, legacy-provider factory or
   /// provider-switch state; SRE retires the old provider separately. Capture any historical dates
-  /// needed from the old provider before cutover, not after its configuration/storage is removed.
+  /// needed from the old provider before cutover. Retire its storage separately after reconciliation.
   /// </para>
   /// </remarks>
   public class SSIBackgroundService : ISSIBackgroundService

@@ -18,6 +18,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
         oldClrType: typeof(string),
         oldType: "varchar(50)",
         oldNullable: true);
+
+      ApplicationDb_SSI_DidxMe_Seeding_ProviderReset.Seed(migrationBuilder);
       #endregion SSI
 
       #region Core
@@ -27,31 +29,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
     protected override void Down(MigrationBuilder migrationBuilder)
     {
-      #region Core
-      ApplicationDb_SSI_DidxMe_Seeding_CustomFields.Revert(migrationBuilder);
-      #endregion Core
-
-      #region SSI
-      // Never truncate an existing provider identity when narrowing the column.
-      migrationBuilder.Sql("""
-        DO $$
-        BEGIN
-          IF EXISTS (SELECT 1 FROM "SSI"."TenantCreation" WHERE length("TenantId") > 50) THEN
-            RAISE EXCEPTION 'Cannot narrow SSI.TenantCreation.TenantId: values exceed 50 characters';
-          END IF;
-        END $$;
-        """);
-
-      migrationBuilder.AlterColumn<string>(
-        name: "TenantId",
-        schema: "SSI",
-        table: "TenantCreation",
-        type: "varchar(50)",
-        nullable: true,
-        oldClrType: typeof(string),
-        oldType: "varchar(125)",
-        oldNullable: true);
-      #endregion SSI
+      throw new NotSupportedException("SSI provider reset cannot restore the previous tenant and credential mappings; use the reviewed recovery procedure.");
     }
   }
 }

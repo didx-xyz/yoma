@@ -48,14 +48,25 @@ security configuration and privileged workflows are held in the private engineer
   with sensitive data redacted and no duplicated Aries handlers.
 - [x] Adrian reviewed, committed and pushed the implementation batch.
 - [ ] Provision/verify Dev with SRE, separating once-off setup from ongoing configuration/secrets.
-- [ ] Deferred until Stage preparation: design/rehearse provider-state reset and reissuance; drain workers, define affected records,
-  preserve source references/dates, rebuild mappings and reconcile both credential families.
+- [x] Prepare the provider-reset seed in the current unpublished migration; verify preserved dates, current default schema selection and reset state against disposable PostgreSQL.
+- [ ] Rehearse coordinated cutover and reissuance before Stage: drain workers, back up state, provision matching SDJWT schemas,
+  rebuild mappings and reconcile both credential families. Migration preparation does not authorize environment execution.
 - [ ] Deferred until Stage preparation: agree rollback/retention before SRE decommissions prior provider data. A DI switch alone
   cannot restore removed data or reinterpret old provider IDs.
 - [x] Remove private integration-document versions from the feature history and delete the assessment file; coordinate collaborator resynchronization.
 
 ## Decisions
 
+- 2026-11-03: Add the one-off reset to `20261102114553_ApplicationDb_SSI_DidxMe` as a separate seed class.
+  Reset all tenant/issuance schedules to Pending, clear provider IDs/version/retry state and use SDJWT.
+  Keep Aries storage, scheduling identity, YoID schema names and issuance dates. Legacy Issued rows missing a date
+  use their previous modification date, matching the earlier date-backfill convention. Block automatic Down;
+  old provider IDs cannot be reconstructed from the reset schedules.
+- 2026-11-03: At Adrian's request, cutover replaces every opportunity schedule's schema name, including custom
+  selections: ImpactAction, Event, Job and Entrepreneurship use their type-specific default; Learning and Other
+  use `Opportunity|Default`. This includes previously issued rows being reset. YoID names remain unchanged.
+  Issuance resolves the latest version for the selected name and reuses DateIssued on the normal Pending path.
+  No Replay state or domain behavior change is required for provider cutover.
 - Keep organisation scheduling and Aries signing behavior unchanged. Adapt current didx:me
   signing in infrastructure; future per-organisation signing is a separate design decision.
 - Schema and issuance stores preserve the current domain contract while provider fallback remains.
@@ -77,5 +88,10 @@ The latest SSI/Core run reported 1,023 total, zero failures/errors and one expli
 run (1,022 passed). Local API issuance, list/detail, mobile-to-email continuity and caching have been exercised; this does not
 claim completion of browser/Dev or live multi-replica tests. Recovery/Replay block production use.
 
-See the [session / frontend handoff](./handoffs/2026-11-02-a.md) and
+The reset seed additionally passed disposable PostgreSQL checks for 4 tenants and 56 credential
+cases covering all six opportunity types, empty schedules and missing-lookup atomicity. The focused SSI suite passed 348 tests with
+one explicit test not run. No deployed or local application database was migrated.
+
+See the [provider-reset handoff](./handoffs/2026-11-03-a.md),
+[session / frontend handoff](./handoffs/2026-11-02-a.md) and
 [local startup guide](../environment.md). Local SSI parallelism was restored to the configured defaults (5/5) after debugging.

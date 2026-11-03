@@ -126,6 +126,32 @@ The private SRE handoff must include the development-user import permission chan
 
 Cutover is a separate reviewed operation: prepare provider-specific data, reissue and reconcile credentials, and agree recovery/retention before decommissioning the prior provider. Changing DI alone is not a data migration. See the [adapter task list](./YOM-1309-use-didxme-for-yoma-wallets-and-credential-issuance/feature.md).
 
+### Provider-reset migration — deployment coordination required
+
+`20261102114553_ApplicationDb_SSI_DidxMe` now includes the one-off reset of existing SSI schedules.
+Applying this migration activates the reset; it is not a dormant script or runtime setting.
+
+1. Back up the database and stop/drain all SSI workers, including old API replicas, before applying it.
+2. Prepare the target provider and configuration. Seed the current SDJWT defaults before enabling
+   issuance: type-specific defaults for ImpactAction, Event, Job and Entrepreneurship, generic for
+   Learning/Other, plus YoID. Verify any retained custom YoID schema names separately.
+3. Apply the migration once. Tenant and credential schedules become Pending; old provider IDs,
+   schema versions and retry/errors are cleared. Opportunity schema names are replaced with the
+   defaults above, including previous custom selections. Row identities, business references, YoID
+   schema names and original issuance dates remain. Aries storage is retained unchanged.
+4. Complete schema seeding and tenant creation, then allow issuance. Existing workers enforce tenant
+   prerequisites and use retained dates. Reconcile counts, dates and wallet access before retiring Aries.
+
+Fresh databases have no schedules to reset; normal development seeding follows. A database that
+already applied this migration will **not** execute the newly added seed. Use a deliberate full reset
+for disposable development databases; arrange a reviewed follow-up migration for any persistent
+environment in that position. Never remove migration-history rows to force it to run again.
+
+Automatic migration rollback is blocked: retained Aries storage alone cannot restore the old domain
+provider IDs. Agree and rehearse recovery before rollout. See the
+[reset handoff](./YOM-1309-use-didxme-for-yoma-wallets-and-credential-issuance/handoffs/2026-11-03-a.md)
+for scope and verification.
+
 ## Local Federation Contract
 
 Normal Yoma sign-in remains the participant entry point. Environment preparation is automated locally; platform trust settings, privileged provisioning procedures and security diagnostics belong in the private SRE handoff. Do not reproduce them in public documentation.
@@ -136,6 +162,6 @@ The optional `LocalDryRunTests` harness is for adapter diagnostics, **not** Jaso
 
 ## Verification and Next Steps
 
-Local provisioning, issuance, API wallet list/detail, holder caching and mobile-to-email wallet continuity have been exercised. Frontend/browser journeys and deployed multi-instance behavior still need verification. Recovery and Replay remain release blockers. Dev preparation is next; cutover and rollback planning are deferred until Stage preparation.
+Local provisioning, issuance, API wallet list/detail, holder caching and mobile-to-email wallet continuity have been exercised. Frontend/browser journeys and deployed multi-instance behavior still need verification. Recovery and Replay remain release blockers. Dev preparation is next; the reset migration is prepared, with coordinated cutover/recovery rehearsal still required before Stage.
 
 Use the [epic](./README.md) for scope/owners and the [adapter feature](./YOM-1309-use-didxme-for-yoma-wallets-and-credential-issuance/feature.md) for current tasks. Historical/private investigation details are not startup instructions.
