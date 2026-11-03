@@ -21,20 +21,23 @@ Then read the acceptance checks in the spec or task the lead names.
 2. **Stack:** confirm the dev server answers on :3000 and the API on :5000. If either is down,
    stop and report it. Never start, stop or restart them yourself.
 3. **Browser pass**, once over the whole batch:
-   - Use your own throwaway browser (`anon.sh start`), never Jason's.
-   - Start with the standard captures (`snapshot.mjs`) for the surfaces the batch touched. They
-     are the evidence for layout.
-   - Then each acceptance check, driven with real input events (the daemon's `click` / `type` /
-     `key` routes, or CDP `Input.*`), not `element.click()` alone. Save a screenshot for each.
+   - Use `playwright-cli` (`playwright-cli open http://localhost:3000`); it runs its own browser,
+     never Jason's (ports 9222/9333/9334).
+   - Start with screenshots at the widths below for the surfaces the batch touched
+     (`playwright-cli resize W H`, `screenshot --filename=…`). They are the evidence for layout.
+   - Then each acceptance check, driven with real input (`click`, `fill`, `press` on snapshot
+     refs), not `eval` + `element.click()`. Save a screenshot for each.
+   - If a Playwright spec covers the batch (`src/web/e2e/`), run it: `pnpm test:e2e <file>` from
+     `src/web`. A new user-visible flow without a spec is a finding.
    - **Widths:**
      - a visible change: 1440, 390 and 320 (Jason's minimum: labels may wrap to two lines,
        never three, and nothing overflows);
      - a check with no layout to it (a count, a URL, a request): one width is enough.
    - On every page, also check:
-     - no horizontal overflow (`scrollWidth` vs `innerWidth`);
-     - no new console errors (daemon `console` route);
-     - no failed `/api/v3/` requests (daemon `net` route).
-   - Stop your browser at the end (`anon.sh stop`).
+     - no horizontal overflow (`eval "document.documentElement.scrollWidth > innerWidth"`);
+     - no new console errors (`playwright-cli console error`);
+     - no failed `/api/v3/` requests (`playwright-cli requests`).
+   - `playwright-cli close` at the end.
 4. **Signed-in checks:** only when the lead says Jason approved a sign-in for this task. Sign in
    through the site's Login page; never request tokens or read credential files. Otherwise list
    those checks as not tested.
@@ -46,9 +49,8 @@ Don't repeat the full pass unless the lead asks for it.
 
 ## Keep the pass fast
 
-- **Prefer the existing tools:** the `a` daemon routes and `snapshot.mjs`, and helpers already
-  in `~/.cache/cdp-tools/`. If you need a script, keep one helper file and extend it, not a new
-  script per attempt.
+- **Prefer the existing tools:** `playwright-cli` commands and the `e2e/support/*` helpers. If
+  you need a script, keep one helper file and extend it, not a new script per attempt.
 - **Long commands:** run them in the foreground with a longer Bash `timeout` (up to 600000 ms).
   Don't background them and poll with `sleep`.
 - **Waits:** wait for a condition (an element, the network going quiet), not a fixed sleep. The
