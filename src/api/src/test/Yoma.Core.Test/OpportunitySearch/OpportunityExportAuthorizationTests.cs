@@ -34,9 +34,9 @@ namespace Yoma.Core.Test.OpportunitySearch
       fixture.Download.Setup(service => service.Schedule(fixture.User.Id, DownloadScheduleType.Opportunities, filter))
         .Callback(() => Assert.True(authorized)).Returns(Task.CompletedTask);
 
-      var result = await fixture.Service.ExportOrScheduleToCSV(filter, true);
+      var (scheduleForProcessing, fileName, bytes) = await fixture.Service.ExportOrScheduleToCSV(filter, true);
 
-      Assert.True(result.scheduleForProcessing);
+      Assert.True(scheduleForProcessing);
       fixture.Download.Verify(service => service.Schedule(fixture.User.Id, DownloadScheduleType.Opportunities, filter), Times.Once);
     }
 
