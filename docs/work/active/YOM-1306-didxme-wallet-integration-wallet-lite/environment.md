@@ -51,6 +51,9 @@ Initialization is **Local only**. Dev and later environments use SRE provisionin
 
 ### Optional local startup without SSI
 
+The e2e CI job uses this disabled mode and creates an empty ignored Local settings file before
+Compose starts. Local development remains enabled by default and uses privately supplied settings.
+
 From `src/api`, in PowerShell:
 
 ```powershell
@@ -177,11 +180,12 @@ Applying this migration activates the reset; it is not a dormant script or runti
 1. Back up the database and stop/drain all SSI workers, including old API replicas, before applying it.
 2. Prepare the target provider and configuration. Seed the current SDJWT defaults before enabling
    issuance: type-specific defaults for ImpactAction, Event, Job and Entrepreneurship, generic for
-   Learning/Other, plus YoID. Verify any retained custom YoID schema names separately.
+   Learning/Other, plus `YoID|Default`. Set `AppSettings.SSISchemaFullNameYoID` to `YoID|Default`
+   in each target environment before schema seeding and issuance.
 3. Apply the migration once. Tenant and credential schedules become Pending; old provider IDs,
-   schema versions and retry/errors are cleared. Opportunity schema names are replaced with the
-   defaults above, including previous custom selections. Row identities, business references, YoID
-   schema names and original issuance dates remain. Aries storage is retained unchanged.
+   schema versions and retry/errors are cleared. Both credential families use the defaults above,
+   replacing historical/custom names across every status. Issuance resolves the latest seeded version.
+   Row identities, business references and original issuance dates remain. Aries storage is retained unchanged.
 4. Complete schema seeding and tenant creation, then allow issuance. Existing workers enforce tenant
    prerequisites and use retained dates. Reconcile counts, dates and wallet access before retiring Aries.
 

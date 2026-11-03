@@ -21,6 +21,8 @@ provided through the approved team handoff, not this public repository.
 - [x] Verify local initialization and application startup after reset.
 - [x] Add a parameterized local reset helper for an existing standalone container setup; document prerequisites and data-reset coordination.
 - [x] Add an enabled-by-default local SSI opt-out shared by Compose init and the API; retain scheduling while pausing workers and blocking SSI endpoints.
+- [x] Prepare empty ignored Local settings and disable SSI in e2e CI; keep local defaults enabled.
+- [x] Make development fixture import tolerate a complete existing user set on restart without overwriting identities.
 - [ ] Help Jason prepare his supported standalone setup and privately supplied Local settings.
 - [ ] SRE: provision Dev and deliver environment-specific configuration/secrets privately.
 - [ ] SRE: review development-fixture provisioning requirements before Dev rollout.

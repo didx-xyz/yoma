@@ -5,7 +5,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 {
   /// <summary>
   /// Resets existing SSI schedules for the one-off move to didx:me. Retains issuance dates,
-  /// client referents and YoID schema names; moves opportunity schedules to current seeded defaults.
+  /// client referents; moves both credential families to current seeded defaults.
   /// Leaves Aries storage and remote credentials intact.
   /// Stop and drain SSI workers before applying. This is provider cutover, not Replay cleanup.
   /// </summary>
@@ -16,7 +16,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
       #region SSI
       // Resolve both lookups before changing rows; missing configuration must fail the migration.
       // Fresh databases have no schedules yet. EF migration history prevents resetting them again.
-      // This cutover deliberately replaces opportunity schema choices, including custom names.
+      // This cutover deliberately replaces all schema choices, including historical/custom names.
+      // Configure SSISchemaFullNameYoID as YoID|Default before seeding the target environment.
       // Issuance resolves the latest version after seeding and waits for the required tenants.
       migrationBuilder.Sql($"""
         DO $$
@@ -31,6 +32,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           SELECT "Id" INTO STRICT issuance_pending_id
           FROM "SSI"."CredentialIssuanceStatus"
           WHERE "Name" = '{CredentialIssuanceStatus.Pending}';
+
+          -- YoID uses the configured default in the new provider, never a historical schema name.
+          UPDATE "SSI"."CredentialIssuance"
+          SET "SchemaName" = 'YoID|Default'
+          WHERE "SchemaTypeId" = (
+            SELECT "Id" FROM "SSI"."SchemaType" WHERE "Name" = '{SchemaType.YoID}'
+          );
 
           -- Match the seeded defaults: Learning/Other use the generic claim set.
           -- Update every opportunity schedule, including previously issued credentials being reset.

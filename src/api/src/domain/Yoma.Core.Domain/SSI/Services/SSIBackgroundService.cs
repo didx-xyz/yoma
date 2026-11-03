@@ -101,7 +101,7 @@ namespace Yoma.Core.Domain.SSI.Services
   /// Its migration preserves issuance dates/scheduling commitments and leaves retired provider-specific
   /// storage intact while resetting domain tenant/issuance state for the new provider. Opportunity
   /// schemas move to the current type-specific default, or generic default where no type-specific
-  /// schema is defined; YoID schema names remain unchanged. Clear old
+  /// schema is defined; YoID moves to YoID|Default. Clear old
   /// tenant and credential IDs, schema versions and retry/error state; tenant creation starts Pending,
   /// then becomes Created before dependent Pending issuance can proceed. Configure the new provider
   /// through DI and seed its schemas before issuance. Domain catalogues and business/completion data
@@ -299,7 +299,7 @@ namespace Yoma.Core.Domain.SSI.Services
             "MyOpportunity_EntrepreneurshipCustomerReach"
           ]);
 
-        // YoID remains AnonCreds. Missing optional source values retain the established n/a handling;
+        // YoID uses the provider's default artifact type. Missing optional values retain the established n/a handling;
         // user discovery preferences and precise coordinates are deliberately not identity claims.
         // User_DisplayName is the protected Title attribute, rendered above the credential body.
         // Do not duplicate it as another body attribute merely to match the BA mock-up's row.

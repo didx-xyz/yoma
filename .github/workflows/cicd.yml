@@ -381,9 +381,12 @@ jobs:
       - name: Start services
         if: steps.should-run.outputs.run == 'true'
         run: |-
+          # CI has no standalone SSI platform or developer Local settings.
+          printf '{}\n' > src/api/src/application/Yoma.Core.Api/appsettings.Local.json
           docker compose -f ./src/api/docker-compose.yml up -d
           docker compose -f ./src/web/docker-compose.yml up -d
         env:
+          YOMA_SSI_ENABLED_ENVIRONMENTS: None
           API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
           YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
 

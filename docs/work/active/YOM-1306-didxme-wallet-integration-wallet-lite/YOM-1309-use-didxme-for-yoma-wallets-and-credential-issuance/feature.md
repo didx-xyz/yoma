@@ -49,6 +49,7 @@ security configuration and privileged workflows are held in the private engineer
 - [x] Adrian reviewed, committed and pushed the implementation batch.
 - [ ] Provision/verify Dev with SRE, separating once-off setup from ongoing configuration/secrets.
 - [x] Prepare the provider-reset seed in the current unpublished migration; verify preserved dates, current default schema selection and reset state against disposable PostgreSQL.
+- [x] Correct the reset to replace historical YoID names with `YoID|Default` across all statuses; verify both credential families resolve current defaults without changing issued dates.
 - [ ] Rehearse coordinated cutover and reissuance before Stage: drain workers, back up state, provision matching SDJWT schemas,
   rebuild mappings and reconcile both credential families. Migration preparation does not authorize environment execution.
 - [ ] Deferred until Stage preparation: agree rollback/retention before SRE decommissions prior provider data. A DI switch alone
@@ -59,14 +60,17 @@ security configuration and privileged workflows are held in the private engineer
 
 - 2026-11-03: Add the one-off reset to `20261102114553_ApplicationDb_SSI_DidxMe` as a separate seed class.
   Reset all tenant/issuance schedules to Pending, clear provider IDs/version/retry state and use SDJWT.
-  Keep Aries storage, scheduling identity, YoID schema names and issuance dates. Legacy Issued rows missing a date
+  Keep Aries storage, scheduling identity and issuance dates. Legacy Issued rows missing a date
   use their previous modification date, matching the earlier date-backfill convention. Block automatic Down;
   old provider IDs cannot be reconstructed from the reset schedules.
 - 2026-11-03: At Adrian's request, cutover replaces every opportunity schedule's schema name, including custom
   selections: ImpactAction, Event, Job and Entrepreneurship use their type-specific default; Learning and Other
-  use `Opportunity|Default`. This includes previously issued rows being reset. YoID names remain unchanged.
+  use `Opportunity|Default`. This includes previously issued rows being reset.
   Issuance resolves the latest version for the selected name and reuses DateIssued on the normal Pending path.
   No Replay state or domain behavior change is required for provider cutover.
+- 2026-11-03 review correction: reset every YoID schedule to `YoID|Default` as well, including historical
+  names in Pending, Issued, Error and Replay. SRE must align `SSISchemaFullNameYoID` with that default.
+  This supersedes the earlier decision to preserve YoID names; both families resolve the latest seeded version.
 - Keep organisation scheduling and Aries signing behavior unchanged. Adapt current didx:me
   signing in infrastructure; future per-organisation signing is a separate design decision.
 - Schema and issuance stores preserve the current domain contract while provider fallback remains.

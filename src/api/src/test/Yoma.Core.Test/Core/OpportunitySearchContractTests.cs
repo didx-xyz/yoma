@@ -150,7 +150,7 @@ namespace Yoma.Core.Test.Core
         Options.Create(new AppSettings()), new HttpContextAccessor(), opportunities.Object,
         engagements.Object, Mock.Of<Domain.ActionLink.Interfaces.ILinkService>(),
         Mock.Of<Domain.Entity.Interfaces.IUserService>(), Mock.Of<Domain.Core.Interfaces.IDownloadService>(),
-        treasury.Object);
+        treasury.Object, Mock.Of<Domain.Entity.Interfaces.IOrganizationService>());
 
       var result = service.Search(filter, true);
 

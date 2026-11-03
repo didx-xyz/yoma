@@ -57,6 +57,9 @@ Jason must align frontend rules/help/CSV samples before coordinated rollout. See
 
 ## Release Gates
 
+PR review fixes and validation are recorded in the [2026-11-03 handoff](./handoffs/2026-11-03-a.md).
+Adrian reviewed and authorized committing this batch.
+
 1. Complete recovery and Replay; verify original issuance dates are preserved.
 2. Finish participant/browser/mobile and credential-detail checks with Jason.
 3. SRE provisions Dev once and supplies ongoing deployment configuration/secrets privately.

@@ -30,6 +30,7 @@ def fake_curl():
     state.setdefault("paths", []).append(path)
     mode = state.get("mode")
     code = 0
+    status = 200
     if path.endswith("/token"):
         form = parse_qs(Path(args[args.index("--data-binary") + 1][1:]).read_text())
         assert form["password"] == [SECRET]
@@ -47,10 +48,19 @@ def fake_curl():
             if mode == "wrong-count":
                 body["added"] = 0
         else:
-            user = next(user for user in state["users"] if path.endswith("/" + user["id"]))
-            body = {"id": user["id"], "username": user["username"]}
-            if mode == "wrong-id":
+            user = next((user for user in state.get("users", []) if path.endswith("/" + user["id"])), None)
+            status = 200 if user else 404
+            body = {"id": user["id"], "username": user["username"]} if user else {}
+            if user and mode == "wrong-id":
                 body["id"] = "unexpected-generated-id"
+            if mode == "lookup-forbidden":
+                status = 403
+            if mode == "lookup-failure":
+                code = 7
+    if "--write-out" in args:
+        print(status, end="")
+    elif "--fail" in args and status >= 400:
+        code = 22
     state_file.write_text(json.dumps(state))
     if not code:
         Path(args[args.index("--output") + 1]).write_text(json.dumps(body))
@@ -58,13 +68,13 @@ def fake_curl():
 
 
 class UserSeedTests(unittest.TestCase):
-    def run_seed(self, mode="success", accounts=None):
+    def run_seed(self, mode="success", accounts=None, users=None):
         with tempfile.TemporaryDirectory() as directory:
             work = Path(directory)
             (work / "curl").write_text(f'#!/bin/sh\nexec "{sys.executable}" "{Path(__file__).resolve()}" curl "$@"\n')
             (work / "curl").chmod(0o700)
             state_file = work / "state.json"
-            state_file.write_text(json.dumps({"mode": mode}))
+            state_file.write_text(json.dumps({"mode": mode, "users": users or []}))
             env = {**os.environ, "PATH": f'{work}:{os.environ["PATH"]}',
                    "FIXTURE_STATE": str(state_file), "KC_BASE_URL": "http://fixture.invalid",
                    "KC_REALM": "yoma", "KC_CLIENT_ID": "admin-cli", "KC_ADMIN_USER": "admin",
@@ -84,9 +94,10 @@ class UserSeedTests(unittest.TestCase):
     def test_imports_fixed_ids_roles_attributes_and_matches_sql(self):
         result, state = self.run_seed()
         self.assertEqual(0, result.returncode, result.stderr)
-        self.assertEqual(6, len(state["paths"]))
+        self.assertEqual(10, len(state["paths"]))
         self.assertEqual(4, len({user["id"] for user in state["users"]}))
-        sql = Path(os.environ["FIXTURE_POST_SQL"]).read_text()
+        sql = Path(os.environ.get("FIXTURE_POST_SQL", Path(__file__).resolve().parents[2] /
+                                 "api/cicd/scripts/postgressql-init/post.sql")).read_text()
         for user in state["users"]:
             self.assertRegex(user["id"], r"^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$")
             self.assertEqual(SECRET, user["credentials"][0]["value"])
@@ -118,6 +129,31 @@ class UserSeedTests(unittest.TestCase):
         result, state = self.run_seed(accounts={"TEST_USER": ACCOUNTS["TEST_USER"]})
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual(1, len(state["users"]))
+
+    def test_restart_preserves_existing_users_without_import(self):
+        _, initial = self.run_seed()
+        result, state = self.run_seed(users=initial["users"])
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn("import skipped", result.stdout)
+        self.assertFalse(any(path.endswith("/partialImport") for path in state["paths"]))
+        self.assertEqual(initial["users"], state["users"])
+
+    def test_partial_or_conflicting_state_does_not_import(self):
+        _, initial = self.run_seed()
+        mismatched = json.loads(json.dumps(initial["users"]))
+        mismatched[0]["username"] = "different@example.invalid"
+        for users in [initial["users"][:1], mismatched]:
+            with self.subTest(users=len(users)):
+                result, state = self.run_seed(users=users)
+                self.assertNotEqual(0, result.returncode)
+                self.assertFalse(any(path.endswith("/partialImport") for path in state["paths"]))
+
+    def test_lookup_errors_do_not_import(self):
+        for mode in ["lookup-forbidden", "lookup-failure"]:
+            with self.subTest(mode=mode):
+                result, state = self.run_seed(mode)
+                self.assertNotEqual(0, result.returncode)
+                self.assertFalse(any(path.endswith("/partialImport") for path in state["paths"]))
 
 
 if __name__ == "__main__":

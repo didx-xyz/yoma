@@ -28,6 +28,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly IUserService _userService;
     private readonly IDownloadService _downloadService;
     private readonly ITreasuryService _treasuryService;
+    private readonly IOrganizationService _organizationService;
     #endregion
 
     #region Constructor
@@ -38,7 +39,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         ILinkService linkService,
         IUserService userService,
         IDownloadService downloadService,
-        ITreasuryService treasuryService)
+        ITreasuryService treasuryService,
+        IOrganizationService organizationService)
     {
       _appSettings = appSettings?.Value ?? throw new ArgumentNullException(nameof(appSettings));
       _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
@@ -48,6 +50,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _userService = userService ?? throw new ArgumentNullException(nameof(userService));
       _downloadService = downloadService ?? throw new ArgumentNullException(nameof(downloadService));
       _treasuryService = treasuryService ?? throw new ArgumentNullException(nameof(treasuryService));
+      _organizationService = organizationService ?? throw new ArgumentNullException(nameof(organizationService));
     }
     #endregion
 
@@ -230,6 +233,21 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       if (!filter.PaginationEnabled)
       {
+        // Authorize before saving; the background worker reuses this filter without a user context.
+        if (ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
+        {
+          if (filter.Organizations?.Value?.Count > 0)
+            _organizationService.IsAdminsOf(filter.Organizations.Value, true);
+          else
+          {
+            var organizations = _organizationService.ListAdminsOf(false).Select(o => o.Id).Distinct().ToList();
+            // Empty lists are normalized away, so never queue an unrestricted export for this user.
+            if (organizations.Count == 0) throw new SecurityException("Unauthorized");
+
+            filter.Organizations = new() { Value = organizations, Unspecified = filter.Organizations?.Unspecified };
+          }
+        }
+
         //schedule the request for processing and return
         var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
         await _downloadService.Schedule(user.Id, DownloadScheduleType.Opportunities, filter);

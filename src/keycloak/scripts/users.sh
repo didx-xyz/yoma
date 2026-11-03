@@ -66,7 +66,42 @@ token=$(jq -er '.access_token | select(type == "string" and length > 0)' "$work_
 printf 'Authorization: Bearer %s\n' "$token" > "$work_dir/auth-header"
 unset token
 
-# Full-reset fixtures only. Fail on conflicts; never overwrite existing identities.
+# A normal restart retains the realm. Accept the complete matching fixture set;
+# partial or conflicting identities still require an explicit development reset.
+jq -r '.[].id' "$work_dir/users.json" > "$work_dir/ids"
+existing_count=0
+while IFS= read -r user_id; do
+  status=$(curl --silent --show-error --header "@$work_dir/auth-header" \
+    --output "$work_dir/user.json" --write-out '%{http_code}' \
+    "${KC_BASE_URL}/admin/realms/${KC_REALM}/users/${user_id}")
+  case "$status" in
+    200)
+      if ! jq -e --arg id "$user_id" --slurpfile expected "$work_dir/users.json" '
+        . as $actual | $expected[0][] | select(.id == $id) |
+        .id == $actual.id and .username == $actual.username' "$work_dir/user.json" > /dev/null; then
+        echo 'keycloak-users: Existing fixture identity does not match; no users were changed.' >&2
+        exit 1
+      fi
+      existing_count=$((existing_count + 1))
+      ;;
+    404) ;;
+    *)
+      echo "keycloak-users: Fixture lookup failed (HTTP $status); no users were changed." >&2
+      exit 1
+      ;;
+  esac
+done < "$work_dir/ids"
+
+if [ "$existing_count" -eq "$user_count" ]; then
+  echo 'keycloak-users: Existing test users and fixed IDs verified; import skipped.'
+  exit 0
+fi
+if [ "$existing_count" -ne 0 ]; then
+  echo 'keycloak-users: Partial fixture state; reset the development realm before importing. No users were changed.' >&2
+  exit 1
+fi
+
+# Fail on conflicts; never overwrite existing identities.
 jq '{ifResourceExists: "FAIL", users: .}' "$work_dir/users.json" > "$work_dir/import.json"
 echo "keycloak-users: Importing $user_count test users with fixed IDs."
 if ! curl --fail --silent --show-error \

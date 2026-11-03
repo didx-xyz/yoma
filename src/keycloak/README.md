@@ -128,6 +128,9 @@ preserves a supplied ID. The script imports credentials, profile attributes and 
 then reads each user back by that ID. It fails on import errors or conflicts without overwriting
 existing identities. Passwords/tokens and HTTP response bodies are not printed.
 
+A normal restart skips import when all configured fixture IDs and usernames already match.
+Partial fixture state or mismatched identities still fail without changing existing users.
+
 | Fixture | Keycloak ID / Yoma ExternalId |
 | --- | --- |
 | testuser@gmail.com | `bed06c20-e8ce-45d8-b15c-26958c7c2721` |
@@ -147,10 +150,10 @@ For VS's separate fixed PostgreSQL instance, run migrations and the same `post.s
 the empty database. The fixed ExternalIds then match the shared, freshly seeded Yoma Keycloak
 without depending on its creation webhooks reaching that separate database.
 
-Offline validation on Linux with Python, sh and jq:
+Offline validation from the repository root on Linux with Python, sh and jq:
 
 ```sh
-FIXTURE_POST_SQL=src/api/cicd/scripts/postgressql-init/post.sql python3 src/keycloak/scripts/test_users.py
+python3 src/keycloak/scripts/test_users.py
 ```
 
 For partners looking to implement Single Sign-On with Yoma:
