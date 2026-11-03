@@ -1356,7 +1356,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (options.EnsureOrganizationAuthorization)
         _organizationService.IsAdmin(request.OrganizationId, true);
 
-      var result = GetById(request.Id, true, true, false);
+      var result = GetById(request.Id, true, true, options.EnsureOrganizationAuthorization);
       var resultCurrent = ObjectHelper.DeepCopy(result);
 
       // A pull provider can extend an expired opportunity or remove its end date.

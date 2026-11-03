@@ -752,6 +752,20 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       if (!filter.PaginationEnabled)
       {
+        // Authorize before saving; the background worker reuses this filter without a user context.
+        if (ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
+        {
+          if (filter.Organizations?.Count > 0)
+            _organizationService.IsAdminsOf(filter.Organizations, true);
+          else
+          {
+            var organizations = _organizationService.ListAdminsOf(false).Select(o => o.Id).Distinct().ToList();
+            // An empty selection is unrestricted when processed, so never queue it for this user.
+            if (organizations.Count == 0) throw new SecurityException("Unauthorized");
+            filter.Organizations = organizations;
+          }
+        }
+
         //schedule the request for processing and return
         var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
         await _downloadService.Schedule(user.Id, DownloadScheduleType.MyOpportunityVerifications, filter);
