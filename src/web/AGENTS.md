@@ -21,6 +21,13 @@ pnpm start     # serve production build
 pnpm lint      # eslint + prettier check
 pnpm format    # prettier write
 pnpm analyze   # bundle analyzer
+pnpm test               # node:test unit tests (src/**/*.test.ts)
+pnpm test:e2e           # Playwright e2e, all projects (needs the stack up, see below)
+pnpm test:e2e:smoke     # @smoke subset — the PR gate
+pnpm test:e2e:headed    # watch it in a browser window
+pnpm test:e2e:ui        # Playwright UI mode
+pnpm test:e2e:coverage  # V8 coverage of client bundles → monocart-report/
+pnpm test:e2e:gaps      # list test.fixme() bypasses (must match known-gaps.md)
 ```
 
 ## Conventions
@@ -33,6 +40,26 @@ pnpm analyze   # bundle analyzer
 - Run web tooling through mise (`mise x -- pnpm exec …`). The shell's bare `node` is v20, which
   pnpm 11 rejects.
 - Never run `next build` (or `pnpm build`) while the dev server is running: they share `.next`.
+
+## End-to-end tests (Playwright)
+
+Required for feature work and support fixes that touch a user-visible flow (root `/AGENTS.md`,
+"Automated Tests"). Harness, rules and the route checklist live in
+`docs/work/active/YOM-1311-automated-browser-tests-for-the-web-app/` — read `README.md` (Shared
+Contract) and `handoffs/2026-11-03-c.md` ("How features must be tested") before writing a spec.
+
+- Layout: `e2e/<public|youth|org-admin|admin>/<area>.spec.ts`; import `{ test, expect }` from
+  `e2e/support/test`. The project supplies the session — never log in inside a spec.
+- Data: assert only on `e2e/seed.ts`. New fixed data goes into `src/api/.../post.sql` **and**
+  `seed.ts` in the same change, with a NOTE for Adrian.
+- Locators: unique `id="…"` with an `// e2e` comment; shared components take `id` as a required
+  prop. No `data-testid`.
+- Prerequisites: `src/api` docker compose up, `pnpm dev` running, `127.0.0.1 keycloak` in
+  `/etc/hosts`, `mise x -- pnpm exec playwright install chromium` once.
+- Use the `playwright-cli` skill to explore a page or debug a failing spec
+  (`pnpm test:e2e <file> --debug`); use the CLI scripts above to run.
+- A spec that fails repeatably for reasons outside your change: `test.fixme(true, "YOM-NNNN: why")`
+  + a row in `known-gaps.md`. Never leave the suite red; never delete the test.
 
 ## Agent roles
 

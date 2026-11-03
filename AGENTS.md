@@ -99,7 +99,17 @@ Rules:
 - New tickets follow `docs/work/templates/linear-epic.md` / `linear-issue.md`. A ticket that cannot be described without naming a class, endpoint or file is a task, not a ticket — fold it into a parent and let that parent's checklist carry it.
 - Keep ticket titles stable — folder names derive from the ticket id and slug.
 - When an AI session changes an approach, update `feature.md`'s Decisions log, not the ticket description. Update the ticket only if the _outcome or scope_ changed.
-- Agents must not edit Linear ticket descriptions unless explicitly asked.
+- Agents must not edit Linear ticket descriptions unless explicitly asked. Status changes and comments are expected (see lifecycle below) but, like every Linear write, need the user's go-ahead first.
+
+**Ticket lifecycle (agents own steps 1–3):**
+
+1. **Every piece of work has a ticket.** If none exists, propose one (title + the `linear-issue.md` block) and create it once the user agrees — unless the user says no ticket is wanted.
+2. **Before pushing**, the ticket reflects reality: status `In Progress` → `In Review`, a comment linking the branch/PR and the `docs/work` folder, and the description updated only if the outcome or scope changed. Do this even when the PR and stage deployment are still unconfirmed — `In Review` is the honest state at that point.
+3. **After the PR merges and deploys to stage**, the ticket moves to `Testing`. This is a manual step today — nothing in CI tells Linear a deploy happened. _Improvement noted:_ a post-deploy hook (GitHub Action on the deploy job → Linear API by ticket id in the branch name) would close this gap; not built yet.
+
+## Confirmation Gate — Always
+
+Agents **always ask the user before**: committing, pushing, creating a PR, and creating or updating a Linear ticket (status, comment or description). Prepare everything — staged diff, commit message, ticket text — then ask once with the exact action listed. A "go" covers the actions named in that question only, not later ones in the session.
 
 ## Commit and PR Conventions
 
@@ -168,3 +178,10 @@ The browser tooling, ports and access rules are in `src/web/AGENTS.md`, "Agent r
 - Never commit secrets or credentials.
 - Prefer editing existing files over creating new ones; follow existing patterns in the component you are working in.
 - Ask before introducing new dependencies.
+
+## Automated Tests (`src/web`, Playwright)
+
+- **Feature development and support work includes Playwright e2e tests.** A change to a user-visible flow adds or updates a spec under `src/web/e2e/`. The rules (one journey per behaviour, parallel-safe, `#id` locators, seed contract, `@smoke` tag) are in `docs/work/active/YOM-1311-automated-browser-tests-for-the-web-app/handoffs/2026-11-03-c.md` "How features must be tested"; the route checklist is `sitemap.md` in the same folder.
+- Agents use the **`playwright-cli` skill** for exploring and debugging pages and the **local Playwright CLI** (`pnpm test:e2e …` from `src/web`) for running specs — not the ad-hoc CDP tooling, except where the agent roles section still calls for it.
+- **CI runs the suite; every test must pass.** Tests are being applied retroactively to production code, so a spec that fails repeatably for reasons outside the change at hand is bypassed with `test.fixme(true, "YOM-NNNN: <why>")` — never deleted, never left red — and recorded in `known-gaps.md` (same folder). `pnpm test:e2e:gaps` lists the current fixmes so the register and the code cannot drift.
+- Flows that cannot be exercised locally or in CI (Keycloak e-mail, real SMS, social IdPs, …) are listed in `known-gaps.md` as **not tested**, with the prerequisite that would unlock them. Do not claim coverage for them.

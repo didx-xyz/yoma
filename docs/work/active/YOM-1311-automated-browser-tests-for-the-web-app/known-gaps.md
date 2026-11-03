@@ -1,0 +1,41 @@
+# Known gaps — what the e2e suite does NOT prove
+
+Two kinds of gap, kept apart on purpose:
+
+- **Not testable** — the flow cannot run locally or in CI. Nothing to fix in the test; record the
+  prerequisite that would unlock it and who owns it.
+- **Bypassed** — a spec exists but is switched off with `test.fixme(true, "YOM-NNNN: <why>")`
+  because it fails repeatably for reasons outside the change that was being made. Every row here
+  must have a matching `fixme` in the code: `pnpm test:e2e:gaps` (from `src/web`) prints them.
+  Remove the `fixme` and the row together.
+
+Update this file in the same commit as the test change. Reviewed by the YOM-1311 master session.
+
+## Not testable (locally or in CI)
+
+| Flow | Why | Unlocks when | Owner |
+| --- | --- | --- | --- |
+| Keycloak e-mail registration (VERIFY_EMAIL page, link click) | No mail catcher; realm SMTP is SendGrid with a fake key → "Failed to send email" | Mailpit (or similar) in `src/api/docker-compose.yml` + realm `smtpServer` pointed at it; test reads the mail via its API | Adrian |
+| Keycloak e-mail password reset | same | same | Adrian |
+| Keycloak "verify email" required action | same | same | Adrian |
+| Real SMS delivery (Twilio/WhatsApp sender) | Local sender is the `dummy` provider (logs, 20 % random failure); production senders need credentials | Not an e2e concern — covered by the provider's own tests / staging smoke | SRE |
+| SMS 2FA (`login-sms-otp.ftl`, `sms-otp-authenticator`) | The authenticator is in no realm flow; the browser flow's conditional OTP step is stock TOTP (`auth-otp-form`) | Only if the flow is added to the realm | Adrian / SRE |
+| Social login (Google, Facebook) | IdP client ids/secrets are placeholders locally; the redirect leaves our stack | Presence of `#social-google` / `#social-facebook` is asserted; the round-trip is a staging manual check | — |
+| Session expiry in real time | Needs the Keycloak session revoked and the 300 s access token to lapse | Covered indirectly: `youth/session-expired.spec.ts` injects the refresh error. Real-time variant not worth the wall-clock | — |
+| Organisation approve/decline (`/organisations/[id]/verify`) | Every seeded organisation is Active; nothing pending to act on | One seeded organisation in Inactive/pending status with a fixed id (`post.sql` + `seed.ts`) | Adrian |
+| Marketplace purchase (`/marketplace/[country]` buy) | Store items come from an external provider | A stubbed store or a seeded local item | Adrian |
+| Referral programme journeys | Programmes and links are seeded with random ids | Fixed-id programme + link in `post.sql` + `seed.ts` | Adrian |
+| Datadog RUM consent *effect* | Only the dialog is testable; RUM is not initialised locally | — | — |
+| Phone OTP flows more than 3×/hour | Provider cap of 3 OTP sends per number per hour (`DefaultPhoneProvider`); CI seeds fresh so unaffected | Second `TEST_PHONE_NUMBERS` entry would double the local budget | Adrian |
+
+## Bypassed (`test.fixme`) — must be empty before the suite becomes a merge gate
+
+| Spec · test | Ticket | Since | Why it fails | What unblocks it |
+| --- | --- | --- | --- | --- |
+| _none_ | | | | |
+
+## Server-side code
+
+Coverage (`pnpm test:e2e:coverage`) measures client bundles only. `getServerSideProps`,
+`pages/api/*` and `server/*` are exercised by the journeys but never counted. Not a gap in the
+tests — a gap in the number; do not read "100 %" as whole-app coverage.
