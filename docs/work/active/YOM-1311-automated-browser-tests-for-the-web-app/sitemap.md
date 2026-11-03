@@ -41,8 +41,9 @@ Legend: ☐ no spec · ☑ smoke (renders, markers present) · ☑☑ journey (a
 | Session expired dialog (refresh failure injected) | ☑☑ | `youth/session-expired.spec.ts` |
 | Email registration / email reset end-to-end | blocked | no mail catcher locally; realm SMTP is SendGrid with a fake key |
 | Social login (Google/Facebook) | blocked | placeholder IdP secrets; presence asserted only |
-| SMS 2FA (`login-sms-otp.ftl`) | ☐ | needs a user with a `phone-otp` credential |
-| Required actions: update profile / update password / verify email pages | ☐ | trigger via admin API `requiredActions` on the throw-away phone user |
+| SMS 2FA (`login-sms-otp.ftl`) | not reachable | `sms-otp-authenticator` is in no realm flow (browser flow's conditional OTP step is the standard `auth-otp-form`); the helm/compose `TEST_PHONE_NUMBERS` number only short-cuts SMS sending, it does not enable 2FA. Test it if/when the flow is added |
+| Required actions: update profile / update password | ☐ | set `requiredActions` via admin API on the throw-away phone user, then log in |
+| Required action: verify email | blocked | needs email (see above) |
 
 ## Discovery & opportunity details (anonymous+)
 
@@ -69,7 +70,7 @@ Legend: ☐ no spec · ☑ smoke (renders, markers present) · ☑☑ journey (a
 | `/user/settings` | title `Yoma \| Settings`; updateSettings | youth | ☐ | |
 | `/organisations/register` → `/success` | h2 "Organisation details" | none (creates an org!) | ☐ | |
 | `/referrals`, `/referrals/program/[id]`, `/claim/[id]`, `/link/[id]`, `/progress/[id]` | titles `Yoma \| Refer a friend…` | referral program (random) | ☐ | |
-| Gating: `/organisations` as youth → no admin UI | | | ☑ | `youth/yoid.spec.ts` |
+| Gating: `/organisations` and every `/admin/*` as youth → Access Restricted | | | ☑☑ | `youth/gating.spec.ts` |
 
 ## Organisation admin (`org-admin`) — Yoma org `…0100`
 
@@ -96,14 +97,15 @@ Legend: ☐ no spec · ☑ smoke (renders, markers present) · ☑☑ journey (a
 | `/admin/schemas`, `/admin/schemas/[id]` | title `Yoma Admin \| Schemas` | none / create | ☐ | |
 | `/admin/stores`, `/admin/stores/[ruleId]` | "🛒 Marketplace Rules"; create/activate/delete | rule (random) | ☐ | |
 | `/admin/treasury` | h "💰Treasury"; save settings | none | ☐ | |
-| `/admin/skills` | "⚡Skills" — **no role gate, any session** | none | ☐ | |
-| `/admin`, `/admin/connections` | "Under development" — **no auth at all** | none | ☐ | |
+| `/admin/skills` | "⚡Skills" | none | ☐ | |
+| `/admin`, `/admin/connections` | "Under development" | none | ☐ (gating covered) | `youth/gating.spec.ts` |
 
-## Findings for the owners (not test gaps)
+## Findings for the owners — fixed 2026-11-03
 
-- `/admin` and `/admin/connections` render for anyone; `/admin/skills` for any signed-in user.
-- Session-expired dialog, "Choose your settings", "Complete your profile" and the RUM consent
-  dialog have no ids; tests use text. The referral toast outlives logout and overlays the Login
-  button (`support/keycloak.ts` closes toasts first).
-- `kc_locale` on the Keycloak auth URL is ignored by this realm/theme; only `ui_locales` works.
-- Two `select[title="Language"]` per page (navbar + drawer).
+- `/admin`, `/admin/connections` had no auth and `/admin/skills` no role check → all three now
+  SSR-gate on `Admin` like the other admin pages (401/403 → Unauthenticated/Unauthorized).
+- Global dialogs got ids: `#dlgSessionExpired` / `#btnSessionExpiredStayLoggedOut`,
+  `#dlgSettings` / `#btnSettingsSkip`, `#dlgUpdateProfile`, `#btnRumConsentNotNow` /
+  `#btnRumConsentAllow`. Language switcher: `#selLanguage` (navbar), `#selLanguage_drawer`.
+- `handleUserSignOut` now dismisses toasts, so nothing from the previous session overlays Login.
+- Still true: `kc_locale` on the Keycloak auth URL is ignored by this realm; use the site switcher.
