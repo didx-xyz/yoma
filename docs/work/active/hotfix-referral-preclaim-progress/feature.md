@@ -4,8 +4,8 @@
 
 - Owner: Adrian
 - Area: API
-- Status: review
-- Branch: `fix/referral-preclaim-progress`
+- Status: review — master forward-port ready; Stage deployment pending
+- Branch: `fix/referral-preclaim-progress-master`
 - Baseline: released `v3.13.7`, commit `740c7c183a505945eebb4fd00ccd6d3e63e7694d`
 
 ## Problem / Goal
@@ -21,8 +21,9 @@ Allow these records to be read without weakening claim eligibility or reward pro
 - [x] Count onboarding progress only when complete and retain it as an effective-completion prerequisite.
 - [x] Cover status/onboarding/requirement combinations, ownership and no-reward behavior.
 - [x] Build and review the scoped diff.
-- [ ] Adrian reviews, commits and opens the Production hotfix PR.
-- [ ] Release through current; forward-port to master and validate on Stage.
+- [x] Adrian reviewed and merged Production hotfix PR #2014 into current; v3.13.8 release started.
+- [x] Forward-port the isolated fix to latest master and validate build, formatting and referral tests.
+- [ ] Review, commit, push and PR into master; deploy and smoke-test on Stage.
 
 ## Decisions
 
@@ -32,3 +33,6 @@ Allow these records to be read without weakening claim eligibility or reward pro
   portion for null/false flags, or report effective completion without onboarding.
 - No data repair, migration, provider operation, claim eligibility change or reward change.
 - No package, frontend, middleware, timeout or infrastructure changes in this hotfix.
+- 2026-11-03: Forward-port merged commit `86477f71f8d093bab597dd2587f26637037e5e83`
+  without committing, from master baseline `476eea4f3f2dc9b68af089dd1d05f827d9d62ca1`.
+  It applies without conflicts or production-code adaptations. Do not merge all of current.
