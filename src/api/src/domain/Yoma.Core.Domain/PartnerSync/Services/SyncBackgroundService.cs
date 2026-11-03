@@ -714,7 +714,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                 await _processingService.RecordPull(action, partnerModel.Id, entityType, item.ExternalId, entityId, payloadHash);
 
                 scope.Complete();
-              });
+              }, clearTrackedChanges: true);
 
               if (itemSkipped)
               {

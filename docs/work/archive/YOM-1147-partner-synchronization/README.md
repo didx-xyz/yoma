@@ -199,6 +199,10 @@ key-only item only for deliberate deletion. No provider may hardcode temporary `
 
 ## Cross-Area Notes
 
+### Expired opportunity extensions — 2026-11-03
+
+Follow-up hotfix under [YOM-1171](YOM-1171-api-enforce-provider-managed-opportunity-rules-for-pull-synchronization/feature.md): a pull provider may extend or remove the end date after expiry. The normal update sets Active in the same opportunity write, with a transactional status/ownership recheck; Archived remains terminal and admin ownership restrictions remain unchanged. This is API-only, with no public endpoint or payload changes. See the feature handoff for review and release gates.
+
 ### Shared skill matching — 2026-09-17
 
 September 25 follow-up: Stage revealed `Programming` -> `Programming (Music)`.
