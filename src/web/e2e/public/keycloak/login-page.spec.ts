@@ -119,8 +119,7 @@ test("the site's language is passed to Keycloak (ui_locales)", async ({
   // Translate cookie and reloads), then open Login. handleUserSignIn sends ui_locales=fr.
   // (kc_locale on the auth URL is not honoured by this realm; ui_locales is the product path.)
   await page.goto(ROUTES.home);
-  // Navbar and drawer both render the switcher; the drawer's is hidden.
-  await page.locator("select[title='Language']:visible").selectOption("fr");
+  await page.locator("#selLanguage").selectOption("fr");
   await page.waitForLoadState("domcontentloaded");
   await openKeycloakLogin(page);
 

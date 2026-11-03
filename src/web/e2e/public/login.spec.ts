@@ -2,7 +2,7 @@ import { expect, test } from "../support/test";
 import { ROUTES, USERS } from "../seed";
 import { loginViaKeycloak } from "../support/auth";
 
-test("user logs in via Keycloak and returns authenticated", async ({
+test("user logs in via Keycloak and returns authenticated @smoke", async ({
   page,
 }) => {
   await page.goto(ROUTES.home);

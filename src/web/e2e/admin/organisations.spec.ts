@@ -1,7 +1,7 @@
 import { expect, test } from "../support/test";
 import { ORGANISATIONS, ROUTES } from "../seed";
 
-test("admin sees every organisation with admin navigation", async ({
+test("admin sees every organisation with admin navigation @smoke", async ({
   page,
 }) => {
   await page.goto(ROUTES.organisations);

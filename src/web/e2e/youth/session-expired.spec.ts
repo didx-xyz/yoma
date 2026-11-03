@@ -19,9 +19,10 @@ test("a failed token refresh shows the Session Expired dialog", async ({
 
   await page.goto(ROUTES.home);
 
-  await expect(page.getByText("Session Expired")).toBeVisible();
+  await expect(page.locator("#dlgSessionExpired")).toBeVisible();
+  await expect(page.locator("#dlgSessionExpired")).toContainText(
+    "Session Expired",
+  );
   await expect(page.locator("#btnSignIn_sessionExpired")).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Stay logged out" }),
-  ).toBeVisible();
+  await expect(page.locator("#btnSessionExpiredStayLoggedOut")).toBeVisible();
 });

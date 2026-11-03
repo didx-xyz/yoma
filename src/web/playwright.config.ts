@@ -26,8 +26,14 @@ export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
   forbidOnly: isCI,
-  retries: isCI ? 2 : 0,
-  workers: isCI ? 1 : undefined,
+  // CI runs against a production image, so a retry only masks a real flake; keep it to one.
+  retries: isCI ? 1 : 0,
+  // Every test owns its data (or runs serial inside its file), so tests are parallel-safe.
+  // GitHub's ubuntu runners have 4 vCPUs; locally the dev server's compile step is the limit.
+  workers: isCI ? 4 : undefined,
+  // `pnpm test:e2e:smoke` runs only @smoke-tagged tests — the PR gate; the full suite is for
+  // merges to master / nightly.
+  grep: process.env.E2E_SMOKE === "1" ? /@smoke/ : undefined,
   reporter: [
     ["list"],
     ...(isCI ? [["html", { open: "never" }] as const] : []),

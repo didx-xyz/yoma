@@ -3,7 +3,7 @@ import { ROUTES, USERS } from "../../seed";
 import { loginViaKeycloak } from "../../support/auth";
 import { openKeycloakLogin } from "../../support/keycloak";
 
-test("logout ends both the site session and the Keycloak SSO session", async ({
+test("logout ends both the site session and the Keycloak SSO session @smoke", async ({
   page,
 }) => {
   await page.goto(ROUTES.home);

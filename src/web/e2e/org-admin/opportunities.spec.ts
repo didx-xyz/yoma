@@ -1,7 +1,7 @@
 import { expect, test } from "../support/test";
 import { FIXTURES, ORGANISATIONS, ROUTES } from "../seed";
 
-test("organisation admin sees the Yoma organisation's opportunities", async ({
+test("organisation admin sees the Yoma organisation's opportunities @smoke", async ({
   page,
 }) => {
   await page.goto(ROUTES.orgOpportunities(ORGANISATIONS.yoma.id));
