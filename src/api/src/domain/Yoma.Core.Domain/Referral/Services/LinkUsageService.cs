@@ -994,11 +994,14 @@ namespace Yoma.Core.Domain.Referral.Services
       if (program.PathwayRequired && program.Pathway == null)
         throw new DataInconsistencyException("Pathway required but does not exist");
 
-      if (!item.UserYoIDOnboarded.HasValue || item.UserYoIDOnboarded.Value == false)
+      // Intent precedes onboarding; only claimed usages require it as an invariant.
+      var isIntent = item.Status is ReferralLinkUsageStatus.Initiated or ReferralLinkUsageStatus.Abandoned;
+      var yoIDOnboarded = item.UserYoIDOnboarded == true;
+      if (!isIntent && !yoIDOnboarded)
         throw new DataInconsistencyException("Expected YoID onboarded but not completed");
 
-      // Nothing to complete: no POP and no Pathway required → always 100%
-      if (!program.ProofOfPersonhoodRequired && !program.PathwayRequired)
+      // With onboarding complete, no POP and no Pathway required → always 100%.
+      if (yoIDOnboarded && !program.ProofOfPersonhoodRequired && !program.PathwayRequired)
       {
         result.PercentComplete = 100m;
         result.EffectiveCompleted = true;
@@ -1027,9 +1030,9 @@ namespace Yoma.Core.Domain.Referral.Services
       var totalWeight = 0m;
       var points = 0m;
 
-      // Always included: YoID is guaranteed at this point
+      // Always required, but a pre-claim intent may not have completed onboarding yet.
       totalWeight += PercentComplete_Weight_YoIDOnboarded;
-      points += PercentComplete_Weight_YoIDOnboarded;
+      if (yoIDOnboarded) points += PercentComplete_Weight_YoIDOnboarded;
 
       // Proof of Personhood
       if (program.ProofOfPersonhoodRequired == true)
@@ -1055,7 +1058,8 @@ namespace Yoma.Core.Domain.Referral.Services
         : Math.Round(points / totalWeight * 100m, 2);
 
       result.EffectiveCompleted =
-        (!program.ProofOfPersonhoodRequired || result.ProofOfPersonhoodCompleted == true)
+        yoIDOnboarded
+        && (!program.ProofOfPersonhoodRequired || result.ProofOfPersonhoodCompleted == true)
         && (!program.PathwayRequired || result.PathwayCompleted == true);
 
       return RedactInfo(result, contextRole);
