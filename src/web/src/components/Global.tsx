@@ -1010,6 +1010,7 @@ export const Global: React.FC = () => {
 
             <div className="flex w-full flex-row gap-3 md:gap-14">
               <button
+                id="btnRumConsentNotNow" // e2e
                 type="button"
                 className="btn border-green text-green btn-outline btn-sm hover:bg-green flex-1 normal-case hover:text-white"
                 onClick={() => handleRumConsentSubmit(false)}
@@ -1017,6 +1018,7 @@ export const Global: React.FC = () => {
                 Not Now
               </button>
               <button
+                id="btnRumConsentAllow" // e2e
                 type="button"
                 className="btn btn-sm btn-success flex-1 text-white normal-case"
                 onClick={() => handleRumConsentSubmit(true)}
@@ -1037,7 +1039,10 @@ export const Global: React.FC = () => {
         }}
         className="md:max-h-[985px] md:w-[700px]"
       >
-        <div className="flex h-full flex-col gap-2 overflow-y-auto">
+        <div
+          id="dlgUpdateProfile"
+          className="flex h-full flex-col gap-2 overflow-y-auto"
+        >
           <div className="bg-theme flex h-16 flex-row p-8 shadow-lg"></div>
           <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 text-center md:px-12">
             <div className="border-purple-dark -mt-8 flex items-center justify-center rounded-full bg-white p-2 shadow-lg">
@@ -1099,7 +1104,10 @@ export const Global: React.FC = () => {
         }}
         className="md:max-h-[890px] md:w-[700px]"
       >
-        <div className="flex h-full flex-col gap-2 overflow-y-auto">
+        <div
+          id="dlgSettings"
+          className="flex h-full flex-col gap-2 overflow-y-auto"
+        >
           <div className="bg-theme flex h-16 flex-row p-8 shadow-lg"></div>
           <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 md:px-12">
             <div className="border-purple-dark -mt-8 flex items-center justify-center rounded-full bg-white p-2 shadow-lg">
@@ -1126,6 +1134,7 @@ export const Global: React.FC = () => {
 
             {/* skip for now link */}
             <button
+              id="btnSettingsSkip" // e2e
               type="button"
               className="hover:text-green text-sm text-black underline"
               onClick={() => {
@@ -1219,7 +1228,10 @@ export const Global: React.FC = () => {
         }}
         className="md:max-h-[360px] md:w-[600px]"
       >
-        <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
+        <div
+          id="dlgSessionExpired"
+          className="flex h-full flex-col gap-2 overflow-y-auto pb-8"
+        >
           <div className="bg-theme flex flex-row items-center justify-end p-4 shadow-lg">
             <button
               type="button"
@@ -1249,6 +1261,7 @@ export const Global: React.FC = () => {
             </div>
 
             <button
+              id="btnSessionExpiredStayLoggedOut" // e2e
               type="button"
               className="hover:text-green text-sm text-black underline"
               onClick={() => {

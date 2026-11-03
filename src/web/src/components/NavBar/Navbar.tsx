@@ -607,6 +607,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                     {/* LANGUAGE, SIGN IN / OUT */}
                     <div className="border-gray flex flex-col gap-3 border-t p-3">
                       <LanguageSwitcher
+                        id="selLanguage_drawer"
                         className="hover:bg-gray-light h-11 gap-3 rounded-lg !px-3 !py-0"
                         classNameIcon="!h-5 !w-5 text-black"
                         classNameSelect="font-nunito -ml-1 text-[15px] font-semibold text-black"
@@ -733,6 +734,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
           {/* RIGHT MENU */}
           <div className="ml-auto flex h-full flex-shrink-0 items-stretch justify-end md:mr-2 md:gap-4">
             <LanguageSwitcher
+              id="selLanguage"
               className="bg-theme font-nunito rounded-none px-3 text-current hover:brightness-95"
               classNameIcon="!h-5 !w-5 !text-current"
               classNameSelect="text-md mobile-select !text-current"
