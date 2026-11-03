@@ -9,6 +9,29 @@ log() { printf '%s\n' "didxme-init: $*"; }
 fail() { log "ERROR: $*"; exit 1; }
 
 [ "${YOMA_ENVIRONMENT:-}" = Local ] || fail 'This initializer is restricted to Local.'
+# Match the API environment list before installing tools, reading settings or contacting mono.
+# The same Compose value overrides AppSettings.SSIEnabledEnvironments in the API container.
+ssi_environments=$(printf '%s' "${YOMA_SSI_ENABLED_ENVIRONMENTS:-Local, Development, Staging, Production}" | tr '[:upper:]' '[:lower:]')
+ssi_local=false
+previous_ifs=$IFS
+IFS=,
+set -f
+for environment in $ssi_environments; do
+  environment=$(printf '%s' "$environment" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+  case "$environment" in
+    local) ssi_local=true ;;
+    none|development|staging|production|'') ;;
+    *) fail 'YOMA_SSI_ENABLED_ENVIRONMENTS contains an unsupported environment.' ;;
+  esac
+done
+set +f
+IFS=$previous_ifs
+if [ "$ssi_local" = false ]; then
+  log 'WARNING: SSI is disabled locally; skipping readiness and provisioning. SSI jobs and endpoints are unavailable.'
+  exit 0
+fi
+
+command -v jq >/dev/null 2>&1 || /sbin/apk add --no-cache jq
 settings=${LOCAL_SETTINGS_FILE:-/settings/appsettings.Local.json}
 [ -f "$settings" ] && [ -w "$settings" ] || fail 'Mount the existing ignored appsettings.Local.json read/write.'
 [ -n "${YOMA_ASSERTION_CLIENT_SECRET:-}" ] || fail 'The local Yoma assertion-client secret is required.'

@@ -20,6 +20,7 @@ provided through the approved team handoff, not this public repository.
 - [x] Synchronize only the integration section of ignored Local settings.
 - [x] Verify local initialization and application startup after reset.
 - [x] Add a parameterized local reset helper for an existing standalone container setup; document prerequisites and data-reset coordination.
+- [x] Add an enabled-by-default local SSI opt-out shared by Compose init and the API; retain scheduling while pausing workers and blocking SSI endpoints.
 - [ ] Help Jason prepare his supported standalone setup and privately supplied Local settings.
 - [ ] SRE: provision Dev and deliver environment-specific configuration/secrets privately.
 - [ ] SRE: review development-fixture provisioning requirements before Dev rollout.
@@ -28,6 +29,10 @@ provided through the approved team handoff, not this public repository.
 
 - Keep the platform independent; no mono source changes or embedded Yoma-stack deployment.
 - Local initialization is not a deployed provisioning mechanism.
+- 2026-11-03: Reuse `AppSettings.SSIEnabledEnvironments` through the local Compose override
+  `YOMA_SSI_ENABLED_ENVIRONMENTS`. `None` skips provisioning and workers and returns 503 on SSI
+  endpoints. Adrian explicitly retained scheduling; schema-dependent business flows still need
+  seeded mappings. Keep the hard stop when enabled and document VS configuration separately.
 - 2026-11-02: Share only the generic local reset entry point. Standalone installation,
   bootstrap/start scripts and environment-specific values remain privately supplied prerequisites.
 - 2026-11-02: Public docs contain startup steps and ownership only. Private access details,
@@ -36,4 +41,5 @@ provided through the approved team handoff, not this public repository.
 ## Links
 
 - [Startup / deployment handoff](../environment.md)
+- [Local SSI opt-out handoff](./handoffs/2026-11-03-a.md)
 - [Historical setup handoff](./handoffs/2026-10-27-a.md)

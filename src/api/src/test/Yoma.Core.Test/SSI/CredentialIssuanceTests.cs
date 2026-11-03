@@ -26,6 +26,23 @@ namespace Yoma.Core.Test.SSI
   public class CredentialIssuanceTests
   {
     #region Tests
+    [Fact]
+    public async Task DisabledSSILeavesPendingWorkUntouchedAndDoesNotCallTheProvider()
+    {
+      using var fixture = new Fixture(Domain.Opportunity.Type.Job, enabledEnvironments: "None");
+
+      await fixture.Background.SeedSchemas();
+      await fixture.Background.ProcessTenantCreation();
+      await fixture.Background.ProcessCredentialIssuance();
+
+      Assert.Equal(CredentialIssuanceStatus.Pending, fixture.Item.Status);
+      Assert.Null(fixture.Item.CredentialId);
+      Assert.Empty(fixture.Requests);
+      fixture.Provider.VerifyNoOtherCalls();
+      fixture.Schemas.VerifyNoOtherCalls();
+      fixture.Tenants.VerifyNoOtherCalls();
+    }
+
     [Theory]
     [InlineData(null, ArtifactType.ACR)]
     [InlineData(null, ArtifactType.SDJWT)]
@@ -489,11 +506,12 @@ namespace Yoma.Core.Test.SSI
 
       #region Constructor
       public Fixture(Domain.Opportunity.Type? type, IServiceScopeFactory? scopeFactory = null,
-        int parallelism = 1, CancellationToken stopping = default, ArtifactType? artifactType = null)
+        int parallelism = 1, CancellationToken stopping = default, ArtifactType? artifactType = null,
+        string enabledEnvironments = "Local")
       {
         var settings = new AppSettings
         {
-          SSIEnabledEnvironments = "Local",
+          SSIEnabledEnvironments = enabledEnvironments,
           YomaOrganizationName = "Yoma",
           SSIMaximumRetryAttempts = 2,
           SSIParallelism = new AppSettingsSSIParallelism { CredentialIssuance = parallelism }

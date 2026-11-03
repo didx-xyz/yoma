@@ -4,6 +4,8 @@
 
 This is a public-repository guide. Obtain private platform instructions, access and configuration through the team's approved secure channel. Do not paste credentials, private infrastructure details, token contents or configuration dumps into this repository, its issues or PRs.
 
+SSI is **enabled by default**. For local work without mono, use the [SSI opt-out](#optional-local-startup-without-ssi) below.
+
 ## First-time preparation — Jason
 
 1. Use the team's reviewed Yoma integration branch and its normal development prerequisites.
@@ -46,6 +48,47 @@ This is a public-repository guide. Obtain private platform instructions, access 
 This prepares the environment; it does **not** mean every participant has been provisioned or every credential issued. Those remain Yoma application jobs. Do not run background recovery/Replay until the outstanding implementation is complete.
 
 Initialization is **Local only**. Dev and later environments use SRE provisioning, not this container.
+
+### Optional local startup without SSI
+
+From `src/api`, in PowerShell:
+
+```powershell
+$env:YOMA_SSI_ENABLED_ENVIRONMENTS = 'None'
+docker compose up --build -d
+```
+
+This single Compose override feeds both `didxme-init` and the API's existing
+`AppSettings.SSIEnabledEnvironments`. The init container logs a warning and exits successfully
+before installing tools, reading/updating Local settings, waiting for mono or provisioning anything.
+Its successful exit satisfies the API dependency. Mono can stay stopped. Schema seeding, tenant
+creation and issuance/Replay jobs skip processing; authenticated SSI endpoints return HTTP 503
+with the normal error envelope. Other API routes remain available.
+
+Scheduling stays unchanged: existing queued work is preserved and new domain actions may still
+queue work for later processing. Workflows that look up schemas while scheduling or configuring
+opportunities need previously seeded local schema mappings. For those workflows on a fresh database,
+complete an SSI-enabled startup/seeding first. This mode does not supply mock schemas or wallet data.
+Normal Yoma database migrations and other initialization still run; the ignored Local file is still
+required by the API/Compose mounts. The switch does not stop mono or clear any data.
+
+To re-enable SSI, start mono independently and wait for readiness, then:
+
+```powershell
+Remove-Item Env:YOMA_SSI_ENABLED_ENVIRONMENTS -ErrorAction SilentlyContinue
+docker compose up --build -d
+```
+
+With no override, the default is `Local, Development, Staging, Production`. An enabled initializer
+still fails startup if mono is unavailable or provisioning fails. Use `None` to disable explicitly;
+an empty value uses the enabled default. These commands recreate changed containers; a plain
+`docker compose restart` does not apply new environment settings. Only start processing queued work
+once the matching provider data and schema mappings are ready.
+
+**Visual Studio:** Compose overrides do not apply to the debugger. Set
+`AppSettings.SSIEnabledEnvironments` to `None` in ignored `appsettings.Local.json` and restart the
+debugging session. Restore its previous list including `Local` before testing SSI again. The init
+does not synchronize this setting into that file. No Helm or deployed-environment settings change.
 
 ## Local Operations
 

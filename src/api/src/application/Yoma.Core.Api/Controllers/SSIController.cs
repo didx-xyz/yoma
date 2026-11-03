@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Net;
+using Yoma.Core.Api.Middleware;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Interfaces;
@@ -14,6 +15,7 @@ namespace Yoma.Core.Api.Controllers
   [Route($"api/{Common.Constants.Api_Version}/ssi")]
   [ApiController]
   [Authorize(Policy = Common.Constants.Authorization_Policy)]
+  [TypeFilter(typeof(SSIEnabledFilter))]
   [SwaggerTag("(by default, Admin role required)")]
   public class SSIController : ControllerBase
   {
