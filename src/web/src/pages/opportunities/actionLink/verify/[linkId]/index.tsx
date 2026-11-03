@@ -120,7 +120,10 @@ const OpportunityActionLinkVerify: NextPageWithLayout<{
               organizationName={opportunityInfo?.organizationName}
             />
 
-            <SignInButton className="btn bg-purple hover:bg-purple-light disabled:bg-purple-light rounded-full text-white normal-case disabled:border-0 md:w-[150px]" />
+            <SignInButton
+              id="btnSignIn_actionLinkVerify"
+              className="btn bg-purple hover:bg-purple-light disabled:bg-purple-light rounded-full text-white normal-case disabled:border-0 md:w-[150px]"
+            />
           </div>
         )}
 

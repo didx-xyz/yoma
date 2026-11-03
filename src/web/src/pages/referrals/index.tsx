@@ -101,6 +101,7 @@ const ReferralWelcomeIntro = ({
       />
       {showSignInButton && (
         <SignInButton
+          id="btnSignIn_referralsIntro"
           className="!bg-orange btn-sm mt-4 !text-white"
           hideIcon={true}
         />
@@ -1032,6 +1033,7 @@ const ReferralsPage: NextPageWithLayout<{
                     className="max-w-3xl !bg-transparent"
                   />
                   <SignInButton
+                    id="btnSignIn_referrals"
                     className="!bg-orange btn-sm mt-4 !text-white"
                     hideIcon={true}
                   />

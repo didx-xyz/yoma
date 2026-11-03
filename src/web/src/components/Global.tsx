@@ -1245,7 +1245,7 @@ export const Global: React.FC = () => {
             </div>
 
             <div className="mt-4 flex grow gap-4">
-              <SignInButton />
+              <SignInButton id="btnSignIn_sessionExpired" />
             </div>
 
             <button

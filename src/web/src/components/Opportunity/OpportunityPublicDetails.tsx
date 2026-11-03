@@ -992,6 +992,7 @@ const OpportunityPublicDetails: React.FC<{
                   </button>
 
                   <SignInButton
+                    id="btnSignIn_opportunity"
                     className="!bg-green w-full hover:brightness-125! md:flex-1"
                     callbackUrl={loginCallbackUrl}
                     showLabel={true}

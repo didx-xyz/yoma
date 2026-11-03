@@ -615,6 +615,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
 
                       {!session && (
                         <SignInButton
+                          id="btnSignIn_drawer"
                           className="!h-10 !min-h-10 w-full rounded-full !shadow-none"
                           tabIndex={isDrawerOpen ? 0 : -1}
                           showLabel={true}
@@ -623,6 +624,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
 
                       {session && (
                         <SignOutButton
+                          id="btnSignOut_drawer"
                           className="!h-10 !min-h-10 w-full rounded-full !shadow-none"
                           tabIndex={isDrawerOpen ? 0 : -1}
                         />
@@ -745,7 +747,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
             )}
             {sessionStatus !== "loading" && !session && (
               <div className="bg-theme flex h-full items-center px-2 hover:bg-black/10 md:px-3">
-                <SignInButton tabIndex={isDrawerOpen ? -1 : 0} />
+                <SignInButton id="btnSignIn" tabIndex={isDrawerOpen ? -1 : 0} />
               </div>
             )}
             {sessionStatus !== "loading" && session && (

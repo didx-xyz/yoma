@@ -611,7 +611,10 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
                 Cancel
               </button>
 
-              <SignInButton className="btn bg-purple hover:bg-purple-light disabled:bg-purple-light transform gap-2 border-0 border-none px-4 shadow-lg transition-all duration-300 ease-in-out hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait md:w-[150px]" />
+              <SignInButton
+                id="btnSignIn_marketplaceCountry"
+                className="btn bg-purple hover:bg-purple-light disabled:bg-purple-light transform gap-2 border-0 border-none px-4 shadow-lg transition-all duration-300 ease-in-out hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait md:w-[150px]"
+              />
             </div>
           </div>
         </div>

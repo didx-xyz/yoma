@@ -29,7 +29,7 @@ export const Unauthenticated: React.FC = () => {
             <br /> Please login to continue your journey with Yoma.
           </p>
 
-          <SignInButton className="!bg-green" />
+          <SignInButton id="btnSignIn_unauthenticated" className="!bg-green" />
         </div>
       </div>
     </>

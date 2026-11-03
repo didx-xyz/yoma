@@ -92,7 +92,10 @@ const MarketplaceLayout: TabProps = ({ children }) => {
                       What is Zlto?
                     </button>
 
-                    <SignInButton className="btn !border-blue-dark rounded-full !border-2 !border-solid !bg-transparent brightness-110 hover:!border-white hover:!brightness-100" />
+                    <SignInButton
+                      id="btnSignIn_marketplace"
+                      className="btn !border-blue-dark rounded-full !border-2 !border-solid !bg-transparent brightness-110 hover:!border-white hover:!brightness-100"
+                    />
                   </div>
                 </>
               )}
