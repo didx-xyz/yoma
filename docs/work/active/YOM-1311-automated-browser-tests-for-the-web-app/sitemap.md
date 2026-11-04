@@ -66,7 +66,7 @@ Legend: ☐ no spec · ☑ smoke (renders, markers present) · ☑☑ journey (a
 | `/yoid/opportunities/declined` `/add` | titles | youth | ☐ | |
 | `/yoid/passport` | credential-type filter group or "No credentials yet" | `passport_enabled` | ☑ | `youth/yoid-tabs.spec.ts` |
 | `/yoid/skills` | "Skills you've earned" + no empty state | 57 verified skills | ☑ | `youth/yoid-tabs.spec.ts` |
-| `/yoid/wallet` (cash-outs session) | `#wallet-products-heading`; balance card only with SSI/Zlto backends | vouchers / ZLTO (random) | ☑ render only | `youth/yoid-tabs.spec.ts` |
+| `/yoid/wallet` (cash-outs session) | `#section-wallet-balance-body` ledger, `#btnCashOut_wallet`, `#lnkCashOutWallet_wallet`, dialog `#cash-out-amount` … `#frmCashOutHosted` | `zlto`/`payout` overlaid on the real `GET /user` (no wallet backend); kill-switch, conversion preview and initiation refusal are the real API (`seed.ts` `CASH_OUT`) | ☑☑ cash-out journeys | `youth/wallet.spec.ts` (+ render in `youth/yoid-tabs.spec.ts`) |
 | `/user/profile` | `#inpProfileFirstName/#inpProfileSurname`, `#btnProfileSubmit`; toast "Your profile has been updated" | youth | ☑☑ surname edit + API check | `youth/profile.spec.ts` |
 | `/user/settings` | `#<SettingKey>` toggles, `#btnSettingsSubmit`; toast "Settings updated" | youth | ☑☑ toggle + API check | `youth/settings.spec.ts` |
 | `/organisations/register` → `/success` | h2 "Organisation details" | none | **not tested** — creates an organisation that nothing cleans up; needs an admin-API delete or a seed reset per run (see `known-gaps.md`) | |
