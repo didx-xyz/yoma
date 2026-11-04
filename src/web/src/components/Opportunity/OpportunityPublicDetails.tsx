@@ -666,6 +666,7 @@ const OpportunityPublicDetails: React.FC<{
   const goToButton = opportunityInfo.url &&
     opportunityInfo.status !== "Expired" && (
       <button
+        id="btnOpportunityGoTo" // e2e
         type="button"
         className={
           tabbed
@@ -798,6 +799,7 @@ const OpportunityPublicDetails: React.FC<{
   );
   const saveButton = (
     <button
+      id="btnOpportunitySave" // e2e
       type="button"
       className={`${
         tabbed
@@ -875,6 +877,7 @@ const OpportunityPublicDetails: React.FC<{
       {isCompleted && completedChip("hidden h-10 md:inline-block")}
       {opportunityInfo.url && opportunityInfo.status !== "Expired" && (
         <button
+          id="btnOpportunityGoTo_sticky" // e2e
           type="button"
           className="btn btn-sm bg-green hover:bg-green-dark disabled:bg-green h-[50px] grow rounded-full px-5 text-sm text-white normal-case md:h-10 md:grow-0"
           onClick={onGoToOpportunity}
@@ -884,6 +887,7 @@ const OpportunityPublicDetails: React.FC<{
         </button>
       )}
       <button
+        id="btnOpportunitySave_sticky" // e2e
         type="button"
         aria-label={isOppSaved ? "Saved" : "Save"}
         className={`btn btn-sm h-[50px] w-[50px] shrink-0 rounded-full px-0 md:h-10 md:w-10 ${

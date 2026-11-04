@@ -453,6 +453,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
               />
               <div className="drawer-content">
                 <label
+                  id="btnMainMenu" // e2e
                   htmlFor="nav-drawer"
                   className="bg-theme drawer flex h-full w-auto cursor-pointer items-center border-none px-4 text-white shadow-none duration-0 hover:brightness-95"
                   tabIndex={isDrawerOpen ? -1 : 0}

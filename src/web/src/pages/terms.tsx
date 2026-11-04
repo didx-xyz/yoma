@@ -32,6 +32,7 @@ const Terms: NextPageWithLayout = () => {
 
       <div className="border-gray flex justify-center border-b md:justify-start">
         <button
+          id="btnTermsTab_terms" // e2e
           type="button"
           className={`grow cursor-pointer px-4 py-2 text-center text-sm md:grow-0 md:text-base ${
             activeTab === "terms"
@@ -43,6 +44,7 @@ const Terms: NextPageWithLayout = () => {
           Terms of Service
         </button>
         <button
+          id="btnTermsTab_privacy" // e2e
           type="button"
           className={`grow cursor-pointer px-4 py-2 text-center text-sm md:grow-0 md:text-base ${
             activeTab === "privacy"
