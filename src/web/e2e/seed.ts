@@ -151,6 +151,51 @@ export const ROUTES = {
     `/organisations/dashboard?organisations=${orgId}`,
   adminOpportunities: "/admin/opportunities",
   adminTreasury: "/admin/treasury",
+  adminSchemas: "/admin/schemas",
+  adminSchemaCreate: "/admin/schemas/create",
+  adminSchema: (fullName: string) =>
+    `/admin/schemas/${encodeURIComponent(fullName)}`,
+};
+
+// Custom-field definitions (YOM-1244) come from migrations
+// (Yoma.Core.Infrastructure.Database/Migrations/*_ApplicationDb_CF_Configuration_Seeding_*.cs),
+// values from post.sql. Only what the discovery filter journeys assert on is listed here.
+export const CUSTOM_FIELDS = {
+  // Option, multi-select; post.sql gives every Job a value of "Permanent" (option key) except the
+  // "incomplete partner-like" fixtures (NN % 3 == 0 or 11), which have no custom-field values.
+  jobEmploymentType: {
+    key: "JobEmploymentType",
+    title: "Employment Type",
+    permanent: { key: "Permanent", name: "Permanent" },
+  },
+  // Decimal; only fixture 01 - Job has a value (1000, per month, USD).
+  jobSalaryMinimum: { key: "JobSalaryMinimum", title: "Minimum Salary" },
+  // Boolean; false on every Job, true on 01 - Job only.
+  jobSalaryDisclosed: { key: "JobSalaryDisclosed", title: "Salary Disclosed" },
+  // Discovery search text that returns exactly the six Job fixtures (01, 02, 05, 06, 21, 22):
+  // random seed titles never contain " - Job".
+  jobFixturesQuery: "- Job",
+};
+
+// Credential schemas are not post.sql rows: SSIBackgroundService.SeedSchemas publishes them on
+// API start-up (names fixed, display name always "Default", versions provider-assigned). The
+// admin pages read them live from the credential provider; src/web defaults to an in-browser mock
+// when NEXT_PUBLIC_ENVIRONMENT=local, which specs switch off via localStorage yoma.schemaMockMode.
+export const SCHEMAS = {
+  mockModeKey: "yoma.schemaMockMode",
+  displayName: "Default",
+  opportunityGeneric: "Opportunity|Default",
+  opportunityJob: "Opportunity|Job|Default",
+  yoid: "YoID|Default",
+  // Lookup.OpportunityType names (GET /opportunity/type); "ImpactAction" displays as "Impact Action".
+  opportunityTypes: [
+    "Entrepreneurship",
+    "Event",
+    "ImpactAction",
+    "Job",
+    "Learning",
+    "Other",
+  ],
 };
 
 // Cash-out preconditions (YOM-1051). Not post.sql rows: both are fixed by code every fresh stack runs.
