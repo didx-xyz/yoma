@@ -12,15 +12,20 @@ test("completed opportunities list the seeded placement", async ({ page }) => {
 });
 
 test("pending opportunities list the seeded verification", async ({ page }) => {
-  await page.goto(ROUTES.yoidPending);
-  await expect(page).toHaveTitle("Yoma | Pending Opportunities");
-  await expect(
-    page.getByRole("heading", {
-      level: 3,
-      name: FIXTURES.event04,
-      exact: true,
-    }),
-  ).toBeVisible();
+  // The list is ordered by last change and has no title search; the API re-stamps pending rows,
+  // so the fixture can sit on any page. Walk pages until it shows (seed has ~30 pending rows).
+  const heading = page.getByRole("heading", {
+    level: 3,
+    name: FIXTURES.event04,
+    exact: true,
+  });
+  for (let pageNo = 1; pageNo <= 6; pageNo++) {
+    await page.goto(`${ROUTES.yoidPending}?page=${pageNo}`);
+    await expect(page).toHaveTitle("Yoma | Pending Opportunities");
+    await expect(page.getByRole("heading", { level: 3 }).first()).toBeVisible();
+    if (await heading.isVisible()) return;
+  }
+  throw new Error(`${FIXTURES.event04} not found in the first 6 pending pages`);
 });
 
 test("skills tab lists the seeded verified skills", async ({ page }) => {

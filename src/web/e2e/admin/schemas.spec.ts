@@ -30,7 +30,9 @@ async function pick(page: Page, inputId: string, option: string) {
   await page.getByRole("option", { name: option, exact: true }).click();
 }
 
-test("schemas list shows the API-seeded default schemas with their opportunity type @smoke", async ({
+// Not @smoke: every test here reads live from the external Aries CloudAPI test tenant (see
+// known-gaps.md); the PR gate must not depend on it.
+test("schemas list shows the API-seeded default schemas with their opportunity type", async ({
   page,
 }) => {
   await page.goto(ROUTES.adminSchemas);
@@ -91,15 +93,17 @@ test("editing a seeded schema keeps its identity read-only and lists every mappe
   await expect(
     page.getByRole("cell", { name: /Always issued — cannot be removed Title/ }),
   ).toBeVisible();
-  const locked = await page
-    .getByRole("img", { name: "Always issued — cannot be removed" })
-    .count();
-  const editable = await page.locator("[id^=selSchemaAttrSource_]").count();
   const schema = (await apiGet(
     page,
     `/ssi/schema/${encodeURIComponent(SCHEMAS.opportunityJob)}`,
   )) as { propertyCount: number };
-  expect(locked + editable).toBe(schema.propertyCount);
+  // Editable rows are filled in by an effect after the step renders: assert with retry.
+  const locked = await page
+    .getByRole("img", { name: "Always issued — cannot be removed" })
+    .count();
+  await expect(page.locator("[id^=selSchemaAttrSource_]")).toHaveCount(
+    schema.propertyCount - locked,
+  );
   // Saving would publish a new provider version — the button is the end of this journey.
   await expect(page.locator("#btnSchemaStep2Next")).toHaveText("Submit");
 });
@@ -138,12 +142,13 @@ test("create wizard validates each step and reaches Review without publishing", 
   await page.locator("#btnSchemaStep2Next").click();
 
   await expect(page.getByRole("heading", { name: "Review" })).toBeVisible();
-  for (const [label, value] of [
+  const review: [string, string][] = [
     ["Schema name", "E2E"],
     ["Schema type", "Opportunity"],
     ["Opportunity type", "Job"],
     ["Artifact type", "JWS"],
-  ]) {
+  ];
+  for (const [label, value] of review) {
     await expect(page.locator("fieldset", { hasText: label })).toContainText(
       value,
     );

@@ -30,6 +30,14 @@ test("unknown route shows the not-found page", async ({ page }) => {
 
 test("marketplace asks for a country and routes to it", async ({ page }) => {
   await page.goto(ROUTES.marketplace);
+  // pages/marketplace/index.tsx returns a disabled marketplace when the dev server was started
+  // with CI set (shells often export CI=true). Name that cause rather than fail on the heading.
+  if (await page.getByText("Updating the store").isVisible()) {
+    throw new Error(
+      "Marketplace is disabled: the dev server was started with CI set. Restart `pnpm dev` " +
+        "with `CI=` unset (the page is cached for 300 s after that).",
+    );
+  }
   await expect(
     page.getByRole("heading", { name: "What is your Country?" }),
   ).toBeVisible();
