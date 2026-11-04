@@ -153,6 +153,19 @@ export const ROUTES = {
   adminTreasury: "/admin/treasury",
 };
 
+// Cash-out preconditions (YOM-1051). Not post.sql rows: both are fixed by code every fresh stack runs.
+export const CASH_OUT = {
+  // appsettings.json AppSettings:PayoutEnabledEnvironments = "Staging, Production"; docker compose
+  // runs the API as "Local", so GET /user → payout.enabled is false and POST /user/payout/zlto
+  // answers 400 "Cash-out is not available".
+  enabled: false,
+  // Migration 20261015090000_ApplicationDb_Treasury_CashOut_Release_Defaults: Treasury payout pool
+  // USD 0, so the conversion preview answers treasuryFundsAvailable: false. An admin saving the
+  // Treasury form must set a positive pool (validator), which would break this — don't, locally.
+  payoutPoolUsd: 0,
+  conversionRateZltoPerUsd: 57,
+};
+
 // Keycloak (src/api/docker-compose.yml keycloak service, src/keycloak/exports/01-yoma-realm.yaml).
 export const KEYCLOAK = {
   // The browser is redirected to this host; it must resolve on the test machine (/etc/hosts).
