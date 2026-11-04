@@ -4,7 +4,11 @@ import { FIXTURES, ORGANISATIONS, ROUTES } from "../seed";
 test("organisation admin sees the Yoma organisation's opportunities @smoke", async ({
   page,
 }) => {
-  await page.goto(ROUTES.orgOpportunities(ORGANISATIONS.yoma.id));
+  // Filter by title: the unfiltered list is ordered by last change, so other tests can push
+  // the fixture off page 1.
+  await page.goto(
+    `${ROUTES.orgOpportunities(ORGANISATIONS.yoma.id)}?query=${encodeURIComponent(FIXTURES.job01)}`,
+  );
 
   await expect(
     page.getByRole("heading", { name: /🏆 Opportunities/ }),

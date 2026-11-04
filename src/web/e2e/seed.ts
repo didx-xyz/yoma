@@ -132,14 +132,25 @@ export const FIXTURES = {
 // Routes the journeys use. Keep in step with src/web/src/lib/constants.ts and pages/.
 export const ROUTES = {
   home: "/",
+  about: "/about",
+  terms: "/terms",
+  marketplace: "/marketplace",
   yoid: "/yoid",
+  yoidCompleted: "/yoid/opportunities/completed",
+  yoidPending: "/yoid/opportunities/pending",
+  yoidSaved: "/yoid/opportunities/saved",
+  yoidSkills: "/yoid/skills",
+  yoidPassport: "/yoid/passport",
+  yoidWallet: "/yoid/wallet",
   profile: "/user/profile",
+  settings: "/user/settings",
   discover: "/opportunities/discover",
   organisations: "/organisations",
   orgOpportunities: (orgId: string) => `/organisations/${orgId}/opportunities`,
   orgDashboard: (orgId: string) =>
     `/organisations/dashboard?organisations=${orgId}`,
   adminOpportunities: "/admin/opportunities",
+  adminTreasury: "/admin/treasury",
 };
 
 // Keycloak (src/api/docker-compose.yml keycloak service, src/keycloak/exports/01-yoma-realm.yaml).

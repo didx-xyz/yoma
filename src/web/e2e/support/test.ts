@@ -19,6 +19,9 @@ export const test = base.extend<{ coverage: void; quietUi: void }>({
       await context.addInitScript(() => {
         localStorage.setItem("rumConsent", "false");
         localStorage.setItem("hasShownRefereePendingToast", "true");
+        // features/discovery/state/usePreferences.ts: the personalisation wizard auto-opens once
+        // per device over the discovery page. A spec about the wizard clears this key itself.
+        localStorage.setItem("yoma.discovery.personalizationSeen", "1");
       });
       await use();
     },

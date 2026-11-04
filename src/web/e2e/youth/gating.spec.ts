@@ -14,6 +14,8 @@ const adminOnly = [
 ];
 
 test("youth is refused on admin pages", async ({ page }) => {
+  // Seven cold routes on a shared dev server; CI's production build is unaffected.
+  test.slow();
   for (const route of adminOnly) {
     // First hit of each route compiles it on the dev server; don't also wait for "load".
     await page.goto(route, { waitUntil: "commit" });
