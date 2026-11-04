@@ -42,9 +42,11 @@ const STYLES: Record<ZltoLedgerVariant, string> = {
 };
 
 export const CashOutWalletLink: React.FC<{
+  /** unique per render site (e2e) */
+  id: string;
   profile: UserProfile;
   variant: ZltoLedgerVariant;
-}> = ({ profile, variant }) => {
+}> = ({ id, profile, variant }) => {
   const url = profile.payout?.walletUrl;
 
   /*
@@ -61,6 +63,7 @@ export const CashOutWalletLink: React.FC<{
 
   return (
     <a
+      id={id} // e2e
       href={url!}
       target="_blank"
       rel="noopener noreferrer"

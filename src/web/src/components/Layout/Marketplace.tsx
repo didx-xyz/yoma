@@ -169,7 +169,11 @@ const MarketplaceLayout: TabProps = ({ children }) => {
                       separate the primary action from the two pills it belongs beside.
                     */}
                     {userProfile.zlto && (
-                      <CashOutEntry profile={userProfile} variant="compact" />
+                      <CashOutEntry
+                        id="btnCashOut_marketplace"
+                        profile={userProfile}
+                        variant="compact"
+                      />
                     )}
                   </div>
                 </>

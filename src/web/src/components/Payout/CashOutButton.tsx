@@ -47,6 +47,8 @@ const STYLES: Record<
 };
 
 export const CashOutButton: React.FC<{
+  /** unique per render site — the ledger has two homes (e2e) */
+  id: string;
   label: string;
   variant: ZltoLedgerVariant;
   /**
@@ -60,7 +62,15 @@ export const CashOutButton: React.FC<{
   busy?: boolean;
   onClick: () => void;
   className?: string;
-}> = ({ label, variant, disabledHelper, busy = false, onClick, className }) => {
+}> = ({
+  id,
+  label,
+  variant,
+  disabledHelper,
+  busy = false,
+  onClick,
+  className,
+}) => {
   const style = STYLES[variant];
   const isDisabled = !!disabledHelper || busy;
   // Per instance: the ledger has two homes and a page could one day show both.
@@ -69,6 +79,7 @@ export const CashOutButton: React.FC<{
   return (
     <div className={`flex flex-col items-center gap-1 ${className ?? ""}`}>
       <button
+        id={id} // e2e
         type="button"
         onClick={onClick}
         disabled={isDisabled}

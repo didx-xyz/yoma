@@ -204,6 +204,7 @@ export const CashOutResumePanel: React.FC<{
       <div className="mt-auto flex flex-col items-center gap-2 pt-2">
         {canContinue && (
           <button
+            id="btnCashOutResumeContinue" // e2e
             type="button"
             onClick={onContinue}
             disabled={busy}
@@ -231,6 +232,7 @@ export const CashOutResumePanel: React.FC<{
             step is where the consequence is spelled out. */}
         {offerCancel && (
           <button
+            id="btnCashOutCancel" // e2e
             type="button"
             onClick={onCancel}
             disabled={busy}

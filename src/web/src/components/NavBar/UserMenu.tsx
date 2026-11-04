@@ -377,6 +377,7 @@ export const UserMenu: React.FC = () => {
                             loader={<TileBodySkeleton />}
                           >
                             <WalletCard
+                              id="drawer"
                               userProfile={userProfile!}
                               onClick={closeOnFollow}
                               link={
