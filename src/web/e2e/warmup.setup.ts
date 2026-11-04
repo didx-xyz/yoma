@@ -6,6 +6,9 @@ import { ORGANISATIONS, ROUTES } from "./seed";
 // sequentially, before the test projects start. The production image in CI needs none of this.
 setup("warm up dev-server routes", async ({ request }) => {
   setup.skip(!!process.env.GITHUB_ACTIONS, "production build in CI");
+  // UI mode / debugging runs one test at a time, so there is no parallel first-hit to protect
+  // against; the compiles just happen inside the test you click.
+  setup.skip(process.env.E2E_WARMUP === "0", "E2E_WARMUP=0");
   setup.setTimeout(10 * 60_000);
 
   const routes = [
