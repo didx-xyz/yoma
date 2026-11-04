@@ -53,7 +53,7 @@ Legend: ☐ no spec · ☑ smoke (renders, markers present) · ☑☑ journey (a
 | `/opportunities` (`[[...query]]`) | title `Yoma \| Opportunities` | fixture titles | ☐ | |
 | `/opportunities/[opportunityId]` | h4 title; `#btnOpportunityGoTo`, `#btnOpportunitySave` | fixture title → id (via search) | ☑☑ save/unsave | `youth/opportunity-details.spec.ts` |
 | `/opportunities/actionLink/verify/[linkId]` | h2 "Almost there…" / "Congratulations!" | instant-verify link (random) | ☐ | |
-| Custom-field filters (CF fields session) | filter panel `data-testid`s | custom field definitions | ☐ | |
+| Custom-field filters on `/opportunities/discover` (`?type=&cf=` JSON clauses) | `#btnDiscoveryFilters`, dialog "Filters" → `#discovery-cf-field-row-1`, `#input_customfieldfilter_<Key>`; chips in `section[aria-label="Filters on this search"]`, `#btnDiscoveryClearFilters`, `#hdrDiscoveryResults` | `seed.ts` `CUSTOM_FIELDS`: Job fixtures via `q="- Job"`; `01 - Job` salary; `Permanent` on complete Jobs | ☑☑ deep link (smoke), panel → URL/request/results, chip remove + clear | `youth/discovery-filters.spec.ts` |
 
 ## Youth (`youth`)
 
@@ -95,7 +95,7 @@ Legend: ☐ no spec · ☑ smoke (renders, markers present) · ☑☑ journey (a
 | `/admin/opportunities` | `#results` row links; active/visible/featured/archive actions | fixtures | ☑ list | `admin/opportunities.spec.ts` |
 | `/admin/links` | h3 "🔗 Links" | link (random) | ☐ | |
 | `/admin/referrals/**` (list, create/edit, info, links, usage) | "🎯 Referral Programs" | programs (random) | ☐ | |
-| `/admin/schemas`, `/admin/schemas/[id]` | title `Yoma Admin \| Schemas` | none / create | ☐ | |
+| `/admin/schemas`, `/admin/schemas/[id]` (`create` or full name) | title `Yoma Admin \| Schemas`; `#lnkSchemaAdd`, `[id="rowSchema_<fullName>"]`; wizard `#inpSchemaName`, `#selSchemaType/_OpportunityType/_ArtifactType`, `#btnSchemaStep{1,2}Next`, `#btnSchemaAttrAdd`, `#selSchemaAttrSource_N`/`#selSchemaAttr_N`, `#btnSchemaStep3Submit` | API start-up schemas (`seed.ts` `SCHEMAS`), read live (`yoma.schemaMockMode=live`) | ☑☑ list (smoke), edit identity read-only + attribute count vs API, create wizard to Review — **never submitted** (see `known-gaps.md`) | `admin/schemas.spec.ts` |
 | `/admin/stores`, `/admin/stores/[ruleId]` | "🛒 Marketplace Rules"; create/activate/delete | rule (random) | ☐ | |
 | `/admin/treasury` | h3 "💰Treasury", tab "Manage", `#btnTreasurySave` | none | ☑ render | `admin/opportunities.spec.ts` |
 | `/admin/skills` | "⚡Skills" | none | ☐ | |
