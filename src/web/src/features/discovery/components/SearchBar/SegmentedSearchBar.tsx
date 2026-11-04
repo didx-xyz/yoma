@@ -188,6 +188,7 @@ export const SegmentedSearchBar: React.FC<{ onOpenFilters: () => void }> = ({
           </React.Fragment>
         ))}
         <button
+          id="btnDiscoveryFilters" // e2e
           type="button"
           onClick={() => {
             setOpenSection(null);
