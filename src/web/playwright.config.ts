@@ -18,7 +18,9 @@ import { storageStatePath } from "./e2e/support/auth";
 // Coverage: `pnpm test:e2e:coverage` (E2E_COVERAGE=1). e2e/support/test.ts records V8 coverage
 // per test; monocart-reporter maps it to src/ and writes monocart-report/ (html + lcov). Only
 // client bundles are measured — getServerSideProps, pages/api and server/ never run in the browser.
-const isCI = !!process.env.CI;
+// GITHUB_ACTIONS, not CI: developer shells often export CI=true, which would switch on the
+// retries/worker profile meant for the production image.
+const isCI = !!process.env.GITHUB_ACTIONS;
 const chromium = { ...devices["Desktop Chrome"] };
 const coverage = process.env.E2E_COVERAGE === "1";
 
@@ -28,9 +30,12 @@ export default defineConfig({
   forbidOnly: isCI,
   // CI runs against a production image, so a retry only masks a real flake; keep it to one.
   retries: isCI ? 1 : 0,
-  // Every test owns its data (or runs serial inside its file), so tests are parallel-safe.
-  // GitHub's ubuntu runners have 4 vCPUs; locally the dev server's compile step is the limit.
-  workers: isCI ? 4 : undefined,
+  // Every test owns its data (or runs serial inside its file), so tests are parallel-safe and
+  // CI (production image, 4 vCPUs) runs 4 workers. Locally the Next dev server is the limit:
+  // with 2+ workers its server child runs out of memory and auto-restarts mid-run (blank pages,
+  // ERR_FAILED / ERR_CONNECTION_REFUSED). One worker is slow (~12 min full) but deterministic;
+  // `pnpm test:e2e:smoke` is the quick local check. Override with --workers=N at your own risk.
+  workers: isCI ? 4 : 1,
   // `pnpm test:e2e:smoke` runs only @smoke-tagged tests — the PR gate; the full suite is for
   // merges to master / nightly.
   grep: process.env.E2E_SMOKE === "1" ? /@smoke/ : undefined,
@@ -59,16 +64,31 @@ export default defineConfig({
         ]
       : []),
   ],
-  timeout: 60_000,
-  expect: { timeout: 10_000 },
+  // Local: cold route compiles on the dev server can take 30–60 s on their own.
+  timeout: isCI ? 60_000 : 120_000,
+  expect: { timeout: isCI ? 10_000 : 20_000 },
   use: {
     baseURL: process.env.E2E_BASE_URL ?? "http://localhost:3000",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
   projects: [
-    { name: "setup", testMatch: /auth\.setup\.ts/, use: chromium },
-    { name: "anonymous", testDir: "./e2e/public", use: chromium },
+    // warmup.setup.ts requests every route once so the dev server compiles them serially before
+    // anything hits them in parallel (it crashes otherwise). auth.setup.ts then signs in each
+    // role. Every test project waits for both.
+    { name: "warmup", testMatch: /warmup\.setup\.ts$/, use: chromium },
+    {
+      name: "setup",
+      testMatch: /auth\.setup\.ts$/,
+      dependencies: ["warmup"],
+      use: chromium,
+    },
+    {
+      name: "anonymous",
+      testDir: "./e2e/public",
+      dependencies: ["warmup"],
+      use: chromium,
+    },
     {
       name: "youth",
       testDir: "./e2e/youth",
