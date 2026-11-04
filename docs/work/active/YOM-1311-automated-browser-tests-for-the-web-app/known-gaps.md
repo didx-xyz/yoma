@@ -27,6 +27,9 @@ Update this file in the same commit as the test change. Reviewed by the YOM-1311
 | Referral programme journeys | Programmes and links are seeded with random ids | Fixed-id programme + link in `post.sql` + `seed.ts` | Adrian |
 | Datadog RUM consent *effect* | Only the dialog is testable; RUM is not initialised locally | — | — |
 | Phone OTP flows more than 3×/hour | Provider cap of 3 OTP sends per number per hour (`DefaultPhoneProvider`); CI seeds fresh so unaffected | Second `TEST_PHONE_NUMBERS` entry would double the local budget | Adrian |
+| Organisation registration (`/organisations/register` → `/success`) | Creates a new organisation under the youth user every run; nothing deletes it, so the DB drifts and the user becomes an org admin, which changes every later youth test | A delete-organisation admin API call in `afterAll`, or a per-run seed reset in CI | Adrian / Jason |
+| Wallet balance / ZLTO (`/yoid/wallet` balance card, cash-out) | Wallet stays "still being set up" locally: no SSI tenant / Zlto backend in compose | Stubbed wallet backends or a seeded `Created` tenant with balance | Adrian |
+| Yo-ID declined list, Add opportunity (`/yoid/opportunities/declined`, `/add`) | No seeded declined/rejected rows asserted on yet; render-only would be trivial | Fixed-id rejected verification in `post.sql` | Adrian |
 
 ## Bypassed (`test.fixme`) — must be empty before the suite becomes a merge gate
 

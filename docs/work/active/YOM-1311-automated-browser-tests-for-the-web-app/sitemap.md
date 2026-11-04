@@ -18,11 +18,11 @@ Legend: ☐ no spec · ☑ smoke (renders, markers present) · ☑☑ journey (a
 | Route | Marker | Seed | Status | Spec |
 | --- | --- | --- | --- | --- |
 | `/` | title `Yoma \| Home`, h1 "Building futures…" | none | ☑ | `public/login.spec.ts` (via login) |
-| `/about` | title `Yoma \| About Us` | none | ☐ | |
-| `/terms` | title `Yoma - Terms of Service & Privacy Policy` | none | ☐ | |
-| `/401` `/403` `/404` `/500` | h2 "Welcome Back!" / "Access Restricted" / "Page Not Found" / "Oops!" | none | ☐ | |
+| `/about` | title `Yoma \| About Us` | none | ☑ | `public/pages.spec.ts` |
+| `/terms` | title `Yoma - Terms of Service & Privacy Policy`; `#btnTermsTab_*` | none | ☑☑ | `public/pages.spec.ts` |
+| `/401` `/403` `/404` `/500` | h2 "Welcome Back!" / "Access Restricted" / "Page Not Found" / "Oops!" | none | ☑ (403, 404) | `youth/gating.spec.ts`, `public/pages.spec.ts` |
 | `/login/return` | SSR redirect only | none | ☐ | |
-| `/marketplace` | h3 "What is your Country?", `#letsGoButton` | countries | ☐ | |
+| `/marketplace` | h3 "What is your Country?", `#input_country`, `#letsGoButton` | countries | ☑☑ | `public/pages.spec.ts` |
 | `/marketplace/[country]` | `#btnSignIn_marketplaceCountry` (anon); buy needs session | store items (external) | ☐ | |
 
 ## Auth / Keycloak (anonymous) — SRE upgrade runbook
@@ -51,7 +51,7 @@ Legend: ☐ no spec · ☑ smoke (renders, markers present) · ☑☑ journey (a
 | --- | --- | --- | --- | --- |
 | `/opportunities/discover` (+ `?q=`) | title `Yoma \| Discover opportunities`, card h3 | fixture titles | ☑ (youth) | `youth/yoid.spec.ts` |
 | `/opportunities` (`[[...query]]`) | title `Yoma \| Opportunities` | fixture titles | ☐ | |
-| `/opportunities/[opportunityId]` | `<title>{title}</title>`; save, go-to-opportunity, complete/verify | fixture title → id (look up via search) | ☐ | |
+| `/opportunities/[opportunityId]` | h4 title; `#btnOpportunityGoTo`, `#btnOpportunitySave` | fixture title → id (via search) | ☑☑ save/unsave | `youth/opportunity-details.spec.ts` |
 | `/opportunities/actionLink/verify/[linkId]` | h2 "Almost there…" / "Congratulations!" | instant-verify link (random) | ☐ | |
 | Custom-field filters (CF fields session) | filter panel `data-testid`s | custom field definitions | ☐ | |
 
@@ -60,15 +60,16 @@ Legend: ☐ no spec · ☑ smoke (renders, markers present) · ☑☑ journey (a
 | Route | Marker | Seed | Status | Spec |
 | --- | --- | --- | --- | --- |
 | `/yoid` | h1 "Good …, Test"; `section#wallet/#passport/#opportunities/#skills` | youth completions | ☑ | `youth/yoid.spec.ts` |
-| `/yoid/opportunities/completed` | title `Yoma \| Completed Opportunities`; `01 - Job` | youth completed `01 - Job` | ☐ | |
-| `/yoid/opportunities/pending` | title `Yoma \| Pending Opportunities`; `04 - Event` | youth pending `04 - Event` | ☐ | |
-| `/yoid/opportunities/saved` `/declined` `/add` | titles | youth | ☐ | |
-| `/yoid/passport` | title `Yoma \| Passport` (or Unavailable) | `passport_enabled` | ☐ | |
-| `/yoid/skills` | title `Yoma \| Skills` | 57 verified skills | ☐ | |
-| `/yoid/wallet` (cash-outs session) | title `Yoma \| Wallet`; vouchers, cash-out | vouchers / ZLTO balance (random) | ☐ | |
-| `/user/profile` | title `Yoma \| Profile`; prefilled `Test`/`testuser@gmail.com` | youth | ☐ | |
-| `/user/settings` | title `Yoma \| Settings`; updateSettings | youth | ☐ | |
-| `/organisations/register` → `/success` | h2 "Organisation details" | none (creates an org!) | ☐ | |
+| `/yoid/opportunities/completed` | title; `01 - Job` | youth completed `01 - Job` | ☑ | `youth/yoid-tabs.spec.ts` |
+| `/yoid/opportunities/pending` | title; `04 - Event` | youth pending `04 - Event` | ☑ | `youth/yoid-tabs.spec.ts` |
+| `/yoid/opportunities/saved` | title; saved fixture | youth | ☑☑ (via save) | `youth/opportunity-details.spec.ts` |
+| `/yoid/opportunities/declined` `/add` | titles | youth | ☐ | |
+| `/yoid/passport` | credential-type filter group or "No credentials yet" | `passport_enabled` | ☑ | `youth/yoid-tabs.spec.ts` |
+| `/yoid/skills` | "Skills you've earned" + no empty state | 57 verified skills | ☑ | `youth/yoid-tabs.spec.ts` |
+| `/yoid/wallet` (cash-outs session) | `#wallet-products-heading`; balance card only with SSI/Zlto backends | vouchers / ZLTO (random) | ☑ render only | `youth/yoid-tabs.spec.ts` |
+| `/user/profile` | `#inpProfileFirstName/#inpProfileSurname`, `#btnProfileSubmit`; toast "Your profile has been updated" | youth | ☑☑ surname edit + API check | `youth/profile.spec.ts` |
+| `/user/settings` | `#<SettingKey>` toggles, `#btnSettingsSubmit`; toast "Settings updated" | youth | ☑☑ toggle + API check | `youth/settings.spec.ts` |
+| `/organisations/register` → `/success` | h2 "Organisation details" | none | **not tested** — creates an organisation that nothing cleans up; needs an admin-API delete or a seed reset per run (see `known-gaps.md`) | |
 | `/referrals`, `/referrals/program/[id]`, `/claim/[id]`, `/link/[id]`, `/progress/[id]` | titles `Yoma \| Refer a friend…` | referral program (random) | ☐ | |
 | Gating: `/organisations` and every `/admin/*` as youth → Access Restricted | | | ☑☑ | `youth/gating.spec.ts` |
 
@@ -76,7 +77,7 @@ Legend: ☐ no spec · ☑ smoke (renders, markers present) · ☑☑ journey (a
 
 | Route | Marker | Seed | Status | Spec |
 | --- | --- | --- | --- | --- |
-| `/organisations/dashboard?organisations=` | title `Yoma \| Dashboard`; "Good … Test Organization Admin User!" | Yoma org | ☐ | |
+| `/organisations/dashboard?organisations=` | title `Yoma \| Dashboard`; tabs Engagement / Rewards & Skills / Demographics; `#btnMainMenu` → `#userMenu_orgs_*` | Yoma org | ☑ | `org-admin/dashboard.spec.ts` |
 | `/organisations/[id]/opportunities` | h3 "🏆 Opportunities", `#lnkNavbarMenu_Submissions`, row link `01 - Job` | fixtures | ☑ | `org-admin/opportunities.spec.ts` |
 | `/organisations/[id]/opportunities/create` → edit → info | title `Yoma \| Opportunity`; create/update | Yoma org | ☐ | |
 | `/organisations/[id]/verifications` | title `Yoma \| Submissions`; approve/reject | youth pending on `04 - Event` | ☐ | |
@@ -91,12 +92,12 @@ Legend: ☐ no spec · ☑ smoke (renders, markers present) · ☑☑ journey (a
 | --- | --- | --- | --- | --- |
 | `/organisations` | h3 "🏢 Organisations", `#lnkNavbarMenu_Treasury`, `JobJack` | partner orgs | ☑ | `admin/organisations.spec.ts` |
 | `/organisations/[id]/verify` (approve / decline) | title `Yoma Admin \| Verify Organisation`, `#btnApprove` `#btnReject` | an Inactive org — none seeded | ☐ | |
-| `/admin/opportunities` | h3 "🏆 Opportunities"; active/visible/featured/archive actions | fixtures | ☐ | |
+| `/admin/opportunities` | `#results` row links; active/visible/featured/archive actions | fixtures | ☑ list | `admin/opportunities.spec.ts` |
 | `/admin/links` | h3 "🔗 Links" | link (random) | ☐ | |
 | `/admin/referrals/**` (list, create/edit, info, links, usage) | "🎯 Referral Programs" | programs (random) | ☐ | |
 | `/admin/schemas`, `/admin/schemas/[id]` | title `Yoma Admin \| Schemas` | none / create | ☐ | |
 | `/admin/stores`, `/admin/stores/[ruleId]` | "🛒 Marketplace Rules"; create/activate/delete | rule (random) | ☐ | |
-| `/admin/treasury` | h "💰Treasury"; save settings | none | ☐ | |
+| `/admin/treasury` | h3 "💰Treasury", tab "Manage", `#btnTreasurySave` | none | ☑ render | `admin/opportunities.spec.ts` |
 | `/admin/skills` | "⚡Skills" | none | ☐ | |
 | `/admin`, `/admin/connections` | "Under development" | none | ☐ (gating covered) | `youth/gating.spec.ts` |
 
