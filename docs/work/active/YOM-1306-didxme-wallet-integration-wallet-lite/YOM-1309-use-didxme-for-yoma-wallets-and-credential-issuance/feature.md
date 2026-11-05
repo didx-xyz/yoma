@@ -41,7 +41,7 @@ security configuration and privileged workflows are held in the private engineer
 - [x] Adrian verified mobile-only registration/profile onboarding, YoID issuance/listing, then adding email and listing the existing credential after signing out/in with email.
 - [x] Adrian confirmed credential detail access after the mobile-to-email transition; the existing YoID was returned.
 - [ ] Verify caching across deployed API replicas.
-- [ ] Coordinate Jason's five frontend CF references and the matching staging rollout.
+- [x] Jason's five frontend CF references aligned (2026-11-05, this branch; see `handoffs/2026-11-05-a.md`). Staging rollout coordination still open.
 - [ ] REQUIRED: implement supported issuance recovery/reconciliation.
 - [ ] REQUIRED: implement background Replay lookup/deletion/confirmed absence and preserve issuance dates.
 - [ ] Optional: shared Debug-only outbound Flurl logging, controlled by existing logging settings,
