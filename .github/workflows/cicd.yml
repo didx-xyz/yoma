@@ -393,6 +393,35 @@ jobs:
           install: true
           cache: true
 
+      # Playwright e2e (YOM-1311). The browser is redirected to http://keycloak:8080, so that
+      # host must resolve on the runner. test-harness-health exits only once the DB seed, the
+      # Keycloak users and the API are all ready; wait on it before the first test.
+      - name: Wait for the stack
+        if: steps.should-run.outputs.run == 'true'
+        run: |-
+          echo "127.0.0.1 keycloak" | sudo tee -a /etc/hosts
+          docker wait test-harness-health
+          curl -fsS --retry 30 --retry-delay 5 --retry-all-errors -o /dev/null http://localhost:3000/
+      - name: Install web dependencies and Chromium
+        if: steps.should-run.outputs.run == 'true'
+        run: |-
+          pnpm install --frozen-lockfile
+          pnpm --filter yoma-web exec playwright install --with-deps chromium
+      - name: Playwright e2e
+        if: steps.should-run.outputs.run == 'true'
+        run: pnpm --filter yoma-web test:e2e
+        env:
+          E2E_BASE_URL: http://localhost:3000
+          PLAYWRIGHT_HTML_OPEN: never
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: failure() && steps.should-run.outputs.run == 'true'
+        with:
+          name: playwright-report
+          path: |
+            src/web/playwright-report
+            src/web/test-results
+          retention-days: 7
+
       - name: Keycloak Config logs
         if: always() && steps.should-run.outputs.run == 'true'
         run: docker logs keycloak-config
