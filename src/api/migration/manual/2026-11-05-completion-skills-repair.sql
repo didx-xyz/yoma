@@ -1,3 +1,7 @@
+-- ARCHIVED MANUAL PROCEDURE: incident repair completed; do not rerun without a fresh review.
+-- Replace __APPROVED_DATABASE__ only in a private operator copy after verifying the target.
+-- SUPERSEDED for the large Production backlog: use completion-skills-batch-prepare.sql
+-- and its dry-run/apply companions. Do NOT run this whole-backlog locking repair.
 -- YOM-1313: reviewed, additive Production repair AFTER deployment of the code fix.
 -- Run the audit first; fill the four approval values below from the reviewed audit.
 -- Defaults deliberately refuse to write. This script ends with ROLLBACK for a dry run.
@@ -20,7 +24,7 @@ SELECT
 
 DO $guard$
 BEGIN
-    IF current_database() <> 'yoma_v3_prod' THEN
+    IF current_database() <> '__APPROVED_DATABASE__' THEN
         RAISE EXCEPTION 'Wrong database: %. Production repair stopped.', current_database();
     END IF;
     IF NOT EXISTS (

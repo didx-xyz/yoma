@@ -6,7 +6,7 @@
 - **Ticket**: [YOM-1313](https://linear.app/didx/issue/YOM-1313/newly-acquired-skills-not-displayed-in-user-profile)
 - **Owner**: Adrian (API hotfix); Jason (Stage integration)
 - **Areas**: api
-- **Status**: review — Production hotfix, not committed or deployed
+- **Status**: in-progress — Production fix and approved backfill complete; Stage reconciliation pending
 - **Started**: 2026-11-05
 
 ## Problem / Goal
@@ -30,8 +30,11 @@ Preserve the original skills collection on the allocation result before replacin
 - [x] Preserve skills while retaining updated allocation totals.
 - [x] Test completion routes, reward/no-reward cases and additive skill assignment.
 - [x] Prepare read-only audit and guarded rollback-first repair scripts; validate with synthetic PostgreSQL data.
-- [ ] Adrian reviews, commits, pushes and releases the hotfix.
-- [ ] Review Production audit, approve historical mapping assumptions, then dry-run and commit the manual repair.
+- [x] Adrian reviews, commits, pushes and releases the hotfix (PR #2019, v3.13.10).
+- [x] Replace whole-backlog repair with tested, session-only batched scripts after reviewing audit volume.
+- [x] Review Production audit, approve historical mapping assumptions, then dry-run and commit the manual repair.
+- [x] Confirm post-commit totals and exclude later-mapping candidates under the no-retrospective-awards rule.
+- [x] Archive sanitised manual scripts and the final repair handoff without Production exports or credentials.
 - [ ] Reconcile the fix into PR #2013; test against that branch's newer domain model.
 
 ## Decisions
@@ -41,16 +44,18 @@ Preserve the original skills collection on the allocation result before replacin
 - 2026-11-05: Historical repair is manual, additive and separate from deployment. Production uses `Entity.UserSkills` and `Entity.UserSkillOrganizations`, with no skill `Type` column. Do not transplant Stage SQL or its newer model assumptions.
 - 2026-11-05: Audit all completed non-Job records with a completion date against current opportunity skill and organisation mappings. Jobs and missing dates are reported but excluded from repair. Current mappings cannot prove the historical mappings; explicit operator approval is mandatory. A mapping created after a completion may also reflect an imported/backdated completion.
 - 2026-11-05: Do not infer a Production deployment cutoff from a Git commit date. New repair rows receive repair-time `DateCreated`, as normal assignment does; existing rows remain unchanged.
+- 2026-11-05: Adrian confirmed no retrospective skill awards for later opportunity changes. The remaining 60,798 late-mapping associations are excluded from this repair, not an outstanding repair backlog. Current rows still cannot establish every historical removal/re-addition.
 
 ## Manual Repair
 
-1. Run `src/api/migration/manual/2026-11-05-completion-skills-audit.sql` read-only and review the returned summary, anomalies and samples. Breakdown/sample arrays are capped; summary and fingerprint cover the complete candidate set.
-2. After the hotfix is deployed, supply the two expected counts and candidate fingerprint in `2026-11-05-completion-skills-repair.sql`. Approve use of current mappings only after reviewing the historical limitation above.
-3. Run the entire repair in a quiet window with its default final `ROLLBACK`. It uses fail-fast table locks and rejects changed candidates. On any error, immediately `ROLLBACK`; do not remove guards to force it through.
-4. Review inserted counts and zero remaining missing links. Then rerun with only the final `ROLLBACK` changed to `COMMIT`. If the candidate set changed, re-audit first.
-5. Run the audit again and verify a repaired learner's skills in the UI. No reward, counter, treasury or credential replay is needed.
+The approved manual repair is complete. Adrian's post-commit results confirmed **999,181 user skills and 999,674 organisation links inserted**, with zero Ready and zero Deferred. This includes the separately reviewed backdated cohort (363 skills and 365 links). The remaining 60,798 associations are excluded under the confirmed policy above.
+
+The whole-backlog repair is superseded. `src/api/migration/manual/2026-11-05-completion-skills-batch-guide.md` documents the archived batched runner, contention handling, targeted backdated repair and validation. These are not deployment migrations or instructions to rerun the completed incident. Public copies use database placeholders and disabled batch apply commands; future use requires fresh review.
+
+No reward, counter, treasury or credential replay is needed. Current mappings remain a historical limitation; excluding late mappings reduces ambiguity but does not manufacture historical evidence.
 
 ## Links
 
 - [Session handoff](handoffs/2026-11-05-a.md)
+- [Final manual repair handoff](handoffs/2026-11-05-b.md)
 - Stage integration target: [PR #2013](https://github.com/didx-xyz/yoma/pull/2013)

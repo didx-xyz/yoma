@@ -1,3 +1,5 @@
+-- ARCHIVED MANUAL PROCEDURE: incident repair completed; do not rerun without a fresh review.
+-- Replace __APPROVED_DATABASE__ only in a private operator copy after verifying the target.
 -- YOM-1313: Production READ ONLY audit. Execute the entire script.
 -- The current mapping is not a historical skill snapshot. Review this limitation before repair.
 -- Jobs and anomalous completed records without DateCompleted are reported but not backfilled.
@@ -8,7 +10,7 @@ SET LOCAL TIME ZONE 'UTC';
 
 DO $guard$
 BEGIN
-    IF current_database() <> 'yoma_v3_prod' THEN
+    IF current_database() <> '__APPROVED_DATABASE__' THEN
         RAISE EXCEPTION 'Wrong database: %. Production audit stopped.', current_database();
     END IF;
     IF (SELECT count(*) FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification') <> 1

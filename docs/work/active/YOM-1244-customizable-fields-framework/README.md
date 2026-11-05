@@ -43,7 +43,7 @@ definitions to the BA-approved set (YOM-1264) without a code change.
 | [`YOM-1281-ui-admin-credential-schema-management-by-type/`](./YOM-1281-ui-admin-credential-schema-management-by-type/feature.md)                                 | [YOM-1281](https://linear.app/didx/issue/YOM-1281) | web  | review — pending live API create/edit                                                 |
 | [`YOM-1282-ui-opportunity-credential-schema-selection/`](./YOM-1282-ui-opportunity-credential-schema-selection/feature.md)                                       | [YOM-1282](https://linear.app/didx/issue/YOM-1282) | web  | review — pending live API create/edit                                                 |
 | [`YOM-1283-ui-youth-opportunity-credential-display/`](./YOM-1283-ui-youth-opportunity-credential-display/feature.md)                                             | [YOM-1283](https://linear.app/didx/issue/YOM-1283) | web  | review — tested against live API                                                      |
-| [`YOM-1313-newly-acquired-skills-not-displayed-in-user-profile/`](./YOM-1313-newly-acquired-skills-not-displayed-in-user-profile/feature.md) | [YOM-1313](https://linear.app/didx/issue/YOM-1313) | api | review — Production completion-skill hotfix |
+| [`YOM-1313-newly-acquired-skills-not-displayed-in-user-profile/`](./YOM-1313-newly-acquired-skills-not-displayed-in-user-profile/feature.md) | [YOM-1313](https://linear.app/didx/issue/YOM-1313) | api | in-progress — Production fix/backfill complete; Stage reconciliation pending |
 
 Tickets with no folder yet — add one when work starts:
 
