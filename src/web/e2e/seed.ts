@@ -147,6 +147,12 @@ export const ROUTES = {
   discover: "/opportunities/discover",
   organisations: "/organisations",
   orgOpportunities: (orgId: string) => `/organisations/${orgId}/opportunities`,
+  orgOpportunityCreate: (orgId: string) =>
+    `/organisations/${orgId}/opportunities/create`,
+  orgOpportunityEdit: (orgId: string, opportunityId: string) =>
+    `/organisations/${orgId}/opportunities/${opportunityId}`,
+  orgVerifications: (orgId: string) => `/organisations/${orgId}/verifications`,
+  opportunity: (opportunityId: string) => `/opportunities/${opportunityId}`,
   orgDashboard: (orgId: string) =>
     `/organisations/dashboard?organisations=${orgId}`,
   adminOpportunities: "/admin/opportunities",

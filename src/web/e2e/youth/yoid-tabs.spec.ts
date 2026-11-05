@@ -1,31 +1,38 @@
+import type { Page } from "@playwright/test";
 import { expect, test } from "../support/test";
 import { FIXTURES, ROUTES } from "../seed";
 
 // The Yo-ID layout owns <title> ("Yoma | Yo-ID"), so tabs are asserted on their own content.
 
-test("completed opportunities list the seeded placement", async ({ page }) => {
-  await page.goto(ROUTES.yoidCompleted);
-  await expect(page).toHaveTitle("Yoma | Completed Opportunities");
-  await expect(
-    page.getByRole("heading", { level: 3, name: FIXTURES.job01, exact: true }),
-  ).toBeVisible();
-});
-
-test("pending opportunities list the seeded verification", async ({ page }) => {
-  // The list is ordered by last change and has no title search; the API re-stamps pending rows,
-  // so the fixture can sit on any page. Walk pages until it shows (seed has ~30 pending rows).
+/** The Yo-ID lists are ordered by last change with no title search; walk pages for a title. */
+async function findOnPages(
+  page: Page,
+  route: string,
+  title: string,
+  pages = 8,
+) {
   const heading = page.getByRole("heading", {
     level: 3,
-    name: FIXTURES.event04,
+    name: title,
     exact: true,
   });
-  for (let pageNo = 1; pageNo <= 6; pageNo++) {
-    await page.goto(`${ROUTES.yoidPending}?page=${pageNo}`);
-    await expect(page).toHaveTitle("Yoma | Pending Opportunities");
+  for (let pageNo = 1; pageNo <= pages; pageNo++) {
+    await page.goto(`${route}?page=${pageNo}`);
     await expect(page.getByRole("heading", { level: 3 }).first()).toBeVisible();
     if (await heading.isVisible()) return;
   }
-  throw new Error(`${FIXTURES.event04} not found in the first 6 pending pages`);
+  throw new Error(`${title} not found in the first ${pages} pages of ${route}`);
+}
+
+test("completed opportunities list the seeded placement", async ({ page }) => {
+  // Newer completions (e.g. the lifecycle flow's) push the seeded one down the list.
+  await findOnPages(page, ROUTES.yoidCompleted, FIXTURES.job01);
+  await expect(page).toHaveTitle("Yoma | Completed Opportunities");
+});
+
+test("pending opportunities list the seeded verification", async ({ page }) => {
+  await findOnPages(page, ROUTES.yoidPending, FIXTURES.event04);
+  await expect(page).toHaveTitle("Yoma | Pending Opportunities");
 });
 
 test("skills tab lists the seeded verified skills", async ({ page }) => {

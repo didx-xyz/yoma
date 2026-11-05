@@ -107,5 +107,13 @@ export default defineConfig({
       dependencies: ["setup"],
       use: { ...chromium, storageState: storageStatePath("admin") },
     },
+    {
+      // Cross-role journeys: each test opens its own context with the role it needs
+      // (support/api.ts ApiClient + storageStatePath), so no default storageState here.
+      name: "flows",
+      testDir: "./e2e/flows",
+      dependencies: ["setup"],
+      use: chromium,
+    },
   ],
 });
