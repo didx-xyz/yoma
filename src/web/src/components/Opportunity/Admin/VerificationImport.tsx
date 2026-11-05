@@ -309,8 +309,8 @@ export const VerificationImport: React.FC<InputProps> = ({
                       an informal venture)
                     </li>
                     <li>
-                      CF:EntrepreneurshipRegistrationReference (up to 125
-                      characters, only for a registered venture)
+                      CF:EntrepreneurshipRegistrationRef (up to 125 characters,
+                      only for a registered venture)
                     </li>
                     <li>
                       CF:EntrepreneurshipSector (ISIC Rev. 5 section letter, A

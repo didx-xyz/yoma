@@ -37,7 +37,7 @@ export const IMPACT_ACTION_TOOL_OPTIONS = { Other: "Other" } as const;
 /** Mirrors `CustomFieldConstants.Entrepreneurship` (API); change only with the API. */
 export const ENTREPRENEURSHIP_CUSTOM_FIELD_KEYS = {
   programmeType: "EntrepreneurshipProgrammeType",
-  programmeOtherDescription: "EntrepreneurshipProgrammeOtherDescription",
+  programmeOtherDescription: "EntrepreneurshipProgrammeOther",
 } as const;
 
 /** Mirrors the API's `EntrepreneurshipProgrammeType` enum — the one programme option a rule interprets. */

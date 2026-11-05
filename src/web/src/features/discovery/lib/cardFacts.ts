@@ -123,7 +123,7 @@ const KEYS = {
   employmentDurationUnit: "JobEmploymentDurationUnit",
   toolsRequired: "ImpactActionToolsRequired",
   programmeType: "EntrepreneurshipProgrammeType",
-  programmeOtherDescription: "EntrepreneurshipProgrammeOtherDescription",
+  programmeOtherDescription: "EntrepreneurshipProgrammeOther",
   difficulty: {
     Learning: "LearningDifficulty",
     ImpactAction: "ImpactActionDifficulty",

@@ -420,9 +420,9 @@ export const OpportunityImport: React.FC<InputProps> = ({
                       JACompanyProgramme, UmuziVentures, SupaMotoAcademy, Other)
                     </li>
                     <li>
-                      CF:EntrepreneurshipProgrammeOtherDescription (up to 255
-                      characters; required with Other and not allowed without it
-                      — to clear both, leave both cells empty)
+                      CF:EntrepreneurshipProgrammeOther (up to 255 characters;
+                      required with Other and not allowed without it — to clear
+                      both, leave both cells empty)
                     </li>
                     <li>
                       CF:EntrepreneurshipVentureStageTargeted (IdeaPreVenture,

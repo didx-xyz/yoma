@@ -6,6 +6,7 @@ import type {
 } from "~/api/models/opportunity";
 import {
   applyCustomFieldRules,
+  ENTREPRENEURSHIP_CUSTOM_FIELD_KEYS,
   JOB_CUSTOM_FIELD_KEYS as K,
 } from "./customFieldRules";
 
@@ -125,5 +126,50 @@ describe("The other employment rules are unchanged", () => {
     const result = applyCustomFieldRules(definitions([]), values);
     assert.deepEqual(result.errors, []);
     assert.equal(result.values, values);
+  });
+});
+
+// The API renamed the programme key on 2026-11-02 (YOM-1306). The rule only fires when the
+// definitions carry the key it looks for, so a stale constant silently disables the rule.
+describe("Entrepreneurship programme Other needs a name (keys renamed 2026-11-02)", () => {
+  const EN = ENTREPRENEURSHIP_CUSTOM_FIELD_KEYS;
+  const ENTREPRENEURSHIP = definitions([
+    EN.programmeType,
+    EN.programmeOtherDescription,
+  ]);
+  const programme = (
+    type: string,
+    other?: string,
+  ): CustomFieldValueRequest[] => [
+    { key: EN.programmeType, values: [type] },
+    ...(other !== undefined
+      ? [{ key: EN.programmeOtherDescription, value: other }]
+      : []),
+  ];
+
+  test("Other without a name is an error on the name field", () => {
+    assert.deepEqual(errorKeys(programme("Other"), ENTREPRENEURSHIP), [
+      EN.programmeOtherDescription,
+    ]);
+  });
+
+  test("Other with a name is fine", () => {
+    assert.deepEqual(
+      errorKeys(programme("Other", "Bootcamp"), ENTREPRENEURSHIP),
+      [],
+    );
+  });
+
+  test("a non-Other programme disables and clears the name", () => {
+    const result = applyCustomFieldRules(
+      ENTREPRENEURSHIP,
+      programme("Accelerator", "stale"),
+    );
+    assert.deepEqual(result.errors, []);
+    assert.ok(result.disabledKeys.has(EN.programmeOtherDescription));
+    assert.equal(
+      result.values.some((v) => v.key === EN.programmeOtherDescription),
+      false,
+    );
   });
 });
