@@ -51,7 +51,7 @@ Legend: ☐ no spec · ☑ smoke (renders, markers present) · ☑☑ journey (a
 | --- | --- | --- | --- | --- |
 | `/opportunities/discover` (+ `?q=`) | title `Yoma \| Discover opportunities`, card h3 | fixture titles | ☑ (youth) | `youth/yoid.spec.ts` |
 | `/opportunities` (`[[...query]]`) | title `Yoma \| Opportunities` | fixture titles | ☐ | |
-| `/opportunities/[opportunityId]` | h4 title; `#btnOpportunityGoTo`, `#btnOpportunitySave` | fixture title → id (via search) | ☑☑ save/unsave | `youth/opportunity-details.spec.ts` |
+| `/opportunities/[opportunityId]` | h4 title; `#btnOpportunityGoTo`, `#btnOpportunitySave`, `#btnOpportunityComplete` → `#btnCompletionSubmit` | fixture title → id (via search); fresh Learning opportunity (flow) | ☑☑ save/unsave; ☑☑ complete with Location proof | `youth/opportunity-details.spec.ts`, `flows/opportunity-lifecycle.spec.ts` |
 | `/opportunities/actionLink/verify/[linkId]` | h2 "Almost there…" / "Congratulations!" | instant-verify link (random) | ☐ | |
 | Custom-field filters on `/opportunities/discover` (`?type=&cf=` JSON clauses) | `#btnDiscoveryFilters`, dialog "Filters" → `#discovery-cf-field-row-1`, `#input_customfieldfilter_<Key>`; chips in `section[aria-label="Filters on this search"]`, `#btnDiscoveryClearFilters`, `#hdrDiscoveryResults` | `seed.ts` `CUSTOM_FIELDS`: Job fixtures via `q="- Job"`; `01 - Job` salary; `Permanent` on complete Jobs | ☑☑ deep link (smoke), panel → URL/request/results, chip remove + clear | `youth/discovery-filters.spec.ts` |
 
@@ -79,8 +79,8 @@ Legend: ☐ no spec · ☑ smoke (renders, markers present) · ☑☑ journey (a
 | --- | --- | --- | --- | --- |
 | `/organisations/dashboard?organisations=` | title `Yoma \| Dashboard`; tabs Engagement / Rewards & Skills / Demographics; `#btnMainMenu` → `#userMenu_orgs_*` | Yoma org | ☑ | `org-admin/dashboard.spec.ts` |
 | `/organisations/[id]/opportunities` | h3 "🏆 Opportunities", `#lnkNavbarMenu_Submissions`, row link `01 - Job` | fixtures | ☑ | `org-admin/opportunities.spec.ts` |
-| `/organisations/[id]/opportunities/create` → edit → info | title `Yoma \| Opportunity`; create/update | Yoma org | ☐ | |
-| `/organisations/[id]/verifications` | title `Yoma \| Submissions`; approve/reject | youth pending on `04 - Event` | ☐ | |
+| `/organisations/[id]/opportunities/create` → edit → info | `#btnOppStep1Next…#btnOppStep7Next`, `#btnOppSubmit`; custom fields `#input_customfield_<key>` per type | Yoma org; fresh per run | ☑☑ wizard (Learning); ☑ edit page custom fields for Learning/Job/Event/ImpactAction/Entrepreneurship | `flows/opportunity-lifecycle.spec.ts` |
+| `/organisations/[id]/verifications` | `#btnVerifyRow_<oppId>_<userId>` → `#btnVerifyApprove` / `#btnVerifyDecline`, `#btnVerifyResultClose` | fresh pending submission (flow) | ☑☑ approve → skill + pending ZLTO | `flows/opportunity-lifecycle.spec.ts` |
 | `/organisations/[id]/links`, `/links/create`, `/links/[linkId]` | h3 "🔗 Links"; createLinkInstantVerify | Yoma org + fixture | ☐ | |
 | `/organisations/[id]/stores` | h3 "🛒 Marketplace Rules" (read-only) | rule (random) | ☐ | |
 | `/organisations/[id]/edit`, `/info` | title `Yoma Admin \| Organisation Edit` / `{name}` | Yoma org | ☐ | |

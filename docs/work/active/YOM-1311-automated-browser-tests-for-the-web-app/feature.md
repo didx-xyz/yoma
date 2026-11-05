@@ -125,7 +125,7 @@ Playwright test under `e2e/`, and `pnpm test:e2e` is part of the pre-commit chec
 - [x] Keycloak suite for the SRE upgrade runbook — 14 anonymous tests green (2026-11-03)
 - [x] `sitemap.md` — every route by role with seed needs and status (2026-11-03)
 - [ ] AGENTS.md: require Playwright tests for feature work (deferred — needs Jason's wording)
-- [ ] CI: run `pnpm test:e2e` in the `test-e2e` job (deferred — workflow edits need an explicit ask)
+- [x] CI: Playwright step in the `test-e2e` job — wait on `test-harness-health`, hosts entry, Chromium, `test:e2e`, report artifact on failure (2026-11-05, Jason asked)
 - [ ] Per-area use-cases per role (deferred)
 
 ## Decisions
