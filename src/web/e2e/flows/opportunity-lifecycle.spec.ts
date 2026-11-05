@@ -3,6 +3,12 @@ import { expect, test } from "../support/test";
 import { ApiClient, apiGet } from "../support/api";
 import { storageStatePath } from "../support/auth";
 import { ORGANISATIONS, ROUTES, USERS } from "../seed";
+import {
+  createOpportunity,
+  isoDate,
+  type Definition,
+  type Lookup,
+} from "../support/opportunities";
 
 /**
  * The opportunity lifecycle across roles, on fresh data every run:
@@ -31,19 +37,6 @@ const TYPES = [
 ] as const;
 const ZLTO = 7;
 
-interface Lookup {
-  id: string;
-  name: string;
-}
-interface Definition {
-  key: string;
-  dataType: string;
-  isRequired: boolean;
-  supportsMultiple: boolean | null;
-  lookupType: string | null;
-  options: { id: string; key: string; name: string }[] | null;
-}
-
 const created: Record<string, string> = {}; // type → opportunity id
 let orgApi: ApiClient;
 let youthApi: ApiClient;
@@ -55,33 +48,6 @@ async function roleContext(browser: Browser, role: "youth" | "orgAdmin") {
     geolocation: { latitude: -33.9249, longitude: 18.4241 }, // Cape Town
     permissions: ["geolocation"],
   });
-}
-
-/**
- * A valid value for every required custom field of a type, from the live definitions: inline
- * options submit their `key`; lookup-typed fields (Education, Skill, …) submit a lookup id.
- */
-async function requiredCustomFields(type: string) {
-  const defs = (await orgApi.get(
-    `/opportunity/custom/field/definition?types=${type}`,
-  )) as Definition[];
-  const lookupId = async (lookup: string) => {
-    if (lookup === "Skill") return skill.id;
-    const [first] = (await orgApi.get(
-      `/lookup/${lookup.toLowerCase()}`,
-    )) as Lookup[];
-    return first!.id;
-  };
-  const fields = [];
-  for (const d of defs.filter((x) => x.isRequired)) {
-    if (d.dataType === "Boolean") fields.push({ key: d.key, value: "false" });
-    else if (d.lookupType)
-      fields.push({ key: d.key, values: [await lookupId(d.lookupType)] });
-    else if (d.options?.[0])
-      fields.push({ key: d.key, values: [d.options[0].key] });
-    else fields.push({ key: d.key, value: "1" });
-  }
-  return fields;
 }
 
 test.beforeAll(async ({ baseURL }) => {
@@ -215,66 +181,8 @@ test("org admin creates a Learning opportunity through the wizard @smoke", async
 test("the other opportunity types are created and their edit pages show the type's custom fields", async ({
   browser,
 }) => {
-  const types = (await orgApi.get("/opportunity/type")) as Lookup[];
-  const [category] = (await orgApi.get("/opportunity/category")) as Lookup[];
-  const [country] = (await orgApi
-    .get("/lookup/country?pageNumber=1&pageSize=1&codes=ZA")
-    .catch(() => orgApi.get("/lookup/country"))) as Lookup[];
-  const [language] = (await orgApi.get("/lookup/language")) as Lookup[];
-  const [interval] = (await orgApi.get("/lookup/timeinterval")) as Lookup[];
-
   for (const type of TYPES.filter((t) => t !== "Learning")) {
-    const res = (await orgApi.post("/opportunity", {
-      id: null,
-      title: `${RUN} ${type}`,
-      description: "Created by the e2e lifecycle flow.",
-      summary: "e2e",
-      typeId: types.find((t) => t.name === type)!.id,
-      organizationId: ORGANISATIONS.yoma.id,
-      instructions: null,
-      uRL: null,
-      zltoReward: null,
-      zltoRewardPool: null,
-      rewardType: "None",
-      incentivized: type === "Entrepreneurship" ? null : false,
-      partnerIncentiveAmount: null,
-      partnerIncentiveCurrency: null,
-      verificationEnabled: false,
-      verificationMethod: null,
-      verificationTypes: null,
-      commitmentIntervalId: interval!.id,
-      commitmentIntervalCount: 1, // required by the API for every type (the UI relaxes it)
-      participantLimit: null,
-      keywords: ["e2e"],
-      dateStart: isoDate(-1),
-      dateEnd: type === "Job" ? isoDate(30) : null,
-      credentialIssuanceEnabled: false,
-      ssiSchemaName: null,
-      engagementTypeId: null,
-      provider: null,
-      providerURL: null,
-      providerLogoURL: null,
-      providerCountryId: null,
-      accessibilitySupport: null,
-      accommodationOtherDescription: null,
-      ageFrom: null,
-      ageTo: null,
-      accommodations: null,
-      targetedGroups: null,
-      sustainableDevelopmentGoals: null,
-      categories: [category!.id],
-      countries: [
-        { countryId: country!.id, region: null, city: null, coordinates: null },
-      ],
-      languages: [language!.id],
-      skills: [skill.id],
-      postAsActive: true,
-      shareWithPartners: false,
-      hidden: false,
-      externalId: null,
-      customFields: await requiredCustomFields(type),
-    })) as { id: string };
-    created[type] = res.id;
+    created[type] = await createOpportunity(orgApi, type, `${RUN} ${type}`);
   }
 
   const ctx = await roleContext(browser, "orgAdmin");
@@ -398,12 +306,6 @@ async function youthVerifyStatus(): Promise<string> {
 }
 
 // --- helpers -----------------------------------------------------------------------------
-
-function isoDate(daysFromToday: number) {
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() + daysFromToday);
-  return d.toISOString().slice(0, 10);
-}
 
 /**
  * react-select: focus the input, type the filter text, pick the first matching option with
