@@ -339,6 +339,7 @@ export const SchemaAttributesEdit: React.FC<InputProps> = ({
                 <tr key={row.key} className="border-gray text-gray-dark">
                   <td>
                     <Select
+                      inputId={`selSchemaAttrSource_${row.key}`} // e2e
                       classNames={{ control: () => "input" }}
                       placeholder="Select data source"
                       isMulti={false}
@@ -358,6 +359,7 @@ export const SchemaAttributesEdit: React.FC<InputProps> = ({
                   </td>
                   <td>
                     <Select
+                      inputId={`selSchemaAttr_${row.key}`} // e2e
                       classNames={{ control: () => "input" }}
                       placeholder="Select attribute"
                       isMulti={false}
@@ -392,6 +394,7 @@ export const SchemaAttributesEdit: React.FC<InputProps> = ({
 
           <div className="flex justify-center">
             <button
+              id="btnSchemaAttrAdd" // e2e
               type="button"
               className="btn"
               onClick={addRow}

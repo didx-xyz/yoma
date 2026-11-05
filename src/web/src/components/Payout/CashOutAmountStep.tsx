@@ -144,6 +144,7 @@ export const CashOutAmountStep: React.FC<{
           {/* `shrink-0` and no wrapping: at 320px the question beside it takes two lines, and
               without this the action broke across them too ("Use / all"). */}
           <button
+            id="btnCashOutUseAll" // e2e
             type="button"
             onClick={onMax}
             className="text-purple shrink-0 text-sm font-bold whitespace-nowrap underline-offset-2 hover:underline"
@@ -247,6 +248,7 @@ export const CashOutAmountStep: React.FC<{
 
       <div className="flex flex-col items-center gap-2">
         <button
+          id="btnCashOutAmountContinue" // e2e
           type="button"
           onClick={onContinue}
           disabled={!canContinue}

@@ -291,6 +291,7 @@ const YoIDDashboard: NextPageWithLayout<{
                     loader={<TileBodySkeleton />}
                   >
                     <WalletCard
+                      id="yoid"
                       userProfile={userProfile!}
                       link={<SectionLink id={id} />}
                     />

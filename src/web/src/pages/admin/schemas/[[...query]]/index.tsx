@@ -125,6 +125,7 @@ const Schemas: NextPageWithLayout<{
 
           <div className="flex gap-2 sm:justify-end">
             <Link
+              id="lnkSchemaAdd" // e2e
               href={`/admin/schemas/create`}
               className="bg-theme flex w-40 flex-row items-center justify-center rounded-full p-1 text-xs whitespace-nowrap text-white brightness-105 hover:brightness-110"
             >
@@ -168,7 +169,11 @@ const Schemas: NextPageWithLayout<{
                 </thead>
                 <tbody>
                   {schemas.map((schema) => (
-                    <tr key={schema.id} className="border-gray text-gray-dark">
+                    <tr
+                      key={schema.id}
+                      id={`rowSchema_${schema.name}`} // e2e
+                      className="border-gray text-gray-dark"
+                    >
                       <td>
                         <Link
                           href={`/admin/schemas/${encodeURIComponent(schema.name)}`}

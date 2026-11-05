@@ -628,6 +628,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                   </span>
                 </label>
                 <textarea
+                  id="txtVerifyComment" // e2e
                   className="input border-gray-light my-2 h-[100px] w-full p-2"
                   onChange={(e) => setVerifyComments(e.target.value)}
                 />
@@ -638,6 +639,7 @@ const OpportunityVerifications: NextPageWithLayout<{
           {/* BUTTONS */}
           <ModalActions>
             <button
+              id="btnVerifyCancel" // e2e
               type="button"
               className={`${BTN_SECONDARY} ${MODAL_ACTION_WIDTH}`}
               onClick={onCloseVerificationModal}
@@ -648,6 +650,7 @@ const OpportunityVerifications: NextPageWithLayout<{
 
             {(bulkActionApprove == null || !bulkActionApprove) && (
               <button
+                id="btnVerifyDecline" // e2e
                 type="button"
                 className={`${BTN_DANGER} ${MODAL_ACTION_WIDTH}`}
                 onClick={() => onVerify(false)}
@@ -659,6 +662,7 @@ const OpportunityVerifications: NextPageWithLayout<{
 
             {(bulkActionApprove == null || bulkActionApprove) && (
               <button
+                id="btnVerifyApprove" // e2e
                 type="button"
                 className={`${BTN_PRIMARY} ${MODAL_ACTION_WIDTH}`}
                 onClick={() => onVerify(true)}
@@ -775,6 +779,7 @@ const OpportunityVerifications: NextPageWithLayout<{
           {/* BUTTON */}
           <ModalActions>
             <button
+              id="btnVerifyResultClose" // e2e
               type="button"
               className={`${BTN_SECONDARY} ${MODAL_ACTION_WIDTH}`}
               onClick={onCloseVerificationResultModal}
@@ -1033,6 +1038,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                                 <div className="flex flex-col gap-2">
                                   {!isPartnerManagedSubmission(item) && (
                                     <button
+                                      id={`btnVerifyRow_${item.opportunityId}_${item.userId}`} // e2e
                                       type="button"
                                       className="btn border-gray text-gray-dark btn-sm hover:bg-gray flex-nowrap bg-white hover:text-white"
                                       onClick={() => {

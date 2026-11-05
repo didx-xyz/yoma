@@ -1,4 +1,5 @@
 import { signIn, signOut } from "next-auth/react";
+import { toast } from "react-toastify";
 import { destroyCookie } from "nookies";
 import { COOKIE_KEYCLOAK_SESSION } from "~/lib/constants";
 import analytics from "~/lib/analytics";
@@ -51,6 +52,9 @@ export const handleUserSignOut = async (
 
   // 📊 ANALYTICS: track logout
   analytics.auth.logout();
+
+  // Toasts raised for the signed-in user (e.g. the referral reminder) must not outlive the session.
+  toast.dismiss();
 
   // Construct the callbackUrl
   let callbackUrl = `${window.location.origin}/`;

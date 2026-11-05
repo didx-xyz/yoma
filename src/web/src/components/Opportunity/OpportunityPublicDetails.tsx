@@ -666,6 +666,7 @@ const OpportunityPublicDetails: React.FC<{
   const goToButton = opportunityInfo.url &&
     opportunityInfo.status !== "Expired" && (
       <button
+        id="btnOpportunityGoTo" // e2e
         type="button"
         className={
           tabbed
@@ -766,6 +767,7 @@ const OpportunityPublicDetails: React.FC<{
     <>
       {canUploadCompletion && (
         <button
+          id="btnOpportunityComplete" // e2e
           type="button"
           className={
             tabbed
@@ -783,6 +785,7 @@ const OpportunityPublicDetails: React.FC<{
 
       {isPendingVerification && (
         <button
+          id="btnOpportunityPending" // e2e
           type="button"
           className="btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[250px]"
           title={pendingVerificationTitle}
@@ -798,6 +801,7 @@ const OpportunityPublicDetails: React.FC<{
   );
   const saveButton = (
     <button
+      id="btnOpportunitySave" // e2e
       type="button"
       className={`${
         tabbed
@@ -853,6 +857,7 @@ const OpportunityPublicDetails: React.FC<{
     <>
       {canUploadCompletion && (
         <button
+          id="btnOpportunityComplete_sticky" // e2e
           type="button"
           className={`${BTN_OUTLINE_GREEN} hidden h-10 px-4 text-sm md:inline-flex`}
           onClick={onUploadCompletionFiles}
@@ -863,6 +868,7 @@ const OpportunityPublicDetails: React.FC<{
       )}
       {isPendingVerification && (
         <button
+          id="btnOpportunityPending_sticky" // e2e
           type="button"
           className={`${BTN_OUTLINE_GREEN} hidden h-10 px-4 text-sm md:inline-flex`}
           title={pendingVerificationTitle}
@@ -875,6 +881,7 @@ const OpportunityPublicDetails: React.FC<{
       {isCompleted && completedChip("hidden h-10 md:inline-block")}
       {opportunityInfo.url && opportunityInfo.status !== "Expired" && (
         <button
+          id="btnOpportunityGoTo_sticky" // e2e
           type="button"
           className="btn btn-sm bg-green hover:bg-green-dark disabled:bg-green h-[50px] grow rounded-full px-5 text-sm text-white normal-case md:h-10 md:grow-0"
           onClick={onGoToOpportunity}
@@ -884,6 +891,7 @@ const OpportunityPublicDetails: React.FC<{
         </button>
       )}
       <button
+        id="btnOpportunitySave_sticky" // e2e
         type="button"
         aria-label={isOppSaved ? "Saved" : "Save"}
         className={`btn btn-sm h-[50px] w-[50px] shrink-0 rounded-full px-0 md:h-10 md:w-10 ${
@@ -913,6 +921,7 @@ const OpportunityPublicDetails: React.FC<{
       </button>
       {canUploadCompletion && (
         <button
+          id="btnOpportunityComplete_mobile" // e2e
           type="button"
           className="text-green hover:text-green-dark inline-flex h-8 basis-full items-center justify-center text-sm font-semibold underline md:hidden"
           onClick={onUploadCompletionFiles}
@@ -923,6 +932,7 @@ const OpportunityPublicDetails: React.FC<{
       )}
       {isPendingVerification && (
         <button
+          id="btnOpportunityPending_mobile" // e2e
           type="button"
           className="text-green hover:text-green-dark inline-flex h-8 basis-full items-center justify-center text-sm font-semibold underline md:hidden"
           title={pendingVerificationTitle}
@@ -992,6 +1002,7 @@ const OpportunityPublicDetails: React.FC<{
                   </button>
 
                   <SignInButton
+                    id="btnSignIn_opportunity"
                     className="!bg-green w-full hover:brightness-125! md:flex-1"
                     callbackUrl={loginCallbackUrl}
                     showLabel={true}

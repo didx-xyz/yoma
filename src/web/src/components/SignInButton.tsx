@@ -7,6 +7,8 @@ import { currentLanguageAtom } from "~/lib/store";
 import { LoadingInline } from "./Status/LoadingInline";
 
 export const SignInButton: React.FC<{
+  // e2e: unique per render site — the button can appear more than once on a page
+  id: string;
   className?: string;
   tabIndex?: number;
   hideIcon?: boolean;
@@ -14,7 +16,7 @@ export const SignInButton: React.FC<{
   showLabel?: boolean;
   // optionally override where the user is returned to after signing in (defaults to the current page)
   callbackUrl?: string;
-}> = ({ className, tabIndex, hideIcon, showLabel, callbackUrl }) => {
+}> = ({ id, className, tabIndex, hideIcon, showLabel, callbackUrl }) => {
   const [isButtonLoading, setIsButtonLoading] = useState(false);
   const currentLanguage = useAtomValue(currentLanguageAtom);
 
@@ -37,7 +39,7 @@ export const SignInButton: React.FC<{
       className={`bg-theme font-nunito btn gap-2 border-0 border-none px-4 shadow-lg hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait disabled:brightness-95 ${className}`}
       onClick={handleLogin}
       disabled={isButtonLoading}
-      id="btnSignIn"
+      id={id}
       tabIndex={tabIndex}
       title="Login"
     >

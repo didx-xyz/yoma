@@ -76,15 +76,32 @@ row in the parent's Tasks, carrying the ticket id. The full test is in `docs/wor
 Three rules that keep these docs trustworthy:
 
 - A handoff written after the fact must be marked `RECONSTRUCTED` in its title and name the commits it was rebuilt from — never present a reconstruction as a contemporaneous record.
-- **Every commit SHA written into a doc must resolve.** A citation that does not is worse than none: it reads as provenance and cannot be followed. Copy hashes from `git log`, never from memory, and verify with `git cat-file -e <sha>^{commit}` before committing. If the source commits genuinely cannot be identified, write that instead of guessing.
+- **Docs never cite branch commit SHAs.** `master` is squash-merged, so every branch SHA dies when the PR lands, and fixing citations afterwards costs another PR. Cite what outlives the squash: the **PR number** (`PR #2018` — GitHub keeps all of a PR's commits browsable under it), the **file path**, and for landed work the squashed master commit `… (#NNNN)` copied from `git log master`. Write "on PR #2018" or "see `src/web/e2e/…`", never `ec399e13f`. The only SHAs allowed are commits already on `master`, verified with `git merge-base --is-ancestor <sha> master`. If the source genuinely cannot be identified, say so instead of guessing.
 - **Status is recorded once, in the feature's `feature.md`** — `planning` | `in-progress` | `review` | `shipped` | `blocked`, optionally followed by ` — <short qualifier>`. Epic README tables may repeat it for scanning, but the feature doc wins on conflict; do not invent parallel vocabularies.
-- **`master` is squash-merged, so branch SHAs stop resolving when a PR lands.** Cite them while the branch is alive, but **before the PR merges, re-point them at the squashed `(#NNNN)` commit or annotate them** — afterwards it is guesswork. Where provenance is already lost beyond recovery, replace the doc set with a context pack (`docs/work/templates/context-pack.md`) rather than carrying dead citations forward.
+- If an existing doc set has lost its provenance beyond recovery, replace it with a context pack (`docs/work/templates/context-pack.md`) rather than carrying dead citations forward.
 
 ## Linear vs `docs/work` — Where Things Belong
 
 **Linear tracks status. `docs/work/` holds the technical detail.** Technical content in a ticket
 goes stale the moment an AI session changes the design, and stale tickets are worse than empty
 ones because they are read as current.
+
+**Write every ticket, comment and status note for a BA or tester, not an engineer.** The reader
+has not seen the code and should not need to. Concretely:
+
+- Plain sentences a high-school reader follows. Say what a user sees or can do, and what changed
+  for them — not how it is built. "Approving a submission now awards the skills it promised" beats
+  "FinalizeVerification lost child items after AllocateRewards".
+- No class, method, file, endpoint, table or commit names; no code blocks; no stack traces. If an
+  engineer needs them, they go in `docs/work/` and the ticket links the folder.
+- Spell out jargon the first time (ZLTO = the reward points youth earn; OTP = the one-time code
+  sent by SMS). Prefer the product's own words (Submissions, Yo-ID, Cash out) over internal ones.
+- Acceptance criteria are steps a tester can perform and a result they can see: "Sign in as a
+  youth, open a completed learning opportunity, check the skill appears on the Yo-ID Skills tab."
+- Comments follow the same rule: status, what to test, what is blocked and by whom. A note for an
+  engineer belongs in the PR or `docs/work/`, with the ticket saying only that it exists.
+- When something is wrong, state it like a bug report a tester could file: who is affected, what
+  they expected, what happens instead, since when (if known), workaround (if any).
 
 | Linear ticket                                                       | `docs/work/`                                                     |
 | ------------------------------------------------------------------- | ---------------------------------------------------------------- |
@@ -99,7 +116,17 @@ Rules:
 - New tickets follow `docs/work/templates/linear-epic.md` / `linear-issue.md`. A ticket that cannot be described without naming a class, endpoint or file is a task, not a ticket — fold it into a parent and let that parent's checklist carry it.
 - Keep ticket titles stable — folder names derive from the ticket id and slug.
 - When an AI session changes an approach, update `feature.md`'s Decisions log, not the ticket description. Update the ticket only if the _outcome or scope_ changed.
-- Agents must not edit Linear ticket descriptions unless explicitly asked.
+- Agents must not edit Linear ticket descriptions unless explicitly asked. Status changes and comments are expected (see lifecycle below) but, like every Linear write, need the user's go-ahead first.
+
+**Ticket lifecycle (agents own steps 1–3):**
+
+1. **Every piece of work has a ticket.** If none exists, propose one (title + the `linear-issue.md` block) and create it once the user agrees — unless the user says no ticket is wanted.
+2. **Before pushing**, the ticket reflects reality: status `In Progress` → `In Review`, a comment linking the branch/PR and the `docs/work` folder, and the description updated only if the outcome or scope changed. Do this even when the PR and stage deployment are still unconfirmed — `In Review` is the honest state at that point.
+3. **After the PR merges and deploys to stage**, the ticket moves to `Testing`. This is a manual step today — nothing in CI tells Linear a deploy happened. _Improvement noted:_ a post-deploy hook (GitHub Action on the deploy job → Linear API by ticket id in the branch name) would close this gap; not built yet.
+
+## Confirmation Gate — Always
+
+Agents **always ask the user before**: committing, pushing, creating a PR, and creating or updating a Linear ticket (status, comment or description). Prepare everything — staged diff, commit message, ticket text — then ask once with the exact action listed. A "go" covers the actions named in that question only, not later ones in the session.
 
 ## Commit and PR Conventions
 
@@ -109,58 +136,10 @@ Rules:
 
 ## Web Tasks — Agent Roles (`src/web` only, opt-in)
 
-The roles in `.claude/agents/` (`designer`, `developer`, `reviewer`, `tester` and `writer`) are
-**off by default**. A full role run takes a long time to conclude and does not suit every task, so
-a session works on `src/web/` directly unless Jason explicitly asks for the roles, e.g. "use the
-agent roles" or "run this through designer → developer → reviewer + tester". Never start them
-unasked.
-
-- **An opt-in covers the task it was given for,** not later tasks in the same session.
-- **Jason may ask for part of the flow** ("just get a reviewer on this"). Run only what was asked.
-- **Without the roles,** the main session does the work itself; the commit and push gate below
-  still applies.
-
-When opted in, the main session is the **lead**. It plans, delegates to the roles, passes their
-results on, and owns the gates. The change type picks the flow. API work is unaffected.
-
-| Change                                                                  | Roles, in order                                                                                                  |
-| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Visible to users: layout, styling, components, motion, copy             | designer (spec) → **Jason approves** → developer (whole batch) → reviewer + tester in parallel → developer fixes once → reviewer (fix diff) + tester (failed checks) → designer (compare once, at the end) |
-| Web logic with no visible change                                        | developer (whole batch) → reviewer + tester → developer fixes once → reviewer (fix diff) + tester (failed checks) |
-| Trivial: a typo, a comment, a one-line copy fix                         | developer → tester (static checks only)                                                                          |
-| A document for readers outside the team: testing guide, BA review pack, release notes | writer → reviewer (fact check against the code) → writer fixes → **Jason approves** before it is shared |
-
-Keep the cycle count low. Each pass through the flow has a fixed cost, and repeated browser passes
-were the main reason early role sessions took 9–10 hours.
-
-- **Batch the work.** Build the whole request as one batch, or two at most (logic first, then the
-  visible changes). Never run the cycle per surface or per task: one review and one test cover
-  the whole batch.
-- **Settle decisions up front.** Ask Jason for spec approval and the roles' product calls together,
-  in batches of at most four. While Jason reviews the spec, a developer can build the logic batch.
-- **Gates:**
-  - Jason approves the design spec before implementation starts;
-  - Jason approves a reader-facing document before it is shared outside the team;
-  - Jason approves every commit and push, with or without the roles.
-- **Fix rounds:**
-  - Wait for both the reviewer and the tester, then hand the developer every finding at once.
-  - The re-check is narrow. The reviewer reads only the fix diff. The tester runs static checks
-    and repeats only the checks that failed or that the fix touched.
-  - One round is the default. Run a second only for what the re-check still fails, then stop and
-    ask Jason. Nits left over go into the handoff, not into another round.
-- **Browser checks belong to the tester.** The developer runs static checks and at most a quick
-  look; the designer compares once, at the end, from a fresh agent.
-- **Hand-offs go through files**, not chat:
-  - the designer's spec lives in the feature folder;
-  - the writer's document lives where the lead names it. A guide that spans tickets goes in the
-    epic folder, e.g. `testing/`;
-  - the lead records the reviewer's findings and the tester's report in the session handoff.
-- **One developer at a time,** in the main checkout. The running dev server serves it, so the
-  tester sees the changes.
-- **Other agents** (Codex, Cursor, …) without these roles, when Jason opts in, follow the same
-  steps in order, themselves.
-
-The browser tooling, ports and access rules are in `src/web/AGENTS.md`, "Agent roles".
+The roles in `.claude/agents/` (`designer`, `developer`, `reviewer`, `tester`, `writer`) are
+**off by default** and run only when Jason asks for them, for the task he asks about. When he
+does, read `.claude/agents/README.md` for the flow, gates and browser tooling. Without the roles
+the session does the work itself; the Confirmation Gate applies either way.
 
 ## General Rules for Agents
 
@@ -168,3 +147,10 @@ The browser tooling, ports and access rules are in `src/web/AGENTS.md`, "Agent r
 - Never commit secrets or credentials.
 - Prefer editing existing files over creating new ones; follow existing patterns in the component you are working in.
 - Ask before introducing new dependencies.
+
+## Automated Tests (`src/web`, Playwright)
+
+- **Feature development and support work includes Playwright e2e tests.** A change to a user-visible flow adds or updates a spec under `src/web/e2e/`. The rules (one journey per behaviour, parallel-safe, `#id` locators, seed contract, `@smoke` tag) are in `docs/work/active/YOM-1311-automated-browser-tests-for-the-web-app/handoffs/2026-11-03-c.md` "How features must be tested"; the route checklist is `sitemap.md` in the same folder.
+- Agents use the **`playwright-cli` skill** for exploring and debugging pages and the **local Playwright CLI** (`pnpm test:e2e …` from `src/web`) for running specs — not the ad-hoc CDP tooling, except where the agent roles section still calls for it.
+- **CI runs the suite; every test must pass.** Tests are being applied retroactively to production code, so a spec that fails repeatably for reasons outside the change at hand is bypassed with `test.fixme(true, "YOM-NNNN: <why>")` — never deleted, never left red — and recorded in `known-gaps.md` (same folder). `pnpm test:e2e:gaps` lists the current fixmes so the register and the code cannot drift.
+- Flows that cannot be exercised locally or in CI (Keycloak e-mail, real SMS, social IdPs, …) are listed in `known-gaps.md` as **not tested**, with the prerequisite that would unlock them. Do not claim coverage for them.

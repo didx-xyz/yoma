@@ -679,6 +679,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       </label>
                       {isCreate && (
                         <input
+                          id="inpSchemaName" // e2e
                           type="text"
                           className="input border-gray focus:border-gray rounded-md focus:outline-none"
                           placeholder="Enter schema name"
@@ -689,6 +690,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
 
                       {!isCreate && (
                         <input
+                          id="inpSchemaName" // e2e
                           type="text"
                           className="input border-gray focus:border-gray rounded-md focus:outline-none"
                           value={schema?.displayName ?? ""}
@@ -724,6 +726,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                         name="typeId"
                         render={({ field: { onChange, value } }) => (
                           <Select
+                            inputId="selSchemaType" // e2e
                             classNames={{
                               control: () => "input",
                             }}
@@ -769,6 +772,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                           name="typeContext"
                           render={({ field: { onChange, value } }) => (
                             <Select
+                              inputId="selSchemaOpportunityType" // e2e
                               classNames={{
                                 control: () => "input",
                               }}
@@ -805,6 +809,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                         name="artifactType"
                         render={({ field: { onChange, value } }) => (
                           <Select
+                            inputId="selSchemaArtifactType" // e2e
                             classNames={{
                               control: () => "input",
                             }}
@@ -851,6 +856,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                         </button>
                       )}
                       <button
+                        id="btnSchemaStep1Next" // e2e
                         type="submit"
                         className="btn btn-sm btn-success grow"
                       >
@@ -912,6 +918,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       </button>
 
                       <button
+                        id="btnSchemaStep2Next" // e2e
                         type="submit"
                         className="btn btn-sm btn-success grow"
                       >
@@ -1074,6 +1081,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                         Back
                       </button>
                       <button
+                        id="btnSchemaStep3Submit" // e2e
                         type="submit"
                         className="btn btn-sm btn-success grow"
                         disabled={

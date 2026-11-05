@@ -62,6 +62,7 @@ export const CashOutReviewStep: React.FC<{
 
       <div className="flex flex-col items-center gap-2">
         <button
+          id="btnCashOutReviewConfirm" // e2e
           type="button"
           onClick={onConfirm}
           disabled={busy}

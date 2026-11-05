@@ -21,7 +21,15 @@ const gitignoreContent = fs.existsSync(gitignorePath)
 
 export default defineConfig([
   // Apply global ignores from .gitignore
-  globalIgnores(["public/**/*", "node_modules/**", ...gitignoreContent]),
+  globalIgnores([
+    "public/**/*",
+    "node_modules/**",
+    // generated e2e output (src/web/.gitignore; the root .gitignore below does not list them)
+    "monocart-report/**",
+    "playwright-report/**",
+    "test-results/**",
+    ...gitignoreContent,
+  ]),
   ...fixupConfigRules(nextConfig),
   ...fixupConfigRules(nextTypescript),
   prettierConfig,

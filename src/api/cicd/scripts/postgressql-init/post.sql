@@ -7,29 +7,35 @@ SET TIMEZONE='UTC';
 
 -- Users & Organizations
 
--- testuser@gmail.com (KeyCloak password: P@ssword1)
+-- NOTE (Adrian, 2026-11-02 — web e2e tests, YOM-1311): the three test users, the Yoma organization and the
+-- organization owning the search fixtures now have FIXED ids, and the users carry seeded "Settings" so the
+-- first-login "Choose your settings" / RUM-consent dialogs do not appear. The Playwright suite in
+-- src/web/e2e/ relies on these values; they are mirrored in src/web/e2e/seed.ts. Keep both in sync.
+-- Keycloak passwords for all three users are P@ssword12 (see keycloak-users in docker-compose.yml).
+
+-- testuser@gmail.com (KeyCloak password: P@ssword12)
 INSERT INTO "Entity"."User"("Id", "Email", "EmailConfirmed", "FirstName", "Surname", "DisplayName", "PhoneNumber", "PhoneNumberConfirmed", "CountryId", "EducationId",
-            "PhotoId", "GenderId", "DateOfBirth", "DateLastLogin", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified")
-VALUES(gen_random_uuid(), 'testuser@gmail.com', TRUE, 'Test', 'User', 'Test User', '+27821234567', TRUE,
+            "PhotoId", "GenderId", "DateOfBirth", "DateLastLogin", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified", "Settings")
+VALUES('00000000-0000-4000-8000-000000000001', 'testuser@gmail.com', TRUE, 'Test', 'User', 'Test User', '+27821234567', TRUE,
         (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2"='ZA'), (SELECT "Id" FROM "Lookup"."Education" ORDER BY RANDOM() LIMIT 1),
         NULL, (SELECT "Id" FROM "Lookup"."Gender" ORDER BY RANDOM() LIMIT 1), CURRENT_DATE - INTERVAL '20 years', NULL, NULL, TRUE,
-        (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'));
+        (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), '{"User_Settings_Configured":true,"User_RumConsent":false}');
 
--- testadminuser@gmail.com (KeyCloak password: P@ssword1)
+-- testadminuser@gmail.com (KeyCloak password: P@ssword12)
 INSERT INTO "Entity"."User"("Id", "Email", "EmailConfirmed", "FirstName", "Surname", "DisplayName", "PhoneNumber", "PhoneNumberConfirmed", "CountryId", "EducationId",
-            "PhotoId", "GenderId", "DateOfBirth", "DateLastLogin", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified")
-VALUES(gen_random_uuid(), 'testadminuser@gmail.com', TRUE, 'Test Admin', 'User', 'Test Admin User', NULL, NULL,
+            "PhotoId", "GenderId", "DateOfBirth", "DateLastLogin", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified", "Settings")
+VALUES('00000000-0000-4000-8000-000000000002', 'testadminuser@gmail.com', TRUE, 'Test Admin', 'User', 'Test Admin User', NULL, NULL,
         (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2"='ZA'), (SELECT "Id" FROM "Lookup"."Education" ORDER BY RANDOM() LIMIT 1),
         NULL, (SELECT "Id" FROM "Lookup"."Gender" ORDER BY RANDOM() LIMIT 1), CURRENT_DATE - INTERVAL '21 years', NULL, NULL, TRUE,
-        (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'));
+        (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), '{"User_Settings_Configured":true,"User_RumConsent":false}');
 
--- testorgadminuser@gmail.com (KeyCloak password: P@ssword1)
+-- testorgadminuser@gmail.com (KeyCloak password: P@ssword12)
 INSERT INTO "Entity"."User"("Id", "Email", "EmailConfirmed", "FirstName", "Surname", "DisplayName", "PhoneNumber", "PhoneNumberConfirmed", "CountryId", "EducationId",
-            "PhotoId", "GenderId", "DateOfBirth", "DateLastLogin", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified")
-VALUES(gen_random_uuid(), 'testorgadminuser@gmail.com', TRUE, 'Test Organization Admin', 'User', 'Test Organization Admin User', NULL, NULL,
+            "PhotoId", "GenderId", "DateOfBirth", "DateLastLogin", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified", "Settings")
+VALUES('00000000-0000-4000-8000-000000000003', 'testorgadminuser@gmail.com', TRUE, 'Test Organization Admin', 'User', 'Test Organization Admin User', NULL, NULL,
         (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2"='ZA'), (SELECT "Id" FROM "Lookup"."Education" ORDER BY RANDOM() LIMIT 1),
         NULL, (SELECT "Id" FROM "Lookup"."Gender" ORDER BY RANDOM() LIMIT 1), CURRENT_DATE - INTERVAL '22 years', NULL, NULL, TRUE,
-        (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'));
+        (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), '{"User_Settings_Configured":true,"User_RumConsent":false}');
 
 -- SSI Tenant Creation (Pending) for YOID onboarded users
 INSERT INTO "SSI"."TenantCreation"("Id", "EntityType", "StatusId", "UserId", "OrganizationId", "TenantId", "ErrorReason", "RetryCount", "DateCreated", "DateModified")
@@ -131,9 +137,10 @@ BEGIN
 END $$ LANGUAGE plpgsql;
 
 --Yoma (Youth Agency Marketplace) organization; Applies to local and development environments only
+-- Fixed id: owns the search fixtures below and is referenced by the web e2e tests (src/web/e2e/seed.ts)
 INSERT INTO "Entity"."Organization"("Id", "Name", "NameHashValue", "WebsiteURL", "PrimaryContactName", "PrimaryContactEmail", "PrimaryContactPhone", "VATIN", "TaxNumber", "RegistrationNumber",
            "City", "CountryId", "StreetAddress", "Province", "PostalCode", "Tagline", "Biography", "StatusId", "CommentApproval", "DateStatusModified", "LogoId", "DateCreated", "CreatedByUserId", "DateModified", "ModifiedByUserId")
-VALUES(gen_random_uuid(), 'Yoma (Youth Agency Marketplace)', ENCODE(DIGEST('Yoma (Youth Agency Marketplace)', 'SHA256'), 'hex'), 'https://www.yoma.world/', 'Primary Contact', 'primarycontact@gmail.com', '+27125555555', 'GB123456789', '0123456789', '12345/28/14',
+VALUES('00000000-0000-4000-8000-000000000100', 'Yoma (Youth Agency Marketplace)', ENCODE(DIGEST('Yoma (Youth Agency Marketplace)', 'SHA256'), 'hex'), 'https://www.yoma.world/', 'Primary Contact', 'primarycontact@gmail.com', '+27125555555', 'GB123456789', '0123456789', '12345/28/14',
 		'My City', (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2" = 'ZA'), 'My Street Address 1000', 'My Province', '12345-1234', 'Tag Line', 'Biography',
 		(SELECT "Id" FROM "Entity"."OrganizationStatus" WHERE "Name" = 'Active'), 'Approved', (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), NULL,
     (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testorgadminuser@gmail.com'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testorgadminuser@gmail.com'));
@@ -526,9 +533,8 @@ SET "Title" = LPAD(F."Number"::TEXT, 2, '0') || ' - ' || T."Name" ||
     "ProviderCountryId" = CASE WHEN MOD(F."Number", 3) = 0 THEN NULL
         ELSE (SELECT "Id" FROM "Lookup"."Country"
             WHERE "CodeAlpha2" = CASE WHEN F."Number" = 23 THEN 'IE' ELSE 'ZA' END) END,
-    "OrganizationId" = (SELECT "Id" FROM "Entity"."Organization"
-        WHERE "StatusId" = (SELECT "Id" FROM "Entity"."OrganizationStatus" WHERE "Name" = 'Active')
-        ORDER BY "Id" LIMIT 1),
+    -- Fixtures belong to the Yoma organization (fixed id above) so the web e2e tests can address them deterministically
+    "OrganizationId" = '00000000-0000-4000-8000-000000000100',
     "StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" = 'Active'),
     "DateStart" = date_trunc('day',
         CASE

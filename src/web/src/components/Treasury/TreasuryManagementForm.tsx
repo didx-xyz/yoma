@@ -416,6 +416,7 @@ export const TreasuryManagementForm: React.FC<{
             Discard changes
           </button>
           <button
+            id="btnTreasurySave" // e2e
             type="submit"
             className={`${BTN_PRIMARY} w-full sm:w-40`}
             disabled={isSubmitting}

@@ -453,6 +453,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
               />
               <div className="drawer-content">
                 <label
+                  id="btnMainMenu" // e2e
                   htmlFor="nav-drawer"
                   className="bg-theme drawer flex h-full w-auto cursor-pointer items-center border-none px-4 text-white shadow-none duration-0 hover:brightness-95"
                   tabIndex={isDrawerOpen ? -1 : 0}
@@ -607,6 +608,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                     {/* LANGUAGE, SIGN IN / OUT */}
                     <div className="border-gray flex flex-col gap-3 border-t p-3">
                       <LanguageSwitcher
+                        id="selLanguage_drawer"
                         className="hover:bg-gray-light h-11 gap-3 rounded-lg !px-3 !py-0"
                         classNameIcon="!h-5 !w-5 text-black"
                         classNameSelect="font-nunito -ml-1 text-[15px] font-semibold text-black"
@@ -615,6 +617,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
 
                       {!session && (
                         <SignInButton
+                          id="btnSignIn_drawer"
                           className="!h-10 !min-h-10 w-full rounded-full !shadow-none"
                           tabIndex={isDrawerOpen ? 0 : -1}
                           showLabel={true}
@@ -623,6 +626,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
 
                       {session && (
                         <SignOutButton
+                          id="btnSignOut_drawer"
                           className="!h-10 !min-h-10 w-full rounded-full !shadow-none"
                           tabIndex={isDrawerOpen ? 0 : -1}
                         />
@@ -731,6 +735,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
           {/* RIGHT MENU */}
           <div className="ml-auto flex h-full flex-shrink-0 items-stretch justify-end md:mr-2 md:gap-4">
             <LanguageSwitcher
+              id="selLanguage"
               className="bg-theme font-nunito rounded-none px-3 text-current hover:brightness-95"
               classNameIcon="!h-5 !w-5 !text-current"
               classNameSelect="text-md mobile-select !text-current"
@@ -745,7 +750,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
             )}
             {sessionStatus !== "loading" && !session && (
               <div className="bg-theme flex h-full items-center px-2 hover:bg-black/10 md:px-3">
-                <SignInButton tabIndex={isDrawerOpen ? -1 : 0} />
+                <SignInButton id="btnSignIn" tabIndex={isDrawerOpen ? -1 : 0} />
               </div>
             )}
             {sessionStatus !== "loading" && session && (

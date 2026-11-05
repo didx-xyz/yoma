@@ -250,6 +250,7 @@ const SettingsForm: React.FC<SettingsFormProps> = ({
             )}
 
             <button
+              id="btnSettingsSubmit" // e2e
               type="submit"
               className="btn btn-success md:btn-wide w-1/2 shrink normal-case"
               disabled={isLoading}

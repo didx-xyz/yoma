@@ -12,11 +12,16 @@ import { ZltoModal } from "./ZltoModal";
  * "What is ZLTO?" after it on the same line (Jason, 2026-10-22); the wallet page passes none.
  */
 export const WalletCard: React.FC<{
+  /**
+   * Render-site suffix for the Cash Out button and wallet link ids — the card has three homes
+   * (overview, wallet tab, user-menu drawer) and the drawer can share a page with either (e2e).
+   */
+  id: string;
   userProfile: UserProfile;
   link?: ReactNode;
   /** Called when the empty state's link is followed (the drawer closes on a plain click). */
   onClick?: MouseEventHandler<HTMLAnchorElement>;
-}> = ({ userProfile, link, onClick }) => {
+}> = ({ id, userProfile, link, onClick }) => {
   const [zltoModalVisible, setZltoModalVisible] = useState(false);
 
   const zlto = userProfile?.zlto;
@@ -70,8 +75,16 @@ export const WalletCard: React.FC<{
              `CashOutEntry` render nothing. It shows itself only once a cash out has completed. */
           actions={
             <>
-              <CashOutEntry profile={userProfile} variant="expanded" />
-              <CashOutWalletLink profile={userProfile} variant="expanded" />
+              <CashOutEntry
+                id={`btnCashOut_${id}`}
+                profile={userProfile}
+                variant="expanded"
+              />
+              <CashOutWalletLink
+                id={`lnkCashOutWallet_${id}`}
+                profile={userProfile}
+                variant="expanded"
+              />
             </>
           }
         />

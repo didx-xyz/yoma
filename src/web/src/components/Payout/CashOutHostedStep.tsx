@@ -90,6 +90,7 @@ export const CashOutHostedStep: React.FC<{
       hands down a definite height rather than free space.
     */}
       <iframe
+        id="frmCashOutHosted" // e2e
         src={paymentUrl}
         title={HOSTED_COPY.frameTitle}
         className="border-gray h-full min-h-0 w-full grow rounded-lg border bg-white"
@@ -114,6 +115,7 @@ export const CashOutHostedStep: React.FC<{
         <div className="flex h-11 flex-row flex-wrap items-center justify-center gap-2 text-xs">
           <span className="text-gray-dark">{HOSTED_COPY.blockedHint}</span>
           <button
+            id="btnCashOutNewWindow" // e2e
             type="button"
             onClick={onOpenInNewWindow}
             className="text-purple inline-flex items-center gap-1 font-bold underline-offset-2 hover:underline"
@@ -131,6 +133,7 @@ export const CashOutHostedStep: React.FC<{
 
         {/* One primary action. The way out is in the status slot above, not competing here. */}
         <button
+          id="btnCashOutHostedDone" // e2e
           type="button"
           onClick={onDone}
           className="btn bg-purple hover:bg-purple w-full rounded-full px-8 text-white normal-case hover:text-white md:w-auto md:self-end"

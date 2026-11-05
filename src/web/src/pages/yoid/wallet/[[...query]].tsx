@@ -272,7 +272,7 @@ const MyWallet: NextPageWithLayout<{
           onToggle={() => toggle("balance")}
         >
           <Suspense isLoading={!userProfile} loader={<TileBodySkeleton />}>
-            <WalletCard userProfile={userProfile!} />
+            <WalletCard id="wallet" userProfile={userProfile!} />
           </Suspense>
         </DetailDisclosure>
 

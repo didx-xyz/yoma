@@ -40,7 +40,7 @@ import NoRowsMessage from "~/components/NoRowsMessage";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { PAGE_SIZE } from "~/lib/constants";
+import { PAGE_SIZE, ROLE_ADMIN } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { getThemeFromRole } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
@@ -77,6 +77,16 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   // 👇 set theme based on role
   const theme = getThemeFromRole(session);
+
+  // 👇 Admin only
+  if (!session.user?.roles.includes(ROLE_ADMIN)) {
+    return {
+      props: {
+        theme: theme,
+        error: 403,
+      },
+    };
+  }
 
   // NB: the filters are driven by the querystring (router.query), not by props
   return {

@@ -150,7 +150,10 @@ export const DiscoveryResults: React.FC<{
         >
           {/* Below `sm` the heading wraps (a long word can break) so the view toggle always
               stays on screen; from `sm` it is one line, as before. */}
-          <h2 className="flex min-w-0 items-center gap-2 text-base font-bold tracking-normal sm:shrink-0 sm:whitespace-nowrap md:text-lg">
+          <h2
+            id="hdrDiscoveryResults" // e2e
+            className="flex min-w-0 items-center gap-2 text-base font-bold tracking-normal sm:shrink-0 sm:whitespace-nowrap md:text-lg"
+          >
             {total === null ? (
               // First load only: a skeleton bar where the count will be (2026-10-09, Jason),
               // and the words for assistive technology.

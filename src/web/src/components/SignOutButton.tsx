@@ -6,9 +6,11 @@ import analytics from "~/lib/analytics";
 import { LoadingInline } from "./Status/LoadingInline";
 
 export const SignOutButton: React.FC<{
+  // e2e: unique per render site — the button can appear more than once on a page
+  id: string;
   className?: string;
   tabIndex?: number;
-}> = ({ className, tabIndex }) => {
+}> = ({ id, className, tabIndex }) => {
   const [isButtonLoading, setIsButtonLoading] = useState(false);
   const { data: session, status: sessionStatus } = useSession();
 
@@ -71,7 +73,7 @@ export const SignOutButton: React.FC<{
       className={`bg-theme font-nunito btn gap-2 border-0 border-none px-4 shadow-lg hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait disabled:brightness-95 ${className}`}
       onClick={handleLogout}
       disabled={isButtonLoading}
-      id="btnSignOut"
+      id={id}
       tabIndex={tabIndex}
       title="Log out"
     >

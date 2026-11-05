@@ -27,11 +27,13 @@ declare global {
 }
 
 const LanguageSwitcher: React.FC<{
+  // e2e: unique per render site (navbar and drawer both render one)
+  id: string;
   className?: string;
   classNameIcon?: string;
   classNameSelect?: string;
   tabIndex?: number;
-}> = ({ className, classNameIcon, classNameSelect, tabIndex }) => {
+}> = ({ id, className, classNameIcon, classNameSelect, tabIndex }) => {
   const [currentLanguage, setCurrentLanguage] = useState<string>();
   const [languageConfig, setLanguageConfig] = useState<any>();
 
@@ -106,6 +108,7 @@ const LanguageSwitcher: React.FC<{
       >
         <IoMdGlobe className={`h-6 w-6 ${classNameIcon}`} />
         <select
+          id={id}
           value={currentLanguage}
           onChange={(e) => switchLanguage(e.target.value)}
           className={`cursor-pointer rounded-md bg-transparent font-semibold focus:outline-none ${classNameSelect}`}

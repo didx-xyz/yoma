@@ -131,9 +131,11 @@ const STEP_BY_VIEW: Partial<Record<FlowView["name"], CashOutStep>> = {
 };
 
 export const CashOutEntry: React.FC<{
+  /** the Cash Out button's id, unique per render site (e2e) */
+  id: string;
   profile: UserProfile;
   variant: ZltoLedgerVariant;
-}> = ({ profile, variant }) => {
+}> = ({ id, profile, variant }) => {
   const setUserProfile = useSetAtom(userProfileAtom);
   const queryClient = useQueryClient();
 
@@ -679,6 +681,7 @@ export const CashOutEntry: React.FC<{
   return (
     <>
       <CashOutButton
+        id={id}
         variant={variant}
         label={
           profile.payout?.active ? CASH_OUT_ACTION_CONTINUE : CASH_OUT_ACTION

@@ -7,6 +7,11 @@
 
 # testing
 /coverage
+/test-results/
+/playwright-report/
+/playwright/.cache/
+/e2e/.auth/
+/monocart-report/
 
 # database
 /prisma/db.sqlite

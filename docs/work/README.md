@@ -66,16 +66,18 @@ carry the breakdown. See `templates/linear-epic.md` and `templates/linear-issue.
 
 ## Commit citations and squash-merge
 
-**`master` is squash-merged** — one commit per PR, `… (#1910)`. So every branch SHA a handoff cites
-**stops resolving the moment its PR lands**: the branch commits collapse into one and the originals
-are unreachable. This is not hypothetical; it is what killed the Partner Sync citations, and it is
-why `b5bfe400` survives in that epic while its four siblings do not — that one *is* the squashed
-commit.
+**`master` is squash-merged** — one commit per PR, `… (#1910)`. Every branch SHA a doc cites stops
+resolving the moment its PR lands, and repairing the doc afterwards costs another PR. That is what
+killed the Partner Sync citations.
 
-Cite branch SHAs while the branch is alive; they are the most precise pointer available. But
-**before a PR merges, re-point or annotate them** — run the check in the Rules below, then either
-swap each hash for the squashed `(#NNNN)` commit or note that it predates the squash. Doing it after
-the merge is guesswork.
+So: **docs never cite branch SHAs.** They cite things that outlive the squash:
+
+- the **PR number** — `PR #2018`. GitHub keeps every commit of a PR browsable under it, forever;
+- the **file path** (and symbol) — `src/web/e2e/flows/opportunity-lifecycle.spec.ts`;
+- for landed work, the **squashed master commit** `a1b2c3d4 (#2018)`, copied from `git log master`.
+
+"Committed as `ec399e13f`" in a handoff is wrong even while the branch is alive; write "on PR #2018"
+or "in this branch, `src/api/.../MyOpportunityService.cs`". Nothing then needs re-pointing on merge.
 
 If a doc set has already lost its provenance and cannot be recovered, replace it with a **context
 pack** (`templates/context-pack.md`) — decisions, contracts and gotchas kept, narrative dropped. It
@@ -115,16 +117,15 @@ edit ticket descriptions unless explicitly asked.
 - Never start coding on an existing feature without reading the epic `README.md`, the feature's `feature.md` and its latest handoff.
 - Never end a session without writing a handoff. A thin handoff beats no handoff.
 - A handoff written after the fact must say so — mark it `RECONSTRUCTED` in the title and name the commits it was rebuilt from. Do not present a reconstruction as a contemporaneous record.
-- **Every commit SHA written into a doc must resolve.** A citation that does not is worse than none — it reads as provenance and cannot be followed. Copy hashes from `git log`, never from memory, and check before committing:
+- **Docs cite PR numbers and file paths, not branch SHAs** (see "Commit citations" above). The only SHAs allowed are commits already on `master`, copied from `git log master` and checked before committing:
 
   ```bash
-  for h in $(grep -rlo RECONSTRUCTED docs/work/active --include=*.md); do
+  for h in $(grep -rl --include=*.md -E '`[0-9a-f]{7,10}`' docs/work/active); do
     for s in $(grep -oE '`[0-9a-f]{7,10}`' "$h" | tr -d '`' | sort -u); do
-      git cat-file -e "$s^{commit}" 2>/dev/null || echo "MISSING $s in $h"; done; done
+      git merge-base --is-ancestor "$s" master 2>/dev/null || echo "NOT ON MASTER: $s in $h"; done; done
   ```
 
-  If the source commits genuinely cannot be identified, write that instead of guessing. **Run this
-  again before a PR merges** — `master` is squash-merged, so branch SHAs stop resolving on landing.
+  If the source commits genuinely cannot be identified, write that instead of guessing.
 
 - **Status is recorded once, in the feature's `feature.md`**, using `planning` | `in-progress` | `review` | `shipped` | `blocked`, optionally followed by ` — <short qualifier>` (e.g. `in-progress — dev complete, browser pass owed`). Epic README tables may repeat it for scanning, but the feature doc wins on conflict — do not invent parallel vocabularies (`production`, `testing`) in the table.
 - `active/` should stay small (a handful of epics). If it grows stale, archive or delete.

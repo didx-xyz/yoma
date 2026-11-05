@@ -60,6 +60,7 @@ export const CurrentFilters: React.FC<{
           </button>
           {hasFilters && (
             <button
+              id="btnDiscoveryClearFilters" // e2e
               type="button"
               onClick={clearFilters}
               className="btn btn-xs bg-green hover:bg-green-dark h-7 rounded-full border-none text-[11px] font-semibold text-white"

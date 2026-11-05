@@ -92,7 +92,10 @@ const MarketplaceLayout: TabProps = ({ children }) => {
                       What is Zlto?
                     </button>
 
-                    <SignInButton className="btn !border-blue-dark rounded-full !border-2 !border-solid !bg-transparent brightness-110 hover:!border-white hover:!brightness-100" />
+                    <SignInButton
+                      id="btnSignIn_marketplace"
+                      className="btn !border-blue-dark rounded-full !border-2 !border-solid !bg-transparent brightness-110 hover:!border-white hover:!brightness-100"
+                    />
                   </div>
                 </>
               )}
@@ -166,7 +169,11 @@ const MarketplaceLayout: TabProps = ({ children }) => {
                       separate the primary action from the two pills it belongs beside.
                     */}
                     {userProfile.zlto && (
-                      <CashOutEntry profile={userProfile} variant="compact" />
+                      <CashOutEntry
+                        id="btnCashOut_marketplace"
+                        profile={userProfile}
+                        variant="compact"
+                      />
                     )}
                   </div>
                 </>

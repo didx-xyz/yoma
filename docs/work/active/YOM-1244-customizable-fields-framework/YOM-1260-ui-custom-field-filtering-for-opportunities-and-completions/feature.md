@@ -102,6 +102,9 @@ individually.
 - [ ] Decide whether completion (MyOpportunity) filtering gets a surface in this epic.
 - [ ] Revisit which definitions should be _filterable_ once the BA set lands — everything active
       is offered today, which will not scale.
+- [x] Playwright e2e for the discovery surface (`src/web/e2e/youth/discovery-filters.spec.ts`,
+      2026-11-04): URL deep link → chips + results (`@smoke`), panel pick → URL / request /
+      results, chip removal + clear. The admin filter (`/admin/opportunities`) is still untested.
 
 ## Decisions
 
@@ -123,6 +126,10 @@ individually.
 - 2026-08-11: Native selects/inputs are sized to the react-select control (`h-10 min-h-10`), not
   the reverse — react-select's 38px control min-height cannot be overridden through its
   `classNames` API, so the shorter `select-sm` / `input-sm` variants were dropped.
+- 2026-11-04: e2e journeys narrow with `q="- Job"` first — post.sql gives every Job (random ones
+  included) `JobEmploymentType=Permanent`, so only the six Job fixtures can prove presence _and_
+  absence (03/06/09-style "incomplete" fixtures have no custom-field values; `01 - Job` alone has a
+  disclosed USD 1 000 salary). Recorded in `e2e/seed.ts` `CUSTOM_FIELDS`.
 
 ## Links
 

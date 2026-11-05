@@ -583,6 +583,7 @@ export const UserProfileForm: React.FC<{
           >
             <FormInput
               inputProps={{
+                id: "inpProfileFirstName", // e2e
                 type: "text",
                 className:
                   "input w-full rounded-md border-gray focus:border-gray focus:outline-none",
@@ -603,6 +604,7 @@ export const UserProfileForm: React.FC<{
           >
             <FormInput
               inputProps={{
+                id: "inpProfileSurname", // e2e
                 type: "text",
                 className:
                   "input w-full rounded-md border-gray focus:border-gray focus:outline-none",
@@ -810,6 +812,7 @@ export const UserProfileForm: React.FC<{
           )}
 
           <button
+            id="btnProfileSubmit" // e2e
             type="submit"
             className="btn bg-green min-w-0 flex-1 gap-2 text-white hover:brightness-110 md:max-w-[220px]"
           >

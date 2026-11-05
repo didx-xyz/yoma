@@ -1,3 +1,6 @@
 **/*.md
 .next
 /public
+/monocart-report
+/playwright-report
+/test-results

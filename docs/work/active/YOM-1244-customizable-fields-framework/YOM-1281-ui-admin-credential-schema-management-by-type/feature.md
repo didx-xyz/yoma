@@ -88,6 +88,9 @@ removal list now also covers
 - [ ] Verify against a running API on `feature/custom-fields-framework` with a representative
       type-specific schema. _(read surfaces done live; creating the schema itself still needs the
       provider create/update path)_
+- [x] Playwright e2e (`src/web/e2e/admin/schemas.spec.ts`, 2026-11-04): list (`@smoke`), edit
+      identity read-only + mapped attribute count vs `GET /ssi/schema/{name}`, create wizard to
+      Review. Submit is never pressed — see `known-gaps.md` (YOM-1311).
 
 ## Decisions
 
@@ -138,6 +141,10 @@ removal list now also covers
   field holds the _full_ provider name, which legitimately contains `|`, so the rule rejected every
   existing schema while pointing at an input that displays the friendly name. Any future validation
   on that field must be scoped the same way.
+- 2026-11-04: **e2e specs force the live source** (`localStorage yoma.schemaMockMode=live` via
+  `addInitScript`) so the local dev server and CI's production build read the same API-seeded
+  schemas; the mock fixtures are not the seed contract. Creating or updating a schema stays
+  untestable until a provider stub exists — the spec blocks non-GET `/ssi/schema` as a guard.
 
 ## Links
 

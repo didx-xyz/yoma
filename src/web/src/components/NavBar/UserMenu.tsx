@@ -189,6 +189,7 @@ export const UserMenu: React.FC = () => {
         <div className="drawer-content flex h-full flex-col">
           <label
             htmlFor="userMenu-drawer"
+            id="btnUserMenu" // e2e
             className="flex h-full items-center rounded-md hover:cursor-pointer"
             tabIndex={isDrawerOpen ? -1 : 0}
             onKeyDown={(e) => {
@@ -376,6 +377,7 @@ export const UserMenu: React.FC = () => {
                             loader={<TileBodySkeleton />}
                           >
                             <WalletCard
+                              id="drawer"
                               userProfile={userProfile!}
                               onClick={closeOnFollow}
                               link={
@@ -484,6 +486,7 @@ export const UserMenu: React.FC = () => {
                 {/* FOOT */}
                 <div className="mt-auto flex flex-col gap-3 pt-2">
                   <SignOutButton
+                    id="btnSignOut"
                     className="!btn-sm w-full"
                     tabIndex={tabIndex}
                   />
