@@ -86,6 +86,23 @@ Three rules that keep these docs trustworthy:
 goes stale the moment an AI session changes the design, and stale tickets are worse than empty
 ones because they are read as current.
 
+**Write every ticket, comment and status note for a BA or tester, not an engineer.** The reader
+has not seen the code and should not need to. Concretely:
+
+- Plain sentences a high-school reader follows. Say what a user sees or can do, and what changed
+  for them — not how it is built. "Approving a submission now awards the skills it promised" beats
+  "FinalizeVerification lost child items after AllocateRewards".
+- No class, method, file, endpoint, table or commit names; no code blocks; no stack traces. If an
+  engineer needs them, they go in `docs/work/` and the ticket links the folder.
+- Spell out jargon the first time (ZLTO = the reward points youth earn; OTP = the one-time code
+  sent by SMS). Prefer the product's own words (Submissions, Yo-ID, Cash out) over internal ones.
+- Acceptance criteria are steps a tester can perform and a result they can see: "Sign in as a
+  youth, open a completed learning opportunity, check the skill appears on the Yo-ID Skills tab."
+- Comments follow the same rule: status, what to test, what is blocked and by whom. A note for an
+  engineer belongs in the PR or `docs/work/`, with the ticket saying only that it exists.
+- When something is wrong, state it like a bug report a tester could file: who is affected, what
+  they expected, what happens instead, since when (if known), workaround (if any).
+
 | Linear ticket                                                       | `docs/work/`                                                     |
 | ------------------------------------------------------------------- | ---------------------------------------------------------------- |
 | Problem, user-facing outcome, acceptance criteria in business terms | Endpoint shapes, payloads, schemas, migrations, class/file names |
