@@ -76,9 +76,9 @@ row in the parent's Tasks, carrying the ticket id. The full test is in `docs/wor
 Three rules that keep these docs trustworthy:
 
 - A handoff written after the fact must be marked `RECONSTRUCTED` in its title and name the commits it was rebuilt from — never present a reconstruction as a contemporaneous record.
-- **Every commit SHA written into a doc must resolve.** A citation that does not is worse than none: it reads as provenance and cannot be followed. Copy hashes from `git log`, never from memory, and verify with `git cat-file -e <sha>^{commit}` before committing. If the source commits genuinely cannot be identified, write that instead of guessing.
+- **Docs never cite branch commit SHAs.** `master` is squash-merged, so every branch SHA dies when the PR lands, and fixing citations afterwards costs another PR. Cite what outlives the squash: the **PR number** (`PR #2018` — GitHub keeps all of a PR's commits browsable under it), the **file path**, and for landed work the squashed master commit `… (#NNNN)` copied from `git log master`. Write "on PR #2018" or "see `src/web/e2e/…`", never `ec399e13f`. The only SHAs allowed are commits already on `master`, verified with `git merge-base --is-ancestor <sha> master`. If the source genuinely cannot be identified, say so instead of guessing.
 - **Status is recorded once, in the feature's `feature.md`** — `planning` | `in-progress` | `review` | `shipped` | `blocked`, optionally followed by ` — <short qualifier>`. Epic README tables may repeat it for scanning, but the feature doc wins on conflict; do not invent parallel vocabularies.
-- **`master` is squash-merged, so branch SHAs stop resolving when a PR lands.** Cite them while the branch is alive, but **before the PR merges, re-point them at the squashed `(#NNNN)` commit or annotate them** — afterwards it is guesswork. Where provenance is already lost beyond recovery, replace the doc set with a context pack (`docs/work/templates/context-pack.md`) rather than carrying dead citations forward.
+- If an existing doc set has lost its provenance beyond recovery, replace it with a context pack (`docs/work/templates/context-pack.md`) rather than carrying dead citations forward.
 
 ## Linear vs `docs/work` — Where Things Belong
 
