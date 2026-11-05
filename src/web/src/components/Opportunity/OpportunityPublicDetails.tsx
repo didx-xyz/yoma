@@ -767,6 +767,7 @@ const OpportunityPublicDetails: React.FC<{
     <>
       {canUploadCompletion && (
         <button
+          id="btnOpportunityComplete" // e2e
           type="button"
           className={
             tabbed
@@ -784,6 +785,7 @@ const OpportunityPublicDetails: React.FC<{
 
       {isPendingVerification && (
         <button
+          id="btnOpportunityPending" // e2e
           type="button"
           className="btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[250px]"
           title={pendingVerificationTitle}
@@ -855,6 +857,7 @@ const OpportunityPublicDetails: React.FC<{
     <>
       {canUploadCompletion && (
         <button
+          id="btnOpportunityComplete_sticky" // e2e
           type="button"
           className={`${BTN_OUTLINE_GREEN} hidden h-10 px-4 text-sm md:inline-flex`}
           onClick={onUploadCompletionFiles}
@@ -865,6 +868,7 @@ const OpportunityPublicDetails: React.FC<{
       )}
       {isPendingVerification && (
         <button
+          id="btnOpportunityPending_sticky" // e2e
           type="button"
           className={`${BTN_OUTLINE_GREEN} hidden h-10 px-4 text-sm md:inline-flex`}
           title={pendingVerificationTitle}
@@ -917,6 +921,7 @@ const OpportunityPublicDetails: React.FC<{
       </button>
       {canUploadCompletion && (
         <button
+          id="btnOpportunityComplete_mobile" // e2e
           type="button"
           className="text-green hover:text-green-dark inline-flex h-8 basis-full items-center justify-center text-sm font-semibold underline md:hidden"
           onClick={onUploadCompletionFiles}
@@ -927,6 +932,7 @@ const OpportunityPublicDetails: React.FC<{
       )}
       {isPendingVerification && (
         <button
+          id="btnOpportunityPending_mobile" // e2e
           type="button"
           className="text-green hover:text-green-dark inline-flex h-8 basis-full items-center justify-center text-sm font-semibold underline md:hidden"
           title={pendingVerificationTitle}

@@ -1334,7 +1334,11 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                   <IoClose className="mr-2 h-5 w-5" />
                   Close
                 </button>
-                <button type="submit" className={`${DIALOG_PRIMARY} md:flex-1`}>
+                <button
+                  id="btnCompletionSubmit" // e2e
+                  type="submit"
+                  className={`${DIALOG_PRIMARY} md:flex-1`}
+                >
                   <IoArrowUp className="mr-2 h-5 w-5" />
                   Submit
                 </button>

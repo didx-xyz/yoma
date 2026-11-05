@@ -2839,6 +2839,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       </Link>
 
                       <button
+                        id="btnOppStep1Next" // e2e
                         type="submit"
                         className="btn btn-success grow md:w-1/3 md:grow-0"
                       >
@@ -3425,6 +3426,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       </button>
 
                       <button
+                        id="btnOppStep2Next" // e2e
                         type="submit"
                         className="btn btn-success grow md:w-1/3 md:grow-0"
                       >
@@ -3888,6 +3890,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       </button>
 
                       <button
+                        id="btnOppStep3Next" // e2e
                         type="submit"
                         className="btn btn-success grow md:w-1/3 md:grow-0"
                       >
@@ -3984,6 +3987,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       </button>
 
                       <button
+                        id="btnOppStep4Next" // e2e
                         type="submit"
                         className="btn btn-success grow md:w-1/3 md:grow-0"
                       >
@@ -4075,6 +4079,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       </button>
 
                       <button
+                        id="btnOppStep5Next" // e2e
                         type="submit"
                         className="btn btn-success grow md:w-1/3 md:grow-0"
                       >
@@ -4395,6 +4400,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       </button>
 
                       <button
+                        id="btnOppStep6Next" // e2e
                         type="submit"
                         className="btn btn-success grow md:w-1/3 md:grow-0"
                       >
@@ -4545,6 +4551,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       </button>
 
                       <button
+                        id="btnOppStep7Next" // e2e
                         type="submit"
                         className="btn btn-success grow md:w-1/3 md:grow-0"
                       >
@@ -4743,6 +4750,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       </button>
 
                       <button
+                        id="btnOppSubmit" // e2e
                         type="submit"
                         className="btn btn-success disabled:bg-gray-light grow md:w-1/3 md:grow-0"
                         disabled={
