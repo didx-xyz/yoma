@@ -1766,6 +1766,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
             // Auto-finalized verifications are finalized by trusted system/import/sync flows.
             var result = await _opportunityService.AllocateRewards(opportunity.Id, !options.AutoFinalizedVerification, options.ImportedOrPartnerSyncedVerification);
+            // Allocation reloads without child items. Preserve skills for assignment while keeping
+            // the freshly allocated totals on the opportunity published in the update event.
+            result.Opportunity.Skills = opportunity.Skills;
             opportunity = result.Opportunity;
             item.ZltoReward = result.ZltoReward;
             item.DateCompleted = options.DateCompleted ?? DateTimeOffset.UtcNow;
