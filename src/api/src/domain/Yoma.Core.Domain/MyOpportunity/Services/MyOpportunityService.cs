@@ -1779,11 +1779,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             EnsureNoEarlierPendingVerificationsForOtherStudents(user, opportunity, item, options.AutoFinalizedVerification);
 
             // Auto-finalized verifications are finalized by trusted system/import/sync flows.
-            // NOTE (Adrian, 2026-11-05 — YOM-1313, found by YOM-1311 e2e): AllocateRewards reloads the opportunity WITHOUT child items
-            // (GetById(id, includeChildItems: false, …)). Replacing `opportunity` with that copy left Skills null,
-            // so AssignSkills below awarded nothing on manual approval. Keep the caller's fully loaded instance;
-            // only the reward amount comes from the allocation result. Found by e2e/flows/opportunity-lifecycle.spec.ts.
             var result = await _opportunityService.AllocateRewards(opportunity.Id, !options.AutoFinalizedVerification, options.ImportedOrPartnerSyncedVerification);
+            // Allocation reloads without child items. Preserve skills for assignment while keeping
+            // the freshly allocated totals on the opportunity published in the update event.
+            result.Opportunity.Skills = opportunity.Skills;
+            opportunity = result.Opportunity;
             item.ZltoReward = result.ZltoReward;
             item.DateCompleted = options.DateCompleted ?? DateTimeOffset.UtcNow;
 

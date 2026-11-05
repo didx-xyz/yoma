@@ -1,0 +1,30 @@
+-- ARCHIVED: completed incident. Apply commands intentionally disabled; fresh review required.
+-- Uncomment commands only in a private operator copy after approval.
+-- PERMANENT WRITES: run only after reviewing preparation and dry-run output.
+-- SAME editor/connection; Auto-commit ON. Execute each statement separately.
+-- First pilot: at most 1000 associations in ONE committed batch.
+-- SET statement_timeout = '30s';
+-- CALL pg_temp.yom1313_run(1000, 1, true);
+-- SELECT * FROM pg_temp.yom1313_log ORDER BY "At" DESC LIMIT 1;
+-- SELECT * FROM pg_temp.yom1313_progress;
+-- RESET statement_timeout;
+
+-- AFTER the pilot is reviewed, run this bounded continuation separately:
+-- SET statement_timeout = '60s';
+-- CALL pg_temp.yom1313_run(1000, 25, true);
+-- SELECT * FROM pg_temp.yom1313_progress;
+-- SELECT * FROM pg_temp.yom1313_log ORDER BY "At" DESC LIMIT 25;
+-- RESET statement_timeout;
+--
+-- Repeat until ReadyRemaining=0; stop and report any Deferred count.
+-- The procedure also stops after a batch taking over 2 seconds; that batch is committed.
+-- Review load and reduce batch size before resuming; do not assume the whole CALL ran.
+-- If batches remain short and database load is normal, p_max_batches may be increased
+-- to at most 100; keep batch size at most 1000. No unbounded automatic loop.
+-- A timeout, busy lock or cancellation rolls back ONLY the active batch.
+-- Prior committed batches remain committed; this is NOT an all-or-nothing operation.
+-- After any error execute ROLLBACK; inspect progress and resume in the SAME session.
+-- Do not raise timeouts/batch sizes or remove guards to force a busy database.
+-- After connection loss, rerun preparation in a fresh session; existing links are skipped.
+-- After completion rerun the original read-only audit. Held mappings remain for separate review.
+-- Close the repair connection to remove its temporary queue, log and procedure.
