@@ -26,6 +26,7 @@ using Yoma.Core.Domain.MyOpportunity.Services;
 using Yoma.Core.Domain.MyOpportunity.Validators;
 using Yoma.Core.Domain.Notification.Interfaces;
 using Yoma.Core.Domain.Opportunity;
+using Yoma.Core.Domain.Opportunity.Events;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Models;
@@ -52,13 +53,69 @@ namespace Yoma.Core.Test.Completion
       Assert.Equal(VerificationStatus.Completed, completed.VerificationStatus);
       Assert.NotNull(completed.DateCompleted);
       fixture.Opportunities.Verify(service => service.AllocateRewards(fixture.Opportunity.Id, true, false), Times.Once);
+      fixture.VerifySkillsAssigned(fixture.Users[0], Times.Once());
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData(0)]
+    [InlineData(20)]
+    public async Task ApprovalPreservesSkillsAndPublishesFreshTotalsRegardlessOfReward(int? reward)
+    {
+      var fixture = new Fixture();
+      fixture.Allocation.ZltoReward = reward;
+      Assert.Null(fixture.Allocation.Opportunity.Skills);
+
+      await fixture.Service.FinalizeVerificationManual(fixture.Request(fixture.Users[0]));
+
+      fixture.VerifySkillsAssigned(fixture.Users[0], Times.Once());
+      Assert.Equal((decimal?)reward, fixture.Items[0].ZltoReward);
+      fixture.Mediator.Verify(mediator => mediator.Publish(It.Is<OpportunityEvent>(value =>
+        value.Entity.ParticipantCount == 6 && value.Entity.ZltoRewardCumulative == 120m), It.IsAny<CancellationToken>()), Times.Once);
+      fixture.Rewards.Verify(service => service.ScheduleTransaction(fixture.Users[0].Id,
+        Domain.Reward.RewardTransactionEntityType.MyOpportunity, fixture.Items[0].Id, It.IsAny<decimal>()),
+        reward > 0 ? Times.Once() : Times.Never());
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ApprovalWithoutConfiguredSkillsStillCompletes(bool emptyList)
+    {
+      var fixture = new Fixture();
+      fixture.Opportunity.Skills = emptyList ? [] : null;
+
+      await fixture.Service.FinalizeVerificationManual(fixture.Request(fixture.Users[0]));
+
+      Assert.Equal(VerificationStatus.Completed, fixture.Items[0].VerificationStatus);
+      fixture.UserService.Verify(service => service.AssignSkills(fixture.Users[0],
+        It.Is<OpportunityModel>(opportunity => opportunity.Skills == null || opportunity.Skills.Count == 0)), Times.Once);
+    }
+
+    [Fact]
+    public async Task BatchApprovalPreservesSkillsForEachLearner()
+    {
+      var fixture = new Fixture();
+
+      var result = await fixture.Service.FinalizeVerificationManual(new MyOpportunityRequestVerifyFinalizeBatch
+      {
+        Status = VerificationStatus.Completed,
+        Items = [.. fixture.Users.Select(user => new MyOpportunityRequestVerifyFinalizeBatchItem
+        {
+          UserId = user.Id,
+          OpportunityId = fixture.Opportunity.Id
+        })]
+      });
+
+      Assert.All(result.Items, item => Assert.Null(item.Failure));
+      foreach (var user in fixture.Users) fixture.VerifySkillsAssigned(user, Times.Once());
     }
 
     [Fact]
     public async Task FailedApprovalRequestsCleanupBeforeBatchContinues()
     {
       var fixture = new Fixture();
-      fixture.UserService.Setup(service => service.AssignSkills(fixture.Users[0], fixture.Opportunity))
+      fixture.UserService.Setup(service => service.AssignSkills(fixture.Users[0], It.IsAny<OpportunityModel>()))
         .ThrowsAsync(new InvalidOperationException("Downstream allocation failure"));
 
       var result = await fixture.Service.FinalizeVerificationManual(new MyOpportunityRequestVerifyFinalizeBatch
@@ -99,6 +156,7 @@ namespace Yoma.Core.Test.Completion
       await Assert.ThrowsAsync<FluentValidation.ValidationException>(() => fixture.Service.FinalizeVerificationManual(fixture.Request(fixture.Users[0])));
 
       fixture.Opportunities.Verify(service => service.AllocateRewards(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<bool>()), Times.Never);
+      fixture.UserService.Verify(service => service.AssignSkills(It.IsAny<User>(), It.IsAny<OpportunityModel>()), Times.Never);
       Assert.Equal([true], fixture.CleanupRequests);
     }
 
@@ -115,6 +173,7 @@ namespace Yoma.Core.Test.Completion
       Assert.Equal(VerificationStatus.Rejected, fixture.Items[0].VerificationStatus);
       Assert.Null(fixture.Items[0].DateCompleted);
       fixture.Opportunities.Verify(service => service.AllocateRewards(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<bool>()), Times.Never);
+      fixture.UserService.Verify(service => service.AssignSkills(It.IsAny<User>(), It.IsAny<OpportunityModel>()), Times.Never);
       Assert.Equal([true], fixture.CleanupRequests);
     }
 
@@ -139,6 +198,7 @@ namespace Yoma.Core.Test.Completion
       Assert.All(fixture.CleanupRequests.Skip(1), clear => Assert.False(clear));
       Assert.Equal(complete ? VerificationStatus.Completed : VerificationStatus.Pending, fixture.Items[0].VerificationStatus);
       fixture.Opportunities.Verify(service => service.AllocateRewards(fixture.Opportunity.Id, false, true), complete ? Times.Once() : Times.Never());
+      fixture.VerifySkillsAssigned(fixture.Users[0], complete ? Times.Once() : Times.Never());
     }
 
     [Fact]
@@ -152,6 +212,7 @@ namespace Yoma.Core.Test.Completion
       Assert.All(fixture.CleanupRequests.Skip(1), clear => Assert.False(clear));
       Assert.Equal(VerificationStatus.Completed, fixture.Items[0].VerificationStatus);
       fixture.Opportunities.Verify(service => service.AllocateRewards(fixture.Opportunity.Id, false, false), Times.Once);
+      fixture.VerifySkillsAssigned(fixture.Users[0], Times.Once());
     }
 
     [Fact]
@@ -175,6 +236,7 @@ namespace Yoma.Core.Test.Completion
       Assert.NotNull(fixture.Items[0].DateCompleted);
       Assert.True(result.Imported);
       fixture.Opportunities.Verify(service => service.AllocateRewards(fixture.Opportunity.Id, false, true), Times.Exactly(2));
+      fixture.VerifySkillsAssigned(fixture.Users[0], Times.Exactly(2));
     }
     #endregion
 
@@ -195,11 +257,15 @@ namespace Yoma.Core.Test.Completion
         Status = Status.Active,
         DateStart = DateTimeOffset.UtcNow.AddDays(-10),
         VerificationEnabled = true,
-        VerificationMethod = VerificationMethod.Automatic
+        VerificationMethod = VerificationMethod.Automatic,
+        Skills = [new() { Id = Guid.NewGuid(), Name = "Communication" }, new() { Id = Guid.NewGuid(), Name = "Teamwork" }]
       };
       internal LinkInfo Link { get; } = new() { Id = Guid.NewGuid(), EntityType = ActionLinkEntityType.Opportunity, Action = LinkAction.Verify };
       internal Mock<IUserService> UserService { get; } = new();
       internal Mock<IOpportunityService> Opportunities { get; } = new();
+      internal Mock<IRewardService> Rewards { get; } = new();
+      internal Mock<IMediator> Mediator { get; } = new();
+      internal OpportunityAllocateRewardResponse Allocation { get; }
       internal List<bool> CleanupRequests { get; } = [];
       internal List<bool> OwnedCleanupRequests { get; } = [];
       internal bool RollBackFirstOwnedExecution { get; set; }
@@ -207,6 +273,13 @@ namespace Yoma.Core.Test.Completion
 
       internal Fixture()
       {
+        // AllocateRewards reloads a separate projection without child items in Production.
+        // Returning the original opportunity here would hide the missing-skills regression.
+        var allocatedOpportunity = ObjectHelper.DeepCopy(Opportunity);
+        allocatedOpportunity.Skills = null;
+        allocatedOpportunity.ParticipantCount = 6;
+        allocatedOpportunity.ZltoRewardCumulative = 120m;
+        Allocation = new OpportunityAllocateRewardResponse { Opportunity = allocatedOpportunity };
         Link.EntityId = Opportunity.Id;
         Items.AddRange(Users.Select(user => new Participation
         {
@@ -228,7 +301,7 @@ namespace Yoma.Core.Test.Completion
         Opportunities.Setup(service => service.GetByIdOrNull(Opportunity.Id, false, false, false, null)).Returns(Opportunity);
         Opportunities.Setup(service => service.GetByExternalId(Opportunity.OrganizationId, "external-id", true, true)).Returns(Opportunity);
         Opportunities.Setup(service => service.AllocateRewards(Opportunity.Id, It.IsAny<bool>(), It.IsAny<bool>()))
-          .ReturnsAsync(new OpportunityAllocateRewardResponse { Opportunity = Opportunity });
+          .ReturnsAsync(Allocation);
         var repository = new Mock<IRepositoryBatchedWithNavigationAndCustomFieldFilter<Participation>>();
         IQueryable<Participation> Read() => Items.Select(item => ObjectHelper.DeepCopy(item)).AsQueryable();
         repository.Setup(value => value.Query(false, LockMode.Wait)).Returns(Read);
@@ -289,15 +362,20 @@ namespace Yoma.Core.Test.Completion
 
         Service = new MyOpportunityService(NullLogger<MyOpportunityService>.Instance, Options.Create(new AppSettings()), http,
           UserService.Object, organizations.Object, Opportunities.Object, actions.Object, statuses.Object, Mock.Of<IOpportunityStatusService>(), Mock.Of<IOrganizationStatusService>(),
-          Mock.Of<IBlobService>(), Mock.Of<ISSICredentialService>(), Mock.Of<IRewardService>(), links.Object,
+          Mock.Of<IBlobService>(), Mock.Of<ISSICredentialService>(), Rewards.Object, links.Object,
           Mock.Of<INotificationURLFactory>(), Mock.Of<INotificationDeliveryService>(), countries, Mock.Of<IGenderService>(), intervals,
           Mock.Of<IDownloadService>(), Mock.Of<IOpportunityVerificationTypeService>(), Mock.Of<IDelayedExecutionService>(),
           Mock.Of<ISyncUserAuthenticationService>(), Mock.Of<ISyncStateService>(), Mock.Of<IProcessingService>(), Mock.Of<ICustomFieldDefinitionService>(), Mock.Of<ICustomFieldValueService>(),
           new MyOpportunitySearchFilterVerificationFilesAdminValidator(), new MyOpportunitySearchFilterAdminValidator(), new MyOpportunityRequestValidatorVerify(intervals, countries),
           new MyOpportunityRequestValidatorVerifyFinalize(UserService.Object, Opportunities.Object), new MyOpportunityRequestValidatorVerifyFinalizeBatch(UserService.Object, Opportunities.Object),
-          new MyOpportunityRequestValidatorVerifyImportCsv(organizations.Object), new MyOpportunityRequestValidatorVerifyImportPartnerSync(countries), Mock.Of<IMediator>(),
+          new MyOpportunityRequestValidatorVerifyImportCsv(organizations.Object), new MyOpportunityRequestValidatorVerifyImportPartnerSync(countries), Mediator.Object,
           repository.Object, Mock.Of<IRepository<MyOpportunityVerification>>(), execution.Object);
       }
+
+      internal void VerifySkillsAssigned(User user, Times times) =>
+        UserService.Verify(service => service.AssignSkills(user, It.Is<OpportunityModel>(opportunity =>
+          opportunity.Id == Opportunity.Id && opportunity.OrganizationId == Opportunity.OrganizationId &&
+          opportunity.Skills != null && opportunity.Skills.Select(skill => skill.Id).SequenceEqual(Opportunity.Skills!.Select(skill => skill.Id)))), times);
 
       internal MyOpportunityRequestVerifyFinalize Request(User user) => new()
       {

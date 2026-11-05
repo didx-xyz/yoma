@@ -374,9 +374,14 @@ jobs:
         run: |-
           docker compose -f ./src/api/docker-compose.yml pull
           docker compose -f ./src/web/docker-compose.yml pull
+        # Web: always this run's image. Its build context is the whole repo, so docker-build
+        # rebuilds it on every run; falling back to `latest` (the last successful master build)
+        # tested the current e2e specs against an older web whenever a PR only touched the API
+        # or a master build had failed (PR #2021). API stays conditional: an API-only image is not
+        # built when src/api is unchanged, and image_version is set on both matrix legs regardless.
         env:
           API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
-          YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
+          YOUTH_TAG: ${{ needs.docker-push.outputs.image_version || 'latest' }}
         continue-on-error: true
       - name: Start services
         if: steps.should-run.outputs.run == 'true'
@@ -385,7 +390,7 @@ jobs:
           docker compose -f ./src/web/docker-compose.yml up -d
         env:
           API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
-          YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
+          YOUTH_TAG: ${{ needs.docker-push.outputs.image_version || 'latest' }}
 
       - uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d # v5.2.4
         if: steps.should-run.outputs.run == 'true'
