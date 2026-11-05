@@ -405,8 +405,14 @@ async function selectOption(page: Page, inputId: string, filter = "") {
   const input = page.locator(inputId);
   await input.click();
   if (filter) await input.pressSequentially(filter, { delay: 20 });
-  // "N results available" is react-select's live region: the menu has options.
-  await expect(page.getByText(/results? available/)).toBeVisible();
+  // Wait for the menu: react-select sets aria-expanded on the input once it is open and renders
+  // the options under the listbox the input's aria-controls points at (portalled, no option
+  // roles exposed, and the "N results available" live region is unreliable on a fast build).
+  await expect(input).toHaveAttribute("aria-expanded", "true");
+  const listbox = await input.getAttribute("aria-controls");
+  await expect(
+    page.locator(`[id="${listbox}"] [id*="-option-"]`).first(),
+  ).toBeVisible();
   await input.press("Enter");
   await input.press("Escape");
 }
