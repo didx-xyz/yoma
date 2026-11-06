@@ -82,8 +82,8 @@ config-cli:
     KEYCLOAK_USER: null
     # REALM_YOMA_ADMIN_CLI_SECRET: xxx
     # SMTP_PASSWORD: SG.xxx
-    CLIENT_DIDXME_ASSERTION_ENABLED: "true"
-    CLIENT_DIDXME_ASSERTION_AUDIENCE: "https://test.didxtech.com/iam/realms/consumers"
+    CLIENT_DIDXME_ASSERTION_ENABLED: true
+    CLIENT_DIDXME_ASSERTION_AUDIENCE: https://test.didxtech.com/iam/realms/consumers
     CLIENT_YOMA_API_URL: https://v3api.dev.yoma.world
     CLIENT_YOMA_WEB_URL: https://dev.yoma.world
     CLIENT_ATINGI_URL: https://preprod.atingi.org
