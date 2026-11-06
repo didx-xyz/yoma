@@ -1,18 +1,22 @@
-import { Nunito, Open_Sans } from "next/font/google";
+import localFont from "next/font/local";
 
-// The site's two `next/font` families, as CSS variables. `_app` puts them on `#mainContent`;
+// The site's two font families, as CSS variables. `_app` puts them on `#mainContent`;
 // `CustomModal` puts them on its portal root too, which sits outside `#mainContent` on
 // `<body>` and otherwise fell back to the system font (2026-10-21).
-export const openSans = Open_Sans({
-  subsets: ["latin"],
+//
+// Self-hosted (variable, Latin subset, from Fontsource; OFL licences beside the files) so the
+// image build never fetches from Google: `next/font/google` failed the master web build when
+// the fetch did (2026-11-05). Each file covers the whole weight range below.
+export const openSans = localFont({
+  src: "../assets/fonts/open-sans-latin-wght.woff2",
   variable: "--font-open-sans",
   display: "swap",
-  weight: ["300", "400", "500", "600", "700", "800"],
+  weight: "300 800",
 });
 
-export const nunito = Nunito({
-  subsets: ["latin"],
+export const nunito = localFont({
+  src: "../assets/fonts/nunito-latin-wght.woff2",
   variable: "--font-nunito",
   display: "swap",
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  weight: "200 1000",
 });
