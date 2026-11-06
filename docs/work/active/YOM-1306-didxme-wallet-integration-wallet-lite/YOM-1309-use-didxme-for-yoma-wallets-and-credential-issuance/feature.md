@@ -42,6 +42,7 @@ security configuration and privileged workflows are held in the private engineer
 - [x] Adrian confirmed credential detail access after the mobile-to-email transition; the existing YoID was returned.
 - [ ] Verify caching across deployed API replicas.
 - [x] Jason's five frontend CF references aligned (2026-11-05, this branch; see `handoffs/2026-11-05-a.md`). Staging rollout coordination still open.
+- [x] UI navigation destinations checked after the API's HTTP/HTTPS URL rule (Adrian's 2026-11-03 follow-up): "Go to opportunity" now refuses non-http(s) links and drops the opener; other data links already safe (see `handoffs/2026-11-06-a.md`).
 - [ ] REQUIRED: implement supported issuance recovery/reconciliation.
 - [ ] REQUIRED: implement background Replay lookup/deletion/confirmed absence and preserve issuance dates.
 - [ ] Optional: shared Debug-only outbound Flurl logging, controlled by existing logging settings,
