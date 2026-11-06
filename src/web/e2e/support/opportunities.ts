@@ -5,12 +5,14 @@ import { ORGANISATIONS } from "../seed";
  * Create a minimal, valid, Active opportunity of a type through the API — for tests that need
  * one to act on without driving the eight-step wizard. No verification, no reward, so it needs
  * neither a credential schema nor a ZLTO pool. Archive it afterwards with
- * `api.patch(\`/opportunity/${id}/Deleted\`)` (the API has no DELETE).
+ * `api.patch(\`/opportunity/${id}/Deleted\`)` (the API has no DELETE). `url` is the partner link
+ * behind "Go to opportunity" (none by default).
  */
 export async function createOpportunity(
   api: ApiClient,
   type: string,
   title: string,
+  { url = null }: { url?: string | null } = {},
 ): Promise<string> {
   const [types, categories, countries, languages, intervals, skills] =
     await Promise.all([
@@ -32,7 +34,7 @@ export async function createOpportunity(
     typeId: types.find((t) => t.name === type)!.id,
     organizationId: ORGANISATIONS.yoma.id,
     instructions: null,
-    uRL: null,
+    uRL: url,
     zltoReward: null,
     zltoRewardPool: null,
     rewardType: "None",
