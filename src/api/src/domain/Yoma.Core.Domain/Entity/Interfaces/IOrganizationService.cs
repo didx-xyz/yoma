@@ -26,6 +26,8 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
     Task<Organization> Update(OrganizationRequestUpdate request, bool ensureOrganizationAuthorization);
 
+    Task<Organization> UpdateRewardPool(Guid id, OrganizationRequestUpdateRewardPool request);
+
     Task<Organization> UpdateStatus(Guid id, OrganizationRequestUpdateStatus request, bool ensureOrganizationAuthorization);
 
     Task<Organization> UpdateSettings(Guid id, SettingsRequest request, bool ensureOrganizationAuthorization);
@@ -43,6 +45,8 @@ namespace Yoma.Core.Domain.Entity.Interfaces
     Task<Organization> AssignAdmins(Guid id, List<string> usernames, bool ensureOrganizationAuthorization);
 
     Task<Organization> RemoveAdmins(Guid id, List<string> usernames, bool ensureOrganizationAuthorization);
+
+    Task SynchronizeAdminRoles(List<Guid> userIds);
 
     Task ResetRewardCumulativesCurrentFinancialYear(bool actionedBySystem);
 

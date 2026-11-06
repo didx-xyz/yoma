@@ -23,7 +23,7 @@ namespace Yoma.Core.Test.Referral.Services
         .Build();
 
       fixture.UserService
-        .Setup(x => x.GetByUsername("testuser@example.com", It.IsAny<bool>(), It.IsAny<bool>()))
+        .Setup(x => x.GetCurrentUser(It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>()))
         .Returns(user);
 
       var service = fixture.Build();
@@ -52,7 +52,7 @@ namespace Yoma.Core.Test.Referral.Services
         .Build();
 
       fixture.UserService
-        .Setup(x => x.GetByUsername("testuser@example.com", It.IsAny<bool>(), It.IsAny<bool>()))
+        .Setup(x => x.GetCurrentUser(It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>()))
         .Returns(user);
 
       var service = fixture.Build();
@@ -82,7 +82,7 @@ namespace Yoma.Core.Test.Referral.Services
         .Build();
 
       fixture.UserService
-        .Setup(x => x.GetByUsername("referrer@example.com", It.IsAny<bool>(), It.IsAny<bool>()))
+        .Setup(x => x.GetCurrentUser(It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>()))
         .Returns(user);
 
       // Setup links owned by the referrer

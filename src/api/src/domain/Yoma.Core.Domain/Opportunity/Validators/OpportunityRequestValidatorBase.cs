@@ -359,8 +359,8 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .WithMessage("With manual verification, one or more verification types are required.");
 
       RuleFor(x => x.VerificationTypes)
-          .Must(types => types == null || types.All(type => VerificationTypeExists(type.Type)))
-          .WithMessage("Verification types must exist if specified.");
+          .Must(types => types == null || types.All(type => type != null && VerificationTypeExists(type.Type)))
+          .WithMessage("Verification types must contain non-empty entries with valid types if specified.");
 
       // Shared opportunities cannot be hidden
       RuleFor(opportunity => opportunity.Hidden)

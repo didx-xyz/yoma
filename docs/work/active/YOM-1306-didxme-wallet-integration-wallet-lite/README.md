@@ -52,13 +52,18 @@ ticket was removed.
 Two custom-field source keys changed while retaining definition identity and display labels:
 `EntrepreneurshipProgrammeOtherDescription` becomes `EntrepreneurshipProgrammeOther`, and
 `EntrepreneurshipRegistrationReference` becomes `EntrepreneurshipRegistrationRef`.
-Jason must align frontend rules/help/CSV samples before coordinated rollout. See the
+Jason aligned the frontend references and added guards on this branch; coordinated rollout remains.
+See the
 [API/frontend handoff](./YOM-1309-use-didxme-for-yoma-wallets-and-credential-issuance/handoffs/2026-11-02-a.md#credential-attribute-names--implemented-api-change-and-jason-handoff).
 
 ## Release Gates
 
-PR review fixes and validation are recorded in the [2026-11-03 handoff](./handoffs/2026-11-03-a.md).
-Adrian reviewed and authorized committing this batch.
+The current review result and Jason's remaining UI actions are in the
+[2026-11-06 handoff](./handoffs/2026-11-06-a.md); earlier decisions remain in the
+[2026-11-03 handoff](./handoffs/2026-11-03-a.md). The Medium batch was restored from its local
+checkpoint onto the updated branch and is uncommitted for review. Commit/push are not authorized.
+The reward-pool UI change, upload handling, rich-text and document-preview checks are tracked
+in the current handoff; Jason's CF and navigation fixes are already present.
 
 1. Complete recovery and Replay; verify original issuance dates are preserved.
 2. Finish participant/browser/mobile and credential-detail checks with Jason.

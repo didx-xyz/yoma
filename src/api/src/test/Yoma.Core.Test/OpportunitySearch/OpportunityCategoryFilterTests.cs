@@ -39,6 +39,62 @@ namespace Yoma.Core.Test.OpportunitySearch
     #endregion
 
     #region Tests
+    [Fact]
+    public void OrganizationCriteriaRejectsAnUnauthorizedSelectionBeforeQuerying()
+    {
+      var fixture = new Fixture();
+      fixture.SetRole(Constants.Role_OrganizationAdmin);
+      var selection = new List<Guid> { Guid.NewGuid() };
+      fixture.Organizations.Setup(service => service.IsAdminsOf(It.IsAny<List<Guid>>(), true))
+        .Throws(new Domain.Core.Exceptions.SecurityException("Unauthorized"));
+
+      Assert.Throws<Domain.Core.Exceptions.SecurityException>(() =>
+        fixture.Service.ListOpportunitySearchCriteriaCategoriesAdmin(selection, true));
+
+      fixture.Mappings.VerifyNoOtherCalls();
+      fixture.Opportunities.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public void PublicOrganizationsSerializeOnlyPublicFields()
+    {
+      var fixture = new Fixture();
+      var organization = new Domain.Entity.Models.OrganizationInfoAdmin
+      {
+        Id = Guid.NewGuid(),
+        Name = "Public organization",
+        Tagline = "Tagline",
+        Status = OrganizationStatus.Active,
+        LogoURL = "https://example.org/logo.png",
+        ZltoRewardPoolCurrentFinancialYear = 100,
+        ZltoRewardCumulative = 25,
+        ZltoRewardCumulativeCurrentFinancialYear = 25,
+        ZltoRewardBalanceCurrentFinancialYear = 75
+      };
+      fixture.Opportunities.Setup(repository => repository.Query()).Returns(new[]
+      {
+        new OpportunityModel
+        {
+          Id = Guid.NewGuid(), OrganizationId = organization.Id,
+          OrganizationStatusId = Fixture.OrganizationActiveId, StatusId = Fixture.ActiveId,
+          DateStart = DateTimeOffset.UtcNow.AddDays(-1)
+        }
+      }.AsQueryable());
+      fixture.Organizations.Setup(service => service.Search(It.IsAny<Domain.Entity.Models.OrganizationSearchFilter>(), false))
+        .Returns(new Domain.Entity.Models.OrganizationSearchResults { Items = [organization] });
+
+      var result = Assert.Single(fixture.Service.ListOpportunitySearchCriteriaOrganizations(null));
+      var json = Newtonsoft.Json.Linq.JObject.FromObject(result);
+
+      Assert.IsType<Domain.Entity.Models.OrganizationInfo>(result);
+      Assert.Equal(organization.Id, result.Id);
+      Assert.Equal(organization.Name, result.Name);
+      Assert.Equal(organization.Tagline, result.Tagline);
+      Assert.Equal(organization.Status, result.Status);
+      Assert.Equal(organization.LogoURL, result.LogoURL);
+      Assert.Equal(["Id", "LogoURL", "Name", "Status", "Tagline"], json.Properties().Select(property => property.Name).Order());
+    }
+
     [Theory]
     [InlineData("default")]
     [InlineData("empty")]

@@ -1,8 +1,10 @@
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Moq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using System.Security.Claims;
 using Xunit;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -23,6 +25,56 @@ namespace Yoma.Core.Test.Entity
   public class UserAccountVerificationTests
   {
     #region Tests
+    [Theory]
+    [InlineData("sub", "other@example.invalid")]
+    [InlineData(ClaimTypes.NameIdentifier, "+27123456789")]
+    public void CurrentUserUsesSubjectEvenWhenTheUsernameMatchesSomeoneElse(string subjectClaim, string username)
+    {
+      var owner = new User { Id = Guid.NewGuid(), ExternalId = Guid.NewGuid(), Email = "changed@example.invalid" };
+      var other = new User { Id = Guid.NewGuid(), ExternalId = Guid.NewGuid(), Email = "other@example.invalid", PhoneNumber = "+27123456789" };
+      var fixture = new Fixture([owner, other], []);
+      fixture.Accessor.HttpContext = new DefaultHttpContext
+      {
+        User = new ClaimsPrincipal(new ClaimsIdentity([
+          new Claim(subjectClaim, owner.ExternalId!.Value.ToString()), new Claim(ClaimTypes.Name, username)], "test"))
+      };
+
+      Assert.Equal(owner.Id, fixture.Service.GetCurrentUser(false, false).Id);
+      // Explicit contact searches are still available to administrative/webhook callers.
+      Assert.Equal(other.Id, fixture.Service.GetByUsername(username, false, false).Id);
+    }
+
+    [Fact]
+    public void MissingIdentityBindingCannotFallBackToAUsernameMatch()
+    {
+      var other = new User { Id = Guid.NewGuid(), ExternalId = Guid.NewGuid(), Email = "other@example.invalid" };
+      var fixture = new Fixture([other], []);
+      fixture.Accessor.HttpContext = new DefaultHttpContext
+      {
+        User = new ClaimsPrincipal(new ClaimsIdentity([
+          new Claim("sub", Guid.NewGuid().ToString()), new Claim(ClaimTypes.Name, other.Email)], "test"))
+      };
+
+      Assert.Throws<Domain.Core.Exceptions.EntityNotFoundException>(() => fixture.Service.GetCurrentUser(false, false, true));
+      Assert.Throws<Domain.Core.Exceptions.EntityNotFoundException>(() => fixture.Service.GetCurrentUser(false, false));
+    }
+
+    [Fact]
+    public void BackgroundFallbackMustBeExplicitAndCannotReplaceAnInvalidAuthenticatedSubject()
+    {
+      var system = new User { Id = Guid.NewGuid(), Email = Domain.Core.Helpers.HttpContextAccessorHelper.GetUsernameSystem };
+      var fixture = new Fixture([system], []);
+
+      Assert.Throws<Domain.Core.Exceptions.SecurityException>(() => fixture.Service.GetCurrentUser(false, false));
+      Assert.Equal(system.Id, fixture.Service.GetCurrentUser(false, false, true).Id);
+
+      fixture.Accessor.HttpContext = new DefaultHttpContext
+      {
+        User = new ClaimsPrincipal(new ClaimsIdentity([new Claim("sub", "invalid")], "test"))
+      };
+      Assert.Throws<Domain.Core.Exceptions.SecurityException>(() => fixture.Service.GetCurrentUser(false, false, true));
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(1)]
@@ -139,6 +191,7 @@ namespace Yoma.Core.Test.Entity
       public Mock<IRepositoryValueContainsWithNavigation<User>> Users { get; } = new();
       public Mock<IRepository<UserLoginHistory>> History { get; } = new();
       public UserService Service { get; }
+      public HttpContextAccessor Accessor { get; } = new();
 
       public Fixture(List<User> users, List<UserLoginHistory> history)
       {
@@ -151,7 +204,7 @@ namespace Yoma.Core.Test.Entity
           .Returns([new SettingsDefinition { Key = "Test", Type = SettingType.Boolean, DefaultValue = "false" }]);
 
         Service = new UserService(
-          Options.Create(new AppSettings()), Mock.Of<IBlobService>(), Mock.Of<ISkillService>(),
+          Options.Create(new AppSettings()), Accessor, Mock.Of<IBlobService>(), Mock.Of<ISkillService>(),
           Mock.Of<IOpportunityCategoryService>(), Mock.Of<IAccessibilityService>(), Mock.Of<ILanguageService>(),
           Mock.Of<IEngagementTypeService>(), Mock.Of<ISSITenantService>(), Mock.Of<ISSICredentialService>(),
           settings.Object, Mock.Of<IDelayedExecutionService>(),

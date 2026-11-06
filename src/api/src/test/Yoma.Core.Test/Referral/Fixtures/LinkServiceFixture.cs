@@ -28,6 +28,7 @@ namespace Yoma.Core.Test.Referral.Fixtures
     public Mock<IShortLinkProviderClient> ShortLinkProviderClient { get; }
     public Mock<IUserService> UserService { get; }
     public Mock<IProgramService> ProgramService { get; }
+    public Mock<IBlockService> BlockService { get; }
     public Mock<ILinkStatusService> LinkStatusService { get; }
     public Mock<ILinkUsageStatusService> LinkUsageStatusService { get; }
     public Mock<ICountryService> CountryService { get; }
@@ -67,6 +68,7 @@ namespace Yoma.Core.Test.Referral.Fixtures
 
       UserService = new Mock<IUserService>();
       ProgramService = new Mock<IProgramService>();
+      BlockService = new Mock<IBlockService>();
 
       LinkStatusService = MockLookupServices.CreateLinkStatusService();
       LinkUsageStatusService = MockLookupServices.CreateLinkUsageStatusService();
@@ -108,6 +110,7 @@ namespace Yoma.Core.Test.Referral.Fixtures
         HttpContextAccessor.Object,
         UserService.Object,
         ProgramService.Object,
+        BlockService.Object,
         LinkStatusService.Object,
         LinkUsageStatusService.Object,
         CountryService.Object,

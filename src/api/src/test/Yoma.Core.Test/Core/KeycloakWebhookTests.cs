@@ -174,6 +174,26 @@ namespace Yoma.Core.Test.Core
       fixture.UserService.Verify(o => o.GetByUsernameOrNull(It.IsAny<string>(), false, false), Times.Never);
     }
 
+    [Theory]
+    [InlineData("REGISTER")]
+    [InlineData("LOGIN")]
+    [InlineData("UPDATE_PROFILE")]
+    public async Task UsernameFallbackCannotReplaceAnExistingIdentityBinding(string type)
+    {
+      using var fixture = new Fixture();
+      var existing = fixture.AddUser(linked: true);
+      var externalId = existing.ExternalId;
+      fixture.KeycloakUser.Id = Guid.NewGuid();
+
+      await fixture.Deliver(type);
+
+      Assert.Equal(externalId, existing.ExternalId);
+      fixture.UserService.Verify(o => o.Upsert(It.IsAny<UserRequest>(), It.IsAny<bool>(), It.IsAny<bool>()), Times.Never);
+      fixture.Repository.Verify(o => o.Update(It.IsAny<User>()), Times.Never);
+      fixture.VerifyRoleAssignment(Times.Never());
+      Assert.Empty(fixture.Wallet.Invocations);
+    }
+
     [Fact]
     public async Task RegistrationStillCreatesWithoutLoginSideEffects()
     {
@@ -754,7 +774,7 @@ namespace Yoma.Core.Test.Core
           .Returns(Task.CompletedTask);
 
         _realUserService = new UserService(
-          Options.Create(new AppSettings()),
+          Options.Create(new AppSettings()), new HttpContextAccessor(),
           Mock.Of<IBlobService>(),
           Mock.Of<ISkillService>(),
           Mock.Of<IOpportunityCategoryService>(),

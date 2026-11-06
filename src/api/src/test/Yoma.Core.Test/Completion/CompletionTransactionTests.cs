@@ -41,6 +41,73 @@ namespace Yoma.Core.Test.Completion
   public class CompletionTransactionTests
   {
     #region Tests
+    [Theory]
+    [InlineData(VerificationStatus.Completed)]
+    [InlineData(VerificationStatus.Rejected)]
+    public async Task ManualFinalizationRequiresOrganizationAccessBeforeMutation(VerificationStatus status)
+    {
+      var fixture = new Fixture();
+      fixture.Opportunities.Setup(service => service.GetById(fixture.Opportunity.Id, true, true, true, null))
+        .Throws(new Domain.Core.Exceptions.SecurityException("Unauthorized"));
+      var request = fixture.Request(fixture.Users[0]);
+      request.Status = status;
+      request.Comment = "Review outcome";
+
+      await Assert.ThrowsAsync<Domain.Core.Exceptions.SecurityException>(() => fixture.Service.FinalizeVerificationManual(request));
+
+      Assert.All(fixture.Items, item => Assert.Equal(VerificationStatus.Pending, item.VerificationStatus));
+      Assert.Empty(fixture.CleanupRequests);
+    }
+
+    [Fact]
+    public async Task ManualBatchChecksOrganizationAccessForEachItem()
+    {
+      var fixture = new Fixture();
+      fixture.Opportunities.SetupSequence(service => service.GetById(fixture.Opportunity.Id, true, true, true, null))
+        .Throws(new Domain.Core.Exceptions.SecurityException("Unauthorized"))
+        .Returns(fixture.Opportunity);
+
+      var result = await fixture.Service.FinalizeVerificationManual(new MyOpportunityRequestVerifyFinalizeBatch
+      {
+        Status = VerificationStatus.Rejected,
+        Comment = "Review outcome",
+        Items = [.. fixture.Users.Select(user => new MyOpportunityRequestVerifyFinalizeBatchItem
+        {
+          UserId = user.Id,
+          OpportunityId = fixture.Opportunity.Id
+        })]
+      });
+
+      Assert.Single(result.Items, item => item.Failure != null);
+      Assert.Single(result.Items, item => item.Failure == null);
+      Assert.Equal(VerificationStatus.Pending, fixture.Items[0].VerificationStatus);
+      Assert.Equal(VerificationStatus.Rejected, fixture.Items[1].VerificationStatus);
+      fixture.Opportunities.Verify(service => service.GetById(fixture.Opportunity.Id, true, true, true, null), Times.Exactly(2));
+    }
+
+    [Theory]
+    [InlineData(",,,,,,,,external-id")]
+    [InlineData("first@example.org,,,,,,,,")]
+    public async Task CsvErrorsStopAtTheConfiguredBudgetBeforeDomainProcessing(string row)
+    {
+      var fixture = new Fixture();
+      fixture.Settings.CSVImportMaxProbeErrorCount = 3;
+      using var stream = new MemoryStream(Encoding.UTF8.GetBytes(
+        "Email,PhoneNumber,FirstName,Surname,Gender,Country,DateCompleted,CountryCompleted,OpportunityExternalId\n" +
+        string.Join('\n', Enumerable.Repeat(row, 30)) + "\n"));
+
+      var result = await fixture.Service.PerformActionImportVerificationFromCSV(new MyOpportunityRequestVerifyImportCsv
+      {
+        OrganizationId = fixture.Opportunity.OrganizationId,
+        File = new FormFile(stream, 0, stream.Length, "File", "completions.csv") { Headers = new HeaderDictionary(), ContentType = "text/csv" }
+      }, false);
+
+      Assert.False(result.Imported);
+      Assert.Equal(3, result.RecordsTotal);
+      Assert.Equal(3, result.RecordsFailed);
+      Assert.Empty(fixture.CleanupRequests);
+    }
+
     [Fact]
     public async Task ManualApprovalRequestsCleanupAndPreservesCompletionOutcome()
     {
@@ -270,6 +337,7 @@ namespace Yoma.Core.Test.Completion
       internal List<bool> OwnedCleanupRequests { get; } = [];
       internal bool RollBackFirstOwnedExecution { get; set; }
       internal MyOpportunityService Service { get; }
+      internal AppSettings Settings { get; } = new();
 
       internal Fixture()
       {
@@ -294,10 +362,10 @@ namespace Yoma.Core.Test.Completion
         }));
         UserService.Setup(service => service.GetById(It.IsAny<Guid>(), false, false)).Returns((Guid id, bool _, bool _) => Users.Single(user => user.Id == id));
         UserService.Setup(service => service.GetByIdOrNull(It.IsAny<Guid>(), false, false)).Returns((Guid id, bool _, bool _) => Users.SingleOrDefault(user => user.Id == id));
-        UserService.Setup(service => service.GetByUsername(It.IsAny<string>(), false, false)).Returns(Users[0]);
+        UserService.Setup(service => service.GetCurrentUser(false, false, It.IsAny<bool>())).Returns(Users[0]);
         Users[0].ExternalId = Guid.NewGuid();
         UserService.Setup(service => service.GetByUsernameOrNull(Users[0].Username, false, false)).Returns(Users[0]);
-        Opportunities.Setup(service => service.GetById(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<bool>(), false, null)).Returns(Opportunity);
+        Opportunities.Setup(service => service.GetById(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>(), null)).Returns(Opportunity);
         Opportunities.Setup(service => service.GetByIdOrNull(Opportunity.Id, false, false, false, null)).Returns(Opportunity);
         Opportunities.Setup(service => service.GetByExternalId(Opportunity.OrganizationId, "external-id", true, true)).Returns(Opportunity);
         Opportunities.Setup(service => service.AllocateRewards(Opportunity.Id, It.IsAny<bool>(), It.IsAny<bool>()))
@@ -360,7 +428,7 @@ namespace Yoma.Core.Test.Completion
         var intervals = Mock.Of<ITimeIntervalService>();
         var countries = Mock.Of<ICountryService>();
 
-        Service = new MyOpportunityService(NullLogger<MyOpportunityService>.Instance, Options.Create(new AppSettings()), http,
+        Service = new MyOpportunityService(NullLogger<MyOpportunityService>.Instance, Options.Create(Settings), http,
           UserService.Object, organizations.Object, Opportunities.Object, actions.Object, statuses.Object, Mock.Of<IOpportunityStatusService>(), Mock.Of<IOrganizationStatusService>(),
           Mock.Of<IBlobService>(), Mock.Of<ISSICredentialService>(), Rewards.Object, links.Object,
           Mock.Of<INotificationURLFactory>(), Mock.Of<INotificationDeliveryService>(), countries, Mock.Of<IGenderService>(), intervals,

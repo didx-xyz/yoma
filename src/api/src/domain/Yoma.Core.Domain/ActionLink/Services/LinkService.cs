@@ -135,6 +135,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
         }
         else
           filter.Organizations = [.. _organizationService.ListAdminsOf(false).Select(o => o.Id)];
+
+        if (filter.Organizations.Count == 0) throw new SecurityException("Unauthorized");
       }
 
       //entity type
@@ -324,7 +326,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       var action = Enum.Parse<LinkAction>(link.Action);
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetCurrentUser(false, false, !ensureOrganizationAuthorization);
 
       NotificationActionLinkVerify? notificationDataDistributionList = null;
       switch (action)
@@ -707,7 +709,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
     private Link LinkFromRequest(LinkRequestCreateBase request, ActionLinkStatus status, bool ensureOrganizationAuthorization)
     {
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetCurrentUser(false, false, !ensureOrganizationAuthorization);
 
       var item = new Link
       {
@@ -766,7 +768,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
           //user context optional; only tracked provided executed with context
           if (!HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor)) return link.ToLinkInfo(false);
 
-          user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+          user = _userService.GetCurrentUser(false, false);
 
           usageLog = _linkUsageLogRepository.Query().SingleOrDefault(o => o.LinkId == link.Id && o.UserId == user.Id);
           if (usageLog != null) return link.ToLinkInfo(false);
@@ -776,7 +778,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
           //user context required
           if (!HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor)) throw new InvalidOperationException($"User context required for link with action '{action}'");
 
-          user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+          user = _userService.GetCurrentUser(false, false);
 
           usageLog = _linkUsageLogRepository.Query().SingleOrDefault(o => o.LinkId == link.Id && o.UserId == user.Id);
           if (usageLog != null) throw new ValidationException($"This link has already been used / claimed on '{usageLog.DateCreated:yyyy-MM-dd HH:mm:ss}'");
@@ -797,8 +799,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
         if (distributionList == null || distributionList.Count == 0)
           throw new DataInconsistencyException("Link is locked to a distribution list but no distribution list is defined");
 
-        var isAuthorized = (!string.IsNullOrEmpty(user.Email) && distributionList.Contains(user.Email, StringComparer.OrdinalIgnoreCase)) ||
-                       (!string.IsNullOrEmpty(user.PhoneNumber) && distributionList.Contains(user.PhoneNumber));
+        var isAuthorized = (user.EmailConfirmed == true && !string.IsNullOrEmpty(user.Email) && distributionList.Contains(user.Email, StringComparer.OrdinalIgnoreCase)) ||
+                       (user.PhoneNumberConfirmed == true && !string.IsNullOrEmpty(user.PhoneNumber) && distributionList.Contains(user.PhoneNumber));
 
         if (!isAuthorized)
           throw new SecurityException("Unauthorized: You don't have access because this link is limited to specific users");
@@ -807,6 +809,21 @@ namespace Yoma.Core.Domain.ActionLink.Services
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted();
+
+        // Serialize claims against the current usage total, including claims arriving on different API instances.
+        link = _linkRepository.Query(Core.LockMode.Wait).SingleOrDefault(o => o.Id == link.Id)
+          ?? throw new EntityNotFoundException("Link not found");
+        AssertActive(link);
+
+        usageLog = _linkUsageLogRepository.Query().SingleOrDefault(o => o.LinkId == link.Id && o.UserId == user.Id);
+        if (usageLog != null)
+        {
+          if (action == LinkAction.Verify)
+            throw new ValidationException($"This link has already been used / claimed on '{usageLog.DateCreated:yyyy-MM-dd HH:mm:ss}'");
+
+          scope.Complete();
+          return;
+        }
 
         usageLog = await _linkUsageLogRepository.Create(new LinkUsageLog
         {
@@ -824,7 +841,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
         link = await _linkRepository.Update(link);
 
         scope.Complete();
-      });
+      }, true); //discard accepted EF state when a claim transaction is retried
 
       return link.ToLinkInfo(false);
     }

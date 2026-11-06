@@ -153,7 +153,7 @@ namespace Yoma.Core.Test.SSI
       {
         var user = new User { Id = Guid.NewGuid(), Username = "wallet-test" };
         var users = new Mock<IUserService>(MockBehavior.Strict);
-        users.Setup(service => service.GetByUsername(user.Username, false, false)).Returns(user);
+        users.Setup(service => service.GetCurrentUser(false, false, It.IsAny<bool>())).Returns(user);
         var tenants = new Mock<ISSITenantService>(MockBehavior.Strict);
         tenants.Setup(service => service.GetTenantId(EntityType.User, user.Id)).Returns("holder");
         tenants.Setup(service => service.GetTenantIdOrNull(EntityType.User, user.Id)).Returns("holder");

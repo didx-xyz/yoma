@@ -5,6 +5,8 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 {
   public interface IUserService
   {
+    User GetCurrentUser(bool includeChildItems, bool includeComputed, bool useSystemDefault = false);
+
     User GetByUsername(string username, bool includeChildItems, bool includeComputed);
 
     User? GetByUsernameOrNull(string? username, bool includeChildItems, bool includeComputed);
@@ -21,6 +23,8 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
     Settings GetSettingsByUsername(string username);
 
+    Settings GetSettingsById(Guid id);
+
     SettingsInfo GetSettingsInfoByUsername(string username);
 
     SettingsInfo GetSettingsInfoById(Guid id);
@@ -33,11 +37,11 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
     Task<User> Upsert(UserRequest request, bool enqueueOutcomes, bool publishEvent);
 
-    Task<User> UpsertPhoto(string username, IFormFile file);
+    Task<User> UpsertPhoto(Guid id, IFormFile file);
 
-    Task<User> DeletePhoto(string username);
+    Task<User> DeletePhoto(Guid id);
 
-    Task<User> UpdateSettings(string username, List<string> roles, SettingsRequest request);
+    Task<User> UpdateSettings(Guid id, List<string> roles, SettingsRequest request);
 
     Task AssignSkills(User user, Opportunity.Models.Opportunity opportunity);
 

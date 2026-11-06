@@ -188,7 +188,7 @@ namespace Yoma.Core.Domain.Referral.Services
       var worldwideCode = Country.Worldwide.ToDescription();
       var countryIdWorldwide = _countryService.GetByCodeAlpha2(worldwideCode).Id;
       var isAuthenticated = HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor);
-      var user = isAuthenticated ? _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false) : null;
+      var user = isAuthenticated ? _userService.GetCurrentUser(false, false) : null;
       var userCountryId = user?.CountryId;
 
       // Anonymous users: only allow published state active (active + started), ignore input
@@ -414,7 +414,7 @@ namespace Yoma.Core.Domain.Referral.Services
       if (existingByName != null)
         throw new ValidationException("A referral programme with this name already exists");
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       var result = new Program
       {
@@ -544,7 +544,7 @@ namespace Yoma.Core.Domain.Referral.Services
       if (request.ReferrerLimit.HasValue && result.ReferrerTotal.HasValue && request.ReferrerLimit.Value < result.ReferrerTotal.Value)
         throw new ValidationException($"The referrer limit cannot be lower than the total referrers already recorded ({result.ReferrerTotal.Value:F0})");
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       var pathwayRemoved = result.Pathway != null && request.Pathway == null;
       var popRemoved = result.ProofOfPersonhoodRequired && !request.ProofOfPersonhoodRequired;
@@ -618,7 +618,7 @@ namespace Yoma.Core.Domain.Referral.Services
     {
       var item = GetById(id, false, false);
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       AssertUpdatable(item);
 
@@ -637,17 +637,20 @@ namespace Yoma.Core.Domain.Referral.Services
 
       AssertUpdatable(result);
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       (Program? Program, BlobObject? ItemAdded) resultImage = (null, null);
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+        // Preserve accounting and lifecycle changes committed since the initial permission/status check.
+        result = GetById(id, false, false, LockMode.Wait);
+        AssertUpdatable(result);
         resultImage = await UpdateImage(result, file);
         result.ModifiedByUserId = user.Id;
         result = await _programRepository.Update(result);
         scope.Complete();
-      });
+      }, true);
 
       if (resultImage.Program == null)
         throw new InvalidOperationException($"{nameof(Program)} expected");
@@ -660,7 +663,7 @@ namespace Yoma.Core.Domain.Referral.Services
       var item = GetById(id, true, false);
       var now = DateTimeOffset.UtcNow;
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       bool cancelReferralLinks = false;
       bool flipLinksToLimitReached = false;
@@ -753,7 +756,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       AssertUpdatable(item);
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -860,11 +863,6 @@ namespace Yoma.Core.Domain.Referral.Services
     #region Private Members
     private async Task<Program> GenerateShortLinkReferrer(Program program, string? url)
     {
-      // No locking applied here:
-      // - Admin-only, low-frequency operation
-      // - Duplicate short-link generation across instances is acceptable (last write wins)
-      // - Distributed locking would be overkill for this use case
-
       if (!string.IsNullOrEmpty(program.ReferrerShortURL)) return program;
 
       AssertUpdatable(program);
@@ -880,9 +878,21 @@ namespace Yoma.Core.Domain.Referral.Services
         URL = url
       });
 
-      program.ReferrerShortURL = responseShortLink.Link;
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
 
-      await _programRepository.Update(program);
+        // External link generation may overlap with completion; reload accounting and status before writing.
+        program = GetById(program.Id, true, false, LockMode.Wait);
+        AssertUpdatable(program);
+        if (string.IsNullOrEmpty(program.ReferrerShortURL))
+        {
+          program.ReferrerShortURL = responseShortLink.Link;
+          program = await _programRepository.Update(program);
+        }
+
+        scope.Complete();
+      }, true);
 
       return program;
     }

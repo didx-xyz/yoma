@@ -201,6 +201,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
         }
         else
           filter.Organizations = [.. _organizationService.ListAdminsOf(false).Select(o => o.Id)];
+
+        if (filter.Organizations.Count == 0) throw new SecurityException("Unauthorized");
       }
 
       if (filter.Organizations != null && filter.Organizations.Count != 0)

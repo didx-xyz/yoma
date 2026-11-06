@@ -101,7 +101,7 @@ namespace Yoma.Core.Domain.Entity.Services
       foreach (var item in items)
       {
         _applicationLifetime.ApplicationStopping.ThrowIfCancellationRequested();
-        await _userService.UpsertPhoto(item.Username, FileHelper.FromByteArray(fileName, $"image/{fileExtension}", resourceBytes));
+        await _userService.UpsertPhoto(item.Id, FileHelper.FromByteArray(fileName, $"image/{fileExtension}", resourceBytes));
       }
     }
     #endregion

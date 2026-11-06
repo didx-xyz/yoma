@@ -140,7 +140,7 @@ namespace Yoma.Core.Domain.Reward.Services
 
       await _walletVoucherSearchFilterValidator.ValidateAndThrowAsync(filter);
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       var item = _walletCreationRepository.Query().SingleOrDefault(o => o.UserId == user.Id) ?? throw new ValidationException($"Wallet creation for the user with username '{user.Username}' hasn't been scheduled. Kindly log out and log back in");
 

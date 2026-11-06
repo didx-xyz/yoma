@@ -13,6 +13,49 @@ namespace Yoma.Core.Test.Referral.Services
   [Trait("Category", "Referral")]
   public class ProgramServiceTests
   {
+    #region Metadata
+    [Fact]
+    public async Task ImageUpdatePreservesTheLockedAccountingSnapshot()
+    {
+      var fixture = new ProgramServiceFixture();
+      var initial = new ProgramBuilder().WithCompletionTotal(1).Build();
+      var current = new ProgramBuilder().WithId(initial.Id).WithCompletionTotal(2).WithZltoRewardCumulative(20).Build();
+      fixture.ProgramRepository.Setup(repository => repository.Query(false)).Returns(new[] { initial }.AsQueryable());
+      fixture.ProgramRepository.Setup(repository => repository.Query(false, LockMode.Wait)).Returns(new[] { current }.AsQueryable());
+      fixture.UserService.Setup(service => service.GetCurrentUser(false, false, It.IsAny<bool>()))
+        .Returns(new Domain.Entity.Models.User { Id = Guid.NewGuid() });
+      using var stream = new MemoryStream([1]);
+      var file = new Microsoft.AspNetCore.Http.FormFile(stream, 0, stream.Length, "image", "image.png");
+      fixture.BlobService.Setup(service => service.Create(FileType.Photos, Domain.BlobProvider.StorageType.Public, file, null))
+        .ReturnsAsync(new Domain.Core.Models.BlobObject { Id = Guid.NewGuid() });
+
+      var result = await fixture.Build().UpdateImage(initial.Id, file);
+
+      Assert.Equal(2, result.CompletionTotal);
+      Assert.Equal(20, result.ZltoRewardCumulative);
+      fixture.ProgramRepository.Verify(repository => repository.Update(It.Is<Program>(program =>
+        program.CompletionTotal == 2 && program.ZltoRewardCumulative == 20)), Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task ShortLinkGenerationPreservesAccountingCommittedDuringTheExternalCall()
+    {
+      var fixture = new ProgramServiceFixture();
+      fixture.AppSettings.Setup(options => options.Value).Returns(new Domain.Core.Models.AppSettings { AppBaseURL = "https://example.org" });
+      var initial = new ProgramBuilder().WithCompletionTotal(1).Build();
+      var current = new ProgramBuilder().WithId(initial.Id).WithCompletionTotal(2).WithZltoRewardCumulative(20).Build();
+      fixture.ProgramRepository.Setup(repository => repository.Query(false)).Returns(new[] { initial }.AsQueryable());
+      fixture.ProgramRepository.Setup(repository => repository.Query(true, LockMode.Wait)).Returns(new[] { current }.AsQueryable());
+      fixture.ShortLinkProviderClient.Setup(client => client.CreateShortLink(It.IsAny<Domain.ShortLinkProvider.Models.ShortLinkRequest>()))
+        .ReturnsAsync(new Domain.ShortLinkProvider.Models.ShortLinkResponse { Link = "https://example.org/short" });
+
+      await fixture.Build().GetOrCreateShortLinkReferrer(initial.Id, false);
+
+      fixture.ProgramRepository.Verify(repository => repository.Update(It.Is<Program>(program =>
+        program.CompletionTotal == 2 && program.ZltoRewardCumulative == 20 && program.ReferrerShortURL == "https://example.org/short")), Times.Once);
+    }
+    #endregion
+
     #region GetById
     [Fact]
     public void GetById_ExistingId_ReturnsProgram()
@@ -72,7 +115,7 @@ namespace Yoma.Core.Test.Referral.Services
       fixture.ProgramRepository.Setup(r => r.Query(It.IsAny<bool>(), It.IsAny<LockMode>())).Returns(programs);
 
       fixture.UserService
-        .Setup(x => x.GetByUsername(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>()))
+        .Setup(x => x.GetCurrentUser(It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>()))
         .Returns(user);
 
       var service = fixture.Build();
@@ -103,7 +146,7 @@ namespace Yoma.Core.Test.Referral.Services
       fixture.ProgramRepository.Setup(r => r.Query(It.IsAny<bool>(), It.IsAny<LockMode>())).Returns(programs);
 
       fixture.UserService
-        .Setup(x => x.GetByUsername(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>()))
+        .Setup(x => x.GetCurrentUser(It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>()))
         .Returns(user);
 
       var service = fixture.Build();
@@ -138,7 +181,7 @@ namespace Yoma.Core.Test.Referral.Services
       fixture.ProgramRepository.Setup(r => r.Query(It.IsAny<bool>(), It.IsAny<LockMode>())).Returns(programs);
 
       fixture.UserService
-        .Setup(x => x.GetByUsername(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>()))
+        .Setup(x => x.GetCurrentUser(It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>()))
         .Returns(user);
 
       var service = fixture.Build();
@@ -230,7 +273,7 @@ namespace Yoma.Core.Test.Referral.Services
       fixture.ProgramRepository.Setup(r => r.Query(It.IsAny<bool>(), It.IsAny<LockMode>())).Returns(programs);
 
       fixture.UserService
-        .Setup(x => x.GetByUsername(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>()))
+        .Setup(x => x.GetCurrentUser(It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>()))
         .Returns(user);
 
       // CountryService.GetByCodeAlpha2("WW") needed by SetAsDefault internals
@@ -272,7 +315,7 @@ namespace Yoma.Core.Test.Referral.Services
       fixture.ProgramRepository.Setup(r => r.Query(It.IsAny<bool>(), It.IsAny<LockMode>())).Returns(programs);
 
       fixture.UserService
-        .Setup(x => x.GetByUsername(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>()))
+        .Setup(x => x.GetCurrentUser(It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>()))
         .Returns(user);
 
       var worldwideCountry = new Domain.Lookups.Models.Country { Id = worldwideCountryId, Name = "Worldwide", CodeAlpha2 = "WW" };

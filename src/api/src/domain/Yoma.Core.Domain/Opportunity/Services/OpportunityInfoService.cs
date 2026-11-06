@@ -58,6 +58,16 @@ namespace Yoma.Core.Domain.Opportunity.Services
     public OpportunityInfo GetById(Guid id, bool ensureOrganizationAuthorization)
     {
       var opportunity = _opportunityService.GetById(id, true, true, ensureOrganizationAuthorization);
+
+      // Passport/history access requires participation; merely viewing or saving an opportunity is insufficient.
+      if (!ensureOrganizationAuthorization && !opportunity.PublishedOrExpired().found &&
+        !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor) && !_organizationService.IsAdmin(opportunity.OrganizationId, false))
+      {
+        var status = _myOpportunityService.GetVerificationStatus(id, null).Status;
+        if (status != VerificationStatus.Pending && status != VerificationStatus.Completed)
+          throw new EntityNotFoundException($"Opportunity with id '{id}' is not available");
+      }
+
       var treasuryInfo = _treasuryService.GetInfo();
 
       var result = opportunity.ToOpportunityInfo(treasuryInfo.ZltoRewardBalanceCurrentFinancialYear, _appSettings.AppBaseURL);
@@ -249,7 +259,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         }
 
         //schedule the request for processing and return
-        var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+        var user = _userService.GetCurrentUser(false, false);
         await _downloadService.Schedule(user.Id, DownloadScheduleType.Opportunities, filter);
         return (true, null, null);
       }

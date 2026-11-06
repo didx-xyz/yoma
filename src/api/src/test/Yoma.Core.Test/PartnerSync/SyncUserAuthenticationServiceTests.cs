@@ -16,6 +16,23 @@ namespace Yoma.Core.Test.PartnerSync
   public class SyncUserAuthenticationServiceTests
   {
     [Theory]
+    [InlineData(SyncPartner.Alison, false)]
+    [InlineData(SyncPartner.Alison, null)]
+    [InlineData(SyncPartner.IXO, false)]
+    [InlineData(SyncPartner.IXO, null)]
+    public async Task UnverifiedEmailCannotBeUsedForPartnerAuthentication(SyncPartner partner, bool? confirmed)
+    {
+      var fixture = new Fixture(partner);
+      fixture.User.EmailConfirmed = confirmed;
+
+      var error = await Assert.ThrowsAsync<ValidationException>(() => fixture.Authenticate());
+
+      Assert.Equal("Email", Assert.Single(error.Errors).PropertyName);
+      fixture.Factory.Verify(o => o.CreateClient<ISyncProviderClientUserAuthentication>(It.IsAny<SyncPartner>()), Times.Never);
+      fixture.State.Verify(o => o.UpsertUserSyncInfo(It.IsAny<Guid>(), It.IsAny<SyncInfoUserPartner>()), Times.Never);
+    }
+
+    [Theory]
     [InlineData(null, false)]
     [InlineData("", false)]
     [InlineData("  ", false)]
@@ -146,6 +163,7 @@ namespace Yoma.Core.Test.PartnerSync
           Id = Guid.NewGuid(),
           Username = "user@example.com",
           Email = "user@example.com",
+          EmailConfirmed = true,
           FirstName = "Test",
           Surname = "User",
           CountryId = countryId

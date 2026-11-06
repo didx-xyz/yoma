@@ -130,7 +130,7 @@ namespace Yoma.Core.Test.OpportunitySearch
           }
         };
         var users = new Mock<IUserService>();
-        users.Setup(service => service.GetByUsername(User.Username, false, false)).Returns(User);
+        users.Setup(service => service.GetCurrentUser(false, false, It.IsAny<bool>())).Returns(User);
         Organizations.Setup(service => service.ListAdminsOf(false)).Returns([new OrganizationInfoAdmin { Id = Organization }]);
         Service = new OpportunityInfoService(Options.Create(new AppSettings()), accessor, Mock.Of<IOpportunityService>(),
           Mock.Of<IMyOpportunityService>(), Mock.Of<ILinkService>(), users.Object, Download.Object,

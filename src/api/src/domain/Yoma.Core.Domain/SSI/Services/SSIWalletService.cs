@@ -59,7 +59,7 @@ namespace Yoma.Core.Domain.SSI.Services
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       filter.EntityType = Entity.EntityType.User;
       filter.EntityId = user.Id;
@@ -71,7 +71,7 @@ namespace Yoma.Core.Domain.SSI.Services
     #region Private Members
     private string GetUserTenantId()
     {
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
       var tenantId = _ssiTenantService.GetTenantId(Entity.EntityType.User, user.Id);
       return tenantId;
     }

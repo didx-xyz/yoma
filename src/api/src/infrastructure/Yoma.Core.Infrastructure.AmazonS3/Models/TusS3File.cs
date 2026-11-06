@@ -6,9 +6,11 @@ using tusdotnet.Models;
 namespace Yoma.Core.Infrastructure.AmazonS3.Models
 {
   // Simple ITusFile implementation 
-  internal class TusS3File(string fileId, Dictionary<string, string> rawMetadata, IAmazonS3 s3Client, string bucketName, string key) : ITusFile
+  internal class TusS3File(string fileId, Guid? ownerId, Dictionary<string, string> rawMetadata, IAmazonS3 s3Client, string bucketName, string key) : ITusFile
   {
     public string Id => fileId;
+
+    public Guid? OwnerId => ownerId;
 
     public Task<Dictionary<string, Metadata>> GetMetadataAsync(CancellationToken cancellationToken)
     {

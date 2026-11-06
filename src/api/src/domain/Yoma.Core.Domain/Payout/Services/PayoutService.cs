@@ -727,7 +727,7 @@ namespace Yoma.Core.Domain.Payout.Services
 
         scope.Complete();
         transitioned = true;
-      });
+      }, true); //discard accepted EF updates after rollback before retrying settlement
 
       if (transitioned)
         await SendNotification(payout, PayoutTransactionStatus.Completed);

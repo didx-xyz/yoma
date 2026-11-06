@@ -123,7 +123,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       if (allowAdminOverride && _httpContextAccessor.HttpContext!.User.IsInRole(Core.Constants.Role_Admin)) return ToInfoParseProgress(result, includeComputed);
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       var role = result.UserId == user.Id ? ReferralParticipationRole.Referee : result.UserIdReferrer == user.Id ? ReferralParticipationRole.Referrer : (ReferralParticipationRole?)null;
       return role == null ? throw new SecurityException("Unauthorized") : ToInfoParseProgress(result, includeComputed, role);
@@ -134,7 +134,7 @@ namespace Yoma.Core.Domain.Referral.Services
       if (programId == Guid.Empty)
         throw new ArgumentNullException(nameof(programId));
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       var results = _linkUsageRepository.Query().Where(x => x.ProgramId == programId && x.UserId == user.Id).ToList();
 
@@ -155,7 +155,7 @@ namespace Yoma.Core.Domain.Referral.Services
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       var results = Search(new ReferralLinkUsageSearchFilterAdmin
       {
@@ -178,7 +178,7 @@ namespace Yoma.Core.Domain.Referral.Services
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       var results = Search(new ReferralLinkUsageSearchFilterAdmin
       {
@@ -282,7 +282,7 @@ namespace Yoma.Core.Domain.Referral.Services
     public async Task ClaimAsRefereeInitiate(Guid linkId)
     {
       var link = _linkService.GetById(linkId, true, false, false, false, false);
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
       var now = DateTimeOffset.UtcNow;
 
       // Self-referral guard; no-op.
@@ -329,7 +329,7 @@ namespace Yoma.Core.Domain.Referral.Services
     {
       var link = _linkService.GetById(linkId, true, false, false, false, false);
       var program = _programService.GetById(link.ProgramId, true, false);
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
       var now = DateTimeOffset.UtcNow;
 
       // All usages by this user (any program)
@@ -433,7 +433,7 @@ namespace Yoma.Core.Domain.Referral.Services
       // Caps at claim time: program-wide + per-referrer
       var programCapReached =
           (program.CompletionLimit.HasValue && (program.CompletionBalance ?? 0) <= 0) ||
-          (program.CompletionLimitReferee.HasValue && link.CompletionTotal >= program.CompletionLimitReferee);
+          (program.CompletionLimitReferee.HasValue && _linkService.GetCompletionTotal(program.Id, link.UserId) >= program.CompletionLimitReferee.Value);
 
       if (programCapReached)
         await ThrowValidationExceptionAndAbandonInitiatedIfRequired("This referral programme has reached its limit", usage, true);
@@ -662,11 +662,14 @@ namespace Yoma.Core.Domain.Referral.Services
             }
 
             // fallback limit reached check if eligibility; only flip active to limit reached (see below); can be in cancelled state and processing in flight
-            if (eligibleForRewards && program.CompletionLimitReferee.HasValue && link.CompletionTotal >= program.CompletionLimitReferee.Value)
+            var referrerCompletionTotal = eligibleForRewards && program.CompletionLimitReferee.HasValue
+              ? _linkService.GetCompletionTotal(program.Id, link.UserId) : 0;
+
+            if (eligibleForRewards && program.CompletionLimitReferee.HasValue && referrerCompletionTotal >= program.CompletionLimitReferee.Value)
             {
               eligibleForRewards = false;
               if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: link {LinkId} per-referrer cap reached (total {Total} >= limit {Limit}); suppressing rewards for usage {UsageId}",
-                link.Id, link.CompletionTotal, program.CompletionLimitReferee, myUsage.Id);
+                link.Id, referrerCompletionTotal, program.CompletionLimitReferee, myUsage.Id);
             }
 
             if (_logger.IsEnabled(LogLevel.Debug)) _logger.LogDebug("Referral progress: eligibility for rewards on usage {UsageId} = {Eligible}",

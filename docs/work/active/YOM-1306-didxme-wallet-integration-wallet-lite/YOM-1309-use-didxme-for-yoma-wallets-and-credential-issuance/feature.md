@@ -89,7 +89,11 @@ security configuration and privileged workflows are held in the private engineer
 
 ## Verification / Handoff
 
-The latest SSI/Core run reported 1,023 total, zero failures/errors and one explicit test not
+Cross-cutting Medium API review and required UI adoption are tracked once in the
+[epic review handoff](../handoffs/2026-11-06-a.md). This includes validation on the updated PR branch;
+the earlier provider-specific results below remain the record of the local integration exercise.
+
+The earlier SSI/Core run reported 1,023 total, zero failures/errors and one explicit test not
 run (1,022 passed). Local API issuance, list/detail, mobile-to-email continuity and caching have been exercised; this does not
 claim completion of browser/Dev or live multi-replica tests. Recovery/Replay block production use.
 

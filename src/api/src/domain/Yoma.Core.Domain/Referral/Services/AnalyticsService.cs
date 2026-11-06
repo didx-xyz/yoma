@@ -53,7 +53,7 @@ namespace Yoma.Core.Domain.Referral.Services
     #region Public Members
     public ReferralAnalyticsUser ByUser(ReferralParticipationRole role)
     {
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       var filter = new ReferralAnalyticsSearchFilterAdmin
       {

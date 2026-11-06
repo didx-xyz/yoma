@@ -1583,7 +1583,7 @@ namespace Yoma.Core.Test.SSI
       {
         var user = new Domain.Entity.Models.User { Id = Guid.NewGuid(), Username = "wallet-test" };
         var users = new Mock<IUserService>();
-        users.Setup(service => service.GetByUsername(user.Username, false, false)).Returns(user);
+        users.Setup(service => service.GetCurrentUser(false, false, It.IsAny<bool>())).Returns(user);
         var tenants = new Mock<ISSITenantService>();
         tenants.Setup(service => service.GetTenantId(Domain.Entity.EntityType.User, user.Id)).Returns("holder");
         var httpContext = new HttpContextAccessor
