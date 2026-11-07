@@ -156,8 +156,9 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
       if (!replacedOpportunity)
         throw new InvalidOperationException("IXO auto-login URL pattern does not contain an opportunity placeholder");
 
-      if (!Uri.TryCreate(result, UriKind.Absolute, out _))
-        throw new InvalidOperationException("IXO auto-login URL pattern produced an invalid absolute URL");
+      if (!Uri.TryCreate(result, UriKind.Absolute, out var uri) || !uri.IsWellFormedOriginalString() ||
+        (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+        throw new InvalidOperationException("IXO auto-login URL pattern must produce a valid HTTP or HTTPS URL");
 
       return result;
     }

@@ -3,5 +3,8 @@
 **/bin
 **/obj
 **/.env
+# Local configuration is bind-mounted at runtime and may contain real external credentials.
+**/appsettings.Local.json
+**/appsettings.local.json
 LICENSE
 README.md

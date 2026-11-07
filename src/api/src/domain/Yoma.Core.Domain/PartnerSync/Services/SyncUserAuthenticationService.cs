@@ -98,6 +98,11 @@ namespace Yoma.Core.Domain.PartnerSync.Services
         if (string.IsNullOrWhiteSpace(partnerSyncInfo.ExternalId))
           throw new InvalidOperationException("Partner external id is required");
 
+        // Partner sign-in may locate an existing account by email; only send a verified address.
+        if (!string.IsNullOrWhiteSpace(user.Email) && user.EmailConfirmed != true)
+          throw new ValidationException([new ValidationFailure(nameof(user.Email),
+            "Please verify your email address before continuing to the partner.")]);
+
         var userSyncInfo = _syncStateService.GetUserSyncInfo(user.Id);
         var country = user.CountryId.HasValue ? _countryService.GetByIdOrNull(user.CountryId.Value) : null;
 

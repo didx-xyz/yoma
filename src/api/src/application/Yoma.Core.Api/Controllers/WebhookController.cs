@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Text;
+using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -338,7 +339,13 @@ namespace Yoma.Core.Api.Controllers
               // registering and completing their first login. In such cases, the external ID won't exist yet.
               // also, handle test users on the development environment who might not have an associated external ID.
               // a user cannot change their phone number or email address until they have completed their first login.
-              return user ?? _userService.GetByUsernameOrNull(kcUser.Username, false, false)?.ToUserRequest();
+              if (user != null) return user;
+
+              user = _userService.GetByUsernameOrNull(kcUser.Username, false, false)?.ToUserRequest();
+              if (user?.ExternalId.HasValue == true && user.ExternalId.Value != kcUser.Id)
+                throw new SecurityException("The user is already linked to a different identity");
+
+              return user;
             },
             exitCondition: result =>
             {

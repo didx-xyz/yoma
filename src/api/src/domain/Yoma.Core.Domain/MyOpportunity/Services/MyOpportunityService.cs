@@ -271,7 +271,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       var myFilter = new MyOpportunitySearchFilterVerificationFilesAdmin
       {
@@ -314,7 +314,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
       //filter validated as admin filter
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       var myFilter = new MyOpportunitySearchFilterVerificationFilesAdmin
       {
@@ -449,10 +449,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       if (opportunityId == Guid.Empty)
         throw new ArgumentNullException(nameof(opportunityId));
 
-      user ??= _userService.GetByUsername(
-        HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false),
-        false,
-        false);
+      user ??= _userService.GetCurrentUser(false, false);
 
       return GetVerificationStatusInternal(opportunityId, user.Id);
     }
@@ -504,7 +501,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       //filter validated by SearchAdmin
 
-      user ??= _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      user ??= _userService.GetCurrentUser(false, false);
 
       var filterInternal = new MyOpportunitySearchFilterAdmin
       {
@@ -524,7 +521,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
     public TimeIntervalSummary GetSummary()
     {
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       var filterInternal = new MyOpportunitySearchFilterAdmin
       {
@@ -609,6 +606,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         else
           //ensure search only spans authorized organizations
           filter.Organizations = [.. _organizationService.ListAdminsOf(false).Select(o => o.Id)];
+
+        // An empty authorized scope must never become an unrestricted search.
+        if (filter.Organizations.Count == 0) throw new SecurityException("Unauthorized");
       }
 
       if (filter.Organizations != null && filter.Organizations.Count != 0)
@@ -752,8 +752,22 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       if (!filter.PaginationEnabled)
       {
+        // Authorize before saving; the background worker reuses this filter without a user context.
+        if (ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
+        {
+          if (filter.Organizations?.Count > 0)
+            _organizationService.IsAdminsOf(filter.Organizations, true);
+          else
+          {
+            var organizations = _organizationService.ListAdminsOf(false).Select(o => o.Id).Distinct().ToList();
+            // An empty selection is unrestricted when processed, so never queue it for this user.
+            if (organizations.Count == 0) throw new SecurityException("Unauthorized");
+            filter.Organizations = organizations;
+          }
+        }
+
         //schedule the request for processing and return
-        var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+        var user = _userService.GetCurrentUser(false, false);
         await _downloadService.Schedule(user.Id, DownloadScheduleType.MyOpportunityVerifications, filter);
         return (true, null, null);
       }
@@ -787,7 +801,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       if (!opportunity.Published)
         throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned", false));
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       var actionViewedId = _myOpportunityActionService.GetByName(Action.Viewed.ToString()).Id;
 
@@ -813,7 +827,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       if (!opportunity.Published)
         throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned", false));
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       var actionNavigatedExternalLinkId = _myOpportunityActionService.GetByName(Action.NavigatedExternalLink.ToString()).Id;
 
@@ -840,7 +854,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var opportunity = _opportunityService.GetById(opportunityId, false, true, false);
       if (!opportunity.Published) return false;
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       var actionSavedId = _myOpportunityActionService.GetByName(Action.Saved.ToString()).Id;
 
@@ -856,7 +870,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       if (!opportunity.Published)
         throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned", false));
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       var actionSavedId = _myOpportunityActionService.GetByName(Action.Saved.ToString()).Id;
 
@@ -882,7 +896,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       if (!opportunity.Published)
         throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned", false));
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       var actionSavedId = _myOpportunityActionService.GetByName(Action.Saved.ToString()).Id;
       var myOpportunity = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionSavedId);
@@ -908,7 +922,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
     public async Task PerformActionSendForVerificationManual(Guid opportunityId, MyOpportunityRequestVerify request)
     {
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       var options = new MyOpportunityVerificationOptions
       {
@@ -924,7 +938,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     {
       var link = _linkService.GetById(linkId, false, false);
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
       var opportunity = _opportunityService.GetById(link.EntityId, true, true, false);
 
       var statusVerification = GetVerificationStatus(opportunity.Id, user);
@@ -973,7 +987,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
     public async Task PerformActionDeleteVerificationManual(Guid opportunityId)
     {
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       // Opportunity can be updated whilst active, and can result in disabling support for verification.
       // Allow deletion provided verification is pending even if no longer supported.
@@ -1050,10 +1064,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var resultItems = new List<MyOpportunityResponseVerifyFinalizeBatchItem>();
       foreach (var item in request.Items)
       {
+        user = null;
+        opportunity = null;
         try
         {
+          opportunity = _opportunityService.GetById(item.OpportunityId, true, true, true);
           user = _userService.GetById(item.UserId, false, false);
-          opportunity = _opportunityService.GetById(item.OpportunityId, true, true, false);
 
           var options = new MyOpportunityVerificationOptions
           {
@@ -1107,8 +1123,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       await _myOpportunityRequestValidatorVerifyFinalize.ValidateAndThrowAsync(request);
 
+      var opportunity = _opportunityService.GetById(request.OpportunityId, true, true, true);
       var user = _userService.GetById(request.UserId, false, false);
-      var opportunity = _opportunityService.GetById(request.OpportunityId, true, true, false);
 
       var options = new MyOpportunityVerificationOptions
       {
@@ -1349,7 +1365,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       var probedVerifications = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-      while (await csv.ReadAsync())
+      // Check before reading another row so every error path, including field errors, respects the limit.
+      while (errors.Count < Math.Max(1, _appSettings.CSVImportMaxProbeErrorCount) && await csv.ReadAsync())
       {
         recordsTotal++;
         var rowNumber = checked((int)csv.LineNumber);

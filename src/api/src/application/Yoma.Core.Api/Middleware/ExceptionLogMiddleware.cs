@@ -48,6 +48,9 @@ namespace Yoma.Core.Api.Middleware
     #region Private Members
     private static (LogLevel, HttpStatusCode) Classify(Exception ex) => ex switch
     {
+      BadHttpRequestException request => (
+        (HttpStatusCode)request.StatusCode is >= HttpStatusCode.BadRequest and < HttpStatusCode.InternalServerError ? LogLevel.Information : LogLevel.Error,
+        (HttpStatusCode)request.StatusCode),
       FluentValidation.ValidationException or ValidationException => (LogLevel.Information, HttpStatusCode.BadRequest),
       EntityNotFoundException => (LogLevel.Information, HttpStatusCode.NotFound),
       RequestInProgressException => (LogLevel.Information, HttpStatusCode.Conflict),

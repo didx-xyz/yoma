@@ -22,7 +22,22 @@ namespace Yoma.Core.Api.Middleware
       }
       catch (Exception ex)
       {
-        await HandleExceptionAsync(httpContext, ex);
+        // A disconnected client cannot receive an error body. A started response belongs to the server.
+        if (httpContext.RequestAborted.IsCancellationRequested) return;
+        if (httpContext.Response.HasStarted) throw;
+
+        try
+        {
+          await HandleExceptionAsync(httpContext, ex);
+        }
+        catch (OperationCanceledException) when (httpContext.RequestAborted.IsCancellationRequested)
+        {
+          // The client disconnected while the error response was being written.
+        }
+        catch (IOException) when (httpContext.RequestAborted.IsCancellationRequested)
+        {
+          // The transport closed while the error response was being written.
+        }
       }
     }
 
@@ -34,13 +49,18 @@ namespace Yoma.Core.Api.Middleware
       List<ErrorResponseItem> errorResponse;
       switch (exNormalized)
       {
+        case BadHttpRequestException badHttpRequestException:
+          // Includes server-specific subclasses; retain the request failure's original HTTP status.
+          context.Response.StatusCode = badHttpRequestException.StatusCode;
+          break;
+
         case FluentValidation.ValidationException validationException:
           context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
 
           if (!validationException.Errors.Any()) break;
 
           errorResponse = [.. validationException.Errors.Select(o => new ErrorResponseItem() { Type = exNormalized.GetType().Name, Message = o.ErrorMessage })];
-          return context.Response.WriteAsJsonAsync(errorResponse);
+          return context.Response.WriteAsJsonAsync(errorResponse, cancellationToken: context.RequestAborted);
 
         case EntityNotFoundException:
           context.Response.StatusCode = (int)HttpStatusCode.NotFound;
@@ -79,7 +99,7 @@ namespace Yoma.Core.Api.Middleware
 
       errorResponse = [new() { Type = exNormalized.GetType().Name, Message = exNormalized.Message }];
 
-      return context.Response.WriteAsJsonAsync(errorResponse);
+      return context.Response.WriteAsJsonAsync(errorResponse, cancellationToken: context.RequestAborted);
     }
   }
 }

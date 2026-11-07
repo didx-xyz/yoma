@@ -54,7 +54,7 @@ namespace Yoma.Core.Api.Middleware
     {
       context.HttpContext.RequestAborted.ThrowIfCancellationRequested();
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
       var action = context.ActionDescriptor as ControllerActionDescriptor
         ?? throw new InvalidOperationException($"{nameof(UserActionLockAttribute)} requires a controller action");
 

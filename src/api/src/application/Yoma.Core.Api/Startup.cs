@@ -25,9 +25,9 @@ using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Core.Services;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Infrastructure.AmazonS3;
-using Yoma.Core.Infrastructure.AriesCloud;
 using Yoma.Core.Infrastructure.Bitly;
 using Yoma.Core.Infrastructure.Database;
+using Yoma.Core.Infrastructure.DidxMe;
 using Yoma.Core.Infrastructure.Emsi;
 using Yoma.Core.Infrastructure.Keycloak;
 using Yoma.Core.Infrastructure.SAYouth;
@@ -238,8 +238,6 @@ namespace Yoma.Core.Api
       #endregion
 
       #region 3rd Partry
-      app.UseSSIProvider();
-
       //migrations applied as part of ConfigureHangfire to ensure db exist prior to executing Hangfire migrations
       _configuration.Configure_RecurringJobs(_appSettings, _environment);
       _configuration.Configure_RecurringJobsNewsFeedProvider();

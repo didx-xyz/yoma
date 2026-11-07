@@ -106,5 +106,17 @@ namespace Yoma.Core.Test.Core.Extensions
 
       Assert.Equal($"**Read [the guide](https://example.com/info)**{StringExtensions.MarkdownParagraphBreak}<u>Note</u>", result);
     }
+
+    [Theory]
+    [InlineData("Before <img\nsrc='x'\nonerror='alert(1)'> After", "Before After")]
+    [InlineData("<svg\nonload='alert(1)'>Text</svg>", "Text")]
+    [InlineData("<u\nonclick='alert(1)'>Note</u>", "<u>Note</u>")]
+    [InlineData("Before <img src='x'", "Before &lt;img src='x'")]
+    [InlineData("<a href='https://example.com'><span\nonclick='alert(1)'>Guide</span></a>", "[Guide](https://example.com/)")]
+    [InlineData("&lt;img\nsrc='x' onerror='alert(1)'&gt;Text", "Text")]
+    public void HtmlToMarkdown_DoesNotRetainSourceElementsOrAttributes(string html, string expected)
+    {
+      Assert.Equal(expected, html.HtmlToMarkdown());
+    }
   }
 }

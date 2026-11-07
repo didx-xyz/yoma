@@ -57,7 +57,7 @@ namespace Yoma.Core.Domain.Core.Services
 
       var client = _blobProviderClientFactory.CreateClient(result.StorageType);
 
-      await client.Create(result.Key, file.ContentType, file.ToBinary());
+      await client.Create(result.Key, FileHelper.GetContentType(result.OriginalFileName, file.ContentType, result.FileType), file.ToBinary());
 
       return result;
     }
@@ -167,7 +167,7 @@ namespace Yoma.Core.Domain.Core.Services
         StorageType = storageType,
         FileType = type,
         Key = key,
-        ContentType = file.ContentType,
+        ContentType = FileHelper.GetContentType(file.FileName, file.ContentType, type),
         OriginalFileName = file.FileName
       };
 
@@ -180,9 +180,9 @@ namespace Yoma.Core.Domain.Core.Services
         result = await _blobObjectRepository.Create(result);
 
         if (TempFileTracker.TryGetTempPath(file, out var tempPath) && !string.IsNullOrEmpty(tempPath))
-          await client.CreateFromFile(key, file.ContentType, tempPath);
+          await client.CreateFromFile(key, result.ContentType, tempPath);
         else
-          await client.Create(key, file.ContentType, file.ToBinary());
+          await client.Create(key, result.ContentType, file.ToBinary());
 
         scope.Complete();
       });
@@ -208,7 +208,7 @@ namespace Yoma.Core.Domain.Core.Services
         StorageType = storageType,
         FileType = type,
         Key = key,
-        ContentType = info.ContentType,
+        ContentType = FileHelper.GetContentType(info.OriginalFileName, info.ContentType, type),
         OriginalFileName = info.OriginalFileName
       };
 
@@ -220,7 +220,7 @@ namespace Yoma.Core.Domain.Core.Services
 
         result = await _blobObjectRepository.Create(result);
 
-        await client.Create(key, info.ContentType, info.SourceBucket, info.SourceKey);
+        await client.Create(key, result.ContentType, info.SourceBucket, info.SourceKey);
 
         scope.Complete();
       });

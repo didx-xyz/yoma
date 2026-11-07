@@ -119,6 +119,21 @@ namespace Yoma.Core.Test.OpportunitySearch
       fixture.Sync.Verify(service => service.GetSyncInfoMyOpportunity(It.IsAny<IReadOnlyCollection<Guid>>()), Times.Never);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void NoMembershipCannotBecomeAnUnrestrictedSearch(bool emptySelection)
+    {
+      var fixture = new Fixture();
+      fixture.Organizations.Setup(service => service.ListAdminsOf(false)).Returns([]);
+      var filter = fixture.Filter(1);
+      filter.Organizations = emptySelection ? [] : null;
+
+      Assert.Throws<SecurityException>(() => fixture.Service.Search(filter, true));
+
+      fixture.Sync.VerifyNoOtherCalls();
+    }
+
     [Fact]
     public void BatchConsistencyErrorStillFailsSearch()
     {

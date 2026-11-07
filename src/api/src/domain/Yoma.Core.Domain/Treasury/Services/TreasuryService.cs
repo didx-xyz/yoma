@@ -231,8 +231,7 @@ namespace Yoma.Core.Domain.Treasury.Services
     #region Private Members
     private Guid ResolveModifiedByUserId()
     {
-      var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-      return _userService.GetByUsername(username, false, false).Id;
+      return _userService.GetCurrentUser(false, false).Id;
     }
 
     private async Task ResetCurrentFinancialYear(Models.Treasury treasury, bool actionedBySystem)

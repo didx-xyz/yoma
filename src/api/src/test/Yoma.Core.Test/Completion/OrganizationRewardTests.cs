@@ -94,9 +94,11 @@ namespace Yoma.Core.Test.Completion
           users.Object, identity.Object, Mock.Of<IOrganizationStatusService>(), providers, Mock.Of<IBlobService>(), Mock.Of<ISSITenantService>(),
           Mock.Of<INotificationURLFactory>(), Mock.Of<INotificationDeliveryService>(), Mock.Of<ISettingsDefinitionService>(),
           new OrganizationRequestValidatorCreate(countries, providers), new OrganizationRequestValidatorUpdate(countries, providers),
+          new OrganizationRequestUpdateRewardPoolValidator(),
           new OrganizationSearchFilterValidator(), new OrganizationRequestUpdateStatusValidator(), new SettingsRequestValidator(), Mock.Of<IMediator>(),
           Repository.Object, Mock.Of<IRepository<OrganizationUser>>(), Mock.Of<IRepository<OrganizationProviderType>>(),
-          Mock.Of<IRepository<OrganizationDocument>>(), Mock.Of<IExecutionStrategyService>());
+          Mock.Of<IRepository<OrganizationDocument>>(), Mock.Of<IExecutionStrategyService>(), Mock.Of<Hangfire.IBackgroundJobClient>(),
+          Mock.Of<IDistributedLockService>());
       }
     }
     #endregion

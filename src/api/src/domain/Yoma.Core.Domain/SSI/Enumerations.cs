@@ -6,7 +6,9 @@ namespace Yoma.Core.Domain.SSI
   {
     JWS,
     [Description("AnonCreds")]
-    ACR
+    ACR,
+    [Description("SD-JWT")]
+    SDJWT
   }
 
   public enum Role

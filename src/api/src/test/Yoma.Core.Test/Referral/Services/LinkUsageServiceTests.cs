@@ -408,6 +408,8 @@ namespace Yoma.Core.Test.Referral.Services
       SetupCountryWorldwide(fixture);
       SetupEmptyUsageRepository(fixture);
 
+
+
       var sut = fixture.Build();
 
       // Act & Assert
@@ -485,13 +487,13 @@ namespace Yoma.Core.Test.Referral.Services
         .WithCompletionLimitReferee(5)
         .Build();
 
-      // Link with CompletionTotal already at the per-referrer limit
+      // This link is below the cap; other links in the programme bring the referrer to the limit.
       var link = new ReferralLinkBuilder()
         .WithId(linkId)
         .WithProgramId(programId)
         .WithUserId(referrerUserId)
         .WithStatus(ReferralLinkStatus.Active)
-        .WithCompletionTotal(5)
+        .WithCompletionTotal(1)
         .Build();
 
       SetupUserService(fixture, RefereeUsername, user);
@@ -499,6 +501,8 @@ namespace Yoma.Core.Test.Referral.Services
       SetupProgramService(fixture, programId, program);
       SetupCountryWorldwide(fixture);
       SetupEmptyUsageRepository(fixture);
+
+      fixture.LinkService.Setup(x => x.GetCompletionTotal(programId, referrerUserId)).Returns(5);
 
       var sut = fixture.Build();
 
@@ -514,7 +518,7 @@ namespace Yoma.Core.Test.Referral.Services
     private static void SetupUserService(LinkUsageServiceFixture fixture, string username, User user)
     {
       fixture.UserService
-        .Setup(x => x.GetByUsername(username, It.IsAny<bool>(), It.IsAny<bool>()))
+        .Setup(x => x.GetCurrentUser(It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>()))
         .Returns(user);
 
       fixture.UserService

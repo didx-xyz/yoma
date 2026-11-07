@@ -117,7 +117,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
         List<MyOpportunityInfo>? myOpportunitiesCompleted = null;
         if (HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor))
         {
-          user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+          user = _userService.GetCurrentUser(false, false);
 
           var myOpportunitySearchFilter = new MyOpportunitySearchFilter
           {
@@ -180,7 +180,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
         throw new ArgumentNullException(nameof(itemCategoryId));
       itemCategoryId = itemCategoryId.Trim();
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       var (walletStatus, walletBalance) = await _walletService.GetWalletStatusAndBalance(user.Id);
 

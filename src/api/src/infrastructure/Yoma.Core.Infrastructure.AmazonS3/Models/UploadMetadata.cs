@@ -2,6 +2,11 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Models
 {
   internal class UploadMetadata
   {
+    /// <summary>
+    /// Server-assigned uploader identity. Missing on legacy uploads, which cannot be claimed retrospectively.
+    /// </summary>
+    public Guid? OwnerId { get; set; }
+
     public long UploadLength { get; set; }
 
     public Dictionary<string, string> Metadata { get; set; } = [];

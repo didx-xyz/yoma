@@ -49,6 +49,13 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
     #endregion
 
     #region Public Members
+    public ArtifactType GetDefaultArtifactType(Domain.SSI.SchemaType schemaType) => schemaType switch
+    {
+      Domain.SSI.SchemaType.YoID => ArtifactType.ACR,
+      Domain.SSI.SchemaType.Opportunity => ArtifactType.JWS,
+      _ => throw new NotSupportedException($"Schema type '{schemaType}' is not supported")
+    };
+
     public async Task<List<Domain.SSI.Models.Provider.Schema>?> ListSchemas(bool latestVersion)
     {
       var client = _clientFactory.CreateGovernanceClient();
@@ -156,6 +163,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
     public async Task<Domain.SSI.Models.Provider.Credential?> GetCredentialByIdOrNull(string tenantId, ArtifactType artifactType, string id)
     {
+      ValidateArtifactType(artifactType);
       ArgumentException.ThrowIfNullOrEmpty(tenantId);
       ArgumentException.ThrowIfNullOrEmpty(id);
 
@@ -188,6 +196,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
       ArgumentException.ThrowIfNullOrEmpty(tenantId);
       ArgumentException.ThrowIfNullOrEmpty(clientReferent.Key);
       ArgumentException.ThrowIfNullOrEmpty(clientReferent.Value);
+      ValidateArtifactType(artifactType);
 
       return await GetCredentialByClientReferentOrNull(_clientFactory.CreateTenantClient(tenantId),
         tenantId, artifactType, clientReferent, false);
@@ -195,6 +204,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
     public async Task DeleteCredential(string tenantId, ArtifactType artifactType, string id)
     {
+      ValidateArtifactType(artifactType);
       ArgumentException.ThrowIfNullOrEmpty(tenantId);
       ArgumentException.ThrowIfNullOrEmpty(id);
 
@@ -263,6 +273,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
     public async Task<Domain.SSI.Models.Provider.Schema> UpsertSchema(SchemaRequest request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
+      ValidateArtifactType(request.ArtifactType);
 
       if (request.Attributes != null) request.Attributes = [.. request.Attributes.Distinct()];
       if (request.Attributes == null || request.Attributes.Count == 0)
@@ -367,6 +378,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
     public async Task<Domain.SSI.Models.Provider.Credential> IssueCredential(CredentialIssuanceRequest request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
+      ValidateArtifactType(request.ArtifactType);
 
       request.ClientReferent = new KeyValuePair<string, string>(request.ClientReferent.Key?.Trim() ?? string.Empty, request.ClientReferent.Value?.Trim() ?? string.Empty);
       if (string.IsNullOrEmpty(request.ClientReferent.Key) && string.IsNullOrEmpty(request.ClientReferent.Value))
@@ -483,6 +495,18 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
     #endregion
 
     #region Private Members
+    private static void ValidateArtifactType(ArtifactType artifactType)
+    {
+      switch (artifactType)
+      {
+        case ArtifactType.ACR:
+        case ArtifactType.JWS:
+          return;
+        default:
+          throw new NotSupportedException($"Artifact type '{artifactType}' is not supported by Aries Cloud");
+      }
+    }
+
     private Models.Credential? GetLocalCredentialByIdOrNull(string tenantId, string id)
     {
       if (!Guid.TryParse(id, out var localId))

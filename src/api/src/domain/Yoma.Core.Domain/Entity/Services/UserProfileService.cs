@@ -110,15 +110,13 @@ namespace Yoma.Core.Domain.Entity.Services
     #region Public Members
     public UserProfile Get()
     {
-      var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-      var user = _userService.GetByUsername(username, false, true);
+      var user = _userService.GetCurrentUser(false, true);
       return ToProfile(user).Result;
     }
 
     public UserPreferences GetPreferences()
     {
-      var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-      var user = _userService.GetByUsername(username, true, false);
+      var user = _userService.GetCurrentUser(true, false);
       var preferences = _userPreferencesRepository.Query().SingleOrDefault(item => item.UserId == user.Id)
         ?? new UserPreferences { UserId = user.Id };
       preferences.SkillsSelfAttested = user.Skills?.Where(item => item.Type == UserSkillType.SelfAttested)
@@ -133,12 +131,10 @@ namespace Yoma.Core.Domain.Entity.Services
 
       await _userPreferencesRequestValidator.ValidateAndThrowAsync(request);
 
-      var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted();
-        var user = _userService.GetByUsername(username, true, false);
+        var user = _userService.GetCurrentUser(true, false);
         var preferences = _userPreferencesRepository.Query().SingleOrDefault(item => item.UserId == user.Id);
 
         // The request replaces all current preferences; only self-attested skill rows may be removed.
@@ -198,70 +194,64 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public async Task<PayoutSession> PayoutRewards(decimal amount)
     {
-      var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-      var user = _userService.GetByUsername(username, false, false);
+      var user = _userService.GetCurrentUser(false, false);
       return await _payoutService.PayoutRewards(user.Id, amount);
     }
 
     public async Task<PayoutSession> GetPayoutSession()
     {
-      var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-      var user = _userService.GetByUsername(username, false, false);
+      var user = _userService.GetCurrentUser(false, false);
       return await _payoutService.GetSession(user.Id);
     }
 
     public async Task<PayoutTransactionInfo> GetLatestPayoutTransaction()
     {
-      var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-      var user = _userService.GetByUsername(username, false, false);
+      var user = _userService.GetCurrentUser(false, false);
       return await _payoutService.GetLatestInfoByUserId(user.Id);
     }
 
     public async Task CancelPayout(Guid payoutId)
     {
-      var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-      var user = _userService.GetByUsername(username, false, false);
+      var user = _userService.GetCurrentUser(false, false);
       await _payoutService.Cancel(user.Id, payoutId);
     }
 
     public List<UserSkillInfo>? GetSkills(UserSkillType? type)
     {
-      var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-      var user = _userService.GetByUsername(username, true, true);
+      var user = _userService.GetCurrentUser(true, true);
       return type.HasValue ? user.Skills?.Where(o => o.Type == type.Value).ToList() : user.Skills;
     }
 
     public Settings GetSettings()
     {
-      var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-      return SettingsHelper.FilterByRoles(_userService.GetSettingsByUsername(username), HttpContextAccessorHelper.GetRoles(_httpContextAccessor));
+      var userId = _userService.GetCurrentUser(false, false).Id;
+      return SettingsHelper.FilterByRoles(_userService.GetSettingsById(userId), HttpContextAccessorHelper.GetRoles(_httpContextAccessor));
     }
 
     public async Task<UserProfile> UpsertPhoto(IFormFile file)
     {
-      var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-      var user = await _userService.UpsertPhoto(username, file);
+      var userId = _userService.GetCurrentUser(false, false).Id;
+      var user = await _userService.UpsertPhoto(userId, file);
       return await ToProfile(user);
     }
 
     public async Task<UserProfile> DeletePhoto()
     {
-      var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-      var user = await _userService.DeletePhoto(username);
+      var userId = _userService.GetCurrentUser(false, false).Id;
+      var user = await _userService.DeletePhoto(userId);
       return await ToProfile(user);
     }
 
     public async Task<UserProfile> UpdateSettings(SettingsRequest settings)
     {
-      var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-      var user = await _userService.UpdateSettings(username, HttpContextAccessorHelper.GetRoles(_httpContextAccessor), settings);
+      var userId = _userService.GetCurrentUser(false, false).Id;
+      var user = await _userService.UpdateSettings(userId, HttpContextAccessorHelper.GetRoles(_httpContextAccessor), settings);
       return await ToProfile(user);
     }
 
     public async Task<UserProfile> YoIDOnboard()
     {
-      var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-      var user = await _userService.YoIDOnboard(username);
+      var user = await _userService.YoIDOnboard(_userService.GetCurrentUser(true, true));
       return await ToProfile(user);
     }
 
@@ -354,9 +344,8 @@ namespace Yoma.Core.Domain.Entity.Services
 
       await _userRequestUpdateProfileValidator.ValidateAndThrowAsync(request);
 
-      var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-
-      var result = _userService.GetByUsername(username, true, true);
+      var result = _userService.GetCurrentUser(true, true);
+      var username = result.Username;
 
       if (!result.ExternalId.HasValue)
         throw new InvalidOperationException($"External id expected for user with id '{result.Id}'");

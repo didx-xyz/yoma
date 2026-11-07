@@ -1,10 +1,9 @@
-using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Options;
 using System.Text;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.BlobProvider.Interfaces;
 using Yoma.Core.Domain.BlobProvider.Models;
-using Yoma.Core.Domain.Core.Exceptions;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Infrastructure.AmazonS3.Models;
 
@@ -16,8 +15,6 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
     private readonly IEnvironmentProvider _environmentProvider;
     private readonly AWSS3Options _options;
     private readonly BufferedTusS3Store _tusStore;
-    private static readonly FileExtensionContentTypeProvider _fileExtensionContentTypeProvider = new();
-    private const string DefaultContentType = "application/octet-stream";
     #endregion
 
     #region Constructor
@@ -89,7 +86,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
     {
       ArgumentException.ThrowIfNullOrWhiteSpace(uploadId);
 
-      var file = await _tusStore.GetFileAsync(uploadId, CancellationToken.None) ?? throw new EntityNotFoundException($"Resumable upload '{uploadId}' not found");
+      var file = await _tusStore.GetOwnedFileAsync(uploadId, CancellationToken.None);
       var metadata = await file.GetMetadataAsync(CancellationToken.None);
 
       if (!metadata.TryGetValue("filename", out var filenameMeta))
@@ -115,23 +112,12 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
       // If they’re gone, the file existence check will reject the request,
       // meaning they are implicitly expired if not submitted in time.
 
-      // Determine ContentType: prefer metadata, otherwise guess from extension
-      string? contentType = null;
-      if (metadata.TryGetValue("contentType", out var ctMeta) ||
-          metadata.TryGetValue("filetype", out ctMeta))
-        contentType = ctMeta.GetString(Encoding.UTF8)?.Trim();
-
-      if (string.IsNullOrWhiteSpace(contentType))
-      {
-        if (!_fileExtensionContentTypeProvider.TryGetContentType(fileName, out contentType))
-          contentType = DefaultContentType;
-      }
-
-      if (string.IsNullOrWhiteSpace(contentType))
-      {
-        if (!_fileExtensionContentTypeProvider.TryGetContentType(fileName, out contentType))
-          contentType = DefaultContentType;
-      }
+      // Retain valid browser MIME information, but never promote an arbitrary response type.
+      // BlobService also validates the allowed extension/size before copying into permanent storage.
+      string? suppliedContentType = null;
+      if (metadata.TryGetValue("contentType", out var ctMeta) || metadata.TryGetValue("filetype", out ctMeta))
+        suppliedContentType = ctMeta.GetString(Encoding.UTF8)?.Trim();
+      var contentType = FileHelper.GetContentType(fileName, suppliedContentType);
 
       if (!_options.Buckets.TryGetValue(StorageType.Private, out var optionsBucket) || optionsBucket == null)
         throw new InvalidOperationException($"Failed to retrieve configuration section '{AWSS3Options.Section}' for storage type '{StorageType.Private}'");

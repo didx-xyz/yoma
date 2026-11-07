@@ -18,7 +18,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
     {
 #pragma warning disable 612, 618
       modelBuilder
-        .HasAnnotation("ProductVersion", "10.0.13")
+        .HasAnnotation("ProductVersion", "10.0.14")
         .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
       NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "pg_trgm");
@@ -1707,6 +1707,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.Property<Guid>("ActionId")
             .HasColumnType("uuid");
 
+          b.Property<string>("City")
+            .HasColumnType("varchar(255)");
+
           b.Property<string>("CommentVerification")
             .HasColumnType("varchar(500)");
 
@@ -1716,14 +1719,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.Property<Guid?>("CommitmentIntervalId")
             .HasColumnType("uuid");
 
-          b.Property<string>("City")
-            .HasColumnType("varchar(255)");
-
           b.Property<Guid?>("CountryId")
             .HasColumnType("uuid");
-
-          b.Property<string>("Region")
-            .HasColumnType("varchar(255)");
 
           b.Property<DateTimeOffset?>("DateCompleted")
             .HasColumnType("timestamp with time zone");
@@ -1752,6 +1749,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.Property<bool?>("Recommendable")
             .HasColumnType("boolean");
 
+          b.Property<string>("Region")
+            .HasColumnType("varchar(255)");
+
           b.Property<byte?>("StarRating")
             .HasColumnType("smallint");
 
@@ -1768,9 +1768,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
           b.HasIndex("CommitmentIntervalId");
 
-          b.HasIndex("OpportunityId");
-
           b.HasIndex("CountryId");
+
+          b.HasIndex("OpportunityId");
 
           b.HasIndex("UserId", "OpportunityId", "ActionId")
             .IsUnique();
@@ -2081,10 +2081,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
           b.HasIndex("Provider");
 
-          b.HasIndex("ProviderCountryId");
-
           NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Provider"), "gin");
           NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Provider"), new[] { "gin_trgm_ops" });
+
+          b.HasIndex("ProviderCountryId");
 
           b.HasIndex("StatusId");
 
@@ -3649,7 +3649,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             .HasColumnType("uuid");
 
           b.Property<string>("TenantId")
-            .HasColumnType("varchar(50)");
+            .HasColumnType("varchar(125)");
 
           b.Property<Guid?>("UserId")
             .HasColumnType("uuid");
@@ -4221,9 +4221,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
           b.Navigation("CommitmentInterval");
 
-          b.Navigation("Opportunity");
-
           b.Navigation("Country");
+
+          b.Navigation("Opportunity");
 
           b.Navigation("User");
 

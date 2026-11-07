@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -14,6 +15,7 @@ using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Infrastructure.Database.Migrations;
 using Yoma.Core.Test.Core.Fixtures;
 using Yoma.Core.Test.SSI.Fixtures;
 using Yoma.Core.Domain.Entity.Interfaces;
@@ -52,6 +54,104 @@ namespace Yoma.Core.Test.SSI
     #endregion Class Variables
 
     #region Tests
+    [Fact]
+    public void MigratedCustomFieldSeedsFitTheCredentialKeyBudgetAndMatchRuntimeRules()
+    {
+      var definitions = new Dictionary<Guid, (string EntityType, string Key)>();
+      foreach (var operation in new ApplicationDb_CF_Configuration().UpOperations.OfType<InsertDataOperation>()
+        .Where(operation => operation.Schema == "Core" && operation.Table == "CustomFieldDefinition"))
+      {
+        for (var row = 0; row < operation.Values.GetLength(0); row++)
+          definitions.Add(Assert.IsType<Guid>(operation.Values[row, Array.IndexOf(operation.Columns, "Id")]),
+            (Assert.IsType<string>(operation.Values[row, Array.IndexOf(operation.Columns, "EntityType")]),
+             Assert.IsType<string>(operation.Values[row, Array.IndexOf(operation.Columns, "Key")])));
+      }
+
+      foreach (var operation in new ApplicationDb_SSI_DidxMe().UpOperations.OfType<UpdateDataOperation>())
+      {
+        var id = Assert.IsType<Guid>(operation.KeyValues[0, 0]);
+        definitions[id] = (definitions[id].EntityType, Assert.IsType<string>(operation.Values[0, 0]));
+      }
+
+      Assert.NotEmpty(definitions);
+      Assert.All(definitions.Values, definition =>
+        Assert.InRange(($"{definition.EntityType}_{definition.Key}").Length, 1, 50));
+      Assert.Equal(Domain.Opportunity.CustomFieldConstants.Entrepreneurship.Programme.OtherDescription,
+        definitions[new Guid("cf0e0001-0929-4cf0-a100-000000000002")].Key);
+      Assert.Equal("EntrepreneurshipRegistrationRef",
+        definitions[new Guid("cf0e0001-0929-4cf0-a100-000000000014")].Key);
+    }
+
+    [Fact]
+    public async Task MissingSchemaFamilyReturnsValidationFailureBeforeProviderWrites()
+    {
+      using var fixture = new Fixture();
+
+      await Assert.ThrowsAsync<FluentValidation.ValidationException>(() => fixture.Service.Create(new SSISchemaRequestCreate
+      {
+        Name = "Missing family",
+        ArtifactType = ArtifactType.SDJWT,
+        Attributes = ["User_DisplayName"]
+      }));
+
+      fixture.Provider.Verify(provider => provider.UpsertSchema(It.IsAny<SchemaRequest>()), Times.Never);
+    }
+
+    [Fact]
+    public void SdJwtExtendsTheArtifactContractWithoutRenumberingExistingValues()
+    {
+      Assert.Equal(0, (int)ArtifactType.JWS);
+      Assert.Equal(1, (int)ArtifactType.ACR);
+      Assert.Equal(2, (int)ArtifactType.SDJWT);
+      Assert.Equal("SD-JWT", ArtifactType.SDJWT.ToDescription());
+    }
+
+    [Fact]
+    public async Task ProviderSelectedSdJwtDefaultsAreSeededOnceForBothFamilies()
+    {
+      using var fixture = new Fixture();
+      fixture.Provider.Setup(provider => provider.GetDefaultArtifactType(It.IsAny<SchemaType>()))
+        .Returns(ArtifactType.SDJWT);
+
+      await fixture.Background.SeedSchemas();
+      await fixture.Background.SeedSchemas();
+      fixture.AssertNoErrors();
+
+      Assert.Equal(6, fixture.Schemas.Count);
+      Assert.All(fixture.Schemas, schema => Assert.Equal(ArtifactType.SDJWT, schema.ArtifactType));
+      fixture.Provider.Verify(provider => provider.UpsertSchema(It.IsAny<SchemaRequest>()), Times.Exactly(6));
+    }
+
+    [Theory]
+    [InlineData(SchemaType.YoID, ArtifactType.ACR, true)]
+    [InlineData(SchemaType.YoID, ArtifactType.SDJWT, true)]
+    [InlineData(SchemaType.YoID, ArtifactType.JWS, false)]
+    [InlineData(SchemaType.Opportunity, ArtifactType.JWS, true)]
+    [InlineData(SchemaType.Opportunity, ArtifactType.SDJWT, true)]
+    [InlineData(SchemaType.Opportunity, ArtifactType.ACR, false)]
+    [InlineData(SchemaType.YoID, (ArtifactType)99, false)]
+    [InlineData(SchemaType.Opportunity, (ArtifactType)99, false)]
+    public async Task SchemaCreationValidatesArtifactFamilyBeforeProviderWrites(SchemaType type, ArtifactType artifactType, bool allowed)
+    {
+      using var fixture = new Fixture();
+      var typeId = fixture.Entities.SelectMany(entity => entity.Types!).First(item => item.Type == type).Id;
+      var request = new SSISchemaRequestCreate
+      {
+        TypeId = typeId,
+        Name = "Artifact validation",
+        ArtifactType = artifactType,
+        Attributes = [type == SchemaType.YoID ? "User_DisplayName" : "Opportunity_Title"]
+      };
+
+      if (allowed)
+        Assert.Equal(artifactType, (await fixture.Service.Create(request)).ArtifactType);
+      else
+      {
+        await Assert.ThrowsAsync<FluentValidation.ValidationException>(() => fixture.Service.Create(request));
+        fixture.Provider.Verify(provider => provider.UpsertSchema(It.IsAny<SchemaRequest>()), Times.Never);
+      }
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
@@ -848,6 +948,8 @@ namespace Yoma.Core.Test.SSI
     [InlineData(ArtifactType.ACR, false)]
     [InlineData(ArtifactType.JWS, true)]
     [InlineData(ArtifactType.ACR, true)]
+    [InlineData(ArtifactType.SDJWT, false)]
+    [InlineData(ArtifactType.SDJWT, true)]
     public async Task LegacyDifficultyUsesCfValueOrArtifactOptionalityWithoutBlockingIssuance(ArtifactType artifact, bool supplied)
     {
       using var fixture = new Fixture();
@@ -855,7 +957,7 @@ namespace Yoma.Core.Test.SSI
       {
         TypeId = fixture.Entities.Single(entity => entity.Name == "Opportunity").Types!.Single().Id,
         Name = "Legacy Difficulty",
-        ArtifactType = artifact,
+        ArtifactType = ArtifactType.JWS,
         Attributes = ["Opportunity_Difficulty", "MyOpportunity_UserDisplayName"]
       });
       var key = Domain.Opportunity.CustomFieldConstants.Difficulty.Keys.Learning;
@@ -886,17 +988,21 @@ namespace Yoma.Core.Test.SSI
     }
 
     [Theory]
-    [InlineData("ImpactAction")]
-    [InlineData("Event")]
-    [InlineData("Job")]
-    [InlineData("Entrepreneurship")]
-    public async Task MissingCustomFieldsAreOmittedForEveryScopedJwtDefault(string context)
+    [InlineData("ImpactAction", ArtifactType.JWS)]
+    [InlineData("Event", ArtifactType.JWS)]
+    [InlineData("Job", ArtifactType.JWS)]
+    [InlineData("Entrepreneurship", ArtifactType.JWS)]
+    [InlineData("ImpactAction", ArtifactType.SDJWT)]
+    [InlineData("Event", ArtifactType.SDJWT)]
+    [InlineData("Job", ArtifactType.SDJWT)]
+    [InlineData("Entrepreneurship", ArtifactType.SDJWT)]
+    public async Task MissingCustomFieldsAreOmittedForEveryScopedJwtDefault(string context, ArtifactType artifactType)
     {
       using var fixture = new Fixture();
       await fixture.Background.SeedSchemas();
       fixture.AssertNoErrors();
       var schema = await fixture.Service.GetByFullName($"Opportunity|{context}|Default");
-      var request = new CredentialIssuanceRequest { ArtifactType = ArtifactType.JWS, Attributes = [] };
+      var request = new CredentialIssuanceRequest { ArtifactType = artifactType, Attributes = [] };
 
       fixture.Map(request, schema, new Domain.Opportunity.Models.Opportunity
       {
@@ -911,23 +1017,34 @@ namespace Yoma.Core.Test.SSI
       Assert.DoesNotContain(request.Attributes.Keys, attribute => attribute.Contains(context, StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
-    public async Task PhoneOnlyYoIDKeepsEveryDeclaredAttributeWithExistingPlaceholders()
+    [Theory]
+    [InlineData(ArtifactType.ACR)]
+    [InlineData(ArtifactType.SDJWT)]
+    public async Task PhoneOnlyYoIDUsesTheArtifactOptionalValueSemantics(ArtifactType artifactType)
     {
       using var fixture = new Fixture();
       await fixture.Background.SeedSchemas();
       fixture.AssertNoErrors();
       var schema = await fixture.Service.GetByFullName("YoID|Default");
-      var request = new CredentialIssuanceRequest { ArtifactType = ArtifactType.ACR, Attributes = [] };
+      var request = new CredentialIssuanceRequest { ArtifactType = artifactType, Attributes = [] };
 
       fixture.Map(request, schema, new Domain.Entity.Models.Organization { Name = "Yoma" });
       fixture.Map(request, schema, new Domain.Entity.Models.User { DisplayName = "Youth", PhoneNumber = "+27123456789" });
 
-      Assert.Equal(Attributes(schema).Order(), request.Attributes.Keys.Order());
       Assert.DoesNotContain("User_Email", request.Attributes.Keys);
-      Assert.Equal("n/a", request.Attributes["User_Education"]);
-      Assert.Equal("n/a", request.Attributes["User_AccountVerificationMethods"]);
       Assert.DoesNotContain("User_PhoneNumber", request.Attributes.Keys);
+      if (artifactType == ArtifactType.ACR)
+      {
+        Assert.Equal(Attributes(schema).Order(), request.Attributes.Keys.Order());
+        Assert.Equal("n/a", request.Attributes["User_Education"]);
+        Assert.Equal("n/a", request.Attributes["User_AccountVerificationMethods"]);
+      }
+      else
+      {
+        Assert.Equal(2, request.Attributes.Count);
+        Assert.Equal("Youth", request.Attributes["User_DisplayName"]);
+        Assert.Equal("Yoma", request.Attributes["Organization_Name"]);
+      }
     }
 
     [Fact]
@@ -1266,7 +1383,7 @@ namespace Yoma.Core.Test.SSI
         Domain.Opportunity.Type.Entrepreneurship =>
         [
           "MyOpportunity_EntrepreneurshipBusinessName", "MyOpportunity_EntrepreneurshipBusinessSummary",
-          "MyOpportunity_EntrepreneurshipBusinessRegistered", "MyOpportunity_EntrepreneurshipRegistrationReference",
+          "MyOpportunity_EntrepreneurshipBusinessRegistered", "MyOpportunity_EntrepreneurshipRegistrationRef",
           "MyOpportunity_EntrepreneurshipSector", "MyOpportunity_EntrepreneurshipJobsCreated",
           "MyOpportunity_EntrepreneurshipRevenueBand", "MyOpportunity_EntrepreneurshipRevenueCurrency",
           "MyOpportunity_EntrepreneurshipFundingTypes", "MyOpportunity_EntrepreneurshipFundingAmountBand",
@@ -1397,6 +1514,8 @@ namespace Yoma.Core.Test.SSI
         var factory = new Mock<ISSIProviderClientFactory>();
         factory.Setup(provider => provider.CreateClient()).Returns(Provider.Object);
         Provider.Setup(provider => provider.ListSchemas(It.IsAny<bool>())).ReturnsAsync(() => [.. Schemas]);
+        Provider.Setup(provider => provider.GetDefaultArtifactType(SchemaType.Opportunity)).Returns(ArtifactType.JWS);
+        Provider.Setup(provider => provider.GetDefaultArtifactType(SchemaType.YoID)).Returns(ArtifactType.ACR);
         RestoreProviderWrites();
         Service = new SSISchemaService(Options.Create(Settings), _cache, factory.Object, EntityService,
           _definitionService.Object, typeService.Object, new SchemaRequestValidatorCreate(EntityService, typeService.Object),
@@ -1407,7 +1526,7 @@ namespace Yoma.Core.Test.SSI
         Background = new SSIBackgroundService(_logger.Object, Options.Create(Settings), environment.Object,
           Options.Create(new ScheduleJobOptions()), Mock.Of<IServiceScopeFactory>(), Service, EntityService,
           Mock.Of<ISSITenantService>(), Mock.Of<ISSICredentialService>(), Lock.Object,
-          Mock.Of<Microsoft.Extensions.Hosting.IHostApplicationLifetime>());
+          Mock.Of<Microsoft.Extensions.Hosting.IHostApplicationLifetime>(), factory.Object);
       }
 
       public void Map<T>(CredentialIssuanceRequest request, SSISchema schema, T entity) where T : class
@@ -1464,7 +1583,7 @@ namespace Yoma.Core.Test.SSI
       {
         var user = new Domain.Entity.Models.User { Id = Guid.NewGuid(), Username = "wallet-test" };
         var users = new Mock<IUserService>();
-        users.Setup(service => service.GetByUsername(user.Username, false, false)).Returns(user);
+        users.Setup(service => service.GetCurrentUser(false, false, It.IsAny<bool>())).Returns(user);
         var tenants = new Mock<ISSITenantService>();
         tenants.Setup(service => service.GetTenantId(Domain.Entity.EntityType.User, user.Id)).Returns("holder");
         var httpContext = new HttpContextAccessor

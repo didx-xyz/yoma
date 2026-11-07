@@ -1,6 +1,7 @@
 using CsvWriter = CsvHelper.CsvWriter;
 using FluentValidation;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -550,7 +551,7 @@ namespace Yoma.Core.Test.Entity
       strategy.Setup(o => o.ExecuteInExecutionStrategyAsync(It.IsAny<Func<Task>>(), It.IsAny<bool>()))
         .Returns<Func<Task>, bool>(async (action, _) => await action());
 
-      var service = new UserService(Options.Create(new AppSettings()), Mock.Of<IBlobService>(), lookup.Object,
+      var service = new UserService(Options.Create(new AppSettings()), new HttpContextAccessor(), Mock.Of<IBlobService>(), lookup.Object,
         categoryLookup.Object, accommodationLookup.Object, languageLookup.Object, Mock.Of<IEngagementTypeService>(),
         Mock.Of<Domain.SSI.Interfaces.ISSITenantService>(), Mock.Of<Domain.SSI.Interfaces.ISSICredentialService>(),
         Mock.Of<ISettingsDefinitionService>(), Mock.Of<IDelayedExecutionService>(),
