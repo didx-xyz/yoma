@@ -7,6 +7,7 @@ bootstrap/start scripts. Only the explicitly named Kind cluster is deleted; its
 cluster-local data is lost. External volumes and remote services are not reset.
 Use -WhatIf to validate prerequisites without stopping or deleting anything.
 #>
+#Requires -Version 7.3
 [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
 param(
     [Parameter(Mandatory)]
@@ -34,6 +35,8 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+# Preserve embedded quotes in bash and Docker template arguments, even if the profile selects Legacy.
+$PSNativeCommandArgumentPassing = 'Standard'
 Get-Command docker -ErrorAction Stop | Out-Null
 
 # Require a local Docker endpoint; never reset a remote Docker context by accident.

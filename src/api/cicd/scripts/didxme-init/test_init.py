@@ -142,7 +142,7 @@ class InitTests(unittest.TestCase):
         curl.chmod(0o700)
         self.env = dict(os.environ, PATH=str(self.root) + os.pathsep + os.environ["PATH"],
                         FIXTURE_STATE=str(self.state), LOCAL_SETTINGS_FILE=str(self.settings),
-                        YOMA_ENVIRONMENT="Local", MONO_READY_TIMEOUT_SECONDS="10", YOMA_ASSERTION_CLIENT_SECRET=SECRET + "-assertion",
+                        YOMA_ENVIRONMENT="Local", YOMA_SSI_ENABLED_ENVIRONMENTS="Local", MONO_READY_TIMEOUT_SECONDS="10", YOMA_ASSERTION_CLIENT_SECRET=SECRET + "-assertion",
                         YOMA_ISSUER_CLIENT_SECRET=SECRET + "-issuer", YOMA_HOLDER_CLIENT_SECRET=SECRET + "-holder")
 
     def run_init(self, mode=None):
@@ -209,6 +209,29 @@ class InitTests(unittest.TestCase):
         self.assertNotEqual(0, result.returncode)
         self.assertIn("restricted to Local", result.stdout)
         self.assertNotIn("calls", json.loads(self.state.read_text()))
+
+    def test_disabled_ssi_exits_before_settings_secrets_or_network_access(self):
+        self.settings.unlink()
+        del self.env["YOMA_ASSERTION_CLIENT_SECRET"]
+        for environments in ["None", "Development, Staging, Production", " none , DEVELOPMENT "]:
+            with self.subTest(environments=environments):
+                self.env["YOMA_SSI_ENABLED_ENVIRONMENTS"] = environments
+                result = self.run_init()
+                self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+                self.assertIn("SSI is disabled locally", result.stdout)
+                self.assertNotIn("calls", json.loads(self.state.read_text()))
+                self.assertFalse(self.settings.exists())
+
+    def test_unsupported_ssi_environment_is_rejected_before_settings_or_network_access(self):
+        self.settings.unlink()
+        for environments in ["Unsupported", "Local, Unsupported", "None, Unsupported"]:
+            with self.subTest(environments=environments):
+                self.env["YOMA_SSI_ENABLED_ENVIRONMENTS"] = environments
+                result = self.run_init()
+                self.assertNotEqual(0, result.returncode)
+                self.assertIn("unsupported environment", result.stdout)
+                self.assertNotIn("calls", json.loads(self.state.read_text()))
+                self.assertFalse(self.settings.exists())
 
     def test_drift_and_provider_failure_block_settings_update_without_exposing_secrets(self):
         for mode in ["drift", "mapper-drift", "issuer-failure"]:

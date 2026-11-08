@@ -358,19 +358,51 @@ namespace Yoma.Core.Test.SSI.DidxMe
       http.ShouldNotHaveCalled("https://wallet.test/*");
     }
 
-    [Fact]
-    public async Task RejectsWalletCorrelationOwnedByAnotherParticipant()
+    [Theory]
+    [InlineData("holder")]
+    [InlineData("tenant")]
+    [InlineData("preset")]
+    public async Task RejectsWalletCorrelationWithConflictingOwnership(string mismatch)
     {
       using var http = new HttpTest()
         .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
       var fixture = new Fixture(http);
       var issued = await fixture.Client.IssueCredential(fixture.Request());
-      Assert.Single(fixture.IssuanceMappings).TenantIdHolder = Guid.NewGuid().ToString();
+      var mapping = Assert.Single(fixture.IssuanceMappings);
+      switch (mismatch)
+      {
+        case "holder": mapping.TenantIdHolder = Guid.NewGuid().ToString(); break;
+        case "tenant": mapping.TenantAlias = "another-tenant"; break;
+        case "preset": mapping.PresetMappingId = "another-preset"; break;
+        default: throw new NotSupportedException(mismatch);
+      }
       http.ForCallsTo("https://wallet.test/api/v2/credentials*").RespondWith(
         JsonConvert.SerializeObject(new { data = new[] { fixture.WalletCredential(issued.Id) }, links = new { } }));
 
       await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.Client.ListCredentials(HolderId));
       Assert.Null(Assert.Single(fixture.IssuanceMappings).WalletCredentialId);
+    }
+
+    [Fact]
+    public async Task WalletListSkipsUnknownIssuanceWithoutHidingKnownCredentials()
+    {
+      using var http = new HttpTest()
+        .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
+      var fixture = new Fixture(http);
+      var issued = await fixture.Client.IssueCredential(fixture.Request());
+      var unknownId = Guid.NewGuid().ToString();
+      http.ForCallsTo("https://wallet.test/api/v2/credentials*").RespondWith(
+        JsonConvert.SerializeObject(new
+        {
+          data = new[] { fixture.WalletCredential(unknownId), fixture.WalletCredential(issued.Id) },
+          links = new { }
+        }));
+
+      var result = await fixture.Client.ListCredentials(HolderId);
+
+      Assert.Equal(issued.Id, Assert.Single(result!).Id);
+      Assert.Equal(WalletId, Assert.Single(fixture.IssuanceMappings).WalletCredentialId);
+      await Assert.ThrowsAsync<EntityNotFoundException>(() => fixture.Client.GetCredentialById(HolderId, unknownId));
     }
 
     [Fact]

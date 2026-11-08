@@ -27,21 +27,24 @@ namespace Yoma.Core.Test.Core
   public class ActionLinkClaimTests
   {
     [Theory]
-    [InlineData(false, false)]
-    [InlineData(false, true)]
-    [InlineData(true, false)]
-    public void SearchRequiresMembershipUnlessTheCallerIsASystemAdmin(bool systemAdmin, bool hasMembership)
+    [InlineData(false, false, false)]
+    [InlineData(false, true, true)]
+    [InlineData(false, true, false)]
+    [InlineData(true, false, false)]
+    public void SearchRequiresMembershipUnlessTheCallerIsASystemAdmin(bool systemAdmin, bool hasMembership, bool matchingOrganization)
     {
       using var fixture = new Fixture();
       fixture.Accessor.HttpContext!.User = new ClaimsPrincipal(new ClaimsIdentity([
         new Claim(ClaimTypes.Role, systemAdmin ? Constants.Role_Admin : Constants.Role_OrganizationAdmin)], "test"));
       fixture.Link.OpportunityOrganizationId = Guid.NewGuid();
       fixture.Organizations.Setup(service => service.ListAdminsOf(false)).Returns(hasMembership
-        ? [new OrganizationInfoAdmin { Id = fixture.Link.OpportunityOrganizationId.Value }] : []);
+        ? [new OrganizationInfoAdmin { Id = matchingOrganization ? fixture.Link.OpportunityOrganizationId.Value : Guid.NewGuid() }] : []);
       var filter = new LinkSearchFilter { EntityType = ActionLinkEntityType.Opportunity };
 
       if (!systemAdmin && !hasMembership)
         Assert.Throws<SecurityException>(() => fixture.Service.Search(filter, true));
+      else if (!systemAdmin && !matchingOrganization)
+        Assert.Empty(fixture.Service.Search(filter, true).Items);
       else
         Assert.Equal(fixture.Link.Id, Assert.Single(fixture.Service.Search(filter, true).Items).Id);
     }

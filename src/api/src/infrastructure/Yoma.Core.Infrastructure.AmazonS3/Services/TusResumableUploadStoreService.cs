@@ -128,6 +128,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
         OriginalFileName = fileName,
         Extension = extension,
         ContentType = contentType,
+        SuppliedContentType = suppliedContentType,
         Length = uploadLength.Value,
         SourceBucket = optionsBucket.BucketName,
         SourceKey = $"{_environmentProvider.Environment}/{_options.Tus.KeyPrefix}/files/{uploadId}".ToLower()

@@ -33,6 +33,22 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           FROM "SSI"."CredentialIssuanceStatus"
           WHERE "Name" = '{CredentialIssuanceStatus.Pending}';
 
+          -- Future completions use the opportunity's selection, not an existing issuance schedule.
+          -- Reconcile selected schemas too, including disabled opportunities that retain a selection.
+          UPDATE "Opportunity"."Opportunity" AS opportunity
+          SET "SSISchemaName" = CASE
+            WHEN opportunity_type."Name" IN (
+              '{Domain.Opportunity.Type.ImpactAction}',
+              '{Domain.Opportunity.Type.Event}',
+              '{Domain.Opportunity.Type.Job}',
+              '{Domain.Opportunity.Type.Entrepreneurship}'
+            ) THEN 'Opportunity|' || opportunity_type."Name" || '|Default'
+            ELSE 'Opportunity|Default'
+          END
+          FROM "Opportunity"."OpportunityType" AS opportunity_type
+          WHERE opportunity_type."Id" = opportunity."TypeId"
+            AND (opportunity."CredentialIssuanceEnabled" OR opportunity."SSISchemaName" IS NOT NULL);
+
           -- YoID uses the configured default in the new provider, never a historical schema name.
           UPDATE "SSI"."CredentialIssuance"
           SET "SchemaName" = 'YoID|Default'

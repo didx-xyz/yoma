@@ -124,6 +124,40 @@ namespace Yoma.Core.Test.Core
     }
 
     [Theory]
+    [InlineData(null, FileType.VoiceNotes, "audio/3gpp")]
+    [InlineData(" ", FileType.VoiceNotes, "audio/3gpp")]
+    [InlineData("application/octet-stream", FileType.VoiceNotes, "audio/3gpp")]
+    [InlineData("text/html", FileType.VoiceNotes, "audio/3gpp")]
+    [InlineData("not a MIME type", FileType.VoiceNotes, "audio/3gpp")]
+    [InlineData("audio/3gpp", FileType.VoiceNotes, "audio/3gpp")]
+    [InlineData("video/3gpp", FileType.VoiceNotes, "video/3gpp")]
+    [InlineData(null, FileType.Videos, "video/3gpp")]
+    public async Task ResumableAttachmentUsesTheCategoryOnlyForMimeFallback(string? supplied, FileType type, string expected)
+    {
+      await using var fixture = await Fixture.Start();
+      var metadata = supplied == null ? "" : $",contentType {Convert.ToBase64String(Encoding.UTF8.GetBytes(supplied))}";
+      var id = await fixture.Create(metadata, "evidence.3gp");
+      using var patch = await fixture.Send("PATCH", id, fixture.Owner);
+      Assert.Equal(HttpStatusCode.NoContent, patch.StatusCode);
+      fixture.SetUser(fixture.Owner);
+      var repository = new Mock<IRepository<BlobObject>>();
+      repository.Setup(service => service.Create(It.IsAny<BlobObject>())).ReturnsAsync((BlobObject item) => item);
+      var provider = new Mock<IBlobProviderClient>();
+      var factory = new Mock<IBlobProviderClientFactory>();
+      factory.Setup(service => service.CreateClient(StorageType.Private)).Returns(provider.Object);
+      var strategy = new Mock<IExecutionStrategyService>();
+      strategy.Setup(service => service.ExecuteInExecutionStrategyAsync(It.IsAny<Func<Task>>(), false))
+        .Returns((Func<Task> action, bool _) => action());
+      var service = new BlobService(fixture.Environment.Object, factory.Object, repository.Object,
+        strategy.Object, fixture.CreateUploadService(fixture.Store));
+
+      var result = await service.Create(type, StorageType.Private, null, id);
+
+      Assert.Equal(expected, result.ContentType);
+      provider.Verify(client => client.Create(It.IsAny<string>(), expected, "test-bucket", $"local/test/files/{id}"), Times.Once);
+    }
+
+    [Theory]
     [InlineData("contentType")]
     [InlineData("filetype")]
     public async Task SupportedBrowserMimeAliasesArePreserved(string metadataKey)
@@ -270,15 +304,15 @@ namespace Yoma.Core.Test.Core
         User = Principal(subject.ToString(), mappedSubject)
       };
 
-      internal async Task<string> Create(string metadata = "")
+      internal async Task<string> Create(string metadata = "", string filename = "evidence.png")
       {
-        using var response = await Send("POST", null, Owner, metadata: metadata);
+        using var response = await Send("POST", null, Owner, metadata: metadata, filename: filename);
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         return response.Headers.Location!.ToString().Split('/').Last();
       }
 
       internal async Task<HttpResponseMessage> Send(string method, string? id, Guid? subject, bool mappedSubject = false,
-        string metadata = "", byte[]? data = null, long offset = 0)
+        string metadata = "", byte[]? data = null, long offset = 0, string filename = "evidence.png")
       {
         using var request = new HttpRequestMessage(new HttpMethod(method), id == null ? "/uploads" : $"/uploads/{id}");
         request.Headers.Add("Tus-Resumable", "1.0.0");
@@ -287,7 +321,7 @@ namespace Yoma.Core.Test.Core
         if (method == "POST")
         {
           request.Headers.Add("Upload-Length", "3");
-          request.Headers.Add("Upload-Metadata", $"filename {Convert.ToBase64String(Encoding.UTF8.GetBytes("evidence.png"))}{metadata}");
+          request.Headers.Add("Upload-Metadata", $"filename {Convert.ToBase64String(Encoding.UTF8.GetBytes(filename))}{metadata}");
         }
         if (method == "PATCH")
         {

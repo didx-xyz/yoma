@@ -50,6 +50,37 @@ namespace Yoma.Core.Test.PartnerSync
     }
 
     [Theory]
+    [InlineData(false)]
+    [InlineData(null)]
+    public async Task UmuziCorrelationRedirectDoesNotRequireVerifiedEmail(bool? confirmed)
+    {
+      var fixture = new Fixture(SyncPartner.Umuzi);
+      fixture.User.EmailConfirmed = confirmed;
+
+      var result = await fixture.Authenticate();
+
+      Assert.Equal("https://partner.example/authenticated", result!.URL);
+      fixture.Provider.Verify(provider => provider.Authenticate(It.Is<SyncRequestUserAuthentication>(
+        request => request.UserId == fixture.User.Id)), Times.Once);
+    }
+
+    [Fact]
+    public async Task LinkedAlisonUserStillRequiresVerifiedEmail()
+    {
+      var fixture = new Fixture(SyncPartner.Alison);
+      fixture.User.EmailConfirmed = false;
+      fixture.State.Setup(service => service.GetUserSyncInfo(fixture.User.Id)).Returns(new SyncInfoUser
+      {
+        Partners = [new SyncInfoUserPartner { Partner = SyncPartner.Alison, ExternalId = "existing-user" }]
+      });
+
+      var error = await Assert.ThrowsAsync<ValidationException>(() => fixture.Authenticate());
+
+      Assert.Equal("Email", Assert.Single(error.Errors).PropertyName);
+      fixture.Provider.Verify(provider => provider.Authenticate(It.IsAny<SyncRequestUserAuthentication>()), Times.Never);
+    }
+
+    [Theory]
     [InlineData(SyncPartner.Alison)]
     [InlineData(SyncPartner.IXO)]
     public async Task MissingProfile_ThrowsValidationBeforeCallingProvider(SyncPartner partner)

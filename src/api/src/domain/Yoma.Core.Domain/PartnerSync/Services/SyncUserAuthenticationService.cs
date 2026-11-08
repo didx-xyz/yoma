@@ -99,7 +99,9 @@ namespace Yoma.Core.Domain.PartnerSync.Services
           throw new InvalidOperationException("Partner external id is required");
 
         // Partner sign-in may locate an existing account by email; only send a verified address.
-        if (!string.IsNullOrWhiteSpace(user.Email) && user.EmailConfirmed != true)
+        // Umuzi's current redirect passes only the Yoma user ID, without email-based authentication.
+        if (partnerSyncInfo.Partner != SyncPartner.Umuzi &&
+          !string.IsNullOrWhiteSpace(user.Email) && user.EmailConfirmed != true)
           throw new ValidationException([new ValidationFailure(nameof(user.Email),
             "Please verify your email address before continuing to the partner.")]);
 

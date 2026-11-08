@@ -58,10 +58,11 @@ See the
 
 ## Release Gates
 
-The current review result and Jason's remaining UI actions are in the
-[2026-11-06 handoff](./handoffs/2026-11-06-a.md); earlier decisions remain in the
-[2026-11-03 handoff](./handoffs/2026-11-03-a.md). The Medium batch was restored from its local
-checkpoint onto the updated branch and is uncommitted for review. Commit/push are not authorized.
+The latest PR follow-ups are in the [2026-11-08 handoff](./handoffs/2026-11-08-a.md).
+The Medium batch is committed and pushed on PR #2013; detailed task status lives in the
+[adapter feature](./YOM-1309-use-didxme-for-yoma-wallets-and-credential-issuance/feature.md).
+Jason's remaining UI actions are in the [2026-11-06 handoff](./handoffs/2026-11-06-a.md);
+earlier decisions remain in the [2026-11-03 handoff](./handoffs/2026-11-03-a.md).
 The reward-pool UI change, upload handling, rich-text and document-preview checks are tracked
 in the current handoff; Jason's CF and navigation fixes are already present.
 
@@ -69,7 +70,7 @@ in the current handoff; Jason's CF and navigation fixes are already present.
 2. Finish participant/browser/mobile and credential-detail checks with Jason.
 3. SRE provisions Dev once and supplies ongoing deployment configuration/secrets privately.
 4. Rehearse data cutover/reissuance and agree rollback/retention before retiring Aries.
-5. Adrian reviews implementation and authorizes commit/push.
+5. Adrian reviews remaining changes and authorizes merge when the release gates are met.
 
 Local provisioning, issuance, API wallet list/detail and caching have been exercised. This is
 not a claim of deployed readiness or a completed browser journey. See [plan](./plan.md) and the

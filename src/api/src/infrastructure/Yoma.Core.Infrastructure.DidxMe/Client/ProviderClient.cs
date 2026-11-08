@@ -330,9 +330,11 @@ namespace Yoma.Core.Infrastructure.DidxMe.Client
       if (!Guid.TryParse(credential.Claims.Value<string>(PresetService.CredentialIdAttribute), out var id))
         throw new InvalidOperationException("The Yoma wallet credential is missing its signed correlation ID");
       var issuance = _issuanceMappings.Query()
-        .SingleOrDefault(item => item.Id == id &&
-          item.TenantAlias == _options.TenantAlias && item.TenantIdHolder == tenantId && item.PresetMappingId == presetMapping.Id)
-        ?? throw new InvalidOperationException("The Yoma wallet credential has no matching issuance intent");
+        .SingleOrDefault(item => item.Id == id);
+      // A wallet may outlive a Yoma data reset. Ignore unknown records, but reject conflicting ownership.
+      if (issuance == null) return null;
+      if (issuance.TenantAlias != _options.TenantAlias || issuance.TenantIdHolder != tenantId || issuance.PresetMappingId != presetMapping.Id)
+        throw new InvalidOperationException("The Yoma wallet credential has no matching issuance intent");
       if (credential.Claims.Value<string>(issuance.ClientReferentKey) != issuance.ClientReferentValue ||
         (issuance.WalletCredentialId != null && issuance.WalletCredentialId != credential.Id))
         throw new InvalidOperationException("The wallet credential does not match its issuance correlation");

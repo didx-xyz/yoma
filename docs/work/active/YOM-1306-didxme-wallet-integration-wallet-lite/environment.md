@@ -11,7 +11,7 @@ SSI is **enabled by default**. For local work without mono, use the [SSI opt-out
 1. Use the team's reviewed Yoma integration branch and its normal development prerequisites.
 2. Ask Robbie/SRE for access and the supported **standalone mono local setup**. Follow those private instructions for dependencies, registry access and issuer preparation. Mono stays outside Yoma's Compose stack; no private checkout or platform configuration is committed here. Adrian's machine-local helpers are not a portable installer.
 3. Obtain a current copy of Adrian's **`appsettings.Local.json` privately**, preferably via the approved password manager/secure sharing mechanism. Place it at `src/api/src/application/Yoma.Core.Api/appsettings.Local.json`. Keep Jason's existing settings if already configured and merge the required changes with Adrian; do not blindly replace unrelated integrations or machine-specific database/cache settings.
-4. The Local file must be valid JSON, include a `DidxMe` object and exist before Compose starts. Tracked `appsettings.json` provides the structure/placeholders, not working credentials. Obtain any other required ignored Yoma configuration through the usual private setup process; this initializer does not generate the rest of Yoma's configuration.
+4. The Local file must be valid JSON and exist before Compose starts. Include a `DidxMe` object when SSI is enabled. Tracked `appsettings.json` provides the structure/placeholders, not working credentials. Obtain other Yoma configuration that is ignored by Git through the usual private setup process; this initializer does not generate the rest of Yoma's configuration.
 5. Verify Git ignores the Local file, from the repository root:
 
    ```powershell
@@ -51,7 +51,7 @@ Initialization is **Local only**. Dev and later environments use SRE provisionin
 
 ### Optional local startup without SSI
 
-The e2e CI job uses this disabled mode and creates an empty ignored Local settings file before
+The e2e CI job uses this disabled mode and creates an ignored Local settings file containing `{}` before
 Compose starts. Local development remains enabled by default and uses privately supplied settings.
 
 From `src/api`, in PowerShell:
@@ -124,7 +124,8 @@ Use mono's supported private reset procedure only for a deliberate clean test en
 [Reset-Local.ps1](../../../../src/api/src/infrastructure/Yoma.Core.Infrastructure.DidxMe/Tools/Reset-Local.ps1)
 is a Yoma-owned convenience script for an **already prepared standalone Linux development
 container using Kind and Tilt**. It does not install mono or add it to Yoma Compose. Other local
-setups should use their supported reset procedure instead.
+setups should use their supported reset procedure instead. Run this helper in **PowerShell 7.3+
+(`pwsh`)**, not Windows PowerShell 5.1; native argument handling must preserve embedded quotes.
 
 Robbie/SRE supplies the container/cluster names, container repository path and bootstrap/start
 script paths privately. Those scripts must already exist in the container: bootstrap must rebuild
@@ -185,7 +186,12 @@ Applying this migration activates the reset; it is not a dormant script or runti
 3. Apply the migration once. Tenant and credential schedules become Pending; old provider IDs,
    schema versions and retry/errors are cleared. Both credential families use the defaults above,
    replacing historical/custom names across every status. Issuance resolves the latest seeded version.
-   Row identities, business references and original issuance dates remain. Aries storage is retained unchanged.
+   Existing opportunity schema selections also move to their type's default so future completions
+   use the new provider. Issuance enablement is unchanged; disabled opportunities without a schema
+   selection remain unselected.
+   Row identities, business references and populated issuance dates remain. Legacy Issued rows
+   without `DateIssued` use their previous `DateModified`, which may differ from the original issuance
+   date. Obtain authoritative dates before cutover where exact dates matter. Aries storage is retained unchanged.
 4. Complete schema seeding and tenant creation, then allow issuance. Existing workers enforce tenant
    prerequisites and use retained dates. Reconcile counts, dates and wallet access before retiring Aries.
 

@@ -208,7 +208,7 @@ namespace Yoma.Core.Domain.Core.Services
         StorageType = storageType,
         FileType = type,
         Key = key,
-        ContentType = FileHelper.GetContentType(info.OriginalFileName, info.ContentType, type),
+        ContentType = FileHelper.GetContentType(info.OriginalFileName, info.SuppliedContentType, type),
         OriginalFileName = info.OriginalFileName
       };
 

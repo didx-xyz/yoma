@@ -5,19 +5,15 @@
 - **Ticket**: YOM-1309
 - **Epic**: [YOM-1306](../README.md)
 - **Owner**: Adrian
+- **Areas**: API, provider adapter
 - **Status**: in-progress — local issuance/read/cache flow verified; release gates remain
 - **Branch**: `feature/yom-1306-didxme-wallet-integration-wallet-lite`
 
 ## Goal / Yoma Contract
 
-Implement the provider behind existing Yoma SSI interfaces. Preserve domain scheduling,
-credential identity and wallet responses; keep Aries infrastructure and its original behavior.
-Provider-specific adaptation and mappings belong in infrastructure. Current didx:me integration
-uses Yoma signing; revisit per-organisation signing separately. No provider selection flag or
-special issuer seed is required in domain/test-data logic.
-
-Both credential families use SDJWT with this adapter. The additive enum/provider changes retain
-existing Aries formats. Preset mappings preserve immutable schema versions; issuance mappings
+Implement the provider under the epic's [shared Yoma contract](../README.md#shared-yoma-contract).
+No provider selection flag or special issuer seed is required in domain/test-data logic.
+Preset mappings preserve immutable schema versions; issuance mappings
 bridge Yoma and provider identifiers without becoming a second wallet. All HTTP calls follow
 Yoma's shared Flurl/serialization patterns.
 
@@ -48,6 +44,8 @@ security configuration and privileged workflows are held in the private engineer
 - [ ] Optional: shared Debug-only outbound Flurl logging, controlled by existing logging settings,
   with sensitive data redacted and no duplicated Aries handlers.
 - [x] Adrian reviewed, committed and pushed the implementation batch.
+- [x] Adrian committed and pushed the Medium API batch on PR #2013 (2026-11-06).
+- [ ] Adrian reviews the remaining PR follow-ups in the [2026-11-08 handoff](../handoffs/2026-11-08-a.md); changes are prepared locally.
 - [ ] Provision/verify Dev with SRE, separating once-off setup from ongoing configuration/secrets.
 - [x] Prepare the provider-reset seed in the current unpublished migration; verify preserved dates, current default schema selection and reset state against disposable PostgreSQL.
 - [x] Correct the reset to replace historical YoID names with `YoID|Default` across all statuses; verify both credential families resolve current defaults without changing issued dates.
@@ -59,6 +57,12 @@ security configuration and privileged workflows are held in the private engineer
 
 ## Decisions
 
+- 2026-11-08: Extend the one-off cutover seed to reset existing opportunity schema selections,
+  not only issuance schedules. Future completions then use the same current defaults. Preserve
+  issuance enablement and leave disabled opportunities without a selection unchanged.
+- 2026-11-08: Wallet listing skips credentials whose signed correlation has no local issuance
+  record, for example after a Yoma-only reset. Existing but conflicting holder/tenant/preset
+  mappings still fail validation. This does not implement recovery or prove remote absence.
 - 2026-11-03: Add the one-off reset to `20261102114553_ApplicationDb_SSI_DidxMe` as a separate seed class.
   Reset all tenant/issuance schedules to Pending, clear provider IDs/version/retry state and use SDJWT.
   Keep Aries storage, scheduling identity and issuance dates. Legacy Issued rows missing a date
@@ -92,6 +96,7 @@ security configuration and privileged workflows are held in the private engineer
 Cross-cutting Medium API review and required UI adoption are tracked once in the
 [epic review handoff](../handoffs/2026-11-06-a.md). This includes validation on the updated PR branch;
 the earlier provider-specific results below remain the record of the local integration exercise.
+The [PR follow-up handoff](../handoffs/2026-11-08-a.md) records the subsequent review corrections.
 
 The earlier SSI/Core run reported 1,023 total, zero failures/errors and one explicit test not
 run (1,022 passed). Local API issuance, list/detail, mobile-to-email continuity and caching have been exercised; this does not

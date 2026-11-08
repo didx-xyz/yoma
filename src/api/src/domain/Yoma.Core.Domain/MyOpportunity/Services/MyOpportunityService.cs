@@ -214,6 +214,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         else
           //ensure search only spans authorized organizations
           organizations = [.. _organizationService.ListAdminsOf(false).Select(o => o.Id)];
+
+        if (organizations.Count == 0) throw new SecurityException("Unauthorized");
       }
 
       if (organizations != null && organizations.Count != 0)

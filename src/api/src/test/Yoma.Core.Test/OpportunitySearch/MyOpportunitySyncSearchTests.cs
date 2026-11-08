@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
 using System.Reflection;
+using System.Security.Claims;
 using Xunit;
 using Yoma.Core.Domain.ActionLink.Interfaces;
 using Yoma.Core.Domain.BlobProvider;
@@ -134,6 +135,58 @@ namespace Yoma.Core.Test.OpportunitySearch
       fixture.Sync.VerifyNoOtherCalls();
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void VerificationCriteriaRejectsAnEmptyAuthorizedScope(bool emptySelection)
+    {
+      var fixture = new Fixture();
+      fixture.Organizations.Setup(service => service.ListAdminsOf(false)).Returns([]);
+
+      Assert.Throws<SecurityException>(() => fixture.Service.ListVerificationSearchCriteriaOpportunity(
+        emptySelection ? [] : null, [VerificationStatus.Completed], true));
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    public void VerificationCriteriaPreservesAuthorizedAndAdministratorResults(bool systemAdmin, bool explicitSelection)
+    {
+      var fixture = new Fixture();
+      fixture.Accessor.HttpContext = new DefaultHttpContext
+      {
+        User = new ClaimsPrincipal(new ClaimsIdentity([
+          new Claim(ClaimTypes.Role, systemAdmin ? Constants.Role_Admin : Constants.Role_OrganizationAdmin)], "test"))
+      };
+      var permitted = fixture.Items.First(item => item.VerificationStatus == VerificationStatus.Completed);
+      fixture.Organizations.Setup(service => service.ListAdminsOf(false))
+        .Returns([new Domain.Entity.Models.OrganizationInfoAdmin { Id = permitted.OrganizationId }]);
+      fixture.Organizations.Setup(service => service.IsAdminsOf(It.IsAny<List<Guid>>(), true)).Returns(true);
+
+      var result = fixture.Service.ListVerificationSearchCriteriaOpportunity(
+        explicitSelection ? [permitted.OrganizationId] : null, [VerificationStatus.Completed], true);
+
+      if (systemAdmin)
+        Assert.Equal(fixture.Items.Count(item => item.VerificationStatus == VerificationStatus.Completed), result.Count);
+      else
+        Assert.Equal(permitted.OpportunityId, Assert.Single(result).Id);
+      fixture.Organizations.Verify(service => service.IsAdminsOf(
+        It.Is<List<Guid>>(ids => ids.SequenceEqual(new[] { permitted.OrganizationId })), true),
+        explicitSelection ? Times.Once() : Times.Never());
+    }
+
+    [Fact]
+    public void VerificationCriteriaRejectsAnotherOrganizationsExplicitSelection()
+    {
+      var fixture = new Fixture();
+      fixture.Organizations.Setup(service => service.IsAdminsOf(It.IsAny<List<Guid>>(), true))
+        .Throws(new SecurityException("Unauthorized"));
+
+      Assert.Throws<SecurityException>(() => fixture.Service.ListVerificationSearchCriteriaOpportunity(
+        [Guid.NewGuid()], [VerificationStatus.Completed], true));
+    }
+
     [Fact]
     public void BatchConsistencyErrorStillFailsSearch()
     {
@@ -158,6 +211,7 @@ namespace Yoma.Core.Test.OpportunitySearch
       internal Dictionary<Guid, SyncInfoMyOpportunity?> Info { get; } = [];
       internal Mock<ISyncStateService> Sync { get; } = new();
       internal Mock<IOrganizationService> Organizations { get; } = new();
+      internal HttpContextAccessor Accessor { get; } = new();
       internal MyOpportunityService Service { get; }
 
       internal Fixture(ParticipationAction action = ParticipationAction.Verification)
@@ -174,6 +228,7 @@ namespace Yoma.Core.Test.OpportunitySearch
             Id = id,
             UserId = Guid.NewGuid(),
             OpportunityId = Guid.NewGuid(),
+            OpportunityTitle = $"Opportunity {index}",
             OrganizationId = Guid.NewGuid(),
             Action = action,
             ActionId = _actions[action],
@@ -220,7 +275,7 @@ namespace Yoma.Core.Test.OpportunitySearch
         var intervals = Mock.Of<ITimeIntervalService>();
         var countries = Mock.Of<ICountryService>();
 
-        Service = new MyOpportunityService(NullLogger<MyOpportunityService>.Instance, Options.Create(new AppSettings()), new HttpContextAccessor(),
+        Service = new MyOpportunityService(NullLogger<MyOpportunityService>.Instance, Options.Create(new AppSettings()), Accessor,
           user, Organizations.Object, opportunity, actions.Object, statuses.Object, opportunityStatuses.Object, organizationStatuses.Object,
           blobs.Object, Mock.Of<ISSICredentialService>(), Mock.Of<IRewardService>(), Mock.Of<ILinkService>(),
           Mock.Of<INotificationURLFactory>(), Mock.Of<INotificationDeliveryService>(), countries, Mock.Of<IGenderService>(), intervals,
