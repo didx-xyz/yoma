@@ -85,7 +85,7 @@ jobs:
             changes:
               - '${{ matrix.dir }}/**'
 
-      - uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d # v5.2.4
+      - uses: jdx/mise-action@f5be966e4a917d54244728e6a5fdcd1d93a35e6c # v5.2.6
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
         with:
           install: true
@@ -104,7 +104,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
 
-      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'cs'
         with:
           dotnet-version: 10.x
@@ -395,7 +395,7 @@ jobs:
           API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
           YOUTH_TAG: ${{ needs.docker-push.outputs.image_version || 'latest' }}
 
-      - uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d # v5.2.4
+      - uses: jdx/mise-action@f5be966e4a917d54244728e6a5fdcd1d93a35e6c # v5.2.6
         if: steps.should-run.outputs.run == 'true'
         with:
           install: true
@@ -421,7 +421,7 @@ jobs:
         env:
           E2E_BASE_URL: http://localhost:3000
           PLAYWRIGHT_HTML_OPEN: never
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure() && steps.should-run.outputs.run == 'true'
         with:
           name: playwright-report
@@ -520,7 +520,7 @@ jobs:
           role-session-name: github-cicd
       - run: aws eks update-kubeconfig --name ${{ secrets.CLUSTER }}
         if: steps.should-run.outputs.run == 'true'
-      - uses: tailscale/github-action@99a8333667fff04fdd6cffb46dfd409f8329a7bf # v4.3.0
+      - uses: tailscale/github-action@064b10558093f38325e838ddea35486bdc6b1d5c # v4.4.0
         if: steps.should-run.outputs.run == 'true'
         with:
           oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
