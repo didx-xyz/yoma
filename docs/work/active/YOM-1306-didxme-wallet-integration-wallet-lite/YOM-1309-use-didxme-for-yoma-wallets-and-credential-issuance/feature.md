@@ -46,8 +46,10 @@ security configuration and privileged workflows are held in the private engineer
 - [x] Adrian reviewed, committed and pushed the implementation batch.
 - [x] Adrian committed and pushed the Medium API batch on PR #2013 (2026-11-06).
 - [x] Adrian committed and pushed the first PR follow-up batch on 2026-11-08.
-- [ ] Adrian reviews the subsequent API corrections from the new full review in the
-  [2026-11-08 handoff](../handoffs/2026-11-08-a.md); this second batch remains local.
+- [x] Adrian reviewed, committed and pushed the subsequent API corrections from the
+  [2026-11-08 handoff](../handoffs/2026-11-08-a.md) on PR #2013.
+- [x] Consolidate Jason's required UI adoption and separate exported UI/Keycloak review groups in the
+  [2026-11-09 handoff](../handoffs/2026-11-09-a.md); implementation/verification remains with Jason.
 - [ ] Provision/verify Dev with SRE, separating once-off setup from ongoing configuration/secrets.
 - [x] Prepare the provider-reset seed in the current unpublished migration; verify preserved dates, current default schema selection and reset state against disposable PostgreSQL.
 - [x] Correct the reset to replace historical YoID names with `YoID|Default` across all statuses; verify both credential families resolve current defaults without changing issued dates.
@@ -107,6 +109,8 @@ Cross-cutting Medium API review and required UI adoption are tracked once in the
 [epic review handoff](../handoffs/2026-11-06-a.md). This includes validation on the updated PR branch;
 the earlier provider-specific results below remain the record of the local integration exercise.
 The [PR follow-up handoff](../handoffs/2026-11-08-a.md) records the subsequent review corrections.
+The [Jason checklist](../handoffs/2026-11-09-a.md) consolidates remaining UI/Keycloak work, including
+the separate security export; it distinguishes existing fixes from findings still needing validation.
 
 The earlier SSI/Core run reported 1,023 total, zero failures/errors and one explicit test not
 run (1,022 passed). Local API issuance, list/detail, mobile-to-email continuity and caching have been exercised; this does not

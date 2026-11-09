@@ -61,7 +61,8 @@ See the
 The latest PR follow-ups are in the [2026-11-08 handoff](./handoffs/2026-11-08-a.md).
 The Medium batch is committed and pushed on PR #2013; detailed task status lives in the
 [adapter feature](./YOM-1309-use-didxme-for-yoma-wallets-and-credential-issuance/feature.md).
-Jason's remaining UI actions are in the [2026-11-06 handoff](./handoffs/2026-11-06-a.md);
+Jason's consolidated UI/Keycloak checklist is in the [2026-11-09 handoff](./handoffs/2026-11-09-a.md);
+the full API contracts and test history remain in the [2026-11-06 handoff](./handoffs/2026-11-06-a.md);
 earlier decisions remain in the [2026-11-03 handoff](./handoffs/2026-11-03-a.md).
 The reward-pool UI change, upload handling, rich-text and document-preview checks are tracked
 in the current handoff; Jason's CF and navigation fixes are already present.
