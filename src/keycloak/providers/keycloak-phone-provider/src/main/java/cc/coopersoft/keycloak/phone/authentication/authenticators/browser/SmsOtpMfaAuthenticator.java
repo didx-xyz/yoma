@@ -17,6 +17,9 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserCredentialModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.services.validation.Validation;
+import static org.keycloak.authentication.authenticators.util.AuthenticatorUtils.getDisabledByBruteForceEventError;
+import org.keycloak.events.Errors;
+import org.keycloak.services.messages.Messages;
 
 import cc.coopersoft.common.OptionalUtils;
 import cc.coopersoft.keycloak.phone.Utils;
@@ -164,26 +167,42 @@ public class SmsOtpMfaAuthenticator implements Authenticator, CredentialValidato
         String secret = formData.getFirst("code");
         String credentialId = formData.getFirst("credentialId");
 
-        String phoneNumber = getCredentialPhoneNumber(context.getUser());
+        UserModel user = context.getUser();
+        String phoneNumber = getCredentialPhoneNumber(user);
+
+        // Lockout is checked before the code is validated and consumed. The user is set on the
+        // authentication session, so failures below are already counted against this account.
+        String bruteForceError = getDisabledByBruteForceEventError(context, user);
+        if (bruteForceError != null) {
+            context.getEvent().user(user).error(bruteForceError);
+            context.form().setError(Errors.USER_TEMPORARILY_DISABLED.equals(bruteForceError)
+                    ? Messages.ACCOUNT_TEMPORARILY_DISABLED
+                    : Messages.ACCOUNT_PERMANENTLY_DISABLED);
+            context.forceChallenge(challenge(context, phoneNumber));
+            return;
+        }
 
         if (credentialId == null || credentialId.isEmpty()) {
             var defaultOtpCredential = getCredentialProvider(context.getSession())
-                    .getDefaultCredential(context.getSession(), context.getRealm(), context.getUser());
+                    .getDefaultCredential(context.getSession(), context.getRealm(), user);
             credentialId = defaultOtpCredential == null ? "" : defaultOtpCredential.getId();
         }
 
         if (Validation.isBlank(secret)) {
+            context.getEvent().user(user).error(Errors.INVALID_USER_CREDENTIALS);
             context.form()
                     .setError(SupportPhonePages.Errors.NOT_MATCH.message());
             Response challenge = challenge(context, phoneNumber);
             context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, challenge);
+            return;
         }
 
         UserCredentialModel input = new UserCredentialModel(credentialId, getType(context.getSession()), secret);
 
-        boolean validated = getCredentialProvider(context.getSession()).isValid(context.getRealm(), context.getUser(), input);
+        boolean validated = getCredentialProvider(context.getSession()).isValid(context.getRealm(), user, input);
 
         if (!validated) {
+            context.getEvent().user(user).error(Errors.INVALID_USER_CREDENTIALS);
             context.form()
                     .setError(SupportPhonePages.Errors.NOT_MATCH.message());
             Response challenge = challenge(context, phoneNumber);

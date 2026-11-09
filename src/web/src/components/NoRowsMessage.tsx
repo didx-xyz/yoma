@@ -4,7 +4,7 @@ const NoRowsMessage: React.FC<{
   icon?: string | ReactNode | null;
   title?: string | null;
   subTitle?: string | null;
-  description?: string | null;
+  description?: ReactNode | null;
   className?: string | null;
   classNameIcon?: string | null;
 }> = ({
@@ -38,14 +38,10 @@ const NoRowsMessage: React.FC<{
           )}
         </div>
 
-        <div
-          className="text-gray-dark text-xs md:text-sm"
-          dangerouslySetInnerHTML={{
-            __html:
-              description ??
-              "There are no rows to display at the moment. Please check back later.",
-          }}
-        ></div>
+        <div className="text-gray-dark text-xs md:text-sm">
+          {description ??
+            "There are no rows to display at the moment. Please check back later."}
+        </div>
       </div>
     </div>
   );

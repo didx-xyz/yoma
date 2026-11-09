@@ -17,11 +17,15 @@ export const ReferralBlockedView: React.FC<RequestBlockedViewProps> = ({
       })
     : null;
 
-  const blockedDescription = `
+  const blockedDescription = (
     <div>
-      <p>Your access to the program was temporarily suspended${blockedDate ? ` on ${blockedDate}` : ""}.</p><p>If you believe this is an error, please contact support.</p>
+      <p>
+        Your access to the program was temporarily suspended
+        {blockedDate ? ` on ${blockedDate}` : ""}.
+      </p>
+      <p>If you believe this is an error, please contact support.</p>
     </div>
-  `;
+  );
 
   return (
     <div className="flex flex-col items-center justify-center">

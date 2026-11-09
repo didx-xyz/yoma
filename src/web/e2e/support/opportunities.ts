@@ -25,13 +25,22 @@ export async function createOpportunity(
         items: Lookup[];
       }>,
     ]);
-  const skill = skills.items[0]!;
+  const skill = skills.items[0];
+  if (!skill)
+    throw new Error(
+      "createOpportunity: the seed has no skills (GET /lookup/skill returned none)",
+    );
+  const opportunityType = types.find((t) => t.name === type);
+  if (!opportunityType)
+    throw new Error(
+      `createOpportunity: unknown opportunity type "${type}" — seed has: ${types.map((t) => t.name).join(", ")}`,
+    );
   const res = (await api.post("/opportunity", {
     id: null,
     title,
     description: "Created by the e2e suite.",
     summary: "e2e",
-    typeId: types.find((t) => t.name === type)!.id,
+    typeId: opportunityType.id,
     organizationId: ORGANISATIONS.yoma.id,
     instructions: null,
     uRL: url,

@@ -171,7 +171,7 @@ public class DefaultPhoneVerificationCodeProvider implements PhoneVerificationCo
     @Override
     public void validateCode(UserModel user, String phoneNumber, String code, TokenCodeType tokenCodeType) {
 
-        logger.info(String.format("valid %s , phone: %s, code: %s", tokenCodeType, phoneNumber, code));
+        logger.infof("Validating %s code for phone %s", tokenCodeType, phoneNumber);
 
         // Check if this is a test phone number with hardcoded code
         String testPhoneNumbersEnv = System.getenv("TEST_PHONE_NUMBERS");
@@ -191,16 +191,13 @@ public class DefaultPhoneVerificationCodeProvider implements PhoneVerificationCo
         if (isTestPhoneNumber && "1234".equals(code)) {
             logger.info(String.format("Test phone number %s validated with hardcoded OTP code", phoneNumber));
 
-            // For test phone number, create a virtual token representation for validation
-            // We don't need to check against database as we're using hardcoded validation
+            // Test numbers skip the database, so there is no token row to consume
             // For authentication flows (login with phone OTP) and reset flows (password reset),
             // don't update user phone number or remove required actions
             if (TokenCodeType.AUTH.equals(tokenCodeType) || TokenCodeType.RESET.equals(tokenCodeType)) {
-                // Just log successful validation without updating user attributes
                 logger.info(String.format("User %s correctly answered the %s code (test phone)", user.getId(), tokenCodeType.label));
             } else {
-                // For other flows (like phone verification), proceed with normal tokenValidated logic
-                tokenValidated(user, phoneNumber, "test-validation-" + System.currentTimeMillis(), TokenCodeType.OTP.equals(tokenCodeType));
+                applyVerifiedPhoneNumber(user, phoneNumber, TokenCodeType.OTP.equals(tokenCodeType));
             }
 
             if (TokenCodeType.OTP.equals(tokenCodeType)) {
@@ -219,17 +216,16 @@ public class DefaultPhoneVerificationCodeProvider implements PhoneVerificationCo
             throw new ForbiddenException("Code does not match with expected value");
         }
 
+        // Consume before any side effect, so a concurrent submission of the same code fails here
+        validateProcess(tokenCode.getId(), user);
+
         logger.info(String.format("User %s correctly answered the %s code", user.getId(), tokenCodeType.label));
 
         // For authentication flows (login with phone OTP) and reset flows (password reset),
         // don't update user phone number or remove required actions
         // This preserves any existing required actions like UPDATE_PHONE_NUMBER
-        if (TokenCodeType.AUTH.equals(tokenCodeType) || TokenCodeType.RESET.equals(tokenCodeType)) {
-            // Just validate the process without updating user attributes or removing required actions
-            validateProcess(tokenCode.getId(), user);
-        } else {
-            // For other flows (like phone verification), proceed with normal tokenValidated logic
-            tokenValidated(user, phoneNumber, tokenCode.getId(), TokenCodeType.OTP.equals(tokenCodeType));
+        if (!TokenCodeType.AUTH.equals(tokenCodeType) && !TokenCodeType.RESET.equals(tokenCodeType)) {
+            applyVerifiedPhoneNumber(user, phoneNumber, TokenCodeType.OTP.equals(tokenCodeType));
         }
 
         if (TokenCodeType.OTP.equals(tokenCodeType)) {
@@ -239,6 +235,27 @@ public class DefaultPhoneVerificationCodeProvider implements PhoneVerificationCo
 
     @Override
     public void tokenValidated(UserModel user, String phoneNumber, String tokenCodeId, boolean isOTP) {
+        validateProcess(tokenCodeId, user);
+        applyVerifiedPhoneNumber(user, phoneNumber, isOTP);
+    }
+
+    /**
+     * Marks the token consumed. The conditional update is atomic at the database,
+     * so of two concurrent submissions only one sees a changed row; the other fails.
+     */
+    @Override
+    public void validateProcess(String tokenCodeId, UserModel user) {
+        int consumed = getEntityManager()
+                .createNamedQuery("consumeTokenCode")
+                .setParameter("id", tokenCodeId)
+                .setParameter("byWhom", user.getId())
+                .executeUpdate();
+        if (consumed != 1) {
+            throw new BadRequestException("Verification code has already been used");
+        }
+    }
+
+    private void applyVerifiedPhoneNumber(UserModel user, String phoneNumber, boolean isOTP) {
 
         boolean updateUserPhoneNumber = !isOTP;
         if (isOTP) {
@@ -289,17 +306,6 @@ public class DefaultPhoneVerificationCodeProvider implements PhoneVerificationCo
 
             user.removeRequiredAction(UpdatePhoneNumberRequiredAction.PROVIDER_ID);
         }
-
-        validateProcess(tokenCodeId, user);
-
-    }
-
-    @Override
-    public void validateProcess(String tokenCodeId, UserModel user) {
-        TokenCode entity = getEntityManager().find(TokenCode.class, tokenCodeId);
-        entity.setConfirmed(true);
-        entity.setByWhom(user.getId());
-        getEntityManager().persist(entity);
     }
 
     private void updateUserOTPCredential(UserModel user, String phoneNumber, String code) {

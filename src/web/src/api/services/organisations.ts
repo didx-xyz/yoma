@@ -6,6 +6,7 @@ import type {
   OrganizationProviderType,
   OrganizationRequestBase,
   OrganizationRequestUpdateStatus,
+  OrganizationRewardPools,
   OrganizationSearchFilter,
   OrganizationSearchResults,
   UserInfo,
@@ -48,6 +49,24 @@ export const patchOrganisation = async (
   const { data } = await (
     await ApiClient
   ).patch<Organization>("/organization", formData);
+  return data;
+};
+
+/**
+ * `PATCH /organization/{id}/rewardpool` — Admin-only, pool-only update. Sends exactly
+ * `{ zltoRewardPoolCurrentFinancialYear }` (`null` = no organisation-level cap) and returns the
+ * full updated `Organization`; administrators and other metadata are untouched server-side.
+ */
+export const patchOrganisationRewardPool = async (
+  id: string,
+  model: OrganizationRewardPools,
+): Promise<Organization> => {
+  const { data } = await (
+    await ApiClient
+  ).patch<Organization>(
+    `/organization/${encodeURIComponent(id)}/rewardpool`,
+    model,
+  );
   return data;
 };
 

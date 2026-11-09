@@ -256,10 +256,14 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
     if (programs.length === 0) {
       return {
         title: "Choose a Referral Program",
-        description:
-          '<div class="space-y-2">' +
-          "<p>No active programs are available right now. Please check back later.</p>" +
-          "</div>",
+        description: (
+          <div className="space-y-2">
+            <p>
+              No active programs are available right now. Please check back
+              later.
+            </p>
+          </div>
+        ),
       };
     }
 
@@ -282,13 +286,16 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
 
     return {
       title: "Choose a Referral Program",
-      description:
-        '<div class="space-y-2">' +
-        "<p>Select the program you want to create a referral link for.</p>" +
-        '<ul class="list-disc space-y-1 pl-5 text-left">' +
-        bullets.map((b) => `<li>${b}</li>`).join("") +
-        "</ul>" +
-        "</div>",
+      description: (
+        <div className="space-y-2">
+          <p>Select the program you want to create a referral link for.</p>
+          <ul className="list-disc space-y-1 pl-5 text-left">
+            {bullets.map((b) => (
+              <li key={b}>{b}</li>
+            ))}
+          </ul>
+        </div>
+      ),
     };
   }, [existingLinksCount, isEditMode, programs.length]);
 
@@ -308,12 +315,15 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
 
     return {
       title: isEditMode ? "Update Your Link" : "Create Your Link",
-      description:
-        '<div class="space-y-2">' +
-        '<ul class="list-disc space-y-1 pl-5 text-left">' +
-        bullets.map((b) => `<li>${b}</li>`).join("") +
-        "</ul>" +
-        "</div>",
+      description: (
+        <div className="space-y-2">
+          <ul className="list-disc space-y-1 pl-5 text-left">
+            {bullets.map((b) => (
+              <li key={b}>{b}</li>
+            ))}
+          </ul>
+        </div>
+      ),
     };
   }, [isEditMode]);
 
@@ -353,12 +363,9 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
             <h2 className="text-lg font-semibold text-black">
               {currentStepMessage.title}
             </h2>
-            <div
-              className="text-gray-dark mt-2 text-sm"
-              dangerouslySetInnerHTML={{
-                __html: currentStepMessage.description,
-              }}
-            />
+            <div className="text-gray-dark mt-2 text-sm">
+              {currentStepMessage.description}
+            </div>
           </div>
         </div>
 

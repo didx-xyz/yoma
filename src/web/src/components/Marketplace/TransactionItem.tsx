@@ -5,17 +5,12 @@ import { AvatarImage } from "../AvatarImage";
 import Moment from "react-moment";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { IoMdAlert } from "react-icons/io";
-import { useEffect, useState } from "react";
+import { SafeHtml } from "../Common/SafeHtml";
 
 const TransactionItemComponent: React.FC<{
   data: WalletVoucher;
   onClick: () => void;
 }> = ({ data, onClick }) => {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
   return (
     <button
       className="relative flex aspect-square h-64 w-full flex-col gap-1 rounded-lg bg-white p-5 shadow-xs sm:max-w-[300px]"
@@ -34,16 +29,10 @@ const TransactionItemComponent: React.FC<{
         </div>
       </div>
       <div className="flex max-w-[280px] grow flex-row">
-        {mounted ? (
-          <p
-            className="text-[rgba(84, 88, 89, 1)] line-clamp-4 text-start text-sm font-light"
-            dangerouslySetInnerHTML={{ __html: data.instructions }}
-          ></p>
-        ) : (
-          <p className="text-[rgba(84, 88, 89, 1)] line-clamp-4 text-start text-sm font-light">
-            {data.instructions?.replace(/<[^>]*>/g, "")}
-          </p>
-        )}
+        <SafeHtml
+          className="text-[rgba(84, 88, 89, 1)] line-clamp-4 text-start text-sm font-light"
+          html={data.instructions}
+        />
       </div>
 
       {/* DATES */}

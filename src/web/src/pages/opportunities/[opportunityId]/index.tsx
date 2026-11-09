@@ -25,6 +25,7 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { OPPORTUNITY_QUERY_KEYS } from "~/hooks/useOpportunityMutations";
+import { toLogSafeError } from "~/lib/apiErrorUtils";
 import { OPPORTUNITIES_SEARCH_URL } from "~/lib/constants";
 import { cameFrom } from "~/lib/previousRoute";
 import { config } from "~/lib/react-query-config";
@@ -77,7 +78,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     if (session && dataOpportunityInfo.published)
       await performActionViewed(opportunityId, context);
   } catch (error) {
-    console.error("Error fetching data in getServerSideProps", error);
+    console.error("Error fetching opportunity in getServerSideProps", {
+      opportunityId,
+      ...toLogSafeError(error),
+    });
     if (axios.isAxiosError(error) && error.response?.status) {
       if (error.response.status === 404) {
         return {

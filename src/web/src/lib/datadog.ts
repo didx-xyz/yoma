@@ -1,4 +1,5 @@
 import { datadogRum } from "@datadog/browser-rum";
+import { toLogSafeError } from "~/lib/apiErrorUtils";
 import { fetchClientEnv } from "~/lib/utils";
 import type { User } from "~/server/auth";
 
@@ -212,7 +213,9 @@ const setupBrowserErrorTracking = () => {
     });
   });
 
-  // Console error override to capture console.error calls
+  // Console error override to capture console.error calls. The extra arguments are forwarded as
+  // RUM context, which the SDK serialises whole, so caught errors are reduced to their log-safe
+  // fields first (an AxiosError would otherwise carry the request headers and bearer token).
   const originalConsoleError = console.error;
   console.error = (...args) => {
     // Call original console.error
@@ -225,7 +228,9 @@ const setupBrowserErrorTracking = () => {
       args[0] instanceof Error ? args[0] : new Error(args.join(" "));
     datadogRum.addError(error, {
       errorType: "console-error",
-      context: args.slice(1),
+      context: args
+        .slice(1)
+        .map((arg) => (arg instanceof Error ? toLogSafeError(arg) : arg)),
     });
   };
 };

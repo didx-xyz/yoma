@@ -1,15 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type {
-  Organization,
   OrganizationRewardPools,
   OrganizationSearchFilter,
   OrganizationSearchResults,
 } from "~/api/models/organisation";
 import {
   getOrganisations,
-  patchOrganisation,
+  patchOrganisationRewardPool,
 } from "~/api/services/organisations";
-import { organizationRewardPoolsRequest } from "~/lib/organisation/organizationRequest";
 
 export const ORGANIZATION_REWARD_QUERY_KEYS = {
   /** A single organisation — the key the org edit/info pages already use. */
@@ -35,15 +33,15 @@ export function organizationSearchQueryOptions(
 }
 
 /**
- * Saves an organisation's reward pools.
+ * Saves an organisation's reward pool via `PATCH /organization/{id}/rewardpool`.
  *
- * ⚠️ `PATCH /organization` is a full replacement — there is no pool-only endpoint. The payload is
- * therefore rebuilt from the organisation by `organizationRewardPoolsRequest`, which is the single
- * place that mapping lives so the organisation edit page and the Treasury Organisations tab send
- * identical bodies. Pass the freshly fetched `Organization`, never a stale form model.
+ * The endpoint is pool-only: the body is exactly `{ zltoRewardPoolCurrentFinancialYear }` and the
+ * server leaves administrators and every other organisation field untouched, so a save from a stale
+ * page cannot overwrite them. `null` removes the organisation-level cap (awards are then limited only
+ * by the Treasury pool); it does not disable awards. The response is the full updated `Organization`.
  *
- * Reward-pool changes are Admin-only server-side (`OrganizationService.cs:460-463`); a non-admin gets
- * a `SecurityException` → **401**.
+ * Global **Admin only** (`[Authorize(Roles = Admin)]` on `OrganizationController.UpdateRewardPool`);
+ * anyone else is rejected with 401 or 403.
  *
  * Errors are deliberately not toasted here — callers map them onto their fields
  * (`lib/organisation/serverErrors.ts`).
@@ -53,13 +51,12 @@ export function useOrganizationRewardPoolsMutation() {
 
   return useMutation({
     mutationFn: ({
-      organization,
+      organizationId,
       pools,
     }: {
-      organization: Organization;
+      organizationId: string;
       pools: OrganizationRewardPools;
-    }) =>
-      patchOrganisation(organizationRewardPoolsRequest(organization, pools)),
+    }) => patchOrganisationRewardPool(organizationId, pools),
     onSuccess: (updated) => {
       // The PATCH returns the updated organisation, so seed it: the figures (including the derived
       // balances) are then current without waiting for a refetch.

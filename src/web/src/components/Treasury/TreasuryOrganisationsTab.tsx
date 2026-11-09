@@ -120,7 +120,7 @@ export const TreasuryOrganisationsTab: React.FC = () => {
 
       try {
         await poolsMutation.mutateAsync({
-          organization: editOrganisation,
+          organizationId: editOrganisation.id,
           pools,
         });
 
@@ -211,6 +211,7 @@ export const TreasuryOrganisationsTab: React.FC = () => {
               figures={organisation}
               action={
                 <button
+                  id={`btnTreasuryOrgEditPools_${organisation.id}`} // e2e
                   type="button"
                   className={`${BTN_SECONDARY} !min-w-0 !px-3`}
                   onClick={() =>
@@ -270,6 +271,7 @@ export const TreasuryOrganisationsTab: React.FC = () => {
                 />
 
                 <OrganizationRewardPoolsForm
+                  id="treasuryOrgPools" // e2e
                   figures={editOrganisation}
                   onSubmit={onSubmitPools}
                   isSubmitting={poolsMutation.isPending}

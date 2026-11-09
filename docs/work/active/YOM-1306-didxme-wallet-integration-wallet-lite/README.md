@@ -64,8 +64,9 @@ The Medium batch is committed and pushed on PR #2013; detailed task status lives
 Jason's consolidated UI/Keycloak checklist is in the [2026-11-09 handoff](./handoffs/2026-11-09-a.md);
 the full API contracts and test history remain in the [2026-11-06 handoff](./handoffs/2026-11-06-a.md);
 earlier decisions remain in the [2026-11-03 handoff](./handoffs/2026-11-03-a.md).
-The reward-pool UI change, upload handling, rich-text and document-preview checks are tracked
-in the current handoff; Jason's CF and navigation fixes are already present.
+Jason's §1–§2 work (reward-pool endpoint, terminal upload rejection, rich-text/log sanitising,
+Keycloak OTP consume-once and brute-force attribution) is in the
+[2026-11-09-b handoff](./handoffs/2026-11-09-b.md); document previews and the §3–§4 groups remain.
 
 1. Complete recovery and Replay; verify original issuance dates are preserved.
 2. Finish participant/browser/mobile and credential-detail checks with Jason.

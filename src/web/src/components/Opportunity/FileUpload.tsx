@@ -2,9 +2,11 @@ import { type ReactElement, useRef, useState } from "react";
 import Image from "next/image";
 import { IoArrowUp, IoClose } from "react-icons/io5";
 import { uploadFileWithTus } from "~/api/services/uploads";
+import { isTusUploadRejected } from "~/api/services/tusProtocol";
 import { toast } from "react-toastify";
 import { MAX_FILE_SIZE, MAX_FILE_SIZE_LABEL } from "~/lib/constants";
 import { BTN_OUTLINE_GREEN } from "../Common/buttonStyles";
+import FormError from "../Common/FormError";
 
 const formatFileSize = (bytes: number, decimals = 1): string => {
   if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
@@ -85,6 +87,11 @@ export const FileUpload: React.FC<InputProps> = ({
   const dataRef = useRef(data);
   dataRef.current = data;
   const inputRef = useRef<HTMLInputElement>(null);
+  // The file whose temporary upload the server rejected outright (403 on an upload the user
+  // does not own or a legacy unowned id, 404/410 when it is gone). Its id is already dropped
+  // from the list; this keeps the File so "Upload again" can start a fresh upload with the
+  // same name and content type, without a second trip through the picker.
+  const [rejected, setRejected] = useState<File | null>(null);
 
   // reset the native input so selecting the same file again triggers onChange
   const resetNativeInput = () => {
@@ -124,6 +131,10 @@ export const FileUpload: React.FC<InputProps> = ({
           // Check if this was a user-initiated cancellation
           if (error.name === "AbortError" || error.name === "CanceledError") {
             console.log(`Upload cancelled for ${file.name}`);
+          } else if (isTusUploadRejected(error)) {
+            // Terminal: the id is dead for this user, so no retry — offer a fresh upload
+            console.warn(`Upload rejected for ${file.name}:`, error.message);
+            setRejected(file);
           } else {
             console.error(`Upload failed for ${file.name}:`, error);
 
@@ -202,6 +213,23 @@ export const FileUpload: React.FC<InputProps> = ({
     }
   };
 
+  // Inline upload mode: add the file to the list and upload it immediately using TUS
+  const startInlineUpload = async (file: File) => {
+    setRejected(null);
+    const newFile: FileUploadData = {
+      file,
+      progress: 0,
+      isUploading: true,
+      uploadId: undefined,
+    };
+
+    const current = dataRef.current;
+    setFiles(allowMultiple ? [...current, newFile] : [newFile]);
+
+    // Start the TUS upload
+    await handleTusUpload(file, allowMultiple ? current.length : 0);
+  };
+
   const onFileInputChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -218,20 +246,7 @@ export const FileUpload: React.FC<InputProps> = ({
       }
 
       if (inlineUpload) {
-        // Inline upload mode: upload immediately using TUS
-        const newFile: FileUploadData = {
-          file: picked,
-          progress: 0,
-          isUploading: true,
-          uploadId: undefined,
-        };
-
-        const newFiles = allowMultiple ? [...data, newFile] : [newFile];
-        setFiles(newFiles);
-
-        // Start the TUS upload
-        const fileIndex = allowMultiple ? data.length : 0;
-        await handleTusUpload(picked, fileIndex);
+        await startInlineUpload(picked);
       } else {
         // Legacy mode: just store the file locally
         const newFile: FileUploadData = {
@@ -404,6 +419,27 @@ export const FileUpload: React.FC<InputProps> = ({
                       )}
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* the server rejected the temporary upload: fresh upload of the same file */}
+            {rejected && (
+              <div
+                id={`${id}_rejected`} // e2e
+                className="flex flex-col gap-2"
+              >
+                <FormError
+                  label={`The upload of ${rejected.name} could not be resumed. Please upload the file again.`}
+                />
+                <button
+                  id={`${id}_retry`} // e2e
+                  type="button"
+                  className={`${BTN_OUTLINE_GREEN} h-10 w-fit px-4`}
+                  onClick={() => startInlineUpload(rejected)}
+                >
+                  <IoArrowUp className="mr-1 h-4 w-4" />
+                  <span className="inline">Upload again</span>
+                </button>
               </div>
             )}
 

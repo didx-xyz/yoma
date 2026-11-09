@@ -103,6 +103,9 @@ public class ResetCredentialWithPhone implements Authenticator, AuthenticatorFac
                 .orElse(false);
 
         context.clearUser();
+        // Brute-force accounting resolves the account from this note; never carry one
+        // attempt's identifier into the next request
+        context.getAuthenticationSession().removeAuthNote(AbstractUsernameFormAuthenticator.ATTEMPTED_USERNAME);
 
         String phoneNumber = inputData.getFirst(FIELD_PHONE_NUMBER);
         String username = inputData.getFirst(AuthenticationManager.FORM_USERNAME);
@@ -133,14 +136,20 @@ public class ResetCredentialWithPhone implements Authenticator, AuthenticatorFac
                 context.forceChallenge(challenge);
                 return false;
             }
+            user = Utils.findUserByPhone(context.getSession(), context.getRealm(), phoneNumber)
+                    .orElse(null);
+
+            // Lockout is checked before the code is validated and consumed
+            if (user != null && isDisabledByBruteForce(context, user, phoneNumber)) {
+                return false;
+            }
 
             String verificationCode = inputData.getFirst(FIELD_VERIFICATION_CODE);
             if (Validation.isBlank(verificationCode)) {
                 invalidVerificationCode(context, phoneNumber);
+                attributeFailure(context, user);
                 return false;
             }
-            user = Utils.findUserByPhone(context.getSession(), context.getRealm(), phoneNumber)
-                    .orElse(null);
 
             if (user != null && !validateVerificationCode(context, user, phoneNumber, verificationCode.trim())) {
                 return false;
@@ -251,7 +260,19 @@ public class ResetCredentialWithPhone implements Authenticator, AuthenticatorFac
         } catch (Exception e) {
             context.getEvent().user(user);
             invalidVerificationCode(context, phoneNumber);
+            attributeFailure(context, user);
             return false;
+        }
+    }
+
+    /**
+     * Points brute-force accounting (AuthenticationManager.lookupUserForBruteForceLog) at the
+     * matched account. Set after the challenge is rendered: login-reset-password.ftl echoes this
+     * note into the username field, which must not disclose the account behind a phone number.
+     */
+    private void attributeFailure(AuthenticationFlowContext context, UserModel user) {
+        if (user != null) {
+            context.getAuthenticationSession().setAuthNote(AbstractUsernameFormAuthenticator.ATTEMPTED_USERNAME, user.getUsername());
         }
     }
 

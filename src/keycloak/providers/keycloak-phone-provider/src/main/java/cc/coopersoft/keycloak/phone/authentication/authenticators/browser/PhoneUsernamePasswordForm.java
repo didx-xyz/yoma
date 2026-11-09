@@ -174,6 +174,12 @@ public class PhoneUsernamePasswordForm extends UsernamePasswordForm implements A
             return false;
         }
 
+        // Brute-force accounting resolves the account from this note
+        // (AuthenticationManager.lookupUserForBruteForceLog); it is narrowed to the
+        // matched user's username below so a stale username from an earlier password
+        // attempt is never blamed for a phone failure
+        context.getAuthenticationSession().setAuthNote(AbstractUsernameFormAuthenticator.ATTEMPTED_USERNAME, phoneNumber.trim());
+
         String code = inputData.getFirst(FIELD_VERIFICATION_CODE);
 
         if (Validation.isBlank(code)) {
@@ -206,8 +212,13 @@ public class PhoneUsernamePasswordForm extends UsernamePasswordForm implements A
             var validPhoneNumber = Utils.canonicalizePhoneNumber(context.getSession(), phoneNumber);
 
             return Utils.findUserByPhone(context.getSession(), context.getRealm(), validPhoneNumber)
-                    .map(user -> validateVerificationCode(context, user, validPhoneNumber, code)
-                    && validateUser(context, user, validPhoneNumber))
+                    .map(user -> {
+                        context.getAuthenticationSession().setAuthNote(AbstractUsernameFormAuthenticator.ATTEMPTED_USERNAME, user.getUsername());
+                        // Lockout is checked before the code, as validatePassword does for passwords
+                        return !isDisabledByBruteForce(context, user, validPhoneNumber)
+                                && validateVerificationCode(context, user, validPhoneNumber, code)
+                                && validateUser(context, user, validPhoneNumber);
+                    })
                     .orElseGet(() -> {
                         context.getEvent().error(Errors.USER_NOT_FOUND);
                         context.form()
@@ -254,7 +265,8 @@ public class PhoneUsernamePasswordForm extends UsernamePasswordForm implements A
                     .setAttribute(ATTEMPTED_PHONE_ACTIVATED, true)
                     .setAttribute(ATTEMPTED_PHONE_NUMBER, phoneNumber);
             assemblyForm(context, context.form());
-            Response challengeResponse = challenge(context, disabledByBruteForceError(bruteForceError), disabledByBruteForceFieldError());
+            // The phone block only renders phoneNumber/code errors; the username field is hidden there
+            Response challengeResponse = challenge(context, disabledByBruteForceError(bruteForceError), FIELD_PHONE_NUMBER);
             context.forceChallenge(challengeResponse);
             return true;
         }

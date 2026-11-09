@@ -35,6 +35,7 @@ import { getUserProfile } from "~/api/services/user";
 import { AvatarImage } from "~/components/AvatarImage";
 import CustomCarousel from "~/components/Carousel/CustomCarousel";
 import CustomModal from "~/components/Common/CustomModal";
+import { SafeHtml } from "~/components/Common/SafeHtml";
 import Suspense from "~/components/Common/Suspense";
 import MarketplaceLayout from "~/components/Layout/Marketplace";
 import { ItemCardComponent } from "~/components/Marketplace/ItemCard";
@@ -730,12 +731,8 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
               )}
 
               <div className="border-gray flex w-full flex-col gap-4 rounded-lg border-2 border-dotted p-4 text-center">
-                <p
-                  dangerouslySetInnerHTML={{ __html: currentItem.description }}
-                ></p>
-                <p
-                  dangerouslySetInnerHTML={{ __html: currentItem.summary }}
-                ></p>
+                <SafeHtml html={currentItem.description} />
+                <SafeHtml html={currentItem.summary} />
               </div>
 
               <div className="p-4 text-center">

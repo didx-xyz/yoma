@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback } from "react";
 import { type StoreItemCategory } from "~/api/models/marketplace";
 import { IoMdLock } from "react-icons/io";
+import { SafeHtml } from "../Common/SafeHtml";
 
 interface InputProps {
   id: string;
@@ -72,10 +73,10 @@ const ItemCardComponent: React.FC<InputProps> = ({
         </div>
 
         {/* DESCRIPTION */}
-        <div
+        <SafeHtml
           className="line-clamp-5 h-[100px] max-w-[200px] text-start text-sm font-light md:max-w-full"
-          dangerouslySetInnerHTML={{ __html: item.description }}
-        ></div>
+          html={item.description}
+        />
 
         {/* BADGES */}
         <div className="flex flex-row items-center justify-start gap-2">

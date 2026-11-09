@@ -1,6 +1,6 @@
-import type { Page, Request, Route } from "@playwright/test";
+import type { Page, Request } from "@playwright/test";
 import { expect, test } from "../support/test";
-import { apiGet } from "../support/api";
+import { apiGet, apiPath, fulfillJson } from "../support/api";
 import { CASH_OUT, ROUTES } from "../seed";
 
 // Yo-ID wallet: the ZLTO ledger and the Cash Out flow (YOM-1051).
@@ -57,23 +57,6 @@ const ENABLED_PAYOUT: Json = {
   currency: null,
   dateCreated: null,
 };
-
-const apiPath = (suffix: string) => (url: URL) =>
-  url.pathname.endsWith(`/api/v3${suffix}`);
-
-/** Fulfil a cross-origin API call (web :3000 → API :5000) with CORS headers the browser accepts. */
-async function fulfillJson(route: Route, body: unknown, status = 200) {
-  await route.fulfill({
-    status,
-    contentType: "application/json",
-    headers: {
-      "access-control-allow-origin":
-        (await route.request().headerValue("origin")) ?? "*",
-      "access-control-allow-credentials": "true",
-    },
-    body: body === undefined ? "" : JSON.stringify(body),
-  });
-}
 
 /**
  * Overlay `GET /user` — real response, with `zlto` / `payout` / top-level fields replaced. A

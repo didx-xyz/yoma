@@ -20,6 +20,7 @@ import type {
 import { WalletCreationStatus } from "~/api/models/user";
 import { searchVouchers } from "~/api/services/marketplace";
 import CustomModal from "~/components/Common/CustomModal";
+import { SafeHtml } from "~/components/Common/SafeHtml";
 import Suspense from "~/components/Common/Suspense";
 import YoID from "~/components/Layout/YoID";
 import { TransactionItemComponent } from "~/components/Marketplace/TransactionItem";
@@ -229,12 +230,10 @@ const MyWallet: NextPageWithLayout<{
                   <div className="text-gray-dark w-full text-xs">
                     Instructions
                   </div>
-                  <div
+                  <SafeHtml
                     className="text-sm font-semibold"
-                    dangerouslySetInnerHTML={{
-                      __html: currentItem.instructions,
-                    }}
-                  ></div>
+                    html={currentItem.instructions}
+                  />
                 </div>
               </div>
 

@@ -3,6 +3,7 @@ import {
   request,
   type APIRequestContext,
   type Page,
+  type Route,
 } from "@playwright/test";
 import type { Role } from "../seed";
 import { storageStatePath } from "./auth";
@@ -22,6 +23,24 @@ export async function apiGet(page: Page, path: string): Promise<unknown> {
   });
   expect(res.ok(), `GET ${path}`).toBe(true);
   return res.json();
+}
+
+/** URL predicate for `page.route` / `waitForResponse`: matches one API v3 path (any origin). */
+export const apiPath = (suffix: string) => (url: URL) =>
+  url.pathname.endsWith(`/api/v3${suffix}`);
+
+/** Fulfil a cross-origin API call (web :3000 → API :5000) with CORS headers the browser accepts. */
+export async function fulfillJson(route: Route, body: unknown, status = 200) {
+  await route.fulfill({
+    status,
+    contentType: "application/json",
+    headers: {
+      "access-control-allow-origin":
+        (await route.request().headerValue("origin")) ?? "*",
+      "access-control-allow-credentials": "true",
+    },
+    body: body === undefined ? "" : JSON.stringify(body),
+  });
 }
 
 /**
