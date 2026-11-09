@@ -644,7 +644,7 @@ namespace Yoma.Core.Domain.Referral.Services
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
         // Preserve accounting and lifecycle changes committed since the initial permission/status check.
-        result = GetById(id, false, false, LockMode.Wait);
+        result = GetById(id, false, true, LockMode.Wait);
         AssertUpdatable(result);
         resultImage = await UpdateImage(result, file);
         result.ModifiedByUserId = user.Id;

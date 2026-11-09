@@ -64,7 +64,10 @@ namespace Yoma.Core.Test.Core
       if (emailConfirmed || phoneConfirmed)
       {
         await fixture.Service.LogUsage(fixture.Link.Id);
-        Assert.Single(fixture.Usages);
+        var usage = Assert.Single(fixture.Usages);
+        Assert.Equal(fixture.User.Id, usage.UserId);
+        Assert.Equal(fixture.User.Username, usage.UsernameClaimed);
+        Assert.Equal(fixture.Link.Id, usage.LinkId);
       }
       else
       {
@@ -104,7 +107,10 @@ namespace Yoma.Core.Test.Core
 
       Assert.Equal(2, result.UsagesTotal);
       Assert.Equal(ActionLinkStatus.LimitReached, result.Status);
-      Assert.Single(fixture.Usages);
+      var usage = Assert.Single(fixture.Usages);
+      Assert.Equal(fixture.User.Id, usage.UserId);
+      Assert.Equal(fixture.User.Username, usage.UsernameClaimed);
+      Assert.Equal(fixture.Link.Id, usage.LinkId);
     }
 
     private sealed class Fixture : IDisposable

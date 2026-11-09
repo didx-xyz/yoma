@@ -114,6 +114,11 @@ security configuration and privileged workflows are held in the private engineer
 
 ## Verification / Handoff
 
+The subsequent 9 November review retains the existing application-level rejection of mapping
+deletion. Adrian rejected adding a database FK-action policy; no provider migration is added.
+The [epic handoff](../handoffs/2026-11-09-a.md#subsequent-full-review--five-new-comments)
+records this decision and Jason's separate token-bearing navigation telemetry finding.
+
 Cross-cutting Medium API review and required UI adoption are tracked once in the
 [epic review handoff](../handoffs/2026-11-06-a.md). This includes validation on the updated PR branch;
 the earlier provider-specific results below remain the record of the local integration exercise.

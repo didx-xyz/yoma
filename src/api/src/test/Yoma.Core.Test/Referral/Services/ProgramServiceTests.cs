@@ -18,8 +18,9 @@ namespace Yoma.Core.Test.Referral.Services
     public async Task ImageUpdatePreservesTheLockedAccountingSnapshot()
     {
       var fixture = new ProgramServiceFixture();
-      var initial = new ProgramBuilder().WithCompletionTotal(1).Build();
-      var current = new ProgramBuilder().WithId(initial.Id).WithCompletionTotal(2).WithZltoRewardCumulative(20).Build();
+      var initial = new ProgramBuilder().WithCompletionTotal(1).WithRewards(10, 10, 25).Build();
+      var current = new ProgramBuilder().WithId(initial.Id).WithCompletionTotal(2)
+        .WithRewards(10, 10, 25).WithZltoRewardCumulative(20).Build();
       fixture.ProgramRepository.Setup(repository => repository.Query(false)).Returns(new[] { initial }.AsQueryable());
       fixture.ProgramRepository.Setup(repository => repository.Query(false, LockMode.Wait)).Returns(new[] { current }.AsQueryable());
       fixture.UserService.Setup(service => service.GetCurrentUser(false, false, It.IsAny<bool>()))
@@ -33,6 +34,9 @@ namespace Yoma.Core.Test.Referral.Services
 
       Assert.Equal(2, result.CompletionTotal);
       Assert.Equal(20, result.ZltoRewardCumulative);
+      Assert.NotNull(result.ZltoRewardEstimate);
+      Assert.Equal(5, result.ZltoRewardEstimate.Referee);
+      Assert.Equal(0, result.ZltoRewardEstimate.Referrer);
       fixture.ProgramRepository.Verify(repository => repository.Update(It.Is<Program>(program =>
         program.CompletionTotal == 2 && program.ZltoRewardCumulative == 20)), Times.Exactly(2));
     }
