@@ -1,3 +1,4 @@
+using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -112,12 +113,12 @@ namespace Yoma.Core.Test.Entity
           published = true;
         }).Returns(Task.CompletedTask);
       var error = new InvalidOperationException("Identity provider unavailable");
-      Action verifyEffects = () =>
+      void verifyEffects()
       {
         Assert.Null(Transaction.Current);
         Assert.True(notified);
         Assert.True(published);
-      };
+      }
       fixture.Identity.Setup(client => client.EnsureRoles(It.IsAny<Guid>(), It.IsAny<List<string>>()))
         .Callback(verifyEffects).ThrowsAsync(error);
       fixture.Identity.Setup(client => client.RemoveRoles(It.IsAny<Guid>(), It.IsAny<List<string>>()))
@@ -434,6 +435,28 @@ namespace Yoma.Core.Test.Entity
       fixture.Repository.Verify(repository => repository.Query(true, LockMode.Wait), Times.Once);
       fixture.MembersRepository.VerifyNoOtherCalls();
       fixture.Identity.VerifyNoOtherCalls();
+    }
+
+    [Theory]
+    [InlineData(null, true)]
+    [InlineData(1d, true)]
+    [InlineData(10000000d, true)]
+    [InlineData(-1d, false)]
+    [InlineData(0d, false)]
+    [InlineData(1.5, false)]
+    [InlineData(10000001d, false)]
+    public void RewardPoolCreateAndUpdateApplyTheSameLimits(double? amount, bool valid)
+    {
+      var pool = (decimal?)amount;
+      var create = new OrganizationRequestValidatorCreate(Mock.Of<ICountryService>(), Mock.Of<IOrganizationProviderTypeService>())
+        .Validate(new OrganizationRequestCreate { ZltoRewardPoolCurrentFinancialYear = pool },
+          options => options.IncludeProperties(request => request.ZltoRewardPoolCurrentFinancialYear));
+      var update = new OrganizationRequestUpdateRewardPoolValidator()
+        .Validate(new OrganizationRequestUpdateRewardPool { ZltoRewardPoolCurrentFinancialYear = pool });
+
+      Assert.Equal(valid, create.IsValid);
+      Assert.Equal(valid, update.IsValid);
+      Assert.Equal(create.Errors.Select(error => error.ErrorMessage), update.Errors.Select(error => error.ErrorMessage));
     }
 
     [Fact]
