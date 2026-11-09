@@ -127,6 +127,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
     {
       var existingProvider = Mock.Of<ISSIProviderClientFactory>();
       var services = new ServiceCollection();
+      services.AddLogging();
       services.AddSingleton(existingProvider);
       var tokenCache = new HolderTokenCacheFixture();
       services.AddSingleton(tokenCache.Cache.Object);

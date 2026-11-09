@@ -312,6 +312,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
       {
         var parts = token.Split('.');
         if (parts.Length != 3) throw new FormatException();
+
         var payload = parts[1].Replace('-', '+').Replace('_', '/');
         payload = payload.PadRight((payload.Length + 3) / 4 * 4, '=');
         return JObject.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(payload)));
@@ -340,8 +341,10 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
     private static List<string> GetAudiences(JObject claims)
     {
       if (claims["aud"]?.Type == JTokenType.String) return [claims.Value<string>("aud")!];
+
       if (claims["aud"] is JArray values && values.All(value => value.Type == JTokenType.String))
         return values.Values<string>().Select(value => value!).ToList();
+
       throw new InvalidOperationException("Federation token audience is missing or malformed");
     }
 

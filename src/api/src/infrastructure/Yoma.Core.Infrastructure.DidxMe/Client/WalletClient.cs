@@ -62,6 +62,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Client
       var json = await response.GetStringAsync();
       var result = JsonConvert.DeserializeObject<ApiResponse<WalletCredential>>(json, SerializerSettings)
         ?? throw new InvalidOperationException("Wallet response is missing");
+
       ValidateCredential(result.Data);
 
       if (!string.Equals(result.Data!.Id, credentialId.ToString(), StringComparison.OrdinalIgnoreCase))
@@ -109,7 +110,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Client
         throw new InvalidOperationException("Wallet response is missing credential data");
 
       foreach (var credential in result.Data)
-        ValidateCredential(credential);
+        ValidateCredential(credential, false);
 
       return result;
     }
@@ -130,14 +131,20 @@ namespace Yoma.Core.Infrastructure.DidxMe.Client
       }
     }
 
-    private static void ValidateCredential(WalletCredential? credential)
+    private static void ValidateCredential(WalletCredential? credential, bool requireYomaFormat = true)
     {
       if (credential == null || !Guid.TryParse(credential.Id, out _) || credential.Claims == null ||
-        credential.DateIssued == null || string.IsNullOrWhiteSpace(credential.Vct) ||
+        string.IsNullOrWhiteSpace(credential.Vct) ||
         string.IsNullOrWhiteSpace(credential.Status))
         throw new InvalidOperationException("Wallet credential response is incomplete");
 
-      if (credential.Format != "vc+sd-jwt")
+      // List pages can contain unrelated types; the provider validates Yoma entries after resolving the preset.
+      if (!requireYomaFormat) return;
+
+      if (credential.DateIssued == null)
+        throw new InvalidOperationException("Wallet credential response is incomplete");
+
+      if (credential.Format != Constants.CredentialFormatSDJWT)
         throw new NotSupportedException("Only SD-JWT wallet credentials are supported by this adapter");
     }
     #endregion

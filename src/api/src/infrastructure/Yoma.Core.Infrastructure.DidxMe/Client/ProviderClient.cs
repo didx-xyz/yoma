@@ -128,8 +128,10 @@ namespace Yoma.Core.Infrastructure.DidxMe.Client
       // Preserve the organisation name hash as a compatibility reference, not a remote issuer ID.
       // This no-op keeps existing domain scheduling intact; environment setup provisions Yoma.
       if (request.Roles.Contains(Role.Issuer)) return request.Referent.Trim();
+
       if (request.Roles.Any(role => role != Role.Holder))
         throw new NotSupportedException("Only holder or issuer tenants are supported");
+
       if (!Guid.TryParse(request.Referent, out var userId))
         throw new ArgumentException("A Yoma user referent is required", nameof(request));
 
@@ -137,6 +139,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Client
       var user = _users.Query(false)
         .SingleOrDefault(user => user.Id == userId)
         ?? throw new EntityNotFoundException("The Yoma participant does not exist");
+
       if (!user.ExternalId.HasValue || user.ExternalId == Guid.Empty)
         throw new InvalidOperationException($"Cannot create didx:me holder for Yoma user '{user.Id}': ExternalId (Yoma Keycloak user ID) is missing");
 
@@ -173,11 +176,14 @@ namespace Yoma.Core.Infrastructure.DidxMe.Client
       var schema = PresetService.ToDomainSchema(mapping);
       if (schema.Name != request.SchemaName || schema.ArtifactType != request.ArtifactType)
         throw new ArgumentException("The requested schema identity/name/artifact type do not agree", nameof(request));
+
       if (request.Attributes == null || request.Attributes.Count == 0 ||
         request.Attributes.Keys.Except(schema.AttributeNames).Any())
         throw new ArgumentException("Credential attributes must belong to the exact requested schema", nameof(request));
+
       if (!request.Attributes.TryGetValue(request.ClientReferent.Key, out var referent) || referent != request.ClientReferent.Value)
         throw new ArgumentException("The signed client referent must match the issuance request", nameof(request));
+
       if (!Guid.TryParse(request.TenantIdHolder, out var holderSubject))
         throw new ArgumentException("A valid didx:me holder ID is required", nameof(request));
 
@@ -263,6 +269,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Client
           var credential = await _wallet.GetCredential(context, mapping.WalletCredentialId);
           var result = await MapCredential(context.HolderId, credential);
           if (result?.Id != issuanceId.ToString()) throw new InvalidOperationException("The wallet credential correlation does not match");
+
           return result;
         }
         catch (HttpClientException exception) when (exception.StatusCode == HttpStatusCode.NotFound)
@@ -325,16 +332,28 @@ namespace Yoma.Core.Infrastructure.DidxMe.Client
     private async Task<Credential?> MapCredential(string tenantId, WalletCredential credential)
     {
       if (credential.Status != "accepted") throw new InvalidOperationException("Expected an accepted wallet credential");
+
       var presetMapping = _presets.GetMappingByVctOrNull(credential.Vct);
       if (presetMapping == null) return null; // Other credential types are not part of Yoma's domain catalogue.
+
+      if (credential.DateIssued == null)
+        throw new InvalidOperationException("Wallet credential response is incomplete");
+
+      if (credential.Format != Constants.CredentialFormatSDJWT)
+        throw new NotSupportedException("Only SD-JWT wallet credentials are supported by this adapter");
+
       if (!Guid.TryParse(credential.Claims.Value<string>(PresetService.CredentialIdAttribute), out var id))
         throw new InvalidOperationException("The Yoma wallet credential is missing its signed correlation ID");
+
       var issuance = _issuanceMappings.Query()
         .SingleOrDefault(item => item.Id == id);
+
       // A wallet may outlive a Yoma data reset. Ignore unknown records, but reject conflicting ownership.
       if (issuance == null) return null;
+
       if (issuance.TenantAlias != _options.TenantAlias || issuance.TenantIdHolder != tenantId || issuance.PresetMappingId != presetMapping.Id)
         throw new InvalidOperationException("The Yoma wallet credential has no matching issuance intent");
+
       if (credential.Claims.Value<string>(issuance.ClientReferentKey) != issuance.ClientReferentValue ||
         (issuance.WalletCredentialId != null && issuance.WalletCredentialId != credential.Id))
         throw new InvalidOperationException("The wallet credential does not match its issuance correlation");
@@ -343,8 +362,10 @@ namespace Yoma.Core.Infrastructure.DidxMe.Client
       foreach (var name in PresetService.ToDomainSchema(presetMapping).AttributeNames)
       {
         if (!credential.Claims.TryGetValue(name, out var claim)) continue;
+
         if (claim.Type != JTokenType.String)
           throw new InvalidOperationException("A Yoma credential contains a non-string domain attribute");
+
         attributes.Add(name, claim.Value<string>()!);
       }
 

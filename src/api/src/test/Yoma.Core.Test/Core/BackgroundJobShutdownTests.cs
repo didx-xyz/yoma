@@ -685,6 +685,16 @@ namespace Yoma.Core.Test.Core
         _mocks.Add(typeof(IHostApplicationLifetime), lifetime);
         _mocks.Add(typeof(IDistributedLockService), Locks);
         Locks.Setup(service => service.TryAcquireLockAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<string>())).ReturnsAsync(true);
+        Locks.Setup(service => service.TryRunWithLockAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<TimeSpan>(),
+            It.IsAny<Func<Task>>(), It.IsAny<CancellationToken>(), It.IsAny<string>()))
+          .Returns(async (string key, TimeSpan duration, TimeSpan timeout, Func<Task> action, CancellationToken cancellation, string process) =>
+          {
+            cancellation.ThrowIfCancellationRequested();
+            if (!await Locks.Object.TryAcquireLockAsync(key, duration, process)) return false;
+            try { await action(); }
+            finally { await Locks.Object.ReleaseLockAsync(key, process); }
+            return true;
+          });
         _service = Resolve(Type.GetType(typeName, throwOnError: true)!);
         foreach (var mock in _mocks.Values) mock.Invocations.Clear();
       }
@@ -765,8 +775,12 @@ namespace Yoma.Core.Test.Core
       public Task Run(string methodName)
       {
         var method = _service.GetType().GetMethod(methodName)!;
-        var args = method.GetParameters().Select(parameter => parameter.ParameterType == typeof(bool)
-          ? (object)false : throw new NotSupportedException($"Job parameter '{parameter.Name}' is unsupported")).ToArray();
+        var args = method.GetParameters().Select(parameter => parameter.ParameterType switch
+        {
+          var type when type == typeof(bool) => (object)false,
+          var type when type == typeof(CancellationToken) => TestContext.Current.CancellationToken,
+          _ => throw new NotSupportedException($"Job parameter '{parameter.Name}' is unsupported")
+        }).ToArray();
         return Task.Run(async () => await (Task)method.Invoke(_service, args)!, TestContext.Current.CancellationToken)
           .WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
       }
@@ -789,6 +803,7 @@ namespace Yoma.Core.Test.Core
           _options[valueType] = value;
           if (value is ScheduleJobOptions schedule)
           {
+            schedule.DistributedLockDurationBufferInMinutes = 2;
             foreach (var property in typeof(ScheduleJobOptions).GetProperties().Where(property => property.PropertyType == typeof(int)
               && (property.Name.Contains("MaxIntervalInHours", StringComparison.Ordinal) || property.Name.EndsWith("BatchSize", StringComparison.Ordinal))))
               property.SetValue(schedule, 2);

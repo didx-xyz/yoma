@@ -247,6 +247,7 @@ namespace Yoma.Core.Test.Referral.Services
         Mock.CountryService.Setup(service => service.GetByIdOrNull(country.Id)).Returns(country);
         Mock.CountryService.Setup(service => service.List(It.IsAny<bool?>())).Returns([country]);
         Mock.ProgramRepository.Setup(repository => repository.Query(It.IsAny<bool>())).Returns(new[] { Program }.AsQueryable());
+        Mock.ProgramRepository.Setup(repository => repository.Query(It.IsAny<bool>(), LockMode.Wait)).Returns(new[] { Program }.AsQueryable());
         Mock.UserService.Setup(service => service.GetCurrentUser(false, false, It.IsAny<bool>())).Returns(new UserBuilder().Build());
         Mock.OpportunityService.Setup(service => service.GetById(It.IsAny<Guid>(), true, true, false))
           .Returns((Guid id, bool _, bool _, bool _, LockMode? _) => Opportunities[id]);

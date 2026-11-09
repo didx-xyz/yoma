@@ -509,6 +509,7 @@ namespace Yoma.Core.Test.Referral.Services
 
       var links = new List<ReferralLink> { link }.AsQueryable();
       fixture.LinkRepository.Setup(r => r.Query(true)).Returns(links);
+      fixture.LinkRepository.Setup(r => r.Query(true, Domain.Core.LockMode.Wait)).Returns(links);
       fixture.LinkRepository.Setup(r => r.Query(It.IsAny<bool>())).Returns(links);
 
       fixture.UserService
@@ -543,6 +544,7 @@ namespace Yoma.Core.Test.Referral.Services
 
       var links = new List<ReferralLink> { link }.AsQueryable();
       fixture.LinkRepository.Setup(r => r.Query(true)).Returns(links);
+      fixture.LinkRepository.Setup(r => r.Query(true, Domain.Core.LockMode.Wait)).Returns(links);
       fixture.LinkRepository.Setup(r => r.Query(It.IsAny<bool>())).Returns(links);
 
       fixture.UserService
@@ -557,6 +559,34 @@ namespace Yoma.Core.Test.Referral.Services
       // Assert
       Assert.Equal(ReferralLinkStatus.Cancelled, result.Status);
       fixture.LinkRepository.Verify(r => r.Update(It.IsAny<ReferralLink>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData(ReferralLinkStatus.Active)]
+    [InlineData(ReferralLinkStatus.Cancelled)]
+    public async Task CancellationPreservesCurrentCountersAndRechecksStatus(ReferralLinkStatus status)
+    {
+      var fixture = new LinkServiceFixture(DefaultUsername);
+      var user = new UserBuilder().WithUsername(DefaultUsername).Build();
+      var initial = new ReferralLinkBuilder().WithUserId(user.Id).WithCompletionTotal(1).Build();
+      var current = new ReferralLinkBuilder().WithId(initial.Id).WithUserId(user.Id)
+        .WithStatus(status).WithCompletionTotal(5).Build();
+      fixture.UserService.Setup(service => service.GetCurrentUser(false, false, It.IsAny<bool>())).Returns(user);
+      fixture.LinkRepository.Setup(repository => repository.Query(true)).Returns(new[] { initial }.AsQueryable());
+      fixture.LinkRepository.Setup(repository => repository.Query(true, Domain.Core.LockMode.Wait)).Returns(() =>
+      {
+        Assert.NotNull(System.Transactions.Transaction.Current);
+        return new[] { current }.AsQueryable();
+      });
+
+      var result = await fixture.Build().Cancel(initial.Id);
+
+      Assert.Equal(5, result.CompletionTotal);
+      Assert.Equal(ReferralLinkStatus.Cancelled, result.Status);
+      fixture.LinkRepository.Verify(repository => repository.Update(It.Is<ReferralLink>(link => link.CompletionTotal == 5)),
+        status == ReferralLinkStatus.Cancelled ? Times.Never() : Times.Once());
+      fixture.LinkMaintenanceService.Verify(service => service.AbandonLinkUsagesByLinkId(initial.Id, null),
+        status == ReferralLinkStatus.Cancelled ? Times.Never() : Times.Once());
     }
 
     #endregion

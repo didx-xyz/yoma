@@ -378,27 +378,28 @@ namespace Yoma.Core.Domain.Referral.Services
 
     public async Task<ReferralLink> Cancel(Guid id)
     {
-      //ensures the link belongs to the current user unless the caller has admin privileges
-      var result = GetById(id, true, true, true, true, false);
-
-      if (result.Status == ReferralLinkStatus.Cancelled) return result;
-
-      if (!Statuses_Cancellable.Contains(result.Status))
-        throw new ValidationException("This referral link can no longer be cancelled");
-
-      var status = _linkStatusService.GetByName(ReferralLinkStatus.Cancelled.ToString());
-      result.StatusId = status.Id;
-      result.Status = ReferralLinkStatus.Cancelled;
+      ReferralLink result = null!;
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
+        // Recheck ownership/status under the lock and preserve concurrent completion counters.
+        result = GetById(id, true, true, true, true, false, LockMode.Wait);
+        if (result.Status == ReferralLinkStatus.Cancelled) return;
+
+        if (!Statuses_Cancellable.Contains(result.Status))
+          throw new ValidationException("This referral link can no longer be cancelled");
+
+        var status = _linkStatusService.GetByName(ReferralLinkStatus.Cancelled.ToString());
+        result.StatusId = status.Id;
+        result.Status = ReferralLinkStatus.Cancelled;
+
         await _linkRepository.Update(result);
         await _linkMaintenanceService.AbandonLinkUsagesByLinkId(result.Id);
 
         scope.Complete();
-      });
+      }, true);
 
       return result;
     }

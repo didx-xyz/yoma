@@ -405,6 +405,36 @@ namespace Yoma.Core.Test.SSI.DidxMe
       await Assert.ThrowsAsync<EntityNotFoundException>(() => fixture.Client.GetCredentialById(HolderId, unknownId));
     }
 
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task WalletListSkipsForeignFormatsButRejectsInvalidYomaCredentials(bool mapped, bool missingDate)
+    {
+      using var http = new HttpTest()
+        .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
+      var fixture = new Fixture(http);
+      var issued = await fixture.Client.IssueCredential(fixture.Request());
+      var credential = JObject.FromObject(fixture.WalletCredential(issued.Id));
+      credential["id"] = Guid.NewGuid().ToString();
+      if (!mapped) credential["vct"] = "https://types.test/unrelated";
+      if (!mapped || !missingDate) credential["format"] = "mso_mdoc";
+      if (!mapped || missingDate) credential.Remove("iat");
+      http.ForCallsTo("https://wallet.test/api/v2/credentials*").RespondWith(
+        JsonConvert.SerializeObject(new
+        {
+          data = new[] { credential, JObject.FromObject(fixture.WalletCredential(issued.Id)) },
+          links = new { }
+        }));
+
+      if (!mapped)
+        Assert.Equal(issued.Id, Assert.Single((await fixture.Client.ListCredentials(HolderId))!).Id);
+      else if (missingDate)
+        await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.Client.ListCredentials(HolderId));
+      else
+        await Assert.ThrowsAsync<NotSupportedException>(() => fixture.Client.ListCredentials(HolderId));
+    }
+
     [Fact]
     public async Task MissingMappedWalletCredentialRetainsDomainNotFoundBehavior()
     {

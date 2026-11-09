@@ -50,9 +50,10 @@ security configuration and privileged workflows are held in the private engineer
   [2026-11-08 handoff](../handoffs/2026-11-08-a.md) on PR #2013.
 - [x] Consolidate Jason's required UI adoption and separate exported UI/Keycloak review groups in the
   [2026-11-09 handoff](../handoffs/2026-11-09-a.md); implementation/verification remains with Jason.
-- [x] Remove reward-pool edits from ordinary organisation updates; preserve the current pool under the existing transaction lock. Retain initial pools on creation and the dedicated Admin endpoint. Uncommitted for Adrian's review; UI adoption is in the same handoff.
-- [x] Check the final 9 November PR review: fix notification/event ordering and fixture-test drift, add missing work-docs metadata, and record the existing cutover decision and redundant guard disposition in the same handoff. Uncommitted for Adrian's review.
-- [ ] Provision/verify Dev with SRE, separating once-off setup from ongoing configuration/secrets.
+- [x] Remove reward-pool edits from ordinary organisation updates; preserve the current pool under the existing transaction lock. Retain initial pools on creation and the dedicated Admin endpoint. Committed and pushed on PR #2013; UI adoption is in the same handoff.
+- [x] Check the final 9 November PR review: fix notification/event ordering and fixture-test drift, add missing work-docs metadata, and record the existing cutover decision and redundant guard disposition in the same handoff. Committed and pushed on PR #2013.
+- [x] SRE prepared Dev; Adrian confirmed test-user issuance and wallet list/detail for YoID and opportunities on 9 November. This does not establish Stage readiness or multi-replica cache coverage.
+- [x] Address the latest API review: preserve current referral accounting during administrative changes/cancellation and filter unrelated wallet types before Yoma-specific format validation. Local changes await Adrian's review; see the consolidated 9 November handoff.
 - [x] Prepare the provider-reset seed in the current unpublished migration; verify preserved dates, current default schema selection and reset state against disposable PostgreSQL.
 - [x] Correct the reset to replace historical YoID names with `YoID|Default` across all statuses; verify both credential families resolve current defaults without changing issued dates.
 - [ ] Rehearse coordinated cutover and reissuance before Stage: drain workers, back up state, provision matching SDJWT schemas,
@@ -63,6 +64,7 @@ security configuration and privileged workflows are held in the private engineer
 
 ## Decisions
 
+- 2026-11-09: Use existing transaction/retry and row-lock patterns for referral administrative writes. Validate limits against the locked current totals; preserve cancellation cleanup. Wallet list pages retain structural validation, with Yoma format/date checks after preset matching. Keep the small reward-pool validation chains explicit rather than introducing another abstraction solely for review feedback.
 - 2026-11-09: Send required notifications/status events before inline role synchronization so
   a failed external role call cannot skip them. Preserve explicit error/retry behavior and the
   earlier decision against queued role recovery. Retain the migration-driven reset with SRE
