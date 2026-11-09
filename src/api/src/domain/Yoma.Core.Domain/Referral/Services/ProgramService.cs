@@ -188,7 +188,7 @@ namespace Yoma.Core.Domain.Referral.Services
       var worldwideCode = Country.Worldwide.ToDescription();
       var countryIdWorldwide = _countryService.GetByCodeAlpha2(worldwideCode).Id;
       var isAuthenticated = HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor);
-      var user = isAuthenticated ? _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false) : null;
+      var user = isAuthenticated ? _userService.GetCurrentUser(false, false) : null;
       var userCountryId = user?.CountryId;
 
       // Anonymous users: only allow published state active (active + started), ignore input
@@ -414,7 +414,7 @@ namespace Yoma.Core.Domain.Referral.Services
       if (existingByName != null)
         throw new ValidationException("A referral programme with this name already exists");
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       var result = new Program
       {
@@ -476,103 +476,107 @@ namespace Yoma.Core.Domain.Referral.Services
       request.DateStart = request.DateStart.RemoveTime();
       if (request.DateEnd.HasValue) request.DateEnd = request.DateEnd.Value.ToEndOfDay();
 
-      var result = GetById(request.Id, true, true);
-      var now = DateTimeOffset.UtcNow;
-
-      AssertUpdatable(result);
-
-      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Updating Program {ProgramId}. Current(Status={Status}, Start={Start:yyyy-MM-dd}, End={End:yyyy-MM-dd}, Limit={Limit}, Total={Total}) Requested(Start={RStart:yyyy-MM-dd}, End={REnd:yyyy-MM-dd}, Limit={RLimit})",
-        result.Id, result.Status, result.DateStart, result.DateEnd, result.CompletionLimit, result.CompletionTotal, request.DateStart, request.DateEnd, request.CompletionLimit);
-
-      var existingByName = GetByNameOrNull(request.Name, false, false);
-      if (existingByName != null && result.Id != existingByName.Id)
-        throw new ValidationException("A referral programme with this name already exists");
-
-      var startDateUpdated = !result.DateStart.Equals(request.DateStart);
-      if (startDateUpdated && request.DateStart < now.RemoveTime())
-        throw new ValidationException("The start date cannot be in the past. The start date has been updated and must be today or later");
-
-      var endDateUpdated = !Nullable.Equals(request.DateEnd, result.DateEnd);
-      var completionWindowUpdated = !Nullable.Equals(request.CompletionWindowInDays, result.CompletionWindowInDays);
-
-      if ((startDateUpdated || endDateUpdated || completionWindowUpdated)
-        && request.DateEnd.HasValue && request.CompletionWindowInDays.HasValue
-        && request.DateStart.AddDays(request.CompletionWindowInDays.Value) > request.DateEnd.Value)
-      {
-        throw new ValidationException(
-          "The completion window exceeds the programme end date. Based on the selected start and end dates, the maximum allowed completion window is " +
-          $"{(request.DateEnd.Value - request.DateStart).Days} days");
-      }
-
-      // If DateEnd is in the past/now, immediately expire 
-      if (request.DateEnd.HasValue && request.DateEnd.Value <= now)
-      {
-        result.Status = ProgramStatus.Expired;
-        result.StatusId = _programStatusService.GetByName(ProgramStatus.Expired.ToString()).Id;
-
-        //notification not send NotificationType.ReferralProgram_Expiration_Expired (sent to admin); explicit admin action
-      }
-      // If program was UnCompletable but the edit makes it healthy, flip to Active provided not limit reached
-      else if (result.Status == ProgramStatus.UnCompletable)
-      {
-        if (request.CompletionLimit.HasValue && (result.CompletionTotal ?? 0) >= request.CompletionLimit.Value)
-        {
-          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Program {ProgramId} edited from UnCompletable -> LimitReached (cap hit: {CompletionTotal}/{CompletionLimit})",
-            result.Id, result.CompletionTotal, request.CompletionLimit);
-
-          result.Status = ProgramStatus.LimitReached;
-          result.StatusId = _programStatusService.GetByName(ProgramStatus.LimitReached.ToString()).Id;
-        }
-        else
-        {
-          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Program {ProgramId} edited from UnCompletable -> Active", result.Id);
-
-          result.Status = ProgramStatus.Active;
-          result.StatusId = _programStatusService.GetByName(ProgramStatus.Active.ToString()).Id;
-        }
-      }
-
-      if (request.ZltoRewardPool.HasValue && result.ZltoRewardCumulative.HasValue && request.ZltoRewardPool.Value < result.ZltoRewardCumulative.Value)
-        throw new ValidationException($"The Zlto reward pool cannot be less than the cumulative Zlto rewards ({result.ZltoRewardCumulative.Value:F0}) already allocated to participants");
-
-      if (request.CompletionLimitReferee.HasValue && request.CompletionLimit.HasValue && request.CompletionLimitReferee.Value > request.CompletionLimit.Value)
-        throw new ValidationException($"The per-referrer completion limit cannot exceed the overall completion limit of {request.CompletionLimit.Value}");
-
-      if (request.CompletionLimit.HasValue && result.CompletionTotal.HasValue && request.CompletionLimit.Value < result.CompletionTotal.Value)
-        throw new ValidationException($"The overall completion limit cannot be lower than the total completions already recorded ({result.CompletionTotal.Value:F0})");
-
-      if (request.ReferrerLimit.HasValue && result.ReferrerTotal.HasValue && request.ReferrerLimit.Value < result.ReferrerTotal.Value)
-        throw new ValidationException($"The referrer limit cannot be lower than the total referrers already recorded ({result.ReferrerTotal.Value:F0})");
-
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
-
-      var pathwayRemoved = result.Pathway != null && request.Pathway == null;
-      var popRemoved = result.ProofOfPersonhoodRequired && !request.ProofOfPersonhoodRequired;
-
-      result.Name = request.Name;
-      result.Summary = request.Summary;
-      result.Description = request.Description;
-      result.CompletionWindowInDays = request.CompletionWindowInDays;
-      result.CompletionLimitReferee = request.CompletionLimitReferee;
-      result.CompletionLimit = request.CompletionLimit;
-      result.ZltoRewardReferrer = request.ZltoRewardReferrer;
-      result.ZltoRewardReferee = request.ZltoRewardReferee;
-      result.ZltoRewardPool = request.ZltoRewardPool;
-      result.ProofOfPersonhoodRequired = request.ProofOfPersonhoodRequired;
-      result.PathwayRequired = request.PathwayRequired;
-      result.MultipleLinksAllowed = request.MultipleLinksAllowed;
-      //status processed above
-      if (!request.IsDefault) result.IsDefault = false; //processed below if true to avoid unique index constraint
-      // Hidden is controlled via a dedicated UI action. If not supplied in the request, preserve the existing value
-      result.Hidden = request.Hidden.HasValue ? request.Hidden : result.Hidden;
-      result.ReferrerLimit = request.ReferrerLimit;
-      result.DateStart = request.DateStart;
-      result.DateEnd = request.DateEnd;
-      result.ModifiedByUserId = user.Id;
+      var user = _userService.GetCurrentUser(false, false);
+      Program result = null!;
+      var pathwayRemoved = false;
+      var popRemoved = false;
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+
+        // Validate and edit the current accounting snapshot, including on transaction retries.
+        result = GetById(request.Id, true, true, LockMode.Wait);
+        var now = DateTimeOffset.UtcNow;
+
+        AssertUpdatable(result);
+
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Updating Program {ProgramId}. Current(Status={Status}, Start={Start:yyyy-MM-dd}, End={End:yyyy-MM-dd}, Limit={Limit}, Total={Total}) Requested(Start={RStart:yyyy-MM-dd}, End={REnd:yyyy-MM-dd}, Limit={RLimit})",
+          result.Id, result.Status, result.DateStart, result.DateEnd, result.CompletionLimit, result.CompletionTotal, request.DateStart, request.DateEnd, request.CompletionLimit);
+
+        var existingByName = GetByNameOrNull(request.Name, false, false);
+        if (existingByName != null && result.Id != existingByName.Id)
+          throw new ValidationException("A referral programme with this name already exists");
+
+        var startDateUpdated = !result.DateStart.Equals(request.DateStart);
+        if (startDateUpdated && request.DateStart < now.RemoveTime())
+          throw new ValidationException("The start date cannot be in the past. The start date has been updated and must be today or later");
+
+        var endDateUpdated = !Nullable.Equals(request.DateEnd, result.DateEnd);
+        var completionWindowUpdated = !Nullable.Equals(request.CompletionWindowInDays, result.CompletionWindowInDays);
+
+        if ((startDateUpdated || endDateUpdated || completionWindowUpdated)
+          && request.DateEnd.HasValue && request.CompletionWindowInDays.HasValue
+          && request.DateStart.AddDays(request.CompletionWindowInDays.Value) > request.DateEnd.Value)
+        {
+          throw new ValidationException(
+            "The completion window exceeds the programme end date. Based on the selected start and end dates, the maximum allowed completion window is " +
+            $"{(request.DateEnd.Value - request.DateStart).Days} days");
+        }
+
+        // If DateEnd is in the past/now, immediately expire
+        if (request.DateEnd.HasValue && request.DateEnd.Value <= now)
+        {
+          result.Status = ProgramStatus.Expired;
+          result.StatusId = _programStatusService.GetByName(ProgramStatus.Expired.ToString()).Id;
+
+          //notification not send NotificationType.ReferralProgram_Expiration_Expired (sent to admin); explicit admin action
+        }
+        // If program was UnCompletable but the edit makes it healthy, flip to Active provided not limit reached
+        else if (result.Status == ProgramStatus.UnCompletable)
+        {
+          if (request.CompletionLimit.HasValue && (result.CompletionTotal ?? 0) >= request.CompletionLimit.Value)
+          {
+            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Program {ProgramId} edited from UnCompletable -> LimitReached (cap hit: {CompletionTotal}/{CompletionLimit})",
+              result.Id, result.CompletionTotal, request.CompletionLimit);
+
+            result.Status = ProgramStatus.LimitReached;
+            result.StatusId = _programStatusService.GetByName(ProgramStatus.LimitReached.ToString()).Id;
+          }
+          else
+          {
+            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Program {ProgramId} edited from UnCompletable -> Active", result.Id);
+
+            result.Status = ProgramStatus.Active;
+            result.StatusId = _programStatusService.GetByName(ProgramStatus.Active.ToString()).Id;
+          }
+        }
+
+        if (request.ZltoRewardPool.HasValue && result.ZltoRewardCumulative.HasValue && request.ZltoRewardPool.Value < result.ZltoRewardCumulative.Value)
+          throw new ValidationException($"The Zlto reward pool cannot be less than the cumulative Zlto rewards ({result.ZltoRewardCumulative.Value:F0}) already allocated to participants");
+
+        if (request.CompletionLimitReferee.HasValue && request.CompletionLimit.HasValue && request.CompletionLimitReferee.Value > request.CompletionLimit.Value)
+          throw new ValidationException($"The per-referrer completion limit cannot exceed the overall completion limit of {request.CompletionLimit.Value}");
+
+        if (request.CompletionLimit.HasValue && result.CompletionTotal.HasValue && request.CompletionLimit.Value < result.CompletionTotal.Value)
+          throw new ValidationException($"The overall completion limit cannot be lower than the total completions already recorded ({result.CompletionTotal.Value:F0})");
+
+        if (request.ReferrerLimit.HasValue && result.ReferrerTotal.HasValue && request.ReferrerLimit.Value < result.ReferrerTotal.Value)
+          throw new ValidationException($"The referrer limit cannot be lower than the total referrers already recorded ({result.ReferrerTotal.Value:F0})");
+
+        pathwayRemoved = result.Pathway != null && request.Pathway == null;
+        popRemoved = result.ProofOfPersonhoodRequired && !request.ProofOfPersonhoodRequired;
+
+        result.Name = request.Name;
+        result.Summary = request.Summary;
+        result.Description = request.Description;
+        result.CompletionWindowInDays = request.CompletionWindowInDays;
+        result.CompletionLimitReferee = request.CompletionLimitReferee;
+        result.CompletionLimit = request.CompletionLimit;
+        result.ZltoRewardReferrer = request.ZltoRewardReferrer;
+        result.ZltoRewardReferee = request.ZltoRewardReferee;
+        result.ZltoRewardPool = request.ZltoRewardPool;
+        result.ProofOfPersonhoodRequired = request.ProofOfPersonhoodRequired;
+        result.PathwayRequired = request.PathwayRequired;
+        result.MultipleLinksAllowed = request.MultipleLinksAllowed;
+        //status processed above
+        if (!request.IsDefault) result.IsDefault = false; //processed below if true to avoid unique index constraint
+        // Hidden is controlled via a dedicated UI action. If not supplied in the request, preserve the existing value
+        result.Hidden = request.Hidden.HasValue ? request.Hidden : result.Hidden;
+        result.ReferrerLimit = request.ReferrerLimit;
+        result.DateStart = request.DateStart;
+        result.DateEnd = request.DateEnd;
+        result.ModifiedByUserId = user.Id;
 
         // countries
         result = await RemoveCountries(result, result.Countries?.Select(o => o.Id).Except(request.Countries ?? []).ToList());
@@ -616,19 +620,24 @@ namespace Yoma.Core.Domain.Referral.Services
 
     public async Task UpdateHidden(Guid id, bool hidden)
     {
-      var item = GetById(id, false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+        var item = GetById(id, false, false, LockMode.Wait);
 
-      AssertUpdatable(item);
+        AssertUpdatable(item);
 
-      if (hidden && item.IsDefault)
-        throw new ValidationException("The default referral programme cannot be hidden");
+        if (hidden && item.IsDefault)
+          throw new ValidationException("The default referral programme cannot be hidden");
 
-      item.Hidden = hidden;
-      item.ModifiedByUserId = user.Id;
+        item.Hidden = hidden;
+        item.ModifiedByUserId = user.Id;
 
-      await _programRepository.Update(item);
+        await _programRepository.Update(item);
+        scope.Complete();
+      }, true);
     }
 
     public async Task<Program> UpdateImage(Guid id, IFormFile file)
@@ -637,17 +646,20 @@ namespace Yoma.Core.Domain.Referral.Services
 
       AssertUpdatable(result);
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       (Program? Program, BlobObject? ItemAdded) resultImage = (null, null);
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+        // Preserve accounting and lifecycle changes committed since the initial permission/status check.
+        result = GetById(id, false, true, LockMode.Wait);
+        AssertUpdatable(result);
         resultImage = await UpdateImage(result, file);
         result.ModifiedByUserId = user.Id;
         result = await _programRepository.Update(result);
         scope.Complete();
-      });
+      }, true);
 
       if (resultImage.Program == null)
         throw new InvalidOperationException($"{nameof(Program)} expected");
@@ -657,72 +669,72 @@ namespace Yoma.Core.Domain.Referral.Services
 
     public async Task UpdateStatus(Guid id, ProgramStatus status)
     {
-      var item = GetById(id, true, false);
-      var now = DateTimeOffset.UtcNow;
-
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
-
-      bool cancelReferralLinks = false;
-      bool flipLinksToLimitReached = false;
-
-      var originalStatus = item.Status;
-      var finalStatus = status;
-
-      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("UpdateStatus requested for Program {ProgramId}. Requested={Requested} Current={Current} End={End} CompletionLimit={CompletionLimit} CompletionTotal={CompletionTotal}",
-        item.Id, status, item.Status, item.DateEnd?.ToString("yyyy-MM-dd") ?? "(null)", item.CompletionLimit, item.CompletionTotal);
-
-      switch (status)
-      {
-        case ProgramStatus.Active:
-          if (item.Status == ProgramStatus.Active) return;
-          if (!Statuses_Activatable.Contains(item.Status))
-            throw new ValidationException("This referral programme cannot be activated right now");
-
-          //ensure DateEnd was updated for re-activation of previously expired program
-          if (item.DateEnd.HasValue && item.DateEnd.Value <= now)
-            throw new ValidationException("This referral programme cannot be activated because its end date is in the past");
-
-          EnsurePathwayIsCompletableOrThrow(item.Pathway);
-
-          if (item.CompletionLimit.HasValue && (item.CompletionTotal ?? 0) >= item.CompletionLimit.Value)
-          {
-            finalStatus = ProgramStatus.LimitReached;
-            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Program {ProgramId} activation resolved to LimitReached (cap hit: {Total}/{Limit})", item.Id, item.CompletionTotal, item.CompletionLimit);
-
-            flipLinksToLimitReached = true;
-          }
-          else
-            finalStatus = ProgramStatus.Active;
-          break;
-
-        case ProgramStatus.Inactive:
-          // existing referral links remain usable and can still be completed, but new links cannot be created
-          if (item.Status == ProgramStatus.Inactive) return;
-          if (!Statuses_DeActivatable.Contains(item.Status))
-            throw new ValidationException("This referral programme cannot be deactivated right now");
-
-          break;
-
-        case ProgramStatus.Deleted:
-          if (item.Status == ProgramStatus.Deleted) return;
-          if (!Statuses_CanDelete.Contains(item.Status))
-            throw new ValidationException("This referral programme cannot be deleted right now");
-
-          cancelReferralLinks = true;
-
-          break;
-
-        default:
-          throw new ArgumentOutOfRangeException(nameof(status), $"{nameof(ProgramStatus)} of '{status.ToDescription()}' not supported");
-      }
-
-      if (finalStatus == originalStatus && !cancelReferralLinks && !flipLinksToLimitReached) return;
-
-      var statusId = _programStatusService.GetByName(finalStatus.ToString()).Id;
+      var user = _userService.GetCurrentUser(false, false);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+
+        var item = GetById(id, true, false, LockMode.Wait);
+        var now = DateTimeOffset.UtcNow;
+
+        bool cancelReferralLinks = false;
+        bool flipLinksToLimitReached = false;
+
+        var originalStatus = item.Status;
+        var finalStatus = status;
+
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("UpdateStatus requested for Program {ProgramId}. Requested={Requested} Current={Current} End={End} CompletionLimit={CompletionLimit} CompletionTotal={CompletionTotal}",
+          item.Id, status, item.Status, item.DateEnd?.ToString("yyyy-MM-dd") ?? "(null)", item.CompletionLimit, item.CompletionTotal);
+
+        switch (status)
+        {
+          case ProgramStatus.Active:
+            if (item.Status == ProgramStatus.Active) return;
+            if (!Statuses_Activatable.Contains(item.Status))
+              throw new ValidationException("This referral programme cannot be activated right now");
+
+            //ensure DateEnd was updated for re-activation of previously expired program
+            if (item.DateEnd.HasValue && item.DateEnd.Value <= now)
+              throw new ValidationException("This referral programme cannot be activated because its end date is in the past");
+
+            EnsurePathwayIsCompletableOrThrow(item.Pathway);
+
+            if (item.CompletionLimit.HasValue && (item.CompletionTotal ?? 0) >= item.CompletionLimit.Value)
+            {
+              finalStatus = ProgramStatus.LimitReached;
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Program {ProgramId} activation resolved to LimitReached (cap hit: {Total}/{Limit})", item.Id, item.CompletionTotal, item.CompletionLimit);
+
+              flipLinksToLimitReached = true;
+            }
+            else
+              finalStatus = ProgramStatus.Active;
+            break;
+
+          case ProgramStatus.Inactive:
+            // existing referral links remain usable and can still be completed, but new links cannot be created
+            if (item.Status == ProgramStatus.Inactive) return;
+            if (!Statuses_DeActivatable.Contains(item.Status))
+              throw new ValidationException("This referral programme cannot be deactivated right now");
+
+            break;
+
+          case ProgramStatus.Deleted:
+            if (item.Status == ProgramStatus.Deleted) return;
+            if (!Statuses_CanDelete.Contains(item.Status))
+              throw new ValidationException("This referral programme cannot be deleted right now");
+
+            cancelReferralLinks = true;
+
+            break;
+
+          default:
+            throw new ArgumentOutOfRangeException(nameof(status), $"{nameof(ProgramStatus)} of '{status.ToDescription()}' not supported");
+        }
+
+        if (finalStatus == originalStatus && !cancelReferralLinks && !flipLinksToLimitReached) return;
+
+        var statusId = _programStatusService.GetByName(finalStatus.ToString()).Id;
 
         item.StatusId = statusId;
         item.Status = finalStatus;
@@ -742,22 +754,21 @@ namespace Yoma.Core.Domain.Referral.Services
         }
 
         scope.Complete();
-      });
 
-      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Program {ProgramId} status updated. Requested={Requested} Final={Final}", item.Id, status, finalStatus);
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Program {ProgramId} status updated. Requested={Requested} Final={Final}", item.Id, status, finalStatus);
+      }, true);
     }
 
     public async Task SetAsDefault(Guid id)
     {
-      var item = GetById(id, false, false);
-
-      AssertUpdatable(item);
-
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+
+        var item = GetById(id, false, false, LockMode.Wait);
+        AssertUpdatable(item);
 
         var outcome = await SetAsDefault(item);
         if (!outcome.Updated) return;
@@ -767,7 +778,7 @@ namespace Yoma.Core.Domain.Referral.Services
         item = await _programRepository.Update(item);
 
         scope.Complete();
-      });
+      }, true);
     }
 
     public async Task<Program> ProcessCompletion(Program program, decimal? rewardAmount)
@@ -860,11 +871,6 @@ namespace Yoma.Core.Domain.Referral.Services
     #region Private Members
     private async Task<Program> GenerateShortLinkReferrer(Program program, string? url)
     {
-      // No locking applied here:
-      // - Admin-only, low-frequency operation
-      // - Duplicate short-link generation across instances is acceptable (last write wins)
-      // - Distributed locking would be overkill for this use case
-
       if (!string.IsNullOrEmpty(program.ReferrerShortURL)) return program;
 
       AssertUpdatable(program);
@@ -880,9 +886,21 @@ namespace Yoma.Core.Domain.Referral.Services
         URL = url
       });
 
-      program.ReferrerShortURL = responseShortLink.Link;
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
 
-      await _programRepository.Update(program);
+        // External link generation may overlap with completion; reload accounting and status before writing.
+        program = GetById(program.Id, true, false, LockMode.Wait);
+        AssertUpdatable(program);
+        if (string.IsNullOrEmpty(program.ReferrerShortURL))
+        {
+          program.ReferrerShortURL = responseShortLink.Link;
+          program = await _programRepository.Update(program);
+        }
+
+        scope.Complete();
+      }, true);
 
       return program;
     }
@@ -1379,6 +1397,8 @@ namespace Yoma.Core.Domain.Referral.Services
 
         if (currentDefault != null)
         {
+          // Preserve the previous default's current accounting totals when clearing its flag.
+          currentDefault = GetById(currentDefault.Id, false, false, LockMode.Wait);
           currentDefault.IsDefault = false;
           currentDefault = await _programRepository.Update(currentDefault);
         }

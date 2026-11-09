@@ -4,30 +4,25 @@
 
 ### Local development stack (BE)
 
-Run:
-```
-docker-compose up
+For the didx:me integration branch, follow the [local startup guide](../../../docs/work/active/YOM-1306-didxme-wallet-integration-wallet-lite/environment.md).
+Prepare standalone mono and obtain ignored Yoma Local settings privately, then start mono before
+Yoma. Local initialization prepares the integration automatically; application jobs still handle
+participant provisioning and credential issuance. Mono remains outside this Compose project.
+
+From `src/api`:
+
+```powershell
+docker compose up --build -d
+docker compose logs -f didxme-init
+docker compose ps -a
 ```
 
-Tear down:
-```
-docker-compose down
-```
+Wait for all initialization to complete. For VS debugging, stop only `yoma-api` and leave dependencies
+running. Verify the host profile's database has its own migrations/seeds; sharing Local settings does
+not imply sharing Compose data. Stop VS before restarting the API container.
 
-Tear down and delete persisted volumes:
-```
-docker-compose down -v
-```
-
-(re)build all containers & run
-```
-docker-compose up --build
-```
-
-(re)build a specific container:
-```
-docker-compose build yoma-api-core
-```
+Do not publish Local settings, credentials, platform access instructions or private security
+configuration. Deployed preparation and secret delivery are SRE-owned, separate from Local init.
 
 ### Local development stack (BE +FE)
 #### Start BE stack:

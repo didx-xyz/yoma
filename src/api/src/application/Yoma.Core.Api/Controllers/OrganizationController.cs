@@ -132,7 +132,8 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Update the specified organization")]
+    [SwaggerOperation(Summary = "Update the specified organization",
+        Description = "Reward-pool changes use the separate rewardpool endpoint; this update preserves the existing pool.")]
     [HttpPatch()]
     [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
@@ -143,6 +144,21 @@ namespace Yoma.Core.Api.Controllers
       var result = await _organizationService.Update(request, true);
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(Update));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Update the organization's reward pool without changing administrators or other metadata")]
+    [HttpPatch("{id}/rewardpool")]
+    [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = Constants.Role_Admin)]
+    public async Task<IActionResult> UpdateRewardPool([FromRoute] Guid id, [FromBody] OrganizationRequestUpdateRewardPool request)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(UpdateRewardPool));
+
+      var result = await _organizationService.UpdateRewardPool(id, request);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(UpdateRewardPool));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }

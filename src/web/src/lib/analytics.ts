@@ -12,6 +12,7 @@ import {
   addRumGlobalContext,
 } from "~/lib/datadog";
 import type { User } from "~/server/auth";
+import { telemetryOrigin } from "~/lib/telemetryUrl";
 
 /**
  * Centralized analytics tracking that sends events to both GA and DataDog
@@ -94,18 +95,25 @@ class Analytics {
       trackGAEvent("Opportunity", "Unsave", title);
     },
 
+    /**
+     * `destination` is the URL the browser was sent to. Partner hand-off links can carry a login
+     * token for this youth, so only its origin leaves this function — both sinks retain whatever
+     * they are sent, and neither needs more than the site to attribute the click.
+     */
     externalLinkClicked: (
       opportunityId: string,
       title: string,
-      url: string,
+      destination: string,
     ) => {
+      const externalOrigin = telemetryOrigin(destination) ?? "unknown";
+
       trackUserAction("opportunity_external_link_clicked", {
         opportunityId,
         opportunityTitle: title,
-        externalUrl: url,
+        externalOrigin,
       });
 
-      trackGAEvent("Opportunity", "External Link", url);
+      trackGAEvent("Opportunity", "External Link", externalOrigin);
     },
 
     shared: (opportunityId: string, title: string, platform?: string) => {

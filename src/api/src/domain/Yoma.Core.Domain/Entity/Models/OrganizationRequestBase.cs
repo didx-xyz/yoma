@@ -70,7 +70,5 @@ namespace Yoma.Core.Domain.Entity.Models
     /// </summary>
     public string? SSOClientIdInbound { get; set; }
 
-    public decimal? ZltoRewardPoolCurrentFinancialYear { get; set; }
-
   }
 }

@@ -6,6 +6,7 @@ import {
 import { getServerSession, type Session } from "next-auth";
 import { env } from "~/env.mjs";
 import { authOptions } from "~/server/auth";
+import { toLogSafeError } from "./apiErrorUtils";
 
 function isGetServerSidePropsContext(
   obj: any,
@@ -51,7 +52,7 @@ const ApiServer = (
       return request;
     },
     (error) => {
-      console.error(`API Error: `, error);
+      console.error("API Error:", toLogSafeError(error));
       throw error;
     },
   );

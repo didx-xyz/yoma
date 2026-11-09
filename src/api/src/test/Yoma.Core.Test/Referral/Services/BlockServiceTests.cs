@@ -22,7 +22,7 @@ namespace Yoma.Core.Test.Referral.Services
         .Setup(x => x.GetById(userId, It.IsAny<bool>(), It.IsAny<bool>()))
         .Returns(user);
       fixture.UserService
-        .Setup(x => x.GetByUsername(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>()))
+        .Setup(x => x.GetCurrentUser(It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>()))
         .Returns(user);
 
       var request = new BlockRequest
@@ -58,7 +58,7 @@ namespace Yoma.Core.Test.Referral.Services
         .Setup(x => x.GetById(userId, It.IsAny<bool>(), It.IsAny<bool>()))
         .Returns(user);
       fixture.UserService
-        .Setup(x => x.GetByUsername(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>()))
+        .Setup(x => x.GetCurrentUser(It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>()))
         .Returns(user);
 
       // Setup existing active block
@@ -98,7 +98,7 @@ namespace Yoma.Core.Test.Referral.Services
         .Setup(x => x.GetById(userId, It.IsAny<bool>(), It.IsAny<bool>()))
         .Returns(user);
       fixture.UserService
-        .Setup(x => x.GetByUsername(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>()))
+        .Setup(x => x.GetCurrentUser(It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>()))
         .Returns(user);
 
       var request = new BlockRequest
@@ -132,7 +132,7 @@ namespace Yoma.Core.Test.Referral.Services
         .Setup(x => x.GetById(userId, It.IsAny<bool>(), It.IsAny<bool>()))
         .Returns(user);
       fixture.UserService
-        .Setup(x => x.GetByUsername(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>()))
+        .Setup(x => x.GetCurrentUser(It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>()))
         .Returns(user);
 
       var request = new BlockRequest
@@ -168,7 +168,7 @@ namespace Yoma.Core.Test.Referral.Services
         .Setup(x => x.GetById(userId, It.IsAny<bool>(), It.IsAny<bool>()))
         .Returns(user);
       fixture.UserService
-        .Setup(x => x.GetByUsername(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>()))
+        .Setup(x => x.GetCurrentUser(It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>()))
         .Returns(user);
 
       // Setup existing active block
@@ -205,7 +205,7 @@ namespace Yoma.Core.Test.Referral.Services
         .Setup(x => x.GetById(userId, It.IsAny<bool>(), It.IsAny<bool>()))
         .Returns(user);
       fixture.UserService
-        .Setup(x => x.GetByUsername(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>()))
+        .Setup(x => x.GetCurrentUser(It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>()))
         .Returns(user);
 
       // No active block in repo (default empty queryable from fixture)

@@ -29,17 +29,32 @@ namespace Yoma.Core.Test.Core
 
     [Theory]
     [InlineData(null, true)]
+    [InlineData("", true)]
     [InlineData("https://example.com/provider", true)]
+    [InlineData("http://example.com/path?key=value#section", true)]
+    [InlineData("HTTPS://example.com/provider", true)]
+    [InlineData("javascript:alert(1)", false)]
+    [InlineData("JaVaScRiPt:alert(1)", false)]
+    [InlineData("data:text/html,<script>alert(1)</script>", false)]
+    [InlineData("ftp://example.com/file", false)]
+    [InlineData("file:///tmp/file", false)]
+    [InlineData("mailto:test@example.com", false)]
+    [InlineData("https://", false)]
+    [InlineData("https://example.com/with space", false)]
+    [InlineData("//example.com/provider", false)]
     [InlineData("not a URL", false)]
     [InlineData("/provider", false)]
-    public void ProviderUrlUsesTheExistingOpportunityUrlRules(string? value, bool valid)
+    public void OpportunityUrlsAllowOnlyWellFormedHttpOrHttpsWhenSpecified(string? value, bool valid)
     {
       var validator = CreateValidator();
-      var request = new OpportunityRequestCreate { ProviderURL = value, ProviderLogoURL = value };
+      var request = new OpportunityRequestCreate { URL = value, ProviderURL = value, ProviderLogoURL = value };
+      Assert.Equal(valid, !validator.Validate(request).Errors.Any(error => error.PropertyName == nameof(request.URL)));
       Assert.Equal(valid, !validator.Validate(request).Errors.Any(error => error.PropertyName == nameof(request.ProviderURL)));
       Assert.Equal(valid, !validator.Validate(request).Errors.Any(error => error.PropertyName == nameof(request.ProviderLogoURL)));
       request.ProviderURL = "https://example.com/" + new string('x', 2048);
       request.ProviderLogoURL = request.ProviderURL;
+      request.URL = request.ProviderURL;
+      Assert.Contains(validator.Validate(request).Errors, error => error.PropertyName == nameof(request.URL));
       Assert.Contains(validator.Validate(request).Errors, error => error.PropertyName == nameof(request.ProviderURL));
       Assert.Contains(validator.Validate(request).Errors, error => error.PropertyName == nameof(request.ProviderLogoURL));
     }

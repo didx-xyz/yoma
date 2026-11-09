@@ -9,13 +9,16 @@
 
 using Amazon.S3;
 using Amazon.S3.Model;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Buffers;
 using System.Net.Mime;
 using System.Text;
 using tusdotnet.Interfaces;
+using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Infrastructure.AmazonS3.Helpers;
 using Yoma.Core.Infrastructure.AmazonS3.Models;
 
 namespace Yoma.Core.Infrastructure.AmazonS3.Services
@@ -32,6 +35,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
     private readonly IDistributedCacheService _cache;
     private readonly IDistributedLockService _distLock;
     private readonly IAmazonS3 _s3Client;
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly string _bucketName;
     private readonly string _filePrefix;
     private readonly string _metadataPrefix;
@@ -56,6 +60,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
         IDistributedCacheService cache,
         IDistributedLockService distLock,
         IAmazonS3 s3Client,
+        IHttpContextAccessor httpContextAccessor,
         string bucketName,
         string filePrefix,
         string metadataPrefix,
@@ -66,6 +71,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
       _cache = cache ?? throw new ArgumentNullException(nameof(cache));
       _distLock = distLock ?? throw new ArgumentNullException(nameof(distLock));
       _s3Client = s3Client ?? throw new ArgumentNullException(nameof(s3Client));
+      _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
       _bucketName = bucketName ?? throw new ArgumentNullException(nameof(bucketName));
       _filePrefix = filePrefix ?? throw new ArgumentNullException(nameof(filePrefix));
       _metadataPrefix = metadataPrefix ?? throw new ArgumentNullException(nameof(metadataPrefix));
@@ -90,6 +96,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
 
       var uploadMeta = new UploadMetadata
       {
+        OwnerId = UploadOwnershipHelper.GetOwnerId(_httpContextAccessor.HttpContext?.User),
         UploadLength = uploadLength,
         Metadata = meta,
         Expires = DateTimeOffset.UtcNow.Add(_expiration)
@@ -155,6 +162,8 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
           {
             meta = new UploadMetadata
             {
+              OwnerId = s3Metadata.TryGetValue(nameof(UploadMetadata.OwnerId), out var ownerId) && Guid.TryParse(ownerId?.ToString(), out var parsedOwnerId)
+                ? parsedOwnerId : null,
               UploadLength = Convert.ToInt64(s3Metadata["UploadLength"]),
               Expires = DateTimeOffset.Parse(s3Metadata["Expires"].ToString()!)
             };
@@ -195,7 +204,21 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
 
       if (meta == null) return null;
 
-      return new TusS3File(fileId, meta.Metadata, _s3Client, _bucketName, S3FileKey(fileId));
+      return new TusS3File(fileId, meta.OwnerId, meta.Metadata, _s3Client, _bucketName, S3FileKey(fileId));
+    }
+
+    /// <summary>
+    /// Authorizes request-driven access and attachment using server-owned metadata.
+    /// Background expiration cleanup deliberately uses the internal store operations without a user context.
+    /// </summary>
+    public async Task<ITusFile> GetOwnedFileAsync(string fileId, CancellationToken ct)
+    {
+      var ownerId = UploadOwnershipHelper.GetOwnerId(_httpContextAccessor.HttpContext?.User);
+      var file = await GetFileAsync(fileId, ct) as TusS3File;
+      if (file?.OwnerId != ownerId)
+        throw new SecurityException("This upload is unavailable to the current user. Please upload the file again");
+
+      return file;
     }
 
     public async Task<IEnumerable<string>> GetExpiredFilesAsync(CancellationToken ct)
@@ -617,6 +640,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
       // This ensures both UploadOffset AND all metadata fields (including contentType via Metadata dictionary) are preserved
       var completeMetadata = new
       {
+        fullMeta.OwnerId,
         fullMeta.UploadLength,
         fullMeta.Metadata,  // This contains filename, contentType, etc.
         fullMeta.Expires,

@@ -233,14 +233,11 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
           {formState.errors.admins && (
             <label className="label font-bold">
               <span
+                id="error_admins" // e2e
                 className="label-text-alt whitespace-break-spaces text-red-500 italic"
-                dangerouslySetInnerHTML={{
-                  __html:
-                    formState.errors.admins.message
-                      ?.toString()
-                      .replace(/\n/g, "<br/>") || "",
-                }}
-              />
+              >
+                {`${formState.errors.admins.message}`}
+              </span>
             </label>
           )}
         </fieldset>

@@ -10,6 +10,7 @@ import {
 } from "./constants";
 import analytics from "./analytics";
 import { addRumGlobalContext, trackError as ddTrackError } from "./datadog";
+import { toLogSafeError } from "./apiErrorUtils";
 
 let apiBaseUrl = "";
 
@@ -102,7 +103,7 @@ const ApiClient = async () => {
       return request;
     },
     (error) => {
-      console.error(`API Error: `, error);
+      console.error("API Error:", toLogSafeError(error));
 
       // 📊 ANALYTICS: Track request setup errors
       analytics.trackError(error, {

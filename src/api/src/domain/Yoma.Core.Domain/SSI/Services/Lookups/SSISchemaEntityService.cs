@@ -232,7 +232,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
         SubGroup = definition.SubGroup,
         SortOrder = definition.SortOrder,
         // IsRequired governs manual capture, not issuance. Imports, partner outcomes and action links
-        // legitimately omit these values; JWS omits them and ACR supplies its existing placeholder.
+        // legitimately omit these values; JWS and SD-JWT omit them and ACR supplies its existing placeholder.
         Required = false,
         IsActive = definition.IsActive,
         IsSystem = definition.IsSystem,
@@ -334,7 +334,8 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
               }
             }
 
-            if (string.IsNullOrEmpty(prop.AttributeName)) prop.AttributeName += $"{propInfo.DeclaringType.Name}_{propInfo.Name}";
+            if (string.IsNullOrEmpty(prop.AttributeName))
+              prop.AttributeName = $"{propInfo.DeclaringType.Name}_{propInfo.Name}";
           }
         }
       }

@@ -972,6 +972,7 @@ const ReferrerLinkDetails: NextPageWithLayout<{
                                   : []
                               }
                               placeholder="Opportunity"
+                              inputId="input_entityId" // e2e
                             />
                           )}
                         />
@@ -1051,6 +1052,7 @@ const ReferrerLinkDetails: NextPageWithLayout<{
                       </button>
                       <button
                         type="submit"
+                        id="btnLinkStep1Next" // e2e
                         className="btn btn-success grow md:w-1/3 md:grow-0"
                       >
                         Next
@@ -1214,6 +1216,7 @@ const ReferrerLinkDetails: NextPageWithLayout<{
                               <CreatableSelect
                                 isMulti
                                 className="w-full"
+                                inputId="input_distributionList" // e2e
                                 onChange={(val) => {
                                   // when pasting multiple values, split them by DELIMETER_PASTE_MULTI and remove duplicates
                                   const userNames = Array.from(
@@ -1259,14 +1262,11 @@ const ReferrerLinkDetails: NextPageWithLayout<{
                           {formStateStep2.errors.distributionList && (
                             <label className="label">
                               <span
+                                id="error_distributionList" // e2e
                                 className="label-text-alt whitespace-break-spaces text-red-500 italic"
-                                dangerouslySetInnerHTML={{
-                                  __html:
-                                    formStateStep2.errors.distributionList.message
-                                      ?.toString()
-                                      .replace(/\n/g, "<br/>") || "",
-                                }}
-                              />
+                              >
+                                {`${formStateStep2.errors.distributionList.message}`}
+                              </span>
                             </label>
                           )}
 

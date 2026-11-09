@@ -79,6 +79,7 @@ import { TONE } from "~/components/Opportunity/TabbedDetails/DetailDisclosure";
 import { OpportunityDetailSections } from "~/components/Opportunity/TabbedDetails/OpportunityDetailSections";
 import { isCashOutClosed } from "~/components/Opportunity/TabbedDetails/detailSectionCopy";
 import { OpportunityCustomFieldsSection } from "~/components/Opportunity/OpportunityCustomFieldsSection";
+import { absoluteWebURL } from "~/components/Opportunity/providerFacts";
 import Share from "~/components/Opportunity/Share";
 import { SignInButton } from "~/components/SignInButton";
 import { ApiErrors } from "~/components/Status/ApiErrors";
@@ -370,8 +371,10 @@ const OpportunityPublicDetails: React.FC<{
     if (blockPartnerHandoff) return;
 
     // Open a blank tab immediately from the user-click handler to avoid popup blockers.
-    // The tab will be navigated to the resolved URL once the API responds.
+    // The tab will be navigated to the resolved URL once the API responds. It shares Yoma's
+    // origin until then, so drop its handle back to this window before a partner page loads.
     const win = window.open("", "_blank");
+    if (win) win.opener = null;
 
     let redirectUrl = opportunityInfo.url;
 
@@ -402,17 +405,34 @@ const OpportunityPublicDetails: React.FC<{
       }
     }
 
+    // The destination is data (the stored opportunity URL, or the partner's pre-auth URL): only
+    // ever navigate to http/https. A `javascript:` value assigned to the blank tab above would run
+    // with Yoma's origin; React's href sanitising does not cover script navigation.
+    const destination = absoluteWebURL(redirectUrl);
+    if (!destination) {
+      win?.close();
+      analytics.trackError(new Error("Unsafe opportunity link"), {
+        errorType: "opportunity_external_link_unsafe",
+        opportunityId: opportunityInfo.id,
+      });
+      toast.error(
+        "This opportunity's link can't be opened. Please let the organisation know.",
+        { autoClose: false },
+      );
+      return;
+    }
+
     if (win) {
-      win.location.href = redirectUrl;
+      win.location.href = destination;
     } else {
-      window.open(redirectUrl, "_blank");
+      window.open(destination, "_blank", "noopener,noreferrer");
     }
 
     // 📊 ANALYTICS: track external link navigation
     analytics.opportunity.externalLinkClicked(
       opportunityInfo.id,
       opportunityInfo.title,
-      redirectUrl,
+      destination,
     );
   }, [
     opportunityInfo.id,

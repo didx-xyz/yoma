@@ -1,3 +1,4 @@
+import axios from "axios";
 import type { ErrorResponseItem } from "~/api/models/common";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -87,11 +88,26 @@ export function formatApiErrorMessage(
   );
 }
 
-export function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+/**
+ * The fields of a caught error that may be written to a log or forwarded to telemetry. An
+ * AxiosError carries its request config (URL, headers with the bearer token) and the whole
+ * response, so it must never be logged as-is; log this instead.
+ */
+export function toLogSafeError(error: unknown): Record<string, unknown> {
+  if (axios.isAxiosError(error)) {
+    const { status, message, errors } = parseApiError(error);
+    return {
+      name: error.name,
+      code: error.code,
+      status,
+      message,
+      apiErrors: errors.map(({ type, message }) => ({ type, message })),
+    };
+  }
+
+  if (error instanceof Error) {
+    return { name: error.name, message: error.message, stack: error.stack };
+  }
+
+  return { message: String(error) };
 }

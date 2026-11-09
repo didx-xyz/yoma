@@ -36,6 +36,7 @@
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.AriesCloud\Yoma.Core.Infrastructure.AriesCloud.csproj" />
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.IXO.YellowCard\Yoma.Core.Infrastructure.IXO.YellowCard.csproj" />
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.Database\Yoma.Core.Infrastructure.Database.csproj" />
+    <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.DidxMe\Yoma.Core.Infrastructure.DidxMe.csproj" />
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.Emsi\Yoma.Core.Infrastructure.Emsi.csproj" />
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.Jobberman\Yoma.Core.Infrastructure.Jobberman.csproj" />
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.JobJack\Yoma.Core.Infrastructure.JobJack.csproj" />

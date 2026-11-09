@@ -22,7 +22,10 @@ namespace Yoma.Core.Domain.Entity.Validators
       _organizationProviderTypeService = organizationProviderTypeService;
 
       RuleFor(x => x.Name).NotEmpty().Length(1, 80).WithMessage("'{PropertyName}' is required and must be between 1 and 80 characters long.");
-      RuleFor(x => x.WebsiteURL).Length(1, 2048).Must(ValidURL).WithMessage("'{PropertyName}' is invalid.");
+      RuleFor(x => x.WebsiteURL)
+          .Length(1, 2048)
+          .Must(ValidURL)
+          .WithMessage("'{PropertyName}' must be a valid HTTP or HTTPS URL if specified.");
       RuleFor(x => x.PrimaryContactName).NotEmpty().Length(1, 255).WithMessage("'{PropertyName}' is required must be between 1 and 255 characters.");
       RuleFor(x => x.PrimaryContactEmail).NotEmpty().Length(1, 320).EmailAddress().WithMessage("'{PropertyName}' is required and must be a valid email address.");
       RuleFor(x => x.PrimaryContactPhone).Cascade(CascadeMode.Stop).NotEmpty().WithMessage("'{PropertyName}' is required.")
@@ -69,11 +72,6 @@ namespace Yoma.Core.Domain.Entity.Validators
         .WithMessage("Additional administrative username(s) must contain either a valid email address or phone number in international format (e.g. +27831234567).")
         .When(x => x.Admins != null && x.Admins.Count != 0);
 
-      RuleFor(x => x.ZltoRewardPoolCurrentFinancialYear)
-          .GreaterThan(0).When(x => x.ZltoRewardPoolCurrentFinancialYear.HasValue).WithMessage("'{PropertyName}' must be greater than 0.")
-          .LessThanOrEqualTo(10_000_000M).When(x => x.ZltoRewardPoolCurrentFinancialYear.HasValue).WithMessage("'{PropertyName}' must not exceed 10 million.")
-          .Must(pool => !pool.HasValue || pool.Value % 1 == 0).WithMessage("'{PropertyName}' does not support decimal points.");
-
     }
     #endregion
 
@@ -81,7 +79,8 @@ namespace Yoma.Core.Domain.Entity.Validators
     private bool ValidURL(string? url)
     {
       if (url == null) return true;
-      return Uri.IsWellFormedUriString(url, UriKind.Absolute);
+      return Uri.TryCreate(url, UriKind.Absolute, out var uri) && uri.IsWellFormedOriginalString() &&
+        (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
     }
 
     private bool CountryExists(Guid? id)

@@ -145,8 +145,8 @@ namespace Yoma.Core.Domain.Referral.Validators
         .WithMessage("Either an end date or a completion window is required.");
 
       RuleFor(x => x.Countries)
-          .Must(x => x == null || (x.Count > 0 && x.All(id => id != Guid.Empty && CountryExists(id))))
-          .WithMessage("Countries must contain at least one valid country if provided.");
+          .Must(x => x != null && x.Count > 0 && x.All(id => id != Guid.Empty && CountryExists(id)))
+          .WithMessage("Please select at least one valid country, or Worldwide.");
 
       // Single default enforced by service
 

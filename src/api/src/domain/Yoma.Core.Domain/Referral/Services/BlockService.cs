@@ -92,7 +92,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       var reason = _blockReasonService.GetById(request.ReasonId);
 
-      var userActor = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var userActor = _userService.GetCurrentUser(false, false);
 
       Block? result = null;
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
@@ -137,7 +137,7 @@ namespace Yoma.Core.Domain.Referral.Services
       var result = _blockRepository.Query().Where(o => o.UserId == user.Id && o.Active).SingleOrDefault();
       if (result == null) return; //user is not blocked
 
-      var userActor = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var userActor = _userService.GetCurrentUser(false, false);
 
       result.Active = false;
       result.CommentUnBlock = request.Comment;

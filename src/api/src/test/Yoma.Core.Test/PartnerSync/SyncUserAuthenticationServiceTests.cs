@@ -16,6 +16,23 @@ namespace Yoma.Core.Test.PartnerSync
   public class SyncUserAuthenticationServiceTests
   {
     [Theory]
+    [InlineData(SyncPartner.Alison, false)]
+    [InlineData(SyncPartner.Alison, null)]
+    [InlineData(SyncPartner.IXO, false)]
+    [InlineData(SyncPartner.IXO, null)]
+    public async Task UnverifiedEmailCannotBeUsedForPartnerAuthentication(SyncPartner partner, bool? confirmed)
+    {
+      var fixture = new Fixture(partner);
+      fixture.User.EmailConfirmed = confirmed;
+
+      var error = await Assert.ThrowsAsync<ValidationException>(() => fixture.Authenticate());
+
+      Assert.Equal("Email", Assert.Single(error.Errors).PropertyName);
+      fixture.Factory.Verify(o => o.CreateClient<ISyncProviderClientUserAuthentication>(It.IsAny<SyncPartner>()), Times.Never);
+      fixture.State.Verify(o => o.UpsertUserSyncInfo(It.IsAny<Guid>(), It.IsAny<SyncInfoUserPartner>()), Times.Never);
+    }
+
+    [Theory]
     [InlineData(null, false)]
     [InlineData("", false)]
     [InlineData("  ", false)]
@@ -30,6 +47,37 @@ namespace Yoma.Core.Test.PartnerSync
 
       info.ExternalId = expected ? null : "new-link";
       Assert.Equal(!expected, info.IsLinked);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(null)]
+    public async Task UmuziCorrelationRedirectDoesNotRequireVerifiedEmail(bool? confirmed)
+    {
+      var fixture = new Fixture(SyncPartner.Umuzi);
+      fixture.User.EmailConfirmed = confirmed;
+
+      var result = await fixture.Authenticate();
+
+      Assert.Equal("https://partner.example/authenticated", result!.URL);
+      fixture.Provider.Verify(provider => provider.Authenticate(It.Is<SyncRequestUserAuthentication>(
+        request => request.UserId == fixture.User.Id)), Times.Once);
+    }
+
+    [Fact]
+    public async Task LinkedAlisonUserStillRequiresVerifiedEmail()
+    {
+      var fixture = new Fixture(SyncPartner.Alison);
+      fixture.User.EmailConfirmed = false;
+      fixture.State.Setup(service => service.GetUserSyncInfo(fixture.User.Id)).Returns(new SyncInfoUser
+      {
+        Partners = [new SyncInfoUserPartner { Partner = SyncPartner.Alison, ExternalId = "existing-user" }]
+      });
+
+      var error = await Assert.ThrowsAsync<ValidationException>(() => fixture.Authenticate());
+
+      Assert.Equal("Email", Assert.Single(error.Errors).PropertyName);
+      fixture.Provider.Verify(provider => provider.Authenticate(It.IsAny<SyncRequestUserAuthentication>()), Times.Never);
     }
 
     [Theory]
@@ -146,6 +194,7 @@ namespace Yoma.Core.Test.PartnerSync
           Id = Guid.NewGuid(),
           Username = "user@example.com",
           Email = "user@example.com",
+          EmailConfirmed = true,
           FirstName = "Test",
           Surname = "User",
           CountryId = countryId

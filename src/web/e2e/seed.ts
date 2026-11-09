@@ -152,6 +152,7 @@ export const ROUTES = {
   orgOpportunityEdit: (orgId: string, opportunityId: string) =>
     `/organisations/${orgId}/opportunities/${opportunityId}`,
   orgVerifications: (orgId: string) => `/organisations/${orgId}/verifications`,
+  orgLinkCreate: (orgId: string) => `/organisations/${orgId}/links/create`,
   opportunity: (opportunityId: string) => `/opportunities/${opportunityId}`,
   orgDashboard: (orgId: string) =>
     `/organisations/dashboard?organisations=${orgId}`,
@@ -225,7 +226,7 @@ export const KEYCLOAK = {
   // Master-realm admin used only to clean up throw-away users and brute-force counters.
   admin: { username: "admin", password: "password" },
   // TEST_PHONE_NUMBERS: SMS is skipped and the OTP is always 1234. Abuse limits still apply:
-  // one send per code type per 5 minutes, three per code type per hour.
+  // one send per code type while an unused code is live (5 minutes), three per code type per hour.
   testPhone: "+27123456789",
   testOtp: "1234",
   // realm supportedLocales; default en

@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using System.Security.Claims;
 using System.Transactions;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
@@ -30,6 +31,7 @@ namespace Yoma.Core.Domain.Entity.Services
   {
     #region Class Variables
     private readonly AppSettings _appSettings;
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IBlobService _blobService;
     private readonly ISkillService _skillService;
     private readonly IOpportunityCategoryService _opportunityCategoryService;
@@ -57,6 +59,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
     #region Constructor
     public UserService(IOptions<AppSettings> appSettings,
+        IHttpContextAccessor httpContextAccessor,
         IBlobService blobService,
         ISkillService skillService,
         IOpportunityCategoryService opportunityCategoryService,
@@ -82,6 +85,7 @@ namespace Yoma.Core.Domain.Entity.Services
         IMediator mediator)
     {
       _appSettings = appSettings?.Value ?? throw new ArgumentNullException(nameof(appSettings));
+      _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
       _blobService = blobService ?? throw new ArgumentNullException(nameof(blobService));
       _skillService = skillService ?? throw new ArgumentNullException(nameof(skillService));
       _opportunityCategoryService = opportunityCategoryService ?? throw new ArgumentNullException(nameof(opportunityCategoryService));
@@ -109,6 +113,27 @@ namespace Yoma.Core.Domain.Entity.Services
     #endregion
 
     #region Public Members
+    /// <summary>
+    /// Resolves the authenticated participant by the validated token subject, never by mutable contact details.
+    /// Explicit system fallback is for trusted background calls only; login upsert remains a separate flow.
+    /// </summary>
+    public User GetCurrentUser(bool includeChildItems, bool includeComputed, bool useSystemDefault = false)
+    {
+      var principal = _httpContextAccessor.HttpContext?.User;
+      if (principal?.Identity?.IsAuthenticated != true)
+      {
+        if (useSystemDefault) return GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, includeChildItems, includeComputed);
+        throw new SecurityException("Unauthorized: User context not available");
+      }
+
+      var subject = principal.FindFirst("sub")?.Value ?? principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+      if (!Guid.TryParse(subject, out var externalId) || externalId == Guid.Empty)
+        throw new SecurityException("Unauthorized: Authenticated user identity is invalid");
+
+      return GetByExternalIdOrNull(externalId, includeChildItems, includeComputed)
+        ?? throw new EntityNotFoundException("Authenticated user does not exist");
+    }
+
     public User GetByUsername(string username, bool includeChildItems, bool includeComputed)
     {
       var result = GetByUsernameOrNull(username, includeChildItems, includeComputed)
@@ -224,6 +249,12 @@ namespace Yoma.Core.Domain.Entity.Services
     public Settings GetSettingsByUsername(string username)
     {
       var user = GetByUsername(username, false, false);
+      return SettingsHelper.Parse(_settingsDefinitionService.ListByEntityType(EntityType.User), user.SettingsRaw);
+    }
+
+    public Settings GetSettingsById(Guid id)
+    {
+      var user = GetById(id, false, false);
       return SettingsHelper.Parse(_settingsDefinitionService.ListByEntityType(EntityType.User), user.SettingsRaw);
     }
 
@@ -374,9 +405,9 @@ namespace Yoma.Core.Domain.Entity.Services
       return result;
     }
 
-    public async Task<User> UpsertPhoto(string username, IFormFile file)
+    public async Task<User> UpsertPhoto(Guid id, IFormFile file)
     {
-      var result = GetByUsername(username, true, true);
+      var result = GetById(id, true, true);
 
       if (file == null || file.Length == 0)
         throw new ValidationException("File is required");
@@ -417,9 +448,9 @@ namespace Yoma.Core.Domain.Entity.Services
       return result;
     }
 
-    public async Task<User> DeletePhoto(string username)
+    public async Task<User> DeletePhoto(Guid id)
     {
-      var result = GetByUsername(username, true, true);
+      var result = GetById(id, true, true);
 
       if (!result.PhotoId.HasValue) return result;
 
@@ -445,13 +476,13 @@ namespace Yoma.Core.Domain.Entity.Services
       return result;
     }
 
-    public async Task<User> UpdateSettings(string username, List<string>? roles, SettingsRequest request)
+    public async Task<User> UpdateSettings(Guid id, List<string>? roles, SettingsRequest request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
       await _settingsRequestValidator.ValidateAndThrowAsync(request);
 
-      var result = GetByUsername(username, false, false);
+      var result = GetById(id, false, false);
 
       var definitions = _settingsDefinitionService.ListByEntityType(EntityType.User);
 

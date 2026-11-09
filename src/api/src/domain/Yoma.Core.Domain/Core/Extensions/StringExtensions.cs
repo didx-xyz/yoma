@@ -266,6 +266,17 @@ namespace Yoma.Core.Domain.Core.Extensions
 
       result = HtmlTagsExceptUnderline().Replace(result, string.Empty);
 
+      // This is a text converter, not an HTML sanitizer. Keep only our attribute-free underline
+      // markup; encode any remaining brackets, including incomplete or malformed source tags.
+      // The UI must still sanitize rich text at its rendering boundary.
+      result = MarkdownHtmlBrackets().Replace(result, match => match.Value switch
+      {
+        "<u>" or "</u>" => match.Value,
+        "<" => "&lt;",
+        ">" => "&gt;",
+        _ => throw new InvalidOperationException($"Unsupported HTML bracket '{match.Value}'")
+      });
+
       result = result.NormalizeTrimMultiline().NormalizeNullableValue();
       if (string.IsNullOrWhiteSpace(result)) return null;
 
@@ -380,11 +391,15 @@ namespace Yoma.Core.Domain.Core.Extensions
     [GeneratedRegex(@"\*")]
     private static partial Regex MarkdownAsterisks();
 
-    [GeneratedRegex("<.*?>")]
+    // Match tag names and multiline attributes without consuming text before another opening bracket.
+    [GeneratedRegex(@"<(?:!|/?[a-z][a-z0-9:-]*(?=[\s/>]))[^<>]*>", RegexOptions.IgnoreCase)]
     private static partial Regex HtmlTags();
 
-    [GeneratedRegex(@"<(?!/?u>).*?>", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"<(?!/?u>)(?:!|/?[a-z][a-z0-9:-]*(?=[\s/>]))[^<>]*>", RegexOptions.IgnoreCase)]
     private static partial Regex HtmlTagsExceptUnderline();
+
+    [GeneratedRegex(@"</?u>|[<>]")]
+    private static partial Regex MarkdownHtmlBrackets();
     #endregion
   }
 }

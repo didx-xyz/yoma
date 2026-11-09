@@ -32,6 +32,7 @@ import {
   ACTION_LINK_QUERY_KEYS,
   useActionLinkUsageQuery,
 } from "~/hooks/useActionLinkMutations";
+import { toLogSafeError } from "~/lib/apiErrorUtils";
 import { DATE_FORMAT_HUMAN, PAGE_SIZE } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
@@ -81,7 +82,11 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       queryFn: () => linkData,
     });
   } catch (error) {
-    console.log("Error fetching link data:", error);
+    console.error("Error fetching link data in getServerSideProps", {
+      organisationId: id,
+      linkId,
+      ...toLogSafeError(error),
+    });
     if (axios.isAxiosError(error) && error.response?.status) {
       if (error.response.status === 404) {
         return {

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,9 +13,11 @@ using tusdotnet.Models.Configuration;
 using tusdotnet.Models.Expiration;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.BlobProvider.Interfaces;
+using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Validators;
 using Yoma.Core.Infrastructure.AmazonS3.Client;
+using Yoma.Core.Infrastructure.AmazonS3.Helpers;
 using Yoma.Core.Infrastructure.AmazonS3.Models;
 using Yoma.Core.Infrastructure.AmazonS3.Services;
 
@@ -57,6 +60,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3
           sp.GetRequiredService<IDistributedCacheService>(),
           sp.GetRequiredService<IDistributedLockService>(),
           wrapper.NativeClient,
+          sp.GetRequiredService<IHttpContextAccessor>(),
           wrapper.AWSS3OptionsBucket.BucketName,
           filePrefix,
           metadataPrefix,
@@ -91,6 +95,19 @@ namespace Yoma.Core.Infrastructure.AmazonS3
             UsePipelinesIfAvailable = options.Tus.UsePipelinesIfAvailable,
             Events = new Events
             {
+              OnAuthorizeAsync = async ctx =>
+              {
+                try
+                {
+                  _ = UploadOwnershipHelper.GetOwnerId(httpContext.User);
+                  if (!string.IsNullOrEmpty(ctx.FileId))
+                    await tusStore.GetOwnedFileAsync(ctx.FileId, httpContext.RequestAborted);
+                }
+                catch (SecurityException ex)
+                {
+                  ctx.FailRequest(HttpStatusCode.Forbidden, ex.Message);
+                }
+              },
               OnBeforeCreateAsync = ctx =>
               {
                 if (ctx.UploadLengthIsDeferred)

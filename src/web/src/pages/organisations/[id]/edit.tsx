@@ -419,9 +419,9 @@ const OrganisationUpdate: NextPageWithLayout<{
    *
    * `PATCH /organization` is a full replacement, and `OrganizationRequestBase` here is seeded once at
    * first render — so submitting the reward step through it would resend whatever that state happens
-   * to hold. This builds the payload from the freshly queried `organisation` instead (shared with the
-   * Treasury Organisations tab via `organizationRewardPoolsRequest`), and maps validation failures
-   * back onto the pool that caused them instead of a generic toast.
+   * to hold. The pool goes through the Admin-only `PATCH /organization/{id}/rewardpool` instead (shared
+   * with the Treasury Organisations tab), which touches nothing but the pool, and validation failures
+   * are mapped back onto the pool that caused them instead of a generic toast.
    */
   const onSubmitRewardPools = useCallback(
     async (pools: OrganizationRewardPools) => {
@@ -433,7 +433,7 @@ const OrganisationUpdate: NextPageWithLayout<{
 
       try {
         await rewardPoolsMutation.mutateAsync({
-          organization: organisation,
+          organizationId: organisation.id,
           pools,
         });
 
@@ -753,6 +753,7 @@ const OrganisationUpdate: NextPageWithLayout<{
 
                   {/* EDITABLE POOLS */}
                   <OrganizationRewardPoolsForm
+                    id="organisationRewardPools" // e2e
                     figures={organisation}
                     onSubmit={onSubmitRewardPools}
                     isSubmitting={rewardPoolsMutation.isPending}

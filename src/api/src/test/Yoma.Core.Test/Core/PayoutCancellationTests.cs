@@ -33,6 +33,20 @@ namespace Yoma.Core.Test.Core
 {
   public class PayoutCancellationTests
   {
+    [Fact]
+    public async Task CompletedPayoutClearsTrackedChangesAtTheSettlementBoundary()
+    {
+      using var f = new Fixture();
+      var response = f.Response();
+      response.Status = PayoutTransactionStatus.Completed;
+
+      await f.Service.ProcessStatus(response);
+
+      Assert.Equal(PayoutTransactionStatus.Completed, f.Payout.Status);
+      f.Strategy.Verify(service => service.ExecuteInExecutionStrategyAsync(It.IsAny<Func<Task>>(), true), Times.Once);
+      f.Treasury.Verify(service => service.PayoutCompleted(It.IsAny<Domain.Treasury.Models.Treasury>(), f.Payout.Amount), Times.Once);
+    }
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
@@ -327,6 +341,8 @@ namespace Yoma.Core.Test.Core
       public List<PayoutTransaction> Payouts { get; } = [];
       public Mock<IRewardProviderClient> RewardProvider { get; } = new();
       public Mock<INotificationDeliveryService> Notifications { get; } = new();
+      public Mock<IExecutionStrategyService> Strategy { get; } = new();
+      public Mock<ITreasuryService> Treasury { get; } = new();
       public PayoutService Service { get; }
       public PayoutStatusResponse Response() => new()
       { Id = Payout.Id, TransactionId = "pay_test", Provider = Domain.Payout.Provider.YellowCard, Status = PayoutTransactionStatus.Cancelled };
@@ -352,8 +368,8 @@ namespace Yoma.Core.Test.Core
           { Id = name == PayoutTransactionStatus.Completed.ToString() ? CompletedStatusId : Guid.NewGuid(), Name = name });
         var users = new Mock<IUserService>();
         users.Setup(p => p.GetById(Payout.UserId, false, false)).Returns(new User { Id = Payout.UserId, Email = "test@example.org" });
-        var strategy = new Mock<IExecutionStrategyService>();
-        strategy.Setup(p => p.ExecuteInExecutionStrategyAsync(It.IsAny<Func<Task>>(), false)).Returns((Func<Task> action, bool _) => action());
+        Strategy.Setup(p => p.ExecuteInExecutionStrategyAsync(It.IsAny<Func<Task>>(), It.IsAny<bool>())).Returns((Func<Task> action, bool _) => action());
+        Treasury.Setup(service => service.Get(LockMode.Wait)).Returns(new Domain.Treasury.Models.Treasury());
         var locks = new Mock<IDistributedLockService>();
         var transactions = new Mock<IPayoutTransactionService>();
         transactions.Setup(p => p.GetLatestInfoByUserId(Payout.UserId)).Returns(() => new PayoutTransactionInfo
@@ -376,7 +392,7 @@ namespace Yoma.Core.Test.Core
         { DistributedLockPayoutDurationInSeconds = 30, PayoutRewardReservationExpirationInMinutes = 1800 }),
           Mock.Of<IEnvironmentProvider>(), locks.Object, users.Object, Mock.Of<ICountryService>(),
           Mock.Of<IWalletService>(), rewards.Object, rewardFactory.Object, transactions.Object,
-          repo.Object, statuses.Object, providerFactory.Object, Mock.Of<ITreasuryService>(), strategy.Object,
+          repo.Object, statuses.Object, providerFactory.Object, Treasury.Object, Strategy.Object,
           Notifications.Object, Mock.Of<INotificationURLFactory>());
       }
       public void Dispose() => _mutex.Dispose();

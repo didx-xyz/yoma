@@ -382,9 +382,13 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
 
       var roleRepresentationsExisting = await rolesMapperApi.GetUsersRoleMappingsByUserIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString());
 
-      var roleRepresentations = roleRepresentationsExisting.RealmMappings.Where(o => roles.Contains(o.Name, StringComparer.OrdinalIgnoreCase)).ToList();
+      var roleRepresentations = roleRepresentationsExisting.RealmMappings?
+        .Where(o => roles.Contains(o.Name, StringComparer.OrdinalIgnoreCase)).ToList();
 
-      await rolesMapperApi.PostUsersRoleMappingsRealmByUserIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString(), roleRepresentations);
+      // Reconciliation can repeat after the role was already removed.
+      if (roleRepresentations == null || roleRepresentations.Count == 0) return;
+
+      await rolesMapperApi.DeleteUsersRoleMappingsRealmByUserIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString(), roleRepresentations);
     }
 
     public async Task<List<User>?> ListByRole(string role)

@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
@@ -130,7 +131,7 @@ namespace Yoma.Core.Test.Completion
         execution.Setup(service => service.ExecuteInExecutionStrategyAsync(It.IsAny<Func<Task>>(), It.IsAny<bool>()))
           .Returns((Func<Task> body, bool _) => body());
 
-        Service = new UserService(Options.Create(new AppSettings()), Mock.Of<IBlobService>(), lookup.Object,
+        Service = new UserService(Options.Create(new AppSettings()), Mock.Of<IHttpContextAccessor>(), Mock.Of<IBlobService>(), lookup.Object,
           Mock.Of<IOpportunityCategoryService>(), Mock.Of<IAccessibilityService>(), Mock.Of<ILanguageService>(), Mock.Of<IEngagementTypeService>(),
           Mock.Of<ISSITenantService>(), Mock.Of<ISSICredentialService>(), Mock.Of<ISettingsDefinitionService>(), Mock.Of<IDelayedExecutionService>(),
           new UserRequestValidator(Mock.Of<ICountryService>(), Mock.Of<IEducationService>(), Mock.Of<IGenderService>(), new CoordinatesValidator()),

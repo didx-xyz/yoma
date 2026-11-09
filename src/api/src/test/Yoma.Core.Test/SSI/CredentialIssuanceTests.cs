@@ -27,16 +27,75 @@ namespace Yoma.Core.Test.SSI
   {
     #region Tests
     [Fact]
-    public async Task StoredIssueDateControlsTheSignedClaimAndRemainsOnTheSchedule()
+    public async Task DisabledSSILeavesPendingWorkUntouchedAndDoesNotCallTheProvider()
     {
-      using var fixture = new Fixture(Domain.Opportunity.Type.Job);
-      var date = new DateTimeOffset(2024, 5, 1, 8, 0, 0, TimeSpan.Zero);
-      fixture.Item.DateIssued = date;
+      using var fixture = new Fixture(Domain.Opportunity.Type.Job, enabledEnvironments: "None");
+
+      await fixture.Background.SeedSchemas();
+      await fixture.Background.ProcessTenantCreation();
+      await fixture.Background.ProcessCredentialIssuance();
+
+      Assert.Equal(CredentialIssuanceStatus.Pending, fixture.Item.Status);
+      Assert.Null(fixture.Item.CredentialId);
+      Assert.Empty(fixture.Requests);
+      fixture.Provider.VerifyNoOtherCalls();
+      fixture.Schemas.VerifyNoOtherCalls();
+      fixture.Tenants.VerifyNoOtherCalls();
+    }
+
+    [Theory]
+    [InlineData(null, ArtifactType.ACR)]
+    [InlineData(null, ArtifactType.SDJWT)]
+    [InlineData(Domain.Opportunity.Type.Job, ArtifactType.JWS)]
+    [InlineData(Domain.Opportunity.Type.Job, ArtifactType.SDJWT)]
+    public async Task IssuancePreservesTheSupportedFamilyFormat(Domain.Opportunity.Type? type, ArtifactType artifactType)
+    {
+      using var fixture = new Fixture(type, artifactType: artifactType);
 
       await fixture.Background.ProcessCredentialIssuance();
 
-      Assert.Equal(date, DateTimeOffset.Parse(Assert.Single(fixture.Requests).Attributes[SSISchemaService.SchemaAttribute_Internal_DateIssued]));
+      Assert.Equal(CredentialIssuanceStatus.Issued, fixture.Item.Status);
+      Assert.Equal(artifactType, Assert.Single(fixture.Requests).ArtifactType);
+      Assert.Equal(artifactType, fixture.Item.ArtifactType);
+      Assert.NotNull(fixture.Item.CredentialId);
+    }
+
+    [Theory]
+    [InlineData(null, ArtifactType.JWS)]
+    [InlineData(Domain.Opportunity.Type.Job, ArtifactType.ACR)]
+    public async Task InvalidFamilyFormatDoesNotReachProvider(Domain.Opportunity.Type? type, ArtifactType artifactType)
+    {
+      using var fixture = new Fixture(type, artifactType: artifactType);
+
+      await fixture.Background.ProcessCredentialIssuance();
+
+      Assert.Empty(fixture.Requests);
+      Assert.NotNull(fixture.Item.ErrorReason);
+      Assert.Null(fixture.Item.CredentialId);
+    }
+
+    [Theory]
+    [InlineData(null, ArtifactType.ACR)]
+    [InlineData(null, ArtifactType.SDJWT)]
+    [InlineData(Domain.Opportunity.Type.Job, ArtifactType.JWS)]
+    [InlineData(Domain.Opportunity.Type.Job, ArtifactType.SDJWT)]
+    public async Task StoredIssueDateControlsTheSignedClaimAndRemainsOnTheSchedule(Domain.Opportunity.Type? type, ArtifactType artifactType)
+    {
+      using var fixture = new Fixture(type, artifactType: artifactType);
+      var date = new DateTimeOffset(2024, 5, 1, 8, 0, 0, TimeSpan.Zero);
+      fixture.Item.DateIssued = date;
+      fixture.AddVersion(new Version(2, 0));
+
+      await fixture.Background.ProcessCredentialIssuance();
+
+      var request = Assert.Single(fixture.Requests);
+      Assert.Equal(date, DateTimeOffset.Parse(request.Attributes[SSISchemaService.SchemaAttribute_Internal_DateIssued]));
       Assert.Equal(date, fixture.Item.DateIssued);
+      Assert.Equal(fixture.Item.SchemaName, request.SchemaName);
+      Assert.Equal(fixture.LatestSchema.Id, request.SchemaId);
+      Assert.Equal(artifactType, request.ArtifactType);
+      Assert.Equal("2.0", fixture.Item.SchemaVersion);
+      Assert.Equal(CredentialIssuanceStatus.Issued, fixture.Item.Status);
     }
 
     [Fact]
@@ -447,11 +506,12 @@ namespace Yoma.Core.Test.SSI
 
       #region Constructor
       public Fixture(Domain.Opportunity.Type? type, IServiceScopeFactory? scopeFactory = null,
-        int parallelism = 1, CancellationToken stopping = default)
+        int parallelism = 1, CancellationToken stopping = default, ArtifactType? artifactType = null,
+        string enabledEnvironments = "Local")
       {
         var settings = new AppSettings
         {
-          SSIEnabledEnvironments = "Local",
+          SSIEnabledEnvironments = enabledEnvironments,
           YomaOrganizationName = "Yoma",
           SSIMaximumRetryAttempts = 2,
           SSIParallelism = new AppSettingsSSIParallelism { CredentialIssuance = parallelism }
@@ -463,7 +523,7 @@ namespace Yoma.Core.Test.SSI
           Id = Guid.NewGuid(),
           SchemaTypeId = schemaTypeIds[type.HasValue ? SchemaType.Opportunity : SchemaType.YoID],
           SchemaType = type.HasValue ? SchemaType.Opportunity : SchemaType.YoID,
-          ArtifactType = type.HasValue ? ArtifactType.JWS : ArtifactType.ACR,
+          ArtifactType = artifactType ?? (type.HasValue ? ArtifactType.JWS : ArtifactType.ACR),
           SchemaName = type.HasValue ? SSISSchemaHelper.ToDefaultFullName(type.Value) : "YoID|Default",
           StatusId = statusIds[CredentialIssuanceStatus.Pending],
           Status = CredentialIssuanceStatus.Pending,
@@ -584,7 +644,7 @@ namespace Yoma.Core.Test.SSI
           tenants.Object,
           credentialService,
           Lock.Object,
-          lifetime.Object);
+          lifetime.Object, factory.Object);
       }
       #endregion Constructor
 

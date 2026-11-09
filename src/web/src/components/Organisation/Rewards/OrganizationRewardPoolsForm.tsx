@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useId, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import {
   ORGANIZATION_REWARD_LIMITS,
@@ -38,6 +38,8 @@ import {
  * responsible for only rendering this to an admin.
  */
 export const OrganizationRewardPoolsForm: React.FC<{
+  /** stable prefix for the form's element ids (`{id}-zltoRewardPoolCurrentFinancialYear`, `{id}-submit`) — unique per home */
+  id: string;
   figures: OrganizationRewardFigures;
   onSubmit: (pools: OrganizationRewardPools) => void;
   isSubmitting: boolean;
@@ -50,6 +52,7 @@ export const OrganizationRewardPoolsForm: React.FC<{
   secondaryAction?: { label: string; onClick: () => void };
   className?: string;
 }> = ({
+  id: idPrefix,
   figures,
   onSubmit,
   isSubmitting,
@@ -59,7 +62,6 @@ export const OrganizationRewardPoolsForm: React.FC<{
   secondaryAction,
   className = "flex flex-col gap-4",
 }) => {
-  const idPrefix = useId();
   const fieldId = (field: OrganizationRewardPoolField) =>
     `${idPrefix}-${field}`;
   const errorId = (field: OrganizationRewardPoolField) =>
@@ -105,7 +107,11 @@ export const OrganizationRewardPoolsForm: React.FC<{
     useWatch({ control, name: "zltoRewardPoolCurrentFinancialYear" }) ??
     defaultValues.zltoRewardPoolCurrentFinancialYear;
 
-  /** Warn when a pool that exists today is being cleared — that stops all awards. */
+  /**
+   * Warn when a pool that exists today is being cleared. A null organisation pool means this level's
+   * cap is **not enforced** — awards continue, limited only by the Treasury pool (`OpportunityService`
+   * skips a level whose pool is null). It does not stop awards.
+   */
   const clearingZlto =
     figures.zltoRewardPoolCurrentFinancialYear !== null &&
     parseAmountInput(zltoInput).kind === "empty";
@@ -140,7 +146,7 @@ export const OrganizationRewardPoolsForm: React.FC<{
       <FormField
         label="ZLTO reward pool"
         subLabel={`Whole numbers, up to ${formatZlto(ORGANIZATION_REWARD_LIMITS.poolMax)}. ${formatZlto(figures.zltoRewardCumulativeCurrentFinancialYear, "0")} awarded so far this financial year.`}
-        tooltip="The ZLTO this organisation can award this financial year, across all its opportunities. Leave it empty to remove the allocation."
+        tooltip="The most ZLTO this organisation can award this financial year, across all its opportunities. Leave it empty to remove the cap — awards are then limited only by the Treasury pool."
         htmlFor={fieldId("zltoRewardPoolCurrentFinancialYear")}
         errorId={errorId("zltoRewardPoolCurrentFinancialYear")}
         showError={showError("zltoRewardPoolCurrentFinancialYear")}
@@ -167,16 +173,19 @@ export const OrganizationRewardPoolsForm: React.FC<{
           id={helpId("zltoRewardPoolCurrentFinancialYear")}
           className="sr-only"
         >
-          Whole ZLTO only. Leave empty to remove the allocation.
+          Whole ZLTO only. Leave empty to remove the cap; awards are then
+          limited only by the Treasury pool.
         </span>
       </FormField>
 
       {clearingZlto && (
-        <FormMessage messageType={FormMessageType.Warning}>
-          You&apos;ve cleared the ZLTO reward pool. Saving this removes the
-          allocation, and this organisation can&apos;t award ZLTO until a new
-          pool is set.
-        </FormMessage>
+        <div id={`${idPrefix}-clearing`} /* e2e */>
+          <FormMessage messageType={FormMessageType.Warning}>
+            You&apos;ve cleared the ZLTO reward pool. Saving this removes the
+            organisation&apos;s cap: it can still award ZLTO, limited only by
+            the Treasury pool, until a new pool is set.
+          </FormMessage>
+        </div>
       )}
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -191,6 +200,7 @@ export const OrganizationRewardPoolsForm: React.FC<{
           </button>
         )}
         <button
+          id={`${idPrefix}-submit`} // e2e
           type="submit"
           className={`${BTN_PRIMARY} w-full sm:w-40`}
           disabled={isSubmitting}

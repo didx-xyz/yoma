@@ -22,6 +22,7 @@ using Yoma.Core.Domain.IdentityProvider.Extensions;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.Lookups.Helpers;
 using Yoma.Core.Domain.Lookups.Interfaces;
+using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.Notification;
 using Yoma.Core.Domain.Notification.Interfaces;
 using Yoma.Core.Domain.Notification.Models;
@@ -69,6 +70,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly ICustomFieldDefinitionService _customFieldDefinitionService;
     private readonly ICustomFieldValueService _customFieldValueService;
     private readonly ISSISchemaService _ssiSchemaService;
+    private readonly IMyOpportunityActionService _myOpportunityActionService;
+    private readonly IMyOpportunityVerificationStatusService _myOpportunityVerificationStatusService;
 
     private readonly IRepository<OpportunityAccommodation> _opportunityAccommodationRepository;
     private readonly IRepository<OpportunityTargetedGroup> _opportunityTargetedGroupRepository;
@@ -91,6 +94,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly IRepository<OpportunityLanguage> _opportunityLanguageRepository;
     private readonly IRepository<OpportunitySkill> _opportunitySkillRepository;
     private readonly IRepository<OpportunityVerificationType> _opportunityVerificationTypeRepository;
+    private readonly IRepositoryBatchedWithNavigationAndCustomFieldFilter<MyOpportunity.Models.MyOpportunity> _myOpportunityRepository;
 
     private readonly IExecutionStrategyService _executionStrategyService;
 
@@ -133,6 +137,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         ICustomFieldDefinitionService customFieldDefinitionService,
         ICustomFieldValueService customFieldValueService,
         ISSISchemaService ssiSchemaService,
+        IMyOpportunityActionService myOpportunityActionService,
+        IMyOpportunityVerificationStatusService myOpportunityVerificationStatusService,
         IRepository<OpportunityAccommodation> opportunityAccommodationRepository,
         IRepository<OpportunityTargetedGroup> opportunityTargetedGroupRepository,
         IRepository<OpportunitySustainableDevelopmentGoal> opportunitySustainableDevelopmentGoalRepository,
@@ -151,6 +157,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         IRepository<OpportunityLanguage> opportunityLanguageRepository,
         IRepository<OpportunitySkill> opportunitySkillRepository,
         IRepository<OpportunityVerificationType> opportunityVerificationTypeRepository,
+        IRepositoryBatchedWithNavigationAndCustomFieldFilter<MyOpportunity.Models.MyOpportunity> myOpportunityRepository,
         IExecutionStrategyService executionStrategyService)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -179,6 +186,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _customFieldDefinitionService = customFieldDefinitionService ?? throw new ArgumentNullException(nameof(customFieldDefinitionService));
       _customFieldValueService = customFieldValueService ?? throw new ArgumentNullException(nameof(customFieldValueService));
       _ssiSchemaService = ssiSchemaService ?? throw new ArgumentNullException(nameof(ssiSchemaService));
+      _myOpportunityActionService = myOpportunityActionService ?? throw new ArgumentNullException(nameof(myOpportunityActionService));
+      _myOpportunityVerificationStatusService = myOpportunityVerificationStatusService ?? throw new ArgumentNullException(nameof(myOpportunityVerificationStatusService));
 
       _opportunityAccommodationRepository = opportunityAccommodationRepository ?? throw new ArgumentNullException(nameof(opportunityAccommodationRepository));
       _opportunityTargetedGroupRepository = opportunityTargetedGroupRepository ?? throw new ArgumentNullException(nameof(opportunityTargetedGroupRepository));
@@ -201,6 +210,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _opportunityLanguageRepository = opportunityLanguageRepository ?? throw new ArgumentNullException(nameof(opportunityLanguageRepository));
       _opportunitySkillRepository = opportunitySkillRepository ?? throw new ArgumentNullException(nameof(opportunitySkillRepository));
       _opportunityVerificationTypeRepository = opportunityVerificationTypeRepository ?? throw new ArgumentNullException(nameof(opportunityVerificationTypeRepository));
+      _myOpportunityRepository = myOpportunityRepository ?? throw new ArgumentNullException(nameof(myOpportunityRepository));
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
     }
     #endregion
@@ -469,7 +479,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       Guid? userCountryId = null;
       if (HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor))
       {
-        var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+        var user = _userService.GetCurrentUser(false, false);
         userCountryId = user.CountryId;
       }
 
@@ -752,7 +762,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
         .ThenBy(o => o.Name)
         .ToList();
 
-      return [.. results.Cast<OrganizationInfo>()];
+      // Create public DTOs; casting retains the administrative runtime type during serialization.
+      return [.. results.Select(o => new OrganizationInfo
+      {
+        Id = o.Id,
+        Name = o.Name,
+        Tagline = o.Tagline,
+        Status = o.Status,
+        LogoURL = o.LogoURL
+      })];
     }
 
     public List<OpportunitySearchCriteriaCommitmentIntervalOption> ListOpportunitySearchCriteriaCommitmentIntervalOptions(List<PublishedState>? publishedStates)
@@ -1056,7 +1074,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var probedTitles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
       var probedExternalIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-      while (await csv.ReadAsync())
+      // Check before reading another row so every error path, including field errors, respects the limit.
+      while (errors.Count < Math.Max(1, _appSettings.CSVImportMaxProbeErrorCount) && await csv.ReadAsync())
       {
         recordsTotal++;
         var rowNumber = checked((int)csv.LineNumber);
@@ -1188,7 +1207,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         //allow an expired opportunity to be flagged as hidden during creation; expired opportunities cannot be updated
       }
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !options.EnsureOrganizationAuthorization), false, false);
+      var user = _userService.GetCurrentUser(false, false, !options.EnsureOrganizationAuthorization);
 
       var organization = _organizationService.GetById(request.OrganizationId, false, true, false);
 
@@ -1356,7 +1375,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (options.EnsureOrganizationAuthorization)
         _organizationService.IsAdmin(request.OrganizationId, true);
 
-      var result = GetById(request.Id, true, true, false);
+      var result = GetById(request.Id, true, true, options.EnsureOrganizationAuthorization);
       var resultCurrent = ObjectHelper.DeepCopy(result);
 
       // A pull provider can extend an expired opportunity or remove its end date.
@@ -1364,6 +1383,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var reopen = options.SyncTypeActionedBy == SyncType.Pull && result.SyncedInfo?.SyncType == SyncType.Pull &&
         result.Status == Status.Expired && (!request.DateEnd.HasValue || request.DateEnd.Value > DateTimeOffset.UtcNow);
       if (!reopen) AssertUpdatable(result);
+
+      // Pending submissions retain the fields captured for their type; other edits still use the current opportunity at approval.
+      if (request.TypeId != result.TypeId)
+      {
+        var actionId = _myOpportunityActionService.GetByName(MyOpportunity.Action.Verification.ToString()).Id;
+        var statusId = _myOpportunityVerificationStatusService.GetByName(MyOpportunity.VerificationStatus.Pending.ToString()).Id;
+        if (_myOpportunityRepository.Query().Any(o => o.OpportunityId == result.Id && o.ActionId == actionId && o.VerificationStatusId == statusId))
+          throw new ValidationException("The opportunity type cannot be changed while submissions are awaiting approval");
+      }
 
       // Pull mappings supply the canonical default, not an administrator's schema choice.
       // Preserve custom selections and let the existing validation reject incompatible type changes.
@@ -1389,7 +1417,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
           throw new ValidationException($"{nameof(Models.Opportunity)} with the specified external id '{request.ExternalId}' already exists for the specified organization");
       }
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !options.EnsureOrganizationAuthorization), false, false);
+      var user = _userService.GetCurrentUser(false, false, !options.EnsureOrganizationAuthorization);
 
       var organization = _organizationService.GetById(request.OrganizationId, false, true, false);
 
@@ -1653,7 +1681,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       var result = GetById(id, true, true, false);
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       AssertUpdatable(result);
 
@@ -1677,7 +1705,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetCurrentUser(false, false, !ensureOrganizationAuthorization);
 
       AssertUpdatable(result);
 
@@ -1717,7 +1745,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       AssertUpdatable(result);
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetCurrentUser(false, false, !ensureOrganizationAuthorization);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -1752,7 +1780,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       AssertUpdatable(result);
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetCurrentUser(false, false, !ensureOrganizationAuthorization);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -1784,7 +1812,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       AssertUpdatable(result);
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetCurrentUser(false, false, !ensureOrganizationAuthorization);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -1819,7 +1847,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       AssertUpdatable(result);
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetCurrentUser(false, false, !ensureOrganizationAuthorization);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -1851,7 +1879,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       AssertUpdatable(result);
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetCurrentUser(false, false, !ensureOrganizationAuthorization);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -1886,7 +1914,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       AssertUpdatable(result);
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetCurrentUser(false, false, !ensureOrganizationAuthorization);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -1921,7 +1949,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       AssertUpdatable(result);
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetCurrentUser(false, false, !ensureOrganizationAuthorization);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -1956,7 +1984,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       AssertUpdatable(result);
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetCurrentUser(false, false, !ensureOrganizationAuthorization);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -1990,7 +2018,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       AssertUpdatable(result);
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetCurrentUser(false, false, !ensureOrganizationAuthorization);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -2028,7 +2056,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (result.VerificationEnabled && (result.VerificationTypes == null || result.VerificationTypes.All(o => verificationTypes.Contains(o.Type))))
         throw new ValidationException("One or more verification types are required when verification is supported. Removal will result in no associated verification types");
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetCurrentUser(false, false, !ensureOrganizationAuthorization);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -2475,7 +2503,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetCurrentUser(false, false, !ensureOrganizationAuthorization);
 
       EventType? eventType = null;
       switch (status)
@@ -2743,6 +2771,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
       //validate existence
       if (organizations != null)
         _organizationService.EnsureExist(organizations, true);
+
+      if (ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
+        _organizationService.IsAdminsOf(organizations!, true);
 
       return organizations;
     }

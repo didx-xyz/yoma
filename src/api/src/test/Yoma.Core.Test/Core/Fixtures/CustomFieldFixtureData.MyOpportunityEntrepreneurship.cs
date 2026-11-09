@@ -57,7 +57,7 @@ namespace Yoma.Core.Test.Core.Fixtures
       {
         EntityType = "MyOpportunity",
         EntityContext = "Entrepreneurship",
-        Key = "EntrepreneurshipRegistrationReference",
+        Key = "EntrepreneurshipRegistrationRef",
         Title = "Registration Reference",
         Description = "Optional registration number or document reference when the venture is registered. Never use a placeholder for an informal venture.",
         Group = "Completion Details",

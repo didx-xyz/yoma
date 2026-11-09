@@ -14,7 +14,13 @@ import java.util.Date;
                 query = "FROM TokenCode t WHERE t.realmId = :realmId " +
                         "AND t.phoneNumber = :phoneNumber " +
                         "AND t.expiresAt >= :now AND t.type = :type " +
+                        "AND t.confirmed = false " +
                         "ORDER BY t.createdAt DESC"
+        ),
+        @NamedQuery(
+                name = "consumeTokenCode",
+                query = "UPDATE TokenCode t SET t.confirmed = true, t.byWhom = :byWhom " +
+                        "WHERE t.id = :id AND t.confirmed = false"
         ),
         @NamedQuery(
                 name = "processesSinceTarget",

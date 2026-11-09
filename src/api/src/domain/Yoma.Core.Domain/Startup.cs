@@ -99,6 +99,7 @@ namespace Yoma.Core.Domain
       services.AddScoped<ICustomFieldDefinitionService, CustomFieldDefinitionService>();
       services.AddScoped<ICustomFieldValueService, CustomFieldValueService>();
       services.AddSingleton<IDistributedCacheService, DistributedCacheService>();
+      services.AddSingleton<IEncryptionService, EncryptionService>();
       services.AddSingleton<IDistributedLockService, DistributedLockService>();
       services.AddSingleton<IIdempotencyService, IdempotencyService>();
       services.AddScoped<IDownloadService, DownloadService>();

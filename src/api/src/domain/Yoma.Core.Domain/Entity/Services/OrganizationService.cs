@@ -45,6 +45,7 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly ISettingsDefinitionService _settingsDefinitionService;
     private readonly OrganizationRequestValidatorCreate _organizationCreateRequestValidator;
     private readonly OrganizationRequestValidatorUpdate _organizationUpdateRequestValidator;
+    private readonly OrganizationRequestUpdateRewardPoolValidator _organizationRequestUpdateRewardPoolValidator;
     private readonly OrganizationSearchFilterValidator _organizationSearchFilterValidator;
     private readonly OrganizationRequestUpdateStatusValidator _organizationRequestUpdateStatusValidator;
     private readonly SettingsRequestValidator _settingsRequestValidator;
@@ -56,6 +57,7 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IRepository<Models.OrganizationProviderType> _organizationProviderTypeRepository;
     private readonly IRepository<OrganizationDocument> _organizationDocumentRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
+    private readonly IDistributedLockService _distributedLockService;
 
     private static readonly OrganizationStatus[] Statuses_Updatable = [OrganizationStatus.Active, OrganizationStatus.Inactive, OrganizationStatus.Declined];
     private static readonly OrganizationStatus[] Statuses_Activatable = [OrganizationStatus.Inactive];
@@ -79,6 +81,7 @@ namespace Yoma.Core.Domain.Entity.Services
         ISettingsDefinitionService settingsDefinitionService,
         OrganizationRequestValidatorCreate organizationCreateRequestValidator,
         OrganizationRequestValidatorUpdate organizationUpdateRequestValidator,
+        OrganizationRequestUpdateRewardPoolValidator organizationRequestUpdateRewardPoolValidator,
         OrganizationSearchFilterValidator organizationSearchFilterValidator,
         OrganizationRequestUpdateStatusValidator organizationRequestUpdateStatusValidator,
         SettingsRequestValidator settingsRequestValidator,
@@ -87,7 +90,8 @@ namespace Yoma.Core.Domain.Entity.Services
         IRepository<OrganizationUser> organizationUserRepository,
         IRepository<Models.OrganizationProviderType> organizationProviderTypeRepository,
         IRepository<OrganizationDocument> organizationDocumentRepository,
-        IExecutionStrategyService executionStrategyService)
+        IExecutionStrategyService executionStrategyService,
+        IDistributedLockService distributedLockService)
     {
       _logger = logger;
       _appSettings = appSettings.Value;
@@ -103,6 +107,7 @@ namespace Yoma.Core.Domain.Entity.Services
       _settingsDefinitionService = settingsDefinitionService;
       _organizationCreateRequestValidator = organizationCreateRequestValidator;
       _organizationUpdateRequestValidator = organizationUpdateRequestValidator;
+      _organizationRequestUpdateRewardPoolValidator = organizationRequestUpdateRewardPoolValidator ?? throw new ArgumentNullException(nameof(organizationRequestUpdateRewardPoolValidator));
       _organizationSearchFilterValidator = organizationSearchFilterValidator;
       _organizationRequestUpdateStatusValidator = organizationRequestUpdateStatusValidator;
       _settingsRequestValidator = settingsRequestValidator;
@@ -112,6 +117,7 @@ namespace Yoma.Core.Domain.Entity.Services
       _organizationProviderTypeRepository = organizationProviderTypeRepository;
       _organizationDocumentRepository = organizationDocumentRepository;
       _executionStrategyService = executionStrategyService;
+      _distributedLockService = distributedLockService ?? throw new ArgumentNullException(nameof(distributedLockService));
     }
     #endregion
 
@@ -232,6 +238,8 @@ namespace Yoma.Core.Domain.Entity.Services
           IsAdminsOf(filter.Organizations, true);
         else
           filter.Organizations = [.. ListAdminsOf(false).Select(o => o.Id)];
+
+        if (filter.Organizations.Count == 0) throw new SecurityException("Unauthorized");
       }
 
       if (filter.Organizations != null && filter.Organizations.Count != 0)
@@ -309,7 +317,7 @@ namespace Yoma.Core.Domain.Entity.Services
       if (rewardPoolsSpecified && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
         throw new SecurityException("Unauthorized");
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       var result = new Organization
       {
@@ -409,6 +417,9 @@ namespace Yoma.Core.Domain.Entity.Services
 
       await SendNotification(result, NotificationType.Organization_Approval_Requested);
 
+      // Notify about the committed change before an external role update can fail.
+      await UpdateAdminRoles(result.Administrators?.Select(o => o.Id).ToList() ?? []);
+
       return result;
     }
 
@@ -434,6 +445,7 @@ namespace Yoma.Core.Domain.Entity.Services
       await _organizationUpdateRequestValidator.ValidateAndThrowAsync(request);
 
       var result = GetById(request.Id, true, true, ensureOrganizationAuthorization);
+      var adminIds = result.Administrators?.Select(o => o.Id).ToList() ?? [];
 
       if (string.Equals(result.Name, _appSettings.YomaOrganizationName, StringComparison.OrdinalIgnoreCase)
           && !string.Equals(result.Name, request.Name))
@@ -456,14 +468,7 @@ namespace Yoma.Core.Domain.Entity.Services
       if (ssoClientUpdated && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
         throw new SecurityException("Unauthorized");
 
-      var rewardPoolsUpdated = request.ZltoRewardPoolCurrentFinancialYear != result.ZltoRewardPoolCurrentFinancialYear;
-      if (rewardPoolsUpdated && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
-        throw new SecurityException("Unauthorized");
-
-      if (request.ZltoRewardPoolCurrentFinancialYear.HasValue && result.ZltoRewardCumulativeCurrentFinancialYear.HasValue && request.ZltoRewardPoolCurrentFinancialYear.Value < result.ZltoRewardCumulativeCurrentFinancialYear.Value)
-        throw new ValidationException($"The Zlto reward pool for the current financial year cannot be less than the cumulative Zlto rewards ({result.ZltoRewardCumulativeCurrentFinancialYear.Value:F0}) already allocated to participants for the current financial year");
-
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetCurrentUser(false, false, !ensureOrganizationAuthorization);
 
       result.Name = request.Name.NormalizeTrim();
       result.WebsiteURL = request.WebsiteURL?.ToLower();
@@ -481,7 +486,6 @@ namespace Yoma.Core.Domain.Entity.Services
       result.Tagline = request.Tagline;
       result.Biography = request.Biography;
       result.ModifiedByUserId = user.Id;
-      result.ZltoRewardPoolCurrentFinancialYear = request.ZltoRewardPoolCurrentFinancialYear;
 
       ValidateUpdatable(result);
 
@@ -494,6 +498,8 @@ namespace Yoma.Core.Domain.Entity.Services
           using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
           //update org
+          // Preserve the current pool under the same row lock used by UpdateRewardPool until this save commits.
+          result.ZltoRewardPoolCurrentFinancialYear = GetById(result.Id, false, false, false, LockMode.Wait).ZltoRewardPoolCurrentFinancialYear;
           result = await _organizationRepository.Update(result);
 
           //provider types
@@ -594,6 +600,35 @@ namespace Yoma.Core.Domain.Entity.Services
       if (statusCurrent != result.Status)
         await _mediator.Publish(new OrganizationStatusChangedEvent(result));
 
+      await UpdateAdminRoles(adminIds.Union(result.Administrators?.Select(o => o.Id) ?? []).ToList());
+
+      return result;
+    }
+
+    public async Task<Organization> UpdateRewardPool(Guid id, OrganizationRequestUpdateRewardPool request)
+    {
+      ArgumentNullException.ThrowIfNull(request);
+      if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
+      await _organizationRequestUpdateRewardPoolValidator.ValidateAndThrowAsync(request);
+
+      var user = _userService.GetCurrentUser(false, false);
+      Organization result = null!;
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+        // A pool edit never resubmits administrator assignments or other organization metadata.
+        result = GetById(id, true, true, true, LockMode.Wait);
+        ValidateUpdatable(result);
+        if (request.ZltoRewardPoolCurrentFinancialYear.HasValue && result.ZltoRewardCumulativeCurrentFinancialYear.HasValue &&
+          request.ZltoRewardPoolCurrentFinancialYear.Value < result.ZltoRewardCumulativeCurrentFinancialYear.Value)
+          throw new ValidationException($"The Zlto reward pool for the current financial year cannot be less than the cumulative Zlto rewards ({result.ZltoRewardCumulativeCurrentFinancialYear.Value:F0}) already allocated to participants for the current financial year");
+
+        result.ZltoRewardPoolCurrentFinancialYear = request.ZltoRewardPoolCurrentFinancialYear;
+        result.ModifiedByUserId = user.Id;
+        result = await _organizationRepository.Update(result);
+        scope.Complete();
+      }, true);
+
       return result;
     }
 
@@ -605,7 +640,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetCurrentUser(false, false, !ensureOrganizationAuthorization);
 
       NotificationType? notificationType = null;
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
@@ -725,7 +760,7 @@ namespace Yoma.Core.Domain.Entity.Services
       if (isProviderTypeMarketplace && (result.Documents == null || !result.Documents.Where(o => o.Type == OrganizationDocumentType.Business).Any()))
         throw new ValidationException($"Business documents are required. Add the required documents before assigning the provider type");
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetCurrentUser(false, false, !ensureOrganizationAuthorization);
 
       var statusCurrent = result.Status;
 
@@ -756,7 +791,7 @@ namespace Yoma.Core.Domain.Entity.Services
       if (result.ProviderTypes == null || result.ProviderTypes.All(o => providerTypeIds.Contains(o.Id)))
         throw new ValidationException("One or more provider types are required. Removal will result in no associated provider types");
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetCurrentUser(false, false, !ensureOrganizationAuthorization);
 
       var statusCurrent = result.Status;
 
@@ -787,7 +822,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       ValidateUpdatable(result);
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetCurrentUser(false, false, !ensureOrganizationAuthorization);
 
       // only allow a user to add a logo if: they are in a user-only role, the organization has no logo, they are the original creator, and the organization is inactive.
       if (userRoleOnly && (result.LogoId.HasValue || user.Id != result.CreatedByUserId || result.Status != OrganizationStatus.Inactive))
@@ -820,7 +855,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       ValidateUpdatable(result);
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetCurrentUser(false, false, !ensureOrganizationAuthorization);
 
       var statusCurrent = result.Status;
 
@@ -860,7 +895,7 @@ namespace Yoma.Core.Domain.Entity.Services
       if (isProviderTypeMarketplace && (result.Documents == null || result.Documents.Where(o => o.Type == OrganizationDocumentType.Business).All(o => documentFileIds.Contains(o.FileId))))
         throw new ValidationException($"Business documents are required. Removal will result in no associated documents");
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetCurrentUser(false, false, !ensureOrganizationAuthorization);
 
       var statusCurrent = result.Status;
 
@@ -905,7 +940,10 @@ namespace Yoma.Core.Domain.Entity.Services
         })
         .ToList();
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      // Reconcile only the requested administrators; unrelated memberships are unchanged.
+      var adminIds = normalizedUsernames!.Select(username => _userService.GetByUsername(username!, false, false).Id).Distinct().ToList();
+
+      var user = _userService.GetCurrentUser(false, false, !ensureOrganizationAuthorization);
 
       var statusCurrent = result.Status;
 
@@ -921,6 +959,8 @@ namespace Yoma.Core.Domain.Entity.Services
       if (statusCurrent != result.Status)
         await _mediator.Publish(new OrganizationStatusChangedEvent(result));
 
+      await UpdateAdminRoles(adminIds);
+
       return result;
     }
 
@@ -933,7 +973,10 @@ namespace Yoma.Core.Domain.Entity.Services
 
       ValidateUpdatable(result);
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      // Retain the requested users even when membership is already absent, so a retry can repair roles.
+      var adminIds = usernames.Select(username => _userService.GetByUsername(username, false, false).Id).Distinct().ToList();
+
+      var user = _userService.GetCurrentUser(false, false, !ensureOrganizationAuthorization);
 
       var statusCurrent = result.Status;
 
@@ -949,6 +992,8 @@ namespace Yoma.Core.Domain.Entity.Services
       if (statusCurrent != result.Status)
         await _mediator.Publish(new OrganizationStatusChangedEvent(result));
 
+      await UpdateAdminRoles(adminIds);
+
       return result;
     }
 
@@ -957,10 +1002,9 @@ namespace Yoma.Core.Domain.Entity.Services
       var organizations = _organizationRepository.Query(LockMode.Wait).ToList();
       if (organizations.Count == 0) return;
 
-      var username = actionedBySystem
-        ? HttpContextAccessorHelper.GetUsernameSystem
-        : HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-      var user = _userService.GetByUsername(username, false, false);
+      var user = actionedBySystem
+        ? _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false)
+        : _userService.GetCurrentUser(false, false);
 
       foreach (var organization in organizations)
       {
@@ -1004,7 +1048,7 @@ namespace Yoma.Core.Domain.Entity.Services
     {
       if (ids.Count == 0) throw new ArgumentNullException(nameof(ids));
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
       var orgIds = _organizationUserRepository.Query().Where(o => o.UserId == user.Id).Select(o => o.OrganizationId).ToList();
 
       var result = !ids.Except(orgIds).Any();
@@ -1022,7 +1066,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public List<OrganizationInfoAdmin> ListAdminsOf(bool includeComputed)
     {
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
       var orgIds = _organizationUserRepository.Query().Where(o => o.UserId == user.Id).Select(o => o.OrganizationId).ToList();
 
       var organizations = _organizationRepository.Query().Where(o => orgIds.Contains(o.Id)).ToList();
@@ -1032,9 +1076,41 @@ namespace Yoma.Core.Domain.Entity.Services
     #endregion
 
     #region Private Members
+    /// <summary>
+    /// Updates roles inline after the membership transaction commits. Reads current memberships under
+    /// a per-user lock, retaining the role when another organisation still needs it. Failures propagate
+    /// to the caller; membership is already saved and no automatic background retry is scheduled.
+    /// </summary>
+    private async Task UpdateAdminRoles(List<Guid> userIds)
+    {
+      ArgumentNullException.ThrowIfNull(userIds);
+
+      foreach (var userId in userIds.Distinct())
+      {
+        var synchronized = await _distributedLockService.TryRunWithLockAsync($"organization_admin_roles:{userId}",
+          TimeSpan.FromSeconds(_appSettings.DistributedLockUserActionLeaseDurationInSeconds),
+          TimeSpan.FromMilliseconds(_appSettings.DistributedLockUserActionAcquireTimeoutInMilliseconds), async () =>
+          {
+            // Read membership only after acquiring the lock: an older grant must not finish after a newer removal.
+            var user = _userService.GetById(userId, false, false);
+            if (!user.ExternalId.HasValue)
+              throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
+
+            if (_organizationUserRepository.Query().Any(o => o.UserId == userId))
+              await _identityProviderClient.EnsureRoles(user.ExternalId.Value, [Core.Constants.Role_OrganizationAdmin]);
+            else
+              await _identityProviderClient.RemoveRoles(user.ExternalId.Value, [Core.Constants.Role_OrganizationAdmin]);
+          });
+
+        // A busy lock must not be reported as a successful role update.
+        if (!synchronized)
+          throw new RequestInProgressException("Administrator role synchronization is already in progress. Please try again.");
+      }
+    }
+
     private bool IsAdmin(Organization organization, bool throwUnauthorized)
     {
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       var isAdmin = HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor);
 
@@ -1209,9 +1285,6 @@ namespace Yoma.Core.Domain.Entity.Services
 
             updated = true;
           }
-
-          //ensure organization admin role
-          await _identityProviderClient.EnsureRoles(user.ExternalId.Value, [Core.Constants.Role_OrganizationAdmin]);
         }
 
         if (updated) organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined, null);
@@ -1238,21 +1311,15 @@ namespace Yoma.Core.Domain.Entity.Services
           if (!user.ExternalId.HasValue)
             throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
 
-          var items = _organizationUserRepository.Query().Where(o => o.UserId == user.Id).ToList();
-
-          var item = items.SingleOrDefault(o => o.OrganizationId == organization.Id);
+          var item = _organizationUserRepository.Query().SingleOrDefault(o => o.OrganizationId == organization.Id && o.UserId == user.Id);
           if (item != null)
           {
             await _organizationUserRepository.Delete(item);
-            items.Remove(item);
 
             organization.Administrators?.Remove(organization.Administrators.Single(o => o.Id == user.Id));
 
             updated = true;
           }
-
-          if (items.Count == 0) //no longer an admin of any organization, remove organization admin role
-            await _identityProviderClient.RemoveRoles(user.ExternalId.Value, [Core.Constants.Role_OrganizationAdmin]);
         }
 
         if (updated) organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined, null);

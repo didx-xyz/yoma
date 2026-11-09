@@ -117,7 +117,7 @@ namespace Yoma.Core.Test.Referral.Services
       usage.Status = status;
       usage.DateClaimed = null;
       var user = new UserBuilder().WithId(asReferee ? usage.UserId : usage.UserIdReferrer).Build();
-      fixture.UserService.Setup(s => s.GetByUsername(username, false, false)).Returns(user);
+      fixture.UserService.Setup(s => s.GetCurrentUser(false, false, It.IsAny<bool>())).Returns(user);
       fixture.LinkUsageRepository.Setup(r => r.Query()).Returns(new[] { usage }.AsQueryable());
       fixture.ProgramService.Setup(s => s.GetById(usage.ProgramId, true, false))
         .Returns(new ProgramBuilder().WithId(usage.ProgramId).Build());

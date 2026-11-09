@@ -84,7 +84,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .Length(1, 2048)
           .Must(ValidURL)
           .When(x => !string.IsNullOrEmpty(x.URL))
-          .WithMessage("URL must be between 1 and 2048 characters long and be a valid URL if specified.");
+          .WithMessage("URL must be between 1 and 2048 characters long and be a valid HTTP or HTTPS URL if specified.");
 
       RuleFor(x => x.Provider)
           .MaximumLength(OpportunityService.Provider_MaxLength);
@@ -93,13 +93,13 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .Length(1, 2048)
           .Must(ValidURL)
           .When(x => !string.IsNullOrEmpty(x.ProviderURL))
-          .WithMessage("Provider URL must be between 1 and 2048 characters long and be a valid URL if specified.");
+          .WithMessage("Provider URL must be between 1 and 2048 characters long and be a valid HTTP or HTTPS URL if specified.");
 
       RuleFor(x => x.ProviderLogoURL)
           .Length(1, 2048)
           .Must(ValidURL)
           .When(x => !string.IsNullOrEmpty(x.ProviderLogoURL))
-          .WithMessage("Provider logo URL must be between 1 and 2048 characters long and be a valid URL if specified.");
+          .WithMessage("Provider logo URL must be between 1 and 2048 characters long and be a valid HTTP or HTTPS URL if specified.");
 
       RuleFor(x => x.ProviderCountryId)
           .Must(id => id.HasValue && id.Value != Guid.Empty && _countryService.GetByIdOrNull(id.Value) is { } country &&
@@ -359,8 +359,8 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .WithMessage("With manual verification, one or more verification types are required.");
 
       RuleFor(x => x.VerificationTypes)
-          .Must(types => types == null || types.All(type => VerificationTypeExists(type.Type)))
-          .WithMessage("Verification types must exist if specified.");
+          .Must(types => types == null || types.All(type => type != null && VerificationTypeExists(type.Type)))
+          .WithMessage("Verification types must contain non-empty entries with valid types if specified.");
 
       // Shared opportunities cannot be hidden
       RuleFor(opportunity => opportunity.Hidden)
@@ -453,7 +453,8 @@ namespace Yoma.Core.Domain.Opportunity.Validators
     private bool ValidURL(string? url)
     {
       if (url == null) return true;
-      return Uri.IsWellFormedUriString(url, UriKind.Absolute);
+      return Uri.TryCreate(url, UriKind.Absolute, out var uri) && uri.IsWellFormedOriginalString() &&
+        (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
     }
 
     private static int CalculateCombinedLength(List<string> list)

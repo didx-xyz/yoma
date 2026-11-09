@@ -29,6 +29,30 @@ namespace Yoma.Core.Test.SSI
 
     #region Tests
     [Fact]
+    public async Task RejectsSdJwtBeforeAnyProviderRequestOrLocalWrite()
+    {
+      using var fixture = new Fixture();
+      fixture.Request.ArtifactType = ArtifactType.SDJWT;
+
+      Assert.Equal(ArtifactType.ACR, fixture.Client.GetDefaultArtifactType(Domain.SSI.SchemaType.YoID));
+      Assert.Equal(ArtifactType.JWS, fixture.Client.GetDefaultArtifactType(Domain.SSI.SchemaType.Opportunity));
+      Assert.Throws<NotSupportedException>(() => fixture.Client.GetDefaultArtifactType((Domain.SSI.SchemaType)99));
+      await Assert.ThrowsAsync<NotSupportedException>(() => fixture.Client.UpsertSchema(new SchemaRequest
+      {
+        Name = "YoID|Default",
+        ArtifactType = ArtifactType.SDJWT,
+        Attributes = ["User_DisplayName"]
+      }));
+      await Assert.ThrowsAsync<NotSupportedException>(() => fixture.Client.IssueCredential(fixture.Request));
+      await Assert.ThrowsAsync<NotSupportedException>(() => fixture.Client.GetCredentialByIdOrNull("tenant", ArtifactType.SDJWT, "id"));
+      await Assert.ThrowsAsync<NotSupportedException>(() => fixture.Client.DeleteCredential("tenant", ArtifactType.SDJWT, "id"));
+      await Assert.ThrowsAsync<NotSupportedException>(() => fixture.Client.GetCredentialByClientReferentOrNull(
+        "tenant", ArtifactType.SDJWT, fixture.Request.ClientReferent));
+      Assert.Empty(fixture.Http.CallLog);
+      Assert.Empty(fixture.Credentials);
+    }
+
+    [Fact]
     public async Task InvalidProviderListIsNotTreatedAsConfirmedAbsence()
     {
       using var fixture = new Fixture();

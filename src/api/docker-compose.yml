@@ -67,11 +67,12 @@ services:
         # Install curl and unzip
         apk add --no-cache curl unzip &&
 
-        # Download webhook providers
-        curl -L https://github.com/vymalo/keycloak-webhook/releases/download/v0.9.1/keycloak-webhook-provider-core-0.9.1-all.jar -o /opt/keycloak/providers/keycloak-webhook-provider-core-0.9.1-all.jar &&
-        curl -L https://github.com/vymalo/keycloak-webhook/releases/download/v0.9.1/keycloak-webhook-provider-http-0.9.1-all.jar -o /opt/keycloak/providers/keycloak-webhook-provider-http-0.9.1-all.jar &&
-        curl -L https://github.com/vymalo/keycloak-webhook/releases/download/v0.9.1/keycloak-webhook-provider-amqp-0.9.1-all.jar -o /opt/keycloak/providers/keycloak-webhook-provider-amqp-0.9.1-all.jar &&
-        curl -L https://github.com/vymalo/keycloak-webhook/releases/download/v0.9.1/keycloak-webhook-provider-syslog-0.9.1-all.jar -o /opt/keycloak/providers/keycloak-webhook-provider-syslog-0.9.1-all.jar &&
+        # Retry transient download failures and reject error pages or truncated JARs.
+        for provider in core http amqp syslog; do
+          file="keycloak-webhook-provider-$$provider-0.9.1-all.jar"
+          curl -fSL --retry 3 --retry-delay 2 --retry-max-time 120 --connect-timeout 10 --max-time 60 "https://github.com/vymalo/keycloak-webhook/releases/download/v0.9.1/$$file" -o "/opt/keycloak/providers/$$file" || exit 1
+          unzip -tq "/opt/keycloak/providers/$$file" || exit 1
+        done &&
 
         # Copy phone provider JARs
         cp /local-providers/keycloak-phone-provider.jar /local-providers/keycloak-phone-provider.resources.jar /local-providers/keycloak-sms-provider-dummy.jar /local-providers/email-required-authenticator.jar /opt/keycloak/providers/ &&
@@ -167,11 +168,11 @@ services:
       - keycloak-themes:/opt/keycloak/themes
 
   keycloak-health:
-    # Wait for Keycloak to be ready before running keycloak-config service
+    # Wait about five minutes for Keycloak; fail startup if it never becomes ready.
     image: docker.io/curlimages/curl
     container_name: keycloak-health
     restart: "no"
-    command: /bin/sh -c "until curl -fsS http://keycloak:9000/health/ready; do sleep 5; done"
+    command: /bin/sh -c "curl -fsS --connect-timeout 5 --max-time 10 --retry 60 --retry-delay 5 --retry-max-time 300 --retry-all-errors http://keycloak:9000/health/ready"
     depends_on:
       keycloak:
         condition: service_started
@@ -203,6 +204,11 @@ services:
       CLIENT_GOODWALL_URL_REDIRECT: "goodwallauth://yomaredirect"
       CLIENT_YOMA_API_SECRET: superSecretYomaApiClientSecret
       CLIENT_YOMA_WEB_SECRET: superSecretYomaWebClientSecret
+      # Local development defaults, matching the other Yoma clients above.
+      # DidxMe:TokenExchange:ClientSecret in Local appsettings must match.
+      CLIENT_DIDXME_ASSERTION_ENABLED: "true"
+      CLIENT_DIDXME_ASSERTION_SECRET: &DidxMeAssertionSecret superSecretDidxMeAssertionClientSecret
+      CLIENT_DIDXME_ASSERTION_AUDIENCE: "https://didx.127.0.0.1.nip.io/iam/realms/consumers"
       CLIENT_ATINGI_SECRET: superSecretAtingiClientSecret
       CLIENT_GOODWALL_SECRET: superSecretAtingiClientSecret
       CLIENT_IIASA_ENABLED: "true"
@@ -274,8 +280,9 @@ services:
       KC_BASE_URL: http://keycloak:8080
       KC_REALM: yoma
       KC_CLIENT_ID: admin-cli
-      KC_ADMIN_USER: sa-yoma-api
-      KC_ADMIN_PASSWORD: *KCAdminPassword
+      # Partial import needs manage-realm. Use the Local bootstrap admin, not the runtime API account.
+      KC_ADMIN_USER: admin
+      KC_ADMIN_PASSWORD: password
       KC_ADMIN_REALM: master
       ADMIN_USER: testadminuser@gmail.com
       ADMIN_USER_PASSWORD: P@ssword12
@@ -296,7 +303,44 @@ services:
     depends_on:
       keycloak-config:
         condition: service_completed_successfully
+      postgres-init:
+        condition: service_completed_successfully
       yoma-api-health:
+        condition: service_completed_successfully
+
+  didxme-init:
+    # Local only: mono is started independently, never managed by this Compose project.
+    # Run after the Yoma realm import and before the API, without depending on keycloak-users
+    # (which itself waits for the API). Resources are reused; fixed local client secrets are applied.
+    build:
+      context: ./cicd/scripts/didxme-init
+    container_name: didxme-init
+    restart: "no"
+    user: 0:0 # write the bind-mounted Local settings
+    environment:
+      YOMA_ENVIRONMENT: Local
+      # One local override controls both provisioning and the API's existing SSI setting.
+      # Set YOMA_SSI_ENABLED_ENVIRONMENTS=None to work without standalone mono.
+      YOMA_SSI_ENABLED_ENVIRONMENTS: &SSIEnabledEnvironments "${YOMA_SSI_ENABLED_ENVIRONMENTS:-Local, Development, Staging, Production}"
+      MONO_READY_TIMEOUT_SECONDS: 120
+      YOMA_ASSERTION_CLIENT_SECRET: *DidxMeAssertionSecret
+      # Public local development defaults only; never use these in deployed environments.
+      YOMA_ISSUER_CLIENT_SECRET: superSecretDidxMeIssuerClientSecret
+      YOMA_HOLDER_CLIENT_SECRET: superSecretDidxMeHolderClientSecret
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command:
+      - /bin/sh
+      - /scripts/init.sh
+    volumes:
+      - ./cicd/scripts/didxme-init/init.sh:/scripts/init.sh:ro
+      - type: bind
+        source: ./src/application/Yoma.Core.Api/appsettings.Local.json
+        target: /settings/appsettings.Local.json
+        bind:
+          create_host_path: false
+    depends_on:
+      keycloak-config:
         condition: service_completed_successfully
 
   yoma-api:
@@ -310,9 +354,17 @@ services:
     restart: always
     environment:
       ASPNETCORE_ENVIRONMENT: Local
+      AppSettings__SSIEnabledEnvironments: *SSIEnabledEnvironments
       ASPNETCORE_URLS: "http://+:5000"
       ConnectionStrings__SQLConnection: "Host=postgres;Port=5432;Database=yoma-dev;Username=postgres;Password=P@ssword1;SslMode=Prefer;Trust Server Certificate=True;Include Error Detail=true;GSS Encryption Mode=Disable;"
       ConnectionStrings__RedisConnection: "valkey:6379"
+      # Local settings retain host URLs for debugger runs; containers reach standalone mono
+      # through its published host ports. Canonical token issuer/audience values are unchanged.
+      DidxMe__CredentialsBaseUri: "http://host.docker.internal:3302/api"
+      DidxMe__WalletBaseUri: "http://host.docker.internal:3300/api"
+      DidxMe__OnboardingBaseUri: "http://host.docker.internal:3303/api"
+      DidxMe__KeycloakBaseUri: "http://host.docker.internal:18080/iam"
+      DidxMe__TokenExchange__KeycloakBaseUri: "http://keycloak:8080"
       Logging__LogLevel__Default: "Debug"
       Logging__LogLevel__Microsoft: "Debug"
       Logging__LogLevel__Microsoft.Hosting.Lifetime: "Information"
@@ -320,12 +372,16 @@ services:
       AllowedOrigins: "http://localhost:5000;http://localhost:3000;http://localhost:3001" # can be set to wildcard * to allow all hosts
     env_file:
       - env.secrets
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "0.0.0.0:5000:5000"
     volumes:
       - yoma:/root/.aspnet/DataProtection-Keys
       - ./src/application/Yoma.Core.Api/appsettings.Local.json:/api/appsettings.Local.json
     depends_on:
+      didxme-init:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       valkey:

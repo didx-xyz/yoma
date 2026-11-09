@@ -22,10 +22,21 @@ namespace Yoma.Core.Domain.SSI.Validators
       RuleFor(o => o.Name).Must(name => !SSISSchemaHelper.SystemCharacters.Any(c => name.Contains(c))).WithMessage(name => $"{{PropertyName}} cannot contain system characters '{string.Join(' ', SSISSchemaHelper.SystemCharacters)}'");
       RuleFor(x => x.TypeId).NotEmpty().Must(TypeExists).WithMessage($"Specified type is invalid / does not exist.");
       RuleFor(x => x).Must(TypeContextValid).WithMessage("Specified type context is invalid or unsupported for the schema type.");
+      RuleFor(x => x)
+        .Must(ArtifactTypeValid)
+        .WithMessage("Specified artifact type is invalid or unsupported for the schema type.");
     }
     #endregion
 
     #region Private Members
+    private bool ArtifactTypeValid(SSISchemaRequestCreate request)
+    {
+      if (request.TypeId == Guid.Empty) return false;
+
+      var schemaType = _ssiSchemaTypeService.GetByIdOrNull(request.TypeId)?.Type;
+      return schemaType.HasValue && SSISSchemaHelper.ArtifactTypeSupported(schemaType.Value, request.ArtifactType);
+    }
+
     private bool TypeExists(Guid id)
     {
       if (id == Guid.Empty) return false;

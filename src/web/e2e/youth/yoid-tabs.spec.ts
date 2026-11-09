@@ -47,10 +47,13 @@ test("passport, wallet and saved tabs render", async ({ page }) => {
   // Three cold routes on a shared dev server; CI's production build is unaffected.
   test.slow();
   await page.goto(ROUTES.yoidPassport);
+  // Three valid renderings: credentials, none yet, or SSI switched off for the environment
+  // (YOMA_SSI_ENABLED_ENVIRONMENTS=None — the CI stack and any local run without didx:me).
   await expect(
     page
       .getByRole("group", { name: "Filter by credential type" })
-      .or(page.getByRole("heading", { name: "No credentials yet" })),
+      .or(page.getByRole("heading", { name: "No credentials yet" }))
+      .or(page.getByText("SSI is disabled for this environment")),
   ).toBeVisible();
 
   await page.goto(ROUTES.yoidWallet);

@@ -10,8 +10,8 @@ import {
 // phone, log in with OTP, reset the password with OTP. Serial: each step needs the previous
 // one's state. The user is removed before and after so the run is repeatable.
 //
-// Abuse limits (DefaultPhoneProvider): one send per code type per 5 min and three per hour for
-// this number — so at most three runs of this file per hour.
+// Abuse limits (DefaultPhoneProvider): one send per code type while an unused code is live (5 min)
+// and three per hour for this number — so at most three runs of this file per hour.
 
 const PASSWORD_1 = "E2ePassw0rd!a";
 const PASSWORD_2 = "E2ePassw0rd!b";

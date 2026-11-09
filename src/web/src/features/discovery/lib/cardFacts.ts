@@ -18,12 +18,15 @@ import { calendarDaysUntil } from "./dates";
  * type ends with `languages · skills` (2026-10-08, Jason), so most cards fill the 2 × 2 grid;
  * they are left out of the lines below.
  *
- *   Job       employment · date · effort · a11y*   (employment = type · work schedule ·
+ *   Job       employment · education · date · effort · a11y*
+ *                                                 (employment = type · work schedule ·
  *                                                  duration, "Permanent · Full-time";
- *                                                  qualification is left out:
- *                                                  `JobMinimumQualification` is not a
- *                                                  system-controlled key — the reason "No
- *                                                  experience needed" is parked too)
+ *                                                  education = the minimum qualification,
+ *                                                  "Matric required" — BA R19, protected by
+ *                                                  the API on PR #2013 (YOM-1260); its value
+ *                                                  is an Education lookup id, labelled through
+ *                                                  the cached `/lookup/education` list. "No
+ *                                                  experience needed" stays parked)
  *   Learning  effort · difficulty · date · a11y*
  *   Impact    tools · effort · date · a11y* · difficulty
  *   Event     date · accessibility · effort · difficulty
@@ -50,6 +53,7 @@ import { calendarDaysUntil } from "./dates";
  */
 export type CardFactKind =
   | "employment"
+  | "education"
   | "effort"
   | "difficulty"
   | "tools"
@@ -79,7 +83,14 @@ export interface CardFact {
 const FILLERS: CardFactKind[] = ["languages", "skills"];
 
 const PRIORITY: Record<string, CardFactKind[]> = {
-  Job: ["employment", "date", "effort", "accessibility", ...FILLERS],
+  Job: [
+    "employment",
+    "education",
+    "date",
+    "effort",
+    "accessibility",
+    ...FILLERS,
+  ],
   Learning: ["effort", "difficulty", "date", "accessibility", ...FILLERS],
   ImpactAction: [
     "tools",
@@ -105,6 +116,7 @@ const ACCESSIBILITY_ALWAYS = ["Event"];
 
 const NAMES: Record<CardFactKind, string> = {
   employment: "Employment",
+  education: "Minimum education",
   effort: "Time commitment",
   difficulty: "Difficulty",
   tools: "Tools needed",
@@ -119,11 +131,12 @@ const NAMES: Record<CardFactKind, string> = {
 const KEYS = {
   employmentType: "JobEmploymentType",
   workSchedule: "JobWorkSchedule",
+  minimumQualification: "JobMinimumQualification",
   employmentDuration: "JobEmploymentDuration",
   employmentDurationUnit: "JobEmploymentDurationUnit",
   toolsRequired: "ImpactActionToolsRequired",
   programmeType: "EntrepreneurshipProgrammeType",
-  programmeOtherDescription: "EntrepreneurshipProgrammeOtherDescription",
+  programmeOtherDescription: "EntrepreneurshipProgrammeOther",
   difficulty: {
     Learning: "LearningDifficulty",
     ImpactAction: "ImpactActionDifficulty",
@@ -184,6 +197,12 @@ export function cardFacts(
    * needs or picked by hand) are non-empty. Context already on the page, never a request.
    */
   accessibilityInSearch: boolean,
+  /**
+   * The Education lookup (`/lookup/education`), already cached by the surface: labels the Job's
+   * minimum qualification, whose stored value is the lookup id. Empty until loaded — the fact
+   * then yields nothing rather than an id.
+   */
+  educations: { id: string; name: string }[] = [],
 ): CardFact[] {
   const fields = opportunity.customFields ?? [];
   const field = (key: string) =>
@@ -211,6 +230,16 @@ export function cardFacts(
           count && unit ? `${count} ${unit.toLowerCase()}` : null;
         const text = [types, schedule, duration].filter(Boolean).join(" · ");
         return text ? same(text) : null;
+      }
+      case "education": {
+        // One value by definition; a label the list lacks (not loaded yet, retired id) is no fact.
+        const ids = field(KEYS.minimumQualification)?.values ?? [];
+        const names = ids.flatMap(
+          (id) => educations.find((e) => e.id === id)?.name ?? [],
+        );
+        return names.length > 0
+          ? { text: `${names.join(", ")} required`, value: names.join(", ") }
+          : null;
       }
       case "effort": {
         const effort = opportunity.commitmentIntervalDescription;

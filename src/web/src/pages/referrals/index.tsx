@@ -55,6 +55,7 @@ import {
   useReferralLinkUsagesReferrerQuery,
   useReferralProgramsQuery,
 } from "~/hooks/useReferralProgramMutations";
+import { toLogSafeError } from "~/lib/apiErrorUtils";
 import { COUNTRY_ID_WW, PAGE_SIZE, THEME_WHITE } from "~/lib/constants";
 import { screenWidthAtom, userProfileAtom } from "~/lib/store";
 import { authOptions } from "~/server/auth";
@@ -68,7 +69,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     try {
       userProfileServer = await getUserProfile(context);
     } catch (e) {
-      console.error("Failed to fetch user profile", e);
+      console.error(
+        "Failed to fetch user profile in getServerSideProps",
+        toLogSafeError(e),
+      );
     }
   }
 

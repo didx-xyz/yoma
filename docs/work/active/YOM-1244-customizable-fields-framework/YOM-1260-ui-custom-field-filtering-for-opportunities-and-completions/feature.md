@@ -34,6 +34,18 @@ Capture and display are [YOM-1255](../YOM-1255-ui-dynamic-custom-fields-for-oppo
 
 ## Plan
 
+### Job card education requirement follow-up — 2026-11-09
+
+- [x] API: protect `JobMinimumQualification` in the unreleased migration on PR #2013.
+- [x] Web / Jason: display the education requirement on Job cards using the existing Education lookup — on PR #2013, see [2026-11-09-b](./handoffs/2026-11-09-b.md).
+- [ ] After merge/deployment, confirm populated Job cards show the education label and absent values are omitted.
+
+The API update sets `IsSystem = true`; `IsProtected` follows from the existing model. It preserves
+the field ID, key, lookup options and saved values. Both existing databases and fresh databases
+receive the update when the migration runs. A local database that already applied this migration
+must be reset before testing the amended seed. No new response field or eligibility rule is added.
+See the [handoff](./handoffs/2026-11-09-a.md); the shared decision is recorded in the epic README.
+
 ### Filter contract — verified by curl against `POST /api/v3/opportunity/search`
 
 ```

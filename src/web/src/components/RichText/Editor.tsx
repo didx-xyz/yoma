@@ -15,6 +15,7 @@ import {
 import "@mdxeditor/editor/style.css";
 import React, { useEffect, useRef } from "react";
 import { Toolbar } from "./Toolbar";
+import { safeHtmlPlugin } from "./safeHtmlPlugin";
 
 export const Editor: React.FC<{
   value: string;
@@ -53,6 +54,7 @@ export const Editor: React.FC<{
           directivesPlugin({
             directiveDescriptors: [AdmonitionDirectiveDescriptor],
           }),
+          safeHtmlPlugin(),
         ]}
         onBlur={() => {
           if (onBlur) {

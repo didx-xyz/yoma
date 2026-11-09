@@ -33,6 +33,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
     private readonly IUserService _userService;
     private readonly IProgramService _programService;
+    private readonly IBlockService _blockService;
     private readonly ILinkStatusService _linkStatusService;
     private readonly ILinkUsageStatusService _linkUsageStatusService;
     private readonly ICountryService _countryService;
@@ -62,6 +63,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       IUserService userService,
       IProgramService programService,
+      IBlockService blockService,
       ILinkStatusService linkStatusService,
       ILinkUsageStatusService linkUsageStatusService,
       ICountryService countryService,
@@ -83,6 +85,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       _userService = userService ?? throw new ArgumentNullException(nameof(userService));
       _programService = programService ?? throw new ArgumentNullException(nameof(programService));
+      _blockService = blockService ?? throw new ArgumentNullException(nameof(blockService));
       _linkStatusService = linkStatusService ?? throw new ArgumentNullException(nameof(linkStatusService));
       _linkUsageStatusService = linkUsageStatusService ?? throw new ArgumentNullException(nameof(linkUsageStatusService));
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
@@ -129,7 +132,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       if (allowAdminOverride && HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) return result;
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
       if (result.UserId != user.Id) throw new SecurityException("Unauthorized");
 
       return result;
@@ -160,7 +163,7 @@ namespace Yoma.Core.Domain.Referral.Services
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetCurrentUser(false, false);
 
       var filterAdmin = new ReferralLinkSearchFilterAdmin
       {
@@ -274,7 +277,10 @@ namespace Yoma.Core.Domain.Referral.Services
         if (program.CompletionLimit.HasValue && (program.CompletionBalance ?? 0) <= 0)
           throw new ValidationException("This referral programme has reached its limit");
 
-        var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+        var user = _userService.GetCurrentUser(false, false);
+
+        if (_blockService.GetByUserIdOrNull(user.Id) != null)
+          throw new ValidationException("You are currently blocked from creating referral links");
 
         var worldwideId = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
         if (!ProgramCountryPolicy.ProgramAccessibleToUser(worldwideId, user.CountryId, program.Countries))
@@ -344,50 +350,72 @@ namespace Yoma.Core.Domain.Referral.Services
 
       await _referralLinkRequestUpdateValidator.ValidateAndThrowAsync(request);
 
-      //link must belong to the current user
-      var result = GetById(request.Id, true, true, true, false, request.IncludeQRCode);
+      ReferralLink? result = null;
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
-      if (!Statuses_Updatable.Contains(result.Status))
-        throw new ValidationException("This referral link can no longer be updated");
+        // Read under the lock so a metadata edit preserves concurrent completion counters and status.
+        result = GetById(request.Id, true, true, true, false, request.IncludeQRCode, LockMode.Wait);
 
-      var existingByName = GetByNameOrNull(result.UserId, result.ProgramId, request.Name, false, false, false);
-      if (existingByName != null && existingByName.Id != result.Id)
-        throw new ValidationException("A referral link with this name already exists");
+        if (!Statuses_Updatable.Contains(result.Status))
+          throw new ValidationException("This referral link can no longer be updated");
 
-      result.Name = request.Name;
-      result.Description = request.Description;
+        var existingByName = GetByNameOrNull(result.UserId, result.ProgramId, request.Name, false, false, false);
+        if (existingByName != null && existingByName.Id != result.Id)
+          throw new ValidationException("A referral link with this name already exists");
 
-      result = await _linkRepository.Update(result);
+        result.Name = request.Name;
+        result.Description = request.Description;
+
+        result = await _linkRepository.Update(result);
+        scope.Complete();
+      }, true);
 
       // GetById ensure QRCodeBase64 and SetUsageAggregates
-      return result;
+      return result ?? throw new InvalidOperationException("Updated referral link expected");
     }
 
     public async Task<ReferralLink> Cancel(Guid id)
     {
-      //ensures the link belongs to the current user unless the caller has admin privileges
-      var result = GetById(id, true, true, true, true, false);
-
-      if (result.Status == ReferralLinkStatus.Cancelled) return result;
-
-      if (!Statuses_Cancellable.Contains(result.Status))
-        throw new ValidationException("This referral link can no longer be cancelled");
-
-      var status = _linkStatusService.GetByName(ReferralLinkStatus.Cancelled.ToString());
-      result.StatusId = status.Id;
-      result.Status = ReferralLinkStatus.Cancelled;
+      ReferralLink result = null!;
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
+        // Recheck ownership/status under the lock and preserve concurrent completion counters.
+        result = GetById(id, true, true, true, true, false, LockMode.Wait);
+        if (result.Status == ReferralLinkStatus.Cancelled) return;
+
+        if (!Statuses_Cancellable.Contains(result.Status))
+          throw new ValidationException("This referral link can no longer be cancelled");
+
+        var status = _linkStatusService.GetByName(ReferralLinkStatus.Cancelled.ToString());
+        result.StatusId = status.Id;
+        result.Status = ReferralLinkStatus.Cancelled;
+
         await _linkRepository.Update(result);
         await _linkMaintenanceService.AbandonLinkUsagesByLinkId(result.Id);
 
         scope.Complete();
-      });
+      }, true);
 
       return result;
+    }
+
+    /// <summary>
+    /// Counts completions across all of a referrer's links in this programme, including inactive links.
+    /// Reward processing holds the programme lock while checking and updating totals.
+    /// </summary>
+    public int GetCompletionTotal(Guid programId, Guid userId)
+    {
+      if (programId == Guid.Empty) throw new ArgumentNullException(nameof(programId));
+      if (userId == Guid.Empty) throw new ArgumentNullException(nameof(userId));
+
+      return _linkRepository.Query(false)
+        .Where(o => o.ProgramId == programId && o.UserId == userId)
+        .Sum(o => o.CompletionTotal) ?? 0;
     }
 
     // NOTE:
@@ -404,6 +432,10 @@ namespace Yoma.Core.Domain.Referral.Services
       var statusLimitReached = _linkStatusService.GetByName(ReferralLinkStatus.LimitReached.ToString());
       var transitionedToLimitReached = false;
 
+      // This completion has not been persisted yet; include it once in the programme-wide referrer total.
+      var referrerCompletionTotal = program.CompletionLimitReferee.HasValue
+        ? GetCompletionTotal(program.Id, link.UserId) + 1 : 0;
+
       // Increment total (always)
       link.CompletionTotal = (link.CompletionTotal ?? 0) + 1;
 
@@ -415,7 +447,7 @@ namespace Yoma.Core.Domain.Referral.Services
       //  • cap is configured and total >= cap (per-referrer), OR program already LimitReached (global cap)
       //  • link currently Active
       var perRefCapHit = program.CompletionLimitReferee.HasValue &&
-                         link.CompletionTotal >= program.CompletionLimitReferee.Value;
+                         referrerCompletionTotal >= program.CompletionLimitReferee.Value;
 
       var programCapHit = program.Status == ProgramStatus.LimitReached;
 
@@ -425,13 +457,13 @@ namespace Yoma.Core.Domain.Referral.Services
         {
           if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation(
             "Referral link {LinkId}: per-referrer cap reached (total {Total} >= limit {Limit}) AND program {ProgramId} LIMIT_REACHED — flipping link to LIMIT_REACHED",
-            link.Id, link.CompletionTotal, program.CompletionLimitReferee, program.Id);
+            link.Id, referrerCompletionTotal, program.CompletionLimitReferee, program.Id);
         }
         else if (perRefCapHit)
         {
           if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation(
             "Referral link {LinkId}: per-referrer cap reached (total {Total} >= limit {Limit}) — flipping to LIMIT_REACHED",
-            link.Id, link.CompletionTotal, program.CompletionLimitReferee);
+            link.Id, referrerCompletionTotal, program.CompletionLimitReferee);
         }
         else // programCapHit
         {

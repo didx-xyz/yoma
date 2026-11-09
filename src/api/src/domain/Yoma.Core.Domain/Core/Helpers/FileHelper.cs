@@ -1,7 +1,9 @@
 using CsvHelper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.StaticFiles;
 using System.Globalization;
 using System.IO.Compression;
+using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
 
@@ -10,6 +12,58 @@ namespace Yoma.Core.Domain.Core.Helpers
   public static class FileHelper
   {
     public const string Zip_FileName_Path_Separator = "_ZipFolder_";
+
+    // Cover supported formats missing from the framework map and use audio for Ogg voice notes.
+    private static readonly FileExtensionContentTypeProvider _contentTypeProvider = new()
+    {
+      Mappings =
+      {
+        [".amr"] = "audio/amr",
+        [".mkv"] = "video/x-matroska",
+        [".ogg"] = "audio/ogg",
+        [".zip"] = "application/zip"
+      }
+    };
+
+    private static readonly Dictionary<string, string[]> _contentTypeAliases = new(StringComparer.OrdinalIgnoreCase)
+    {
+      [".jpg"] = ["image/jpg", "image/pjpeg"],
+      [".jpeg"] = ["image/jpg", "image/pjpeg"],
+      [".png"] = ["image/x-png"],
+      [".wav"] = ["audio/x-wav", "audio/wave", "audio/vnd.wave"],
+      [".mp3"] = ["audio/mp3", "audio/x-mp3"],
+      [".m4a"] = ["audio/x-m4a"],
+      [".ogg"] = ["application/ogg", "video/ogg"],
+      [".3gp"] = ["audio/3gpp", "video/3gpp"],
+      [".mkv"] = ["video/matroska"],
+      [".zip"] = ["application/x-zip-compressed"],
+      [".csv"] = ["application/vnd.ms-excel"]
+    };
+
+    /// <summary>
+    /// Retains a supplied MIME type only when it matches the extension's known type or aliases.
+    /// Missing, generic or mismatched types use the server mapping after extension/size validation.
+    /// This does not inspect file contents or replace isolation of document previews.
+    /// </summary>
+    public static string GetContentType(string fileName, string? suppliedContentType = null, FileType? type = null)
+    {
+      ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
+      fileName = fileName.Trim();
+      var extension = Path.GetExtension(fileName);
+      var contentType = _contentTypeProvider.TryGetContentType(fileName, out var mappedContentType)
+        ? mappedContentType : "application/octet-stream";
+
+      // 3GP supports both audio and video; retain a valid supplied type and use the category for fallback.
+      if (type == FileType.VoiceNotes && string.Equals(extension, ".3gp", StringComparison.OrdinalIgnoreCase))
+        contentType = "audio/3gpp";
+
+      if (MediaTypeHeaderValue.TryParse(suppliedContentType, out var supplied) &&
+        (string.Equals(supplied.MediaType, contentType, StringComparison.OrdinalIgnoreCase) ||
+          (_contentTypeAliases.TryGetValue(extension, out var aliases) && aliases.Contains(supplied.MediaType, StringComparer.OrdinalIgnoreCase))))
+        return supplied.ToString();
+
+      return contentType;
+    }
 
     public static IFormFile FromByteArray(string fileName, string contentType, byte[] data)
     {

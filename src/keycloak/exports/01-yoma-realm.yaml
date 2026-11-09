@@ -1147,7 +1147,17 @@ clients:
     authenticationFlowBindingOverrides: {}
     fullScopeAllowed: true
     nodeReRegistrationTimeout: -1
+    # Swagger user sessions need the same subject and exchange audience as yoma-web.
+    protocolMappers:
+      - name: didxme-assertion-audience
+        protocol: openid-connect
+        protocolMapper: oidc-audience-mapper
+        config:
+          included.client.audience: yoma-didxme-assertion
+          access.token.claim: "true"
+          id.token.claim: "false"
     defaultClientScopes:
+      - basic
       - web-origins
       - acr
       - profile
@@ -1160,6 +1170,38 @@ clients:
       - phone
       - offline_access
       - microprofile-jwt
+  # Optional Yoma-side exchange client. SRE supplies the secret and the exact
+  # didx:me consumers issuer; no didx:me resources are managed by this import.
+  - clientId: yoma-didxme-assertion
+    name: Yoma didx:me assertion exchange
+    description: Exchange authenticated Yoma user tokens for single-audience federation assertions
+    enabled: $(env:CLIENT_DIDXME_ASSERTION_ENABLED:-false)
+    clientAuthenticatorType: client-secret
+    secret: $(env:CLIENT_DIDXME_ASSERTION_SECRET:-)
+    protocol: openid-connect
+    publicClient: false
+    bearerOnly: false
+    standardFlowEnabled: false
+    implicitFlowEnabled: false
+    directAccessGrantsEnabled: false
+    serviceAccountsEnabled: false
+    consentRequired: false
+    fullScopeAllowed: false
+    attributes:
+      standard.token.exchange.enabled: "true"
+    protocolMappers:
+      - name: didxme-consumers-audience
+        protocol: openid-connect
+        protocolMapper: oidc-audience-mapper
+        config:
+          included.custom.audience: $(env:CLIENT_DIDXME_ASSERTION_AUDIENCE:-)
+          access.token.claim: "true"
+          id.token.claim: "false"
+    defaultClientScopes:
+      - basic
+      - profile
+      - email
+    optionalClientScopes: []
   - id: e394e8ee-3dcd-47d7-a34a-10e5d9e83fe9
     clientId: yoma-web
     name: yoma-web
@@ -1245,7 +1287,15 @@ clients:
           access.token.claim: "true"
           claim.name: clientAddress
           jsonType.label: String
+      - name: didxme-assertion-audience
+        protocol: openid-connect
+        protocolMapper: oidc-audience-mapper
+        config:
+          included.client.audience: yoma-didxme-assertion
+          access.token.claim: "true"
+          id.token.claim: "false"
     defaultClientScopes:
+      - basic
       - web-origins
       - acr
       - profile

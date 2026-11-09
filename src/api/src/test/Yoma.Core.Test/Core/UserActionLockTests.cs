@@ -279,7 +279,7 @@ namespace Yoma.Core.Test.Core
       Func<Task> CreateAction()
       {
         var fixture = new LinkUsageServiceFixture();
-        fixture.UserService.Setup(service => service.GetByUsername(It.IsAny<string>(), false, false)).Returns(user);
+        fixture.UserService.Setup(service => service.GetCurrentUser(false, false, It.IsAny<bool>())).Returns(user);
         fixture.LinkService.Setup(service => service.GetById(link.Id, true, false, false, false, false, null)).Returns(link);
         fixture.LinkUsageRepository.Setup(repository => repository.Query()).Returns(() => usages.AsQueryable());
         fixture.LinkUsageRepository.Setup(repository => repository.Create(It.IsAny<ReferralLinkUsage>()))
@@ -524,7 +524,7 @@ namespace Yoma.Core.Test.Core
         _redis = redis;
         UserId = userId;
         Context.RequestAborted = TestContext.Current.CancellationToken;
-        Users.Setup(service => service.GetByUsername(It.IsAny<string>(), false, false))
+        Users.Setup(service => service.GetCurrentUser(false, false, It.IsAny<bool>()))
           .Returns(new UserBuilder().WithId(userId).Build());
       }
 

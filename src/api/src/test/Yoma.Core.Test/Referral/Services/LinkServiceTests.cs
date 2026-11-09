@@ -18,6 +18,81 @@ namespace Yoma.Core.Test.Referral.Services
     private const string DefaultUsername = "testuser@example.com";
     #endregion
 
+    #region Completion and Metadata
+    [Fact]
+    public async Task BlockedReferrerCannotCreateAnotherLink()
+    {
+      var fixture = new LinkServiceFixture();
+      var user = new UserBuilder().WithUsername(DefaultUsername).WithCountryId(UserCountryId).Build();
+      var program = new ProgramBuilder().WithCountries([CreateWorldwideCountry()]).Build();
+      SetupCreateMocks(fixture, program, user);
+      fixture.BlockService.Setup(service => service.GetByUserIdOrNull(user.Id))
+        .Returns(new Block { UserId = user.Id, Active = true });
+
+      await Assert.ThrowsAsync<ValidationException>(() => fixture.Build().Create(new ReferralLinkRequestCreate
+      {
+        ProgramId = program.Id,
+        Name = "New link"
+      }));
+
+      fixture.LinkRepository.Verify(repository => repository.Create(It.IsAny<ReferralLink>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CompletionCapIncludesOtherLinksOnlyForTheSameProgrammeAndReferrer()
+    {
+      var fixture = new LinkServiceFixture();
+      var program = new ProgramBuilder().WithCompletionLimitReferee(5).Build();
+      var userId = Guid.NewGuid();
+      var link = new ReferralLinkBuilder().WithProgramId(program.Id).WithUserId(userId)
+        .WithStatus(ReferralLinkStatus.Active).WithCompletionTotal(1).Build();
+      var other = new ReferralLinkBuilder().WithProgramId(program.Id).WithUserId(userId)
+        .WithStatus(ReferralLinkStatus.Cancelled).WithCompletionTotal(3).Build();
+      var otherProgramme = new ReferralLinkBuilder().WithProgramId(Guid.NewGuid()).WithUserId(userId)
+        .WithCompletionTotal(100).Build();
+      var otherReferrer = new ReferralLinkBuilder().WithProgramId(program.Id).WithUserId(Guid.NewGuid())
+        .WithCompletionTotal(100).Build();
+      fixture.LinkRepository.Setup(repository => repository.Query(false))
+        .Returns(new[] { link, other, otherProgramme, otherReferrer }.AsQueryable());
+      var service = fixture.Build();
+
+      Assert.Equal(4, service.GetCompletionTotal(program.Id, userId));
+
+      var result = await service.ProcessCompletion(program, link, null);
+
+      Assert.Equal(2, result.CompletionTotal);
+      Assert.Equal(ReferralLinkStatus.LimitReached, result.Status);
+      Assert.Equal(5, service.GetCompletionTotal(program.Id, userId));
+    }
+
+    [Theory]
+    [InlineData(ReferralLinkStatus.Active)]
+    [InlineData(ReferralLinkStatus.LimitReached)]
+    public async Task MetadataEditUsesCurrentCountersAndStatusUnderTheLock(ReferralLinkStatus status)
+    {
+      var fixture = new LinkServiceFixture();
+      var user = new User { Id = Guid.NewGuid(), Username = DefaultUsername };
+      var link = new ReferralLinkBuilder().WithUserId(user.Id).WithStatus(status).WithCompletionTotal(5).Build();
+      fixture.UserService.Setup(service => service.GetCurrentUser(false, false, It.IsAny<bool>())).Returns(user);
+      fixture.LinkRepository.Setup(repository => repository.Query(true, Domain.Core.LockMode.Wait))
+        .Returns(new[] { link }.AsQueryable());
+      var service = fixture.Build();
+      var request = new ReferralLinkRequestUpdate { Id = link.Id, Name = "Updated name" };
+
+      if (status == ReferralLinkStatus.LimitReached)
+      {
+        await Assert.ThrowsAsync<ValidationException>(() => service.Update(request));
+        fixture.LinkRepository.Verify(repository => repository.Update(It.IsAny<ReferralLink>()), Times.Never);
+      }
+      else
+      {
+        var result = await service.Update(request);
+        Assert.Equal(5, result.CompletionTotal);
+        Assert.Equal("Updated name", result.Name);
+      }
+    }
+    #endregion
+
     #region Helpers
     private static readonly Guid WorldwideCountryId = Guid.Parse("e0000000-0000-0000-0000-000000000099");
     private static readonly Guid UserCountryId = Guid.Parse("e0000000-0000-0000-0000-000000000001");
@@ -59,7 +134,7 @@ namespace Yoma.Core.Test.Referral.Services
         .ReturnsAsync((Program p, bool incremented) => p);
 
       fixture.UserService
-        .Setup(x => x.GetByUsername(DefaultUsername, It.IsAny<bool>(), It.IsAny<bool>()))
+        .Setup(x => x.GetCurrentUser(It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>()))
         .Returns(user);
 
       fixture.CountryService
@@ -263,7 +338,7 @@ namespace Yoma.Core.Test.Referral.Services
         .Returns(program);
 
       fixture.UserService
-        .Setup(x => x.GetByUsername(DefaultUsername, It.IsAny<bool>(), It.IsAny<bool>()))
+        .Setup(x => x.GetCurrentUser(It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>()))
         .Returns(user);
 
       fixture.CountryService
@@ -434,10 +509,11 @@ namespace Yoma.Core.Test.Referral.Services
 
       var links = new List<ReferralLink> { link }.AsQueryable();
       fixture.LinkRepository.Setup(r => r.Query(true)).Returns(links);
+      fixture.LinkRepository.Setup(r => r.Query(true, Domain.Core.LockMode.Wait)).Returns(links);
       fixture.LinkRepository.Setup(r => r.Query(It.IsAny<bool>())).Returns(links);
 
       fixture.UserService
-        .Setup(x => x.GetByUsername(DefaultUsername, It.IsAny<bool>(), It.IsAny<bool>()))
+        .Setup(x => x.GetCurrentUser(It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>()))
         .Returns(user);
 
       var service = fixture.Build();
@@ -468,10 +544,11 @@ namespace Yoma.Core.Test.Referral.Services
 
       var links = new List<ReferralLink> { link }.AsQueryable();
       fixture.LinkRepository.Setup(r => r.Query(true)).Returns(links);
+      fixture.LinkRepository.Setup(r => r.Query(true, Domain.Core.LockMode.Wait)).Returns(links);
       fixture.LinkRepository.Setup(r => r.Query(It.IsAny<bool>())).Returns(links);
 
       fixture.UserService
-        .Setup(x => x.GetByUsername(DefaultUsername, It.IsAny<bool>(), It.IsAny<bool>()))
+        .Setup(x => x.GetCurrentUser(It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>()))
         .Returns(user);
 
       var service = fixture.Build();
@@ -482,6 +559,34 @@ namespace Yoma.Core.Test.Referral.Services
       // Assert
       Assert.Equal(ReferralLinkStatus.Cancelled, result.Status);
       fixture.LinkRepository.Verify(r => r.Update(It.IsAny<ReferralLink>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData(ReferralLinkStatus.Active)]
+    [InlineData(ReferralLinkStatus.Cancelled)]
+    public async Task CancellationPreservesCurrentCountersAndRechecksStatus(ReferralLinkStatus status)
+    {
+      var fixture = new LinkServiceFixture(DefaultUsername);
+      var user = new UserBuilder().WithUsername(DefaultUsername).Build();
+      var initial = new ReferralLinkBuilder().WithUserId(user.Id).WithCompletionTotal(1).Build();
+      var current = new ReferralLinkBuilder().WithId(initial.Id).WithUserId(user.Id)
+        .WithStatus(status).WithCompletionTotal(5).Build();
+      fixture.UserService.Setup(service => service.GetCurrentUser(false, false, It.IsAny<bool>())).Returns(user);
+      fixture.LinkRepository.Setup(repository => repository.Query(true)).Returns(new[] { initial }.AsQueryable());
+      fixture.LinkRepository.Setup(repository => repository.Query(true, Domain.Core.LockMode.Wait)).Returns(() =>
+      {
+        Assert.NotNull(System.Transactions.Transaction.Current);
+        return new[] { current }.AsQueryable();
+      });
+
+      var result = await fixture.Build().Cancel(initial.Id);
+
+      Assert.Equal(5, result.CompletionTotal);
+      Assert.Equal(ReferralLinkStatus.Cancelled, result.Status);
+      fixture.LinkRepository.Verify(repository => repository.Update(It.Is<ReferralLink>(link => link.CompletionTotal == 5)),
+        status == ReferralLinkStatus.Cancelled ? Times.Never() : Times.Once());
+      fixture.LinkMaintenanceService.Verify(service => service.AbandonLinkUsagesByLinkId(initial.Id, null),
+        status == ReferralLinkStatus.Cancelled ? Times.Never() : Times.Once());
     }
 
     #endregion
@@ -507,7 +612,7 @@ namespace Yoma.Core.Test.Referral.Services
       fixture.LinkRepository.Setup(r => r.Query(It.IsAny<bool>())).Returns(links);
 
       fixture.UserService
-        .Setup(x => x.GetByUsername(DefaultUsername, It.IsAny<bool>(), It.IsAny<bool>()))
+        .Setup(x => x.GetCurrentUser(It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>()))
         .Returns(user);
 
       var service = fixture.Build();

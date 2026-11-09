@@ -115,6 +115,45 @@ describe("Card facts say what they are (2026-10-07)", () => {
     assert.equal(texts(scheduleOnly)[0], "Part-time");
   });
 
+  test("a Job's minimum qualification follows employment, labelled through the Education lookup (R19, YOM-1260)", () => {
+    const EDUCATIONS = [
+      { id: "edu-matric", name: "Matric" },
+      { id: "edu-degree", name: "Degree" },
+    ];
+    const job = opportunity({
+      commitmentIntervalDescription: "1 Week",
+      customFields: [
+        { key: "JobEmploymentType", values: ["Permanent"] },
+        { key: "JobMinimumQualification", values: ["edu-matric"] },
+      ] as OpportunityInfo["customFields"],
+    });
+    const [, fact] = cardFacts(job, DEFINITIONS, NOW, false, EDUCATIONS);
+    assert.equal(fact?.text, "Matric required");
+    assert.equal(fact?.tip, "Minimum education: Matric");
+    assert.deepEqual(
+      cardFacts(job, DEFINITIONS, NOW, false, EDUCATIONS).map((f) => f.text),
+      ["Permanent", "Matric required", "1 week effort"],
+    );
+    // The lookup not loaded, or an id it no longer carries: no fact, never a raw id.
+    assert.deepEqual(texts(job), ["Permanent", "1 week effort"]);
+    assert.deepEqual(
+      cardFacts(job, DEFINITIONS, NOW, false, [EDUCATIONS[1]!]).map(
+        (f) => f.text,
+      ),
+      ["Permanent", "1 week effort"],
+    );
+    // Absent on the Job: nothing shows (display only, never an eligibility gate).
+    const none = opportunity({
+      customFields: [
+        { key: "JobEmploymentType", values: ["Permanent"] },
+      ] as OpportunityInfo["customFields"],
+    });
+    assert.deepEqual(
+      cardFacts(none, DEFINITIONS, NOW, false, EDUCATIONS).map((f) => f.text),
+      ["Permanent"],
+    );
+  });
+
   test("the tooltip's two lines: the fact's name and its whole value", () => {
     const learning = opportunity({
       type: "Learning",

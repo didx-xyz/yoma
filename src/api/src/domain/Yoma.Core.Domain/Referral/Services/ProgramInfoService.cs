@@ -41,7 +41,7 @@ namespace Yoma.Core.Domain.Referral.Services
     {
       var countryIdWorldwide = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
       var isAuthenticated = HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor);
-      var user = isAuthenticated ? _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false) : null;
+      var user = isAuthenticated ? _userService.GetCurrentUser(false, false) : null;
       countries = ProgramCountryPolicy.ResolveAvailableCountriesForProgramSearch(countryIdWorldwide, isAuthenticated, user?.CountryId, countries);
 
       //active and started (published state active)
@@ -110,7 +110,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       var countryIdWorldwide = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
       var isAuthenticated = HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor);
-      var user = isAuthenticated ? _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false) : null;
+      var user = isAuthenticated ? _userService.GetCurrentUser(false, false) : null;
       var countries = ProgramCountryPolicy.ResolveAvailableCountriesForProgramSearch(countryIdWorldwide, isAuthenticated, user?.CountryId, filter.Countries);
 
       var filterInternal = new ProgramSearchFilterAdmin
