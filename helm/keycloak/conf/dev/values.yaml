@@ -10,7 +10,7 @@ ingress:
     rules:
       - host: auth.{{ .Values.keycloak.ingressDomain }}
   external:
-    enabled: false
+    enabled: true
     rules:
       - host: "{{ .Values.keycloak.ingressDomain }}"
         paths:
