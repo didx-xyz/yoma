@@ -640,8 +640,10 @@ and the investigation in the YOM-1283 handoff.
    opportunities" in the passport. Ask: alias `Micro-task` → ImpactAction (+ regression test), and
    count Stage credentials whose signed Type is neither a current enum name nor `Task`.
 2. **Protect `JobMinimumQualification`** (`isSystem`/`isProtected`, like `JobWorkSchedule`) so the
-   discovery Job card can show "Education level required" (BA R19). Labels resolve through
-   `/lookup/education`, which Web already caches.
+   discovery Job card can show "Education level required" (BA R19). API seed update prepared on
+   PR #2013; it takes effect only when deployed and the unreleased migration runs. Jason still
+   needs to render the card fact, resolving labels through `/lookup/education`, which Web already
+   caches. See the [2026-11-09 handoff](./YOM-1260-ui-custom-field-filtering-for-opportunities-and-completions/handoffs/2026-11-09-a.md).
 3. **Optional, BA R9:** a skill-overlap sort (`OpportunitySearchOrderField`) so Web can rank by
    the youth's skills instead of only filtering Jobs by them. Not requested by Jason; recorded as
    the only way skills could visibly "affect matches".

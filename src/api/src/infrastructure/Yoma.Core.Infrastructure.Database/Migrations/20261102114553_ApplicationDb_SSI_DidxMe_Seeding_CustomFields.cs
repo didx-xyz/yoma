@@ -9,6 +9,15 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
     public static void Seed(MigrationBuilder migrationBuilder)
     {
       #region Core
+      // Job cards rely on this stable key to display the required education level.
+      migrationBuilder.UpdateData(
+        schema: "Core",
+        table: "CustomFieldDefinition",
+        keyColumn: "Id",
+        keyValue: new Guid("cf0b0001-0929-4cf0-a100-000000000010"),
+        column: "IsSystem",
+        value: true);
+
       // Keep definition IDs, values and options. Recreate credential schemas/presets at the didx:me cutover.
       migrationBuilder.UpdateData(
         schema: "Core",

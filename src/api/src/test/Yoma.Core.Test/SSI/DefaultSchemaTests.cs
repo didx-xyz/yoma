@@ -67,7 +67,8 @@ namespace Yoma.Core.Test.SSI
              Assert.IsType<string>(operation.Values[row, Array.IndexOf(operation.Columns, "Key")])));
       }
 
-      foreach (var operation in new ApplicationDb_SSI_DidxMe().UpOperations.OfType<UpdateDataOperation>())
+      foreach (var operation in new ApplicationDb_SSI_DidxMe().UpOperations.OfType<UpdateDataOperation>()
+        .Where(operation => operation.Schema == "Core" && operation.Table == "CustomFieldDefinition" && operation.Columns.SequenceEqual(["Key"])))
       {
         var id = Assert.IsType<Guid>(operation.KeyValues[0, 0]);
         definitions[id] = (definitions[id].EntityType, Assert.IsType<string>(operation.Values[0, 0]));
