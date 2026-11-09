@@ -39,11 +39,15 @@ namespace Yoma.Core.Test.Referral.Services
         new ReferralLinkUsageBuilder().WithStatus(ReferralLinkUsageStatus.Expired).Build()]);
       fixture.Items.Add(new ReferralLinkUsage
       {
-        UserId = Guid.NewGuid(), Status = ReferralLinkUsageStatus.Abandoned, StatusId = LookupBuilder.UsageStatusAbandonedId
+        UserId = Guid.NewGuid(),
+        Status = ReferralLinkUsageStatus.Abandoned,
+        StatusId = LookupBuilder.UsageStatusAbandonedId
       });
       fixture.Items.Add(new ReferralLinkUsage
       {
-        UserId = Guid.NewGuid(), Status = ReferralLinkUsageStatus.Initiated, StatusId = LookupBuilder.UsageStatusInitiatedId
+        UserId = Guid.NewGuid(),
+        Status = ReferralLinkUsageStatus.Initiated,
+        StatusId = LookupBuilder.UsageStatusInitiatedId
       });
 
       await fixture.Build().ProcessPendingProgress(CancellationToken.None);
