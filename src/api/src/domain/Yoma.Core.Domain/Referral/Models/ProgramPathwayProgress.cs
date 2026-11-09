@@ -12,7 +12,8 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public PathwayOrderMode OrderMode { get; set; }
 
-    public bool Completed => StepsTotal == 0 || StepsCompleted == StepsTotal;
+    public bool Completed => StepsTotal == 0
+      || (Rule == PathwayCompletionRule.Any ? StepsCompleted > 0 : StepsCompleted == StepsTotal);
 
     public DateTimeOffset? DateCompleted =>
     !Completed
@@ -72,7 +73,8 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public short OrderDisplay { get; set; }
 
-    public bool Completed => TasksTotal == 0 || TasksCompleted == TasksTotal;
+    public bool Completed => TasksTotal == 0
+      || (Rule == PathwayCompletionRule.Any ? TasksCompleted > 0 : TasksCompleted == TasksTotal);
 
     public DateTimeOffset? DateCompleted =>
       !Completed

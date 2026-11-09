@@ -364,6 +364,11 @@ namespace Yoma.Core.Domain
         s => s.ProcessDeletion(), options.ResumableUploadStoreDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //referral
+      // Kept in the dashboard for deliberate retries; never scheduled automatically.
+      RecurringJob.AddOrUpdate<ILinkUsageBackgroundService>(
+        "Referral Pending Claim Progress (manual only)",
+        s => s.ProcessPendingProgress(CancellationToken.None), Cron.Never(), new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+
       RecurringJob.AddOrUpdate<IProgramBackgroundService>(
         $"Referral Program Expiration ({ProgramBackgroundService.Statuses_Expirable.JoinNames()} that has ended)",
         s => s.ProcessExpiration(), options.ReferralProgramExpirationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
