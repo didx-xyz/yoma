@@ -37,7 +37,7 @@ Capture and display are [YOM-1255](../YOM-1255-ui-dynamic-custom-fields-for-oppo
 ### Job card education requirement follow-up — 2026-11-09
 
 - [x] API: protect `JobMinimumQualification` in the unreleased migration on PR #2013.
-- [ ] Web / Jason: display the education requirement on Job cards using the existing Education lookup.
+- [x] Web / Jason: display the education requirement on Job cards using the existing Education lookup — on PR #2013, see [2026-11-09-b](./handoffs/2026-11-09-b.md).
 - [ ] After merge/deployment, confirm populated Job cards show the education label and absent values are omitted.
 
 The API update sets `IsSystem = true`; `IsProtected` follows from the existing model. It preserves

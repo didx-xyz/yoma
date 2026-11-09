@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "../support/test";
+import { ApiClient } from "../support/api";
 import { CUSTOM_FIELDS, FIXTURES, FIXTURE_TITLE, ROUTES } from "../seed";
 
 // Custom-field ("type-specific") filters on discovery (YOM-1260 / YOM-1262). Every journey narrows
@@ -141,4 +142,32 @@ test("removing a chip drops that clause and clear filters drops them all", async
   ).toHaveCount(0);
   // Clearing also drops the search text, so discovery is back on its home rails.
   await expect(page.getByRole("region", { name: "Featured" })).toBeVisible();
+});
+
+test("a Job card names its minimum education, labelled through the Education lookup (BA R19, YOM-1260)", async ({
+  page,
+  baseURL,
+}) => {
+  // The seed gives every complete Job the first Education by name; "01 - Job" is one of them.
+  const api = await ApiClient.forRole("youth", baseURL!);
+  const educations = (await api.get("/lookup/education")) as {
+    id: string;
+    name: string;
+  }[];
+  await api.dispose();
+  const expected = [...educations].sort((a, b) =>
+    a.name.localeCompare(b.name),
+  )[0]!.name;
+
+  // The salary URL leaves exactly one result, so the fact belongs to 01 - Job.
+  await page.goto(SALARY_URL);
+  await expect(card(page, FIXTURES.job01)).toBeVisible();
+  await expect(page.locator("#hdrDiscoveryResults")).toHaveText(/^1 match/);
+
+  const fact = page.getByRole("button", {
+    name: `${expected} required (Minimum education: ${expected})`,
+  });
+  await expect(fact).toBeVisible();
+  // The facts are what the card shows, not a raw lookup id.
+  await expect(page.getByText(/^[0-9a-f]{8}-[0-9a-f]{4}-/)).toHaveCount(0);
 });

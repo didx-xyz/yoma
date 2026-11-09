@@ -10,6 +10,7 @@ import {
   IoLanguageOutline,
   IoRibbonOutline,
   IoStarOutline,
+  IoSchoolOutline,
   IoTimeOutline,
 } from "react-icons/io5";
 import type { OpportunityInfo } from "~/api/models/opportunity";
@@ -35,6 +36,7 @@ import { typeBadgeClass, typeBandClass, typeLabel } from "~/lib/typeColours";
 
 export const FACT_ICONS: Record<CardFactKind, React.ElementType> = {
   employment: IoBriefcaseOutline,
+  education: IoSchoolOutline,
   effort: IoTimeOutline,
   difficulty: IoStarOutline,
   tools: IoConstructOutline,
@@ -197,6 +199,7 @@ export const OpportunityCard: React.FC<{
     definitions,
     now,
     effectiveFilters.accommodations.length > 0,
+    lookups.educations,
   );
   // The first country's city, else its name; a Worldwide one names where its provider is based.
   const location = cardPlace(opportunity);

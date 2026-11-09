@@ -3,6 +3,7 @@ import type {
   Accessibility,
   Country,
   Currency,
+  Education,
   EngagementType,
   Language,
   SustainableDevelopmentGoal,
@@ -18,6 +19,7 @@ import type {
 import {
   getAccessibilityOptions,
   getCurrencies,
+  getEducations,
   getEngagementTypes,
   getLanguages,
   getTimeIntervals,
@@ -93,6 +95,12 @@ export interface DiscoveryLookups {
    */
   targetedGroups: TargetedGroup[];
   currencies: Currency[];
+  /**
+   * The Education lookup — labels a Job card's minimum qualification, whose custom-field value
+   * is the lookup id (`cardFacts.ts`, YOM-1260). The Personalize wizard's cache entry; never a
+   * request of its own.
+   */
+  educations: Education[];
   /** Opportunity Type enum name → GUID, for the search request. */
   typeIdByName: Record<string, string>;
   /**
@@ -198,6 +206,12 @@ export function useDiscoveryLookups(): DiscoveryLookups {
     queryFn: () => getLanguages(),
     staleTime: Infinity,
   });
+  // The Education lookup — the wizard's query (`usePreferenceOptions`), one cache entry.
+  const educationsQuery = useQuery({
+    queryKey: ["discovery", "lookup", "educations"],
+    queryFn: () => getEducations(),
+    staleTime: Infinity,
+  });
 
   const queries = [
     typesQuery,
@@ -241,6 +255,7 @@ export function useDiscoveryLookups(): DiscoveryLookups {
     sdgs: sdgsQuery.data ?? NONE,
     targetedGroups: targetedGroupsQuery.data ?? NONE,
     currencies: currenciesQuery.data ?? NONE,
+    educations: educationsQuery.data ?? NONE,
     typeIdByName: Object.fromEntries((types ?? []).map((t) => [t.name, t.id])),
     otherAccommodationId: hasSettled(accessibilityQuery)
       ? (otherIn(accessibilityQuery.data) ??
@@ -269,7 +284,12 @@ export function useDiscoveryLookups(): DiscoveryLookups {
     },
     typesFailed: typesQuery.isError,
     retry: () => {
-      for (const query of [...queries, accessibilityQuery, allLanguagesQuery])
+      for (const query of [
+        ...queries,
+        accessibilityQuery,
+        allLanguagesQuery,
+        educationsQuery,
+      ])
         if (query.isError) void query.refetch();
     },
   };

@@ -50,6 +50,7 @@ export const OpportunityRow: React.FC<{
       definitions,
       now,
       effectiveFilters.accommodations.length > 0,
+      lookups.educations,
     )[0] ?? null;
   const type = typeLabel(lookups.types, opportunity.type);
   // The first country's city, else its name; a Worldwide one names where its provider is based.
