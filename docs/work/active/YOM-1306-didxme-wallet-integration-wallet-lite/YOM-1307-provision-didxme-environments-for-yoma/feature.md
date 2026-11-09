@@ -28,11 +28,15 @@ provided through the approved team handoff, not this public repository.
 - [ ] SRE: provision Dev and deliver environment-specific configuration/secrets privately.
 - [ ] SRE: review development-fixture provisioning requirements before Dev rollout.
 - [x] Review the supplied Dev/Stage configuration structure against the adapter model; secret values and deployed behavior remain unverified.
+- [x] Reject failed or invalid Keycloak provider downloads and bound the local/CI Keycloak readiness wait.
 
 ## Decisions
 
 - Keep the platform independent; no mono source changes or embedded Yoma-stack deployment.
 - Local initialization is not a deployed provisioning mechanism.
+- 2026-11-09: Keep the existing Keycloak provider versions and release URLs. Retry transient
+  download failures, validate each JAR, and fail readiness after about five minutes rather than
+  allowing Compose to wait indefinitely after a Keycloak crash.
 - 2026-11-03: Reuse `AppSettings.SSIEnabledEnvironments` through the local Compose override
   `YOMA_SSI_ENABLED_ENVIRONMENTS`. `None` skips provisioning and workers and returns 503 on SSI
   endpoints. Adrian explicitly retained scheduling; schema-dependent business flows still need

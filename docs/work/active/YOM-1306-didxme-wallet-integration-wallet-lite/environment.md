@@ -56,6 +56,12 @@ Initialization is **Local only**. Dev and later environments use SRE provisionin
 Compose builds the local initializer image with `curl` and `jq` already installed. Startup does
 not download packages; rebuild the image with `--build` after tooling changes.
 
+The separate Yoma `keycloak-init` still installs tools and downloads its public provider JARs.
+Downloads retry transient failures and must pass archive validation before Keycloak starts.
+`keycloak-health` fails after about five minutes if Keycloak never becomes ready. For failures,
+check `docker compose logs keycloak-init keycloak keycloak-health` and retry startup after the
+download/service problem is resolved; a database reset is not required.
+
 ### Optional local startup without SSI
 
 The e2e CI job uses this disabled mode and creates an ignored Local settings file containing `{}` before
