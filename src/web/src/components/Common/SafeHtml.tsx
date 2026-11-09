@@ -119,8 +119,19 @@ export const sanitizeHtmlToReact = (html: string): ReactNode[] => {
   return toReactNodes(document.body, { value: 0 });
 };
 
-export const stripHtmlTags = (html: string): string =>
-  html.replace(/<[^>]*>/g, "");
+/**
+ * Pre-hydration fallback text. The result is rendered as a React text node — never as markup — so
+ * this is about not showing stray tags, not about safety. Still, strip until nothing changes:
+ * a single pass leaves `<scr<b>ipt>` reading `<script>`.
+ */
+const stripHtmlTags = (html: string): string => {
+  let text = html;
+  for (;;) {
+    const next = text.replace(/<[^>]*>/g, "");
+    if (next === text) return text;
+    text = next;
+  }
+};
 
 export const SafeHtml: React.FC<{
   html: string | null | undefined;
