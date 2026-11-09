@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using System.Collections.Concurrent;
@@ -13,6 +14,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
   internal sealed class HolderTokenCacheFixture
   {
     public Mock<IDistributedCacheService> Cache { get; } = new();
+    public Mock<ILogger<HolderAuthService>> Logger { get; } = new();
     public Mock<IDistributedLockService> Lock { get; } = new();
     public IDataProtectionProvider Protection { get; } = new EphemeralDataProtectionProvider();
     public IEncryptionService Encryption => new EncryptionService(Protection);
@@ -22,6 +24,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
 
     public HolderTokenCacheFixture()
     {
+      Logger.Setup(logger => logger.IsEnabled(LogLevel.Error)).Returns(true);
       Cache.Setup(cache => cache.GetAsync<string>(It.IsAny<string>()))
         .ReturnsAsync((string key) => Values.TryGetValue(key, out var value) ? value : null);
       Cache.Setup(cache => cache.SetAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<TimeSpan?>()))
@@ -58,6 +61,6 @@ namespace Yoma.Core.Test.SSI.DidxMe
     }
 
     public HolderAuthService Create(TimeProvider clock, ProviderOptions options) =>
-      new(Options.Create(options), clock, Cache.Object, Lock.Object, Encryption);
+      new(Options.Create(options), clock, Cache.Object, Lock.Object, Encryption, Logger.Object);
   }
 }

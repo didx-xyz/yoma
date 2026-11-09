@@ -1,6 +1,7 @@
 using Flurl.Http;
 using Flurl.Http.Newtonsoft;
 using Flurl.Http.Testing;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Newtonsoft.Json;
@@ -374,6 +375,51 @@ namespace Yoma.Core.Test.SSI.DidxMe
       Assert.Equal(HttpStatusCode.Unauthorized, exception.StatusCode);
       http.ShouldHaveCalled(YomaEndpoint).Times(1);
       http.ShouldNotHaveCalled(HolderEndpoint);
+    }
+
+    [Theory]
+    [InlineData(false, HttpStatusCode.BadRequest)]
+    [InlineData(true, HttpStatusCode.BadRequest)]
+    [InlineData(false, HttpStatusCode.Unauthorized)]
+    [InlineData(true, HttpStatusCode.Unauthorized)]
+    [InlineData(false, HttpStatusCode.InternalServerError)]
+    [InlineData(true, HttpStatusCode.InternalServerError)]
+    public async Task TokenExchangeLogsOnlyBadRequestsWithoutSensitiveContentAndPreservesFailure(bool holderGrant, HttpStatusCode status)
+    {
+      using var http = new HttpTest()
+        .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
+      var clock = new TestClock();
+      var cache = new HolderTokenCacheFixture();
+      using var service = cache.Create(clock, CreateOptions());
+      var context = CreateContext(clock);
+      if (holderGrant)
+        http.RespondWithJson(new
+        {
+          access_token = Token(clock, new JObject { ["sub"] = "user-a", ["aud"] = Audience }),
+          token_type = "Bearer",
+          expires_in = 120
+        });
+
+      const string response = "{\"error\":\"invalid_grant\",\"error_description\":\"private-provider-diagnostic\"}";
+      http.RespondWith(response, (int)status);
+
+      var exception = await Assert.ThrowsAsync<HttpClientException>(() =>
+        service.GetAuthHeader(context, TestContext.Current.CancellationToken));
+
+      Assert.Equal(status, exception.StatusCode);
+      Assert.Equal(response, exception.Message);
+      Assert.Empty(cache.Values);
+      Assert.Equal(holderGrant ? 2 : 1, http.CallLog.Count);
+      var logs = cache.Logger.Invocations.Where(invocation => invocation.Method.Name == "Log").ToList();
+      if (status == HttpStatusCode.BadRequest)
+      {
+        var log = Assert.Single(logs);
+        Assert.Equal(LogLevel.Error, log.Arguments[0]);
+        Assert.Equal("Holder token exchange failed with HTTP 400. Check identity-provider logs for the rejection reason.", log.Arguments[2]?.ToString());
+        Assert.Null(log.Arguments[3]);
+      }
+      else
+        Assert.Empty(logs);
     }
 
     [Fact]

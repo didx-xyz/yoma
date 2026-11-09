@@ -1,10 +1,13 @@
 using Flurl;
 using Flurl.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
+using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Infrastructure.DidxMe.Interfaces;
@@ -29,6 +32,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
     private readonly IDistributedCacheService _cache;
     private readonly IDistributedLockService _distributedLock;
     private readonly IEncryptionService _encryption;
+    private readonly ILogger<HolderAuthService> _logger;
     private const string CachePrefix = "didxme:holder-token:v1";
     private readonly SemaphoreSlim _tokenLock = new(1, 1);
     private volatile CachedToken? _token;
@@ -40,7 +44,8 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
       TimeProvider timeProvider,
       IDistributedCacheService cache,
       IDistributedLockService distributedLock,
-      IEncryptionService encryption)
+      IEncryptionService encryption,
+      ILogger<HolderAuthService> logger)
     {
       ArgumentNullException.ThrowIfNull(options, nameof(options));
 
@@ -49,6 +54,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
       _cache = cache ?? throw new ArgumentNullException(nameof(cache));
       _distributedLock = distributedLock ?? throw new ArgumentNullException(nameof(distributedLock));
       _encryption = encryption ?? throw new ArgumentNullException(nameof(encryption));
+      _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
     #endregion
 
@@ -91,7 +97,20 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
               // Both HTTP legs fit within this budget, leaving a full request timeout as lease margin.
               using var acquisition = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
               acquisition.CancelAfter(TimeSpan.FromSeconds(_options.RequestTimeoutSeconds * 2d));
-              cached = await Exchange(context, key, sourceExpiry, acquisition.Token);
+              try
+              {
+                cached = await Exchange(context, key, sourceExpiry, acquisition.Token);
+              }
+              catch (HttpClientException ex) when (ex.StatusCode == HttpStatusCode.BadRequest)
+              {
+                // Token-exchange rejection blocks wallet access; the shared middleware treats ordinary 400s as Information.
+                // Omit the exception and raw response because identity-provider diagnostics may contain sensitive values.
+                if (_logger.IsEnabled(LogLevel.Error))
+                  _logger.LogError("Holder token exchange failed with HTTP {status}. Check identity-provider logs for the rejection reason.", (int)ex.StatusCode);
+
+                throw;
+              }
+
               var protectedValue = _encryption.Encrypt(JsonConvert.SerializeObject(cached), key);
               var remaining = cached.DateExpire - _timeProvider.GetUtcNow();
               if (remaining <= TimeSpan.Zero)

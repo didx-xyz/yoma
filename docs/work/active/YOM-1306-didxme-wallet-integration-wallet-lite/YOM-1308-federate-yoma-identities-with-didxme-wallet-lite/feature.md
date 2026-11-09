@@ -6,7 +6,7 @@
 - **Epic**: [YOM-1306](../README.md)
 - **Owner**: Adrian; participant journey with Jason
 - **Areas**: API, web (participant journey), Keycloak
-- **Status**: in-progress — local API identity flow verified; browser/Dev checks remain
+- **Status**: in-progress — local API and Dev test-user wallet reads verified; release checks remain
 
 ## Goal
 
@@ -21,6 +21,8 @@ security/configuration and investigation results belong in the private team hand
 - [x] Verify participant identity resolution and authenticated API wallet reads locally.
 - [x] Align full-reset development fixture identity IDs with SQL seeds.
 - [x] Verify automatic Local integration initialization and repeatable local configuration.
+- [x] Adrian confirmed Dev test-user issuance and wallet list/detail for YoID and opportunity credentials on 2026-11-09.
+- [x] Surface holder token-exchange HTTP 400 failures at Error level without adding sensitive response content to that entry.
 - [ ] Verify browser sign-in, refresh and subsequent wallet access with Jason.
 - [x] Adrian verified mobile-only issuance, then listing/detail of the existing YoID after adding email and signing in again through Swagger. Frontend verification remains separate.
 - [ ] Confirm Dev provisioning/configuration privately with SRE before rollout.
@@ -31,6 +33,7 @@ security/configuration and investigation results belong in the private team hand
 - Participant API authentication remains required; successful local online access does not
   establish completed background recovery/Replay.
 - Fixture identity IDs are test-data conventions, not runtime identity assumptions.
+- 2026-11-09: Log holder token-exchange HTTP 400 failures in the provider adapter, preserving the existing exception and response. Ordinary API 400 classification stays unchanged; provider diagnostics are checked privately.
 - Mono remains independently managed. Public setup is in the [environment guide](../environment.md).
 - 2026-11-02: Remove detailed private platform trust/grant configuration and security probes from
   public Markdown. Preserve authorized engineering material privately; the affected branch history was subsequently cleaned.
@@ -39,3 +42,4 @@ security/configuration and investigation results belong in the private team hand
 
 - [Adapter tasks](../YOM-1309-use-didxme-for-yoma-wallets-and-credential-issuance/feature.md)
 - [Session handoff](./handoffs/2026-11-02-a.md)
+- [Federation logging handoff](./handoffs/2026-11-09-a.md)
