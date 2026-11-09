@@ -118,5 +118,30 @@ namespace Yoma.Core.Test.Core.Extensions
     {
       Assert.Equal(expected, html.HtmlToMarkdown());
     }
+
+    [Theory]
+    [InlineData("a < b and c > d", "a < b and c > d")]
+    [InlineData("a < b\nthen > d", "a < b\nthen > d")]
+    [InlineData("a < b\n<span>kept</span>", "a < b\n kept")]
+    [InlineData("a <broken <span>kept</span>", "a <broken kept")]
+    [InlineData("<span\nclass='note'>kept</span>", "kept")]
+    [InlineData("<!-- editor note --><!DOCTYPE html><span>kept</span>", "kept")]
+    public void RemoveHtmlTags_PreservesLiteralComparisonsAndUnclosedBrackets(string html, string expected)
+    {
+      Assert.Equal(expected, html.RemoveHtmlTags());
+    }
+
+    [Theory]
+    [InlineData("a < b and c > d", "a &lt; b and c &gt; d")]
+    [InlineData("a < b\nthen > d", "a &lt; b\nthen &gt; d")]
+    [InlineData("a < b\n<span>kept</span>", "a &lt; b\nkept")]
+    [InlineData("a <broken <span>kept</span>", "a &lt;broken kept")]
+    [InlineData("a < b <u>kept</u>", "a &lt; b <u>kept</u>")]
+    [InlineData("<a href='https://example.com'>a < b <span\nclass='note'>kept</span></a>", "[a &lt; b kept](https://example.com/)")]
+    [InlineData("<!-- editor note --><!DOCTYPE html><span>kept</span>", "kept")]
+    public void HtmlToMarkdown_EncodesLiteralBracketsWithoutLosingText(string html, string expected)
+    {
+      Assert.Equal(expected, html.HtmlToMarkdown());
+    }
   }
 }

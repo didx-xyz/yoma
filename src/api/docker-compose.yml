@@ -311,10 +311,11 @@ services:
     # Local only: mono is started independently, never managed by this Compose project.
     # Run after the Yoma realm import and before the API, without depending on keycloak-users
     # (which itself waits for the API). Resources are reused; fixed local client secrets are applied.
-    image: docker.io/curlimages/curl
+    build:
+      context: ./cicd/scripts/didxme-init
     container_name: didxme-init
     restart: "no"
-    user: 0:0 # same curl/jq tooling pattern as keycloak-users
+    user: 0:0 # write the bind-mounted Local settings
     environment:
       YOMA_ENVIRONMENT: Local
       # One local override controls both provisioning and the API's existing SSI setting.

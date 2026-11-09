@@ -27,6 +27,7 @@ provided through the approved team handoff, not this public repository.
 - [ ] Help Jason prepare his supported standalone setup and privately supplied Local settings.
 - [ ] SRE: provision Dev and deliver environment-specific configuration/secrets privately.
 - [ ] SRE: review development-fixture provisioning requirements before Dev rollout.
+- [x] Review the supplied Dev/Stage configuration structure against the adapter model; secret values and deployed behavior remain unverified.
 
 ## Decisions
 

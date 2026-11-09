@@ -1,5 +1,4 @@
 using FluentValidation;
-using Hangfire;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -58,7 +57,6 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IRepository<Models.OrganizationProviderType> _organizationProviderTypeRepository;
     private readonly IRepository<OrganizationDocument> _organizationDocumentRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
-    private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly IDistributedLockService _distributedLockService;
 
     private static readonly OrganizationStatus[] Statuses_Updatable = [OrganizationStatus.Active, OrganizationStatus.Inactive, OrganizationStatus.Declined];
@@ -93,7 +91,6 @@ namespace Yoma.Core.Domain.Entity.Services
         IRepository<Models.OrganizationProviderType> organizationProviderTypeRepository,
         IRepository<OrganizationDocument> organizationDocumentRepository,
         IExecutionStrategyService executionStrategyService,
-        IBackgroundJobClient backgroundJobClient,
         IDistributedLockService distributedLockService)
     {
       _logger = logger;
@@ -120,7 +117,6 @@ namespace Yoma.Core.Domain.Entity.Services
       _organizationProviderTypeRepository = organizationProviderTypeRepository;
       _organizationDocumentRepository = organizationDocumentRepository;
       _executionStrategyService = executionStrategyService;
-      _backgroundJobClient = backgroundJobClient ?? throw new ArgumentNullException(nameof(backgroundJobClient));
       _distributedLockService = distributedLockService ?? throw new ArgumentNullException(nameof(distributedLockService));
     }
     #endregion
@@ -419,7 +415,7 @@ namespace Yoma.Core.Domain.Entity.Services
         throw;
       }
 
-      await UpdateAdminRolesAfterCommit(result.Administrators?.Select(o => o.Id).ToList() ?? []);
+      await UpdateAdminRoles(result.Administrators?.Select(o => o.Id).ToList() ?? []);
 
       await SendNotification(result, NotificationType.Organization_Approval_Requested);
 
@@ -603,7 +599,7 @@ namespace Yoma.Core.Domain.Entity.Services
         throw;
       }
 
-      await UpdateAdminRolesAfterCommit(adminIds.Union(result.Administrators?.Select(o => o.Id) ?? []).ToList());
+      await UpdateAdminRoles(adminIds.Union(result.Administrators?.Select(o => o.Id) ?? []).ToList());
 
       if (statusCurrent != OrganizationStatus.Inactive && result.Status == OrganizationStatus.Inactive)
         await SendNotification(result, NotificationType.Organization_Approval_Requested);
@@ -965,7 +961,7 @@ namespace Yoma.Core.Domain.Entity.Services
         scope.Complete();
       });
 
-      await UpdateAdminRolesAfterCommit(adminIds);
+      await UpdateAdminRoles(adminIds);
 
       if (statusCurrent != result.Status)
         await _mediator.Publish(new OrganizationStatusChangedEvent(result));
@@ -998,44 +994,12 @@ namespace Yoma.Core.Domain.Entity.Services
         scope.Complete();
       });
 
-      await UpdateAdminRolesAfterCommit(adminIds);
+      await UpdateAdminRoles(adminIds);
 
       if (statusCurrent != result.Status)
         await _mediator.Publish(new OrganizationStatusChangedEvent(result));
 
       return result;
-    }
-
-    /// <summary>
-    /// Reconciles external roles from committed memberships. Retries never replay an old grant/removal
-    /// decision, and membership in another organization keeps the administrator role. Immediate calls
-    /// and background retries share a per-user lock and the existing user-action lock timings.
-    /// </summary>
-    public async Task SynchronizeAdminRoles(List<Guid> userIds)
-    {
-      ArgumentNullException.ThrowIfNull(userIds);
-
-      foreach (var userId in userIds.Distinct())
-      {
-        var synchronized = await _distributedLockService.TryRunWithLockAsync($"organization_admin_roles:{userId}",
-          TimeSpan.FromSeconds(_appSettings.DistributedLockUserActionLeaseDurationInSeconds),
-          TimeSpan.FromMilliseconds(_appSettings.DistributedLockUserActionAcquireTimeoutInMilliseconds), async () =>
-          {
-            // Read membership only after acquiring the lock: an older grant must not finish after a newer removal.
-            var user = _userService.GetById(userId, false, false);
-            if (!user.ExternalId.HasValue)
-              throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
-
-            if (_organizationUserRepository.Query().Any(o => o.UserId == userId))
-              await _identityProviderClient.EnsureRoles(user.ExternalId.Value, [Core.Constants.Role_OrganizationAdmin]);
-            else
-              await _identityProviderClient.RemoveRoles(user.ExternalId.Value, [Core.Constants.Role_OrganizationAdmin]);
-          });
-
-        // Never report successful reconciliation when another worker held the lock; Hangfire must retry it.
-        if (!synchronized)
-          throw new RequestInProgressException("Administrator role synchronization is already in progress. Please try again.");
-      }
     }
 
     public async Task ResetRewardCumulativesCurrentFinancialYear(bool actionedBySystem)
@@ -1117,14 +1081,36 @@ namespace Yoma.Core.Domain.Entity.Services
     #endregion
 
     #region Private Members
-    private async Task UpdateAdminRolesAfterCommit(List<Guid> userIds)
+    /// <summary>
+    /// Updates roles inline after the membership transaction commits. Reads current memberships under
+    /// a per-user lock, retaining the role when another organisation still needs it. Failures propagate
+    /// to the caller; membership is already saved and no automatic background retry is scheduled.
+    /// </summary>
+    private async Task UpdateAdminRoles(List<Guid> userIds)
     {
-      if (userIds.Count == 0) return;
+      ArgumentNullException.ThrowIfNull(userIds);
 
-      // Queue a retryable reconciliation after the owning transaction has committed. Also apply it now
-      // so successful requests retain their existing immediate role-assignment behavior.
-      _backgroundJobClient.Enqueue<IOrganizationService>(service => service.SynchronizeAdminRoles(userIds));
-      await SynchronizeAdminRoles(userIds);
+      foreach (var userId in userIds.Distinct())
+      {
+        var synchronized = await _distributedLockService.TryRunWithLockAsync($"organization_admin_roles:{userId}",
+          TimeSpan.FromSeconds(_appSettings.DistributedLockUserActionLeaseDurationInSeconds),
+          TimeSpan.FromMilliseconds(_appSettings.DistributedLockUserActionAcquireTimeoutInMilliseconds), async () =>
+          {
+            // Read membership only after acquiring the lock: an older grant must not finish after a newer removal.
+            var user = _userService.GetById(userId, false, false);
+            if (!user.ExternalId.HasValue)
+              throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
+
+            if (_organizationUserRepository.Query().Any(o => o.UserId == userId))
+              await _identityProviderClient.EnsureRoles(user.ExternalId.Value, [Core.Constants.Role_OrganizationAdmin]);
+            else
+              await _identityProviderClient.RemoveRoles(user.ExternalId.Value, [Core.Constants.Role_OrganizationAdmin]);
+          });
+
+        // A busy lock must not be reported as a successful role update.
+        if (!synchronized)
+          throw new RequestInProgressException("Administrator role synchronization is already in progress. Please try again.");
+      }
     }
 
     private bool IsAdmin(Organization organization, bool throwUnauthorized)

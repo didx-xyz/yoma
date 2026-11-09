@@ -9,7 +9,7 @@ log() { printf '%s\n' "didxme-init: $*"; }
 fail() { log "ERROR: $*"; exit 1; }
 
 [ "${YOMA_ENVIRONMENT:-}" = Local ] || fail 'This initializer is restricted to Local.'
-# Match the API environment list before installing tools, reading settings or contacting mono.
+# Match the API environment list before checking tools, reading settings or contacting mono.
 # The same Compose value overrides AppSettings.SSIEnabledEnvironments in the API container.
 ssi_environments=$(printf '%s' "${YOMA_SSI_ENABLED_ENVIRONMENTS:-Local, Development, Staging, Production}" | tr '[:upper:]' '[:lower:]')
 ssi_local=false
@@ -31,7 +31,7 @@ if [ "$ssi_local" = false ]; then
   exit 0
 fi
 
-command -v jq >/dev/null 2>&1 || /sbin/apk add --no-cache jq
+command -v jq >/dev/null 2>&1 || fail 'jq is missing; rebuild the local didxme-init image.'
 settings=${LOCAL_SETTINGS_FILE:-/settings/appsettings.Local.json}
 [ -f "$settings" ] && [ -w "$settings" ] || fail 'Mount the existing ignored appsettings.Local.json read/write.'
 [ -n "${YOMA_ASSERTION_CLIENT_SECRET:-}" ] || fail 'The local Yoma assertion-client secret is required.'

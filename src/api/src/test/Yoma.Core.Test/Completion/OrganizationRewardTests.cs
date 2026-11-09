@@ -97,7 +97,7 @@ namespace Yoma.Core.Test.Completion
           new OrganizationRequestUpdateRewardPoolValidator(),
           new OrganizationSearchFilterValidator(), new OrganizationRequestUpdateStatusValidator(), new SettingsRequestValidator(), Mock.Of<IMediator>(),
           Repository.Object, Mock.Of<IRepository<OrganizationUser>>(), Mock.Of<IRepository<OrganizationProviderType>>(),
-          Mock.Of<IRepository<OrganizationDocument>>(), Mock.Of<IExecutionStrategyService>(), Mock.Of<Hangfire.IBackgroundJobClient>(),
+          Mock.Of<IRepository<OrganizationDocument>>(), Mock.Of<IExecutionStrategyService>(),
           Mock.Of<IDistributedLockService>());
       }
     }

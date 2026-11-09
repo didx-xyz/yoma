@@ -45,7 +45,9 @@ security configuration and privileged workflows are held in the private engineer
   with sensitive data redacted and no duplicated Aries handlers.
 - [x] Adrian reviewed, committed and pushed the implementation batch.
 - [x] Adrian committed and pushed the Medium API batch on PR #2013 (2026-11-06).
-- [ ] Adrian reviews the remaining PR follow-ups in the [2026-11-08 handoff](../handoffs/2026-11-08-a.md); changes are prepared locally.
+- [x] Adrian committed and pushed the first PR follow-up batch on 2026-11-08.
+- [ ] Adrian reviews the subsequent API corrections from the new full review in the
+  [2026-11-08 handoff](../handoffs/2026-11-08-a.md); this second batch remains local.
 - [ ] Provision/verify Dev with SRE, separating once-off setup from ongoing configuration/secrets.
 - [x] Prepare the provider-reset seed in the current unpublished migration; verify preserved dates, current default schema selection and reset state against disposable PostgreSQL.
 - [x] Correct the reset to replace historical YoID names with `YoID|Default` across all statuses; verify both credential families resolve current defaults without changing issued dates.
@@ -57,6 +59,12 @@ security configuration and privileged workflows are held in the private engineer
 
 ## Decisions
 
+- 2026-11-08, Adrian's review: synchronize administrator roles inline after membership commits.
+  Remove the ad hoc Hangfire retry and its job-facing interface method. Preserve the per-user lock,
+  current-membership checks and normal API errors. A failed external call requires an explicit retry;
+  a failed database commit never changes roles. This supersedes the queued-recovery approach.
+- 2026-11-08: Preserve literal comparisons and unclosed brackets during HTML-to-text conversion,
+  while continuing to remove multiline source tags. UI rendering still requires its own protection.
 - 2026-11-08: Extend the one-off cutover seed to reset existing opportunity schema selections,
   not only issuance schedules. Future completions then use the same current defaults. Preserve
   issuance enablement and leave disabled opportunities without a selection unchanged.
@@ -78,7 +86,9 @@ security configuration and privileged workflows are held in the private engineer
   This supersedes the earlier decision to preserve YoID names; both families resolve the latest seeded version.
 - Keep organisation scheduling and Aries signing behavior unchanged. Adapt current didx:me
   signing in infrastructure; future per-organisation signing is a separate design decision.
-- Schema and issuance stores preserve the current domain contract while provider fallback remains.
+- Schema and issuance stores preserve the current domain contract. Aries infrastructure is retained
+  for a planned rollback requiring compatible configuration and restored provider mappings/data;
+  switching DI does not restore IDs cleared by the reset migration or the previous runtime state.
 - Validate complete attribute names in preset seeding, not unrelated entity/CF read paths.
 - Shorten source CF names with ID-preserving migration; coordinate web and CSV references.
 - 2026-11-02: Cache holder tokens securely across requests; retain issuer caching behavior.

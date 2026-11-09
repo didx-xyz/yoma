@@ -8,6 +8,7 @@ import base64
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -219,6 +220,23 @@ class InitTests(unittest.TestCase):
                 result = self.run_init()
                 self.assertEqual(0, result.returncode, result.stdout + result.stderr)
                 self.assertIn("SSI is disabled locally", result.stdout)
+                self.assertNotIn("calls", json.loads(self.state.read_text()))
+                self.assertFalse(self.settings.exists())
+
+    def test_missing_jq_fails_enabled_startup_but_does_not_block_disabled_ssi(self):
+        tools = self.root / "tools"
+        tools.mkdir()
+        for name in ["sh", "tr", "sed"]:
+            (tools / name).symlink_to(shutil.which(name))
+        self.env["PATH"] = str(tools)
+        self.settings.unlink()
+
+        for environments, expected_code in [("Local", 1), ("None", 0)]:
+            with self.subTest(environments=environments):
+                self.env["YOMA_SSI_ENABLED_ENVIRONMENTS"] = environments
+                result = self.run_init()
+                self.assertEqual(expected_code, result.returncode, result.stdout + result.stderr)
+                self.assertIn("jq is missing" if expected_code else "SSI is disabled locally", result.stdout)
                 self.assertNotIn("calls", json.loads(self.state.read_text()))
                 self.assertFalse(self.settings.exists())
 

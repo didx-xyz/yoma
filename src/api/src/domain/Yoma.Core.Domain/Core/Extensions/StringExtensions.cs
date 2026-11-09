@@ -391,10 +391,11 @@ namespace Yoma.Core.Domain.Core.Extensions
     [GeneratedRegex(@"\*")]
     private static partial Regex MarkdownAsterisks();
 
-    [GeneratedRegex("<.*?>", RegexOptions.Singleline)]
+    // Match tag names and multiline attributes without consuming text before another opening bracket.
+    [GeneratedRegex(@"<(?:!|/?[a-z][a-z0-9:-]*(?=[\s/>]))[^<>]*>", RegexOptions.IgnoreCase)]
     private static partial Regex HtmlTags();
 
-    [GeneratedRegex(@"<(?!/?u>).*?>", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
+    [GeneratedRegex(@"<(?!/?u>)(?:!|/?[a-z][a-z0-9:-]*(?=[\s/>]))[^<>]*>", RegexOptions.IgnoreCase)]
     private static partial Regex HtmlTagsExceptUnderline();
 
     [GeneratedRegex(@"</?u>|[<>]")]

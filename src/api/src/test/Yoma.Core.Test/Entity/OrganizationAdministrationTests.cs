@@ -1,6 +1,3 @@
-using Hangfire;
-using Hangfire.Common;
-using Hangfire.States;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -78,24 +75,19 @@ namespace Yoma.Core.Test.Entity
 
       fixture.MembersRepository.Verify(repository => repository.Create(It.IsAny<OrganizationUser>()), Times.Once);
       fixture.Identity.VerifyNoOtherCalls();
-      fixture.Jobs.VerifyNoOtherCalls();
     }
 
     [Fact]
-    public async Task RolesAreGrantedOnlyAfterTheMembershipTransactionAndAReconciliationIsQueued()
+    public async Task RolesAreGrantedInlineAfterTheMembershipTransaction()
     {
       var fixture = new Fixture();
       fixture.Identity.Setup(client => client.EnsureRoles(fixture.User.ExternalId!.Value, It.IsAny<List<string>>()))
         .Callback(() => Assert.Null(Transaction.Current)).Returns(Task.CompletedTask);
-      fixture.Jobs.Setup(client => client.Create(It.IsAny<Job>(), It.IsAny<IState>()))
-        .Callback(() => Assert.Null(Transaction.Current)).Returns("test-job");
 
       await fixture.Service.AssignAdmins(fixture.Item.Id, [fixture.User.Username], true);
 
       Assert.Single(fixture.Members);
       fixture.Identity.Verify(client => client.EnsureRoles(fixture.User.ExternalId!.Value, It.IsAny<List<string>>()), Times.Once);
-      fixture.Jobs.Verify(client => client.Create(It.Is<Job>(job => job.Method.Name == nameof(IOrganizationService.SynchronizeAdminRoles)),
-        It.IsAny<EnqueuedState>()), Times.Once);
     }
 
     [Fact]
@@ -109,14 +101,12 @@ namespace Yoma.Core.Test.Entity
       await fixture.Service.AssignAdmins(fixture.Item.Id, [fixture.User.Username], true);
 
       Assert.Equal(2, fixture.Members.Count);
-      fixture.Jobs.Verify(client => client.Create(It.Is<Job>(job =>
-        ((List<Guid>)job.Args[0]).SequenceEqual(new[] { fixture.User.Id })), It.IsAny<EnqueuedState>()), Times.Once);
       fixture.Identity.Verify(client => client.EnsureRoles(fixture.User.ExternalId!.Value, It.IsAny<List<string>>()), Times.Once);
       fixture.Identity.VerifyNoOtherCalls();
     }
 
     [Fact]
-    public async Task DatabaseFailureDoesNotGrantRolesOrScheduleReconciliation()
+    public async Task DatabaseFailureDoesNotGrantRoles()
     {
       var fixture = new Fixture();
       fixture.Repository.Setup(repository => repository.Update(It.IsAny<Organization>()))
@@ -125,23 +115,74 @@ namespace Yoma.Core.Test.Entity
       await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.Service.AssignAdmins(fixture.Item.Id, [fixture.User.Username], true));
 
       fixture.Identity.VerifyNoOtherCalls();
-      fixture.Jobs.VerifyNoOtherCalls();
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task TransactionCommitFailureDoesNotChangeExternalRoles(bool remove)
+    {
+      var fixture = new Fixture();
+      if (remove)
+      {
+        fixture.Members.Add(new OrganizationUser { OrganizationId = fixture.Item.Id, UserId = fixture.User.Id });
+        fixture.Item.Administrators = [new UserInfo { Id = fixture.User.Id, Username = fixture.User.Username }];
+      }
+      var enlistment = new Mock<IEnlistmentNotification>();
+      enlistment.Setup(item => item.Prepare(It.IsAny<PreparingEnlistment>()))
+        .Callback((PreparingEnlistment item) => item.ForceRollback(new InvalidOperationException("Commit failed")));
+      enlistment.Setup(item => item.Rollback(It.IsAny<Enlistment>())).Callback((Enlistment item) => item.Done());
+      fixture.Repository.Setup(repository => repository.Update(It.IsAny<Organization>()))
+        .Callback(() => Transaction.Current!.EnlistVolatile(enlistment.Object, EnlistmentOptions.None))
+        .ReturnsAsync(fixture.Item);
+
+      await Assert.ThrowsAsync<TransactionAbortedException>(() => remove
+        ? fixture.Service.RemoveAdmins(fixture.Item.Id, [fixture.User.Username], true)
+        : fixture.Service.AssignAdmins(fixture.Item.Id, [fixture.User.Username], true));
+
+      enlistment.Verify(item => item.Prepare(It.IsAny<PreparingEnlistment>()), Times.Once);
+      fixture.Identity.VerifyNoOtherCalls();
     }
 
     [Fact]
-    public async Task RetryUsesCurrentMembershipRatherThanTheOriginalGrantDecision()
+    public async Task FailedRoleGrantPropagatesAndCanBeRetriedWithoutDuplicatingMembership()
     {
       var fixture = new Fixture();
+      var synchronizationError = new InvalidOperationException("Identity provider unavailable");
       fixture.Identity.Setup(client => client.EnsureRoles(It.IsAny<Guid>(), It.IsAny<List<string>>()))
+        .ThrowsAsync(synchronizationError);
+
+      var result = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        fixture.Service.AssignAdmins(fixture.Item.Id, [fixture.User.Username], true));
+
+      Assert.Same(synchronizationError, result);
+      Assert.Single(fixture.Members);
+      fixture.Identity.Setup(client => client.EnsureRoles(It.IsAny<Guid>(), It.IsAny<List<string>>()))
+        .Returns(Task.CompletedTask);
+      await fixture.Service.AssignAdmins(fixture.Item.Id, [fixture.User.Username], true);
+
+      Assert.Single(fixture.Members);
+      fixture.Identity.Verify(client => client.EnsureRoles(fixture.User.ExternalId!.Value, It.IsAny<List<string>>()), Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task FailedRoleRemovalPropagatesAndCanBeRetriedAfterMembershipWasRemoved()
+    {
+      var fixture = new Fixture();
+      fixture.Members.Add(new OrganizationUser { OrganizationId = fixture.Item.Id, UserId = fixture.User.Id });
+      fixture.Item.Administrators = [new UserInfo { Id = fixture.User.Id, Username = fixture.User.Username }];
+      fixture.Identity.Setup(client => client.RemoveRoles(fixture.User.ExternalId!.Value, It.IsAny<List<string>>()))
         .ThrowsAsync(new InvalidOperationException("Identity provider unavailable"));
 
-      await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.Service.AssignAdmins(fixture.Item.Id, [fixture.User.Username], true));
-      fixture.Jobs.Verify(client => client.Create(It.IsAny<Job>(), It.IsAny<IState>()), Times.Once);
+      await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.Service.RemoveAdmins(fixture.Item.Id, [fixture.User.Username], true));
 
-      fixture.Members.Clear(); // Membership was removed before the queued retry.
-      await fixture.Service.SynchronizeAdminRoles([fixture.User.Id]);
+      Assert.Empty(fixture.Members);
+      fixture.Identity.Setup(client => client.RemoveRoles(fixture.User.ExternalId!.Value, It.IsAny<List<string>>()))
+        .Returns(Task.CompletedTask);
+      await fixture.Service.RemoveAdmins(fixture.Item.Id, [fixture.User.Username], true);
 
-      fixture.Identity.Verify(client => client.RemoveRoles(fixture.User.ExternalId!.Value, It.IsAny<List<string>>()), Times.Once);
+      Assert.Empty(fixture.Members);
+      fixture.Identity.Verify(client => client.RemoveRoles(fixture.User.ExternalId!.Value, It.IsAny<List<string>>()), Times.Exactly(2));
     }
 
     [Fact]
@@ -149,6 +190,7 @@ namespace Yoma.Core.Test.Entity
     {
       var fixture = new Fixture();
       fixture.Members.Add(new OrganizationUser { OrganizationId = fixture.Item.Id, UserId = fixture.User.Id });
+      fixture.Item.Administrators = [new UserInfo { Id = fixture.User.Id, Username = fixture.User.Username }];
       using var gate = new SemaphoreSlim(1);
       fixture.Locks.Setup(service => service.TryRunWithLockAsync($"organization_admin_roles:{fixture.User.Id}",
         It.IsAny<TimeSpan>(), It.IsAny<TimeSpan>(), It.IsAny<Func<Task>>(), It.IsAny<CancellationToken>(), It.IsAny<string>()))
@@ -178,10 +220,9 @@ namespace Yoma.Core.Test.Entity
       fixture.Identity.Setup(client => client.RemoveRoles(fixture.User.ExternalId!.Value, It.IsAny<List<string>>()))
         .Callback(() => hasRole = false).Returns(Task.CompletedTask);
 
-      var granting = fixture.Service.SynchronizeAdminRoles([fixture.User.Id]);
+      var granting = fixture.Service.AssignAdmins(fixture.Item.Id, [fixture.User.Username], true);
       await grantStarted.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
-      fixture.Members.Clear();
-      var removing = fixture.Service.SynchronizeAdminRoles([fixture.User.Id]);
+      var removing = fixture.Service.RemoveAdmins(fixture.Item.Id, [fixture.User.Username], true);
       try
       {
         // The newer removal must wait for the older external grant, then read current membership.
@@ -208,7 +249,6 @@ namespace Yoma.Core.Test.Entity
         fixture.Service.AssignAdmins(fixture.Item.Id, [fixture.User.Username], true));
 
       Assert.Single(fixture.Members);
-      fixture.Jobs.Verify(client => client.Create(It.IsAny<Job>(), It.IsAny<IState>()), Times.Once);
       fixture.Identity.VerifyNoOtherCalls();
     }
 
@@ -235,7 +275,6 @@ namespace Yoma.Core.Test.Entity
       await fixture.Service.RemoveAdmins(fixture.Item.Id, [fixture.User.Username], true);
 
       fixture.Identity.Verify(client => client.RemoveRoles(fixture.User.ExternalId!.Value, It.IsAny<List<string>>()), Times.Once);
-      fixture.Jobs.Verify(client => client.Create(It.IsAny<Job>(), It.IsAny<IState>()), Times.Once);
     }
 
     [Fact]
@@ -253,7 +292,6 @@ namespace Yoma.Core.Test.Entity
       fixture.Repository.Verify(repository => repository.Query(true, LockMode.Wait), Times.Once);
       fixture.MembersRepository.VerifyNoOtherCalls();
       fixture.Identity.VerifyNoOtherCalls();
-      fixture.Jobs.VerifyNoOtherCalls();
     }
 
     [Fact]
@@ -326,7 +364,6 @@ namespace Yoma.Core.Test.Entity
       internal Mock<IRepositoryBatchedValueContainsWithNavigationAndTrackingTotals<Organization>> Repository { get; } = new();
       internal Mock<IRepository<OrganizationUser>> MembersRepository { get; } = new();
       internal Mock<IIdentityProviderClient> Identity { get; } = new();
-      internal Mock<IBackgroundJobClient> Jobs { get; } = new();
       internal Mock<IDistributedLockService> Locks { get; } = new();
       internal Mock<IBlobService> Blobs { get; } = new();
       internal OrganizationService Service { get; }
@@ -389,7 +426,7 @@ namespace Yoma.Core.Test.Entity
           new OrganizationRequestValidatorCreate(countries.Object, providers.Object), new OrganizationRequestValidatorUpdate(countries.Object, providers.Object),
           new OrganizationRequestUpdateRewardPoolValidator(), new OrganizationSearchFilterValidator(), new OrganizationRequestUpdateStatusValidator(),
           new SettingsRequestValidator(), Mock.Of<IMediator>(), Repository.Object, MembersRepository.Object,
-          Mock.Of<IRepository<OrganizationProviderType>>(), Mock.Of<IRepository<OrganizationDocument>>(), strategy.Object, Jobs.Object, Locks.Object);
+          Mock.Of<IRepository<OrganizationProviderType>>(), Mock.Of<IRepository<OrganizationDocument>>(), strategy.Object, Locks.Object);
       }
     }
     #endregion

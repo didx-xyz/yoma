@@ -46,8 +46,6 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
     Task<Organization> RemoveAdmins(Guid id, List<string> usernames, bool ensureOrganizationAuthorization);
 
-    Task SynchronizeAdminRoles(List<Guid> userIds);
-
     Task ResetRewardCumulativesCurrentFinancialYear(bool actionedBySystem);
 
     Task AllocateRewards(Organization organization, decimal? zltoReward);

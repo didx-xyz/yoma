@@ -27,6 +27,11 @@ SSI is **enabled by default**. For local work without mono, use the [SSI opt-out
 1. **Start mono independently** using the supported private setup instructions. Wait until the required platform and issuer services are ready.
 2. **Start Yoma**, from `src/api`:
 
+   **Existing database:** before startup, back up persistent data and complete the
+   [cutover preparation](#provider-reset-migration--deployment-coordination-required).
+   Startup applies pending migrations: the one-off provider reset clears SSI provider IDs and
+   changes opportunity schema selections. Disabling SSI does not disable migrations.
+
    ```powershell
    docker compose up --build -d
    docker compose logs -f didxme-init
@@ -48,6 +53,8 @@ SSI is **enabled by default**. For local work without mono, use the [SSI opt-out
 This prepares the environment; it does **not** mean every participant has been provisioned or every credential issued. Those remain Yoma application jobs. Do not run background recovery/Replay until the outstanding implementation is complete.
 
 Initialization is **Local only**. Dev and later environments use SRE provisioning, not this container.
+Compose builds the local initializer image with `curl` and `jq` already installed. Startup does
+not download packages; rebuild the image with `--build` after tooling changes.
 
 ### Optional local startup without SSI
 
@@ -56,6 +63,11 @@ Compose starts. Local development remains enabled by default and uses privately 
 
 From `src/api`, in PowerShell:
 
+**Existing database:** back up persistent data and complete the
+[cutover preparation](#provider-reset-migration--deployment-coordination-required) before starting.
+SSI-disabled startup still applies pending migrations, including the one-off reset of provider IDs
+and opportunity schema selections.
+
 ```powershell
 $env:YOMA_SSI_ENABLED_ENVIRONMENTS = 'None'
 docker compose up --build -d
@@ -63,7 +75,7 @@ docker compose up --build -d
 
 This single Compose override feeds both `didxme-init` and the API's existing
 `AppSettings.SSIEnabledEnvironments`. The init container logs a warning and exits successfully
-before installing tools, reading/updating Local settings, waiting for mono or provisioning anything.
+before checking tools, reading/updating Local settings, waiting for mono or provisioning anything.
 Its successful exit satisfies the API dependency. Mono can stay stopped. Schema seeding, tenant
 creation and issuance/Replay jobs skip processing; authenticated SSI endpoints return HTTP 503
 with the normal error envelope. Other API routes remain available.
@@ -76,6 +88,10 @@ Normal Yoma database migrations and other initialization still run; the ignored 
 required by the API/Compose mounts. The switch does not stop mono or clear any data.
 
 To re-enable SSI, start mono independently and wait for readiness, then:
+
+**Existing database:** confirm backups and
+[cutover preparation](#provider-reset-migration--deployment-coordination-required) before restart;
+any pending provider-reset migration still runs during API startup.
 
 ```powershell
 Remove-Item Env:YOMA_SSI_ENABLED_ENVIRONMENTS -ErrorAction SilentlyContinue
@@ -101,6 +117,10 @@ does not synchronize this setting into that file. No Helm or deployed-environmen
 - Local application credentials are repeatable development defaults. Platform/issuer access credentials remain owned by standalone mono setup and are not copied into Yoma API settings.
 
 ### Debug the API in Visual Studio
+
+Before starting the debugger against an existing database, back it up and complete the
+[cutover preparation](#provider-reset-migration--deployment-coordination-required).
+API migrations also run under Visual Studio, including when SSI is disabled.
 
 1. Complete normal Compose startup, including SQL/user initialization.
 2. From `src/api`, run `docker compose stop yoma-api`; leave dependencies running.
