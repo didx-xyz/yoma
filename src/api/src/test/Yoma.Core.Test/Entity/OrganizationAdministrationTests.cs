@@ -12,6 +12,7 @@ using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity;
+using Yoma.Core.Domain.Entity.Events;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Models;
@@ -19,7 +20,9 @@ using Yoma.Core.Domain.Entity.Services;
 using Yoma.Core.Domain.Entity.Validators;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
+using Yoma.Core.Domain.Notification;
 using Yoma.Core.Domain.Notification.Interfaces;
+using Yoma.Core.Domain.Notification.Models;
 using Yoma.Core.Domain.SSI.Interfaces;
 using OrganizationProviderType = Yoma.Core.Domain.Entity.Models.OrganizationProviderType;
 using SettingsDefinition = Yoma.Core.Domain.Entity.Models.Lookups.SettingsDefinition;
@@ -54,27 +57,83 @@ namespace Yoma.Core.Test.Entity
       var fixture = new Fixture();
       fixture.Blobs.Setup(service => service.Create(FileType.Documents, StorageType.Private, It.IsAny<IFormFile>(), null))
         .ThrowsAsync(new Domain.Core.Exceptions.BusinessException("Document rejected"));
-      var document = FileHelper.FromByteArray("registration.pdf", "application/pdf", [1, 2, 3]);
-      var request = new OrganizationRequestCreate
-      {
-        Name = "New organization",
-        PrimaryContactName = "Test Admin",
-        PrimaryContactEmail = "admin@example.invalid",
-        PrimaryContactPhone = "+27821234567",
-        City = "Test City",
-        CountryId = fixture.CountryId,
-        StreetAddress = "Test Street",
-        Province = "Test Province",
-        PostalCode = "0001",
-        ProviderTypes = [fixture.ProviderTypeId],
-        AddCurrentUserAsAdmin = true,
-        RegistrationDocuments = [document]
-      };
+      var request = fixture.CreateRequest();
 
       await Assert.ThrowsAsync<Domain.Core.Exceptions.BusinessException>(() => fixture.Service.Create(request));
 
       fixture.MembersRepository.Verify(repository => repository.Create(It.IsAny<OrganizationUser>()), Times.Once);
       fixture.Identity.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task CreationApprovalNotificationIsSentBeforeRoleFailure()
+    {
+      var fixture = new Fixture();
+      var notified = false;
+      fixture.Notifications.Setup(service => service.Send(NotificationType.Organization_Approval_Requested,
+          It.IsAny<List<NotificationRecipient>>(), It.IsAny<NotificationOrganizationApproval>()))
+        .Callback(() => notified = true).Returns(Task.CompletedTask);
+      var error = new InvalidOperationException("Identity provider unavailable");
+      fixture.Identity.Setup(client => client.EnsureRoles(It.IsAny<Guid>(), It.IsAny<List<string>>()))
+        .Callback(() =>
+        {
+          Assert.Null(Transaction.Current);
+          Assert.True(notified);
+        }).ThrowsAsync(error);
+
+      Assert.Same(error, await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.Service.Create(fixture.CreateRequest())));
+      Assert.True(notified);
+    }
+
+    [Theory]
+    [InlineData("Update")]
+    [InlineData("AssignAdmins")]
+    [InlineData("RemoveAdmins")]
+    public async Task CommittedStatusEventIsPublishedBeforeRoleFailure(string operation)
+    {
+      var fixture = new Fixture();
+      fixture.Item.Status = OrganizationStatus.Declined;
+      fixture.Item.ProviderTypes = [new() { Id = fixture.ProviderTypeId, Name = "Other" }];
+      if (operation != "AssignAdmins")
+      {
+        fixture.Item.Administrators = [new UserInfo { Id = fixture.User.Id, Username = fixture.User.Username }];
+        fixture.Members.Add(new OrganizationUser { OrganizationId = fixture.Item.Id, UserId = fixture.User.Id });
+      }
+      var notified = false;
+      var published = false;
+      fixture.Notifications.Setup(service => service.Send(NotificationType.Organization_Approval_Requested,
+          It.IsAny<List<NotificationRecipient>>(), It.IsAny<NotificationOrganizationApproval>()))
+        .Callback(() => notified = true).Returns(Task.CompletedTask);
+      fixture.Mediator.Setup(mediator => mediator.Publish(It.IsAny<OrganizationStatusChangedEvent>(), It.IsAny<CancellationToken>()))
+        .Callback((OrganizationStatusChangedEvent value, CancellationToken _) =>
+        {
+          Assert.Null(Transaction.Current);
+          Assert.Equal(OrganizationStatus.Inactive, value.Entity.Status);
+          published = true;
+        }).Returns(Task.CompletedTask);
+      var error = new InvalidOperationException("Identity provider unavailable");
+      Action verifyEffects = () =>
+      {
+        Assert.Null(Transaction.Current);
+        Assert.True(notified);
+        Assert.True(published);
+      };
+      fixture.Identity.Setup(client => client.EnsureRoles(It.IsAny<Guid>(), It.IsAny<List<string>>()))
+        .Callback(verifyEffects).ThrowsAsync(error);
+      fixture.Identity.Setup(client => client.RemoveRoles(It.IsAny<Guid>(), It.IsAny<List<string>>()))
+        .Callback(verifyEffects).ThrowsAsync(error);
+
+      var result = await Assert.ThrowsAsync<InvalidOperationException>(() => operation switch
+      {
+        "Update" => fixture.Service.Update(fixture.UpdateRequest(), true),
+        "AssignAdmins" => fixture.Service.AssignAdmins(fixture.Item.Id, [fixture.User.Username], true),
+        "RemoveAdmins" => fixture.Service.RemoveAdmins(fixture.Item.Id, [fixture.User.Username], true),
+        _ => throw new NotSupportedException($"Unsupported operation '{operation}'")
+      });
+
+      Assert.Same(error, result);
+      Assert.True(notified);
+      Assert.True(published);
     }
 
     [Fact]
@@ -277,6 +336,89 @@ namespace Yoma.Core.Test.Entity
       fixture.Identity.Verify(client => client.RemoveRoles(fixture.User.ExternalId!.Value, It.IsAny<List<string>>()), Times.Once);
     }
 
+    [Theory]
+    [InlineData(Domain.Core.Constants.Role_Admin, 200)]
+    [InlineData(Domain.Core.Constants.Role_Admin, null)]
+    [InlineData(Domain.Core.Constants.Role_OrganizationAdmin, 200)]
+    [InlineData(Domain.Core.Constants.Role_OrganizationAdmin, null)]
+    public async Task OrdinaryUpdatePreservesThePoolReadUnderTheTransactionLock(string role, int? currentPool)
+    {
+      var fixture = new Fixture();
+      fixture.Accessor.HttpContext!.User = new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.Role, role)], "test"));
+      fixture.Item.ZltoRewardPoolCurrentFinancialYear = 50;
+      fixture.Item.Administrators = [new UserInfo { Id = fixture.User.Id, Username = fixture.User.Username }];
+      fixture.Item.ProviderTypes = [new() { Id = fixture.ProviderTypeId, Name = "Other" }];
+      fixture.Members.Add(new OrganizationUser { OrganizationId = fixture.Item.Id, UserId = fixture.User.Id });
+      var lockedRead = false;
+      fixture.Repository.Setup(repository => repository.Query(false, LockMode.Wait))
+        .Callback(() =>
+        {
+          Assert.NotNull(Transaction.Current);
+          lockedRead = true;
+        })
+        .Returns(new[] { new Organization { Id = fixture.Item.Id, ZltoRewardPoolCurrentFinancialYear = currentPool } }.AsQueryable());
+      fixture.Repository.Setup(repository => repository.Update(It.IsAny<Organization>()))
+        .Callback((Organization item) =>
+        {
+          Assert.True(lockedRead);
+          Assert.NotNull(Transaction.Current);
+          Assert.Equal((decimal?)currentPool, item.ZltoRewardPoolCurrentFinancialYear);
+        })
+        .ReturnsAsync((Organization item) => item);
+      var request = fixture.UpdateRequest();
+
+      var result = await fixture.Service.Update(request, true);
+
+      Assert.Equal(request.Name, result.Name);
+      Assert.Equal((decimal?)currentPool, result.ZltoRewardPoolCurrentFinancialYear);
+      Assert.Equal(fixture.User.Id, Assert.Single(result.Administrators!).Id);
+      fixture.Repository.Verify(repository => repository.Query(false, LockMode.Wait), Times.Once);
+      fixture.Repository.Verify(repository => repository.Update(It.IsAny<Organization>()), Times.AtLeastOnce);
+    }
+
+    [Fact]
+    public async Task SystemAdminCanSetTheInitialRewardPoolOnCreation()
+    {
+      var fixture = new Fixture();
+      var request = fixture.CreateRequest();
+      request.ZltoRewardPoolCurrentFinancialYear = 100;
+
+      var result = await fixture.Service.Create(request);
+
+      Assert.Equal(100m, result.ZltoRewardPoolCurrentFinancialYear);
+      fixture.Repository.Verify(repository => repository.Create(It.Is<Organization>(item => item.ZltoRewardPoolCurrentFinancialYear == 100)), Times.Once);
+    }
+
+    [Fact]
+    public async Task OrganizationAdminCannotSetTheInitialRewardPool()
+    {
+      var fixture = new Fixture();
+      fixture.Accessor.HttpContext!.User = new ClaimsPrincipal(new ClaimsIdentity([
+        new Claim(ClaimTypes.Role, Domain.Core.Constants.Role_OrganizationAdmin)], "test"));
+      var request = fixture.CreateRequest();
+      request.ZltoRewardPoolCurrentFinancialYear = 100;
+
+      await Assert.ThrowsAsync<Domain.Core.Exceptions.SecurityException>(() => fixture.Service.Create(request));
+
+      fixture.Repository.Verify(repository => repository.Create(It.IsAny<Organization>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(0)]
+    [InlineData(1.5)]
+    [InlineData(10000001)]
+    public async Task InitialRewardPoolRetainsTheExistingValueLimits(double amount)
+    {
+      var fixture = new Fixture();
+      var request = fixture.CreateRequest();
+      request.ZltoRewardPoolCurrentFinancialYear = (decimal)amount;
+
+      await Assert.ThrowsAsync<FluentValidation.ValidationException>(() => fixture.Service.Create(request));
+
+      fixture.Repository.VerifyNoOtherCalls();
+    }
+
     [Fact]
     public async Task RewardPoolUpdatePreservesCurrentMembershipsAndMetadata()
     {
@@ -366,6 +508,8 @@ namespace Yoma.Core.Test.Entity
       internal Mock<IIdentityProviderClient> Identity { get; } = new();
       internal Mock<IDistributedLockService> Locks { get; } = new();
       internal Mock<IBlobService> Blobs { get; } = new();
+      internal Mock<INotificationDeliveryService> Notifications { get; } = new();
+      internal Mock<IMediator> Mediator { get; } = new();
       internal OrganizationService Service { get; }
 
       internal Fixture()
@@ -415,6 +559,10 @@ namespace Yoma.Core.Test.Entity
         var statuses = new Mock<IOrganizationStatusService>();
         statuses.Setup(service => service.GetByName(OrganizationStatus.Inactive.ToString()))
           .Returns(new Domain.Entity.Models.Lookups.OrganizationStatus { Id = Guid.NewGuid(), Name = OrganizationStatus.Inactive.ToString() });
+        Blobs.Setup(service => service.Create(FileType.Documents, StorageType.Private, It.IsAny<IFormFile>(), null))
+          .ReturnsAsync(new BlobObject { Id = Guid.NewGuid(), StorageType = StorageType.Private, Key = "registration.pdf" });
+        var documents = new Mock<IRepository<OrganizationDocument>>();
+        documents.Setup(repository => repository.Create(It.IsAny<OrganizationDocument>())).ReturnsAsync((OrganizationDocument item) => item);
 
         Service = new OrganizationService(NullLogger<OrganizationService>.Instance, Options.Create(new AppSettings
         {
@@ -422,11 +570,49 @@ namespace Yoma.Core.Test.Entity
           DistributedLockUserActionLeaseDurationInSeconds = 120
         }), Accessor,
           users.Object, identity.Object, statuses.Object, providers.Object, Blobs.Object, Mock.Of<ISSITenantService>(),
-          Mock.Of<INotificationURLFactory>(), Mock.Of<INotificationDeliveryService>(), settings.Object,
+          Mock.Of<INotificationURLFactory>(), Notifications.Object, settings.Object,
           new OrganizationRequestValidatorCreate(countries.Object, providers.Object), new OrganizationRequestValidatorUpdate(countries.Object, providers.Object),
           new OrganizationRequestUpdateRewardPoolValidator(), new OrganizationSearchFilterValidator(), new OrganizationRequestUpdateStatusValidator(),
-          new SettingsRequestValidator(), Mock.Of<IMediator>(), Repository.Object, MembersRepository.Object,
-          Mock.Of<IRepository<OrganizationProviderType>>(), Mock.Of<IRepository<OrganizationDocument>>(), strategy.Object, Locks.Object);
+          new SettingsRequestValidator(), Mediator.Object, Repository.Object, MembersRepository.Object,
+          Mock.Of<IRepository<OrganizationProviderType>>(), documents.Object, strategy.Object, Locks.Object);
+      }
+
+      internal OrganizationRequestUpdate UpdateRequest()
+      {
+        return new OrganizationRequestUpdate
+        {
+          Id = Item.Id,
+          Name = "Updated organization",
+          PrimaryContactName = "Test Admin",
+          PrimaryContactEmail = "admin@example.invalid",
+          PrimaryContactPhone = "+27821234567",
+          City = "Test City",
+          CountryId = CountryId,
+          StreetAddress = "Test Street",
+          Province = "Test Province",
+          PostalCode = "0001",
+          ProviderTypes = [ProviderTypeId],
+          AddCurrentUserAsAdmin = true
+        };
+      }
+
+      internal OrganizationRequestCreate CreateRequest()
+      {
+        return new OrganizationRequestCreate
+        {
+          Name = "New organization",
+          PrimaryContactName = "Test Admin",
+          PrimaryContactEmail = "admin@example.invalid",
+          PrimaryContactPhone = "+27821234567",
+          City = "Test City",
+          CountryId = CountryId,
+          StreetAddress = "Test Street",
+          Province = "Test Province",
+          PostalCode = "0001",
+          ProviderTypes = [ProviderTypeId],
+          AddCurrentUserAsAdmin = true,
+          RegistrationDocuments = [FileHelper.FromByteArray("registration.pdf", "application/pdf", [1, 2, 3])]
+        };
       }
     }
     #endregion

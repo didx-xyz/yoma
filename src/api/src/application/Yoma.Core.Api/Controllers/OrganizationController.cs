@@ -132,7 +132,8 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Update the specified organization")]
+    [SwaggerOperation(Summary = "Update the specified organization",
+        Description = "Reward-pool changes use the separate rewardpool endpoint; this update preserves the existing pool.")]
     [HttpPatch()]
     [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]

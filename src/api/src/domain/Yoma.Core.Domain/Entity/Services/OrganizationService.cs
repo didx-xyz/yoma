@@ -415,9 +415,10 @@ namespace Yoma.Core.Domain.Entity.Services
         throw;
       }
 
-      await UpdateAdminRoles(result.Administrators?.Select(o => o.Id).ToList() ?? []);
-
       await SendNotification(result, NotificationType.Organization_Approval_Requested);
+
+      // Notify about the committed change before an external role update can fail.
+      await UpdateAdminRoles(result.Administrators?.Select(o => o.Id).ToList() ?? []);
 
       return result;
     }
@@ -467,13 +468,6 @@ namespace Yoma.Core.Domain.Entity.Services
       if (ssoClientUpdated && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
         throw new SecurityException("Unauthorized");
 
-      var rewardPoolsUpdated = request.ZltoRewardPoolCurrentFinancialYear != result.ZltoRewardPoolCurrentFinancialYear;
-      if (rewardPoolsUpdated && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
-        throw new SecurityException("Unauthorized");
-
-      if (request.ZltoRewardPoolCurrentFinancialYear.HasValue && result.ZltoRewardCumulativeCurrentFinancialYear.HasValue && request.ZltoRewardPoolCurrentFinancialYear.Value < result.ZltoRewardCumulativeCurrentFinancialYear.Value)
-        throw new ValidationException($"The Zlto reward pool for the current financial year cannot be less than the cumulative Zlto rewards ({result.ZltoRewardCumulativeCurrentFinancialYear.Value:F0}) already allocated to participants for the current financial year");
-
       var user = _userService.GetCurrentUser(false, false, !ensureOrganizationAuthorization);
 
       result.Name = request.Name.NormalizeTrim();
@@ -492,7 +486,6 @@ namespace Yoma.Core.Domain.Entity.Services
       result.Tagline = request.Tagline;
       result.Biography = request.Biography;
       result.ModifiedByUserId = user.Id;
-      result.ZltoRewardPoolCurrentFinancialYear = request.ZltoRewardPoolCurrentFinancialYear;
 
       ValidateUpdatable(result);
 
@@ -505,6 +498,8 @@ namespace Yoma.Core.Domain.Entity.Services
           using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
           //update org
+          // Preserve the current pool under the same row lock used by UpdateRewardPool until this save commits.
+          result.ZltoRewardPoolCurrentFinancialYear = GetById(result.Id, false, false, false, LockMode.Wait).ZltoRewardPoolCurrentFinancialYear;
           result = await _organizationRepository.Update(result);
 
           //provider types
@@ -599,13 +594,13 @@ namespace Yoma.Core.Domain.Entity.Services
         throw;
       }
 
-      await UpdateAdminRoles(adminIds.Union(result.Administrators?.Select(o => o.Id) ?? []).ToList());
-
       if (statusCurrent != OrganizationStatus.Inactive && result.Status == OrganizationStatus.Inactive)
         await SendNotification(result, NotificationType.Organization_Approval_Requested);
 
       if (statusCurrent != result.Status)
         await _mediator.Publish(new OrganizationStatusChangedEvent(result));
+
+      await UpdateAdminRoles(adminIds.Union(result.Administrators?.Select(o => o.Id) ?? []).ToList());
 
       return result;
     }
@@ -961,10 +956,10 @@ namespace Yoma.Core.Domain.Entity.Services
         scope.Complete();
       });
 
-      await UpdateAdminRoles(adminIds);
-
       if (statusCurrent != result.Status)
         await _mediator.Publish(new OrganizationStatusChangedEvent(result));
+
+      await UpdateAdminRoles(adminIds);
 
       return result;
     }
@@ -994,10 +989,10 @@ namespace Yoma.Core.Domain.Entity.Services
         scope.Complete();
       });
 
-      await UpdateAdminRoles(adminIds);
-
       if (statusCurrent != result.Status)
         await _mediator.Publish(new OrganizationStatusChangedEvent(result));
+
+      await UpdateAdminRoles(adminIds);
 
       return result;
     }

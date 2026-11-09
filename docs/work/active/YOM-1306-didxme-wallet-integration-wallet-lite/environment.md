@@ -203,6 +203,10 @@ Cutover is a separate reviewed operation: prepare provider-specific data, reissu
 
 `20261102114553_ApplicationDb_SSI_DidxMe` now includes the one-off reset of existing SSI schedules.
 Applying this migration activates the reset; it is not a dormant script or runtime setting.
+There is no application-level approval flag. The first API startup with this migration pending
+applies it automatically, even with SSI jobs disabled. SRE must arrange a controlled stop/start
+cutover after backup and worker drain; a normal rolling deployment with old workers still active
+does not satisfy these prerequisites.
 
 1. Back up the database and stop/drain all SSI workers, including old API replicas, before applying it.
 2. Prepare the target provider and configuration. Seed the current SDJWT defaults before enabling

@@ -108,7 +108,8 @@ class UserSeedTests(unittest.TestCase):
             if user["username"] == ACCOUNTS["YOMA_SYSTEM_USER"]:
                 self.assertIn('SET "ExternalId" = ' + "'" + user["id"] + "'", sql)
             else:
-                statement = next(part for part in sql.split(";") if "VALUES(gen_random_uuid(), '" + user["username"] + "'" in part)
+                statement = next(part for part in sql.split(";")
+                                 if 'INSERT INTO "Entity"."User"(' in part and ", '" + user["username"] + "', " in part)
                 self.assertIn("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), '" + user["id"] + "', TRUE", statement)
         by_name = {user["username"]: user for user in state["users"]}
         self.assertIn("Admin", by_name[ACCOUNTS["ADMIN_USER"]]["realmRoles"])

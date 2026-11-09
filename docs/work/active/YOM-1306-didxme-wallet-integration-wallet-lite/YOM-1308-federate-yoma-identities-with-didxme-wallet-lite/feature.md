@@ -5,6 +5,7 @@
 - **Ticket**: YOM-1308
 - **Epic**: [YOM-1306](../README.md)
 - **Owner**: Adrian; participant journey with Jason
+- **Areas**: API, web (participant journey), Keycloak
 - **Status**: in-progress — local API identity flow verified; browser/Dev checks remain
 
 ## Goal

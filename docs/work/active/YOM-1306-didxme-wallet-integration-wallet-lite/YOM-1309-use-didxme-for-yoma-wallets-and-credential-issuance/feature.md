@@ -50,6 +50,8 @@ security configuration and privileged workflows are held in the private engineer
   [2026-11-08 handoff](../handoffs/2026-11-08-a.md) on PR #2013.
 - [x] Consolidate Jason's required UI adoption and separate exported UI/Keycloak review groups in the
   [2026-11-09 handoff](../handoffs/2026-11-09-a.md); implementation/verification remains with Jason.
+- [x] Remove reward-pool edits from ordinary organisation updates; preserve the current pool under the existing transaction lock. Retain initial pools on creation and the dedicated Admin endpoint. Uncommitted for Adrian's review; UI adoption is in the same handoff.
+- [x] Check the final 9 November PR review: fix notification/event ordering and fixture-test drift, add missing work-docs metadata, and record the existing cutover decision and redundant guard disposition in the same handoff. Uncommitted for Adrian's review.
 - [ ] Provision/verify Dev with SRE, separating once-off setup from ongoing configuration/secrets.
 - [x] Prepare the provider-reset seed in the current unpublished migration; verify preserved dates, current default schema selection and reset state against disposable PostgreSQL.
 - [x] Correct the reset to replace historical YoID names with `YoID|Default` across all statuses; verify both credential families resolve current defaults without changing issued dates.
@@ -61,6 +63,13 @@ security configuration and privileged workflows are held in the private engineer
 
 ## Decisions
 
+- 2026-11-09: Send required notifications/status events before inline role synchronization so
+  a failed external role call cannot skip them. Preserve explicit error/retry behavior and the
+  earlier decision against queued role recovery. Retain the migration-driven reset with SRE
+  backup/drain/controlled-startup prerequisites; no additional application approval flag.
+- 2026-11-09: Existing organisation pools change only through the dedicated endpoint. Full updates
+  preserve the current database value under the existing row lock, using the existing repository.
+  Creation retains its optional initial pool. No new repository interface or persistence path.
 - 2026-11-08, Adrian's review: synchronize administrator roles inline after membership commits.
   Remove the ad hoc Hangfire retry and its job-facing interface method. Preserve the per-user lock,
   current-membership checks and normal API errors. A failed external call requires an explicit retry;
