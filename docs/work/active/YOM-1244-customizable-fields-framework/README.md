@@ -29,6 +29,14 @@ definitions to the BA-approved set (YOM-1264) without a code change.
 
 ## Child Features
 
+| Feature | Ticket | Area | Status |
+| --- | --- | --- | --- |
+| [Pending submission type protection](./YOM-1312-opportunity-approval-workflow-allowing-changes-to-submitted/feature.md) | [YOM-1312](https://linear.app/didx/issue/YOM-1312) | api | review |
+
+YOM-1312 blocks opportunity **type changes only** while youth submissions await approval.
+Other edits retain the existing current-opportunity behaviour; no submission snapshot or
+automatic withdrawal is introduced. The shared update rule covers manual, CSV and partner-sync updates.
+
 **Final credential phase, stage 1 (2026-10-07):** following the assessment, Adrian authorized
 uncommitted schema-configuration work for review. The [YOM-1277 implementation and attribute
 map](./YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/feature.md#stage-1--schema-configuration-implemented-for-review)

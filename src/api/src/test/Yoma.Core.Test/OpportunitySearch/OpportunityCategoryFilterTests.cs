@@ -15,6 +15,7 @@ using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Notification.Interfaces;
+using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Models;
@@ -403,6 +404,7 @@ namespace Yoma.Core.Test.OpportunitySearch
           Mock.Of<INotificationURLFactory>(), Mock.Of<INotificationDeliveryService>(), identityFactory.Object, Mock.Of<ISyncStateService>(),
           Mock.Of<ITreasuryService>(), Mock.Of<IPartnerService>(), Mock.Of<ICustomFieldDefinitionService>(), Mock.Of<ICustomFieldValueService>(),
           Mock.Of<ISSISchemaService>(),
+          Mock.Of<IMyOpportunityActionService>(), Mock.Of<IMyOpportunityVerificationStatusService>(),
           Mock.Of<IRepository<OpportunityAccommodation>>(), Mock.Of<IRepository<OpportunityTargetedGroup>>(),
           Mock.Of<IRepository<OpportunitySustainableDevelopmentGoal>>(), accessibility, targetedGroups, sustainableDevelopmentGoals,
           new OpportunityRequestValidatorCreate(types, organizations, engagement, intervals, categories.Object, countries, languages, skills,
@@ -411,7 +413,8 @@ namespace Yoma.Core.Test.OpportunitySearch
             verificationTypes, countryValidator, currency, accessibility, targetedGroups, sustainableDevelopmentGoals),
           countryValidator, searchValidator, new OpportunitySearchFilterCriteriaValidator(organizations), Mock.Of<IMediator>(),
           Opportunities.Object, Mappings.Object, Mock.Of<IRepositoryPropertyContainsWithSpatial<OpportunityCountry>>(), Mock.Of<IRepository<OpportunityLanguage>>(),
-          Mock.Of<IRepository<OpportunitySkill>>(), Mock.Of<IRepository<OpportunityVerificationType>>(), Mock.Of<IExecutionStrategyService>());
+          Mock.Of<IRepository<OpportunitySkill>>(), Mock.Of<IRepository<OpportunityVerificationType>>(),
+          Mock.Of<IRepositoryBatchedWithNavigationAndCustomFieldFilter<Domain.MyOpportunity.Models.MyOpportunity>>(), Mock.Of<IExecutionStrategyService>());
       }
 
       internal Category AddCategory(string name)

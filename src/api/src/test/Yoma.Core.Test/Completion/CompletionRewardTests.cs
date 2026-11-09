@@ -18,6 +18,7 @@ using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Notification.Interfaces;
+using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Models;
@@ -163,6 +164,7 @@ namespace Yoma.Core.Test.Completion
           Mock.Of<INotificationURLFactory>(), Mock.Of<INotificationDeliveryService>(), identity.Object, Mock.Of<ISyncStateService>(),
           Treasuries.Object, Mock.Of<IPartnerService>(), Mock.Of<ICustomFieldDefinitionService>(), Mock.Of<ICustomFieldValueService>(),
           Mock.Of<ISSISchemaService>(),
+          Mock.Of<IMyOpportunityActionService>(), Mock.Of<IMyOpportunityVerificationStatusService>(),
           Mock.Of<IRepository<OpportunityAccommodation>>(), Mock.Of<IRepository<OpportunityTargetedGroup>>(),
           Mock.Of<IRepository<OpportunitySustainableDevelopmentGoal>>(), accessibility, targetedGroups, sustainableDevelopmentGoals,
           new OpportunityRequestValidatorCreate(types, Organizations.Object, engagement, intervals, categories, countries, languages, skills, verificationTypes,
@@ -171,7 +173,8 @@ namespace Yoma.Core.Test.Completion
             countryValidator, currency, accessibility, targetedGroups, sustainableDevelopmentGoals),
           countryValidator, searchValidator, new OpportunitySearchFilterCriteriaValidator(Organizations.Object), Mock.Of<IMediator>(),
           Repository.Object, Mock.Of<IRepository<OpportunityCategory>>(), Mock.Of<IRepositoryPropertyContainsWithSpatial<OpportunityCountry>>(),
-          Mock.Of<IRepository<OpportunityLanguage>>(), Mock.Of<IRepository<OpportunitySkill>>(), Mock.Of<IRepository<OpportunityVerificationType>>(), execution.Object);
+          Mock.Of<IRepository<OpportunityLanguage>>(), Mock.Of<IRepository<OpportunitySkill>>(), Mock.Of<IRepository<OpportunityVerificationType>>(),
+          Mock.Of<IRepositoryBatchedWithNavigationAndCustomFieldFilter<Domain.MyOpportunity.Models.MyOpportunity>>(), execution.Object);
       }
     }
     #endregion

@@ -22,6 +22,7 @@ using Yoma.Core.Domain.IdentityProvider.Extensions;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.Lookups.Helpers;
 using Yoma.Core.Domain.Lookups.Interfaces;
+using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.Notification;
 using Yoma.Core.Domain.Notification.Interfaces;
 using Yoma.Core.Domain.Notification.Models;
@@ -69,6 +70,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly ICustomFieldDefinitionService _customFieldDefinitionService;
     private readonly ICustomFieldValueService _customFieldValueService;
     private readonly ISSISchemaService _ssiSchemaService;
+    private readonly IMyOpportunityActionService _myOpportunityActionService;
+    private readonly IMyOpportunityVerificationStatusService _myOpportunityVerificationStatusService;
 
     private readonly IRepository<OpportunityAccommodation> _opportunityAccommodationRepository;
     private readonly IRepository<OpportunityTargetedGroup> _opportunityTargetedGroupRepository;
@@ -91,6 +94,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly IRepository<OpportunityLanguage> _opportunityLanguageRepository;
     private readonly IRepository<OpportunitySkill> _opportunitySkillRepository;
     private readonly IRepository<OpportunityVerificationType> _opportunityVerificationTypeRepository;
+    private readonly IRepositoryBatchedWithNavigationAndCustomFieldFilter<MyOpportunity.Models.MyOpportunity> _myOpportunityRepository;
 
     private readonly IExecutionStrategyService _executionStrategyService;
 
@@ -133,6 +137,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         ICustomFieldDefinitionService customFieldDefinitionService,
         ICustomFieldValueService customFieldValueService,
         ISSISchemaService ssiSchemaService,
+        IMyOpportunityActionService myOpportunityActionService,
+        IMyOpportunityVerificationStatusService myOpportunityVerificationStatusService,
         IRepository<OpportunityAccommodation> opportunityAccommodationRepository,
         IRepository<OpportunityTargetedGroup> opportunityTargetedGroupRepository,
         IRepository<OpportunitySustainableDevelopmentGoal> opportunitySustainableDevelopmentGoalRepository,
@@ -151,6 +157,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         IRepository<OpportunityLanguage> opportunityLanguageRepository,
         IRepository<OpportunitySkill> opportunitySkillRepository,
         IRepository<OpportunityVerificationType> opportunityVerificationTypeRepository,
+        IRepositoryBatchedWithNavigationAndCustomFieldFilter<MyOpportunity.Models.MyOpportunity> myOpportunityRepository,
         IExecutionStrategyService executionStrategyService)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -179,6 +186,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _customFieldDefinitionService = customFieldDefinitionService ?? throw new ArgumentNullException(nameof(customFieldDefinitionService));
       _customFieldValueService = customFieldValueService ?? throw new ArgumentNullException(nameof(customFieldValueService));
       _ssiSchemaService = ssiSchemaService ?? throw new ArgumentNullException(nameof(ssiSchemaService));
+      _myOpportunityActionService = myOpportunityActionService ?? throw new ArgumentNullException(nameof(myOpportunityActionService));
+      _myOpportunityVerificationStatusService = myOpportunityVerificationStatusService ?? throw new ArgumentNullException(nameof(myOpportunityVerificationStatusService));
 
       _opportunityAccommodationRepository = opportunityAccommodationRepository ?? throw new ArgumentNullException(nameof(opportunityAccommodationRepository));
       _opportunityTargetedGroupRepository = opportunityTargetedGroupRepository ?? throw new ArgumentNullException(nameof(opportunityTargetedGroupRepository));
@@ -201,6 +210,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _opportunityLanguageRepository = opportunityLanguageRepository ?? throw new ArgumentNullException(nameof(opportunityLanguageRepository));
       _opportunitySkillRepository = opportunitySkillRepository ?? throw new ArgumentNullException(nameof(opportunitySkillRepository));
       _opportunityVerificationTypeRepository = opportunityVerificationTypeRepository ?? throw new ArgumentNullException(nameof(opportunityVerificationTypeRepository));
+      _myOpportunityRepository = myOpportunityRepository ?? throw new ArgumentNullException(nameof(myOpportunityRepository));
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
     }
     #endregion
@@ -1373,6 +1383,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var reopen = options.SyncTypeActionedBy == SyncType.Pull && result.SyncedInfo?.SyncType == SyncType.Pull &&
         result.Status == Status.Expired && (!request.DateEnd.HasValue || request.DateEnd.Value > DateTimeOffset.UtcNow);
       if (!reopen) AssertUpdatable(result);
+
+      // Pending submissions retain the fields captured for their type; other edits still use the current opportunity at approval.
+      if (request.TypeId != result.TypeId)
+      {
+        var actionId = _myOpportunityActionService.GetByName(MyOpportunity.Action.Verification.ToString()).Id;
+        var statusId = _myOpportunityVerificationStatusService.GetByName(MyOpportunity.VerificationStatus.Pending.ToString()).Id;
+        if (_myOpportunityRepository.Query().Any(o => o.OpportunityId == result.Id && o.ActionId == actionId && o.VerificationStatusId == statusId))
+          throw new ValidationException("The opportunity type cannot be changed while submissions are awaiting approval");
+      }
 
       // Pull mappings supply the canonical default, not an administrator's schema choice.
       // Preserve custom selections and let the existing validation reject incompatible type changes.
