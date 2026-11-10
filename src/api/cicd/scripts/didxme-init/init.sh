@@ -224,6 +224,7 @@ log 'Issuer client and project created or verified; existing credentials were re
 
 stage='local issuance webhook'
 # The public provider API registers endpoints but does not return signing secrets.
+# Registration uses the issuer token; local endpoint/secret reads use the webhook service token.
 # Local-only bootstrap access reads the existing endpoint secret without rotating it.
 # Never mount Docker/Kubernetes control sockets or copy platform signing keys into this image.
 printf '%s' "$YOMA_WEBHOOK_API_TOKEN" >"$work/webhook-token"

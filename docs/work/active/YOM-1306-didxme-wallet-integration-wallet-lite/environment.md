@@ -300,7 +300,7 @@ original issuance dates. Missing issuance tracking rows are not reconstructed: t
 the native wallet ID, but issuer/session audit references remain unavailable. Preset mappings are
 still required for reads and recovery.
 
-The follow-up remains uncommitted for review; Dev deployment verification, Stage-only preset/data
+The follow-up is on [draft PR #2025](https://github.com/didx-xyz/yoma/pull/2025); Dev deployment verification, Stage-only preset/data
 preparation and deployed multi-instance checks are still required. See the
 [local debug handoff](./YOM-1309-use-didxme-for-yoma-wallets-and-credential-issuance/handoffs/2026-11-10-e.md)
 and the [configuration checklist for Robbie](./YOM-1309-use-didxme-for-yoma-wallets-and-credential-issuance/handoffs/2026-11-10-d.md#configuration-handoff--pending-with-robbie).

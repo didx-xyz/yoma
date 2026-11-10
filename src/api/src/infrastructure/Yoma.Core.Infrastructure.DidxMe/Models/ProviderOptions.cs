@@ -76,14 +76,17 @@ namespace Yoma.Core.Infrastructure.DidxMe.Models
     /// DIDx/SRE-provisioned organisation client used for presets, onboarding, issuance and delivery.
     /// Currently selects Yoma's single issuer tenant/project, not a client per Yoma organisation.
     /// </summary>
-    public IssuerOptions Issuer { get; set; } = new();
+    public IssuerOptions Issuer { get; set; } = null!;
 
     /// <summary>
     /// DIDx/SRE-provisioned federated Lite client accepting a signed Yoma assertion and returning
     /// a token for the linked participant's wallet. This shared application client is not an issuer.
     /// </summary>
-    public HolderOptions Holder { get; set; } = new();
+    public HolderOptions Holder { get; set; } = null!;
 
+    /// <summary>
+    /// Explicit webhook configuration. A valid signing secret is required when SSI is enabled.
+    /// </summary>
     public WebhookOptions Webhook { get; set; } = null!;
   }
 }

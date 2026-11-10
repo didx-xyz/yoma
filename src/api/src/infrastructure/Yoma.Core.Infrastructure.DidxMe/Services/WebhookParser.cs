@@ -32,6 +32,20 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
     #endregion
 
     #region Public Members
+    public static bool IsSigningSecretValid(string? secret)
+    {
+      try
+      {
+        var key = ReadSigningKey(secret);
+        CryptographicOperations.ZeroMemory(key);
+        return true;
+      }
+      catch (InvalidOperationException)
+      {
+        return false;
+      }
+    }
+
     public WebhookResult? Parse(string body, string? id, string? timestamp, string? signature)
     {
       if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(signature) ||
@@ -39,19 +53,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
         Math.Abs((decimal)seconds - DateTimeOffset.UtcNow.ToUnixTimeSeconds()) > _options.TimestampToleranceSeconds)
         throw new UnauthorizedAccessException("Invalid or expired webhook authentication");
 
-      if (string.IsNullOrWhiteSpace(_options.SigningSecret) || !_options.SigningSecret.StartsWith(SigningSecretPrefix, StringComparison.Ordinal))
-        throw new InvalidOperationException("The webhook signing secret is not configured");
-
-      byte[] key;
-      try
-      {
-        key = Convert.FromBase64String(_options.SigningSecret[SigningSecretPrefix.Length..]);
-      }
-      catch (FormatException)
-      {
-        throw new InvalidOperationException("The webhook signing secret is invalid");
-      }
-
+      var key = ReadSigningKey(_options.SigningSecret);
       var expected = HMACSHA256.HashData(key, Encoding.UTF8.GetBytes($"{id}.{timestamp}.{body}"));
       CryptographicOperations.ZeroMemory(key);
       var verified = false;
@@ -87,6 +89,25 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
         IssuanceId = issuanceId,
         WalletCredentialId = walletId.ToString()
       };
+    }
+    #endregion
+
+    #region Private Members
+    private static byte[] ReadSigningKey(string? secret)
+    {
+      if (string.IsNullOrWhiteSpace(secret) || !secret.StartsWith(SigningSecretPrefix, StringComparison.Ordinal))
+        throw new InvalidOperationException("The webhook signing secret is not configured");
+
+      try
+      {
+        var key = Convert.FromBase64String(secret[SigningSecretPrefix.Length..]);
+        if (key.Length == 0) throw new InvalidOperationException("The webhook signing secret is empty");
+        return key;
+      }
+      catch (FormatException)
+      {
+        throw new InvalidOperationException("The webhook signing secret is invalid");
+      }
     }
     #endregion
   }

@@ -47,12 +47,15 @@ namespace Yoma.Core.Test.Core
     }
 
     [Theory]
-    [InlineData("success")]
-    [InlineData("wrong-state")]
-    [InlineData("token-failure")]
-    [InlineData("wrong-subject")]
-    [InlineData("malformed-token")]
-    public async Task BackgroundAssertionUsesConfiguredClientAndCleansOnlyItsOwnSession(string scenario)
+    [InlineData("success", 204)]
+    [InlineData("wrong-state", 204)]
+    [InlineData("token-failure", 204)]
+    [InlineData("wrong-subject", 204)]
+    [InlineData("malformed-token", 204)]
+    [InlineData("success", 404)]
+    [InlineData("success", 500)]
+    [InlineData("token-failure", 500)]
+    public async Task BackgroundAssertionUsesConfiguredClientAndCleansOnlyItsOwnSession(string scenario, int cleanupStatus)
     {
       var userId = Guid.NewGuid();
       var sessionId = Guid.NewGuid().ToString();
@@ -66,6 +69,8 @@ namespace Yoma.Core.Test.Core
       string? verifier = null;
       var userToken = scenario == "malformed-token" ? "invalid-test-token" : Token(scenario == "wrong-subject" ? Guid.NewGuid() : userId, sessionId);
       var options = Options();
+      var logger = new Mock<ILogger<KeycloakClient>>();
+      logger.Setup(value => value.IsEnabled(LogLevel.Error)).Returns(true);
       var builder = WebApplication.CreateBuilder();
       builder.Logging.ClearProviders();
       builder.WebHost.UseUrls("http://127.0.0.1:0");
@@ -111,15 +116,21 @@ namespace Yoma.Core.Test.Core
       {
         adminAuthorization.Add(context.Request.Headers.Authorization.ToString());
         cleanup.Add(id);
+        if (cleanupStatus == 500) return Results.Json(new { detail = "sensitive-test-response" }, statusCode: cleanupStatus);
         sessions.Remove(id);
-        return Results.NoContent();
+        return Results.StatusCode(cleanupStatus);
       });
       await app.StartAsync(TestContext.Current.CancellationToken);
       FlurlHttp.ConfigureClientForUrl(app.Urls.Single())
         .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
-      using var client = Client(app.Urls.Single(), options);
+      using var client = Client(app.Urls.Single(), options, logger.Object);
 
-      if (scenario == "success")
+      if (scenario == "success" && cleanupStatus == 500)
+      {
+        var error = await Assert.ThrowsAsync<FS.Keycloak.RestApiClient.Client.ApiException>(() => client.GetUserAccessToken(userId, TestContext.Current.CancellationToken));
+        Assert.Equal(cleanupStatus, error.ErrorCode);
+      }
+      else if (scenario == "success")
       {
         var result = await client.GetUserAccessToken(userId, TestContext.Current.CancellationToken);
         Assert.Equal(userToken, result.AccessToken);
@@ -135,7 +146,18 @@ namespace Yoma.Core.Test.Core
         await Assert.ThrowsAsync<InvalidOperationException>(() => client.GetUserAccessToken(userId, TestContext.Current.CancellationToken));
 
       Assert.Equal(sessionId, Assert.Single(cleanup));
-      Assert.Equal(otherSessionId, Assert.Single(sessions));
+      Assert.Contains(otherSessionId, sessions);
+      Assert.Equal(cleanupStatus == 500 ? 2 : 1, sessions.Count);
+      if (cleanupStatus == 500)
+      {
+        var entry = Assert.Single(logger.Invocations, value => value.Method.Name == nameof(ILogger.Log));
+        var message = entry.Arguments[2]?.ToString();
+        Assert.NotNull(message);
+        Assert.Contains("ApiException", message);
+        Assert.Contains("500", message);
+        Assert.DoesNotContain("sensitive-test-response", message);
+        Assert.Null(entry.Arguments[3]);
+      }
       Assert.All(adminAuthorization, value =>
       {
         var header = System.Net.Http.Headers.AuthenticationHeaderValue.Parse(value);
@@ -175,8 +197,8 @@ namespace Yoma.Core.Test.Core
       }
     };
 
-    private static KeycloakClient Client(string url, KeycloakAdminOptions options) => new(
-      NullLogger<KeycloakClient>.Instance, new AppSettings(), Mock.Of<IEnvironmentProvider>(), options,
+    private static KeycloakClient Client(string url, KeycloakAdminOptions options, ILogger<KeycloakClient>? logger = null) => new(
+      logger ?? NullLogger<KeycloakClient>.Instance, new AppSettings(), Mock.Of<IEnvironmentProvider>(), options,
       new Keycloak.AuthServices.Authentication.KeycloakAuthenticationOptions { AuthServerUrl = url, Realm = "test" });
 
     private static string Token(Guid userId, string sessionId)

@@ -47,11 +47,21 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
         .FirstOrDefault();
     }
 
-    public Task<IssuanceMapping> Create(IssuanceMapping item)
+    public async Task<IssuanceMapping> Create(IssuanceMapping item)
     {
       ArgumentNullException.ThrowIfNull(item);
 
-      return _repository.Create(item);
+      IssuanceMapping? result = null;
+      await _executionStrategy.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        // Reuse an existing attempt on retry; the issuance job owns execution concurrency.
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+        result = Find(item.TenantIdHolder, new KeyValuePair<string, string>(item.ClientReferentKey, item.ClientReferentValue));
+        result ??= await _repository.Create(item);
+        scope.Complete();
+      }, clearTrackedChanges: true);
+
+      return result!;
     }
 
     public async Task<IssuanceMapping> Update(Guid id, Action<IssuanceMapping> update)

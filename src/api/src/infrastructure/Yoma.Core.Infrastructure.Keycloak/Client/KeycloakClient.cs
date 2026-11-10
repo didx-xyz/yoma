@@ -294,10 +294,12 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
               // A session already removed by the identity provider needs no further cleanup.
             }
           }
-          catch
+          catch (Exception exception)
           {
+            // SDK errors can contain response bodies and headers; log diagnostics without those values.
             if (_logger.IsEnabled(LogLevel.Error))
-              _logger.LogError("Failed to end a temporary identity-provider session for user '{userId}'", id);
+              _logger.LogError("Failed to end a temporary identity-provider session for user '{userId}': {exceptionType}, HTTP status {statusCode}",
+                id, exception.GetType().Name, (exception as FS.Keycloak.RestApiClient.Client.ApiException)?.ErrorCode);
 
             // Retain an original acquisition failure; otherwise make unsuccessful cleanup visible.
             if (completed) throw;

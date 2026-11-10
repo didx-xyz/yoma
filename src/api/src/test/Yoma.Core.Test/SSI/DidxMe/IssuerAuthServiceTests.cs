@@ -23,6 +23,38 @@ namespace Yoma.Core.Test.SSI.DidxMe
 
     #region Tests
     [Theory]
+    [InlineData(true, null, false)]
+    [InlineData(true, "", false)]
+    [InlineData(true, "placeholder", false)]
+    [InlineData(true, "whsec_", false)]
+    [InlineData(true, "whsec_not-base64", false)]
+    [InlineData(true, "whsec_dGVzdC1vbmx5", true)]
+    [InlineData(false, null, true)]
+    public void EnabledSSIRequiresAValidSigningSecretAtStartup(bool enabled, string? secret, bool valid)
+    {
+      var services = new ServiceCollection();
+      services.AddSingleton(Mock.Of<Domain.Core.Interfaces.IEnvironmentProvider>(value => value.Environment == Domain.Core.Environment.Local));
+      var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+      {
+        ["DidxMe:Holder:TokenAcquisitionTimeoutSeconds"] = "30",
+        ["DidxMe:Webhook:WaitTimeoutSeconds"] = "60",
+        ["DidxMe:Webhook:SigningSecret"] = secret
+      }).Build();
+      Infrastructure.DidxMe.Startup.ConfigureServices_InfrastructureSSIProvider(services, configuration,
+        new Domain.Core.Models.AppSettings { SSIEnabledEnvironments = enabled ? "Local" : "" });
+      using var provider = services.BuildServiceProvider();
+      var startup = provider.GetRequiredService<IStartupValidator>();
+
+      if (valid) startup.Validate();
+      else
+      {
+        var error = Assert.Throws<OptionsValidationException>(() => startup.Validate());
+        Assert.Contains("DidxMe.Webhook.SigningSecret", error.Message);
+        if (!string.IsNullOrEmpty(secret)) Assert.DoesNotContain(secret, error.Message);
+      }
+    }
+
+    [Theory]
     [InlineData(30)]
     [InlineData(0)]
     public async Task CachedTokenRefreshesBeforeExpiry(int bufferSeconds)
@@ -163,12 +195,15 @@ namespace Yoma.Core.Test.SSI.DidxMe
       var services = new ServiceCollection();
       var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
       {
+        ["DidxMe:Holder:TokenAcquisitionTimeoutSeconds"] = "30",
+        ["DidxMe:Webhook:WaitTimeoutSeconds"] = "60",
         [$"DidxMe:{setting}"] = value
       }).Build();
       Infrastructure.DidxMe.Startup.ConfigureServices_DidxMe(services, configuration);
       using var provider = services.BuildServiceProvider();
 
-      Assert.Throws<OptionsValidationException>(() => provider.GetRequiredService<IOptions<ProviderOptions>>().Value);
+      var error = Assert.Throws<OptionsValidationException>(() => provider.GetRequiredService<IOptions<ProviderOptions>>().Value);
+      Assert.Contains($"DidxMe.{setting}", error.Message);
     }
     #endregion
 

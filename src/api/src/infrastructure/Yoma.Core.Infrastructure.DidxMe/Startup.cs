@@ -34,7 +34,8 @@ namespace Yoma.Core.Infrastructure.DidxMe
         .Validate(options => options.IssuerRequestTimeoutSeconds > 0, $"{ProviderOptions.Section}.{nameof(ProviderOptions.IssuerRequestTimeoutSeconds)} must be positive")
         .Validate(options => options.AccessTokenRefreshBufferSeconds >= 0, $"{ProviderOptions.Section}.{nameof(ProviderOptions.AccessTokenRefreshBufferSeconds)} must be non-negative")
         .Validate(options => options.Holder != null && options.Holder.TokenAcquisitionTimeoutSeconds > 0, $"{ProviderOptions.Section}.{nameof(ProviderOptions.Holder)}.{nameof(HolderOptions.TokenAcquisitionTimeoutSeconds)} must be positive")
-        .Validate(options => options.Webhook != null && options.Webhook.WaitTimeoutSeconds > 0 && options.Webhook.PollIntervalMilliseconds > 0 &&
+        .Validate(options => options.Webhook != null, $"{ProviderOptions.Section}.{nameof(ProviderOptions.Webhook)} is required")
+        .Validate(options => options.Webhook == null || options.Webhook.WaitTimeoutSeconds > 0 && options.Webhook.PollIntervalMilliseconds > 0 &&
           options.Webhook.TimestampToleranceSeconds > 0, $"{ProviderOptions.Section}.{nameof(ProviderOptions.Webhook)} timeouts and polling interval must be positive")
         .ValidateOnStart();
 
@@ -56,6 +57,13 @@ namespace Yoma.Core.Infrastructure.DidxMe
       AppSettings appSettings)
     {
       services.ConfigureServices_DidxMe(configuration);
+
+      // Local SSI opt-out must still boot without a provisioned webhook secret.
+      services.AddOptions<ProviderOptions>()
+        .Validate<IEnvironmentProvider>((options, environment) =>
+          !appSettings.SSIEnabledEnvironmentsAsEnum.HasFlag(environment.Environment) ||
+          WebhookParser.IsSigningSecretValid(options.Webhook?.SigningSecret),
+          $"{ProviderOptions.Section}.{nameof(ProviderOptions.Webhook)}.{nameof(WebhookOptions.SigningSecret)} must be a valid webhook signing secret when SSI is enabled");
 
       services.AddDbContext<ProviderDbContext>((sp, options) =>
       {

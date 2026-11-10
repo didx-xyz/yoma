@@ -74,6 +74,8 @@ security configuration and privileged workflows are held in the private engineer
 
 ## Decisions
 
+- 2026-11-10 deployment review: initialize existing issuance journal rows to `Accepted` when adding the required status column, as agreed with Adrian. This supersedes the earlier no-backfill decision: deployment precedes manual Stage preparation. New rows explicitly start as `Prepared` in the service. This does not convert legacy credential IDs or replace the manual Stage procedure. Keep the initial journal lookup/insert ReadCommitted, per Adrian's review; the existing job lock owns execution concurrency. This is not an atomic uniqueness guarantee if that lock expires or callers bypass it. Provider calls remain outside transactions. See the [latest review handoff](./handoffs/2026-11-10-g.md).
+
 - 2026-11-10 PR review: check issuance transitions against the locked current row. The identity provider decides whether a client's webhook events should be ignored; exclude all events from the dedicated assertion client before idempotency/user processing, without injecting Keycloak options into the controller. Do not classify other clients by naming conventions or confidential/service-account settings. Retain wallet-wide reference recovery and conservative delivery-error handling. Keep the agreed manual Stage preparation and direct UTC clock; see the [review dispositions](./handoffs/2026-11-10-f.md).
 
 - 2026-11-10: An accepted credential can restore the domain's native wallet ID/version/date even when its issuance journal is missing. Do not fabricate issuer/session references or recreate an incomplete journal. Reads and Replay still use the wallet ID, client referent and retained preset mapping. Issuer/session audit history is unavailable for that recovered attempt. Local jobs verified this for YoID and Opportunity; see the [local results](./handoffs/2026-11-10-e.md).
@@ -153,7 +155,7 @@ the separate security export; it distinguishes existing fixes from findings stil
 
 The earlier SSI/Core run reported 1,023 total, zero failures/errors and one explicit test not
 run (1,022 passed). Local API issuance, list/detail, mobile-to-email continuity and caching have been exercised; this does not
-claim completion of browser/Dev or live multi-replica tests. Recovery/Replay block production use.
+claim completion of browser/Dev or live multi-replica tests. Recovery/Replay are now implemented and locally verified on draft PR #2025; deployed verification and Stage preparation remain release gates.
 
 The reset seed additionally passed disposable PostgreSQL checks for 4 tenants and 56 credential
 cases covering all six opportunity types, empty schedules and missing-lookup atomicity. The focused SSI suite passed 348 tests with

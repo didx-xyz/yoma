@@ -13,13 +13,14 @@ namespace Yoma.Core.Infrastructure.DidxMe.Migrations
     /// <inheritdoc />
     protected override void Up(MigrationBuilder migrationBuilder)
     {
+      // Existing rows track issued credentials. New attempts explicitly start as Prepared in the service.
       migrationBuilder.AddColumn<string>(
         name: "Status",
         schema: "DidxMe",
         table: "IssuanceMapping",
         type: "varchar(25)",
         nullable: false,
-        defaultValue: "");
+        defaultValue: IssuanceStatus.Accepted.ToString());
 
       migrationBuilder.CreateIndex(
         name: "IX_IssuanceMapping_TenantAlias_IssuanceId",
