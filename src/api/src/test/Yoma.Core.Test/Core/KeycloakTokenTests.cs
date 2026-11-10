@@ -50,7 +50,9 @@ namespace Yoma.Core.Test.Core
       await using var app = builder.Build();
       app.MapPost("/realms/master/protocol/openid-connect/token", () => Results.Json(new
       {
-        access_token = "admin-test-token", expires_in = 300, token_type = "Bearer"
+        access_token = "admin-test-token",
+        expires_in = 300,
+        token_type = "Bearer"
       }));
       app.MapPost($"/admin/realms/test/users/{userId}/impersonation", (HttpContext context) =>
       {
@@ -144,8 +146,10 @@ namespace Yoma.Core.Test.Core
       Admin = new KeycloakCredentials { Realm = "master", Username = "test-admin", Password = "test-password" },
       TokenExchange = new TokenExchangeOptions
       {
-        ClientId = "assertion-client", ClientSecret = "test-secret",
-        RedirectUri = "http://127.0.0.1:1/callback", RequestTimeoutSeconds = 5
+        ClientId = "assertion-client",
+        ClientSecret = "test-secret",
+        RedirectUri = "http://127.0.0.1:1/callback",
+        RequestTimeoutSeconds = 5
       }
     };
 
@@ -158,7 +162,9 @@ namespace Yoma.Core.Test.Core
       var header = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes("{\"alg\":\"RS256\",\"typ\":\"JWT\"}"));
       var body = WebEncoders.Base64UrlEncode(JsonSerializer.SerializeToUtf8Bytes(new
       {
-        sub = userId.ToString(), sid = sessionId, exp = DateTimeOffset.UtcNow.AddMinutes(5).ToUnixTimeSeconds()
+        sub = userId.ToString(),
+        sid = sessionId,
+        exp = DateTimeOffset.UtcNow.AddMinutes(5).ToUnixTimeSeconds()
       }));
       return $"{header}.{body}.dGVzdA";
     }

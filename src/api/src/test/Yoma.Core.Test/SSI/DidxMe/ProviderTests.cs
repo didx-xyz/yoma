@@ -138,7 +138,9 @@ namespace Yoma.Core.Test.SSI.DidxMe
       var request = fixture.Request();
       request.TenantIdIssuer = await fixture.Client.EnsureTenant(new TenantRequest
       {
-        Referent = referent, Name = "Partner", Roles = [Role.Issuer]
+        Referent = referent,
+        Name = "Partner",
+        Roles = [Role.Issuer]
       });
       await fixture.Client.IssueCredential(request);
       Assert.Equal(referent, Assert.Single(fixture.IssuanceMappings).TenantIdIssuer);

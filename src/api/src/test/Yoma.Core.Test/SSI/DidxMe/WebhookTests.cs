@@ -102,8 +102,11 @@ namespace Yoma.Core.Test.SSI.DidxMe
     {
       public IssuanceMapping Mapping { get; } = new()
       {
-        Id = Guid.NewGuid(), TenantAlias = "yoma", TenantIdHolder = "holder-test",
-        IssuanceId = "session-test", Status = nameof(IssuanceStatus.Delivering)
+        Id = Guid.NewGuid(),
+        TenantAlias = "yoma",
+        TenantIdHolder = "holder-test",
+        IssuanceId = "session-test",
+        Status = nameof(IssuanceStatus.Delivering)
       };
       public Mock<IRepository<IssuanceMapping>> Repository { get; } = new();
       public IssuanceTrackingService Service { get; }
@@ -118,7 +121,8 @@ namespace Yoma.Core.Test.SSI.DidxMe
           .Returns((Func<Task> action, bool _) => action());
         Service = new IssuanceTrackingService(Options.Create(new ProviderOptions
         {
-          TenantAlias = "yoma", Webhook = new WebhookOptions { PollIntervalMilliseconds = 1 }
+          TenantAlias = "yoma",
+          Webhook = new WebhookOptions { PollIntervalMilliseconds = 1 }
         }), Repository.Object, strategy.Object);
       }
     }

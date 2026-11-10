@@ -59,7 +59,8 @@ namespace Yoma.Core.Test.SSI.DidxMe
 
       context = new HolderContext
       {
-        UserId = userId.ToString(), HolderId = "holder-a",
+        UserId = userId.ToString(),
+        HolderId = "holder-a",
         AccessToken = Token(issuedAt, new JObject { ["sub"] = userId.ToString() })
       };
       http.RespondWithJson(new { access_token = Token(issuedAt, HolderClaims()), token_type = "Bearer", expires_in = 120 });

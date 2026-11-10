@@ -92,7 +92,8 @@ namespace Yoma.Core.Test.SSI.DidxMe
           }
         }, new KeycloakAuthenticationOptions
         {
-          AuthServerUrl = "https://yoma.example.test", Realm = "yoma"
+          AuthServerUrl = "https://yoma.example.test",
+          Realm = "yoma"
         }));
       return new(Options.Create(options), Cache.Object, Lock.Object, Encryption, Logger.Object,
         identityProvider ?? factory.Object);

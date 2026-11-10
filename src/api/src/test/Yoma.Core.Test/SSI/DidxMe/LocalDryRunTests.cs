@@ -296,8 +296,10 @@ namespace Yoma.Core.Test.SSI.DidxMe
         {
           SchemaId = issued[0].SchemaId,
           SchemaName = "YoID|DidxMeLocalDryRun",
-          SchemaType = "YoID", ArtifactType = ArtifactType.SDJWT,
-          TenantIdHolder = tenantId, TenantIdIssuer = issuerTenantId,
+          SchemaType = "YoID",
+          ArtifactType = ArtifactType.SDJWT,
+          TenantIdHolder = tenantId,
+          TenantIdIssuer = issuerTenantId,
           ClientReferent = new("_Referent_Client", issued[0].Attributes["_Referent_Client"]),
           Attributes = new Dictionary<string, string>(issued[0].Attributes)
         });
@@ -332,7 +334,10 @@ namespace Yoma.Core.Test.SSI.DidxMe
           // Local admin tokens are short-lived; cleanup can run after the inline wait expires.
           yomaAdmin = await Token(identityOptions.AuthServerUrl, "master", new
           {
-            grant_type = "password", client_id = "admin-cli", username = "admin", password = "password"
+            grant_type = "password",
+            client_id = "admin-cli",
+            username = "admin",
+            password = "password"
           });
           if (subject == null)
           {
