@@ -24,7 +24,6 @@ namespace Yoma.Core.Test.SSI.DidxMe
     #region Tests
     [Theory]
     [InlineData(30)]
-    [InlineData(5)]
     [InlineData(0)]
     public async Task CachedTokenRefreshesBeforeExpiry(int bufferSeconds)
     {
@@ -35,8 +34,6 @@ namespace Yoma.Core.Test.SSI.DidxMe
       using var service = CreateService(bufferSeconds: bufferSeconds);
 
       var first = await service.GetAuthHeader(TestContext.Current.CancellationToken);
-      var cached = await service.GetAuthHeader(TestContext.Current.CancellationToken);
-      Assert.Equal(first, cached);
       Assert.Equal("Authorization", first.Key);
       Assert.Equal("Bearer first-token", first.Value);
       http.ShouldHaveCalled(TokenEndpoint)

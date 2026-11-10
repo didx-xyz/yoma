@@ -7,6 +7,12 @@ namespace Yoma.Core.Domain.IdentityProvider.Interfaces
   {
     bool AuthenticateWebhook(HttpContext httpContext);
 
+    /// <summary>
+    /// Identifies a configured client that authenticates on a user's behalf for background operations.
+    /// Its events represent integration activity, not activity performed by the user.
+    /// </summary>
+    bool IsClientActingOnBehalfOfUser(string? clientId);
+
     Task<User?> GetUserByUsername(string? username);
 
     Task<User?> GetUserById(Guid id);

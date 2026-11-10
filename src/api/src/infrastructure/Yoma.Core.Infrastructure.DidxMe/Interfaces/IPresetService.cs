@@ -1,4 +1,3 @@
-using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Models.Provider;
 using Yoma.Core.Infrastructure.DidxMe.Models;
 

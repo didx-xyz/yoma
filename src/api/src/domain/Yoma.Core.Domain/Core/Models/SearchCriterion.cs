@@ -1,5 +1,3 @@
-using Yoma.Core.Domain.Core.Extensions;
-
 namespace Yoma.Core.Domain.Core.Models
 {
   /// <summary>

@@ -26,8 +26,6 @@ using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces;
 using Yoma.Core.Infrastructure.IXO.YellowCard.Interfaces;
 using Yoma.Core.Infrastructure.DidxMe.Interfaces;
-using Yoma.Core.Infrastructure.DidxMe.Models;
-using Yoma.Core.Infrastructure.DidxMe.Services;
 using Yoma.Core.Infrastructure.Keycloak.Models;
 
 namespace Yoma.Core.Test.Core
@@ -35,6 +33,32 @@ namespace Yoma.Core.Test.Core
   public class KeycloakWebhookTests
   {
     #region Recovery and Existing Users
+    [Theory]
+    [InlineData("LOGIN", false)]
+    [InlineData("LOGIN", true)]
+    [InlineData("REGISTER", false)]
+    [InlineData("REGISTER", true)]
+    [InlineData("UPDATE_PROFILE", false)]
+    [InlineData("UPDATE_PROFILE", true)]
+    public async Task TechnicalClientEventsDoNotCreateOrUpdateYouthOrRecordLogin(string type, bool existingUser)
+    {
+      using var fixture = new Fixture();
+      var user = existingUser ? fixture.AddUser(linked: true) : null;
+      var lastLogin = user?.DateLastLogin;
+
+      await fixture.Deliver(type, clientId: "assertion-client");
+
+      Assert.Equal(existingUser ? 1 : 0, fixture.Users.Count);
+      Assert.Equal(lastLogin, user?.DateLastLogin);
+      Assert.Empty(fixture.History);
+      fixture.Idempotency.Verify(value => value.TryCreateAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+      fixture.VerifyLog(LogLevel.Information, "Webhook from technical client 'assertion-client' ignored", Times.Once());
+      fixture.UserService.Verify(value => value.Upsert(It.IsAny<UserRequest>(), It.IsAny<bool>(), It.IsAny<bool>()), Times.Never);
+      fixture.Repository.Verify(value => value.Update(It.IsAny<User>()), Times.Never);
+      fixture.VerifyRoleAssignment(Times.Never());
+      fixture.VerifyNoOnboardingOrPayoutCalls();
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
@@ -937,13 +961,15 @@ namespace Yoma.Core.Test.Core
       }
 
       public async Task Deliver(string type, string? eventId = null, string? userId = null,
-        int expectedStatus = StatusCodes.Status200OK, string? identityProvider = null)
+        int expectedStatus = StatusCodes.Status200OK, string? identityProvider = null, string clientId = "yoma-web")
       {
         var response = new CompletedResponseFeature();
         var context = new DefaultHttpContext();
         context.Features.Set<IHttpResponseFeature>(response);
         var factory = new Mock<IIdentityProviderClientFactory>();
         factory.Setup(o => o.CreateClient()).Returns(Identity.Object);
+        Identity.Setup(value => value.IsClientActingOnBehalfOfUser(It.IsAny<string>()))
+          .Returns((string value) => value == "assertion-client");
         var controller = new WebhookController(
           Logger.Object,
           Options.Create(new AppSettings { DistributedLockKeycloakEventDurationInSeconds = 60 }),
@@ -968,7 +994,7 @@ namespace Yoma.Core.Test.Core
           RealmId = "yoma",
           Id = eventId ?? Guid.NewGuid().ToString(),
           Time = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-          ClientId = "yoma-web",
+          ClientId = clientId,
           UserId = userId ?? KeycloakUser.Id.ToString(),
           IpAddress = "127.0.0.1",
           Details = new Details

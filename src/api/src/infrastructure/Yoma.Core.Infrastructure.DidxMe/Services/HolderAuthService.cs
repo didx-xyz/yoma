@@ -82,8 +82,6 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
           throw new InvalidOperationException("The authenticated Yoma token has expired");
       }
 
-      var identityProvider = _identityProviderClientFactory.CreateClient();
-      using var disposable = identityProvider as IDisposable;
       var key = CacheKey(context);
       var acquisitionTimeout = TimeSpan.FromSeconds(_options.Holder.TokenAcquisitionTimeoutSeconds);
       var leaseDuration = acquisitionTimeout + TimeSpan.FromSeconds(_options.RequestTimeoutSeconds);
@@ -103,6 +101,9 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
               // Another API instance may have populated the entry while this request waited.
               cached = await ReadCached(key);
               if (cached != null) return;
+
+              var identityProvider = _identityProviderClientFactory.CreateClient();
+              using var disposable = identityProvider as IDisposable;
 
               // Bound acquisition; the identity provider owns cleanup of any temporary session.
               using var acquisition = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -337,7 +338,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
       if (claims["aud"]?.Type == JTokenType.String) return [claims.Value<string>("aud")!];
 
       if (claims["aud"] is JArray values && values.All(value => value.Type == JTokenType.String))
-        return values.Values<string>().Select(value => value!).ToList();
+        return [.. values.Values<string>().Select(value => value!)];
 
       throw new InvalidOperationException("Federation token audience is missing or malformed");
     }

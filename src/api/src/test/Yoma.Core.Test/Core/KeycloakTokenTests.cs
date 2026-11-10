@@ -1,6 +1,7 @@
 using Flurl;
 using Flurl.Http;
 using Flurl.Http.Newtonsoft;
+using Flurl.Http.Testing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -24,6 +25,27 @@ namespace Yoma.Core.Test.Core
   public class KeycloakTokenTests
   {
     #region Tests
+    [Theory]
+    [InlineData("assertion-client", "assertion-client", true)]
+    [InlineData("assertion-client", "yoma-web", false)]
+    [InlineData("assertion-client", "partner-client", false)]
+    [InlineData("assertion-client", "ASSERTION-CLIENT", false)]
+    [InlineData("assertion-client", null, false)]
+    [InlineData("assertion-client", " ", false)]
+    [InlineData(null, "yoma-web", false)]
+    [InlineData("", "", false)]
+    public void WebhookFilteringOnlyExcludesTheConfiguredTechnicalClient(string? configuredClient, string? eventClient, bool expected)
+    {
+      var options = Options();
+      if (configuredClient == null) options.TokenExchange = null!;
+      else options.TokenExchange.ClientId = configuredClient;
+      using var http = new HttpTest();
+      using var client = Client("https://identity.example.test", options);
+
+      Assert.Equal(expected, client.IsClientActingOnBehalfOfUser(eventClient));
+      Assert.Empty(http.CallLog);
+    }
+
     [Theory]
     [InlineData("success")]
     [InlineData("wrong-state")]

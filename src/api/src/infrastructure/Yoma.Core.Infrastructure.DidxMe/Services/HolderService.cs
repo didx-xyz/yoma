@@ -126,14 +126,15 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
 
         await _tracking.Update(mapping.Id, item =>
         {
-          if (item.Status == nameof(IssuanceStatus.Deleted))
+          var status = Enum.Parse<IssuanceStatus>(item.Status, true);
+          if (status == IssuanceStatus.Deleted)
             throw new InvalidOperationException("The issuance was deleted during recovery");
 
           if (item.WalletCredentialId != null && item.WalletCredentialId != result.Id)
             throw new InvalidOperationException("The recovered wallet ID conflicts with the recorded credential");
 
           item.WalletCredentialId = result.Id;
-          item.Status = nameof(IssuanceStatus.Accepted);
+          item.Status = IssuanceStatus.Accepted.ToString();
         });
       }
       return result;

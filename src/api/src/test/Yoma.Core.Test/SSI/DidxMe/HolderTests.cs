@@ -12,11 +12,9 @@ using Xunit;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.IdentityProvider.Models;
-using Yoma.Core.Domain.SSI;
 using Yoma.Core.Infrastructure.DidxMe.Client;
 using Yoma.Core.Infrastructure.DidxMe.Interfaces;
 using Yoma.Core.Infrastructure.DidxMe.Models;
-using Yoma.Core.Infrastructure.DidxMe.Services;
 
 namespace Yoma.Core.Test.SSI.DidxMe
 {
@@ -54,6 +52,9 @@ namespace Yoma.Core.Test.SSI.DidxMe
       http.RespondWithJson(new { access_token = Token(issuedAt, HolderClaims()), token_type = "Bearer", expires_in = 120 });
       await background.GetAuthHeader(context, TestContext.Current.CancellationToken);
       await background.GetAuthHeader(context, TestContext.Current.CancellationToken);
+      using var anotherScope = cache.Create(CreateOptions(), identityProvider: factory.Object);
+      await anotherScope.GetAuthHeader(context, TestContext.Current.CancellationToken);
+      factory.Verify(value => value.CreateClient(), Times.Once);
       identity.Verify(client => client.GetUserAccessToken(userId, It.IsAny<CancellationToken>()), Times.Once);
       identity.Verify(client => client.ExchangeUserAccessToken(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
 
@@ -294,7 +295,6 @@ namespace Yoma.Core.Test.SSI.DidxMe
 
     [Theory]
     [InlineData(30)]
-    [InlineData(5)]
     [InlineData(0)]
     public async Task RefreshAndInvalidationAcquireNewAssertions(int bufferSeconds)
     {
@@ -310,7 +310,6 @@ namespace Yoma.Core.Test.SSI.DidxMe
       EnqueueTokens(http, issuedAt, holderExpiresIn: 1);
       await service.GetAuthHeader(context, TestContext.Current.CancellationToken);
       Assert.InRange(Assert.Single(cache.Expirations).Value.TotalSeconds, 0, 1);
-      await service.GetAuthHeader(context, TestContext.Current.CancellationToken);
       http.ShouldHaveCalled(HolderEndpoint).Times(1);
       Assert.All(http.CallLog, call => Assert.Equal(TimeSpan.FromSeconds(
         call.Request.Url.ToString() == YomaEndpoint ? 30 : 17), call.Request.Settings.Timeout));

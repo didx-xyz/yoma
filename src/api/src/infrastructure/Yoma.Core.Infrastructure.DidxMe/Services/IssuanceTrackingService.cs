@@ -68,7 +68,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
         var issuerCredentialId = result.IssuerCredentialId;
         var walletCredentialId = result.WalletCredentialId;
         var deliveryCompleted = result.DeliveryCompleted;
-        var status = Enum.Parse<IssuanceStatus>(result.Status);
+        var status = Enum.Parse<IssuanceStatus>(result.Status, true);
 
         update(result);
 
@@ -77,7 +77,8 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
           (walletCredentialId != null && walletCredentialId != result.WalletCredentialId))
           throw new InvalidOperationException("A confirmed provider identifier cannot be replaced");
 
-        if (status == IssuanceStatus.Deleted && result.Status != nameof(IssuanceStatus.Deleted))
+        var updatedStatus = Enum.Parse<IssuanceStatus>(result.Status, true);
+        if (status == IssuanceStatus.Deleted && updatedStatus != IssuanceStatus.Deleted)
           throw new InvalidOperationException("A deleted issuance attempt cannot be resumed");
 
         result.DeliveryCompleted |= deliveryCompleted;
@@ -99,13 +100,14 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
 
       await Update(mapping.Id, item =>
       {
-        if (item.Status == nameof(IssuanceStatus.Deleted)) return;
+        var status = Enum.Parse<IssuanceStatus>(item.Status, true);
+        if (status == IssuanceStatus.Deleted) return;
 
         if (item.WalletCredentialId != null && item.WalletCredentialId != walletId)
           throw new InvalidOperationException("The accepted event conflicts with the recorded wallet credential");
 
         item.WalletCredentialId = walletId;
-        item.Status = nameof(IssuanceStatus.Accepted);
+        item.Status = IssuanceStatus.Accepted.ToString();
       });
     }
 
@@ -117,10 +119,11 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
       do
       {
         var mapping = _repository.Query().Single(item => item.Id == id && item.TenantAlias == _options.TenantAlias);
-        if (mapping.Status == nameof(IssuanceStatus.Deleted))
+        var status = Enum.Parse<IssuanceStatus>(mapping.Status, true);
+        if (status == IssuanceStatus.Deleted)
           throw new InvalidOperationException("The delivered credential was deleted before issuance completed");
 
-        if (mapping.Status == nameof(IssuanceStatus.Accepted) && !string.IsNullOrWhiteSpace(mapping.WalletCredentialId))
+        if (status == IssuanceStatus.Accepted && !string.IsNullOrWhiteSpace(mapping.WalletCredentialId))
           return mapping.WalletCredentialId;
 
         await Task.Delay(TimeSpan.FromMilliseconds(_options.Webhook.PollIntervalMilliseconds), cancellationToken);
@@ -138,7 +141,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
       var ids = _repository.Query().Where(item => item.TenantAlias == _options.TenantAlias &&
         item.TenantIdHolder == holderId && item.WalletCredentialId == walletId).Select(item => item.Id).ToList();
       foreach (var id in ids)
-        await Update(id, item => item.Status = nameof(IssuanceStatus.Deleted));
+        await Update(id, item => item.Status = IssuanceStatus.Deleted.ToString());
     }
     #endregion
   }

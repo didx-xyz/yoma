@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Infrastructure.DidxMe.Context;

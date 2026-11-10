@@ -8,7 +8,6 @@ using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Models.Provider;
-using Yoma.Core.Infrastructure.DidxMe.Client;
 using Yoma.Core.Infrastructure.DidxMe.Models;
 
 namespace Yoma.Core.Infrastructure.DidxMe.Services

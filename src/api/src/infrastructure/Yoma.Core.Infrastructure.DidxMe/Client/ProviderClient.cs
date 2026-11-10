@@ -5,7 +5,6 @@ using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Interfaces.Provider;
-using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Domain.SSI.Models.Provider;
 using Yoma.Core.Infrastructure.DidxMe.Models;
 using Yoma.Core.Infrastructure.DidxMe.Services;
@@ -187,20 +186,17 @@ namespace Yoma.Core.Infrastructure.DidxMe.Client
       }
 
       var issuance = _tracking.Find(context.HolderId, request.ClientReferent);
-      if (issuance == null)
+      issuance ??= await _tracking.Create(new IssuanceMapping
       {
-        issuance = await _tracking.Create(new IssuanceMapping
-        {
-          Id = Guid.NewGuid(),
-          TenantAlias = _options.TenantAlias,
-          PresetMappingId = schema.Id,
-          TenantIdIssuer = request.TenantIdIssuer.Trim(),
-          TenantIdHolder = context.HolderId,
-          ClientReferentKey = request.ClientReferent.Key,
-          ClientReferentValue = request.ClientReferent.Value,
-          Status = IssuanceStatus.Prepared.ToString()
-        });
-      }
+        Id = Guid.NewGuid(),
+        TenantAlias = _options.TenantAlias,
+        PresetMappingId = schema.Id,
+        TenantIdIssuer = request.TenantIdIssuer.Trim(),
+        TenantIdHolder = context.HolderId,
+        ClientReferentKey = request.ClientReferent.Key,
+        ClientReferentValue = request.ClientReferent.Value,
+        Status = IssuanceStatus.Prepared.ToString()
+      });
 
       if (issuance.PresetMappingId != schema.Id)
         throw new InvalidOperationException("The existing issuance attempt uses a different preset");
@@ -208,7 +204,8 @@ namespace Yoma.Core.Infrastructure.DidxMe.Client
       // Persist the offer IDs before delivery. An unsaved offer cannot have reached the wallet.
       // Once delivery starts, an ambiguous result must recover the same credential, never issue another.
       IssuanceResponse offer;
-      switch (Enum.Parse<IssuanceStatus>(issuance.Status))
+      var status = Enum.Parse<IssuanceStatus>(issuance.Status, true);
+      switch (status)
       {
         case IssuanceStatus.Prepared:
           var attributes = request.Attributes.Where(pair => !string.IsNullOrEmpty(pair.Value))
@@ -217,9 +214,13 @@ namespace Yoma.Core.Infrastructure.DidxMe.Client
           ValidateOffer(offer);
           issuance = await _tracking.Update(issuance.Id, item =>
           {
+            var itemStatus = Enum.Parse<IssuanceStatus>(item.Status, true);
+            if (itemStatus != IssuanceStatus.Prepared)
+              throw new InvalidOperationException("The issuance attempt changed while creating its offer; retry recovery");
+
             item.IssuanceId = offer.Id;
             item.IssuerCredentialId = offer.Credentials![0].Id;
-            item.Status = nameof(IssuanceStatus.Offered);
+            item.Status = IssuanceStatus.Offered.ToString();
           });
           break;
 
@@ -238,7 +239,18 @@ namespace Yoma.Core.Infrastructure.DidxMe.Client
           throw new InvalidOperationException("The issuance attempt cannot be resumed from its current status");
       }
 
-      await _tracking.Update(issuance.Id, item => item.Status = nameof(IssuanceStatus.Delivering));
+      await _tracking.Update(issuance.Id, item =>
+      {
+        var itemStatus = Enum.Parse<IssuanceStatus>(item.Status, true);
+
+        // Check the current state under the journal row lock, not the earlier request snapshot.
+        if (itemStatus != IssuanceStatus.Offered)
+          throw new InvalidOperationException("The issuance attempt changed before delivery; retry recovery");
+
+        item.Status = IssuanceStatus.Delivering.ToString();
+      });
+
+      // Even a 4xx can follow storage of a pending credential. Keep delivery errors in recovery.
       await _issuer.Deliver(context.UserId, offer.OfferUri!);
       await _tracking.Update(issuance.Id, item => item.DeliveryCompleted = true);
 

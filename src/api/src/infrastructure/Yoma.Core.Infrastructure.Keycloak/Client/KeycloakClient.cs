@@ -120,6 +120,15 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       return await ReadUserAccessToken(response, started);
     }
 
+    public bool IsClientActingOnBehalfOfUser(string? clientId)
+    {
+      // This client acquires assertions for integrations; its events are not youth activity.
+      // A confidential client or service-account capability alone does not establish that distinction.
+      var assertionClientId = _keycloakAdminOptions.TokenExchange?.ClientId;
+      return !string.IsNullOrWhiteSpace(clientId) && !string.IsNullOrWhiteSpace(assertionClientId) &&
+        string.Equals(clientId, assertionClientId, StringComparison.Ordinal);
+    }
+
     public bool AuthenticateWebhook(HttpContext httpContext)
     {
       if (httpContext == null)

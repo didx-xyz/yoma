@@ -32,11 +32,9 @@ using Yoma.Core.Domain.SSI.Interfaces.Provider;
 using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Domain.SSI.Models.Provider;
 using Yoma.Core.Infrastructure.DidxMe;
-using Yoma.Core.Infrastructure.DidxMe.Client;
 using Yoma.Core.Infrastructure.DidxMe.Context;
 using Yoma.Core.Infrastructure.DidxMe.Interfaces;
 using Yoma.Core.Infrastructure.DidxMe.Models;
-using Yoma.Core.Infrastructure.DidxMe.Services;
 using Yoma.Core.Infrastructure.Shared;
 
 namespace Yoma.Core.Test.SSI.DidxMe

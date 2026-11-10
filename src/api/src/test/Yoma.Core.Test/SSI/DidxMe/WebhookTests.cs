@@ -17,6 +17,21 @@ namespace Yoma.Core.Test.SSI.DidxMe
   {
     #region Tests
     [Theory]
+    [InlineData("")]
+    [InlineData("Unknown")]
+    public async Task InvalidStoredStatusFailsBeforeMutation(string status)
+    {
+      var fixture = new Fixture();
+      fixture.Mapping.Status = status;
+      var invoked = false;
+
+      await Assert.ThrowsAsync<ArgumentException>(() => fixture.Service.Update(fixture.Mapping.Id, _ => invoked = true));
+
+      Assert.False(invoked);
+      fixture.Repository.Verify(value => value.Update(It.IsAny<IssuanceMapping>()), Times.Never);
+    }
+
+    [Theory]
     [InlineData("valid")]
     [InlineData("rotation")]
     [InlineData("tampered")]

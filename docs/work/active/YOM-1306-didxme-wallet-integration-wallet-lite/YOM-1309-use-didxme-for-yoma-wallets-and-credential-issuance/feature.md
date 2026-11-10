@@ -29,7 +29,8 @@ security configuration and privileged workflows are held in the private engineer
 - [x] Replace the additional signed tracking attribute with native wallet-ID tracking; issuance waits inline for authenticated acceptance. Local adapter proof and focused failure-path tests passed; review remains open.
 - [x] Persist issuance progress before delivery and hold uncertain outcomes for reconciliation. Accepted credentials recover by client referent; a missing wallet result after delivery starts is not permission to issue again.
 - [x] Verify the real VS job flow: signed acceptance, native wallet IDs, holder recovery, both credential families recovering with and without tracking rows, and Replay preserving the original issuance date. See the [local results](./handoffs/2026-11-10-e.md).
-- [ ] Review/commit/push this follow-up, create its PR and update YOM-1309 with the PR link; obtain approval before publishing.
+- [x] Commit/push the phase-1 follow-up and open [draft PR #2025](https://github.com/didx-xyz/yoma/pull/2025).
+- [ ] Review the PR #2025 follow-up corrections and confirm the Linear review status/link; obtain approval before publishing further changes.
 - [ ] Prepare a separately reviewed Stage-only cleanup/reissuance procedure, preserving holders and original issuance dates. Confirm preset handling separately; do not add a forced-version workaround or change the existing Prod cutover migration.
 - [ ] Later phase: implement YoID replacement/revocation after phase 1 is verified. Background Replay is implemented in this phase; deployed verification remains outstanding.
 - [x] Scaffold and wire the infrastructure using Yoma conventions.
@@ -72,6 +73,8 @@ security configuration and privileged workflows are held in the private engineer
 - [x] Remove private integration-document versions from the feature history and delete the assessment file; coordinate collaborator resynchronization.
 
 ## Decisions
+
+- 2026-11-10 PR review: check issuance transitions against the locked current row. The identity provider decides whether a client's webhook events should be ignored; exclude all events from the dedicated assertion client before idempotency/user processing, without injecting Keycloak options into the controller. Do not classify other clients by naming conventions or confidential/service-account settings. Retain wallet-wide reference recovery and conservative delivery-error handling. Keep the agreed manual Stage preparation and direct UTC clock; see the [review dispositions](./handoffs/2026-11-10-f.md).
 
 - 2026-11-10: An accepted credential can restore the domain's native wallet ID/version/date even when its issuance journal is missing. Do not fabricate issuer/session references or recreate an incomplete journal. Reads and Replay still use the wallet ID, client referent and retained preset mapping. Issuer/session audit history is unavailable for that recovered attempt. Local jobs verified this for YoID and Opportunity; see the [local results](./handoffs/2026-11-10-e.md).
 

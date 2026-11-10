@@ -781,6 +781,53 @@ namespace Yoma.Core.Test.SSI.DidxMe
     }
 
     [Theory]
+    [InlineData(IssuanceStatus.Prepared, IssuanceStatus.Offered)]
+    [InlineData(IssuanceStatus.Offered, IssuanceStatus.Delivering)]
+    [InlineData(IssuanceStatus.Offered, IssuanceStatus.Accepted)]
+    [InlineData(IssuanceStatus.Offered, IssuanceStatus.Deleted)]
+    public async Task StaleIssuanceCannotOverwriteTheCurrentStateOrDeliverAgain(IssuanceStatus original, IssuanceStatus current)
+    {
+      using var http = new HttpTest().WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
+      var fixture = new Fixture(http);
+      var mapping = new IssuanceMapping
+      {
+        Id = Guid.NewGuid(),
+        TenantAlias = "yoma",
+        TenantIdHolder = HolderId,
+        TenantIdIssuer = OrganizationReferent,
+        PresetMappingId = "schema-1",
+        ClientReferentKey = ReferentAttribute,
+        ClientReferentValue = "scheduled-issuance",
+        IssuanceId = "issuance-id",
+        IssuerCredentialId = "issuer-credential-id",
+        Status = original.ToString()
+      };
+      fixture.IssuanceMappings.Add(mapping);
+      http.ForCallsTo("https://creds.test/api/v1/issuances/issuance-id").RespondWithJson(new
+      {
+        data = new
+        {
+          id = mapping.IssuanceId,
+          status = "offered",
+          offerUri = "openid-credential-offer://offer",
+          credentials = new[] { new { id = mapping.IssuerCredentialId, format = "sd-jwt-vc" } }
+        }
+      });
+      // Simulate a competing request committing after the initial read, before the row lock.
+      fixture.IssuanceMappingRepository.Setup(value => value.Query(It.IsAny<LockMode>())).Returns(() =>
+      {
+        mapping.Status = current.ToString();
+        return fixture.IssuanceMappings.AsQueryable();
+      });
+
+      await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.Client.IssueCredential(fixture.Request()));
+
+      Assert.Equal(current.ToString(), mapping.Status);
+      fixture.IssuanceMappingRepository.Verify(value => value.Update(It.IsAny<IssuanceMapping>()), Times.Never);
+      http.ShouldNotHaveCalled("https://wallet.test/api/v2/orgs/credentials");
+    }
+
+    [Theory]
     [InlineData(401)]
     [InlineData(403)]
     [InlineData(500)]

@@ -2,7 +2,6 @@ using System.Linq.Expressions;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
-using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Lookups.Helpers;
 using Yoma.Core.Domain.Opportunity.Helpers;
 using Yoma.Core.Domain.Opportunity.Models;

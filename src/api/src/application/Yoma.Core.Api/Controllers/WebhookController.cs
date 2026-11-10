@@ -175,6 +175,12 @@ namespace Yoma.Core.Api.Controllers
               return;
             }
 
+            if (_identityProviderClient.IsClientActingOnBehalfOfUser(payload.ClientId))
+            {
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Webhook from technical client '{clientId}' ignored", payload.ClientId.SanitizeLogValue());
+              return;
+            }
+
             if (string.IsNullOrWhiteSpace(payload.Id))
             {
               if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("Webhook payload contains no id. Processing skipped");
