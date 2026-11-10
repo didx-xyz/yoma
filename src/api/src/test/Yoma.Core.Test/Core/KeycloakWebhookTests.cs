@@ -25,6 +25,9 @@ using Yoma.Core.Domain.Referral.Events;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces;
 using Yoma.Core.Infrastructure.IXO.YellowCard.Interfaces;
+using Yoma.Core.Infrastructure.DidxMe.Interfaces;
+using Yoma.Core.Infrastructure.DidxMe.Models;
+using Yoma.Core.Infrastructure.DidxMe.Services;
 using Yoma.Core.Infrastructure.Keycloak.Models;
 
 namespace Yoma.Core.Test.Core
@@ -953,7 +956,9 @@ namespace Yoma.Core.Test.Core
           Education.Object,
           Wallet.Object,
           Payout.Object,
-          Mock.Of<IYellowCardWebhookParser>())
+          Mock.Of<IYellowCardWebhookParser>(),
+          Mock.Of<IWebhookParser>(),
+          Mock.Of<IIssuanceTrackingService>())
         {
           ControllerContext = new ControllerContext { HttpContext = context }
         };

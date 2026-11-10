@@ -1,3 +1,4 @@
+using Yoma.Core.Infrastructure.DidxMe.Interfaces;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Security.Cryptography;
@@ -18,24 +19,22 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
   /// Yoma does not manage a separate template lifecycle or AnonCreds credential definitions.
   /// Domain Schema DTOs are projections at the existing SSI boundary, retained for Aries fallback.
   /// </summary>
-  public class PresetService
+  public class PresetService : IPresetService
   {
     #region Class Variables
     private const int AttributeName_MaxLength = 50;
 
     private readonly ProviderOptions _options;
     private readonly IRepository<CredentialPresetMapping> _repository;
-    private readonly IssuerClient _issuerClient;
+    private readonly IIssuerClient _issuerClient;
 
-    // Infrastructure-only signed correlation. Never presented as a domain schema attribute.
-    internal const string CredentialIdAttribute = "_Yoma_Credential_ID";
     #endregion
 
     #region Constructor
     public PresetService(
       IOptions<ProviderOptions> options,
       IRepository<CredentialPresetMapping> repository,
-      IssuerClient issuerClient)
+      IIssuerClient issuerClient)
     {
       ArgumentNullException.ThrowIfNull(options, nameof(options));
 
@@ -97,9 +96,6 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
         throw new ArgumentException(
           $"Credential attribute name '{invalidAttribute}' is {invalidAttribute.Length} characters; the maximum is {AttributeName_MaxLength}, including any prefix and underscore", nameof(request));
 
-      if (attributes.Contains(CredentialIdAttribute, StringComparer.OrdinalIgnoreCase))
-        throw new ArgumentException("The schema contains a reserved infrastructure attribute", nameof(request));
-
       var name = request.Name.Trim();
       var existing = ListDomainSchemas(true).SingleOrDefault(item => item.Name == name);
       var version = existing?.Version.IncrementMinor() ?? VersionExtensions.Default;
@@ -112,11 +108,6 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
       // Preserve those strings exactly; optional domain attributes must remain omittable.
       var definitions = attributes.ToDictionary(attribute => attribute,
         attribute => new CredentialAttribute { Name = attribute });
-      definitions.Add(CredentialIdAttribute, new CredentialAttribute
-      {
-        Name = CredentialIdAttribute,
-        Required = true
-      });
 
       // A previous remote create may have succeeded before this database saved its mapping.
       // Expected conflicts are normal responses. Always validate the immutable preset before reuse.

@@ -1,3 +1,17 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Yoma.Core.Api.Controllers;
+using Yoma.Core.Domain.Entity.Interfaces;
+using Yoma.Core.Domain.IdentityProvider.Interfaces;
+using Yoma.Core.Domain.Lookups.Interfaces;
+using Yoma.Core.Domain.Payout.Interfaces;
+using Yoma.Core.Domain.Reward.Interfaces;
+using Yoma.Core.Infrastructure.IXO.YellowCard.Interfaces;
+using Keycloak.AuthServices.Authentication;
+using Yoma.Core.Infrastructure.Keycloak;
 using Flurl;
 using Flurl.Http;
 using Flurl.Http.Newtonsoft;
@@ -57,13 +71,16 @@ namespace Yoma.Core.Test.SSI.DidxMe
         .Build();
       var options = configuration.GetSection(ProviderOptions.Section).Get<ProviderOptions>()
         ?? throw new InvalidOperationException("DidxMe settings are missing");
-      foreach (var url in new[] { options.KeycloakBaseUri, options.TokenExchange.KeycloakBaseUri,
+      var identityOptions = configuration.GetSection(KeycloakAuthenticationOptions.Section).Get<KeycloakAuthenticationOptions>()
+        ?? throw new InvalidOperationException("Identity-provider settings are missing");
+      ArgumentException.ThrowIfNullOrWhiteSpace(identityOptions.AuthServerUrl);
+      foreach (var url in new[] { options.KeycloakBaseUri, identityOptions.AuthServerUrl,
         options.WalletBaseUri, options.CredentialsBaseUri, options.OnboardingBaseUri })
       {
         if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || !uri.IsLoopback)
           throw new InvalidOperationException("This dry run permits only local platform endpoints");
       }
-      if (options.TenantAlias != "yoma" || options.TokenExchange.Realm != "yoma")
+      if (options.TenantAlias != "yoma" || identityOptions.Realm != "yoma")
         throw new InvalidOperationException("This dry run requires the prepared local Yoma tenant and realm");
 
       var users = new List<User>();
@@ -75,6 +92,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
       userRepository.Setup(repository => repository.Query(false)).Returns(() => users.AsQueryable());
       var accessor = new HttpContextAccessor();
       var services = new ServiceCollection();
+      services.AddLogging();
       // Protocol dry run uses an isolated cache/key ring; cross-replica reuse is covered separately.
       var tokenCache = new HolderTokenCacheFixture();
       services.AddSingleton(tokenCache.Cache.Object);
@@ -83,6 +101,10 @@ namespace Yoma.Core.Test.SSI.DidxMe
       services.AddSingleton<IHttpContextAccessor>(accessor);
       services.AddSingleton(userRepository.Object);
       services.AddSingleton(tenantRepository.Object);
+      services.ConfigureServices_IdentityProvider(configuration);
+      services.ConfigureServices_InfrastructureIdentityProvider();
+      services.AddSingleton(Mock.Of<IEnvironmentProvider>());
+      services.AddOptions<AppSettings>();
       services.ConfigureServices_InfrastructureShared();
       services.ConfigureServices_InfrastructureSSIProvider(configuration, new AppSettings
       {
@@ -100,11 +122,34 @@ namespace Yoma.Core.Test.SSI.DidxMe
       provider.Configure_InfrastructureDatabaseSSIProvider();
       // Repeat migration startup to verify a retained local database is safe to reuse.
       provider.Configure_InfrastructureDatabaseSSIProvider();
+      var receiverBuilder = WebApplication.CreateBuilder();
+      receiverBuilder.Logging.ClearProviders();
+      receiverBuilder.WebHost.UseUrls("http://0.0.0.0:5114");
+      await using var receiver = receiverBuilder.Build();
+      receiver.MapPost("/api/v3/webhook/didxme", async (HttpContext context) =>
+      {
+        await using var webhookScope = provider.CreateAsyncScope();
+        var controller = new WebhookController(
+          NullLogger<WebhookController>.Instance, Options.Create(new AppSettings()),
+          Mock.Of<IIdempotencyService>(), tokenCache.Lock.Object,
+          webhookScope.ServiceProvider.GetRequiredService<IIdentityProviderClientFactory>(),
+          Mock.Of<IUserService>(), Mock.Of<IGenderService>(), Mock.Of<ICountryService>(),
+          Mock.Of<IEducationService>(), Mock.Of<IWalletService>(), Mock.Of<IPayoutService>(),
+          Mock.Of<IYellowCardWebhookParser>(),
+          webhookScope.ServiceProvider.GetRequiredService<IWebhookParser>(),
+          webhookScope.ServiceProvider.GetRequiredService<IIssuanceTrackingService>())
+        {
+          ControllerContext = new ControllerContext { HttpContext = context }
+        };
+        var result = await controller.ReceiveDidxMeWebhook();
+        return Results.StatusCode(((StatusCodeResult)result).StatusCode);
+      });
+      await receiver.StartAsync(TestContext.Current.CancellationToken);
       await using var scope = provider.CreateAsyncScope();
       Assert.False(scope.ServiceProvider.GetRequiredService<ProviderDbContext>().Database.HasPendingModelChanges());
       var client = scope.ServiceProvider.GetRequiredService<ISSIProviderClientFactory>().CreateClient();
-      var adminBase = options.TokenExchange.KeycloakBaseUri.AppendPathSegments("admin", "realms", "yoma").ToString();
-      var yomaAdmin = await Token(options.TokenExchange.KeycloakBaseUri, "master", new
+      var adminBase = identityOptions.AuthServerUrl.AppendPathSegments("admin", "realms", "yoma").ToString();
+      var yomaAdmin = await Token(identityOptions.AuthServerUrl, "master", new
       {
         grant_type = "password",
         client_id = "admin-cli",
@@ -146,7 +191,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
           Name = "Local Dry Run",
           Roles = [Role.Holder]
         });
-        var holder = await scope.ServiceProvider.GetRequiredService<IssuerClient>().GetHolderOrNull(subject);
+        var holder = await scope.ServiceProvider.GetRequiredService<IIssuerClient>().GetHolderOrNull(subject);
         Assert.NotNull(holder);
         Assert.Equal(holder.Id, tenantId);
         tenants.Add(new SSITenantCreation { UserId = user.Id, TenantId = tenantId });
@@ -161,7 +206,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
           .SetQueryParam("clientId", "yoma-web").GetJsonAsync<JArray>(cancellationToken: TestContext.Current.CancellationToken);
         var webSecret = await Request(adminBase.AppendPathSegments("clients", web.Single().Value<string>("id"), "client-secret"), yomaAdmin)
           .GetJsonAsync<JObject>(cancellationToken: TestContext.Current.CancellationToken);
-        var userToken = await Token(options.TokenExchange.KeycloakBaseUri, "yoma", new
+        var userToken = await Token(identityOptions.AuthServerUrl, "yoma", new
         {
           grant_type = "password",
           client_id = "yoma-web",
@@ -176,7 +221,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
           User = new ClaimsPrincipal(new ClaimsIdentity([new Claim("sub", subject)], "Bearer"))
         };
         accessor.HttpContext.Request.Headers.Authorization = $"Bearer {userToken}";
-        holderContext = await scope.ServiceProvider.GetRequiredService<HolderContextService>().Get(tenantId);
+        holderContext = await scope.ServiceProvider.GetRequiredService<IHolderService>().GetContext(tenantId);
         var issuerTenantId = await client.EnsureTenant(new TenantRequest
         {
           Referent = organization.NameHashValue,
@@ -241,7 +286,27 @@ namespace Yoma.Core.Test.SSI.DidxMe
           walletIds.Add(record.WalletCredentialId!);
         }
         Assert.Null(await client.GetCredentialByClientReferentOrNull(tenantId, ArtifactType.SDJWT, new("_Referent_Client", "pending-platform-solution")));
-        await Assert.ThrowsAsync<NotSupportedException>(() => client.DeleteCredential(tenantId, ArtifactType.SDJWT, issued[0].Id));
+        // Exercise background reference lookup, then delete/reissue through the same provider contract.
+        var recovered = await client.GetCredentialByClientReferentOrNull(tenantId, ArtifactType.SDJWT,
+          new("_Referent_Client", issued[0].Attributes["_Referent_Client"]));
+        Assert.Equal(issued[0].Id, recovered!.Id);
+        await client.DeleteCredential(tenantId, ArtifactType.SDJWT, issued[0].Id);
+        Assert.Null(await client.GetCredentialByIdOrNull(tenantId, ArtifactType.SDJWT, issued[0].Id));
+        var replacement = await client.IssueCredential(new CredentialIssuanceRequest
+        {
+          SchemaId = issued[0].SchemaId,
+          SchemaName = "YoID|DidxMeLocalDryRun",
+          SchemaType = "YoID", ArtifactType = ArtifactType.SDJWT,
+          TenantIdHolder = tenantId, TenantIdIssuer = issuerTenantId,
+          ClientReferent = new("_Referent_Client", issued[0].Attributes["_Referent_Client"]),
+          Attributes = new Dictionary<string, string>(issued[0].Attributes)
+        });
+        Assert.NotEqual(issued[0].Id, replacement.Id);
+        Assert.Equal(issued[0].Attributes, replacement.Attributes);
+        walletIds.Add(replacement.Id);
+        Assert.DoesNotContain("_Yoma_Credential_ID",
+          (await scope.ServiceProvider.GetRequiredService<IWalletClient>()
+            .GetCredential(holderContext, replacement.Id, TestContext.Current.CancellationToken)).Claims.Properties().Select(item => item.Name));
       }
       finally
       {
@@ -251,19 +316,24 @@ namespace Yoma.Core.Test.SSI.DidxMe
         {
           if (holderContext != null)
           {
-            var walletClient = scope.ServiceProvider.GetRequiredService<WalletClient>();
+            var walletClient = scope.ServiceProvider.GetRequiredService<IWalletClient>();
             var page = await walletClient.ListCredentialPage(holderContext, cancellationToken: CancellationToken.None);
             foreach (var credential in page.Data!) walletIds.Add(credential.Id);
             var header = await scope.ServiceProvider.GetRequiredService<IHolderAuthService>().GetAuthHeader(holderContext, CancellationToken.None);
             foreach (var id in walletIds)
             {
               await options.WalletBaseUri.AppendPathSegments("v2", "credentials", id)
-                .WithHeader(header.Key, header.Value).DeleteAsync(cancellationToken: CancellationToken.None);
+                .WithHeader(header.Key, header.Value).AllowHttpStatus(404).DeleteAsync(cancellationToken: CancellationToken.None);
             }
           }
         }
         finally
         {
+          // Local admin tokens are short-lived; cleanup can run after the inline wait expires.
+          yomaAdmin = await Token(identityOptions.AuthServerUrl, "master", new
+          {
+            grant_type = "password", client_id = "admin-cli", username = "admin", password = "password"
+          });
           if (subject == null)
           {
             var identities = await Request(adminBase.AppendPathSegment("users"), yomaAdmin)

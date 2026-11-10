@@ -17,6 +17,8 @@ using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Payout.Interfaces;
 using Yoma.Core.Domain.Reward.Interfaces;
+using Yoma.Core.Infrastructure.DidxMe.Interfaces;
+using Yoma.Core.Infrastructure.DidxMe.Models;
 using Yoma.Core.Infrastructure.Keycloak;
 using Yoma.Core.Infrastructure.Keycloak.Models;
 using Yoma.Core.Infrastructure.IXO.YellowCard;
@@ -45,6 +47,9 @@ namespace Yoma.Core.Api.Controllers
     private readonly IPayoutService _payoutService;
     private readonly IYellowCardWebhookParser _yellowCardWebhookParser;
 
+    private readonly IWebhookParser _didxMeWebhookParser;
+    private readonly IIssuanceTrackingService _issuanceTrackingService;
+
     private const string Keycloak_Key_Prefix = "keycloak_event";
     private const string YellowCard_Key_Prefix = "yellowcard_event";
     #endregion
@@ -61,7 +66,9 @@ namespace Yoma.Core.Api.Controllers
       IEducationService educationService,
       IWalletService walletService,
       IPayoutService payoutService,
-      IYellowCardWebhookParser yellowCardWebhookParser)
+      IYellowCardWebhookParser yellowCardWebhookParser,
+      IWebhookParser didxMeWebhookParser,
+      IIssuanceTrackingService issuanceTrackingService)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _appSettings = appSettings.Value ?? throw new ArgumentNullException(nameof(appSettings));
@@ -75,10 +82,51 @@ namespace Yoma.Core.Api.Controllers
       _walletService = walletService ?? throw new ArgumentNullException(nameof(walletService));
       _payoutService = payoutService ?? throw new ArgumentNullException(nameof(payoutService));
       _yellowCardWebhookParser = yellowCardWebhookParser ?? throw new ArgumentNullException(nameof(yellowCardWebhookParser));
+      _didxMeWebhookParser = didxMeWebhookParser ?? throw new ArgumentNullException(nameof(didxMeWebhookParser));
+      _issuanceTrackingService = issuanceTrackingService ?? throw new ArgumentNullException(nameof(issuanceTrackingService));
     }
     #endregion
 
     #region Public Members
+    /// <summary>
+    /// Authenticates the raw request and persists wallet acceptance before acknowledging delivery.
+    /// Infrastructure owns correlation and the issuance wait; persistence failures allow sender retries.
+    /// </summary>
+    [HttpPost("webhook/didxme")]
+    public async Task<IActionResult> ReceiveDidxMeWebhook()
+    {
+      string requestBody;
+      using (var reader = new StreamReader(Request.Body, Encoding.UTF8,
+        detectEncodingFromByteOrderMarks: false, bufferSize: 1024, leaveOpen: true))
+        requestBody = await reader.ReadToEndAsync(Request.HttpContext.RequestAborted);
+
+      WebhookResult? webhook;
+      try
+      {
+        // Svix supports standard Webhook-* headers or its original Svix-* names.
+        var standardHeaders = Request.Headers.ContainsKey(WebhookHeaders.Id);
+        webhook = _didxMeWebhookParser.Parse(requestBody,
+          Request.Headers[standardHeaders ? WebhookHeaders.Id : WebhookHeaders.SvixId].ToString(),
+          Request.Headers[standardHeaders ? WebhookHeaders.Timestamp : WebhookHeaders.SvixTimestamp].ToString(),
+          Request.Headers[standardHeaders ? WebhookHeaders.Signature : WebhookHeaders.SvixSignature].ToString());
+      }
+      catch (UnauthorizedAccessException)
+      {
+        if (_logger.IsEnabled(LogLevel.Warning)) _logger.LogWarning("didx:me webhook authentication failed");
+        return Unauthorized();
+      }
+      catch (Exception exception) when (exception is JsonException or ArgumentException)
+      {
+        if (_logger.IsEnabled(LogLevel.Warning)) _logger.LogWarning("Invalid didx:me webhook payload received");
+        return BadRequest();
+      }
+
+      if (webhook != null)
+        await _issuanceTrackingService.Accept(webhook.IssuanceId, webhook.WalletCredentialId);
+
+      return Ok();
+    }
+
     /// <summary>
     /// Authenticates and acknowledges the Keycloak webhook before processing it after the response completes.
     /// Identity-profile synchronization is recoverable and does not require the sender to retry when downstream

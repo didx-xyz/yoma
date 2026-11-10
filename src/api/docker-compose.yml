@@ -205,9 +205,10 @@ services:
       CLIENT_YOMA_API_SECRET: superSecretYomaApiClientSecret
       CLIENT_YOMA_WEB_SECRET: superSecretYomaWebClientSecret
       # Local development defaults, matching the other Yoma clients above.
-      # DidxMe:TokenExchange:ClientSecret in Local appsettings must match.
+      # KeycloakAdmin:TokenExchange:ClientSecret in Local appsettings must match.
       CLIENT_DIDXME_ASSERTION_ENABLED: "true"
       CLIENT_DIDXME_ASSERTION_SECRET: &DidxMeAssertionSecret superSecretDidxMeAssertionClientSecret
+      CLIENT_DIDXME_ASSERTION_REDIRECT_URI: &DidxMeAssertionRedirectUri "http://localhost:5000/identity/assertion-callback"
       CLIENT_DIDXME_ASSERTION_AUDIENCE: "https://didx.127.0.0.1.nip.io/iam/realms/consumers"
       CLIENT_ATINGI_SECRET: superSecretAtingiClientSecret
       CLIENT_GOODWALL_SECRET: superSecretAtingiClientSecret
@@ -324,6 +325,10 @@ services:
       YOMA_SSI_ENABLED_ENVIRONMENTS: &SSIEnabledEnvironments "${YOMA_SSI_ENABLED_ENVIRONMENTS:-Local, Development, Staging, Production}"
       MONO_READY_TIMEOUT_SECONDS: 120
       YOMA_ASSERTION_CLIENT_SECRET: *DidxMeAssertionSecret
+      YOMA_ASSERTION_REDIRECT_URI: *DidxMeAssertionRedirectUri
+      # Local bootstrap token supplied privately in ignored src/api/.env; never used by the API.
+      YOMA_WEBHOOK_API_TOKEN: "${YOMA_WEBHOOK_API_TOKEN:-}"
+      YOMA_WEBHOOK_URL: "http://host.docker.internal:5000/api/v3/webhook/didxme"
       # Public local development defaults only; never use these in deployed environments.
       YOMA_ISSUER_CLIENT_SECRET: superSecretDidxMeIssuerClientSecret
       YOMA_HOLDER_CLIENT_SECRET: superSecretDidxMeHolderClientSecret
@@ -364,7 +369,6 @@ services:
       DidxMe__WalletBaseUri: "http://host.docker.internal:3300/api"
       DidxMe__OnboardingBaseUri: "http://host.docker.internal:3303/api"
       DidxMe__KeycloakBaseUri: "http://host.docker.internal:18080/iam"
-      DidxMe__TokenExchange__KeycloakBaseUri: "http://keycloak:8080"
       Logging__LogLevel__Default: "Debug"
       Logging__LogLevel__Microsoft: "Debug"
       Logging__LogLevel__Microsoft.Hosting.Lifetime: "Information"

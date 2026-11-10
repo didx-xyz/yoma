@@ -3,7 +3,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Models
   /// <summary>
   /// Binds the DidxMe configuration section for one Yoma environment. DIDx/SRE provisions the
   /// didx:me tenant, issuer project, issuer client and federated Lite client. Yoma's normal
-  /// Keycloak import provisions the separate assertion-exchange client described by TokenExchange.
+  /// identity-provider integration owns acquisition of Yoma assertions.
   /// Issuer operations use client credentials; wallet reads exchange an authenticated Yoma user's
   /// token through Yoma Keycloak and then didx:me Keycloak. These are separate authorization paths.
   /// </summary>
@@ -18,7 +18,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Models
     public const string Section = "DidxMe";
 
     /// <summary>
-    /// Timeout in seconds for each issuer-token, Yoma assertion, holder-token and wallet-read
+    /// Timeout in seconds for each issuer-token, holder-token and wallet-read
     /// HTTP request. Must be positive; defaults to 30. Each federation leg has its own timeout.
     /// </summary>
     public int RequestTimeoutSeconds { get; set; } = 30;
@@ -68,7 +68,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Models
     /// <summary>
     /// Reachable didx:me Keycloak root, including any deployment prefix such as /iam, but excluding
     /// /realms. Issuer and Holder realms are appended here. Yoma's Keycloak URL belongs separately
-    /// in TokenExchange; transport URLs need not equal the canonical issuer/audience URL.
+    /// in the identity-provider configuration; transport URLs need not equal the canonical issuer/audience URL.
     /// </summary>
     public string KeycloakBaseUri { get; set; } = null!;
 
@@ -84,10 +84,6 @@ namespace Yoma.Core.Infrastructure.DidxMe.Models
     /// </summary>
     public HolderOptions Holder { get; set; } = new();
 
-    /// <summary>
-    /// Yoma-provisioned confidential client that exchanges the current participant token for an
-    /// assertion whose sole audience is Holder.AssertionAudience, before the didx:me JWT grant.
-    /// </summary>
-    public TokenExchangeOptions TokenExchange { get; set; } = new();
+    public WebhookOptions Webhook { get; set; } = null!;
   }
 }

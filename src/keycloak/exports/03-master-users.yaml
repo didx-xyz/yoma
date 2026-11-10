@@ -18,5 +18,7 @@ users:
         - view-users
         - manage-users
         - view-realm
+        # Authorized background assertions; runtime access remains limited to the Yoma realm.
+        - impersonation
     notBefore: 0
     groups: []

@@ -10,6 +10,7 @@ using System.Text;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Infrastructure.DidxMe.Interfaces;
 using Yoma.Core.Infrastructure.DidxMe.Models;
 
@@ -22,17 +23,18 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
   /// Yoma's shared key ring with a separate didx:me purpose. Reuse ends at the earliest source,
   /// assertion or holder expiry, with buffered exchanged-token deadlines and no sliding extension.
   /// The scoped instance retains one token for paging within a request. No source/assertion token,
-  /// refresh token or offline grant is persisted; this does not enable background wallet access.
+  /// refresh token or offline grant is persisted. Explicit background access uses the identity-provider
+  /// contract; an interactive exchange failure never falls back to privileged access.
   /// </summary>
   public sealed class HolderAuthService : IHolderAuthService, IDisposable
   {
     #region Class Variables
     private readonly ProviderOptions _options;
-    private readonly TimeProvider _timeProvider;
     private readonly IDistributedCacheService _cache;
     private readonly IDistributedLockService _distributedLock;
     private readonly IEncryptionService _encryption;
     private readonly ILogger<HolderAuthService> _logger;
+    private readonly IIdentityProviderClientFactory _identityProviderClientFactory;
     private const string CachePrefix = "didxme:holder-token:v1";
     private readonly SemaphoreSlim _tokenLock = new(1, 1);
     private volatile CachedToken? _token;
@@ -41,20 +43,20 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
     #region Constructor
     public HolderAuthService(
       IOptions<ProviderOptions> options,
-      TimeProvider timeProvider,
       IDistributedCacheService cache,
       IDistributedLockService distributedLock,
       IEncryptionService encryption,
-      ILogger<HolderAuthService> logger)
+      ILogger<HolderAuthService> logger,
+      IIdentityProviderClientFactory identityProviderClientFactory)
     {
       ArgumentNullException.ThrowIfNull(options, nameof(options));
 
       _options = options.Value ?? throw new ArgumentNullException(nameof(options));
-      _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
       _cache = cache ?? throw new ArgumentNullException(nameof(cache));
       _distributedLock = distributedLock ?? throw new ArgumentNullException(nameof(distributedLock));
       _encryption = encryption ?? throw new ArgumentNullException(nameof(encryption));
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+      _identityProviderClientFactory = identityProviderClientFactory ?? throw new ArgumentNullException(nameof(identityProviderClientFactory));
     }
     #endregion
 
@@ -64,42 +66,50 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
       CancellationToken cancellationToken = default)
     {
       ArgumentNullException.ThrowIfNull(context, nameof(context));
-      ArgumentException.ThrowIfNullOrWhiteSpace(context.AccessToken);
       ArgumentException.ThrowIfNullOrWhiteSpace(context.UserId);
       ArgumentException.ThrowIfNullOrWhiteSpace(context.HolderId);
       cancellationToken.ThrowIfCancellationRequested();
 
       // This binding check supplements the host's authentication; decoding is not signature validation.
-      var source = ReadClaims(context.AccessToken);
-      AssertClaim(source, "sub", context.UserId);
-      var sourceExpiry = GetExpiry(source);
-      if (sourceExpiry <= _timeProvider.GetUtcNow())
-        throw new InvalidOperationException("The authenticated Yoma token has expired");
+      var sourceExpiry = DateTimeOffset.MaxValue;
+      if (!context.IsBackground)
+      {
+        ArgumentException.ThrowIfNullOrWhiteSpace(context.AccessToken);
+        var source = ReadClaims(context.AccessToken);
+        AssertClaim(source, "sub", context.UserId);
+        sourceExpiry = GetExpiry(source);
+        if (sourceExpiry <= DateTimeOffset.UtcNow)
+          throw new InvalidOperationException("The authenticated Yoma token has expired");
+      }
 
+      var identityProvider = _identityProviderClientFactory.CreateClient();
+      using var disposable = identityProvider as IDisposable;
       var key = CacheKey(context);
+      var acquisitionTimeout = TimeSpan.FromSeconds(_options.Holder.TokenAcquisitionTimeoutSeconds);
+      var leaseDuration = acquisitionTimeout + TimeSpan.FromSeconds(_options.RequestTimeoutSeconds);
       await _tokenLock.WaitAsync(cancellationToken);
 
       try
       {
         var cached = _token;
         if (cached == null || cached.Key != key || cached.HolderId != context.HolderId ||
-          cached.DateExpire <= _timeProvider.GetUtcNow())
+          cached.DateExpire <= DateTimeOffset.UtcNow)
         {
           cached = await ReadCached(key);
           if (cached == null)
           {
-            await WithCacheLock(key, async () =>
+            await WithCacheLock(key, leaseDuration, async () =>
             {
               // Another API instance may have populated the entry while this request waited.
               cached = await ReadCached(key);
               if (cached != null) return;
 
-              // Both HTTP legs fit within this budget, leaving a full request timeout as lease margin.
+              // Bound acquisition; the identity provider owns cleanup of any temporary session.
               using var acquisition = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-              acquisition.CancelAfter(TimeSpan.FromSeconds(_options.RequestTimeoutSeconds * 2d));
+              acquisition.CancelAfter(acquisitionTimeout);
               try
               {
-                cached = await Exchange(context, key, sourceExpiry, acquisition.Token);
+                cached = await Exchange(context, identityProvider, key, sourceExpiry, acquisition.Token);
               }
               catch (HttpClientException ex) when (ex.StatusCode == HttpStatusCode.BadRequest)
               {
@@ -112,7 +122,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
               }
 
               var protectedValue = _encryption.Encrypt(JsonConvert.SerializeObject(cached), key);
-              var remaining = cached.DateExpire - _timeProvider.GetUtcNow();
+              var remaining = cached.DateExpire - DateTimeOffset.UtcNow;
               if (remaining <= TimeSpan.Zero)
                 throw new InvalidOperationException("Federated holder token expired before caching");
 
@@ -122,7 +132,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
           _token = cached;
         }
 
-        if (cached == null || cached.DateExpire <= _timeProvider.GetUtcNow())
+        if (cached == null || cached.DateExpire <= DateTimeOffset.UtcNow)
           throw new InvalidOperationException("Federated holder token expired before use");
 
         return new KeyValuePair<string, string>(
@@ -148,7 +158,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
         _token = null;
         if (rejected == null) return;
 
-        await WithCacheLock(rejected.Key, async () =>
+        await WithCacheLock(rejected.Key, TimeSpan.FromSeconds(_options.RequestTimeoutSeconds * 3d), async () =>
         {
           var current = await ReadCached(rejected.Key);
           if (current?.Value == rejected.Value)
@@ -170,11 +180,9 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
       // Hash the binding, including client-secret rotation; never place tokens, secrets or user IDs in cache keys.
       var binding = JsonConvert.SerializeObject(new object[]
       {
-        context.AccessToken, context.UserId, context.HolderId, _options.TenantAlias,
+        context.IsBackground, context.AccessToken, context.UserId, context.HolderId, _options.TenantAlias,
         _options.KeycloakBaseUri, _options.Holder.Realm, _options.Holder.ClientId,
         _options.Holder.ClientSecret, _options.Holder.AssertionAudience, _options.WalletBaseUri,
-        _options.TokenExchange.KeycloakBaseUri, _options.TokenExchange.Realm,
-        _options.TokenExchange.ClientId, _options.TokenExchange.ClientSecret,
         _options.AccessTokenRefreshBufferSeconds
       });
       return $"{CachePrefix}:{Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(binding)))}";
@@ -189,7 +197,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
 
         var cached = JsonConvert.DeserializeObject<CachedToken>(_encryption.Decrypt(protectedValue, key));
         return cached?.Key == key && !string.IsNullOrWhiteSpace(cached.Value) &&
-          cached.DateExpire > _timeProvider.GetUtcNow() ? cached : null;
+          cached.DateExpire > DateTimeOffset.UtcNow ? cached : null;
       }
       catch (CryptographicException)
       {
@@ -202,48 +210,34 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
       }
     }
 
-    private async Task WithCacheLock(string key, Func<Task> action, CancellationToken cancellationToken)
+    private async Task WithCacheLock(string key, TimeSpan duration, Func<Task> action, CancellationToken cancellationToken)
     {
-      var duration = TimeSpan.FromSeconds(_options.RequestTimeoutSeconds * 3d);
       if (!await _distributedLock.TryRunWithLockAsync(key, duration, duration, action, cancellationToken))
         throw new TimeoutException("Timed out waiting for federated holder token acquisition");
     }
 
     private async Task<CachedToken> Exchange(
       HolderContext context,
+      IIdentityProviderClient identityProvider,
       string key,
       DateTimeOffset sourceExpiry,
       CancellationToken cancellationToken)
     {
-      var exchange = _options.TokenExchange;
-      ArgumentNullException.ThrowIfNull(exchange);
-      ArgumentException.ThrowIfNullOrWhiteSpace(exchange.ClientId);
-      ArgumentException.ThrowIfNullOrWhiteSpace(exchange.ClientSecret);
       ArgumentException.ThrowIfNullOrWhiteSpace(_options.Holder.ClientId);
       ArgumentException.ThrowIfNullOrWhiteSpace(_options.Holder.ClientSecret);
       ArgumentException.ThrowIfNullOrWhiteSpace(_options.Holder.AssertionAudience);
       ArgumentException.ThrowIfNullOrWhiteSpace(_options.TenantAlias);
 
-      ArgumentException.ThrowIfNullOrWhiteSpace(exchange.KeycloakBaseUri);
-      ArgumentException.ThrowIfNullOrWhiteSpace(exchange.Realm);
-
-      var requestAssertion = new Dictionary<string, string>
+      var token = context.IsBackground
+        ? await identityProvider.GetUserAccessToken(Guid.Parse(context.UserId), cancellationToken)
+        : await identityProvider.ExchangeUserAccessToken(context.AccessToken, cancellationToken);
+      var started = DateTimeOffset.UtcNow;
+      var assertion = new AccessTokenResponse
       {
-        { "grant_type", "urn:ietf:params:oauth:grant-type:token-exchange" },
-        { "client_id", exchange.ClientId },
-        { "client_secret", exchange.ClientSecret },
-        { "subject_token", context.AccessToken },
-        { "subject_token_type", "urn:ietf:params:oauth:token-type:access_token" },
-        { "requested_token_type", "urn:ietf:params:oauth:token-type:access_token" }
+        AccessToken = token.AccessToken,
+        TokenType = "Bearer",
+        ExpiresIn = token.ExpiresIn
       };
-
-      var started = _timeProvider.GetUtcNow();
-      var assertion = await exchange.KeycloakBaseUri
-        .AppendPathSegments("realms", exchange.Realm, "protocol", "openid-connect", "token")
-        .WithTimeout(TimeSpan.FromSeconds(_options.RequestTimeoutSeconds))
-        .PostUrlEncodedAsync(requestAssertion, cancellationToken: cancellationToken)
-        .EnsureSuccessStatusCodeAsync()
-        .ReceiveJson<AccessTokenResponse>();
 
       var assertionExpiry = ValidateResponse(assertion, started);
       var assertionClaims = ReadClaims(assertion.AccessToken);
@@ -263,7 +257,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
         { "assertion", assertion.AccessToken }
       };
 
-      var holderStarted = _timeProvider.GetUtcNow();
+      var holderStarted = DateTimeOffset.UtcNow;
       var response = await _options.KeycloakBaseUri
         .AppendPathSegments("realms", _options.Holder.Realm, "protocol", "openid-connect", "token")
         .WithTimeout(TimeSpan.FromSeconds(_options.RequestTimeoutSeconds))
@@ -280,7 +274,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
         throw new InvalidOperationException("didx:me holder token is missing the wallet audience");
 
       var expires = new[] { sourceExpiry, assertionExpiry, holderExpiry }.Min();
-      if (expires <= _timeProvider.GetUtcNow())
+      if (expires <= DateTimeOffset.UtcNow)
         throw new InvalidOperationException("Federated holder token expired during acquisition");
 
       return new CachedToken
@@ -300,7 +294,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
 
       var expiry = new[] { started.AddSeconds(response.ExpiresIn), GetExpiry(ReadClaims(response.AccessToken)) }.Min();
       expiry = expiry.AddSeconds(-Math.Min(_options.AccessTokenRefreshBufferSeconds, response.ExpiresIn / 10d));
-      if (expiry <= _timeProvider.GetUtcNow())
+      if (expiry <= DateTimeOffset.UtcNow)
         throw new InvalidOperationException("Federation token response has expired");
 
       return expiry;

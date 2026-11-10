@@ -11,6 +11,8 @@ namespace Yoma.Core.Infrastructure.DidxMe.Entities
   /// </summary>
   [Table("IssuanceMapping", Schema = "DidxMe")]
   [Index(nameof(TenantAlias), nameof(TenantIdHolder), nameof(ClientReferentValue))]
+  [Index(nameof(TenantAlias), nameof(IssuanceId))]
+  [Index(nameof(TenantAlias), nameof(WalletCredentialId))]
   public class IssuanceMapping : BaseEntity<Guid>
   {
     [Required]
@@ -50,6 +52,10 @@ namespace Yoma.Core.Infrastructure.DidxMe.Entities
     public string? WalletCredentialId { get; set; }
 
     public bool DeliveryCompleted { get; set; }
+
+    [Required]
+    [Column(TypeName = "varchar(25)")]
+    public string Status { get; set; } = null!;
 
     public DateTimeOffset DateCreated { get; set; }
 

@@ -26,7 +26,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Models
     /// <summary>
     /// Secret supplied for the didx:me organisation client. Obtain it through the approved
     /// environment secret store; keep Local values ignored and never log this options object.
-    /// It is independent of the Holder and TokenExchange client secrets.
+    /// It is independent of the Holder and Yoma identity-provider client secrets.
     /// </summary>
     public string ClientSecret { get; set; } = null!;
   }

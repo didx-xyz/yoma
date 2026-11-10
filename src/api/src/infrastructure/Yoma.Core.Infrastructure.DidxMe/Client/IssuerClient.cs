@@ -15,7 +15,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Client
   /// and host-configured Newtonsoft serializer. Expected absence and conflicts are handled at
   /// their call sites; unauthorized responses invalidate the issuer token without retrying mutations.
   /// </summary>
-  public class IssuerClient
+  public class IssuerClient : IIssuerClient
   {
     #region Class Variables
     private readonly ProviderOptions _options;
@@ -110,6 +110,22 @@ namespace Yoma.Core.Infrastructure.DidxMe.Client
         .WithTimeout(TimeSpan.FromSeconds(_options.IssuerRequestTimeoutSeconds))
         .PostJsonAsync(requestCreate),
         [HttpStatusCode.Created]);
+
+      var result = await response.GetJsonAsync<ApiResponse<IssuanceResponse>>();
+      return result?.Data ?? throw new InvalidOperationException("didx:me issuance response is missing data");
+    }
+
+    public async Task<IssuanceResponse> GetIssuance(string id)
+    {
+      ArgumentException.ThrowIfNullOrWhiteSpace(id);
+      ArgumentException.ThrowIfNullOrWhiteSpace(_options.CredentialsBaseUri);
+
+      var authHeader = await _authService.GetAuthHeader();
+      using var response = await Execute(() => _options.CredentialsBaseUri
+        .AppendPathSegments("v1", "issuances", id)
+        .WithAuthHeader(authHeader)
+        .WithTimeout(TimeSpan.FromSeconds(_options.IssuerRequestTimeoutSeconds))
+        .GetAsync());
 
       var result = await response.GetJsonAsync<ApiResponse<IssuanceResponse>>();
       return result?.Data ?? throw new InvalidOperationException("didx:me issuance response is missing data");

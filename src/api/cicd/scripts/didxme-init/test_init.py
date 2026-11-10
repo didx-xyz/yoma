@@ -120,6 +120,35 @@ def fake_curl():
         else:
             state["project"] = True
             code, body = 201, {"tenantAlias": "yoma", "serviceName": "me-creds", "meCredsProjectId": "stable-project-id"}
+    elif path == "/api/v1/endpoints":
+        assert method == "POST"
+        data = json.loads(payload)
+        assert data == {"id": "yoma-local-api", "url": "http://host.docker.internal:5000/api/v3/webhook/didxme",
+                        "filterTypes": ["wallet.credential.accepted"]}
+        state["webhook"] = True
+        state["webhook_creates"] = state.get("webhook_creates", 0) + 1
+        code, body = 201, {"data": data}
+    elif path == "/api/v1/app/yoma/endpoint/yoma-local-api":
+        assert method == "GET", "Existing webhooks must not be overwritten or deleted"
+        code = 200 if state.get("webhook") else 404
+        body = {"uid": "yoma-local-api", "url": "http://host.docker.internal:5000/api/v3/webhook/didxme",
+                "disabled": False, "filterTypes": ["wallet.credential.accepted"]}
+        if mode == "webhook-drift":
+            body["url"] = "https://other.example.test/webhook"
+        if mode == "webhook-disabled":
+            body["disabled"] = True
+        if mode == "webhook-events":
+            body["filterTypes"] = []
+        if mode == "webhook-denied":
+            code, body = 401, {"message": SECRET}
+    elif path == "/api/v1/app/yoma/endpoint/yoma-local-api/secret":
+        assert method == "GET", "Signing secrets must never be rotated by init"
+        state.setdefault("webhook_secret", "whsec_" + base64.b64encode((SECRET + "-webhook").encode()).decode())
+        body = {"key": state["webhook_secret"]}
+        if mode == "webhook-secret-failure":
+            code, body = 500, {"message": SECRET}
+        if mode == "webhook-secret-invalid":
+            body = {"key": "invalid"}
     else:
         raise AssertionError("Unexpected fixture request: " + method + " " + path)
     state_path.write_text(json.dumps(state))
@@ -136,15 +165,23 @@ class InitTests(unittest.TestCase):
         self.state = self.root / "state.json"
         self.state.write_text("{}")
         self.settings = self.root / "appsettings.Local.json"
-        self.original = {"DidxMe": {"RequestTimeoutSeconds": 17}, "External": {"Secret": SECRET + "-unrelated"}, "AppSettings": {"Other": "preserved"}}
+        self.original = {
+            "KeycloakAdmin": {"Admin": {"Password": SECRET + "-admin"}, "TokenExchange": {"RequestTimeoutSeconds": 19}},
+            "DidxMe": {"RequestTimeoutSeconds": 17, "TokenExchange": {"ClientSecret": SECRET + "-old"},
+                       "Webhook": {"SigningSecret": SECRET + "-old-webhook", "WaitTimeoutSeconds": 42}},
+            "External": {"Secret": SECRET + "-unrelated"},
+            "AppSettings": {"Other": "preserved"},
+        }
         self.settings.write_text(json.dumps(self.original))
         curl = self.root / "curl"
         curl.write_text('#!/bin/sh\nexec python3 "' + str(Path(__file__).resolve()) + '" --fake-curl "$@"\n')
         curl.chmod(0o700)
         self.env = dict(os.environ, PATH=str(self.root) + os.pathsep + os.environ["PATH"],
                         FIXTURE_STATE=str(self.state), LOCAL_SETTINGS_FILE=str(self.settings),
-                        YOMA_ENVIRONMENT="Local", YOMA_SSI_ENABLED_ENVIRONMENTS="Local", MONO_READY_TIMEOUT_SECONDS="10", YOMA_ASSERTION_CLIENT_SECRET=SECRET + "-assertion",
-                        YOMA_ISSUER_CLIENT_SECRET=SECRET + "-issuer", YOMA_HOLDER_CLIENT_SECRET=SECRET + "-holder")
+                        YOMA_ENVIRONMENT="Local", YOMA_SSI_ENABLED_ENVIRONMENTS="Local", MONO_READY_TIMEOUT_SECONDS="10", YOMA_ASSERTION_CLIENT_SECRET=SECRET + "-assertion", YOMA_ASSERTION_REDIRECT_URI="http://localhost:5000/identity/assertion-callback",
+                        YOMA_ISSUER_CLIENT_SECRET=SECRET + "-issuer", YOMA_HOLDER_CLIENT_SECRET=SECRET + "-holder",
+                        YOMA_WEBHOOK_API_TOKEN=SECRET + "-webhook-provisioning",
+                        YOMA_WEBHOOK_URL="http://host.docker.internal:5000/api/v3/webhook/didxme")
 
     def run_init(self, mode=None):
         if mode:
@@ -154,6 +191,9 @@ class InitTests(unittest.TestCase):
         result = subprocess.run(["sh", str(Path(__file__).with_name("init.sh"))], env=self.env,
                                 capture_output=True, text=True, timeout=30)
         self.assertNotIn(SECRET, result.stdout + result.stderr)
+        state = json.loads(self.state.read_text())
+        if state.get("webhook_secret"):
+            self.assertNotIn(state["webhook_secret"], result.stdout + result.stderr)
         return result
 
     def test_fresh_setup_then_rerun_preserves_clients_secrets_and_other_settings(self):
@@ -166,13 +206,21 @@ class InitTests(unittest.TestCase):
         self.assertEqual(1, state["issuer_creates"])
         self.assertEqual(1, state["holder_updates"])
         self.assertEqual(1, state["issuer_updates"])
+        self.assertEqual(1, state["webhook_creates"])
         self.assertTrue(state["project"])
         self.assertEqual(self.original["External"], settings["External"])
         self.assertEqual(self.original["AppSettings"], settings["AppSettings"])
         self.assertEqual(17, settings["DidxMe"]["RequestTimeoutSeconds"])
+        self.assertEqual(state["webhook_secret"], settings["DidxMe"]["Webhook"]["SigningSecret"])
+        self.assertEqual(42, settings["DidxMe"]["Webhook"]["WaitTimeoutSeconds"])
         self.assertEqual(SECRET + "-issuer", settings["DidxMe"]["Issuer"]["ClientSecret"])
         self.assertEqual(SECRET + "-holder", settings["DidxMe"]["Holder"]["ClientSecret"])
-        self.assertEqual(SECRET + "-assertion", settings["DidxMe"]["TokenExchange"]["ClientSecret"])
+        self.assertEqual(SECRET + "-assertion", settings["KeycloakAdmin"]["TokenExchange"]["ClientSecret"])
+
+        self.assertNotIn("TokenExchange", settings["DidxMe"])
+        self.assertEqual(self.original["KeycloakAdmin"]["Admin"], settings["KeycloakAdmin"]["Admin"])
+        self.assertEqual(19, settings["KeycloakAdmin"]["TokenExchange"]["RequestTimeoutSeconds"])
+        self.assertEqual(self.env["YOMA_ASSERTION_REDIRECT_URI"], settings["KeycloakAdmin"]["TokenExchange"]["RedirectUri"])
 
     def test_mono_reset_restores_same_local_secrets(self):
         self.assertEqual(0, self.run_init().returncode)
@@ -185,6 +233,35 @@ class InitTests(unittest.TestCase):
         del self.env["YOMA_HOLDER_CLIENT_SECRET"]
         self.assertNotEqual(0, self.run_init().returncode)
         self.assertNotIn("calls", json.loads(self.state.read_text()))
+
+    def test_webhook_reset_refreshes_only_the_signing_secret(self):
+        self.assertEqual(0, self.run_init().returncode)
+        before = json.loads(self.settings.read_text())
+        new_secret = "whsec_" + base64.b64encode((SECRET + "-reset").encode()).decode()
+        self.state.write_text(json.dumps({"webhook_secret": new_secret}))
+        self.assertEqual(0, self.run_init().returncode)
+        after = json.loads(self.settings.read_text())
+        self.assertEqual(new_secret, after["DidxMe"]["Webhook"]["SigningSecret"])
+        before["DidxMe"]["Webhook"]["SigningSecret"] = new_secret
+        self.assertEqual(before, after)
+
+    def test_missing_webhook_token_or_wrong_callback_fails_before_provisioning(self):
+        self.env["YOMA_WEBHOOK_API_TOKEN"] = ""
+        self.assertNotEqual(0, self.run_init().returncode)
+        self.assertNotIn("calls", json.loads(self.state.read_text()))
+        self.env["YOMA_WEBHOOK_API_TOKEN"] = SECRET
+        self.env["YOMA_WEBHOOK_URL"] = "https://deployed.example.test/webhook"
+        self.assertNotEqual(0, self.run_init().returncode)
+        self.assertNotIn("calls", json.loads(self.state.read_text()))
+
+    def test_webhook_failures_leave_settings_unchanged(self):
+        for mode in ["webhook-drift", "webhook-disabled", "webhook-events", "webhook-denied",
+                     "webhook-secret-failure", "webhook-secret-invalid"]:
+            with self.subTest(mode=mode):
+                self.state.write_text("{}")
+                result = self.run_init(mode)
+                self.assertNotEqual(0, result.returncode)
+                self.assertEqual(self.original, json.loads(self.settings.read_text()))
 
     def test_secret_failure_blocks_settings_update(self):
         for mode in ["secret-denied", "secret-not-applied", "wrong-client"]:

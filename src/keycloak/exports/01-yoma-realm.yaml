@@ -1174,14 +1174,16 @@ clients:
   # didx:me consumers issuer; no didx:me resources are managed by this import.
   - clientId: yoma-didxme-assertion
     name: Yoma didx:me assertion exchange
-    description: Exchange authenticated Yoma user tokens for single-audience federation assertions
+    description: Acquire single-audience assertions for authenticated and authorized background access
     enabled: $(env:CLIENT_DIDXME_ASSERTION_ENABLED:-false)
     clientAuthenticatorType: client-secret
     secret: $(env:CLIENT_DIDXME_ASSERTION_SECRET:-)
     protocol: openid-connect
     publicClient: false
     bearerOnly: false
-    standardFlowEnabled: false
+    standardFlowEnabled: true
+    redirectUris:
+      - $(env:CLIENT_DIDXME_ASSERTION_REDIRECT_URI:-)
     implicitFlowEnabled: false
     directAccessGrantsEnabled: false
     serviceAccountsEnabled: false
@@ -1189,6 +1191,7 @@ clients:
     fullScopeAllowed: false
     attributes:
       standard.token.exchange.enabled: "true"
+      pkce.code.challenge.method: S256
     protocolMappers:
       - name: didxme-consumers-audience
         protocol: openid-connect

@@ -11,11 +11,13 @@ SSI is **enabled by default**. For local work without mono, use the [SSI opt-out
 1. Use the team's reviewed Yoma integration branch and its normal development prerequisites.
 2. Ask Robbie/SRE for access and the supported **standalone mono local setup**. Follow those private instructions for dependencies, registry access and issuer preparation. Mono stays outside Yoma's Compose stack; no private checkout or platform configuration is committed here. Adrian's machine-local helpers are not a portable installer.
 3. Obtain a current copy of Adrian's **`appsettings.Local.json` privately**, preferably via the approved password manager/secure sharing mechanism. Place it at `src/api/src/application/Yoma.Core.Api/appsettings.Local.json`. Keep Jason's existing settings if already configured and merge the required changes with Adrian; do not blindly replace unrelated integrations or machine-specific database/cache settings.
-4. The Local file must be valid JSON and exist before Compose starts. Include a `DidxMe` object when SSI is enabled. Tracked `appsettings.json` provides the structure/placeholders, not working credentials. Obtain other Yoma configuration that is ignored by Git through the usual private setup process; this initializer does not generate the rest of Yoma's configuration.
-5. Verify Git ignores the Local file, from the repository root:
+4. Obtain the local webhook provisioning token privately and set `YOMA_WEBHOOK_API_TOKEN` in ignored `src/api/.env`. It is used only by the initializer, not by the API. Renew it if it expires or the local platform signing configuration changes. The standalone local platform must permit webhook delivery to the host API; follow its private setup instructions. Do not disable outbound protections broadly.
+5. The Local file must be valid JSON and exist before Compose starts. Include a `DidxMe` object when SSI is enabled. Tracked `appsettings.json` provides the structure/placeholders, not working credentials. Obtain other Yoma configuration that is ignored by Git through the usual private setup process; this initializer does not generate the rest of Yoma's configuration.
+6. Verify Git ignores both private files, from the repository root:
 
    ```powershell
    git check-ignore src/api/src/application/Yoma.Core.Api/appsettings.Local.json
+   git check-ignore src/api/.env
    ```
 
    The command must report the path. Never force-add it. The file contains real external-platform credentials even when some local defaults are disposable.
@@ -46,11 +48,12 @@ SSI is **enabled by default**. For local work without mono, use the [SSI opt-out
 | --- | --- |
 | Existing Yoma identity import | Applies Yoma's integration configuration through its normal initialization pattern. |
 | Local `didxme-init` | Waits up to 120 seconds for the independent platform, then creates or verifies the Yoma integration resources. It never starts or resets mono. |
-| Local settings synchronization | Applies the agreed local development defaults and updates only `DidxMe` in the existing ignored source-project Local file. Other settings are preserved. |
+| Local settings synchronization | Applies the agreed local development defaults and updates `DidxMe` and `KeycloakAdmin.TokenExchange` in the existing ignored source-project Local file. Other settings are preserved. |
+| Local webhook provisioning | Creates or verifies the acceptance endpoint and retrieves its signing secret into `DidxMe.Webhook.SigningSecret`. Reuses existing secrets; refreshes the local value after a platform reset. Preserves webhook timeout settings. |
 | API startup | Waits for successful integration initialization, runs application migrations and allows the existing application seed/jobs to proceed. |
 | Existing SQL/user init | Seeds full-reset development fixtures in the Compose database and identity service. |
 
-This prepares the environment; it does **not** mean every participant has been provisioned or every credential issued. Those remain Yoma application jobs. Do not run background recovery/Replay until the outstanding implementation is complete.
+This prepares the environment; it does **not** mean every participant has been provisioned or every credential issued. Those remain Yoma application jobs. Background recovery/Replay is implemented in the phase-1 follow-up; verify its configuration and data readiness before running it in an environment.
 
 Initialization is **Local only**. Dev and later environments use SRE provisioning, not this container.
 Compose builds the local initializer image with `curl` and `jq` already installed. Startup does
@@ -115,7 +118,52 @@ once the matching provider data and schema mappings are ready.
 debugging session. Restore its previous list including `Local` before testing SSI again. The init
 does not synchronize this setting into that file. No Helm or deployed-environment settings change.
 
+## Identity token configuration
+
+Yoma assertion acquisition belongs to the identity-provider adapter. Configure its client under
+`KeycloakAdmin.TokenExchange` (`ClientId`, `ClientSecret`, `RedirectUri`, and
+`RequestTimeoutSeconds`, default 30). It uses the existing `Keycloak.AuthServerUrl` and
+`Keycloak.Realm`. didx:me consumes the identity-provider interface; it does not receive these secrets.
+
+**Existing deployments:** SRE must move the former `DidxMe.TokenExchange.ClientId/ClientSecret`
+values to `KeycloakAdmin.TokenExchange`, verify the existing identity URL/realm, and remove the old
+section. Register the exact callback and supply the matching `CLIENT_DIDXME_ASSERTION_REDIRECT_URI`
+to the Yoma realm import. Confirm the approved background identity permissions privately before
+enabling background processing. No Helm configuration or deployed secrets were changed in this session.
+
+Local Compose supplies matching development values to the normal realm import and initializer.
+The initializer removes the old Local section and preserves unrelated settings, including other
+`KeycloakAdmin` properties. Restart the API/debugger after initialization. There is no deployed
+configuration fallback to the former section.
+
 ## Local Operations
+
+### Issuance webhook
+
+Locally, `didxme-init` creates or verifies the acceptance endpoint, retrieves its signing secret,
+and updates `DidxMe.Webhook.SigningSecret` in ignored `appsettings.Local.json`. A rerun does not
+rotate the secret or duplicate the endpoint. A changed/disabled endpoint or failed secret read
+blocks initialization without updating settings. Webhook timeout settings are retained.
+
+The callback is `http://host.docker.internal:5000/api/v3/webhook/didxme`, so it can reach either
+the Docker API's published port or the API running in VS. Stop the Docker API before starting
+the VS project profile. That profile now listens on all host interfaces on port 5000 while opening
+the browser at `http://localhost:5000`. Use the project profile, not IIS Express. Host firewall and
+the independently managed local platform's outbound rules must permit the callback; initialization
+does not alter these rules or wait for the API, which starts afterwards. Verify signed delivery
+before triggering issuance. A full mono reset may require its local delivery permission to be reapplied.
+
+For deployed environments, agree registration/automation with Robbie/SRE and supply the
+endpoint-specific signing secret through environment secret configuration. Local initialization
+does not configure deployed environments. The signing secret is separate from OAuth client secrets;
+tracked settings contain placeholders only.
+
+The API verifies the signature and timestamp, then saves the wallet credential ID before returning
+success. Issuance waits inline after delivery for that persisted result, including when another API
+instance receives the event. `WaitTimeoutSeconds` bounds this wait; `PollIntervalMilliseconds`
+controls the database check interval. A timeout leaves the attempt available for recovery, rather
+than issuing another credential. Do not enable issuance until callback reachability and signing
+configuration have been verified for the environment.
 
 - Keep mono and Yoma as separately managed stacks. Stopping Yoma does not stop mono.
 - The init updates the real bind-mounted Local file used by Visual Studio. Do not edit it while init runs; restart an API process after configuration changes.
@@ -245,6 +293,16 @@ The optional `LocalDryRunTests` harness is for adapter diagnostics, **not** Jaso
 
 ## Verification and Next Steps
 
-Local provisioning, issuance, API wallet list/detail, holder caching and mobile-to-email wallet continuity have been exercised. Frontend/browser journeys and deployed multi-instance behavior still need verification. Recovery and Replay remain release blockers. Dev preparation is next; the reset migration is prepared, with coordinated cutover/recovery rehearsal still required before Stage.
+The initial integration is deployed to Stage. Phase-1 native wallet IDs, signed webhook completion,
+holder recovery, credential recovery with/without tracking rows and Replay have passed the real
+local VS job run for YoID and Opportunity. Replay produced new wallet IDs while preserving the
+original issuance dates. Missing issuance tracking rows are not reconstructed: the domain regains
+the native wallet ID, but issuer/session audit references remain unavailable. Preset mappings are
+still required for reads and recovery.
+
+The follow-up remains uncommitted for review; Dev deployment verification, Stage-only preset/data
+preparation and deployed multi-instance checks are still required. See the
+[local debug handoff](./YOM-1309-use-didxme-for-yoma-wallets-and-credential-issuance/handoffs/2026-11-10-e.md)
+and the [configuration checklist for Robbie](./YOM-1309-use-didxme-for-yoma-wallets-and-credential-issuance/handoffs/2026-11-10-d.md#configuration-handoff--pending-with-robbie).
 
 Use the [epic](./README.md) for scope/owners and the [adapter feature](./YOM-1309-use-didxme-for-yoma-wallets-and-credential-issuance/feature.md) for current tasks. Historical/private investigation details are not startup instructions.

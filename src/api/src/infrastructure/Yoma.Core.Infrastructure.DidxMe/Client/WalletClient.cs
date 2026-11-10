@@ -15,7 +15,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Client
   /// HTTP failures propagate as HttpClientException; a failed page is never treated as empty.
   /// Unauthorized responses invalidate the rejected holder token in the shared cache, without retry.
   /// </summary>
-  public class WalletClient
+  public class WalletClient : IWalletClient
   {
     #region Class Variables
     private readonly ProviderOptions _options;
@@ -47,6 +47,15 @@ namespace Yoma.Core.Infrastructure.DidxMe.Client
       string id,
       CancellationToken cancellationToken = default)
     {
+      return await GetCredentialByIdOrNull(context, id, cancellationToken)
+        ?? throw new EntityNotFoundException("The credential is no longer present in the holder wallet");
+    }
+
+    public async Task<WalletCredential?> GetCredentialByIdOrNull(
+      HolderContext context,
+      string id,
+      CancellationToken cancellationToken = default)
+    {
       if (!Guid.TryParse(id, out var credentialId))
         throw new ArgumentException("A valid wallet credential ID is required", nameof(id));
 
@@ -57,7 +66,10 @@ namespace Yoma.Core.Infrastructure.DidxMe.Client
         .AppendPathSegments("v2", "credentials", credentialId.ToString())
         .WithAuthHeader(authHeader)
         .WithTimeout(TimeSpan.FromSeconds(_options.RequestTimeoutSeconds))
-        .GetAsync(cancellationToken: cancellationToken));
+        .AllowHttpStatus((int)HttpStatusCode.NotFound)
+        .GetAsync(cancellationToken: cancellationToken), [HttpStatusCode.NotFound]);
+
+      if ((HttpStatusCode)response.StatusCode == HttpStatusCode.NotFound) return null;
 
       var json = await response.GetStringAsync();
       var result = JsonConvert.DeserializeObject<ApiResponse<WalletCredential>>(json, SerializerSettings)
@@ -79,6 +91,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Client
       HolderContext context,
       string? after = null,
       int pageSize = 100,
+      WalletCredentialStatus status = WalletCredentialStatus.Accepted,
       CancellationToken cancellationToken = default)
     {
       if (pageSize < 1 || pageSize > 100)
@@ -86,11 +99,13 @@ namespace Yoma.Core.Infrastructure.DidxMe.Client
 
       ArgumentException.ThrowIfNullOrWhiteSpace(_options.WalletBaseUri);
 
+      if (!Enum.IsDefined(status)) throw new ArgumentOutOfRangeException(nameof(status));
+
       var url = _options.WalletBaseUri
         .AppendPathSegments("v2", "credentials")
         .SetQueryParams(new Dictionary<string, object>
         {
-          ["status"] = "accepted",
+          ["status"] = status.ToString().ToLowerInvariant(),
           ["page[size]"] = pageSize
         });
 
@@ -114,14 +129,30 @@ namespace Yoma.Core.Infrastructure.DidxMe.Client
 
       return result;
     }
+
+    public async Task DeleteCredential(HolderContext context, string id, CancellationToken cancellationToken = default)
+    {
+      if (!Guid.TryParse(id, out var credentialId))
+        throw new ArgumentException("A valid wallet credential ID is required", nameof(id));
+
+      ArgumentException.ThrowIfNullOrWhiteSpace(_options.WalletBaseUri);
+
+      var authHeader = await _authService.GetAuthHeader(context, cancellationToken);
+      using var response = await Execute(() => _options.WalletBaseUri
+        .AppendPathSegments("v2", "credentials", credentialId.ToString())
+        .WithAuthHeader(authHeader)
+        .WithTimeout(TimeSpan.FromSeconds(_options.RequestTimeoutSeconds))
+        .AllowHttpStatus((int)HttpStatusCode.NotFound)
+        .DeleteAsync(cancellationToken: cancellationToken), [HttpStatusCode.NoContent, HttpStatusCode.NotFound]);
+    }
     #endregion
 
     #region Private Members
-    private async Task<IFlurlResponse> Execute(Func<Task<IFlurlResponse>> request)
+    private async Task<IFlurlResponse> Execute(Func<Task<IFlurlResponse>> request, List<HttpStatusCode>? additionalSuccessStatusCodes = null)
     {
       try
       {
-        return await request().EnsureSuccessStatusCodeAsync();
+        return await request().EnsureSuccessStatusCodeAsync(additionalSuccessStatusCodes);
       }
       catch (HttpClientException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized)
       {

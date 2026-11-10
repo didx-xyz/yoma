@@ -1,9 +1,15 @@
+using Keycloak.AuthServices.Authentication;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using System.Collections.Concurrent;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Domain.IdentityProvider.Interfaces;
+using Yoma.Core.Infrastructure.Keycloak.Client;
+using Yoma.Core.Infrastructure.Keycloak.Models;
 using Yoma.Core.Domain.Core.Services;
 using Yoma.Core.Infrastructure.DidxMe.Models;
 using Yoma.Core.Infrastructure.DidxMe.Services;
@@ -13,6 +19,11 @@ namespace Yoma.Core.Test.SSI.DidxMe
   // Shared backing services model separate request scopes/replicas without touching local Valkey.
   internal sealed class HolderTokenCacheFixture
   {
+    #region Class Variables
+    private readonly ConcurrentDictionary<string, SemaphoreSlim> _locks = new();
+    #endregion
+
+    #region Public Properties
     public Mock<IDistributedCacheService> Cache { get; } = new();
     public Mock<ILogger<HolderAuthService>> Logger { get; } = new();
     public Mock<IDistributedLockService> Lock { get; } = new();
@@ -20,8 +31,9 @@ namespace Yoma.Core.Test.SSI.DidxMe
     public IEncryptionService Encryption => new EncryptionService(Protection);
     public ConcurrentDictionary<string, string> Values { get; } = new();
     public ConcurrentDictionary<string, TimeSpan> Expirations { get; } = new();
-    private readonly ConcurrentDictionary<string, SemaphoreSlim> _locks = new();
+    #endregion
 
+    #region Constructor
     public HolderTokenCacheFixture()
     {
       Logger.Setup(logger => logger.IsEnabled(LogLevel.Error)).Returns(true);
@@ -60,7 +72,31 @@ namespace Yoma.Core.Test.SSI.DidxMe
         });
     }
 
-    public HolderAuthService Create(TimeProvider clock, ProviderOptions options) =>
-      new(Options.Create(options), clock, Cache.Object, Lock.Object, Encryption, Logger.Object);
+    #endregion
+
+    #region Public Members
+    public HolderAuthService Create(ProviderOptions options, string identitySecret = "test-only",
+      IIdentityProviderClientFactory? identityProvider = null)
+    {
+      var factory = new Mock<IIdentityProviderClientFactory>();
+      factory.Setup(value => value.CreateClient()).Returns(() => new KeycloakClient(
+        NullLogger<KeycloakClient>.Instance, new AppSettings(), Mock.Of<IEnvironmentProvider>(),
+        new KeycloakAdminOptions
+        {
+          Admin = new KeycloakCredentials { Realm = "master", Username = "test", Password = "test" },
+          TokenExchange = new TokenExchangeOptions
+          {
+            ClientId = "assertion-client",
+            ClientSecret = identitySecret,
+            RequestTimeoutSeconds = 30
+          }
+        }, new KeycloakAuthenticationOptions
+        {
+          AuthServerUrl = "https://yoma.example.test", Realm = "yoma"
+        }));
+      return new(Options.Create(options), Cache.Object, Lock.Object, Encryption, Logger.Object,
+        identityProvider ?? factory.Object);
+    }
+    #endregion
   }
 }
