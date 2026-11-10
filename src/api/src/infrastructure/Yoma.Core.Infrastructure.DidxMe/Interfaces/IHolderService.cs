@@ -21,6 +21,8 @@ namespace Yoma.Core.Infrastructure.DidxMe.Interfaces
 
     Task<Credential?> GetCredentialByClientReferentOrNull(string tenantId, ArtifactType artifactType, KeyValuePair<string, string> clientReferent);
 
+    Task<Credential?> GetCredentialByClientReferentOrNull(HolderContext context, ArtifactType artifactType, KeyValuePair<string, string> clientReferent);
+
     Task<Credential?> GetCredentialByIdOrNull(string tenantId, ArtifactType artifactType, string id);
 
     Task DeleteCredential(string tenantId, ArtifactType artifactType, string id);

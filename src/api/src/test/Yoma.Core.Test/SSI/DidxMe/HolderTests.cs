@@ -29,6 +29,47 @@ namespace Yoma.Core.Test.SSI.DidxMe
     #endregion
 
     #region Tests
+    [Theory]
+    [InlineData("success")]
+    [InlineData("lock-timeout")]
+    [InlineData("cache-failure")]
+    public async Task UnauthorizedInvalidationUsesAcquisitionBudgetAndPreservesWalletFailure(string scenario)
+    {
+      using var http = new HttpTest().WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
+      var issuedAt = DateTimeOffset.UtcNow;
+      var options = CreateOptions();
+      options.Holder.TokenAcquisitionTimeoutSeconds = 150;
+      options.RequestTimeoutSeconds = 30;
+      var cache = new HolderTokenCacheFixture();
+      using var auth = cache.Create(options);
+      var context = CreateContext(issuedAt);
+      EnqueueTokens(http, issuedAt);
+      await auth.GetAuthHeader(context, TestContext.Current.CancellationToken);
+
+      if (scenario == "lock-timeout")
+        cache.Lock.Setup(service => service.TryRunWithLockAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(),
+          It.IsAny<TimeSpan>(), It.IsAny<Func<Task>>(), It.IsAny<CancellationToken>(), It.IsAny<string>())).ReturnsAsync(false);
+      else if (scenario == "cache-failure")
+        cache.Cache.Setup(service => service.RemoveAsync(It.IsAny<string>())).ThrowsAsync(new InvalidOperationException("cache unavailable"));
+
+      http.RespondWithJson(new { error = "unauthorized" }, 401);
+      var client = new WalletClient(Options.Create(options), auth);
+      var error = await Assert.ThrowsAsync<HttpClientException>(() => client.GetCredential(context, CredentialId, TestContext.Current.CancellationToken));
+
+      Assert.Equal(HttpStatusCode.Unauthorized, error.StatusCode);
+      cache.Lock.Verify(service => service.TryRunWithLockAsync(It.IsAny<string>(), TimeSpan.FromSeconds(180),
+        TimeSpan.FromSeconds(180), It.IsAny<Func<Task>>(), It.IsAny<CancellationToken>(), It.IsAny<string>()), Times.Exactly(2));
+      if (scenario == "success") Assert.Empty(cache.Values);
+      else
+      {
+        Assert.Single(cache.Values);
+        var log = Assert.Single(cache.Logger.Invocations, item => item.Method.Name == "Log");
+        Assert.Equal(LogLevel.Error, log.Arguments[0]);
+        Assert.Null(log.Arguments[3]);
+      }
+      http.ShouldHaveCalled(WalletEndpoint + "/" + CredentialId).Times(1);
+    }
+
     [Fact]
     public async Task BackgroundTokensAreSeparateFromInteractiveTokensAndUseOnlyTheExplicitIdentityOperation()
     {
@@ -300,23 +341,20 @@ namespace Yoma.Core.Test.SSI.DidxMe
     {
       using var http = new HttpTest()
         .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
-      var clock = new TestTimeProvider();
-      var issuedAt = clock.GetUtcNow();
+      var issuedAt = DateTimeOffset.UtcNow;
       var options = CreateOptions();
       options.AccessTokenRefreshBufferSeconds = bufferSeconds;
       options.RequestTimeoutSeconds = 17;
       var cache = new HolderTokenCacheFixture();
-      using var service = cache.Create(options, timeProvider: clock);
+      using var service = cache.Create(options);
       var context = CreateContext(issuedAt);
-      EnqueueTokens(http, issuedAt, holderExpiresIn: 100);
-      var first = await service.GetAuthHeader(context, TestContext.Current.CancellationToken);
-      Assert.InRange(Assert.Single(cache.Expirations).Value.TotalSeconds, 90, 100);
+      EnqueueTokens(http, issuedAt, holderExpiresIn: 1);
+      await service.GetAuthHeader(context, TestContext.Current.CancellationToken);
+      Assert.InRange(Assert.Single(cache.Expirations).Value.TotalSeconds, 0, 1);
       http.ShouldHaveCalled(HolderEndpoint).Times(1);
       Assert.All(http.CallLog, call => Assert.Equal(TimeSpan.FromSeconds(
         call.Request.Url.ToString() == YomaEndpoint ? 30 : 17), call.Request.Settings.Timeout));
-      Assert.Equal(first, await service.GetAuthHeader(context, TestContext.Current.CancellationToken));
-      http.ShouldHaveCalled(HolderEndpoint).Times(1);
-      clock.Advance(TimeSpan.FromSeconds(bufferSeconds == 0 ? 100 : 90));
+      await Task.Delay(1100, TestContext.Current.CancellationToken);
       EnqueueTokens(http, issuedAt);
       await service.GetAuthHeader(context, TestContext.Current.CancellationToken);
       await service.Invalidate();

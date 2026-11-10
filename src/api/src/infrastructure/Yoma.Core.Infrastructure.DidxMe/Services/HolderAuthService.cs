@@ -30,7 +30,6 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
   {
     #region Class Variables
     private readonly ProviderOptions _options;
-    private readonly TimeProvider _timeProvider;
     private readonly IDistributedCacheService _cache;
     private readonly IDistributedLockService _distributedLock;
     private readonly IEncryptionService _encryption;
@@ -48,13 +47,11 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
       IDistributedLockService distributedLock,
       IEncryptionService encryption,
       ILogger<HolderAuthService> logger,
-      IIdentityProviderClientFactory identityProviderClientFactory,
-      TimeProvider? timeProvider = null)
+      IIdentityProviderClientFactory identityProviderClientFactory)
     {
       ArgumentNullException.ThrowIfNull(options, nameof(options));
 
       _options = options.Value ?? throw new ArgumentNullException(nameof(options));
-      _timeProvider = timeProvider ?? TimeProvider.System;
       _cache = cache ?? throw new ArgumentNullException(nameof(cache));
       _distributedLock = distributedLock ?? throw new ArgumentNullException(nameof(distributedLock));
       _encryption = encryption ?? throw new ArgumentNullException(nameof(encryption));
@@ -81,7 +78,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
         var source = ReadClaims(context.AccessToken);
         AssertClaim(source, "sub", context.UserId);
         sourceExpiry = GetExpiry(source);
-        if (sourceExpiry <= _timeProvider.GetUtcNow())
+        if (sourceExpiry <= DateTimeOffset.UtcNow)
           throw new InvalidOperationException("The authenticated Yoma token has expired");
       }
 
@@ -94,7 +91,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
       {
         var cached = _token;
         if (cached == null || cached.Key != key || cached.HolderId != context.HolderId ||
-          cached.DateExpire <= _timeProvider.GetUtcNow())
+          cached.DateExpire <= DateTimeOffset.UtcNow)
         {
           cached = await ReadCached(key);
           if (cached == null)
@@ -126,7 +123,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
               }
 
               var protectedValue = _encryption.Encrypt(JsonConvert.SerializeObject(cached), key);
-              var remaining = cached.DateExpire - _timeProvider.GetUtcNow();
+              var remaining = cached.DateExpire - DateTimeOffset.UtcNow;
               if (remaining <= TimeSpan.Zero)
                 throw new InvalidOperationException("Federated holder token expired before caching");
 
@@ -136,7 +133,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
           _token = cached;
         }
 
-        if (cached == null || cached.DateExpire <= _timeProvider.GetUtcNow())
+        if (cached == null || cached.DateExpire <= DateTimeOffset.UtcNow)
           throw new InvalidOperationException("Federated holder token expired before use");
 
         return new KeyValuePair<string, string>(
@@ -162,12 +159,19 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
         _token = null;
         if (rejected == null) return;
 
-        await WithCacheLock(rejected.Key, TimeSpan.FromSeconds(_options.RequestTimeoutSeconds * 3d), async () =>
+        var leaseDuration = TimeSpan.FromSeconds(_options.Holder.TokenAcquisitionTimeoutSeconds) + TimeSpan.FromSeconds(_options.RequestTimeoutSeconds);
+        await WithCacheLock(rejected.Key, leaseDuration, async () =>
         {
           var current = await ReadCached(rejected.Key);
           if (current?.Value == rejected.Value)
             await _cache.RemoveAsync(rejected.Key);
         }, CancellationToken.None);
+      }
+      catch (Exception ex)
+      {
+        // Cache cleanup must not replace the wallet's original unauthorized response.
+        if (_logger.IsEnabled(LogLevel.Error))
+          _logger.LogError("Failed to invalidate the rejected holder token ({exceptionType}); the shared entry may remain until expiry", ex.GetType().Name);
       }
       finally
       {
@@ -201,7 +205,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
 
         var cached = JsonConvert.DeserializeObject<CachedToken>(_encryption.Decrypt(protectedValue, key));
         return cached?.Key == key && !string.IsNullOrWhiteSpace(cached.Value) &&
-          cached.DateExpire > _timeProvider.GetUtcNow() ? cached : null;
+          cached.DateExpire > DateTimeOffset.UtcNow ? cached : null;
       }
       catch (CryptographicException)
       {
@@ -235,7 +239,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
       var token = context.IsBackground
         ? await identityProvider.GetUserAccessToken(Guid.Parse(context.UserId), cancellationToken)
         : await identityProvider.ExchangeUserAccessToken(context.AccessToken, cancellationToken);
-      var started = _timeProvider.GetUtcNow();
+      var started = DateTimeOffset.UtcNow;
       var assertion = new AccessTokenResponse
       {
         AccessToken = token.AccessToken,
@@ -261,7 +265,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
         { "assertion", assertion.AccessToken }
       };
 
-      var holderStarted = _timeProvider.GetUtcNow();
+      var holderStarted = DateTimeOffset.UtcNow;
       var response = await _options.KeycloakBaseUri
         .AppendPathSegments("realms", _options.Holder.Realm, "protocol", "openid-connect", "token")
         .WithTimeout(TimeSpan.FromSeconds(_options.RequestTimeoutSeconds))
@@ -278,7 +282,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
         throw new InvalidOperationException("didx:me holder token is missing the wallet audience");
 
       var expires = new[] { sourceExpiry, assertionExpiry, holderExpiry }.Min();
-      if (expires <= _timeProvider.GetUtcNow())
+      if (expires <= DateTimeOffset.UtcNow)
         throw new InvalidOperationException("Federated holder token expired during acquisition");
 
       return new CachedToken
@@ -298,7 +302,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
 
       var expiry = new[] { started.AddSeconds(response.ExpiresIn), GetExpiry(ReadClaims(response.AccessToken)) }.Min();
       expiry = expiry.AddSeconds(-Math.Min(_options.AccessTokenRefreshBufferSeconds, response.ExpiresIn / 10d));
-      if (expiry <= _timeProvider.GetUtcNow())
+      if (expiry <= DateTimeOffset.UtcNow)
         throw new InvalidOperationException("Federation token response has expired");
 
       return expiry;

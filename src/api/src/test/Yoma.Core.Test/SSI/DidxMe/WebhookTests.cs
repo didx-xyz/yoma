@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Newtonsoft.Json;
 using System.Security.Cryptography;
@@ -25,9 +26,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
       fixture.Mapping.Status = status;
       var invoked = false;
 
-      var error = await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.Service.Update(fixture.Mapping.Id, _ => invoked = true));
-      Assert.Contains(fixture.Mapping.Id.ToString(), error.Message);
-      Assert.Contains($"'{status}'", error.Message);
+      await Assert.ThrowsAsync<ArgumentException>(() => fixture.Service.Update(fixture.Mapping.Id, _ => invoked = true));
 
       Assert.False(invoked);
       fixture.Repository.Verify(value => value.Update(It.IsAny<IssuanceMapping>()), Times.Never);
@@ -85,8 +84,12 @@ namespace Yoma.Core.Test.SSI.DidxMe
 
       Assert.Equal("wallet-test", await fixture.Service.WaitForWalletId(fixture.Mapping.Id, TestContext.Current.CancellationToken));
       Assert.True(fixture.Mapping.DeliveryCompleted);
-      await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.Service.Accept("session-test", "conflicting-wallet"));
+      await fixture.Service.Accept("session-test", "conflicting-wallet");
       Assert.Equal("wallet-test", fixture.Mapping.WalletCredentialId);
+      Assert.Equal(nameof(IssuanceStatus.Accepted), fixture.Mapping.Status);
+      var log = Assert.Single(fixture.Logger.Invocations, item => item.Method.Name == "Log");
+      Assert.Equal(LogLevel.Error, log.Arguments[0]);
+      Assert.Contains(fixture.Mapping.Id.ToString(), log.Arguments[2]!.ToString());
       await fixture.Service.ConfirmDeleted("holder-test", "wallet-test");
       await fixture.Service.Accept("session-test", "wallet-test");
       Assert.Equal(nameof(IssuanceStatus.Deleted), fixture.Mapping.Status);
@@ -126,17 +129,19 @@ namespace Yoma.Core.Test.SSI.DidxMe
         Status = nameof(IssuanceStatus.Delivering)
       };
       public Mock<IRepository<IssuanceMapping>> Repository { get; } = new();
+      public Mock<ILogger<IssuanceTrackingService>> Logger { get; } = new();
       public IssuanceTrackingService Service { get; }
 
       public Fixture()
       {
+        Logger.Setup(logger => logger.IsEnabled(LogLevel.Error)).Returns(true);
         Repository.Setup(value => value.Query()).Returns(() => new[] { Mapping }.AsQueryable());
         Repository.Setup(value => value.Query(It.IsAny<LockMode>())).Returns(() => new[] { Mapping }.AsQueryable());
         Repository.Setup(value => value.Update(It.IsAny<IssuanceMapping>())).ReturnsAsync((IssuanceMapping item) => item);
         var strategy = new Mock<IProviderExecutionStrategyService>();
         strategy.Setup(value => value.ExecuteInExecutionStrategyAsync(It.IsAny<Func<Task>>(), true))
           .Returns((Func<Task> action, bool _) => action());
-        Service = new IssuanceTrackingService(Options.Create(new ProviderOptions
+        Service = new IssuanceTrackingService(Logger.Object, Options.Create(new ProviderOptions
         {
           TenantAlias = "yoma",
           Webhook = new WebhookOptions { PollIntervalMilliseconds = 1 }

@@ -152,6 +152,8 @@ the browser at `http://localhost:5000`. Use the project profile, not IIS Express
 the independently managed local platform's outbound rules must permit the callback; initialization
 does not alter these rules or wait for the API, which starts afterwards. Verify signed delivery
 before triggering issuance. A full mono reset may require its local delivery permission to be reapplied.
+Restrict inbound port 5000 to the local container callback source; do not expose this debug
+listener to other hosts on a shared network. Keep the host firewall enabled.
 
 For deployed environments, agree registration/automation with Robbie/SRE and supply the
 endpoint-specific signing secret through environment secret configuration. Local initialization

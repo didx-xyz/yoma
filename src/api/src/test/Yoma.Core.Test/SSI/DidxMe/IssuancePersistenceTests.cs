@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
 using Xunit;
 using Yoma.Core.Infrastructure.DidxMe;
@@ -54,7 +55,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
         async Task<IssuanceMapping> Create()
         {
           await using var attempt = new ProviderDbContext(options);
-          var service = new IssuanceTrackingService(Options.Create(new ProviderOptions { TenantAlias = "yoma" }),
+          var service = new IssuanceTrackingService(NullLogger<IssuanceTrackingService>.Instance, Options.Create(new ProviderOptions { TenantAlias = "yoma" }),
             new IssuanceMappingRepository(attempt), new ExecutionStrategyService(attempt));
           return await service.Create(new IssuanceMapping
           {

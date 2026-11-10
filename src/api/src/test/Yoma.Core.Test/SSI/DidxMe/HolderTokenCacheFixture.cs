@@ -76,7 +76,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
 
     #region Public Members
     public HolderAuthService Create(ProviderOptions options, string identitySecret = "test-only",
-      IIdentityProviderClientFactory? identityProvider = null, TimeProvider? timeProvider = null)
+      IIdentityProviderClientFactory? identityProvider = null)
     {
       var factory = new Mock<IIdentityProviderClientFactory>();
       factory.Setup(value => value.CreateClient()).Returns(() => new KeycloakClient(
@@ -96,7 +96,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
           Realm = "yoma"
         }));
       return new(Options.Create(options), Cache.Object, Lock.Object, Encryption, Logger.Object,
-        identityProvider ?? factory.Object, timeProvider);
+        identityProvider ?? factory.Object);
     }
     #endregion
   }

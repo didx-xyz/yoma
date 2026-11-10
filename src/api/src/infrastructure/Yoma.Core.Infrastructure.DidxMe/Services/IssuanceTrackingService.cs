@@ -1,5 +1,6 @@
 using Yoma.Core.Infrastructure.DidxMe.Interfaces;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
 using System.Transactions;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Helpers;
@@ -15,15 +16,17 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
   public class IssuanceTrackingService : IIssuanceTrackingService
   {
     #region Class Variables
+    private readonly ILogger<IssuanceTrackingService> _logger;
     private readonly ProviderOptions _options;
     private readonly IRepository<IssuanceMapping> _repository;
     private readonly IProviderExecutionStrategyService _executionStrategy;
     #endregion
 
     #region Constructor
-    public IssuanceTrackingService(IOptions<ProviderOptions> options, IRepository<IssuanceMapping> repository,
+    public IssuanceTrackingService(ILogger<IssuanceTrackingService> logger, IOptions<ProviderOptions> options, IRepository<IssuanceMapping> repository,
       IProviderExecutionStrategyService executionStrategy)
     {
+      _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _options = (options ?? throw new ArgumentNullException(nameof(options))).Value;
       _repository = repository ?? throw new ArgumentNullException(nameof(repository));
       _executionStrategy = executionStrategy ?? throw new ArgumentNullException(nameof(executionStrategy));
@@ -78,8 +81,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
         var issuerCredentialId = result.IssuerCredentialId;
         var walletCredentialId = result.WalletCredentialId;
         var deliveryCompleted = result.DeliveryCompleted;
-        if (!Enum.TryParse<IssuanceStatus>(result.Status, true, out var status))
-          throw new InvalidOperationException($"Issuance row '{id}' has unparseable status '{result.Status}'");
+        var status = Enum.Parse<IssuanceStatus>(result.Status, true);
 
         update(result);
 
@@ -88,8 +90,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
           (walletCredentialId != null && walletCredentialId != result.WalletCredentialId))
           throw new InvalidOperationException("A confirmed provider identifier cannot be replaced");
 
-        if (!Enum.TryParse<IssuanceStatus>(result.Status, true, out var updatedStatus))
-          throw new InvalidOperationException($"Issuance row '{id}' has unparseable status '{result.Status}'");
+        var updatedStatus = Enum.Parse<IssuanceStatus>(result.Status, true);
         if (status == IssuanceStatus.Deleted && updatedStatus != IssuanceStatus.Deleted)
           throw new InvalidOperationException("A deleted issuance attempt cannot be resumed");
 
@@ -116,7 +117,13 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
         if (status == IssuanceStatus.Deleted) return;
 
         if (item.WalletCredentialId != null && item.WalletCredentialId != walletId)
-          throw new InvalidOperationException("The accepted event conflicts with the recorded wallet credential");
+        {
+          // Retrying this event cannot repair the conflict. Preserve the confirmed ID for reconciliation.
+          if (_logger.IsEnabled(LogLevel.Error))
+            _logger.LogError("Accepted wallet event conflicts with issuance mapping {mappingId}; the recorded wallet credential was retained", item.Id);
+
+          return;
+        }
 
         item.WalletCredentialId = walletId;
         item.Status = IssuanceStatus.Accepted.ToString();

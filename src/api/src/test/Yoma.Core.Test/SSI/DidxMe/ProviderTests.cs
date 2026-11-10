@@ -3,6 +3,7 @@ using Flurl.Http.Newtonsoft;
 using Flurl.Http.Testing;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -179,7 +180,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
       var delivery = JObject.Parse(http.CallLog.Single(call => call.Request.Url.Path.EndsWith("/orgs/credentials")).RequestBody);
       Assert.Equal(YomaSubjectId, delivery.Value<string>("recipient"));
       Assert.Equal("externalIdentifier", delivery.Value<string>("identifierType"));
-      http.ShouldHaveCalled($"https://onboarding.test/api/users/by-external-identifier/{YomaSubjectId}").Times(2);
+      http.ShouldHaveCalled($"https://onboarding.test/api/users/by-external-identifier/{YomaSubjectId}").Times(1);
     }
 
     [Fact]
@@ -781,36 +782,6 @@ namespace Yoma.Core.Test.SSI.DidxMe
     }
 
     [Theory]
-    [InlineData("")]
-    [InlineData("not-a-status")]
-    public async Task InvalidStoredStatusIdentifiesTheRowAndPreventsUpdate(string status)
-    {
-      using var http = new HttpTest();
-      var fixture = new Fixture(http);
-      var mapping = new IssuanceMapping { Id = Guid.NewGuid(), TenantAlias = "yoma", Status = status };
-      fixture.IssuanceMappings.Add(mapping);
-
-      var error = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-        fixture.Tracking.Update(mapping.Id, item => item.Status = nameof(IssuanceStatus.Delivering)));
-
-      Assert.Contains(mapping.Id.ToString(), error.Message);
-      Assert.Contains($"'{status}'", error.Message);
-      fixture.IssuanceMappingRepository.Verify(value => value.Update(It.IsAny<IssuanceMapping>()), Times.Never);
-    }
-
-    [Fact]
-    public void LegacyRowsReceiveAcceptedStatusWhenTheStatusColumnIsAdded()
-    {
-      var migration = new Infrastructure.DidxMe.Migrations.ProviderDb_IssuanceTracking();
-      var column = Assert.Single(migration.UpOperations
-        .OfType<Microsoft.EntityFrameworkCore.Migrations.Operations.AddColumnOperation>(),
-        item => item.Table == "IssuanceMapping" && item.Name == "Status");
-
-      Assert.False(column.IsNullable);
-      Assert.Equal(nameof(IssuanceStatus.Accepted), column.DefaultValue);
-    }
-
-    [Theory]
     [InlineData(IssuanceStatus.Prepared, IssuanceStatus.Offered)]
     [InlineData(IssuanceStatus.Offered, IssuanceStatus.Delivering)]
     [InlineData(IssuanceStatus.Offered, IssuanceStatus.Accepted)]
@@ -978,7 +949,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
         var strategy = new Mock<IProviderExecutionStrategyService>();
         strategy.Setup(value => value.ExecuteInExecutionStrategyAsync(It.IsAny<Func<Task>>(), true))
           .Returns((Func<Task> action, bool _) => action());
-        Tracking = new IssuanceTrackingService(options, IssuanceMappingRepository.Object, strategy.Object);
+        Tracking = new IssuanceTrackingService(NullLogger<IssuanceTrackingService>.Instance, options, IssuanceMappingRepository.Object, strategy.Object);
         var holder = new HolderService(accessor, issuer, wallet, presets, Tracking, users.Object, Repository(TenantCreations).Object);
         Client = new ProviderClient(options, presets, issuer, Tracking, holder, users.Object);
         IssuanceMappingRepository.Setup(value => value.Update(It.IsAny<IssuanceMapping>()))

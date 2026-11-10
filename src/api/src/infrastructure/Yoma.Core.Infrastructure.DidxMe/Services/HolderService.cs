@@ -100,6 +100,17 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
       ArgumentException.ThrowIfNullOrWhiteSpace(clientReferent.Value);
 
       var context = await GetBackgroundContext(tenantId);
+      return await GetCredentialByClientReferentOrNull(context, artifactType, clientReferent);
+    }
+
+    public async Task<Credential?> GetCredentialByClientReferentOrNull(HolderContext context, ArtifactType artifactType,
+      KeyValuePair<string, string> clientReferent)
+    {
+      ArgumentNullException.ThrowIfNull(context);
+      PresetService.ValidateArtifactType(artifactType);
+      ArgumentException.ThrowIfNullOrWhiteSpace(clientReferent.Key);
+      ArgumentException.ThrowIfNullOrWhiteSpace(clientReferent.Value);
+
       var matches = new List<WalletCredential>();
       foreach (var status in Enum.GetValues<WalletCredentialStatus>())
       {

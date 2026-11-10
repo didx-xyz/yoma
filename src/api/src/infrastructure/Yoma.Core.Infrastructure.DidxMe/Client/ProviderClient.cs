@@ -173,7 +173,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Client
         throw new ArgumentException("The signed client referent must match the issuance request", nameof(request));
 
       var context = await _holder.GetBackgroundContext(request.TenantIdHolder);
-      var recovered = await _holder.GetCredentialByClientReferentOrNull(context.HolderId, request.ArtifactType, request.ClientReferent);
+      var recovered = await _holder.GetCredentialByClientReferentOrNull(context, request.ArtifactType, request.ClientReferent);
       if (recovered != null)
       {
         // A retry may resolve a newer schema version than the successful original attempt.
