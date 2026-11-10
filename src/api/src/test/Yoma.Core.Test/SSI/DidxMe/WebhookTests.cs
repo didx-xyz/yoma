@@ -25,7 +25,9 @@ namespace Yoma.Core.Test.SSI.DidxMe
       fixture.Mapping.Status = status;
       var invoked = false;
 
-      await Assert.ThrowsAsync<ArgumentException>(() => fixture.Service.Update(fixture.Mapping.Id, _ => invoked = true));
+      var error = await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.Service.Update(fixture.Mapping.Id, _ => invoked = true));
+      Assert.Contains(fixture.Mapping.Id.ToString(), error.Message);
+      Assert.Contains($"'{status}'", error.Message);
 
       Assert.False(invoked);
       fixture.Repository.Verify(value => value.Update(It.IsAny<IssuanceMapping>()), Times.Never);

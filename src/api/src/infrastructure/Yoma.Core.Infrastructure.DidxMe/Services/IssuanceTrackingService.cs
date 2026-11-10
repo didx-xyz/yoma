@@ -78,7 +78,8 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
         var issuerCredentialId = result.IssuerCredentialId;
         var walletCredentialId = result.WalletCredentialId;
         var deliveryCompleted = result.DeliveryCompleted;
-        var status = Enum.Parse<IssuanceStatus>(result.Status, true);
+        if (!Enum.TryParse<IssuanceStatus>(result.Status, true, out var status))
+          throw new InvalidOperationException($"Issuance row '{id}' has unparseable status '{result.Status}'");
 
         update(result);
 
@@ -87,7 +88,8 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
           (walletCredentialId != null && walletCredentialId != result.WalletCredentialId))
           throw new InvalidOperationException("A confirmed provider identifier cannot be replaced");
 
-        var updatedStatus = Enum.Parse<IssuanceStatus>(result.Status, true);
+        if (!Enum.TryParse<IssuanceStatus>(result.Status, true, out var updatedStatus))
+          throw new InvalidOperationException($"Issuance row '{id}' has unparseable status '{result.Status}'");
         if (status == IssuanceStatus.Deleted && updatedStatus != IssuanceStatus.Deleted)
           throw new InvalidOperationException("A deleted issuance attempt cannot be resumed");
 

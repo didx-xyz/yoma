@@ -101,7 +101,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       ArgumentException.ThrowIfNullOrWhiteSpace(accessToken);
       cancellationToken.ThrowIfCancellationRequested();
 
-      var options = _keycloakAdminOptions.TokenExchange;
+      var options = ValidateTokenExchangeOptions();
       var started = DateTimeOffset.UtcNow;
       using var response = await _keycloakAuthenticationOptions.AuthServerUrl
         .AppendPathSegments("realms", _keycloakAuthenticationOptions.Realm, "protocol", "openid-connect", "token")
@@ -118,6 +118,22 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
         .EnsureSuccessStatusCodeAsync();
 
       return await ReadUserAccessToken(response, started);
+    }
+
+    private TokenExchangeOptions ValidateTokenExchangeOptions()
+    {
+      var options = _keycloakAdminOptions.TokenExchange
+        ?? throw new InvalidOperationException("KeycloakAdmin.TokenExchange is not configured");
+      if (string.IsNullOrWhiteSpace(options.ClientId))
+        throw new InvalidOperationException("KeycloakAdmin.TokenExchange.ClientId is required");
+      if (string.IsNullOrWhiteSpace(options.ClientSecret))
+        throw new InvalidOperationException("KeycloakAdmin.TokenExchange.ClientSecret is required");
+      if (options.RequestTimeoutSeconds <= 0)
+        throw new InvalidOperationException("KeycloakAdmin.TokenExchange.RequestTimeoutSeconds must be positive");
+      if (!Uri.TryCreate(_keycloakAuthenticationOptions.AuthServerUrl, UriKind.Absolute, out var authServer) ||
+        (authServer.Scheme != Uri.UriSchemeHttps && authServer.Scheme != Uri.UriSchemeHttp))
+        throw new InvalidOperationException("Keycloak AuthServerUrl must be an absolute HTTP/HTTPS URL");
+      return options;
     }
 
     public bool IsClientActingOnBehalfOfUser(string? clientId)
@@ -163,7 +179,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
     {
       if (id == Guid.Empty) throw new ArgumentNullException(nameof(id));
       cancellationToken.ThrowIfCancellationRequested();
-      var options = _keycloakAdminOptions.TokenExchange;
+      var options = ValidateTokenExchangeOptions();
       ArgumentException.ThrowIfNullOrWhiteSpace(options.RedirectUri);
 
       // Three acquisition requests plus one independently bounded cleanup request.

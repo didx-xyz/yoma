@@ -72,7 +72,16 @@ security configuration and privileged workflows are held in the private engineer
   cannot restore removed data or reinterpret old provider IDs.
 - [x] Remove private integration-document versions from the feature history and delete the assessment file; coordinate collaborator resynchronization.
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:8cc5e8eac651b16d7eb72ea21f3c71357d115c3ca1fa11f9ef2cb9e38a58c657 -->
+
 ## Decisions
+
+- 2026-11-10 follow-up review request: use an optional TimeProvider in holder/issuer authentication, defaulting to the system clock, to verify cache refresh deterministically. This supersedes the earlier direct-UTC-only decision for these two services. Added shared assertion-client configuration validation and row-specific journal status diagnostics; retained the existing locked delivery transition and conservative delivery errors. See [review correction handoff](./handoffs/2026-11-10-h.md).
+
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 - 2026-11-10 deployment review: initialize existing issuance journal rows to `Accepted` when adding the required status column, as agreed with Adrian. This supersedes the earlier no-backfill decision: deployment precedes manual Stage preparation. New rows explicitly start as `Prepared` in the service. This does not convert legacy credential IDs or replace the manual Stage procedure. Keep the initial journal lookup/insert ReadCommitted, per Adrian's review; the existing job lock owns execution concurrency. This is not an atomic uniqueness guarantee if that lock expires or callers bypass it. Provider calls remain outside transactions. See the [latest review handoff](./handoffs/2026-11-10-g.md).
 

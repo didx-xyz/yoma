@@ -300,20 +300,23 @@ namespace Yoma.Core.Test.SSI.DidxMe
     {
       using var http = new HttpTest()
         .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
-      var issuedAt = DateTimeOffset.UtcNow;
+      var clock = new TestTimeProvider();
+      var issuedAt = clock.GetUtcNow();
       var options = CreateOptions();
       options.AccessTokenRefreshBufferSeconds = bufferSeconds;
       options.RequestTimeoutSeconds = 17;
       var cache = new HolderTokenCacheFixture();
-      using var service = cache.Create(options);
+      using var service = cache.Create(options, timeProvider: clock);
       var context = CreateContext(issuedAt);
-      EnqueueTokens(http, issuedAt, holderExpiresIn: 1);
-      await service.GetAuthHeader(context, TestContext.Current.CancellationToken);
-      Assert.InRange(Assert.Single(cache.Expirations).Value.TotalSeconds, 0, 1);
+      EnqueueTokens(http, issuedAt, holderExpiresIn: 100);
+      var first = await service.GetAuthHeader(context, TestContext.Current.CancellationToken);
+      Assert.InRange(Assert.Single(cache.Expirations).Value.TotalSeconds, 90, 100);
       http.ShouldHaveCalled(HolderEndpoint).Times(1);
       Assert.All(http.CallLog, call => Assert.Equal(TimeSpan.FromSeconds(
         call.Request.Url.ToString() == YomaEndpoint ? 30 : 17), call.Request.Settings.Timeout));
-      await Task.Delay(1100, TestContext.Current.CancellationToken);
+      Assert.Equal(first, await service.GetAuthHeader(context, TestContext.Current.CancellationToken));
+      http.ShouldHaveCalled(HolderEndpoint).Times(1);
+      clock.Advance(TimeSpan.FromSeconds(bufferSeconds == 0 ? 100 : 90));
       EnqueueTokens(http, issuedAt);
       await service.GetAuthHeader(context, TestContext.Current.CancellationToken);
       await service.Invalidate();

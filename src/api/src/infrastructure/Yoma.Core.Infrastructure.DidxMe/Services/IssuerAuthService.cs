@@ -18,17 +18,19 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
   {
     #region Class Variables
     private readonly ProviderOptions _options;
+    private readonly TimeProvider _timeProvider;
     private readonly SemaphoreSlim _accessTokenLock = new(1, 1);
     private volatile CachedAccessToken? _accessToken;
     #endregion
 
     #region Constructor
     public IssuerAuthService(
-      IOptions<ProviderOptions> options)
+      IOptions<ProviderOptions> options, TimeProvider? timeProvider = null)
     {
       ArgumentNullException.ThrowIfNull(options, nameof(options));
 
       _options = options.Value ?? throw new ArgumentNullException(nameof(options));
+      _timeProvider = timeProvider ?? TimeProvider.System;
     }
     #endregion
 
@@ -38,7 +40,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
       cancellationToken.ThrowIfCancellationRequested();
 
       var token = _accessToken;
-      if (token != null && token.DateExpire > DateTimeOffset.UtcNow)
+      if (token != null && token.DateExpire > _timeProvider.GetUtcNow())
         return CreateAuthHeader(token);
 
       await _accessTokenLock.WaitAsync(cancellationToken);
@@ -46,7 +48,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
       try
       {
         token = _accessToken;
-        if (token != null && token.DateExpire > DateTimeOffset.UtcNow)
+        if (token != null && token.DateExpire > _timeProvider.GetUtcNow())
           return CreateAuthHeader(token);
 
         token = await GetAccessToken(cancellationToken);
@@ -93,7 +95,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
 
       // Count the lifetime from before the request so transport latency cannot extend the cache
       // beyond the authorization server's expiry. Short-lived tokens retain a usable refresh window.
-      var requestedAt = DateTimeOffset.UtcNow;
+      var requestedAt = _timeProvider.GetUtcNow();
       var response = await _options.KeycloakBaseUri
         .AppendPathSegments("realms", _options.Issuer.Realm, "protocol", "openid-connect", "token")
         .WithTimeout(TimeSpan.FromSeconds(_options.RequestTimeoutSeconds))
@@ -112,7 +114,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
 
       var refreshBuffer = Math.Min(_options.AccessTokenRefreshBufferSeconds, response.ExpiresIn / 10d);
       var dateExpire = requestedAt.AddSeconds(response.ExpiresIn - refreshBuffer);
-      if (dateExpire <= DateTimeOffset.UtcNow)
+      if (dateExpire <= _timeProvider.GetUtcNow())
         throw new InvalidOperationException("didx:me issuer token expired before it could be cached");
 
       return new CachedAccessToken

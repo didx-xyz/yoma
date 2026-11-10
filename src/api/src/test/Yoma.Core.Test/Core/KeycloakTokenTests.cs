@@ -26,6 +26,31 @@ namespace Yoma.Core.Test.Core
   {
     #region Tests
     [Theory]
+    [InlineData("TokenExchange")]
+    [InlineData("ClientId")]
+    [InlineData("ClientSecret")]
+    [InlineData("RequestTimeoutSeconds")]
+    [InlineData("AuthServerUrl")]
+    public async Task BothAssertionPathsRejectInvalidConfigurationBeforeHttp(string field)
+    {
+      var options = Options();
+      switch (field)
+      {
+        case "TokenExchange": options.TokenExchange = null!; break;
+        case "ClientId": options.TokenExchange.ClientId = " "; break;
+        case "ClientSecret": options.TokenExchange.ClientSecret = ""; break;
+        case "RequestTimeoutSeconds": options.TokenExchange.RequestTimeoutSeconds = 0; break;
+      }
+      using var http = new HttpTest();
+      using var client = Client(field == "AuthServerUrl" ? " " : "https://identity.example.test", options);
+      var interactive = await Assert.ThrowsAsync<InvalidOperationException>(() => client.ExchangeUserAccessToken("test-token", TestContext.Current.CancellationToken));
+      var background = await Assert.ThrowsAsync<InvalidOperationException>(() => client.GetUserAccessToken(Guid.NewGuid(), TestContext.Current.CancellationToken));
+      Assert.Contains(field, interactive.Message);
+      Assert.Equal(interactive.Message, background.Message);
+      Assert.Empty(http.CallLog);
+    }
+
+    [Theory]
     [InlineData("assertion-client", "assertion-client", true)]
     [InlineData("assertion-client", "yoma-web", false)]
     [InlineData("assertion-client", "partner-client", false)]

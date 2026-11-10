@@ -61,9 +61,10 @@ namespace Yoma.Core.Test.SSI.DidxMe
     {
       using var http = new HttpTest()
         .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
-      http.RespondWithJson(new { access_token = "first-token", token_type = "Bearer", expires_in = 1 });
+      http.RespondWithJson(new { access_token = "first-token", token_type = "Bearer", expires_in = 100 });
       http.RespondWithJson(new { access_token = "second-token", token_type = "Bearer", expires_in = 120 });
-      using var service = CreateService(bufferSeconds: bufferSeconds);
+      var clock = new TestTimeProvider();
+      using var service = CreateService(bufferSeconds: bufferSeconds, timeProvider: clock);
 
       var first = await service.GetAuthHeader(TestContext.Current.CancellationToken);
       Assert.Equal("Authorization", first.Key);
@@ -73,7 +74,9 @@ namespace Yoma.Core.Test.SSI.DidxMe
         .WithRequestBody("*grant_type=client_credentials*client_id=yoma-issuer*client_secret=unit-test-secret*")
         .Times(1);
 
-      await Task.Delay(1100, TestContext.Current.CancellationToken);
+      Assert.Equal("Bearer first-token", (await service.GetAuthHeader(TestContext.Current.CancellationToken)).Value);
+      http.ShouldHaveCalled(TokenEndpoint).Times(1);
+      clock.Advance(TimeSpan.FromSeconds(bufferSeconds == 0 ? 100 : 90));
 
       Assert.Equal("Bearer second-token", (await service.GetAuthHeader(TestContext.Current.CancellationToken)).Value);
       http.ShouldHaveCalled(TokenEndpoint).Times(2);
@@ -208,7 +211,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
     #endregion
 
     #region Private Members
-    private static IssuerAuthService CreateService(string clientId = "yoma-issuer", int bufferSeconds = 30)
+    private static IssuerAuthService CreateService(string clientId = "yoma-issuer", int bufferSeconds = 30, TimeProvider? timeProvider = null)
     {
       return new IssuerAuthService(Options.Create(new ProviderOptions
       {
@@ -220,7 +223,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
           ClientId = clientId,
           ClientSecret = "unit-test-secret"
         }
-      }));
+      }), timeProvider);
     }
 
     #endregion

@@ -781,6 +781,36 @@ namespace Yoma.Core.Test.SSI.DidxMe
     }
 
     [Theory]
+    [InlineData("")]
+    [InlineData("not-a-status")]
+    public async Task InvalidStoredStatusIdentifiesTheRowAndPreventsUpdate(string status)
+    {
+      using var http = new HttpTest();
+      var fixture = new Fixture(http);
+      var mapping = new IssuanceMapping { Id = Guid.NewGuid(), TenantAlias = "yoma", Status = status };
+      fixture.IssuanceMappings.Add(mapping);
+
+      var error = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        fixture.Tracking.Update(mapping.Id, item => item.Status = nameof(IssuanceStatus.Delivering)));
+
+      Assert.Contains(mapping.Id.ToString(), error.Message);
+      Assert.Contains($"'{status}'", error.Message);
+      fixture.IssuanceMappingRepository.Verify(value => value.Update(It.IsAny<IssuanceMapping>()), Times.Never);
+    }
+
+    [Fact]
+    public void LegacyRowsReceiveAcceptedStatusWhenTheStatusColumnIsAdded()
+    {
+      var migration = new Infrastructure.DidxMe.Migrations.ProviderDb_IssuanceTracking();
+      var column = Assert.Single(migration.UpOperations
+        .OfType<Microsoft.EntityFrameworkCore.Migrations.Operations.AddColumnOperation>(),
+        item => item.Table == "IssuanceMapping" && item.Name == "Status");
+
+      Assert.False(column.IsNullable);
+      Assert.Equal(nameof(IssuanceStatus.Accepted), column.DefaultValue);
+    }
+
+    [Theory]
     [InlineData(IssuanceStatus.Prepared, IssuanceStatus.Offered)]
     [InlineData(IssuanceStatus.Offered, IssuanceStatus.Delivering)]
     [InlineData(IssuanceStatus.Offered, IssuanceStatus.Accepted)]
