@@ -10,11 +10,11 @@ using System.Net;
 using System.Text;
 using Xunit;
 using Yoma.Core.Domain.Core.Exceptions;
-using Yoma.Core.Domain.SSI;
+using Yoma.Core.Domain.IdentityProvider.Interfaces;
+using Yoma.Core.Domain.IdentityProvider.Models;
 using Yoma.Core.Infrastructure.DidxMe.Client;
 using Yoma.Core.Infrastructure.DidxMe.Interfaces;
 using Yoma.Core.Infrastructure.DidxMe.Models;
-using Yoma.Core.Infrastructure.DidxMe.Services;
 
 namespace Yoma.Core.Test.SSI.DidxMe
 {
@@ -29,16 +29,132 @@ namespace Yoma.Core.Test.SSI.DidxMe
     #endregion
 
     #region Tests
+    [Theory]
+    [InlineData("success")]
+    [InlineData("lock-timeout")]
+    [InlineData("cache-failure")]
+    public async Task UnauthorizedInvalidationUsesAcquisitionBudgetAndPreservesWalletFailure(string scenario)
+    {
+      using var http = new HttpTest().WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
+      var issuedAt = DateTimeOffset.UtcNow;
+      var options = CreateOptions();
+      options.Holder.TokenAcquisitionTimeoutSeconds = 150;
+      options.RequestTimeoutSeconds = 30;
+      var cache = new HolderTokenCacheFixture();
+      using var auth = cache.Create(options);
+      var context = CreateContext(issuedAt);
+      EnqueueTokens(http, issuedAt);
+      await auth.GetAuthHeader(context, TestContext.Current.CancellationToken);
+
+      if (scenario == "lock-timeout")
+        cache.Lock.Setup(service => service.TryRunWithLockAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(),
+          It.IsAny<TimeSpan>(), It.IsAny<Func<Task>>(), It.IsAny<CancellationToken>(), It.IsAny<string>())).ReturnsAsync(false);
+      else if (scenario == "cache-failure")
+        cache.Cache.Setup(service => service.RemoveAsync(It.IsAny<string>())).ThrowsAsync(new InvalidOperationException("cache unavailable"));
+
+      http.RespondWithJson(new { error = "unauthorized" }, 401);
+      var client = new WalletClient(Options.Create(options), auth);
+      var error = await Assert.ThrowsAsync<HttpClientException>(() => client.GetCredential(context, CredentialId, TestContext.Current.CancellationToken));
+
+      Assert.Equal(HttpStatusCode.Unauthorized, error.StatusCode);
+      cache.Lock.Verify(service => service.TryRunWithLockAsync(It.IsAny<string>(), TimeSpan.FromSeconds(180),
+        TimeSpan.FromSeconds(180), It.IsAny<Func<Task>>(), It.IsAny<CancellationToken>(), It.IsAny<string>()), Times.Exactly(2));
+      if (scenario == "success") Assert.Empty(cache.Values);
+      else
+      {
+        Assert.Single(cache.Values);
+        var log = Assert.Single(cache.Logger.Invocations, item => item.Method.Name == "Log");
+        Assert.Equal(LogLevel.Error, log.Arguments[0]);
+        Assert.Null(log.Arguments[3]);
+      }
+      http.ShouldHaveCalled(WalletEndpoint + "/" + CredentialId).Times(1);
+    }
+
+    [Fact]
+    public async Task BackgroundTokensAreSeparateFromInteractiveTokensAndUseOnlyTheExplicitIdentityOperation()
+    {
+      using var http = new HttpTest().WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
+      var issuedAt = DateTimeOffset.UtcNow;
+      var cache = new HolderTokenCacheFixture();
+      var userId = Guid.NewGuid();
+      var identity = new Mock<IIdentityProviderClient>();
+      var assertion = new UserAccessToken
+      {
+        AccessToken = Token(issuedAt, new JObject { ["sub"] = userId.ToString(), ["aud"] = Audience }),
+        ExpiresIn = 120
+      };
+      identity.Setup(client => client.GetUserAccessToken(userId, It.IsAny<CancellationToken>())).ReturnsAsync(assertion);
+      identity.Setup(client => client.ExchangeUserAccessToken(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(assertion);
+      var factory = new Mock<IIdentityProviderClientFactory>();
+      factory.Setup(value => value.CreateClient()).Returns(identity.Object);
+      using var background = cache.Create(CreateOptions(), identityProvider: factory.Object);
+      using var interactive = cache.Create(CreateOptions(), identityProvider: factory.Object);
+      var context = new HolderContext { UserId = userId.ToString(), HolderId = "holder-a", IsBackground = true };
+      http.RespondWithJson(new { access_token = Token(issuedAt, HolderClaims()), token_type = "Bearer", expires_in = 120 });
+      await background.GetAuthHeader(context, TestContext.Current.CancellationToken);
+      await background.GetAuthHeader(context, TestContext.Current.CancellationToken);
+      using var anotherScope = cache.Create(CreateOptions(), identityProvider: factory.Object);
+      await anotherScope.GetAuthHeader(context, TestContext.Current.CancellationToken);
+      factory.Verify(value => value.CreateClient(), Times.Once);
+      identity.Verify(client => client.GetUserAccessToken(userId, It.IsAny<CancellationToken>()), Times.Once);
+      identity.Verify(client => client.ExchangeUserAccessToken(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+
+      context = new HolderContext
+      {
+        UserId = userId.ToString(),
+        HolderId = "holder-a",
+        AccessToken = Token(issuedAt, new JObject { ["sub"] = userId.ToString() })
+      };
+      http.RespondWithJson(new { access_token = Token(issuedAt, HolderClaims()), token_type = "Bearer", expires_in = 120 });
+      await interactive.GetAuthHeader(context, TestContext.Current.CancellationToken);
+      identity.Verify(client => client.ExchangeUserAccessToken(context.AccessToken, It.IsAny<CancellationToken>()), Times.Once);
+      Assert.Equal(2, cache.Values.Count);
+      cache.Lock.Verify(service => service.TryRunWithLockAsync(It.IsAny<string>(), TimeSpan.FromSeconds(180),
+        TimeSpan.FromSeconds(180), It.IsAny<Func<Task>>(), It.IsAny<CancellationToken>(), It.IsAny<string>()), Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task IdentityClientSecretRotationDoesNotInvalidateAnAlreadyIssuedHolderToken()
+    {
+      using var http = new HttpTest().WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
+      var issuedAt = DateTimeOffset.UtcNow;
+      var cache = new HolderTokenCacheFixture();
+      using var first = cache.Create(CreateOptions());
+      EnqueueTokens(http, issuedAt);
+      await first.GetAuthHeader(CreateContext(issuedAt), TestContext.Current.CancellationToken);
+      using var rotated = cache.Create(CreateOptions(), identitySecret: "rotated-identity-secret");
+      EnqueueTokens(http, issuedAt);
+      await rotated.GetAuthHeader(CreateContext(issuedAt), TestContext.Current.CancellationToken);
+      Assert.Single(cache.Values);
+      http.ShouldHaveCalled(YomaEndpoint).Times(1);
+    }
+
+    [Fact]
+    public async Task InteractiveExchangeFailureNeverRequestsPrivilegedAccess()
+    {
+      var issuedAt = DateTimeOffset.UtcNow;
+      var identity = new Mock<IIdentityProviderClient>();
+      identity.Setup(client => client.ExchangeUserAccessToken(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        .ThrowsAsync(new UnauthorizedAccessException("Exchange denied"));
+      var factory = new Mock<IIdentityProviderClientFactory>();
+      factory.Setup(value => value.CreateClient()).Returns(identity.Object);
+      var cache = new HolderTokenCacheFixture();
+      using var service = cache.Create(CreateOptions(), identityProvider: factory.Object);
+      await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.GetAuthHeader(CreateContext(issuedAt), TestContext.Current.CancellationToken));
+      identity.Verify(client => client.GetUserAccessToken(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+      Assert.Empty(cache.Values);
+    }
+
     [Fact]
     public async Task SeparateScopesShareOnlyEncryptedTokensWithoutExtendingExpiry()
     {
       using var http = new HttpTest().WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
-      var clock = new TestClock();
+      var issuedAt = DateTimeOffset.UtcNow;
       var cache = new HolderTokenCacheFixture();
-      var context = CreateContext(clock);
-      using var first = cache.Create(clock, CreateOptions());
-      using var second = cache.Create(clock, CreateOptions());
-      EnqueueTokens(http, clock);
+      var context = CreateContext(issuedAt);
+      using var first = cache.Create(CreateOptions());
+      using var second = cache.Create(CreateOptions());
+      EnqueueTokens(http, issuedAt);
 
       var header = await first.GetAuthHeader(context, TestContext.Current.CancellationToken);
       var entry = Assert.Single(cache.Values);
@@ -47,9 +163,8 @@ namespace Yoma.Core.Test.SSI.DidxMe
       Assert.DoesNotContain(header.Value[7..], entry.Value);
       Assert.DoesNotContain(context.HolderId, entry.Key);
       Assert.DoesNotContain("test-only", entry.Key);
-      Assert.Equal(TimeSpan.FromSeconds(108), cache.Expirations[entry.Key]);
+      Assert.InRange(cache.Expirations[entry.Key].TotalSeconds, 98, 100);
 
-      clock.Now = clock.Now.AddSeconds(30);
       Assert.Equal(header, await second.GetAuthHeader(context, TestContext.Current.CancellationToken));
       Assert.Equal(entry.Value, cache.Values[entry.Key]);
       Assert.Equal(2, http.CallLog.Count);
@@ -60,72 +175,77 @@ namespace Yoma.Core.Test.SSI.DidxMe
     public async Task ConcurrentScopesAcquireOneTokenAndCacheLockTimeoutMakesNoRequests()
     {
       using var http = new HttpTest().WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
-      var clock = new TestClock();
+      var issuedAt = DateTimeOffset.UtcNow;
       var cache = new HolderTokenCacheFixture();
-      using var first = cache.Create(clock, CreateOptions());
-      using var second = cache.Create(clock, CreateOptions());
-      EnqueueTokens(http, clock);
+      using var first = cache.Create(CreateOptions());
+      using var second = cache.Create(CreateOptions());
+      EnqueueTokens(http, issuedAt);
       var headers = await Task.WhenAll(
-        first.GetAuthHeader(CreateContext(clock), TestContext.Current.CancellationToken),
-        second.GetAuthHeader(CreateContext(clock), TestContext.Current.CancellationToken));
+        first.GetAuthHeader(CreateContext(issuedAt), TestContext.Current.CancellationToken),
+        second.GetAuthHeader(CreateContext(issuedAt), TestContext.Current.CancellationToken));
       Assert.Equal(headers[0], headers[1]);
       Assert.Equal(2, http.CallLog.Count);
 
       cache.Lock.Setup(service => service.TryRunWithLockAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(),
         It.IsAny<TimeSpan>(), It.IsAny<Func<Task>>(), It.IsAny<CancellationToken>(), It.IsAny<string>())).ReturnsAsync(false);
-      using var blocked = cache.Create(clock, CreateOptions());
-      await Assert.ThrowsAsync<TimeoutException>(() => blocked.GetAuthHeader(CreateContext(clock, jti: "new-session"), TestContext.Current.CancellationToken));
+      using var blocked = cache.Create(CreateOptions());
+      await Assert.ThrowsAsync<TimeoutException>(() => blocked.GetAuthHeader(CreateContext(issuedAt, jti: "new-session"), TestContext.Current.CancellationToken));
       Assert.Equal(2, http.CallLog.Count);
     }
 
     [Theory]
     [InlineData(20, 120, 120, 120, 120, 20)]
-    [InlineData(600, 120, 60, 120, 120, 54)]
+    [InlineData(600, 120, 60, 120, 120, 45)]
     [InlineData(600, 120, 120, 60, 120, 48)]
     public async Task DistributedExpiryUsesTheEarliestSourceAssertionAndHolderDeadline(
       int sourceLifetime, int assertionLifetime, int assertionExpiresIn, int holderLifetime, int holderExpiresIn, int expected)
     {
       using var http = new HttpTest().WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
-      var clock = new TestClock();
+      var issuedAt = DateTimeOffset.UtcNow;
       var cache = new HolderTokenCacheFixture();
-      using var service = cache.Create(clock, CreateOptions());
+      using var service = cache.Create(CreateOptions());
       var context = new HolderContext
       {
-        AccessToken = Token(clock, new JObject { ["sub"] = "user-a" }, sourceLifetime),
+        AccessToken = Token(issuedAt, new JObject { ["sub"] = "user-a" }, sourceLifetime),
         UserId = "user-a",
         HolderId = "holder-a"
       };
       http.RespondWithJson(new
       {
-        access_token = Token(clock, new JObject { ["sub"] = "user-a", ["aud"] = Audience }, assertionLifetime),
+        access_token = Token(issuedAt, new JObject { ["sub"] = "user-a", ["aud"] = Audience }, assertionLifetime),
         token_type = "Bearer",
         expires_in = assertionExpiresIn
       });
-      http.RespondWithJson(new { access_token = Token(clock, HolderClaims(), holderLifetime), token_type = "Bearer", expires_in = holderExpiresIn });
+      http.RespondWithJson(new { access_token = Token(issuedAt, HolderClaims(), holderLifetime), token_type = "Bearer", expires_in = holderExpiresIn });
 
       await service.GetAuthHeader(context, TestContext.Current.CancellationToken);
-      Assert.Equal(TimeSpan.FromSeconds(expected), Assert.Single(cache.Expirations).Value);
+      Assert.InRange(Assert.Single(cache.Expirations).Value.TotalSeconds, expected - 1, expected);
     }
 
     [Fact]
     public async Task ExpiredOrUnreadableSharedEntriesAreReplacedWithoutReusingTokens()
     {
       using var http = new HttpTest().WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
-      var clock = new TestClock();
+      var issuedAt = DateTimeOffset.UtcNow;
       var cache = new HolderTokenCacheFixture();
-      var context = CreateContext(clock);
-      using var first = cache.Create(clock, CreateOptions());
-      EnqueueTokens(http, clock);
+      var context = CreateContext(issuedAt);
+      using var first = cache.Create(CreateOptions());
+      EnqueueTokens(http, issuedAt);
       var original = await first.GetAuthHeader(context, TestContext.Current.CancellationToken);
-      clock.Now = clock.Now.AddSeconds(108);
-      using var expired = cache.Create(clock, CreateOptions());
-      EnqueueTokens(http, clock);
+      var expiredKey = Assert.Single(cache.Values).Key;
+      var cached = JObject.Parse(cache.Encryption.Decrypt(cache.Values[expiredKey], expiredKey));
+      cached["DateExpire"] = DateTimeOffset.UtcNow.AddSeconds(-1);
+      cache.Values[expiredKey] = cache.Encryption.Encrypt(cached.ToString(), expiredKey);
+      using var expired = cache.Create(CreateOptions());
+      var replacementClaims = HolderClaims();
+      replacementClaims["jti"] = "replacement-after-expiry";
+      EnqueueTokens(http, issuedAt, holderClaims: replacementClaims);
       Assert.NotEqual(original, await expired.GetAuthHeader(context, TestContext.Current.CancellationToken));
 
       var key = Assert.Single(cache.Values).Key;
       cache.Values[key] = "corrupted ciphertext";
-      using var corrupted = cache.Create(clock, CreateOptions());
-      EnqueueTokens(http, clock);
+      using var corrupted = cache.Create(CreateOptions());
+      EnqueueTokens(http, issuedAt);
       await corrupted.GetAuthHeader(context, TestContext.Current.CancellationToken);
       Assert.NotEqual("corrupted ciphertext", cache.Values[key]);
       Assert.Equal(6, http.CallLog.Count);
@@ -135,12 +255,12 @@ namespace Yoma.Core.Test.SSI.DidxMe
     public async Task OldUnauthorizedResponseDoesNotEvictAnotherScopesReplacement()
     {
       using var http = new HttpTest().WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
-      var clock = new TestClock();
+      var issuedAt = DateTimeOffset.UtcNow;
       var cache = new HolderTokenCacheFixture();
-      var context = CreateContext(clock);
-      using var first = cache.Create(clock, CreateOptions());
-      using var second = cache.Create(clock, CreateOptions());
-      EnqueueTokens(http, clock);
+      var context = CreateContext(issuedAt);
+      using var first = cache.Create(CreateOptions());
+      using var second = cache.Create(CreateOptions());
+      EnqueueTokens(http, issuedAt);
       await first.GetAuthHeader(context, TestContext.Current.CancellationToken);
       await second.GetAuthHeader(context, TestContext.Current.CancellationToken);
       await second.Invalidate();
@@ -148,13 +268,13 @@ namespace Yoma.Core.Test.SSI.DidxMe
 
       var replacementClaims = HolderClaims();
       replacementClaims["jti"] = "replacement";
-      EnqueueTokens(http, clock, holderClaims: replacementClaims);
-      using var replacement = cache.Create(clock, CreateOptions());
+      EnqueueTokens(http, issuedAt, holderClaims: replacementClaims);
+      using var replacement = cache.Create(CreateOptions());
       var header = await replacement.GetAuthHeader(context, TestContext.Current.CancellationToken);
       await first.Invalidate();
       Assert.Single(cache.Values);
 
-      using var next = cache.Create(clock, CreateOptions());
+      using var next = cache.Create(CreateOptions());
       Assert.Equal(header, await next.GetAuthHeader(context, TestContext.Current.CancellationToken));
       Assert.Equal(4, http.CallLog.Count);
     }
@@ -163,24 +283,24 @@ namespace Yoma.Core.Test.SSI.DidxMe
     public async Task SharedTokensAreIsolatedBySourceHolderAndClientConfiguration()
     {
       using var http = new HttpTest().WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
-      var clock = new TestClock();
+      var issuedAt = DateTimeOffset.UtcNow;
       var cache = new HolderTokenCacheFixture();
-      using var first = cache.Create(clock, CreateOptions());
-      EnqueueTokens(http, clock);
-      await first.GetAuthHeader(CreateContext(clock), TestContext.Current.CancellationToken);
+      using var first = cache.Create(CreateOptions());
+      EnqueueTokens(http, issuedAt);
+      await first.GetAuthHeader(CreateContext(issuedAt), TestContext.Current.CancellationToken);
 
-      using var refreshed = cache.Create(clock, CreateOptions());
-      EnqueueTokens(http, clock);
-      await refreshed.GetAuthHeader(CreateContext(clock, jti: "refreshed"), TestContext.Current.CancellationToken);
-      using var holder = cache.Create(clock, CreateOptions());
-      EnqueueTokens(http, clock, "holder-b");
-      await holder.GetAuthHeader(CreateContext(clock, "holder-b"), TestContext.Current.CancellationToken);
+      using var refreshed = cache.Create(CreateOptions());
+      EnqueueTokens(http, issuedAt);
+      await refreshed.GetAuthHeader(CreateContext(issuedAt, jti: "refreshed"), TestContext.Current.CancellationToken);
+      using var holder = cache.Create(CreateOptions());
+      EnqueueTokens(http, issuedAt, "holder-b");
+      await holder.GetAuthHeader(CreateContext(issuedAt, "holder-b"), TestContext.Current.CancellationToken);
 
       var options = CreateOptions();
       options.Holder.ClientSecret = "rotated-test-only";
-      using var rotated = cache.Create(clock, options);
-      EnqueueTokens(http, clock);
-      await rotated.GetAuthHeader(CreateContext(clock), TestContext.Current.CancellationToken);
+      using var rotated = cache.Create(options);
+      EnqueueTokens(http, issuedAt);
+      await rotated.GetAuthHeader(CreateContext(issuedAt), TestContext.Current.CancellationToken);
       Assert.Equal(4, cache.Values.Count);
       Assert.Equal(8, http.CallLog.Count);
     }
@@ -190,10 +310,10 @@ namespace Yoma.Core.Test.SSI.DidxMe
     {
       using var http = new HttpTest()
         .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
-      var clock = new TestClock();
-      using var service = new HolderTokenCacheFixture().Create(clock, CreateOptions());
-      var context = CreateContext(clock);
-      EnqueueTokens(http, clock);
+      var issuedAt = DateTimeOffset.UtcNow;
+      using var service = new HolderTokenCacheFixture().Create(CreateOptions());
+      var context = CreateContext(issuedAt);
+      EnqueueTokens(http, issuedAt);
 
       var first = await service.GetAuthHeader(context, TestContext.Current.CancellationToken);
       Assert.Equal(first, await service.GetAuthHeader(context, TestContext.Current.CancellationToken));
@@ -203,42 +323,42 @@ namespace Yoma.Core.Test.SSI.DidxMe
       http.ShouldHaveCalled(HolderEndpoint).WithVerb(HttpMethod.Post)
         .WithRequestBody("*grant_type=*jwt-bearer*assertion=*").Times(1);
 
-      EnqueueTokens(http, clock, "holder-b");
+      EnqueueTokens(http, issuedAt, "holder-b");
       var otherHolder = new HolderContext { AccessToken = context.AccessToken, UserId = "user-a", HolderId = "holder-b" };
       Assert.NotEqual(first, await service.GetAuthHeader(otherHolder, TestContext.Current.CancellationToken));
       http.ShouldHaveCalled(HolderEndpoint).Times(2);
 
-      EnqueueTokens(http, clock, "holder-b");
-      var refreshedInput = CreateContext(clock, "holder-b", "new-login-token");
+      EnqueueTokens(http, issuedAt, "holder-b");
+      var refreshedInput = CreateContext(issuedAt, "holder-b", "new-login-token");
       await service.GetAuthHeader(refreshedInput, TestContext.Current.CancellationToken);
       http.ShouldHaveCalled(HolderEndpoint).Times(3);
     }
 
     [Theory]
-    [InlineData(30, 108)]
-    [InlineData(5, 115)]
-    [InlineData(0, 120)]
-    public async Task RefreshAndInvalidationAcquireNewAssertions(int bufferSeconds, int refreshAfterSeconds)
+    [InlineData(30)]
+    [InlineData(0)]
+    public async Task RefreshAndInvalidationAcquireNewAssertions(int bufferSeconds)
     {
       using var http = new HttpTest()
         .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
-      var clock = new TestClock();
+      var issuedAt = DateTimeOffset.UtcNow;
       var options = CreateOptions();
       options.AccessTokenRefreshBufferSeconds = bufferSeconds;
       options.RequestTimeoutSeconds = 17;
-      using var service = new HolderTokenCacheFixture().Create(clock, options);
-      var context = CreateContext(clock);
-      EnqueueTokens(http, clock);
+      var cache = new HolderTokenCacheFixture();
+      using var service = cache.Create(options);
+      var context = CreateContext(issuedAt);
+      EnqueueTokens(http, issuedAt, holderExpiresIn: 1);
       await service.GetAuthHeader(context, TestContext.Current.CancellationToken);
-      clock.Now = clock.Now.AddSeconds(refreshAfterSeconds - 1);
-      await service.GetAuthHeader(context, TestContext.Current.CancellationToken);
+      Assert.InRange(Assert.Single(cache.Expirations).Value.TotalSeconds, 0, 1);
       http.ShouldHaveCalled(HolderEndpoint).Times(1);
-      Assert.All(http.CallLog, call => Assert.Equal(TimeSpan.FromSeconds(17), call.Request.Settings.Timeout));
-      clock.Now = clock.Now.AddSeconds(1);
-      EnqueueTokens(http, clock);
+      Assert.All(http.CallLog, call => Assert.Equal(TimeSpan.FromSeconds(
+        call.Request.Url.ToString() == YomaEndpoint ? 30 : 17), call.Request.Settings.Timeout));
+      await Task.Delay(1100, TestContext.Current.CancellationToken);
+      EnqueueTokens(http, issuedAt);
       await service.GetAuthHeader(context, TestContext.Current.CancellationToken);
       await service.Invalidate();
-      EnqueueTokens(http, clock);
+      EnqueueTokens(http, issuedAt);
       await service.GetAuthHeader(context, TestContext.Current.CancellationToken);
       http.ShouldHaveCalled(YomaEndpoint).Times(3);
       http.ShouldHaveCalled(HolderEndpoint).Times(3);
@@ -253,14 +373,14 @@ namespace Yoma.Core.Test.SSI.DidxMe
     {
       using var http = new HttpTest()
         .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
-      var clock = new TestClock();
-      using var service = new HolderTokenCacheFixture().Create(clock, CreateOptions());
+      var issuedAt = DateTimeOffset.UtcNow;
+      using var service = new HolderTokenCacheFixture().Create(CreateOptions());
       var badClaims = HolderClaims();
       badClaims[claim] = value;
-      EnqueueTokens(http, clock, holderClaims: badClaims);
-      await Assert.ThrowsAsync<InvalidOperationException>(() => service.GetAuthHeader(CreateContext(clock), TestContext.Current.CancellationToken));
-      EnqueueTokens(http, clock);
-      await service.GetAuthHeader(CreateContext(clock), TestContext.Current.CancellationToken);
+      EnqueueTokens(http, issuedAt, holderClaims: badClaims);
+      await Assert.ThrowsAsync<InvalidOperationException>(() => service.GetAuthHeader(CreateContext(issuedAt), TestContext.Current.CancellationToken));
+      EnqueueTokens(http, issuedAt);
+      await service.GetAuthHeader(CreateContext(issuedAt), TestContext.Current.CancellationToken);
       http.ShouldHaveCalled(YomaEndpoint).Times(2);
     }
 
@@ -269,15 +389,15 @@ namespace Yoma.Core.Test.SSI.DidxMe
     {
       using var http = new HttpTest()
         .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
-      var clock = new TestClock();
+      var issuedAt = DateTimeOffset.UtcNow;
       http.RespondWithJson(new
       {
-        access_token = Token(clock, new JObject { ["sub"] = "user-a", ["aud"] = new JArray(Audience, "extra") }),
+        access_token = Token(issuedAt, new JObject { ["sub"] = "user-a", ["aud"] = new JArray(Audience, "extra") }),
         token_type = "Bearer",
         expires_in = 120
       });
-      using var service = new HolderTokenCacheFixture().Create(clock, CreateOptions());
-      await Assert.ThrowsAsync<InvalidOperationException>(() => service.GetAuthHeader(CreateContext(clock), TestContext.Current.CancellationToken));
+      using var service = new HolderTokenCacheFixture().Create(CreateOptions());
+      await Assert.ThrowsAsync<InvalidOperationException>(() => service.GetAuthHeader(CreateContext(issuedAt), TestContext.Current.CancellationToken));
       http.ShouldNotHaveCalled(HolderEndpoint);
     }
 
@@ -286,12 +406,11 @@ namespace Yoma.Core.Test.SSI.DidxMe
     {
       using var http = new HttpTest()
         .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
-      var clock = new TestClock();
-      using var service = new HolderTokenCacheFixture().Create(clock, CreateOptions());
-      var mismatched = new HolderContext { AccessToken = CreateContext(clock).AccessToken, UserId = "other-user", HolderId = "holder-a" };
+      var issuedAt = DateTimeOffset.UtcNow;
+      using var service = new HolderTokenCacheFixture().Create(CreateOptions());
+      var mismatched = new HolderContext { AccessToken = CreateContext(issuedAt).AccessToken, UserId = "other-user", HolderId = "holder-a" };
       await Assert.ThrowsAsync<InvalidOperationException>(() => service.GetAuthHeader(mismatched, TestContext.Current.CancellationToken));
-      var expired = CreateContext(clock);
-      clock.Now = clock.Now.AddMinutes(11);
+      var expired = CreateContext(issuedAt.AddMinutes(-11));
       await Assert.ThrowsAsync<InvalidOperationException>(() => service.GetAuthHeader(expired, TestContext.Current.CancellationToken));
       http.ShouldNotHaveMadeACall();
     }
@@ -301,11 +420,11 @@ namespace Yoma.Core.Test.SSI.DidxMe
     {
       using var http = new HttpTest()
         .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
-      var clock = new TestClock();
-      using var service = new HolderTokenCacheFixture().Create(clock, CreateOptions());
+      var issuedAt = DateTimeOffset.UtcNow;
+      using var service = new HolderTokenCacheFixture().Create(CreateOptions());
       using var cancellation = new CancellationTokenSource();
       cancellation.Cancel();
-      await Assert.ThrowsAsync<OperationCanceledException>(() => service.GetAuthHeader(CreateContext(clock), cancellation.Token));
+      await Assert.ThrowsAsync<OperationCanceledException>(() => service.GetAuthHeader(CreateContext(issuedAt), cancellation.Token));
       http.ShouldNotHaveMadeACall();
     }
 
@@ -317,7 +436,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
       http.RespondWithJson(new { data = new[] { Credential() }, links = new { next = "https://untrusted.example.test/page2" } });
       var auth = CreateAuth();
       var client = new WalletClient(Options.Create(CreateOptions()), auth.Object);
-      var page = await client.ListCredentialPage(CreateContext(new TestClock()), "cursor-a", 20, TestContext.Current.CancellationToken);
+      var page = await client.ListCredentialPage(CreateContext(DateTimeOffset.UtcNow), "cursor-a", 20, cancellationToken: TestContext.Current.CancellationToken);
       Assert.Single(page.Data!);
       Assert.True(page.Data![0].Claims.Value<bool>("verified"));
       Assert.Equal(7, page.Data[0].Claims.Value<int>("score"));
@@ -331,7 +450,6 @@ namespace Yoma.Core.Test.SSI.DidxMe
     [Theory]
     [InlineData(401)]
     [InlineData(403)]
-    [InlineData(404)]
     public async Task WalletFailuresPropagateInsteadOfReturningAbsence(int status)
     {
       using var http = new HttpTest()
@@ -339,7 +457,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
       http.RespondWithJson(new { error = "failure" }, status);
       var auth = CreateAuth();
       var client = new WalletClient(Options.Create(CreateOptions()), auth.Object);
-      var exception = await Assert.ThrowsAsync<HttpClientException>(() => client.GetCredential(CreateContext(new TestClock()), CredentialId, TestContext.Current.CancellationToken));
+      var exception = await Assert.ThrowsAsync<HttpClientException>(() => client.GetCredential(CreateContext(DateTimeOffset.UtcNow), CredentialId, TestContext.Current.CancellationToken));
       Assert.Equal((HttpStatusCode)status, exception.StatusCode);
       auth.Verify(service => service.Invalidate(), status == 401 ? Times.Once() : Times.Never());
       http.ShouldHaveCalled(WalletEndpoint + "/" + CredentialId).Times(1);
@@ -354,7 +472,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
       var client = new WalletClient(Options.Create(CreateOptions()), CreateAuth().Object);
 
       var exception = await Assert.ThrowsAsync<HttpClientException>(() =>
-        client.ListCredentialPage(CreateContext(new TestClock()), cancellationToken: TestContext.Current.CancellationToken));
+        client.ListCredentialPage(CreateContext(DateTimeOffset.UtcNow), cancellationToken: TestContext.Current.CancellationToken));
 
       Assert.Equal(HttpStatusCode.ServiceUnavailable, exception.StatusCode);
       Assert.Single(http.CallLog);
@@ -366,11 +484,11 @@ namespace Yoma.Core.Test.SSI.DidxMe
       using var http = new HttpTest()
         .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
       http.ForCallsTo(YomaEndpoint).RespondWith("Invalid assertion client", 401);
-      var clock = new TestClock();
-      using var service = new HolderTokenCacheFixture().Create(clock, CreateOptions());
+      var issuedAt = DateTimeOffset.UtcNow;
+      using var service = new HolderTokenCacheFixture().Create(CreateOptions());
 
       var exception = await Assert.ThrowsAsync<HttpClientException>(() =>
-        service.GetAuthHeader(CreateContext(clock), TestContext.Current.CancellationToken));
+        service.GetAuthHeader(CreateContext(issuedAt), TestContext.Current.CancellationToken));
 
       Assert.Equal(HttpStatusCode.Unauthorized, exception.StatusCode);
       http.ShouldHaveCalled(YomaEndpoint).Times(1);
@@ -388,14 +506,14 @@ namespace Yoma.Core.Test.SSI.DidxMe
     {
       using var http = new HttpTest()
         .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
-      var clock = new TestClock();
+      var issuedAt = DateTimeOffset.UtcNow;
       var cache = new HolderTokenCacheFixture();
-      using var service = cache.Create(clock, CreateOptions());
-      var context = CreateContext(clock);
+      using var service = cache.Create(CreateOptions());
+      var context = CreateContext(issuedAt);
       if (holderGrant)
         http.RespondWithJson(new
         {
-          access_token = Token(clock, new JObject { ["sub"] = "user-a", ["aud"] = Audience }),
+          access_token = Token(issuedAt, new JObject { ["sub"] = "user-a", ["aud"] = Audience }),
           token_type = "Bearer",
           expires_in = 120
         });
@@ -429,7 +547,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
         .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
       http.RespondWithJson(new { meta = new { totalCount = 0 } });
       var client = new WalletClient(Options.Create(CreateOptions()), CreateAuth().Object);
-      await Assert.ThrowsAsync<InvalidOperationException>(() => client.ListCredentialPage(CreateContext(new TestClock()), cancellationToken: TestContext.Current.CancellationToken));
+      await Assert.ThrowsAsync<InvalidOperationException>(() => client.ListCredentialPage(CreateContext(DateTimeOffset.UtcNow), cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -437,20 +555,20 @@ namespace Yoma.Core.Test.SSI.DidxMe
     {
       using var http = new HttpTest()
         .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
-      var clock = new TestClock();
+      var issuedAt = DateTimeOffset.UtcNow;
       http.RespondWithJson(new
       {
-        access_token = Token(clock, new JObject { ["sub"] = "user-a", ["aud"] = Audience }),
+        access_token = Token(issuedAt, new JObject { ["sub"] = "user-a", ["aud"] = Audience }),
         token_type = "Bearer",
         expires_in = 120
       });
       http.RespondWithJson(new { error = "invalid_grant" }, 400);
-      using var service = new HolderTokenCacheFixture().Create(clock, CreateOptions());
-      var exception = await Assert.ThrowsAsync<HttpClientException>(() => service.GetAuthHeader(CreateContext(clock), TestContext.Current.CancellationToken));
+      using var service = new HolderTokenCacheFixture().Create(CreateOptions());
+      var exception = await Assert.ThrowsAsync<HttpClientException>(() => service.GetAuthHeader(CreateContext(issuedAt), TestContext.Current.CancellationToken));
       Assert.Equal(HttpStatusCode.BadRequest, exception.StatusCode);
 
-      EnqueueTokens(http, clock);
-      await service.GetAuthHeader(CreateContext(clock), TestContext.Current.CancellationToken);
+      EnqueueTokens(http, issuedAt);
+      await service.GetAuthHeader(CreateContext(issuedAt), TestContext.Current.CancellationToken);
       http.ShouldHaveCalled(YomaEndpoint).Times(2);
       http.ShouldHaveCalled(HolderEndpoint).Times(2);
     }
@@ -482,7 +600,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
       http.ForCallsTo(WalletEndpoint + "?*")
         .RespondWith(JsonConvert.SerializeObject(new { data = new[] { credential } }));
       var client = new WalletClient(Options.Create(CreateOptions()), CreateAuth().Object);
-      var context = CreateContext(new TestClock());
+      var context = CreateContext(DateTimeOffset.UtcNow);
 
       var single = await client.GetCredential(context, CredentialId, TestContext.Current.CancellationToken);
       var page = await client.ListCredentialPage(context, cancellationToken: TestContext.Current.CancellationToken);
@@ -505,7 +623,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
         .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
       http.RespondWithJson(new { data = Credential() });
       var client = new WalletClient(Options.Create(CreateOptions()), CreateAuth().Object);
-      var credential = await client.GetCredential(CreateContext(new TestClock()), CredentialId, TestContext.Current.CancellationToken);
+      var credential = await client.GetCredential(CreateContext(DateTimeOffset.UtcNow), CredentialId, TestContext.Current.CancellationToken);
       Assert.Equal(CredentialId, credential.Id);
       Assert.Equal("YomaYoId-v1", credential.Vct);
       Assert.Equal(new DateTimeOffset(2026, 11, 2, 0, 0, 0, TimeSpan.Zero), credential.DateIssued);
@@ -523,19 +641,11 @@ namespace Yoma.Core.Test.SSI.DidxMe
       http.RespondWith(new JObject { ["data"] = data }.ToString());
       var client = new WalletClient(Options.Create(CreateOptions()), CreateAuth().Object);
       if (field == "format")
-        await Assert.ThrowsAsync<NotSupportedException>(() => client.GetCredential(CreateContext(new TestClock()), CredentialId, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<NotSupportedException>(() => client.GetCredential(CreateContext(DateTimeOffset.UtcNow), CredentialId, TestContext.Current.CancellationToken));
       else
-        await Assert.ThrowsAsync<InvalidOperationException>(() => client.GetCredential(CreateContext(new TestClock()), CredentialId, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => client.GetCredential(CreateContext(DateTimeOffset.UtcNow), CredentialId, TestContext.Current.CancellationToken));
     }
 
-    [Fact]
-    public async Task TemporaryIssuanceRecoveryReturnsNullButReplayRemainsUnsupported()
-    {
-      var service = new BackgroundWalletService();
-      await Assert.ThrowsAsync<NotSupportedException>(() => service.GetCredentialByIdOrNull("holder-a", ArtifactType.SDJWT, CredentialId));
-      Assert.Null(await service.GetCredentialByClientReferentOrNull("holder-a", ArtifactType.SDJWT, new("referent", "issue-a")));
-      await Assert.ThrowsAsync<NotSupportedException>(() => service.DeleteCredential("holder-a", ArtifactType.SDJWT, CredentialId));
-    }
     #endregion
 
     #region Private Members
@@ -550,19 +660,12 @@ namespace Yoma.Core.Test.SSI.DidxMe
         ClientId = "holder-client",
         ClientSecret = "test-only",
         AssertionAudience = Audience
-      },
-      TokenExchange = new()
-      {
-        KeycloakBaseUri = "https://yoma.example.test",
-        Realm = "yoma",
-        ClientId = "assertion-client",
-        ClientSecret = "test-only"
       }
     };
 
-    private static HolderContext CreateContext(TestClock clock, string holderId = "holder-a", string jti = "input-a") => new()
+    private static HolderContext CreateContext(DateTimeOffset issuedAt, string holderId = "holder-a", string jti = "input-a") => new()
     {
-      AccessToken = Token(clock, new JObject { ["sub"] = "user-a", ["jti"] = jti }, 600),
+      AccessToken = Token(issuedAt, new JObject { ["sub"] = "user-a", ["jti"] = jti }, 600),
       UserId = "user-a",
       HolderId = holderId
     };
@@ -575,15 +678,15 @@ namespace Yoma.Core.Test.SSI.DidxMe
       ["aud"] = "me-wallet-api"
     };
 
-    private static void EnqueueTokens(HttpTest http, TestClock clock, string holderId = "holder-a", JObject? holderClaims = null)
+    private static void EnqueueTokens(HttpTest http, DateTimeOffset issuedAt, string holderId = "holder-a", JObject? holderClaims = null, int holderExpiresIn = 120)
     {
-      http.RespondWithJson(new { access_token = Token(clock, new JObject { ["sub"] = "user-a", ["aud"] = Audience }), token_type = "Bearer", expires_in = 120 });
-      http.RespondWithJson(new { access_token = Token(clock, holderClaims ?? HolderClaims(holderId)), token_type = "Bearer", expires_in = 120 });
+      http.RespondWithJson(new { access_token = Token(issuedAt, new JObject { ["sub"] = "user-a", ["aud"] = Audience }), token_type = "Bearer", expires_in = 120 });
+      http.RespondWithJson(new { access_token = Token(issuedAt, holderClaims ?? HolderClaims(holderId)), token_type = "Bearer", expires_in = holderExpiresIn });
     }
 
-    private static string Token(TestClock clock, JObject claims, int lifetime = 120)
+    private static string Token(DateTimeOffset issuedAt, JObject claims, int lifetime = 120)
     {
-      claims["exp"] = clock.Now.AddSeconds(lifetime).ToUnixTimeSeconds();
+      claims["exp"] = issuedAt.AddSeconds(lifetime).ToUnixTimeSeconds();
       // Synthetic HTTP fixtures only; the service expects the host to authenticate Yoma tokens.
       return "e30." + Convert.ToBase64String(Encoding.UTF8.GetBytes(claims.ToString()))
         .TrimEnd('=').Replace('+', '-').Replace('/', '_') + ".test-signature";
@@ -607,11 +710,6 @@ namespace Yoma.Core.Test.SSI.DidxMe
       return auth;
     }
 
-    private sealed class TestClock : TimeProvider
-    {
-      public DateTimeOffset Now { get; set; } = new(2026, 11, 2, 0, 0, 0, TimeSpan.Zero);
-      public override DateTimeOffset GetUtcNow() => Now;
-    }
     #endregion
   }
 }

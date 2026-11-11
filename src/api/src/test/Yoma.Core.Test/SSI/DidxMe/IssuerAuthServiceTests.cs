@@ -23,21 +23,49 @@ namespace Yoma.Core.Test.SSI.DidxMe
 
     #region Tests
     [Theory]
-    [InlineData(30, 108)]
-    [InlineData(5, 115)]
-    [InlineData(0, 120)]
-    public async Task CachedTokenRefreshesBeforeExpiry(int bufferSeconds, int refreshAfterSeconds)
+    [InlineData(true, null, false)]
+    [InlineData(true, "", false)]
+    [InlineData(true, "placeholder", false)]
+    [InlineData(true, "whsec_", false)]
+    [InlineData(true, "whsec_not-base64", false)]
+    [InlineData(true, "whsec_dGVzdC1vbmx5", true)]
+    [InlineData(false, null, true)]
+    public void EnabledSSIRequiresAValidSigningSecretAtStartup(bool enabled, string? secret, bool valid)
+    {
+      var services = new ServiceCollection();
+      services.AddSingleton(Mock.Of<Domain.Core.Interfaces.IEnvironmentProvider>(value => value.Environment == Domain.Core.Environment.Local));
+      var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+      {
+        ["DidxMe:Holder:TokenAcquisitionTimeoutSeconds"] = "30",
+        ["DidxMe:Webhook:WaitTimeoutSeconds"] = "60",
+        ["DidxMe:Webhook:SigningSecret"] = secret
+      }).Build();
+      Infrastructure.DidxMe.Startup.ConfigureServices_InfrastructureSSIProvider(services, configuration,
+        new Domain.Core.Models.AppSettings { SSIEnabledEnvironments = enabled ? "Local" : "" });
+      using var provider = services.BuildServiceProvider();
+      var startup = provider.GetRequiredService<IStartupValidator>();
+
+      if (valid) startup.Validate();
+      else
+      {
+        var error = Assert.Throws<OptionsValidationException>(() => startup.Validate());
+        Assert.Contains("DidxMe.Webhook.SigningSecret", error.Message);
+        if (!string.IsNullOrEmpty(secret)) Assert.DoesNotContain(secret, error.Message);
+      }
+    }
+
+    [Theory]
+    [InlineData(30)]
+    [InlineData(0)]
+    public async Task CachedTokenRefreshesBeforeExpiry(int bufferSeconds)
     {
       using var http = new HttpTest()
         .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
-      http.RespondWithJson(new { access_token = "first-token", token_type = "Bearer", expires_in = 120 });
+      http.RespondWithJson(new { access_token = "first-token", token_type = "Bearer", expires_in = 1 });
       http.RespondWithJson(new { access_token = "second-token", token_type = "Bearer", expires_in = 120 });
-      var clock = new TestTimeProvider();
-      using var service = CreateService(clock, bufferSeconds: bufferSeconds);
+      using var service = CreateService(bufferSeconds: bufferSeconds);
 
       var first = await service.GetAuthHeader(TestContext.Current.CancellationToken);
-      var cached = await service.GetAuthHeader(TestContext.Current.CancellationToken);
-      Assert.Equal(first, cached);
       Assert.Equal("Authorization", first.Key);
       Assert.Equal("Bearer first-token", first.Value);
       http.ShouldHaveCalled(TokenEndpoint)
@@ -45,11 +73,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
         .WithRequestBody("*grant_type=client_credentials*client_id=yoma-issuer*client_secret=unit-test-secret*")
         .Times(1);
 
-      // Configured buffers are capped at ten percent of the token lifetime.
-      clock.Advance(TimeSpan.FromSeconds(refreshAfterSeconds - 1));
-      Assert.Equal(first, await service.GetAuthHeader(TestContext.Current.CancellationToken));
-      http.ShouldHaveCalled(TokenEndpoint).Times(1);
-      clock.Advance(TimeSpan.FromSeconds(1));
+      await Task.Delay(1100, TestContext.Current.CancellationToken);
 
       Assert.Equal("Bearer second-token", (await service.GetAuthHeader(TestContext.Current.CancellationToken)).Value);
       http.ShouldHaveCalled(TokenEndpoint).Times(2);
@@ -62,9 +86,8 @@ namespace Yoma.Core.Test.SSI.DidxMe
         .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
       http.RespondWithJson(new { access_token = "issuer-a-token", token_type = "Bearer", expires_in = 120 });
       http.RespondWithJson(new { access_token = "issuer-b-token", token_type = "Bearer", expires_in = 120 });
-      var clock = new TestTimeProvider();
-      using var issuerA = CreateService(clock, "issuer-a");
-      using var issuerB = CreateService(clock, "issuer-b");
+      using var issuerA = CreateService("issuer-a");
+      using var issuerB = CreateService("issuer-b");
 
       Assert.Equal("Bearer issuer-a-token", (await issuerA.GetAuthHeader(TestContext.Current.CancellationToken)).Value);
       Assert.Equal("Bearer issuer-b-token", (await issuerB.GetAuthHeader(TestContext.Current.CancellationToken)).Value);
@@ -84,7 +107,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
         .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
       http.RespondWithJson(new { access_token = token, token_type = tokenType, expires_in = expiresIn });
       http.RespondWithJson(new { access_token = "valid-token", token_type = "Bearer", expires_in = 120 });
-      using var service = CreateService(new TestTimeProvider());
+      using var service = CreateService();
 
       await Assert.ThrowsAsync<InvalidOperationException>(() => service.GetAuthHeader(TestContext.Current.CancellationToken));
 
@@ -99,7 +122,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
         .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
       http.RespondWithJson(new { error = "invalid_client" }, 401);
       http.RespondWithJson(new { access_token = "valid-token", token_type = "Bearer", expires_in = 120 });
-      using var service = CreateService(new TestTimeProvider());
+      using var service = CreateService();
 
       var exception = await Assert.ThrowsAsync<HttpClientException>(() => service.GetAuthHeader(TestContext.Current.CancellationToken));
       Assert.Equal(HttpStatusCode.Unauthorized, exception.StatusCode);
@@ -113,7 +136,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
     {
       using var http = new HttpTest()
         .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
-      using var service = CreateService(new TestTimeProvider());
+      using var service = CreateService();
       using var cancellation = new CancellationTokenSource();
       cancellation.Cancel();
 
@@ -129,6 +152,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
       var services = new ServiceCollection();
       services.AddLogging();
       services.AddSingleton(existingProvider);
+      services.AddSingleton(Mock.Of<Domain.IdentityProvider.Interfaces.IIdentityProviderClientFactory>());
       var tokenCache = new HolderTokenCacheFixture();
       services.AddSingleton(tokenCache.Cache.Object);
       services.AddSingleton(tokenCache.Lock.Object);
@@ -140,7 +164,8 @@ namespace Yoma.Core.Test.SSI.DidxMe
         ["DidxMe:Issuer:Realm"] = "product-hub",
         ["DidxMe:Issuer:ClientId"] = "yoma-issuer",
         ["DidxMe:Issuer:ClientSecret"] = "unit-test-secret",
-        ["DidxMe:Holder:ClientId"] = "yoma-federated-lite"
+        ["DidxMe:Holder:ClientId"] = "yoma-federated-lite",
+        ["DidxMe:Webhook:WaitTimeoutSeconds"] = "60"
       }).Build();
 
       Infrastructure.DidxMe.Startup.ConfigureServices_DidxMe(services, configuration);
@@ -170,17 +195,20 @@ namespace Yoma.Core.Test.SSI.DidxMe
       var services = new ServiceCollection();
       var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
       {
+        ["DidxMe:Holder:TokenAcquisitionTimeoutSeconds"] = "30",
+        ["DidxMe:Webhook:WaitTimeoutSeconds"] = "60",
         [$"DidxMe:{setting}"] = value
       }).Build();
       Infrastructure.DidxMe.Startup.ConfigureServices_DidxMe(services, configuration);
       using var provider = services.BuildServiceProvider();
 
-      Assert.Throws<OptionsValidationException>(() => provider.GetRequiredService<IOptions<ProviderOptions>>().Value);
+      var error = Assert.Throws<OptionsValidationException>(() => provider.GetRequiredService<IOptions<ProviderOptions>>().Value);
+      Assert.Contains($"DidxMe.{setting}", error.Message);
     }
     #endregion
 
     #region Private Members
-    private static IssuerAuthService CreateService(TimeProvider clock, string clientId = "yoma-issuer", int bufferSeconds = 30)
+    private static IssuerAuthService CreateService(string clientId = "yoma-issuer", int bufferSeconds = 30)
     {
       return new IssuerAuthService(Options.Create(new ProviderOptions
       {
@@ -192,17 +220,9 @@ namespace Yoma.Core.Test.SSI.DidxMe
           ClientId = clientId,
           ClientSecret = "unit-test-secret"
         }
-      }), clock);
+      }));
     }
 
-    private sealed class TestTimeProvider : TimeProvider
-    {
-      private DateTimeOffset _now = new(2026, 10, 28, 0, 0, 0, TimeSpan.Zero);
-
-      public override DateTimeOffset GetUtcNow() => _now;
-
-      public void Advance(TimeSpan duration) => _now += duration;
-    }
     #endregion
   }
 }

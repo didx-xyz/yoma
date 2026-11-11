@@ -1,5 +1,4 @@
 using System.Linq.Expressions;
-using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Domain.Core.Extensions
 {

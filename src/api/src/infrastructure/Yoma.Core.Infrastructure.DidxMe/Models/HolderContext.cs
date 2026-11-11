@@ -1,12 +1,18 @@
 namespace Yoma.Core.Infrastructure.DidxMe.Models
 {
   /// <summary>
-  /// Supplied by the authenticated request adapter after Yoma has validated the access token.
+  /// Supplied by the authenticated request adapter or the trusted background adapter.
   /// HolderId comes from the trusted identity mapping, never from a caller-selected wallet ID.
   /// </summary>
   public class HolderContext
   {
     public string AccessToken { get; init; } = null!;
+
+    /// <summary>
+    /// Set only by the background adapter after resolving and checking the stored holder mapping.
+    /// Interactive requests must never fall back to privileged authentication on a token failure.
+    /// </summary>
+    public bool IsBackground { get; init; }
 
     /// <summary>
     /// Authenticated Yoma Keycloak subject, registered as the didx:me external identifier.

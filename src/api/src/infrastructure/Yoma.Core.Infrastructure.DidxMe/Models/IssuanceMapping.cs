@@ -1,17 +1,15 @@
 namespace Yoma.Core.Infrastructure.DidxMe.Models
 {
   /// <summary>
-  /// Correlates Yoma's single domain credential ID with the didx:me issuance, issuer credential and
-  /// holder-wallet credential IDs, and records progress across their separate operations. Yoma's
-  /// existing credential-ID column cannot represent all those identities without a domain change.
-  /// Signed credentials, offers and participant tokens remain outside this store. Persisted intent
-  /// does not prove remote presence/absence or solve the outstanding background recovery capability.
+  /// Internal issuance journal. Correlates the issuer operation with the native holder-wallet ID.
+  /// The domain receives WalletCredentialId; this row ID is never signed or exposed as a credential ID.
+  /// Offers, signed credentials and participant tokens are not persisted here.
+  /// Wallet recovery can restore the domain without this row; missing issuer/session history is not reconstructed.
   /// </summary>
   public class IssuanceMapping
   {
     /// <summary>
-    /// Stable correlation UUID signed as _Yoma_Credential_ID and returned as Credential.Id.
-    /// The domain persists it in SSICredentialIssuance.CredentialId; it is neither external credential ID.
+    /// Internal journal key, independent of the domain schedule and both provider credential IDs.
     /// </summary>
     public Guid Id { get; set; }
 
@@ -48,7 +46,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Models
     public string ClientReferentValue { get; set; } = null!;
 
     /// <summary>
-    /// Remote issuance-operation ID retained for tracing. Recording it does not implement recovery.
+    /// Issuer operation ID used to correlate the accepted-wallet webhook and resume an undelivered offer.
     /// </summary>
     public string? IssuanceId { get; set; }
 
@@ -58,8 +56,8 @@ namespace Yoma.Core.Infrastructure.DidxMe.Models
     public string? IssuerCredentialId { get; set; }
 
     /// <summary>
-    /// Holder-wallet credential ID learned during authenticated reads by matching the signed Yoma
-    /// correlation. Initially null; once known, enables direct wallet retrieval by ID.
+    /// Native holder-wallet credential ID resolved from the accepted event or reference-based recovery.
+    /// Returned to the domain for storage, wallet reads and Replay deletion.
     /// </summary>
     public string? WalletCredentialId { get; set; }
 
@@ -67,6 +65,12 @@ namespace Yoma.Core.Infrastructure.DidxMe.Models
     /// Records a successful delivery response. Does not prove continued wallet presence or drive retries.
     /// </summary>
     public bool DeliveryCompleted { get; set; }
+
+    /// <summary>
+    /// Adapter progress; Delivering is uncertain until the wallet confirms acceptance or deletion.
+    /// A late/duplicate event must never revive a Deleted attempt.
+    /// </summary>
+    public string Status { get; set; } = null!;
 
     /// <summary>
     /// UTC time the local issuance intent was persisted, not the credential's signed issuance date.

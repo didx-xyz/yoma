@@ -1,14 +1,10 @@
-using Flurl;
-using Microsoft.AspNetCore.WebUtilities;
+using Yoma.Core.Infrastructure.DidxMe.Interfaces;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json.Linq;
-using System.Net;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Interfaces.Provider;
-using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Domain.SSI.Models.Provider;
 using Yoma.Core.Infrastructure.DidxMe.Models;
 using Yoma.Core.Infrastructure.DidxMe.Services;
@@ -26,40 +22,32 @@ namespace Yoma.Core.Infrastructure.DidxMe.Client
   public class ProviderClient : ISSIProviderClient
   {
     #region Class Variables
+    private const string OfferedStatus = "offered";
     private readonly ProviderOptions _options;
-    private readonly PresetService _presets;
-    private readonly IssuerClient _issuer;
-    private readonly WalletClient _wallet;
-    private readonly HolderContextService _holderContext;
-    private readonly BackgroundWalletService _background;
-    private readonly IRepository<IssuanceMapping> _issuanceMappings;
+    private readonly IPresetService _presets;
+    private readonly IHolderService _holder;
+    private readonly IIssuerClient _issuer;
+    private readonly IIssuanceTrackingService _tracking;
     private readonly IRepositoryValueContainsWithNavigation<User> _users;
-    private readonly IRepository<SSITenantCreation> _tenantCreations;
     #endregion
 
     #region Constructor
     public ProviderClient(
       IOptions<ProviderOptions> options,
-      PresetService presets,
-      IssuerClient issuer,
-      WalletClient wallet,
-      HolderContextService holderContext,
-      BackgroundWalletService background,
-      IRepository<IssuanceMapping> issuanceMappings,
-      IRepositoryValueContainsWithNavigation<User> users,
-      IRepository<SSITenantCreation> tenantCreations)
+      IPresetService presets,
+      IIssuerClient issuer,
+      IIssuanceTrackingService tracking,
+      IHolderService holder,
+      IRepositoryValueContainsWithNavigation<User> users)
     {
       ArgumentNullException.ThrowIfNull(options, nameof(options));
 
       _options = options.Value ?? throw new ArgumentNullException(nameof(options));
       _presets = presets ?? throw new ArgumentNullException(nameof(presets));
+      _holder = holder ?? throw new ArgumentNullException(nameof(holder));
       _issuer = issuer ?? throw new ArgumentNullException(nameof(issuer));
-      _wallet = wallet ?? throw new ArgumentNullException(nameof(wallet));
-      _holderContext = holderContext ?? throw new ArgumentNullException(nameof(holderContext));
-      _background = background ?? throw new ArgumentNullException(nameof(background));
-      _issuanceMappings = issuanceMappings ?? throw new ArgumentNullException(nameof(issuanceMappings));
+      _tracking = tracking ?? throw new ArgumentNullException(nameof(tracking));
       _users = users ?? throw new ArgumentNullException(nameof(users));
-      _tenantCreations = tenantCreations ?? throw new ArgumentNullException(nameof(tenantCreations));
     }
     #endregion
 
@@ -184,203 +172,121 @@ namespace Yoma.Core.Infrastructure.DidxMe.Client
       if (!request.Attributes.TryGetValue(request.ClientReferent.Key, out var referent) || referent != request.ClientReferent.Value)
         throw new ArgumentException("The signed client referent must match the issuance request", nameof(request));
 
-      if (!Guid.TryParse(request.TenantIdHolder, out var holderSubject))
-        throw new ArgumentException("A valid didx:me holder ID is required", nameof(request));
+      var context = await _holder.GetBackgroundContext(request.TenantIdHolder);
+      var recovered = await _holder.GetCredentialByClientReferentOrNull(context, request.ArtifactType, request.ClientReferent);
+      if (recovered != null)
+      {
+        // A retry may resolve a newer schema version than the successful original attempt.
+        // Return the actual issued version; the domain records its schema and signed date.
+        var recoveredSchema = PresetService.ToDomainSchema(_presets.GetMapping(recovered.SchemaId));
+        if (recoveredSchema.Name != schema.Name || recoveredSchema.ArtifactType != schema.ArtifactType)
+          throw new InvalidOperationException("The existing credential does not match the scheduled schema");
 
-      var holderId = holderSubject.ToString();
-      // Delivery accepts an external identifier, not a holder ID. Resolve the existing domain
-      // tenant-to-user association without changing it or duplicating it in another store, then
-      // verify the remote mapping before issuing. This also works without a participant session.
-      var tenant = _tenantCreations.Query()
-        .SingleOrDefault(item => item.TenantId == holderId && item.UserId.HasValue)
-        ?? throw new InvalidOperationException("The didx:me holder has no Yoma participant tenant mapping");
-      var user = _users.Query(false)
-        .SingleOrDefault(item => item.Id == tenant.UserId)
-        ?? throw new EntityNotFoundException("The Yoma participant does not exist");
-      if (!user.ExternalId.HasValue || user.ExternalId == Guid.Empty)
-        throw new InvalidOperationException($"Cannot issue to didx:me holder '{holderId}': the participant's ExternalId (Yoma Keycloak user ID) is missing");
+        return recovered;
+      }
 
-      var externalId = user.ExternalId.Value.ToString();
-      var holder = await _issuer.GetHolderOrNull(externalId)
-        ?? throw new InvalidOperationException("The participant has not been onboarded into didx:me");
-      if (Guid.Parse(holder.Id) != holderSubject)
-        throw new InvalidOperationException("The linked didx:me holder does not match the participant's stored tenant ID");
-
-      // TODO YOM-1309: the explicitly approved temporary recovery bypass can duplicate issuance
-      // after a remote success/local-save failure. This journal does not solve that capability gap.
-      var recovered = await _background.GetCredentialByClientReferentOrNull(holderId, request.ArtifactType, request.ClientReferent);
-      if (recovered != null) return recovered;
-
-      var issuance = await _issuanceMappings.Create(new IssuanceMapping
+      var issuance = _tracking.Find(context.HolderId, request.ClientReferent);
+      issuance ??= await _tracking.Create(new IssuanceMapping
       {
         Id = Guid.NewGuid(),
         TenantAlias = _options.TenantAlias,
         PresetMappingId = schema.Id,
         TenantIdIssuer = request.TenantIdIssuer.Trim(),
-        TenantIdHolder = holderId,
+        TenantIdHolder = context.HolderId,
         ClientReferentKey = request.ClientReferent.Key,
-        ClientReferentValue = request.ClientReferent.Value
+        ClientReferentValue = request.ClientReferent.Value,
+        Status = IssuanceStatus.Prepared.ToString()
       });
-      var attributes = request.Attributes
-        .Where(pair => !string.IsNullOrEmpty(pair.Value))
-        .ToDictionary(pair => pair.Key, pair => pair.Value);
-      var signedAttributes = new Dictionary<string, string>(attributes)
+
+      if (issuance.PresetMappingId != schema.Id)
+        throw new InvalidOperationException("The existing issuance attempt uses a different preset");
+
+      // Persist the offer IDs before delivery. An unsaved offer cannot have reached the wallet.
+      // Once delivery starts, an ambiguous result must recover the same credential, never issue another.
+      IssuanceResponse offer;
+      var status = Enum.Parse<IssuanceStatus>(issuance.Status, true);
+      switch (status)
       {
-        [PresetService.CredentialIdAttribute] = issuance.Id.ToString()
-      };
-      var response = await _issuer.Issue(mapping.PresetId, signedAttributes);
-      if (string.IsNullOrWhiteSpace(response.Id) || string.IsNullOrWhiteSpace(response.OfferUri) ||
-        response.Credentials?.Count != 1 || string.IsNullOrWhiteSpace(response.Credentials[0].Id) ||
-        response.Credentials[0].Format != "sd-jwt-vc" || response.Status != "offered")
-        throw new InvalidOperationException("didx:me did not return the expected single SD-JWT issuance offer");
+        case IssuanceStatus.Prepared:
+          var attributes = request.Attributes.Where(pair => !string.IsNullOrEmpty(pair.Value))
+            .ToDictionary(pair => pair.Key, pair => pair.Value);
+          offer = await _issuer.Issue(mapping.PresetId, attributes);
+          ValidateOffer(offer);
+          issuance = await _tracking.Update(issuance.Id, item =>
+          {
+            var itemStatus = Enum.Parse<IssuanceStatus>(item.Status, true);
+            if (itemStatus != IssuanceStatus.Prepared)
+              throw new InvalidOperationException("The issuance attempt changed while creating its offer; retry recovery");
 
-      issuance.IssuanceId = response.Id;
-      issuance.IssuerCredentialId = response.Credentials[0].Id;
-      await _issuanceMappings.Update(issuance);
+            item.IssuanceId = offer.Id;
+            item.IssuerCredentialId = offer.Credentials![0].Id;
+            item.Status = IssuanceStatus.Offered.ToString();
+          });
+          break;
 
-      await _issuer.Deliver(externalId, response.OfferUri);
-      issuance.DeliveryCompleted = true;
-      await _issuanceMappings.Update(issuance);
+        case IssuanceStatus.Offered:
+          offer = await _issuer.GetIssuance(issuance.IssuanceId!);
+          ValidateOffer(offer);
+          if (offer.Id != issuance.IssuanceId || offer.Credentials![0].Id != issuance.IssuerCredentialId)
+            throw new InvalidOperationException("The resumed offer does not match the recorded issuance");
+          break;
 
-      return new Credential
-      {
-        Id = issuance.Id.ToString(),
-        SchemaId = schema.Id,
-        Attributes = attributes
-      };
-    }
+        case IssuanceStatus.Delivering:
+        case IssuanceStatus.Accepted:
+          throw new InvalidOperationException("Delivery already started but the credential is not present in the wallet; reconcile this attempt before retrying");
 
-    public async Task<Credential> GetCredentialById(string tenantId, string id)
-    {
-      if (!Guid.TryParse(id, out var issuanceId))
-        throw new ArgumentException("A valid Yoma credential ID is required", nameof(id));
-
-      var context = await _holderContext.Get(tenantId);
-      var mapping = _issuanceMappings.Query()
-        .SingleOrDefault(item => item.Id == issuanceId &&
-          item.TenantAlias == _options.TenantAlias && item.TenantIdHolder == context.HolderId);
-
-      if (mapping == null) throw new EntityNotFoundException("The credential does not belong to this wallet");
-
-      if (mapping.WalletCredentialId != null)
-      {
-        try
-        {
-          var credential = await _wallet.GetCredential(context, mapping.WalletCredentialId);
-          var result = await MapCredential(context.HolderId, credential);
-          if (result?.Id != issuanceId.ToString()) throw new InvalidOperationException("The wallet credential correlation does not match");
-
-          return result;
-        }
-        catch (HttpClientException exception) when (exception.StatusCode == HttpStatusCode.NotFound)
-        {
-          throw new EntityNotFoundException("The credential is no longer present in the holder wallet");
-        }
+        default:
+          throw new InvalidOperationException("The issuance attempt cannot be resumed from its current status");
       }
 
-      return (await ListCredentials(context)).SingleOrDefault(item => item.Id == issuanceId.ToString())
-        ?? throw new EntityNotFoundException("The credential is not present in the holder wallet");
+      await _tracking.Update(issuance.Id, item =>
+      {
+        var itemStatus = Enum.Parse<IssuanceStatus>(item.Status, true);
+
+        // Check the current state under the journal row lock, not the earlier request snapshot.
+        if (itemStatus != IssuanceStatus.Offered)
+          throw new InvalidOperationException("The issuance attempt changed before delivery; retry recovery");
+
+        item.Status = IssuanceStatus.Delivering.ToString();
+      });
+
+      // Even a 4xx can follow storage of a pending credential. Keep delivery errors in recovery.
+      await _issuer.Deliver(context.UserId, offer.OfferUri!);
+      await _tracking.Update(issuance.Id, item => item.DeliveryCompleted = true);
+
+      // The webhook may arrive on another API instance, even before delivery returns.
+      // Wait inline on its durable correlation; do not return an internal journal ID to the domain.
+      var walletId = await _tracking.WaitForWalletId(issuance.Id);
+      var credential = await _holder.GetCredential(context, walletId);
+      if (credential == null || credential.SchemaId != schema.Id ||
+        !credential.Attributes.TryGetValue(request.ClientReferent.Key, out var actualReferent) || actualReferent != request.ClientReferent.Value)
+        throw new InvalidOperationException("The delivered wallet credential does not match the issuance request");
+
+      return credential;
     }
 
-    public async Task<List<Credential>?> ListCredentials(string tenantId) =>
-      await ListCredentials(await _holderContext.Get(tenantId));
+    public Task<Credential> GetCredentialById(string tenantId, string id) => _holder.GetCredentialById(tenantId, id);
+
+    public async Task<List<Credential>?> ListCredentials(string tenantId) => await _holder.ListCredentials(tenantId);
 
     public Task<Credential?> GetCredentialByClientReferentOrNull(string tenantId, ArtifactType artifactType,
       KeyValuePair<string, string> clientReferent) =>
-      _background.GetCredentialByClientReferentOrNull(tenantId, artifactType, clientReferent);
+      _holder.GetCredentialByClientReferentOrNull(tenantId, artifactType, clientReferent);
 
     public Task<Credential?> GetCredentialByIdOrNull(string tenantId, ArtifactType artifactType, string id) =>
-      _background.GetCredentialByIdOrNull(tenantId, artifactType, id);
+      _holder.GetCredentialByIdOrNull(tenantId, artifactType, id);
 
     public Task DeleteCredential(string tenantId, ArtifactType artifactType, string id) =>
-      _background.DeleteCredential(tenantId, artifactType, id);
+      _holder.DeleteCredential(tenantId, artifactType, id);
     #endregion
 
     #region Private Members
-    private async Task<List<Credential>> ListCredentials(HolderContext context)
+    private static void ValidateOffer(IssuanceResponse response)
     {
-      var result = new List<Credential>();
-      var cursors = new HashSet<string>(StringComparer.Ordinal);
-      var ids = new HashSet<string>(StringComparer.Ordinal);
-      string? after = null;
-
-      do
-      {
-        var page = await _wallet.ListCredentialPage(context, after);
-        foreach (var item in page.Data!)
-        {
-          var mapped = await MapCredential(context.HolderId, item);
-          if (mapped != null && ids.Add(mapped.Id)) result.Add(mapped);
-        }
-
-        after = null;
-        if (page.Links?.TryGetValue("next", out var next) == true && !string.IsNullOrWhiteSpace(next))
-        {
-          // Extract only the cursor. Never follow a supplied URL with a participant bearer token.
-          var query = QueryHelpers.ParseQuery(new Url(next).Query);
-          if (!query.TryGetValue("page[after]", out var values) || values.Count != 1)
-            throw new InvalidOperationException("didx:me returned an invalid wallet pagination cursor");
-          after = values[0];
-          if (string.IsNullOrWhiteSpace(after) || !cursors.Add(after))
-            throw new InvalidOperationException("didx:me returned invalid or repeating wallet pagination");
-        }
-      } while (after != null);
-
-      return result;
-    }
-
-    private async Task<Credential?> MapCredential(string tenantId, WalletCredential credential)
-    {
-      if (credential.Status != "accepted") throw new InvalidOperationException("Expected an accepted wallet credential");
-
-      var presetMapping = _presets.GetMappingByVctOrNull(credential.Vct);
-      if (presetMapping == null) return null; // Other credential types are not part of Yoma's domain catalogue.
-
-      if (credential.DateIssued == null)
-        throw new InvalidOperationException("Wallet credential response is incomplete");
-
-      if (credential.Format != Constants.CredentialFormatSDJWT)
-        throw new NotSupportedException("Only SD-JWT wallet credentials are supported by this adapter");
-
-      if (!Guid.TryParse(credential.Claims.Value<string>(PresetService.CredentialIdAttribute), out var id))
-        throw new InvalidOperationException("The Yoma wallet credential is missing its signed correlation ID");
-
-      var issuance = _issuanceMappings.Query()
-        .SingleOrDefault(item => item.Id == id);
-
-      // A wallet may outlive a Yoma data reset. Ignore unknown records, but reject conflicting ownership.
-      if (issuance == null) return null;
-
-      if (issuance.TenantAlias != _options.TenantAlias || issuance.TenantIdHolder != tenantId || issuance.PresetMappingId != presetMapping.Id)
-        throw new InvalidOperationException("The Yoma wallet credential has no matching issuance intent");
-
-      if (credential.Claims.Value<string>(issuance.ClientReferentKey) != issuance.ClientReferentValue ||
-        (issuance.WalletCredentialId != null && issuance.WalletCredentialId != credential.Id))
-        throw new InvalidOperationException("The wallet credential does not match its issuance correlation");
-
-      var attributes = new Dictionary<string, string>();
-      foreach (var name in PresetService.ToDomainSchema(presetMapping).AttributeNames)
-      {
-        if (!credential.Claims.TryGetValue(name, out var claim)) continue;
-
-        if (claim.Type != JTokenType.String)
-          throw new InvalidOperationException("A Yoma credential contains a non-string domain attribute");
-
-        attributes.Add(name, claim.Value<string>()!);
-      }
-
-      if (issuance.WalletCredentialId == null)
-      {
-        issuance.WalletCredentialId = credential.Id;
-        await _issuanceMappings.Update(issuance);
-      }
-
-      return new Credential
-      {
-        Id = id.ToString(),
-        SchemaId = presetMapping.Id,
-        Attributes = attributes
-      };
+      if (string.IsNullOrWhiteSpace(response.Id) || string.IsNullOrWhiteSpace(response.OfferUri) ||
+        response.Credentials?.Count != 1 || string.IsNullOrWhiteSpace(response.Credentials[0].Id) ||
+        response.Credentials[0].Format != Constants.CredentialFormatIssuerSDJWT || response.Status != OfferedStatus)
+        throw new InvalidOperationException("didx:me did not return the expected single SD-JWT issuance offer");
     }
     #endregion
   }

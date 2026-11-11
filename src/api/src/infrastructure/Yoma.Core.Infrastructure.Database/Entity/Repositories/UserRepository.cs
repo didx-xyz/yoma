@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 using System.Linq.Expressions;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;

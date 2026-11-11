@@ -34,9 +34,12 @@ fi
 command -v jq >/dev/null 2>&1 || fail 'jq is missing; rebuild the local didxme-init image.'
 settings=${LOCAL_SETTINGS_FILE:-/settings/appsettings.Local.json}
 [ -f "$settings" ] && [ -w "$settings" ] || fail 'Mount the existing ignored appsettings.Local.json read/write.'
+[ -n "${YOMA_ASSERTION_REDIRECT_URI:-}" ] || fail 'The local Yoma assertion callback is required.'
 [ -n "${YOMA_ASSERTION_CLIENT_SECRET:-}" ] || fail 'The local Yoma assertion-client secret is required.'
 [ -n "${YOMA_ISSUER_CLIENT_SECRET:-}" ] || fail 'The fixed local issuer-client secret is required.'
 [ -n "${YOMA_HOLDER_CLIENT_SECRET:-}" ] || fail 'The fixed local holder-client secret is required.'
+[ -n "${YOMA_WEBHOOK_API_TOKEN:-}" ] || fail 'Supply the local webhook provisioning token privately in src/api/.env (YOMA_WEBHOOK_API_TOKEN).'
+[ "${YOMA_WEBHOOK_URL:-}" = 'http://host.docker.internal:5000/api/v3/webhook/didxme' ] || fail 'The local webhook callback must target the Yoma host API on port 5000.'
 wait_seconds=${MONO_READY_TIMEOUT_SECONDS:-120}
 case "$wait_seconds" in ''|*[!0-9]*) fail 'Readiness timeout must be a positive integer.' ;; esac
 [ "$wait_seconds" -gt 0 ] && [ "$wait_seconds" -le 300 ] || fail 'Readiness timeout must be between 1 and 300 seconds.'
@@ -46,6 +49,8 @@ hub=http://host.docker.internal:3400/api
 yoma=http://keycloak:8080
 jwks=http://host.docker.internal:8080/realms/yoma/protocol/openid-connect/certs
 audience=https://didx.127.0.0.1.nip.io/iam/realms/consumers
+webhooks=http://host.docker.internal:8071/api/v1
+webhook_id=yoma-local-api
 work=$(mktemp -d /tmp/yoma-didxme-init.XXXXXX)
 stage=preflight
 cleanup() {
@@ -217,18 +222,42 @@ success
 assert_json '.tenantAlias == "yoma" and .serviceName == "me-creds" and (.meCredsProjectId | type == "string" and length > 0)'
 log 'Issuer client and project created or verified; existing credentials were reused.'
 
+stage='local issuance webhook'
+# The public provider API registers endpoints but does not return signing secrets.
+# Registration uses the issuer token; local endpoint/secret reads use the webhook service token.
+# Local-only bootstrap access reads the existing endpoint secret without rotating it.
+# Never mount Docker/Kubernetes control sockets or copy platform signing keys into this image.
+printf '%s' "$YOMA_WEBHOOK_API_TOKEN" >"$work/webhook-token"
+webhook_endpoint="$webhooks/app/yoma/endpoint/$webhook_id"
+request GET "$webhook_endpoint" "$work/webhook-token"
+if [ "$status" = 404 ]; then
+  jq -n --arg id "$webhook_id" '{id:$id,url:env.YOMA_WEBHOOK_URL,filterTypes:["wallet.credential.accepted"]}' >"$work/payload"
+  request POST 'http://host.docker.internal:3302/api/v1/endpoints' "$work/issuer-token" "$work/payload"
+  case "$status" in 2??|409) ;; *) success ;; esac
+  request GET "$webhook_endpoint" "$work/webhook-token"
+fi
+success
+assert_json '.uid == "yoma-local-api" and .url == env.YOMA_WEBHOOK_URL and .disabled == false and .filterTypes == ["wallet.credential.accepted"]'
+request GET "$webhook_endpoint/secret" "$work/webhook-token"
+success
+assert_json '.key | type == "string" and test("^whsec_[A-Za-z0-9+/]+={0,2}$")'
+cp "$work/response.json" "$work/webhook-secret.json"
+log 'Local acceptance webhook created or verified; signing secret retrieved without rotation.'
+log 'Callback targets host port 5000 for Docker or VS. Local platform delivery must allow the host; VS must listen beyond loopback.'
+
 stage='ignored Local settings'
 # Preserve every other platform's configuration. Host URLs stay in Local settings; Compose
 # supplies container-reachable URL overrides to the API. Secrets never enter tracked files.
-jq --slurpfile holder "$work/holder.json" --slurpfile issuer "$work/issuer.json" --arg audience "$audience" '
+# Refresh the endpoint signing secret after a platform reset; retain webhook tuning and unrelated settings.
+jq --slurpfile holder "$work/holder.json" --slurpfile issuer "$work/issuer.json" --slurpfile webhook "$work/webhook-secret.json" --arg audience "$audience" '
   .DidxMe += {
     TenantAlias:"yoma",CredentialsBaseUri:"http://localhost:3302/api",WalletBaseUri:"http://localhost:3300/api",
     OnboardingBaseUri:"http://localhost:3303/api",KeycloakBaseUri:"http://localhost:18080/iam",
     Issuer:{Realm:"product-hub",ClientId:"yoma-me-creds",ClientSecret:$issuer[0].clientSecret},
-    Holder:{Realm:"consumers",ClientId:"yoma-federated-lite",ClientSecret:$holder[0].clientSecret,AssertionAudience:$audience},
-    TokenExchange:{Realm:"yoma",KeycloakBaseUri:"http://localhost:8080",ClientId:"yoma-didxme-assertion",ClientSecret:env.YOMA_ASSERTION_CLIENT_SECRET}
-  }' "$work/original.json" >"$work/settings.json"
-jq -e --slurpfile before "$work/original.json" 'del(.DidxMe) == ($before[0] | del(.DidxMe))' "$work/settings.json" >/dev/null || fail 'Unrelated settings changed; refusing to write.'
+    Holder:{Realm:"consumers",ClientId:"yoma-federated-lite",ClientSecret:$holder[0].clientSecret,AssertionAudience:$audience}
+  } | .DidxMe.Webhook.SigningSecret = $webhook[0].key | del(.DidxMe.TokenExchange) |
+  .KeycloakAdmin.TokenExchange += {ClientId:"yoma-didxme-assertion",ClientSecret:env.YOMA_ASSERTION_CLIENT_SECRET,RedirectUri:env.YOMA_ASSERTION_REDIRECT_URI}' "$work/original.json" >"$work/settings.json"
+jq -e --slurpfile before "$work/original.json" 'def unrelated: del(.DidxMe, .KeycloakAdmin.TokenExchange) | if .KeycloakAdmin == {} then del(.KeycloakAdmin) else . end; unrelated == ($before[0] | unrelated)' "$work/settings.json" >/dev/null || fail 'Unrelated settings changed; refusing to write.'
 cmp -s "$settings" "$work/original.json" || fail 'Local settings changed concurrently; rerun init after finishing edits.'
 # Keep the bind-mounted file inode so an already-created API mount sees the update.
 if ! cmp -s "$work/settings.json" "$work/original.json"; then
@@ -237,4 +266,4 @@ if ! cmp -s "$work/settings.json" "$work/original.json"; then
     fail 'Could not write Local settings.'
   fi
 fi
-log 'Local didx:me setup complete. Only ignored DidxMe settings were updated; Yoma API may start.'
+log 'Local didx:me setup complete. Only ignored DidxMe and identity-provider user-token settings were updated; Yoma API may start.'

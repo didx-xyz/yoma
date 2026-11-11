@@ -3,6 +3,7 @@ using Flurl.Http.Newtonsoft;
 using Flurl.Http.Testing;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -12,6 +13,8 @@ using System.Security.Cryptography;
 using System.Text;
 using Xunit;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Core;
+using Yoma.Core.Infrastructure.DidxMe;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.SSI;
@@ -33,6 +36,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
     private const string HolderId = "22222222-2222-2222-2222-222222222222";
     private const string WalletId = "33333333-3333-3333-3333-333333333333";
     private const string OrganizationReferent = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    private static readonly string[] DefaultYoIdPresetIdentity = ["yoma", "YoID|Default", "1.0"];
     #endregion
 
     #region Tests
@@ -119,43 +123,29 @@ namespace Yoma.Core.Test.SSI.DidxMe
       await Assert.ThrowsAsync<NotSupportedException>(() => fixture.Client.IssueCredential(request));
       await Assert.ThrowsAsync<NotSupportedException>(() => fixture.Client.GetCredentialByClientReferentOrNull(
         HolderId, artifactType, request.ClientReferent));
-      Assert.Throws<NotSupportedException>(() =>
-      {
-        _ = fixture.Client.GetCredentialByIdOrNull(HolderId, artifactType, "id");
-      });
-      Assert.Throws<NotSupportedException>(() =>
-      {
-        _ = fixture.Client.DeleteCredential(HolderId, artifactType, "id");
-      });
+      await Assert.ThrowsAsync<NotSupportedException>(() => fixture.Client.GetCredentialByIdOrNull(HolderId, artifactType, "id"));
+      await Assert.ThrowsAsync<NotSupportedException>(() => fixture.Client.DeleteCredential(HolderId, artifactType, "id"));
       Assert.Empty(http.CallLog);
       Assert.Empty(fixture.IssuanceMappings);
     }
 
-    [Fact]
-    public async Task DifferentOrganisationsRetainLocalReferencesButUseTheConfiguredIssuer()
+    [Theory]
+    [InlineData("organisation-a")]
+    [InlineData("organisation-b")]
+    public async Task DifferentOrganisationsRetainLocalReferencesButUseTheConfiguredIssuer(string referent)
     {
-      using var http = new HttpTest()
-        .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
+      using var http = new HttpTest().WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
       var fixture = new Fixture(http);
-      var partner = new Organization { Id = Guid.NewGuid(), Name = "Partner", NameHashValue = new string('b', 64) };
-      fixture.Organizations.Add(partner);
-      foreach (var organization in fixture.Organizations)
+      var request = fixture.Request();
+      request.TenantIdIssuer = await fixture.Client.EnsureTenant(new TenantRequest
       {
-        var issuerId = await fixture.Client.EnsureTenant(new TenantRequest
-        {
-          Referent = " " + organization.NameHashValue + " ",
-          Name = organization.Name,
-          Roles = [Role.Holder, Role.Issuer, Role.Verifier]
-        });
-        var request = fixture.Request();
-        request.TenantIdIssuer = issuerId;
-        await fixture.Client.IssueCredential(request);
-      }
-
-      Assert.Equal(new[] { OrganizationReferent, partner.NameHashValue }, fixture.IssuanceMappings.Select(item => item.TenantIdIssuer));
-      http.ShouldHaveCalled("https://creds.test/api/v1/issuances")
-        .WithHeader("Authorization", "Bearer issuer-test").Times(2);
-      http.ShouldNotHaveCalled("https://onboarding.test/api/users");
+        Referent = referent,
+        Name = "Partner",
+        Roles = [Role.Issuer]
+      });
+      await fixture.Client.IssueCredential(request);
+      Assert.Equal(referent, Assert.Single(fixture.IssuanceMappings).TenantIdIssuer);
+      http.ShouldHaveCalled("https://creds.test/api/v1/issuances").WithHeader("Authorization", "Bearer issuer-test").Times(1);
     }
 
     [Theory]
@@ -173,18 +163,18 @@ namespace Yoma.Core.Test.SSI.DidxMe
       var result = await fixture.Client.IssueCredential(request);
 
       var intent = Assert.Single(fixture.IssuanceMappings);
-      Assert.Equal(intent.Id.ToString(), result.Id);
+      Assert.Equal(WalletId, result.Id);
+      Assert.NotEqual(intent.Id.ToString(), result.Id);
       Assert.NotEqual("issuer-credential-id", result.Id);
       Assert.Equal(HolderId, intent.TenantIdHolder);
       Assert.Equal(OrganizationReferent, intent.TenantIdIssuer);
       Assert.True(intent.DeliveryCompleted);
       Assert.Equal("issuer-credential-id", intent.IssuerCredentialId);
-      Assert.Null(intent.WalletCredentialId);
+      Assert.Equal(WalletId, intent.WalletCredentialId);
       Assert.Equal(original, result.Attributes);
       Assert.Equal(original, request.Attributes);
       Assert.DoesNotContain(CorrelationAttribute, result.Attributes.Keys);
-      http.ShouldHaveCalled("https://creds.test/api/v1/issuances")
-        .WithRequestBody($"*{CorrelationAttribute}*{intent.Id}*").Times(1);
+      Assert.DoesNotContain(CorrelationAttribute, http.CallLog.Single(call => call.Request.Url.ToString() == "https://creds.test/api/v1/issuances").RequestBody);
       http.ShouldHaveCalled("https://wallet.test/api/v2/orgs/credentials")
         .WithHeader("x-approve-credential", "true").Times(1);
       var delivery = JObject.Parse(http.CallLog.Single(call => call.Request.Url.Path.EndsWith("/orgs/credentials")).RequestBody);
@@ -255,7 +245,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
       var next = "https://untrusted.test/steal?page%5Bafter%5D=next-page";
       http.ForCallsTo("https://wallet.test/api/v2/credentials*")
         .RespondWith(JsonConvert.SerializeObject(new { data = Array.Empty<object>(), links = new { next } }))
-        .RespondWith(JsonConvert.SerializeObject(new { data = new[] { fixture.WalletCredential(issued.Id) }, links = new { } }));
+        .RespondWith(JsonConvert.SerializeObject(new { data = new[] { Fixture.WalletCredential(issued.Id) }, links = new { } }));
 
       var result = Assert.Single((await fixture.Client.ListCredentials(HolderId))!);
       Assert.Equal(issued.Id, result.Id);
@@ -278,13 +268,13 @@ namespace Yoma.Core.Test.SSI.DidxMe
       var issued = await fixture.Client.IssueCredential(fixture.Request());
       Assert.Single(fixture.IssuanceMappings).WalletCredentialId = WalletId;
       http.ForCallsTo($"https://wallet.test/api/v2/credentials/{WalletId}")
-        .RespondWith(JsonConvert.SerializeObject(new { data = fixture.WalletCredential(issued.Id) }));
+        .RespondWith(JsonConvert.SerializeObject(new { data = Fixture.WalletCredential(issued.Id) }));
 
       var result = await fixture.Client.GetCredentialById(HolderId, issued.Id);
 
       Assert.Equal(issued.Id, result.Id);
       Assert.Equal(issued.Attributes, result.Attributes);
-      http.ShouldHaveCalled($"https://wallet.test/api/v2/credentials/{WalletId}").Times(1);
+      http.ShouldHaveCalled($"https://wallet.test/api/v2/credentials/{WalletId}").Times(2);
     }
 
     [Fact]
@@ -292,7 +282,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
     {
       using var http = new HttpTest()
         .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
-      var fixture = new Fixture(http);
+      var fixture = new Fixture(http) { UseDefaultWalletResponses = false };
       http.ForCallsTo("https://wallet.test/api/v2/credentials*").RespondWithJson(new
       {
         data = Array.Empty<object>(),
@@ -362,7 +352,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
     [InlineData("holder")]
     [InlineData("tenant")]
     [InlineData("preset")]
-    public async Task RejectsWalletCorrelationWithConflictingOwnership(string mismatch)
+    public async Task WalletReadsUseAuthorizedWalletOwnershipRatherThanAnInternalJournalId(string mismatch)
     {
       using var http = new HttpTest()
         .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
@@ -377,14 +367,13 @@ namespace Yoma.Core.Test.SSI.DidxMe
         default: throw new NotSupportedException(mismatch);
       }
       http.ForCallsTo("https://wallet.test/api/v2/credentials*").RespondWith(
-        JsonConvert.SerializeObject(new { data = new[] { fixture.WalletCredential(issued.Id) }, links = new { } }));
+        JsonConvert.SerializeObject(new { data = new[] { Fixture.WalletCredential(issued.Id) }, links = new { } }));
 
-      await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.Client.ListCredentials(HolderId));
-      Assert.Null(Assert.Single(fixture.IssuanceMappings).WalletCredentialId);
+      Assert.Equal(WalletId, Assert.Single((await fixture.Client.ListCredentials(HolderId))!).Id);
     }
 
     [Fact]
-    public async Task WalletListSkipsUnknownIssuanceWithoutHidingKnownCredentials()
+    public async Task WalletListCanReadCredentialsWithoutALocalIssuanceJournal()
     {
       using var http = new HttpTest()
         .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
@@ -394,15 +383,17 @@ namespace Yoma.Core.Test.SSI.DidxMe
       http.ForCallsTo("https://wallet.test/api/v2/credentials*").RespondWith(
         JsonConvert.SerializeObject(new
         {
-          data = new[] { fixture.WalletCredential(unknownId), fixture.WalletCredential(issued.Id) },
+          data = new[] { Fixture.WalletCredential(unknownId), Fixture.WalletCredential(issued.Id) },
           links = new { }
         }));
 
       var result = await fixture.Client.ListCredentials(HolderId);
 
-      Assert.Equal(issued.Id, Assert.Single(result!).Id);
+      Assert.Equal([unknownId, issued.Id], result!.Select(item => item.Id));
       Assert.Equal(WalletId, Assert.Single(fixture.IssuanceMappings).WalletCredentialId);
-      await Assert.ThrowsAsync<EntityNotFoundException>(() => fixture.Client.GetCredentialById(HolderId, unknownId));
+      fixture.UseDefaultWalletResponses = false;
+      fixture.IssuanceMappings.Clear();
+      Assert.Equal([unknownId, issued.Id], (await fixture.Client.ListCredentials(HolderId))!.Select(item => item.Id));
     }
 
     [Theory]
@@ -415,7 +406,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
         .WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
       var fixture = new Fixture(http);
       var issued = await fixture.Client.IssueCredential(fixture.Request());
-      var credential = JObject.FromObject(fixture.WalletCredential(issued.Id));
+      var credential = JObject.FromObject(Fixture.WalletCredential(issued.Id));
       credential["id"] = Guid.NewGuid().ToString();
       if (!mapped) credential["vct"] = "https://types.test/unrelated";
       if (!mapped || !missingDate) credential["format"] = "mso_mdoc";
@@ -423,7 +414,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
       http.ForCallsTo("https://wallet.test/api/v2/credentials*").RespondWith(
         JsonConvert.SerializeObject(new
         {
-          data = new[] { credential, JObject.FromObject(fixture.WalletCredential(issued.Id)) },
+          data = new[] { credential, JObject.FromObject(Fixture.WalletCredential(issued.Id)) },
           links = new { }
         }));
 
@@ -447,7 +438,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
 
       await Assert.ThrowsAsync<EntityNotFoundException>(() => fixture.Client.GetCredentialById(HolderId, issued.Id));
 
-      http.ShouldHaveCalled($"https://wallet.test/api/v2/credentials/{WalletId}").Times(1);
+      http.ShouldHaveCalled($"https://wallet.test/api/v2/credentials/{WalletId}").Times(2);
     }
 
     [Theory]
@@ -498,7 +489,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
       var fixture = new Fixture(http);
       fixture.PresetMappings.Clear();
       var hash = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(
-        JsonConvert.SerializeObject(new[] { "yoma", "YoID|Default", "1.0" }))));
+        JsonConvert.SerializeObject(DefaultYoIdPresetIdentity))));
       var code = $"yoma-{hash[..40]}";
       var presetId = $"~yoma:{code}";
       http.ForCallsTo("https://creds.test/api/v1/presets/credentials")
@@ -516,8 +507,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
             templateType = $"https://types.test/{code}",
             templateAttributes = new Dictionary<string, object>
             {
-              ["Name"] = new { type = "string", required = false, alwaysDisclosed = false },
-              [CorrelationAttribute] = new { type = "string", required = true, alwaysDisclosed = false }
+              ["Name"] = new { type = "string", required = false, alwaysDisclosed = false }
             }
           }
         });
@@ -649,8 +639,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
             templateType = $"https://types.test/{code}",
             templateAttributes = new Dictionary<string, object>
             {
-              [attributeName] = new { type = "string", required = false, alwaysDisclosed = false },
-              [CorrelationAttribute] = new { type = "string", required = true, alwaysDisclosed = false }
+              [attributeName] = new { type = "string", required = false, alwaysDisclosed = false }
             }
           }
         });
@@ -665,7 +654,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
         });
         Assert.Equal(Version.Parse(version), schema.Version);
         Assert.Equal(artifact, schema.ArtifactType);
-        Assert.Equal(new[] { attributeName }, schema.AttributeNames);
+        Assert.Equal([attributeName], schema.AttributeNames);
       }
       Assert.Equal(2, (await fixture.Client.ListSchemas(false))!.Count);
       Assert.Equal(new Version(1, 1), Assert.Single((await fixture.Client.ListSchemas(true))!).Version);
@@ -683,7 +672,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
         Assert.Equal("string", attributes[attributeName]!.Value<string>("type"));
         Assert.False(attributes[attributeName]!.Value<bool>("required"));
         Assert.False(attributes[attributeName]!.Value<bool>("alwaysDisclosed"));
-        Assert.True(attributes[CorrelationAttribute]!.Value<bool>("required"));
+        Assert.Null(attributes[CorrelationAttribute]);
         Assert.Null(body["TemplateAttributes"]);
       }
     }
@@ -699,6 +688,201 @@ namespace Yoma.Core.Test.SSI.DidxMe
       fixture.IssuerAuth.Verify(service => service.Invalidate(), Times.Once);
       http.ShouldHaveCalled("https://creds.test/api/v1/issuances").Times(1);
     }
+
+    [Fact]
+    public async Task RecoveryFindsNativeWalletIdWithoutLocalJournalOrAdditionalAttribute()
+    {
+      using var http = new HttpTest().WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
+      var fixture = new Fixture(http) { UseDefaultWalletResponses = false };
+      http.ForCallsTo("https://wallet.test/api/v2/credentials?*")
+        .WithQueryParam("status", "accepted").RespondWithJson(new { data = new[] { Fixture.WalletCredential(WalletId) } });
+      foreach (var status in new[] { "pending", "rejected" })
+        http.ForCallsTo("https://wallet.test/api/v2/credentials?*")
+          .WithQueryParam("status", status).RespondWithJson(new { data = Array.Empty<object>() });
+
+      var result = await fixture.Client.IssueCredential(fixture.Request());
+
+      Assert.Equal(WalletId, result.Id);
+      Assert.Empty(fixture.IssuanceMappings);
+      Assert.DoesNotContain(CorrelationAttribute, result.Attributes.Keys);
+      http.ShouldNotHaveCalled("https://creds.test/api/v1/issuances");
+      http.ShouldNotHaveCalled("https://wallet.test/api/v2/orgs/credentials");
+    }
+
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(false, false)]
+    public async Task RecoveryAfterSchemaChangePreservesTheIssuedVersionButRejectsAnotherSchema(bool sameSchema, bool hasJournal)
+    {
+      using var http = new HttpTest().WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
+      var fixture = new Fixture(http);
+      if (hasJournal) await fixture.Client.IssueCredential(fixture.Request());
+
+      var original = Assert.Single(fixture.PresetMappings);
+      var latest = new CredentialPresetMapping
+      {
+        Id = "schema-2",
+        TenantAlias = original.TenantAlias,
+        Name = sameSchema ? original.Name : "Opportunity|Job|Default",
+        Version = "1.1",
+        ArtifactType = original.ArtifactType,
+        AttributeNames = original.AttributeNames,
+        PresetId = "~yoma:opportunity-v2",
+        Vct = "https://types.test/opportunity-v2"
+      };
+      fixture.PresetMappings.Add(latest);
+      fixture.UseDefaultWalletResponses = false;
+      http.ForCallsTo("https://wallet.test/api/v2/credentials?*")
+        .WithQueryParam("status", "accepted").RespondWithJson(new { data = new[] { Fixture.WalletCredential(WalletId) } });
+      http.ForCallsTo("https://wallet.test/api/v2/credentials?*")
+        .WithQueryParam("status", "pending").RespondWithJson(new { data = Array.Empty<object>() });
+      http.ForCallsTo("https://wallet.test/api/v2/credentials?*")
+        .WithQueryParam("status", "rejected").RespondWithJson(new { data = Array.Empty<object>() });
+
+      var request = fixture.Request();
+      request.SchemaId = latest.Id;
+      request.SchemaName = latest.Name;
+      if (sameSchema)
+      {
+        var recovered = await fixture.Client.IssueCredential(request);
+        Assert.Equal(WalletId, recovered.Id);
+        Assert.Equal(original.Id, recovered.SchemaId);
+        Assert.Equal(request.Attributes["DateIssued"], recovered.Attributes["DateIssued"]);
+      }
+      else
+        await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.Client.IssueCredential(request));
+
+      if (hasJournal)
+      {
+        http.ShouldHaveCalled("https://creds.test/api/v1/issuances").Times(1);
+        http.ShouldHaveCalled("https://wallet.test/api/v2/orgs/credentials").Times(1);
+      }
+      else
+      {
+        http.ShouldNotHaveCalled("https://creds.test/api/v1/issuances");
+        http.ShouldNotHaveCalled("https://wallet.test/api/v2/orgs/credentials");
+      }
+    }
+
+    [Fact]
+    public async Task LostDeliveryResponseDoesNotDeliverOrIssueAgainWhileWalletIsAbsent()
+    {
+      using var http = new HttpTest().WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
+      var fixture = new Fixture(http) { UseDefaultDeliveryResponse = false };
+      http.ForCallsTo("https://wallet.test/api/v2/orgs/credentials").RespondWith(status: 500);
+
+      await Assert.ThrowsAsync<HttpClientException>(() => fixture.Client.IssueCredential(fixture.Request()));
+      Assert.Equal(nameof(IssuanceStatus.Delivering), Assert.Single(fixture.IssuanceMappings).Status);
+      await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.Client.IssueCredential(fixture.Request()));
+
+      http.ShouldHaveCalled("https://creds.test/api/v1/issuances").Times(1);
+      http.ShouldHaveCalled("https://wallet.test/api/v2/orgs/credentials").Times(1);
+    }
+
+    [Theory]
+    [InlineData(IssuanceStatus.Prepared, IssuanceStatus.Offered)]
+    [InlineData(IssuanceStatus.Offered, IssuanceStatus.Delivering)]
+    [InlineData(IssuanceStatus.Offered, IssuanceStatus.Accepted)]
+    [InlineData(IssuanceStatus.Offered, IssuanceStatus.Deleted)]
+    public async Task StaleIssuanceCannotOverwriteTheCurrentStateOrDeliverAgain(IssuanceStatus original, IssuanceStatus current)
+    {
+      using var http = new HttpTest().WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
+      var fixture = new Fixture(http);
+      var mapping = new IssuanceMapping
+      {
+        Id = Guid.NewGuid(),
+        TenantAlias = "yoma",
+        TenantIdHolder = HolderId,
+        TenantIdIssuer = OrganizationReferent,
+        PresetMappingId = "schema-1",
+        ClientReferentKey = ReferentAttribute,
+        ClientReferentValue = "scheduled-issuance",
+        IssuanceId = "issuance-id",
+        IssuerCredentialId = "issuer-credential-id",
+        Status = original.ToString()
+      };
+      fixture.IssuanceMappings.Add(mapping);
+      http.ForCallsTo("https://creds.test/api/v1/issuances/issuance-id").RespondWithJson(new
+      {
+        data = new
+        {
+          id = mapping.IssuanceId,
+          status = "offered",
+          offerUri = "openid-credential-offer://offer",
+          credentials = new[] { new { id = mapping.IssuerCredentialId, format = "sd-jwt-vc" } }
+        }
+      });
+      // Simulate a competing request committing after the initial read, before the row lock.
+      fixture.IssuanceMappingRepository.Setup(value => value.Query(It.IsAny<LockMode>())).Returns(() =>
+      {
+        mapping.Status = current.ToString();
+        return fixture.IssuanceMappings.AsQueryable();
+      });
+
+      await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.Client.IssueCredential(fixture.Request()));
+
+      Assert.Equal(current.ToString(), mapping.Status);
+      fixture.IssuanceMappingRepository.Verify(value => value.Update(It.IsAny<IssuanceMapping>()), Times.Never);
+      http.ShouldNotHaveCalled("https://wallet.test/api/v2/orgs/credentials");
+    }
+
+    [Theory]
+    [InlineData(401)]
+    [InlineData(403)]
+    [InlineData(500)]
+    public async Task FailedRecoveryReadNeverBecomesPermissionToIssue(int status)
+    {
+      using var http = new HttpTest().WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
+      var fixture = new Fixture(http) { UseDefaultWalletResponses = false };
+      http.ForCallsTo("https://wallet.test/api/v2/credentials?*").RespondWith(status: status);
+
+      await Assert.ThrowsAsync<HttpClientException>(() => fixture.Client.IssueCredential(fixture.Request()));
+
+      Assert.Empty(fixture.IssuanceMappings);
+      http.ShouldNotHaveCalled("https://creds.test/api/v1/issuances");
+    }
+
+    [Fact]
+    public async Task ReplayConfirmsDeletionAndCreatesANewAttemptWithTheOriginalDate()
+    {
+      using var http = new HttpTest().WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
+      var fixture = new Fixture(http);
+      var request = fixture.Request();
+      await fixture.Client.IssueCredential(request);
+      var previous = Assert.Single(fixture.IssuanceMappings);
+      var replaying = false;
+      http.ForCallsTo("https://wallet.test/api/v2/credentials/" + WalletId).WithVerb(HttpMethod.Get)
+        .With(call => !replaying).RespondWithJson(new { data = Fixture.WalletCredential(WalletId) }).RespondWith(status: 404);
+      http.ForCallsTo("https://wallet.test/api/v2/credentials/" + WalletId).WithVerb(HttpMethod.Delete).RespondWith(status: 204);
+
+      await fixture.Client.DeleteCredential(HolderId, ArtifactType.SDJWT, WalletId);
+      Assert.Equal(nameof(IssuanceStatus.Deleted), previous.Status);
+      Assert.Null(await fixture.Client.GetCredentialByIdOrNull(HolderId, ArtifactType.SDJWT, WalletId));
+
+      replaying = true;
+      http.ForCallsTo("https://wallet.test/api/v2/credentials?*").RespondWithJson(new { data = Array.Empty<object>() });
+      http.ForCallsTo("https://wallet.test/api/v2/credentials/" + WalletId).WithVerb(HttpMethod.Get)
+        .RespondWithJson(new { data = Fixture.WalletCredential(WalletId) });
+      var result = await fixture.Client.IssueCredential(request);
+      Assert.Equal(request.Attributes["DateIssued"], result.Attributes["DateIssued"]);
+      Assert.Equal(2, fixture.IssuanceMappings.Count);
+      Assert.NotEqual(previous.Id, fixture.IssuanceMappings.Last().Id);
+      http.ShouldHaveCalled("https://creds.test/api/v1/issuances").Times(2);
+    }
+
+    [Fact]
+    public async Task RemoteAbsenceRepairsJournalAfterDeletePersistenceFailure()
+    {
+      using var http = new HttpTest().WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
+      var fixture = new Fixture(http);
+      await fixture.Client.IssueCredential(fixture.Request());
+      http.ForCallsTo("https://wallet.test/api/v2/credentials/" + WalletId).RespondWith(status: 404);
+
+      Assert.Null(await fixture.Client.GetCredentialByIdOrNull(HolderId, ArtifactType.SDJWT, WalletId));
+      Assert.Equal(nameof(IssuanceStatus.Deleted), Assert.Single(fixture.IssuanceMappings).Status);
+    }
     #endregion
 
     #region Fixtures
@@ -712,7 +896,11 @@ namespace Yoma.Core.Test.SSI.DidxMe
       public readonly Mock<IRepository<IssuanceMapping>> IssuanceMappingRepository;
       public readonly Mock<IIssuerAuthService> IssuerAuth = new();
       public readonly ProviderClient Client;
+      public readonly IssuanceTrackingService Tracking;
       private readonly ArtifactType _artifactType;
+      public bool UseDefaultWalletResponses = true;
+      public bool SimulateAcceptance = true;
+      public bool UseDefaultDeliveryResponse = true;
 
       public Fixture(HttpTest http, ArtifactType artifactType = ArtifactType.SDJWT)
       {
@@ -724,6 +912,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
         var options = Options.Create(new ProviderOptions
         {
           TenantAlias = "yoma",
+          Webhook = new WebhookOptions(),
           CredentialsBaseUri = "https://creds.test/api",
           WalletBaseUri = "https://wallet.test/api",
           OnboardingBaseUri = "https://onboarding.test/api"
@@ -755,9 +944,35 @@ namespace Yoma.Core.Test.SSI.DidxMe
         context.Request.Headers.Authorization = "Bearer source-test";
         var accessor = new HttpContextAccessor { HttpContext = context };
         var issuer = new IssuerClient(options, IssuerAuth.Object);
-        Client = new ProviderClient(options, new PresetService(options, presetMappingRepository.Object, issuer), issuer,
-          new WalletClient(options, holderAuth.Object), new HolderContextService(accessor, issuer),
-          new BackgroundWalletService(), IssuanceMappingRepository.Object, users.Object, Repository(TenantCreations).Object);
+        var presets = new PresetService(options, presetMappingRepository.Object, issuer);
+        var wallet = new WalletClient(options, holderAuth.Object);
+        var strategy = new Mock<IProviderExecutionStrategyService>();
+        strategy.Setup(value => value.ExecuteInExecutionStrategyAsync(It.IsAny<Func<Task>>(), true))
+          .Returns((Func<Task> action, bool _) => action());
+        Tracking = new IssuanceTrackingService(NullLogger<IssuanceTrackingService>.Instance, options, IssuanceMappingRepository.Object, strategy.Object);
+        var holder = new HolderService(accessor, issuer, wallet, presets, Tracking, users.Object, Repository(TenantCreations).Object);
+        Client = new ProviderClient(options, presets, issuer, Tracking, holder, users.Object);
+        IssuanceMappingRepository.Setup(value => value.Update(It.IsAny<IssuanceMapping>()))
+          .ReturnsAsync((IssuanceMapping item) =>
+          {
+            if (SimulateAcceptance && item.DeliveryCompleted && item.Status == nameof(IssuanceStatus.Delivering))
+            {
+              item.WalletCredentialId = WalletId;
+              item.Status = nameof(IssuanceStatus.Accepted);
+            }
+            return item;
+          });
+        http.ForCallsTo("https://wallet.test/api/v2/credentials?*")
+          .With(call => UseDefaultWalletResponses && IssuanceMappings.All(item => !item.DeliveryCompleted))
+          .RespondWithJson(new { data = Array.Empty<object>() });
+        var deliveryReadCompleted = false;
+        http.ForCallsTo("https://wallet.test/api/v2/credentials/" + WalletId)
+          .With(call => !deliveryReadCompleted && IssuanceMappings.Any(item => item.DeliveryCompleted))
+          .RespondWith(() =>
+          {
+            deliveryReadCompleted = true;
+            return new StringContent(JsonConvert.SerializeObject(new { data = WalletCredential(WalletId) }));
+          });
         http.ForCallsTo("https://onboarding.test/api/users/by-external-identifier/*")
           .RespondWithJson(new { data = new { id = HolderId, username = "yoma-holder", enabled = true } });
         http.ForCallsTo("https://creds.test/api/v1/issuances").RespondWithJson(new
@@ -770,7 +985,8 @@ namespace Yoma.Core.Test.SSI.DidxMe
             credentials = new[] { new { id = "issuer-credential-id", format = "sd-jwt-vc" } }
           }
         }, 201);
-        http.ForCallsTo("https://wallet.test/api/v2/orgs/credentials").RespondWithJson(new { data = (object?)null }, 201);
+        http.ForCallsTo("https://wallet.test/api/v2/orgs/credentials")
+          .With(call => UseDefaultDeliveryResponse).RespondWithJson(new { data = (object?)null }, 201);
       }
 
       public CredentialIssuanceRequest Request() => new()
@@ -790,16 +1006,15 @@ namespace Yoma.Core.Test.SSI.DidxMe
         }
       };
 
-      public object WalletCredential(string id) => new
+      public static object WalletCredential(string id) => new
       {
-        id = WalletId,
+        id,
         format = "vc+sd-jwt",
         vct = "https://types.test/opportunity-v1",
         status = "accepted",
         iat = "2026-11-02T00:00:00Z",
         claims = new Dictionary<string, string>
         {
-          [CorrelationAttribute] = id,
           [ReferentAttribute] = "scheduled-issuance",
           ["Skills"] = "[\"C#\",\"English\"]",
           ["DateIssued"] = "2026-11-02T00:00:00+00:00"
@@ -810,6 +1025,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
       {
         var repository = new Mock<IRepository<T>>();
         repository.Setup(value => value.Query()).Returns(() => items.AsQueryable());
+        repository.Setup(value => value.Query(It.IsAny<LockMode>())).Returns(() => items.AsQueryable());
         repository.Setup(value => value.Create(It.IsAny<T>())).ReturnsAsync((T item) => { items.Add(item); return item; });
         repository.Setup(value => value.Update(It.IsAny<T>())).ReturnsAsync((T item) => item);
         return repository;

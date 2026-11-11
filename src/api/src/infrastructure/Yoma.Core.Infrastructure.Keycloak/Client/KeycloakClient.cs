@@ -3,11 +3,19 @@ using FS.Keycloak.RestApiClient.Authentication.Client;
 using FS.Keycloak.RestApiClient.Authentication.ClientFactory;
 using FS.Keycloak.RestApiClient.Authentication.Flow;
 using FS.Keycloak.RestApiClient.Model;
+using Flurl;
+using Flurl.Http;
 using Keycloak.AuthServices.Authentication;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using System.Net.Http.Headers;
+using System.Net;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Cryptography;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using System.Text;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
@@ -25,12 +33,32 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
   public sealed class KeycloakClient : IDisposable, IIdentityProviderClient
   {
     #region Class Variables
+    private const string IdentityCookie = "KEYCLOAK_IDENTITY";
+    private const string SessionClaim = "sid";
+    private const string CookieHeader = "Set-Cookie";
+    private const string BearerTokenType = "Bearer";
+    private const string AuthorizationError = "error";
+    private const string AuthorizationState = "state";
+    private const string AuthorizationCode = "code";
+    private const string TokenExchangeGrant = "urn:ietf:params:oauth:grant-type:token-exchange";
+    private const string AccessTokenType = "urn:ietf:params:oauth:token-type:access_token";
+    private const string AuthorizationCodeGrant = "authorization_code";
+    private const string OpenIdScope = "openid";
+    private const string NonInteractivePrompt = "none";
+    private const string PkceMethod = "S256";
+
     private readonly ILogger<KeycloakClient> _logger;
     private readonly AppSettings _appSettings;
     private readonly IEnvironmentProvider _environmentProvider;
     private readonly KeycloakAdminOptions _keycloakAdminOptions;
     private readonly KeycloakAuthenticationOptions _keycloakAuthenticationOptions;
     private readonly AuthenticationHttpClient _httpClient;
+
+    // The SDK token model uses CLR names; OIDC token responses use snake_case.
+    private static readonly JsonSerializerSettings TokenSerializerSettings = new()
+    {
+      ContractResolver = new DefaultContractResolver { NamingStrategy = new SnakeCaseNamingStrategy() }
+    };
     #endregion
 
     #region Constructor
@@ -61,6 +89,46 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
     #endregion
 
     #region Public Members
+    /// <summary>
+    /// Exchanges the authenticated participant's incoming token through Keycloak's standard token
+    /// exchange, using KeycloakAdmin.TokenExchange and the existing Keycloak URL/realm. The client
+    /// mappings determine the target audience. The admin SDK has no OIDC token-exchange operation.
+    /// Returns the same user's token and remaining lifetime for downstream
+    /// federation; a rejected exchange never falls back to privileged background access.
+    /// </summary>
+    public async Task<UserAccessToken> ExchangeUserAccessToken(string accessToken, CancellationToken cancellationToken = default)
+    {
+      ArgumentException.ThrowIfNullOrWhiteSpace(accessToken);
+      cancellationToken.ThrowIfCancellationRequested();
+
+      var options = _keycloakAdminOptions.TokenExchange;
+      var started = DateTimeOffset.UtcNow;
+      using var response = await _keycloakAuthenticationOptions.AuthServerUrl
+        .AppendPathSegments("realms", _keycloakAuthenticationOptions.Realm, "protocol", "openid-connect", "token")
+        .WithTimeout(TimeSpan.FromSeconds(options.RequestTimeoutSeconds))
+        .PostUrlEncodedAsync(new
+        {
+          grant_type = TokenExchangeGrant,
+          client_id = options.ClientId,
+          client_secret = options.ClientSecret,
+          subject_token = accessToken,
+          subject_token_type = AccessTokenType,
+          requested_token_type = AccessTokenType
+        }, cancellationToken: cancellationToken)
+        .EnsureSuccessStatusCodeAsync();
+
+      return await ReadUserAccessToken(response, started);
+    }
+
+    public bool IsClientActingOnBehalfOfUser(string? clientId)
+    {
+      // This client acquires assertions for integrations; its events are not youth activity.
+      // A confidential client or service-account capability alone does not establish that distinction.
+      var assertionClientId = _keycloakAdminOptions.TokenExchange?.ClientId;
+      return !string.IsNullOrWhiteSpace(clientId) && !string.IsNullOrWhiteSpace(assertionClientId) &&
+        string.Equals(clientId, assertionClientId, StringComparison.Ordinal);
+    }
+
     public bool AuthenticateWebhook(HttpContext httpContext)
     {
       if (httpContext == null)
@@ -84,6 +152,160 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       var password = credentials[1];
 
       return username == _keycloakAdminOptions.WebhookAdmin.Username && password == _keycloakAdminOptions.WebhookAdmin.Password;
+    }
+
+    /// <summary>
+    /// Uses the existing admin integration to create an isolated, temporary user session and
+    /// redeem a PKCE authorization code without a browser or participant password. This is not
+    /// legacy token exchange. Cleanup deletes only this session, never the user's other logins.
+    /// </summary>
+    public async Task<UserAccessToken> GetUserAccessToken(Guid id, CancellationToken cancellationToken = default)
+    {
+      if (id == Guid.Empty) throw new ArgumentNullException(nameof(id));
+      cancellationToken.ThrowIfCancellationRequested();
+      var options = _keycloakAdminOptions.TokenExchange;
+      ArgumentException.ThrowIfNullOrWhiteSpace(options.RedirectUri);
+
+      // Three acquisition requests plus one independently bounded cleanup request.
+      using var acquisition = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+      acquisition.CancelAfter(TimeSpan.FromSeconds(options.RequestTimeoutSeconds * 3d));
+      cancellationToken = acquisition.Token;
+
+      if (!Uri.TryCreate(options.RedirectUri, UriKind.Absolute, out var callback) ||
+        (callback.Scheme != Uri.UriSchemeHttps && callback.Scheme != Uri.UriSchemeHttp) ||
+        !string.IsNullOrEmpty(callback.Query) || !string.IsNullOrEmpty(callback.Fragment))
+        throw new InvalidOperationException("An absolute HTTP/HTTPS callback without query or fragment is required");
+
+      var baseUri = _keycloakAuthenticationOptions.AuthServerUrl?.TrimEnd('/')
+        ?? throw new InvalidOperationException("The identity provider URL is not configured");
+      var realm = _keycloakAuthenticationOptions.Realm;
+      var cookies = new CookieJar();
+      string? sessionId = null;
+      var completed = false;
+
+      // Keep privileged operations on the SDK's authenticated API clients. Ordinary Flurl
+      // authorization requests below receive only this isolated session's cookies.
+      using var usersApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<UsersApi>(_httpClient);
+      using var realmsApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<RealmsAdminApi>(_httpClient);
+      try
+      {
+        using var impersonationTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        impersonationTimeout.CancelAfter(TimeSpan.FromSeconds(options.RequestTimeoutSeconds));
+        var impersonation = await usersApi.PostUsersImpersonationByUserIdWithHttpInfoAsync(
+          realm, id.ToString(), impersonationTimeout.Token);
+        // The SDK returns Set-Cookie headers but does not populate its Cookies collection.
+        var sessionCookies = new CookieContainer();
+        var authorizationUri = new Uri(baseUri.AppendPathSegments("realms", realm, "protocol", "openid-connect", "auth"));
+        if (impersonation.Headers.TryGetValue(CookieHeader, out var headers))
+          foreach (var header in headers)
+            sessionCookies.SetCookies(new Uri(baseUri), header);
+
+        // Use only the cookies returned by this impersonation call on the configured IdP transport.
+        // Browser Secure flags may describe the public TLS endpoint while this API uses an internal URL.
+        // The authorization request never follows redirects or forwards cookies to the callback.
+        foreach (Cookie cookie in sessionCookies.GetAllCookies())
+          cookies.AddOrReplace(cookie.Name, cookie.Value, authorizationUri.ToString());
+
+        var identity = cookies.SingleOrDefault(cookie => cookie.Name == IdentityCookie)
+          ?? throw new InvalidOperationException("Identity provider did not establish the temporary user session");
+        var session = ReadUserTokenClaims(identity.Value);
+        sessionId = session.Claims.SingleOrDefault(claim => claim.Type == SessionClaim)?.Value;
+        if (string.IsNullOrWhiteSpace(sessionId))
+          throw new InvalidOperationException("Temporary identity session has no identifier");
+
+        if (session.Subject != id.ToString())
+          throw new InvalidOperationException("Temporary identity session does not belong to the requested user");
+
+        var verifier = WebEncoders.Base64UrlEncode(RandomNumberGenerator.GetBytes(32));
+        var challenge = WebEncoders.Base64UrlEncode(SHA256.HashData(Encoding.ASCII.GetBytes(verifier)));
+        var state = Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(32));
+        using var authorization = await baseUri
+          .AppendPathSegments("realms", realm, "protocol", "openid-connect", "auth")
+          .SetQueryParams(new
+          {
+            client_id = options.ClientId,
+            redirect_uri = options.RedirectUri,
+            response_type = AuthorizationCode,
+            scope = OpenIdScope,
+            prompt = NonInteractivePrompt,
+            state,
+            code_challenge = challenge,
+            code_challenge_method = PkceMethod
+          })
+          .WithCookies(cookies)
+          .WithAutoRedirect(false)
+          .WithTimeout(TimeSpan.FromSeconds(options.RequestTimeoutSeconds))
+          .AllowHttpStatus((int)HttpStatusCode.Found)
+          .GetAsync(cancellationToken: cancellationToken)
+          .EnsureSuccessStatusCodeAsync([HttpStatusCode.Found]);
+
+        var location = authorization.ResponseMessage.Headers.Location;
+        if (authorization.StatusCode != (int)HttpStatusCode.Found || location?.IsAbsoluteUri != true ||
+          location.GetLeftPart(UriPartial.Path) != callback.GetLeftPart(UriPartial.Path) ||
+          !string.IsNullOrEmpty(location.Fragment))
+          throw new InvalidOperationException("Identity provider did not return the expected authorization callback");
+
+        var query = QueryHelpers.ParseQuery(location.Query);
+        if (query.ContainsKey(AuthorizationError) || !query.TryGetValue(AuthorizationState, out var returnedState) ||
+          returnedState.Count != 1 || returnedState[0] != state ||
+          !query.TryGetValue(AuthorizationCode, out var code) || code.Count != 1 || string.IsNullOrWhiteSpace(code[0]))
+          throw new InvalidOperationException("Identity provider rejected the noninteractive authorization request");
+
+        var started = DateTimeOffset.UtcNow;
+        using var response = await baseUri
+          .AppendPathSegments("realms", realm, "protocol", "openid-connect", "token")
+          .WithTimeout(TimeSpan.FromSeconds(options.RequestTimeoutSeconds))
+          .PostUrlEncodedAsync(new
+          {
+            grant_type = AuthorizationCodeGrant,
+            client_id = options.ClientId,
+            client_secret = options.ClientSecret,
+            redirect_uri = options.RedirectUri,
+            code = code[0],
+            code_verifier = verifier
+          }, cancellationToken: cancellationToken)
+          .EnsureSuccessStatusCodeAsync();
+
+        var result = await ReadUserAccessToken(response, started);
+        var token = ReadUserTokenClaims(result.AccessToken);
+        if (token.Subject != id.ToString() ||
+          token.Claims.SingleOrDefault(claim => claim.Type == SessionClaim)?.Value != sessionId ||
+          token.ValidTo <= DateTimeOffset.UtcNow.UtcDateTime)
+          throw new InvalidOperationException("Identity provider returned an unexpected user access token");
+
+        completed = true;
+        return result;
+      }
+      finally
+      {
+        cookies.Clear();
+        if (sessionId != null)
+        {
+          try
+          {
+            // Cleanup has its own bounded token so caller cancellation cannot skip it.
+            using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(options.RequestTimeoutSeconds));
+            try
+            {
+              await realmsApi.DeleteSessionsBySessionAsync(realm, sessionId, cancellationToken: cleanup.Token);
+            }
+            catch (FS.Keycloak.RestApiClient.Client.ApiException exception) when (exception.ErrorCode == (int)HttpStatusCode.NotFound)
+            {
+              // A session already removed by the identity provider needs no further cleanup.
+            }
+          }
+          catch (Exception exception)
+          {
+            // SDK errors can contain response bodies and headers; log diagnostics without those values.
+            if (_logger.IsEnabled(LogLevel.Error))
+              _logger.LogError("Failed to end a temporary identity-provider session for user '{userId}': {exceptionType}, HTTP status {statusCode}",
+                id, exception.GetType().Name, (exception as FS.Keycloak.RestApiClient.Client.ApiException)?.ErrorCode);
+
+            // Retain an original acquisition failure; otherwise make unsuccessful cleanup visible.
+            if (completed) throw;
+          }
+        }
+      }
     }
 
     public async Task<User?> GetUserByUsername(string? username)
@@ -321,7 +543,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       var userRepresentation = await userApi.GetUsersByUserIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString());
 
       var actions = userRepresentation?.RequiredActions;
-      var actionsText = (actions != null && actions.Count > 0) ? string.Join(", ", actions) : "none";
+      var actionsText = (actions != null && actions.Count > 0) ? string.Join(", ", actions) : NonInteractivePrompt;
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Fetched user representation for user ID: {id} - RequiredActions: {actions}", id, actionsText);
 
       if (!string.IsNullOrEmpty(userRepresentation?.Email))
@@ -410,6 +632,51 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
     public void Dispose()
     {
       _httpClient?.Dispose();
+    }
+    #endregion
+
+    #region Private Members
+    private async Task<UserAccessToken> ReadUserAccessToken(IFlurlResponse response, DateTimeOffset started)
+    {
+      KeycloakApiToken? result;
+      try
+      {
+        result = JsonConvert.DeserializeObject<KeycloakApiToken>(await response.GetStringAsync(), TokenSerializerSettings);
+      }
+      catch (JsonException)
+      {
+        throw new InvalidOperationException("Identity provider returned an invalid token response");
+      }
+
+      if (result == null || string.IsNullOrWhiteSpace(result.AccessToken) || result.ExpiresIn <= TimeSpan.Zero ||
+        !string.Equals(result.TokenType, BearerTokenType, StringComparison.OrdinalIgnoreCase))
+        throw new InvalidOperationException("Identity provider returned an invalid user access token");
+
+      var token = ReadUserTokenClaims(result.AccessToken);
+      // Preserve the SDK token model's safety margin and the signed token's earlier deadline.
+      var expires = new[] { started.Add(result.ExpiresIn), new DateTimeOffset(token.ValidTo) }.Min();
+      if (expires <= DateTimeOffset.UtcNow)
+        throw new InvalidOperationException("Identity provider returned an expired user access token");
+
+      return new UserAccessToken
+      {
+        AccessToken = result.AccessToken,
+        ExpiresIn = (int)(expires - DateTimeOffset.UtcNow).TotalSeconds
+      };
+    }
+
+    private static JwtSecurityToken ReadUserTokenClaims(string value)
+    {
+      // Tokens came directly from the configured identity provider. Do not include parser errors
+      // or token contents in failures; callers separately validate the expected subject/audience.
+      try
+      {
+        return new JwtSecurityTokenHandler().ReadJwtToken(value);
+      }
+      catch (Exception exception) when (exception is ArgumentException or Microsoft.IdentityModel.Tokens.SecurityTokenException or FormatException)
+      {
+        throw new InvalidOperationException("Identity provider returned malformed user token claims");
+      }
     }
     #endregion
   }

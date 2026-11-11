@@ -29,6 +29,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Repositories
         IssuanceId = entity.IssuanceId,
         IssuerCredentialId = entity.IssuerCredentialId,
         WalletCredentialId = entity.WalletCredentialId,
+        Status = entity.Status,
         DeliveryCompleted = entity.DeliveryCompleted,
         DateCreated = entity.DateCreated,
         DateModified = entity.DateModified
@@ -51,6 +52,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Repositories
         IssuanceId = item.IssuanceId,
         IssuerCredentialId = item.IssuerCredentialId,
         WalletCredentialId = item.WalletCredentialId,
+        Status = item.Status,
         DeliveryCompleted = item.DeliveryCompleted,
         DateCreated = item.DateCreated,
         DateModified = item.DateModified
@@ -62,21 +64,12 @@ namespace Yoma.Core.Infrastructure.DidxMe.Repositories
     public async Task<IssuanceMapping> Update(IssuanceMapping item)
     {
       var entity = _context.IssuanceMapping.Single(entity => entity.Id == item.Id);
-      if (entity.TenantAlias != item.TenantAlias || entity.TenantIdHolder != item.TenantIdHolder ||
-        entity.TenantIdIssuer != item.TenantIdIssuer || entity.PresetMappingId != item.PresetMappingId ||
-        entity.ClientReferentKey != item.ClientReferentKey || entity.ClientReferentValue != item.ClientReferentValue)
-        throw new InvalidOperationException("An issuance's identity and ownership cannot change");
-
-      if ((entity.IssuanceId != null && entity.IssuanceId != item.IssuanceId) ||
-        (entity.IssuerCredentialId != null && entity.IssuerCredentialId != item.IssuerCredentialId) ||
-        (entity.WalletCredentialId != null && entity.WalletCredentialId != item.WalletCredentialId))
-        throw new InvalidOperationException("A confirmed provider identifier cannot be replaced");
-
       item.DateModified = DateTimeOffset.UtcNow;
       entity.IssuanceId = item.IssuanceId;
       entity.IssuerCredentialId = item.IssuerCredentialId;
       entity.WalletCredentialId = item.WalletCredentialId;
-      entity.DeliveryCompleted |= item.DeliveryCompleted;
+      entity.DeliveryCompleted = item.DeliveryCompleted;
+      entity.Status = item.Status;
       entity.DateModified = item.DateModified;
       await _context.SaveChangesAsync();
       return item;

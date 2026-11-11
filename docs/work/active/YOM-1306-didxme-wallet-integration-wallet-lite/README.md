@@ -4,8 +4,8 @@
 
 - **Epic**: [YOM-1306](https://linear.app/didx/issue/YOM-1306)
 - **Owners**: Adrian (API), Jason (web), Robbie/SRE (environments)
-- **Status**: in-progress — local API flow verified; release work remains
-- **Branch**: `feature/yom-1306-didxme-wallet-integration-wallet-lite`
+- **Status**: in-progress — initial integration deployed to Stage; phase-1 follow-up pending
+- **Branch**: `feature/yom-1306-didxme-issuance-recovery-replay`
 
 ## Goal
 
@@ -17,7 +17,7 @@ planned recovery/cutover. Provider changes are not an automatic runtime fallback
 
 Use the [local startup guide](./environment.md): obtain Local configuration privately, prepare
 standalone mono using DIDx's supported private instructions, start mono, then start Yoma.
-Yoma Local initialization prepares the integration and updates only its section of the ignored
+Yoma Local initialization prepares the integration and updates the integration and identity token sections of the ignored
 Local file. Participant provisioning and issuance still run through application jobs.
 
 This repository is public. Private platform research, access instructions, security configuration
@@ -29,7 +29,7 @@ and environment receipts belong in the approved private team handoff, not Markdo
 | --- | --- | --- |
 | [YOM-1307 — Environments](./YOM-1307-provision-didxme-environments-for-yoma/feature.md) | Adrian / SRE | review |
 | [YOM-1308 — Identity integration](./YOM-1308-federate-yoma-identities-with-didxme-wallet-lite/feature.md) | Adrian / Jason | in-progress |
-| [YOM-1309 — Provider adapter](./YOM-1309-use-didxme-for-yoma-wallets-and-credential-issuance/feature.md) | Adrian | in-progress |
+| [YOM-1309 — Provider adapter](./YOM-1309-use-didxme-for-yoma-wallets-and-credential-issuance/feature.md) | Adrian | review |
 | [YOM-1310 — Participant wallet](https://linear.app/didx/issue/YOM-1310) | Jason | planning |
 
 Feature files own detailed task status. YOM-1306 is the canonical root; the redundant earlier
@@ -45,7 +45,7 @@ ticket was removed.
   the existing Aries implementation is retained. See code summaries for Yoma compatibility logic.
 - Wallet filtering, ordering and paging remain in the domain. No pagination redesign is included.
 - Encrypted holder caching is implemented; deployed multi-instance verification remains open.
-- Recovery and Replay are incomplete and block production readiness.
+- Recovery and Replay are implemented and verified locally; deployed validation and Stage preparation remain release gates.
 
 ## Cross-area Handoff
 
@@ -58,6 +58,15 @@ See the
 
 ## Release Gates
 
+PR #2013 merged and Adrian confirmed initial Stage issuance and wallet access. The next phase
+addresses issuance tracking and interim recovery; YoID replacement/revocation follows separately.
+See the [phase-1 handoff](./YOM-1309-use-didxme-for-yoma-wallets-and-credential-issuance/handoffs/2026-11-10-a.md).
+The subsequent [local background-access proof](./YOM-1309-use-didxme-for-yoma-wallets-and-credential-issuance/handoffs/2026-11-10-b.md)
+passed recovery lookup, deletion and replacement without a holder password or existing login.
+Application integration and the real VS job run now pass, including recovery without an issuance
+journal and Replay for both credential families. See the [local debug results and release preparation](./YOM-1309-use-didxme-for-yoma-wallets-and-credential-issuance/handoffs/2026-11-10-e.md).
+Deployed configuration/verification and Stage preset/data preparation remain outstanding.
+
 The latest PR follow-ups are in the [2026-11-08 handoff](./handoffs/2026-11-08-a.md).
 The Medium batch is committed and pushed on PR #2013; detailed task status lives in the
 [adapter feature](./YOM-1309-use-didxme-for-yoma-wallets-and-credential-issuance/feature.md).
@@ -68,7 +77,7 @@ Jason's §1–§2 work (reward-pool endpoint, terminal upload rejection, rich-te
 Keycloak OTP consume-once and brute-force attribution) is in the
 [2026-11-09-b handoff](./handoffs/2026-11-09-b.md); document previews and the §3–§4 groups remain.
 
-1. Complete recovery and Replay; verify original issuance dates are preserved.
+1. Verify the locally tested recovery and Replay flows in Dev with deployed permissions and callbacks.
 2. Finish participant/browser/mobile and credential-detail checks with Jason.
 3. SRE provisions Dev once and supplies ongoing deployment configuration/secrets privately.
 4. Rehearse data cutover/reissuance and agree rollback/retention before retiring Aries.

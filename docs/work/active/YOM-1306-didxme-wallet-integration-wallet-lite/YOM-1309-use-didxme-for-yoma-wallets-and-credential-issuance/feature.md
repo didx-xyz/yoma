@@ -6,8 +6,8 @@
 - **Epic**: [YOM-1306](../README.md)
 - **Owner**: Adrian
 - **Areas**: API, provider adapter
-- **Status**: in-progress — local issuance/read/cache flow verified; release gates remain
-- **Branch**: `feature/yom-1306-didxme-wallet-integration-wallet-lite`
+- **Status**: review — phase-1 implementation and local debug verification complete; deployment preparation pending
+- **Branch**: `feature/yom-1306-didxme-issuance-recovery-replay`
 
 ## Goal / Yoma Contract
 
@@ -22,6 +22,19 @@ security configuration and privileged workflows are held in the private engineer
 
 ## Tasks
 
+- [x] Undo the uncommitted revocation prototype and rename the follow-up branch for phase 1; source restored to the PR #2013 baseline.
+- [x] Prove authorized background holder access locally without a holder password or existing login; verify recovery lookup, deletion and replacement. Application integration and the VS job run are now verified; deployed configuration remains outstanding.
+- [x] Move Yoma token configuration/acquisition behind the identity-provider contract; preserve encrypted cache binding and separate interactive/background operations.
+- [x] Automate local acceptance-webhook registration and signing-secret synchronization in `didxme-init`; verify repeat runs and reset handling. Local platform delivery permissions remain a standalone prerequisite; deployed provisioning is coordinated with Robbie.
+- [x] Replace the additional signed tracking attribute with native wallet-ID tracking; issuance waits inline for authenticated acceptance. Local adapter proof and focused failure-path tests passed; review remains open.
+- [x] Persist issuance progress before delivery and hold uncertain outcomes for reconciliation. Accepted credentials recover by client referent; a missing wallet result after delivery starts is not permission to issue again.
+- [x] Verify the real VS job flow: signed acceptance, native wallet IDs, holder recovery, both credential families recovering with and without tracking rows, and Replay preserving the original issuance date. See the [local results](./handoffs/2026-11-10-e.md).
+- [x] Commit/push the phase-1 follow-up and open [draft PR #2025](https://github.com/didx-xyz/yoma/pull/2025).
+- [ ] Review the PR #2025 follow-up corrections and confirm the Linear review status/link; obtain approval before publishing further changes.
+- [x] Prepare private Stage-only preset refresh and Replay tooling outside the repository, with guarded SQL and isolated PostgreSQL verification. Existing Admin schema Update creates clean versions without changing public attributes. No runtime workaround or Prod cutover migration change.
+- [ ] Review and execute that procedure on Stage after deployment/configuration verification, with workers paused and drained; confirm wallet results before restoring schedules.
+- [x] Share schema definitions through the existing distributed cache and coordinate cache population/provider writes with the existing ownership-checked distributed lock. Preserve domain reflection metadata and historical schema reads; leave PATCH versioning unchanged for Stage preparation.
+- [ ] Later phase: implement YoID replacement/revocation after phase 1 is verified. Background Replay is implemented in this phase; deployed verification remains outstanding.
 - [x] Scaffold and wire the infrastructure using Yoma conventions.
 - [x] Support SDJWT for both YoID and opportunity credentials.
 - [x] Persist schema/credential mappings while retaining domain identity contracts.
@@ -39,8 +52,8 @@ security configuration and privileged workflows are held in the private engineer
 - [ ] Verify caching across deployed API replicas.
 - [x] Jason's five frontend CF references aligned (2026-11-05, this branch; see `handoffs/2026-11-05-a.md`). Staging rollout coordination still open.
 - [x] UI navigation destinations checked after the API's HTTP/HTTPS URL rule (Adrian's 2026-11-03 follow-up): "Go to opportunity" now refuses non-http(s) links and drops the opener; other data links already safe (see `handoffs/2026-11-06-a.md`).
-- [ ] REQUIRED: implement supported issuance recovery/reconciliation.
-- [ ] REQUIRED: implement background Replay lookup/deletion/confirmed absence and preserve issuance dates.
+- [x] Implement background reference recovery with explicit handling of ambiguous delivery; verified locally. Deployed verification remains required.
+- [x] Implement background Replay lookup/deletion/confirmed absence and preserve issuance dates; verified locally. Stage preparation remains outstanding.
 - [ ] Optional: shared Debug-only outbound Flurl logging, controlled by existing logging settings,
   with sensitive data redacted and no duplicated Aries handlers.
 - [x] Adrian reviewed, committed and pushed the implementation batch.
@@ -56,14 +69,31 @@ security configuration and privileged workflows are held in the private engineer
 - [x] Address the latest API review: preserve current referral accounting during administrative changes/cancellation and filter unrelated wallet types before Yoma-specific format validation. Adrian reviewed, committed and pushed this batch on PR #2013; see the consolidated 9 November handoff.
 - [x] Prepare the provider-reset seed in the current unpublished migration; verify preserved dates, current default schema selection and reset state against disposable PostgreSQL.
 - [x] Correct the reset to replace historical YoID names with `YoID|Default` across all statuses; verify both credential families resolve current defaults without changing issued dates.
-- [ ] Rehearse coordinated cutover and reissuance before Stage: drain workers, back up state, provision matching SDJWT schemas,
-  rebuild mappings and reconcile both credential families. Migration preparation does not authorize environment execution.
+- [x] Initial Stage cutover completed; Adrian confirmed tenant creation, issuance and wallet access. Phase-1 Stage cleanup/reissuance is separate work above.
 - [ ] Deferred until Stage preparation: agree rollback/retention before SRE decommissions prior provider data. A DI switch alone
   cannot restore removed data or reinterpret old provider IDs.
 - [x] Remove private integration-document versions from the feature history and delete the assessment file; coordinate collaborator resynchronization.
 
 ## Decisions
 
+- 2026-11-11 shared schema cache: cache provider definitions in Valkey, not JSON-ignored domain reflection metadata. Cache hits remain unlocked; misses recheck/populate under the same lock used to invalidate and upsert. Clear before the provider write so partial success followed by failure cannot leave the previous snapshot cached. Use a fixed TTL bounded by the shorter existing lookup expiration setting, a five-minute non-renewing lease and a thirty-second acquisition timeout. No generation marker, new infrastructure or configuration. All replicas must run this change before relying on shared invalidation; thereafter schema updates do not require a separate pod roll. Already-running readers may finish their existing snapshot; lease expiry is not fenced against an overlong operation.
+
+- 2026-11-11 Stage preparation: use the existing Admin schema Update API to explicitly create new versions with unchanged domain attributes; startup comparison cannot detect removal of an infrastructure-only attribute. Preserve historical preset mappings for wallet decoding/Replay. Convert legacy domain tracking IDs to known wallet IDs, or NULL for validated reference recovery, only in the reviewed Stage cohort. Pause workers and complete the rollout on every replica before preparation. One-off operator tooling stays outside the repository; see the [handoff](./handoffs/2026-11-11-a.md).
+
+- 2026-11-10 final review follow-up: acknowledge and log a conflicting acceptance event without replacing its confirmed wallet ID; persistence failures still propagate for retry. Reuse the resolved holder context during issuance without narrowing the recovery scan. Align token invalidation with the acquisition lock budget and preserve the original wallet failure if cache cleanup fails. Retain the existing Keycloak options registration: Adrian rejected isolated timeout validation; positive configuration remains an operator requirement. See the [follow-up handoff](./handoffs/2026-11-10-h.md).
+
+- 2026-11-10 deployment review: initialize existing issuance journal rows to `Accepted` when adding the required status column, as agreed with Adrian. This supersedes the earlier no-backfill decision: deployment precedes manual Stage preparation. New rows explicitly start as `Prepared` in the service. This does not convert legacy credential IDs or replace the manual Stage procedure. Keep the initial journal lookup/insert ReadCommitted, per Adrian's review; the existing job lock owns execution concurrency. This is not an atomic uniqueness guarantee if that lock expires or callers bypass it. Provider calls remain outside transactions. See the [latest review handoff](./handoffs/2026-11-10-g.md).
+
+- 2026-11-10 PR review: check issuance transitions against the locked current row. The identity provider decides whether a client's webhook events should be ignored; exclude all events from the dedicated assertion client before idempotency/user processing, without injecting Keycloak options into the controller. Do not classify other clients by naming conventions or confidential/service-account settings. Retain wallet-wide reference recovery and conservative delivery-error handling. Keep the agreed manual Stage preparation and direct UTC clock; see the [review dispositions](./handoffs/2026-11-10-f.md).
+
+- 2026-11-10: An accepted credential can restore the domain's native wallet ID/version/date even when its issuance journal is missing. Do not fabricate issuer/session references or recreate an incomplete journal. Reads and Replay still use the wallet ID, client referent and retained preset mapping. Issuer/session audit history is unavailable for that recovered attempt. Local jobs verified this for YoID and Opportunity; see the [local results](./handoffs/2026-11-10-e.md).
+
+- 2026-11-10 review: use DateTimeOffset.UtcNow directly, with no injected clock or clock DI. Preserve expiry/timeout coverage using real short lifetimes and expired cache fixtures. See the [implementation review handoff](./handoffs/2026-11-10-d.md) for the local proof and remaining Stage preparation.
+
+- 2026-11-10: Yoma assertion acquisition and configuration belong to the identity-provider adapter. Both token paths use the existing domain-owned provider contract; didx:me has no Keycloak project dependency or Yoma client secrets. Keep the configuration name `KeycloakAdmin.TokenExchange`. Local initialization updates this section; SRE must move deployed configuration before release. Normal issuance will wait inline for the correlated wallet event; background lookup is the recovery path, not a replacement for that event.
+
+- 2026-11-10: Local proof establishes a viable authorized background holder-access route for wallet recovery lookup and deletion. New issuer-side operations are not a prerequisite for this route, subject to deployment approval and application implementation. This supersedes the assumption that only an interim manual process is possible. No production-readiness claim: pending/in-flight issuance, retries, concurrency and deployed permissions still require implementation and verification.
+- 2026-11-10: Start phase 1 afresh. Remove last night's uncommitted revocation implementation, interface additions and tests. Phase 1 covers native issuance tracking and an explicitly limited interim recovery approach; YoID replacement/revocation is separate. No environment changes are authorized by this reset. See the [handoff](./handoffs/2026-11-10-a.md).
 - 2026-11-09: Use existing transaction/retry and row-lock patterns for referral administrative writes. Validate limits against the locked current totals; preserve cancellation cleanup. Wallet list pages retain structural validation, with Yoma format/date checks after preset matching. Keep the small reward-pool validation chains explicit rather than introducing another abstraction solely for review feedback.
 - 2026-11-09: Send required notifications/status events before inline role synchronization so
   a failed external role call cannot skip them. Preserve explicit error/retry behavior and the
@@ -116,6 +146,9 @@ security configuration and privileged workflows are held in the private engineer
 
 ## Verification / Handoff
 
+Current phase-1 evidence and deployment prerequisites are in the [local debug handoff](./handoffs/2026-11-10-e.md).
+Earlier entries below describe their respective runs and do not replace this follow-up's deployment gates.
+
 The subsequent 9 November review retains the existing application-level rejection of mapping
 deletion. Adrian rejected adding a database FK-action policy; no provider migration is added.
 The [epic handoff](../handoffs/2026-11-09-a.md#subsequent-full-review--five-new-comments)
@@ -130,7 +163,7 @@ the separate security export; it distinguishes existing fixes from findings stil
 
 The earlier SSI/Core run reported 1,023 total, zero failures/errors and one explicit test not
 run (1,022 passed). Local API issuance, list/detail, mobile-to-email continuity and caching have been exercised; this does not
-claim completion of browser/Dev or live multi-replica tests. Recovery/Replay block production use.
+claim completion of browser/Dev or live multi-replica tests. Recovery/Replay are now implemented and locally verified on draft PR #2025; deployed verification and Stage preparation remain release gates.
 
 The reset seed additionally passed disposable PostgreSQL checks for 4 tenants and 56 credential
 cases covering all six opportunity types, empty schedules and missing-lookup atomicity. The focused SSI suite passed 348 tests with

@@ -13,6 +13,11 @@ namespace Yoma.Core.Infrastructure.DidxMe.Models
   public class HolderOptions
   {
     /// <summary>
+    /// Overall token acquisition budget in seconds across Yoma and didx:me federation.
+    /// </summary>
+    public int TokenAcquisitionTimeoutSeconds { get; set; } = 150;
+
+    /// <summary>
     /// didx:me realm containing the federated Lite client and participant identities (locally
     /// consumers), appended to ProviderOptions.KeycloakBaseUri for the JWT bearer grant.
     /// </summary>

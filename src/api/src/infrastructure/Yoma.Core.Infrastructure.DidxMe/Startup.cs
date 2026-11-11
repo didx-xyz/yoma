@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.SSI.Interfaces.Provider;
@@ -31,18 +30,20 @@ namespace Yoma.Core.Infrastructure.DidxMe
 
       services.AddOptions<ProviderOptions>()
         .Bind(configuration.GetSection(ProviderOptions.Section))
-        .Validate(options => options.RequestTimeoutSeconds > 0, "DidxMe.RequestTimeoutSeconds must be positive")
-        .Validate(options => options.IssuerRequestTimeoutSeconds > 0, "DidxMe.IssuerRequestTimeoutSeconds must be positive")
-        .Validate(options => options.AccessTokenRefreshBufferSeconds >= 0, "DidxMe.AccessTokenRefreshBufferSeconds must be non-negative")
+        .Validate(options => options.RequestTimeoutSeconds > 0, $"{ProviderOptions.Section}.{nameof(ProviderOptions.RequestTimeoutSeconds)} must be positive")
+        .Validate(options => options.IssuerRequestTimeoutSeconds > 0, $"{ProviderOptions.Section}.{nameof(ProviderOptions.IssuerRequestTimeoutSeconds)} must be positive")
+        .Validate(options => options.AccessTokenRefreshBufferSeconds >= 0, $"{ProviderOptions.Section}.{nameof(ProviderOptions.AccessTokenRefreshBufferSeconds)} must be non-negative")
+        .Validate(options => options.Holder != null && options.Holder.TokenAcquisitionTimeoutSeconds > 0, $"{ProviderOptions.Section}.{nameof(ProviderOptions.Holder)}.{nameof(HolderOptions.TokenAcquisitionTimeoutSeconds)} must be positive")
+        .Validate(options => options.Webhook != null, $"{ProviderOptions.Section}.{nameof(ProviderOptions.Webhook)} is required")
+        .Validate(options => options.Webhook == null || options.Webhook.WaitTimeoutSeconds > 0 && options.Webhook.PollIntervalMilliseconds > 0 &&
+          options.Webhook.TimestampToleranceSeconds > 0, $"{ProviderOptions.Section}.{nameof(ProviderOptions.Webhook)} timeouts and polling interval must be positive")
         .ValidateOnStart();
 
-      services.TryAddSingleton(TimeProvider.System);
       // Issuer tokens stay in process. Scoped holder auth uses Yoma's shared encrypted cache and
       // Data Protection key ring, retaining only the current request's token for paging.
       services.AddSingleton<IIssuerAuthService, IssuerAuthService>();
       services.AddScoped<IHolderAuthService, HolderAuthService>();
-      services.AddScoped<WalletClient>();
-      services.AddScoped<BackgroundWalletService>();
+      services.AddScoped<IWalletClient, WalletClient>();
     }
 
     /// <summary>
@@ -56,6 +57,13 @@ namespace Yoma.Core.Infrastructure.DidxMe
       AppSettings appSettings)
     {
       services.ConfigureServices_DidxMe(configuration);
+
+      // Local SSI opt-out must still boot without a provisioned webhook secret.
+      services.AddOptions<ProviderOptions>()
+        .Validate<IEnvironmentProvider>((options, environment) =>
+          !appSettings.SSIEnabledEnvironmentsAsEnum.HasFlag(environment.Environment) ||
+          WebhookParser.IsSigningSecretValid(options.Webhook?.SigningSecret),
+          $"{ProviderOptions.Section}.{nameof(ProviderOptions.Webhook)}.{nameof(WebhookOptions.SigningSecret)} must be a valid webhook signing secret when SSI is enabled");
 
       services.AddDbContext<ProviderDbContext>((sp, options) =>
       {
@@ -74,12 +82,15 @@ namespace Yoma.Core.Infrastructure.DidxMe
       services.AddScoped<IRepository<IssuanceMapping>, IssuanceMappingRepository>();
 
       // Transport and services
-      services.AddScoped<IssuerClient>();
-      services.AddScoped<PresetService>();
-      services.AddScoped<HolderContextService>();
+      services.AddScoped<IIssuerClient, IssuerClient>();
+      services.AddScoped<IPresetService, PresetService>();
+      services.AddScoped<IHolderService, HolderService>();
+      services.AddScoped<IWebhookParser, WebhookParser>();
+      services.AddScoped<IProviderExecutionStrategyService, ExecutionStrategyService>();
+      services.AddScoped<IIssuanceTrackingService, IssuanceTrackingService>();
 
       // Provider
-      services.AddScoped<ProviderClient>();
+      services.AddScoped<ISSIProviderClient, ProviderClient>();
       services.AddScoped<ISSIProviderClientFactory, ProviderClientFactory>();
     }
 

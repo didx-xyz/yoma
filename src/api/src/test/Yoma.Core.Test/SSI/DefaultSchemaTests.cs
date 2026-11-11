@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Newtonsoft.Json;
+using System.Collections.Concurrent;
 using System.Reflection;
 using System.Security.Claims;
 using Xunit;
@@ -585,6 +586,35 @@ namespace Yoma.Core.Test.SSI
       Assert.Contains("MyOpportunity_UserDateOfBirth", Attributes(await fixture.Service.GetById(original.Id)));
       Assert.Contains("MyOpportunity_DateCompleted", Attributes(await fixture.Service.GetById(original.Id)));
       Assert.Equal(7, fixture.Schemas.Count);
+    }
+
+    [Fact]
+    public async Task ExplicitUpdateVersionsUnchangedSchemasWhileAutomaticSeedingReusesThem()
+    {
+      using var fixture = new Fixture();
+      fixture.Provider.Setup(provider => provider.GetDefaultArtifactType(It.IsAny<SchemaType>())).Returns(ArtifactType.SDJWT);
+      await fixture.Background.SeedSchemas();
+      var originals = (await fixture.Service.List((SchemaType?)null)).ToList();
+      Assert.Equal(6, originals.Count);
+
+      foreach (var original in originals)
+      {
+        var updated = await fixture.Service.Update(new SSISchemaRequestUpdate
+        {
+          Name = original.Name,
+          Attributes = [.. Attributes(original)]
+        });
+
+        Assert.Equal(original.Name, updated.Name);
+        Assert.Equal(new Version(1, 1), updated.Version);
+        Assert.NotEqual(original.Id, updated.Id);
+        Assert.True(Attributes(original).SetEquals(Attributes(updated)));
+        Assert.Equal(original.Version, (await fixture.Service.GetById(original.Id)).Version);
+      }
+
+      await fixture.Background.SeedSchemas();
+      Assert.Equal(12, fixture.Schemas.Count);
+      fixture.AssertNoErrors();
     }
 
     [Fact]
@@ -1439,6 +1469,175 @@ namespace Yoma.Core.Test.SSI
         .OrderBy(order => order ?? int.MaxValue),
         group.Select(attribute => attribute.SortOrder)));
     }
+
+    [Fact]
+    public async Task SharedSchemaCacheRetainsIssuanceMetadataAndInvalidatesAcrossServices()
+    {
+      using var fixture = new Fixture();
+      await fixture.Background.SeedSchemas();
+      fixture.AssertNoErrors();
+      fixture.Settings.CacheEnabledByCacheItemTypes = "Lookups";
+      var otherService = fixture.CreateSchemaService();
+      var original = await fixture.Service.GetByFullName("Opportunity|Event|Default");
+      fixture.Provider.Invocations.Clear();
+
+      var cached = await otherService.GetByFullName(original.Name);
+      Assert.Equal(original.Version, cached.Version);
+      Assert.Equal(JsonConvert.SerializeObject(original), JsonConvert.SerializeObject(cached));
+      foreach (var entity in original.Entities)
+      {
+        var restored = cached.Entities.Single(item => item.Id == entity.Id);
+        Assert.Equal(entity.TypeName, restored.TypeName);
+        foreach (var property in entity.Properties!)
+        {
+          var restoredProperty = restored.Properties!.Single(item => item.Id == property.Id);
+          Assert.Equal(property.Name, restoredProperty.Name);
+          Assert.Equal(property.DotNetType, restoredProperty.DotNetType);
+          Assert.Equal(property.SystemType, restoredProperty.SystemType);
+          Assert.Equal(property.Format, restoredProperty.Format);
+        }
+      }
+      fixture.Provider.Verify(provider => provider.ListSchemas(false), Times.Never);
+      fixture.Cache.Verify(cache => cache.GetOrCreateAsync(It.IsAny<string>(), It.IsAny<Func<Task<List<Schema>>>>(),
+        null, TimeSpan.FromHours(1)), Times.Once);
+
+      var updated = await fixture.Service.Update(new SSISchemaRequestUpdate
+      {
+        Name = original.Name,
+        Attributes = [.. Attributes(original)]
+      });
+
+      Assert.Equal(updated.Id, (await otherService.GetByFullName(original.Name)).Id);
+      Assert.Equal(original.Id, (await otherService.GetById(original.Id)).Id);
+      fixture.Provider.Verify(provider => provider.ListSchemas(false), Times.Once);
+    }
+
+    [Fact]
+    public async Task DisabledSchemaCacheReadsProviderWithoutPopulatingSharedCache()
+    {
+      using var fixture = new Fixture();
+      await fixture.Background.SeedSchemas();
+      fixture.Provider.Invocations.Clear();
+      fixture.Cache.Invocations.Clear();
+
+      await fixture.Service.GetByFullName("YoID|Default");
+      await fixture.Service.GetByFullName("YoID|Default");
+
+      fixture.Provider.Verify(provider => provider.ListSchemas(false), Times.Exactly(2));
+      Assert.Empty(fixture.Cache.Invocations);
+    }
+
+    [Fact]
+    public async Task SchemaCreationInvalidatesAnEmptySharedCache()
+    {
+      using var fixture = new Fixture();
+      fixture.Settings.CacheEnabledByCacheItemTypes = "Lookups";
+      var otherService = fixture.CreateSchemaService();
+      Assert.Empty(await otherService.List(null));
+
+      var created = await fixture.Service.Create(new SSISchemaRequestCreate
+      {
+        TypeId = fixture.Entities.SelectMany(entity => entity.Types!).First(type => type.Type == SchemaType.YoID).Id,
+        Name = "Default",
+        ArtifactType = ArtifactType.SDJWT,
+        Attributes = ["User_DisplayName"]
+      });
+
+      Assert.Equal(created.Id, (await otherService.GetByFullName(created.Name)).Id);
+    }
+
+    [Fact]
+    public async Task InFlightCacheFillCannotLeaveStaleSchemasAfterUpdate()
+    {
+      using var fixture = new Fixture();
+      await fixture.Background.SeedSchemas();
+      var original = await fixture.Service.GetByFullName("YoID|Default");
+      fixture.Settings.CacheEnabledByCacheItemTypes = "Lookups";
+      var otherService = fixture.CreateSchemaService();
+      var loading = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+      var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+      var reads = 0;
+      fixture.Provider.Setup(provider => provider.ListSchemas(false)).Returns(async () =>
+      {
+        var snapshot = fixture.Schemas.ToList();
+        if (Interlocked.Increment(ref reads) == 1)
+        {
+          loading.SetResult();
+          await release.Task;
+        }
+        return snapshot;
+      });
+
+      var read = fixture.Service.GetByFullName(original.Name);
+      await loading.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+      var update = otherService.Update(new SSISchemaRequestUpdate
+      {
+        Name = original.Name,
+        Attributes = [.. Attributes(original)]
+      });
+      Assert.False(update.IsCompleted);
+      release.SetResult();
+
+      await Task.WhenAll(read, update).WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+      Assert.Equal(original.Id, (await read).Id);
+      Assert.Equal((await update).Id, (await fixture.Service.GetByFullName(original.Name)).Id);
+      Assert.Equal(2, reads);
+    }
+
+    [Fact]
+    public async Task ProviderWriteFollowedByFailureDoesNotLeaveOldSchemasCached()
+    {
+      using var fixture = new Fixture();
+      await fixture.Background.SeedSchemas();
+      fixture.Settings.CacheEnabledByCacheItemTypes = "Lookups";
+      var original = await fixture.Service.GetByFullName("YoID|Default");
+      fixture.Provider.Setup(provider => provider.UpsertSchema(It.IsAny<SchemaRequest>()))
+        .Returns((SchemaRequest request) =>
+        {
+          fixture.Schemas.Add(new Schema
+          {
+            Id = "accepted-before-response-failed",
+            Name = request.Name,
+            Version = new Version(1, 1),
+            ArtifactType = ArtifactType.ACR,
+            AttributeNames = request.Attributes
+          });
+          throw new InvalidOperationException("Response failed after provider persistence");
+        });
+
+      await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.Service.Update(new SSISchemaRequestUpdate
+      {
+        Name = original.Name,
+        Attributes = [.. Attributes(original)]
+      }));
+      Assert.Equal("accepted-before-response-failed", (await fixture.CreateSchemaService().GetByFullName(original.Name)).Id);
+    }
+
+    [Fact]
+    public async Task BusySchemaLockNeverFallsBackToUnlockedReadsOrWrites()
+    {
+      using var fixture = new Fixture();
+      await fixture.Background.SeedSchemas();
+      fixture.Settings.CacheEnabledByCacheItemTypes = "Lookups";
+      var original = await fixture.Service.GetByFullName("YoID|Default");
+      fixture.Lock.Setup(service => service.TryRunWithLockAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(),
+        It.IsAny<TimeSpan>(), It.IsAny<Func<Task>>(), It.IsAny<CancellationToken>(), It.IsAny<string>()))
+        .ReturnsAsync(false);
+      fixture.Provider.Invocations.Clear();
+
+      await Assert.ThrowsAsync<TimeoutException>(() => fixture.Service.Update(new SSISchemaRequestUpdate
+      {
+        Name = original.Name,
+        Attributes = [.. Attributes(original)]
+      }));
+      fixture.Provider.Verify(provider => provider.UpsertSchema(It.IsAny<SchemaRequest>()), Times.Never);
+      Assert.Equal(original.Id, (await fixture.Service.GetByFullName(original.Name)).Id);
+
+      await fixture.Cache.Object.RemoveAsync(Domain.Core.Helpers.CacheHelper.GenerateKey<Schema>());
+      await Assert.ThrowsAsync<TimeoutException>(() => fixture.Service.GetByFullName(original.Name));
+      fixture.Provider.Verify(provider => provider.ListSchemas(false), Times.Never);
+    }
+
     #endregion Tests
 
     #region Private Members
@@ -1455,12 +1654,17 @@ namespace Yoma.Core.Test.SSI
       private readonly Mock<ILogger<SSIBackgroundService>> _logger = new();
       private readonly Mock<ICustomFieldDefinitionService> _definitionService = new();
       private readonly Mock<ICustomFieldValueService> _valueService = new();
+      private readonly SemaphoreSlim _schemaLock = new(1, 1);
+      private readonly ConcurrentDictionary<string, string> _distributedValues = new();
+      private readonly Func<SSISchemaService> _createSchemaService;
 
       public AppSettings Settings { get; } = new()
       {
         SSIEnabledEnvironments = "Local",
         SSISchemaFullNameYoID = "YoID|Default",
-        CacheEnabledByCacheItemTypes = "None"
+        CacheEnabledByCacheItemTypes = "None",
+        CacheSlidingExpirationInHours = 1,
+        CacheAbsoluteExpirationRelativeToNowInDays = 1
       };
 
       public List<Schema> Schemas { get; } = [];
@@ -1468,6 +1672,7 @@ namespace Yoma.Core.Test.SSI
       public List<CustomFieldDefinition> Definitions { get; }
       public Mock<ISSIProviderClient> Provider { get; } = new();
       public Mock<IDistributedLockService> Lock { get; } = new();
+      public Mock<IDistributedCacheService> Cache { get; } = new();
       public SSISchemaEntityService EntityService { get; }
       public SSISchemaService Service { get; }
       public SSIBackgroundService Background { get; }
@@ -1476,6 +1681,41 @@ namespace Yoma.Core.Test.SSI
 
       public Fixture()
       {
+        Cache.Setup(cache => cache.GetAsync<List<Schema>>(It.IsAny<string>()))
+          .ReturnsAsync((string key) => _distributedValues.TryGetValue(key, out var value)
+            ? JsonConvert.DeserializeObject<List<Schema>>(value) : null);
+        Cache.Setup(cache => cache.GetOrCreateAsync(It.IsAny<string>(), It.IsAny<Func<Task<List<Schema>>>>(),
+          It.IsAny<TimeSpan?>(), It.IsAny<TimeSpan?>()))
+          .Returns(async (string key, Func<Task<List<Schema>>> provider, TimeSpan? sliding, TimeSpan? absolute) =>
+          {
+            if (_distributedValues.TryGetValue(key, out var value))
+              return JsonConvert.DeserializeObject<List<Schema>>(value)!;
+
+            var result = await provider();
+            _distributedValues[key] = JsonConvert.SerializeObject(result);
+            return result;
+          });
+        Cache.Setup(cache => cache.RemoveAsync(It.IsAny<string>()))
+          .Returns((string key) =>
+          {
+            _distributedValues.TryRemove(key, out _);
+            return Task.CompletedTask;
+          });
+        Lock.Setup(service => service.TryRunWithLockAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(),
+          It.IsAny<TimeSpan>(), It.IsAny<Func<Task>>(), It.IsAny<CancellationToken>(), It.IsAny<string>()))
+          .Returns(async (string key, TimeSpan duration, TimeSpan timeout, Func<Task> action, CancellationToken token, string process) =>
+          {
+            if (!await _schemaLock.WaitAsync(timeout, token)) return false;
+            try
+            {
+              await action();
+              return true;
+            }
+            finally
+            {
+              _schemaLock.Release();
+            }
+          });
         _logger.Setup(logger => logger.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
 
         Definitions = CustomFieldFixtureData.CreateDefinitions();
@@ -1518,9 +1758,10 @@ namespace Yoma.Core.Test.SSI
         Provider.Setup(provider => provider.GetDefaultArtifactType(SchemaType.Opportunity)).Returns(ArtifactType.JWS);
         Provider.Setup(provider => provider.GetDefaultArtifactType(SchemaType.YoID)).Returns(ArtifactType.ACR);
         RestoreProviderWrites();
-        Service = new SSISchemaService(Options.Create(Settings), _cache, factory.Object, EntityService,
+        _createSchemaService = () => new SSISchemaService(Options.Create(Settings), Cache.Object, Lock.Object, factory.Object, EntityService,
           _definitionService.Object, typeService.Object, new SchemaRequestValidatorCreate(EntityService, typeService.Object),
           new SchemaRequestValidatorUpdate(EntityService));
+        Service = _createSchemaService();
         var environment = new Mock<IEnvironmentProvider>();
         environment.SetupGet(provider => provider.Environment).Returns(Domain.Core.Environment.Local);
         Lock.Setup(service => service.TryAcquireLockAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<string>())).ReturnsAsync(true);
@@ -1529,6 +1770,8 @@ namespace Yoma.Core.Test.SSI
           Mock.Of<ISSITenantService>(), Mock.Of<ISSICredentialService>(), Lock.Object,
           Mock.Of<Microsoft.Extensions.Hosting.IHostApplicationLifetime>(), factory.Object);
       }
+
+      public SSISchemaService CreateSchemaService() => _createSchemaService();
 
       public void Map<T>(CredentialIssuanceRequest request, SSISchema schema, T entity) where T : class
       {
@@ -1604,7 +1847,11 @@ namespace Yoma.Core.Test.SSI
         return await wallet.GetUserCredentialById(credential.Id);
       }
 
-      public void Dispose() => _cache.Dispose();
+      public void Dispose()
+      {
+        _cache.Dispose();
+        _schemaLock.Dispose();
+      }
 
     }
     #endregion Private Members
