@@ -86,6 +86,8 @@ security configuration and privileged workflows are held in the private engineer
 
 ## Decisions
 
+- 2026-11-11, PR #2027 CI follow-up: repeated e2e runs failed before tests started because the hosted runner could not resolve its Azure Ubuntu package mirror. Use the official HTTPS Ubuntu archive/security mirrors in the disposable e2e runner's existing apt mirror list before Playwright installs dependencies. Keep test execution and apt signature verification unchanged; hosted validation is pending the next push.
+
 - 2026-11-11, wallet verification decision: supersedes the initial UI placeholder plan. Provider receipt verification plus current lifecycle checks supplies the display result. Add Expired from signed expiry, with confirmed Revoked taking precedence; both map to Invalid. No fresh signature verification on each view. This is not authorization or proof acceptance. See the updated UI handover.
 
 - 2026-11-11 wallet review: lifecycle status comes from each provider adapter, not domain issuance history. Shared `CredentialStatus` is `Unknown` / `Issued` / `Revoked`. didx:me resolves the correlated issuer credential; Aries requests revocation checks for AnonCreds and reports non-revocable local JWS as issued. Missing correlation or failed status checks remain unknown. Keep native provider enums separate: wallet acceptance and issuer offers are different contracts. See the replacement handoff for read costs and UI handling.

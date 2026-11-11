@@ -413,6 +413,9 @@ jobs:
       - name: Install web dependencies and Chromium
         if: steps.should-run.outputs.run == 'true'
         run: |-
+          # Avoid the runner's unreliable Azure mirror when Playwright installs Ubuntu packages.
+          # Keep apt's signed sources; only change the mirrors used by this disposable runner.
+          printf '%s\n' 'https://archive.ubuntu.com/ubuntu' 'https://security.ubuntu.com/ubuntu' | sudo tee /etc/apt/apt-mirrors.txt > /dev/null
           pnpm install --frozen-lockfile
           pnpm --filter yoma-web exec playwright install --with-deps chromium
       - name: Playwright e2e
