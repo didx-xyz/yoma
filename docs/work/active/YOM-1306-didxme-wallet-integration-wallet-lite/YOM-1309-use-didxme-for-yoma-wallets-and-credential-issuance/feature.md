@@ -43,8 +43,8 @@ security configuration and privileged workflows are held in the private engineer
 - [x] Verify the automated regression suite and apply the new migration to an isolated PostgreSQL database containing an issued credential.
 - [x] Review the uncommitted YoID replacement change and run live profile-change/revocation/reissuance tests against local didx:me, including unchanged/unrelated edits, provider status, retained history and retry recovery. See the [local test results](./handoffs/2026-11-11-c.md#live-local-docker-results).
 - [ ] Obtain commit/PR approval, coordinate wallet status tags with Jason and verify the replacement flow after deployment. Cryptographic proof validation has not been exercised.
-- [x] Separate list lifecycle badges from detail verification presentation. Add detail-only verificationStatus with the explicitly requested temporary Verified assumption for Issued credentials; retain Invalid for known revocation and Unknown when lifecycle is unknown. See the [UI handover](./handoffs/2026-11-11-c.md#jason--wallet-status-tags).
-- [ ] Investigate and integrate actual verification on credential detail viewing, replacing the temporary assumption. Cover trusted issuer/signature, disclosures, validity dates, revocation and unavailable checks; keep list requests free of verification work.
+- [x] Separate list lifecycle badges from detail verification status: Issued maps to Verified, Revoked/Expired to Invalid and Unknown to Unknown. See the [UI handover](./handoffs/2026-11-11-c.md#jason--wallet-status-tags).
+- [x] Resolve wallet validity through provider receipt verification plus current revocation and signed-expiry checks; no repeated cryptographic verification on view. Presentation/proof verification remains separate.
 - [x] Scaffold and wire the infrastructure using Yoma conventions.
 - [x] Support SDJWT for both YoID and opportunity credentials.
 - [x] Persist schema/credential mappings while retaining domain identity contracts.
@@ -86,7 +86,7 @@ security configuration and privileged workflows are held in the private engineer
 
 ## Decisions
 
-- 2026-11-11, detail verification follow-up: keep lifecycle status on wallet cards; add separate detail-only verificationStatus with Verified, Invalid and Unknown. Revoked lifecycle means Invalid verification, not Withdrawn; an unavailable result remains Unknown. At Adrian's explicit request, Issued temporarily maps to Verified for UI preparation until actual detail verification is integrated. This is a presentation assumption and must not authorize any action. See the updated UI handover for rollout behavior.
+- 2026-11-11, wallet verification decision: supersedes the initial UI placeholder plan. Provider receipt verification plus current lifecycle checks supplies the display result. Add Expired from signed expiry, with confirmed Revoked taking precedence; both map to Invalid. No fresh signature verification on each view. This is not authorization or proof acceptance. See the updated UI handover.
 
 - 2026-11-11 wallet review: lifecycle status comes from each provider adapter, not domain issuance history. Shared `CredentialStatus` is `Unknown` / `Issued` / `Revoked`. didx:me resolves the correlated issuer credential; Aries requests revocation checks for AnonCreds and reports non-revocable local JWS as issued. Missing correlation or failed status checks remain unknown. Keep native provider enums separate: wallet acceptance and issuer offers are different contracts. See the replacement handoff for read costs and UI handling.
 - 2026-11-11 review: use explicit `Reissue` status for queued attribute comparisons and their retries. Unchanged credentials return to `Issued`; changed credentials move to `Revoke`. Pending/Replay work retains its status and records the refresh marker until successful issuance promotes it to `Reissue`. The marker also protects a newer profile change from an older comparison.

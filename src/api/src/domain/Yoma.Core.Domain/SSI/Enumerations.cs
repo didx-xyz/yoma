@@ -40,8 +40,8 @@ namespace Yoma.Core.Domain.SSI
     Unknown,
 
     /// <summary>
-    /// The provider reports the credential as issued and not revoked, or it is non-revocable.
-    /// This does not replace expiry, signature or proof verification.
+    /// The provider reports the credential as issued and not revoked, or it is non-revocable,
+    /// and any declared credential expiry has not passed. This is not a fresh proof verification.
     /// </summary>
     Issued,
 
@@ -49,7 +49,13 @@ namespace Yoma.Core.Domain.SSI
     /// The provider confirms credential revocation.
     /// Its wallet copy remains visible with this status until deletion succeeds.
     /// </summary>
-    Revoked
+    Revoked,
+
+    /// <summary>
+    /// The credential's signed expiry has passed. Confirmed revocation takes precedence.
+    /// Its wallet copy remains visible while stored by the provider.
+    /// </summary>
+    Expired
   }
 
   public enum CredentialVerificationStatus
@@ -61,13 +67,13 @@ namespace Yoma.Core.Domain.SSI
     Unknown,
 
     /// <summary>
-    /// Positive verification presentation result. Temporarily assumed for issued credentials
-    /// until actual verification is integrated; not evidence of a completed cryptographic check.
+    /// Wallet display result relying on the provider's issuance/receipt verification and current
+    /// lifecycle checks. This is not a fresh signature check or a verified presentation.
     /// </summary>
     Verified,
 
     /// <summary>
-    /// The credential cannot pass verification, including confirmed revocation.
+    /// The credential is invalid for use due to confirmed revocation or expiry.
     /// </summary>
     Invalid
   }

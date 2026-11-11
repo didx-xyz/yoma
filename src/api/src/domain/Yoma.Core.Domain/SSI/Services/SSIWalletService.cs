@@ -54,26 +54,15 @@ namespace Yoma.Core.Domain.SSI.Services
 
       var result = await ParseCredential<SSICredential>(item);
 
-      // TODO YOM-1309: replace the temporary issued-credential assumption with actual verification
-      // on detail reads only. Never use this presentation placeholder to authorize a proof or action.
-      switch (result.Status)
+      // The provider owns receipt verification and lifecycle checks. This wallet display result
+      // does not replace verification of a presentation when the credential is used.
+      result.VerificationStatus = result.Status switch
       {
-        case CredentialStatus.Issued:
-          result.VerificationStatus = CredentialVerificationStatus.Verified;
-          break;
-
-        case CredentialStatus.Revoked:
-          result.VerificationStatus = CredentialVerificationStatus.Invalid;
-          break;
-
-        case CredentialStatus.Unknown:
-          result.VerificationStatus = CredentialVerificationStatus.Unknown;
-          break;
-
-        default:
-          throw new NotSupportedException($"Credential status '{result.Status}' not supported");
-      }
-
+        CredentialStatus.Issued => CredentialVerificationStatus.Verified,
+        CredentialStatus.Revoked or CredentialStatus.Expired => CredentialVerificationStatus.Invalid,
+        CredentialStatus.Unknown => CredentialVerificationStatus.Unknown,
+        _ => throw new NotSupportedException($"Credential status '{result.Status}' not supported"),
+      };
       return result;
     }
 

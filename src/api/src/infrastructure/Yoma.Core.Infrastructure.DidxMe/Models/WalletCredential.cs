@@ -21,6 +21,12 @@ namespace Yoma.Core.Infrastructure.DidxMe.Models
     [JsonProperty("iat")]
     public DateTimeOffset? DateIssued { get; set; }
 
+    /// <summary>
+    /// Optional signed credential expiry returned by the provider; absent means no expiry is declared.
+    /// </summary>
+    [JsonProperty("exp")]
+    public DateTimeOffset? DateExpire { get; set; }
+
     public JObject Claims { get; set; } = null!;
   }
 }

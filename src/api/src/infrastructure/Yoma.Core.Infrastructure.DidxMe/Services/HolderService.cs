@@ -90,8 +90,10 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
     public async Task<Credential> GetCredentialById(string tenantId, string id)
     {
       var context = await GetContext(tenantId);
-      var result = await GetCredential(context, id);
-      result.Status = await GetCredentialStatus(context.HolderId, result);
+      var credential = await _wallet.GetCredential(context, id);
+      var result = Map(credential)
+        ?? throw new EntityNotFoundException("The credential has no Yoma preset mapping");
+      result.Status = await GetCredentialStatus(context.HolderId, result, credential.DateExpire);
       return result;
     }
 
@@ -102,10 +104,16 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
     public async Task<List<Credential>> ListCredentials(string tenantId)
     {
       var context = await GetContext(tenantId);
-      var result = (await List(context)).Select(Map).OfType<Credential>().ToList();
+      var result = new List<Credential>();
 
-      foreach (var credential in result)
-        credential.Status = await GetCredentialStatus(context.HolderId, credential);
+      foreach (var credential in await List(context))
+      {
+        var item = Map(credential);
+        if (item == null) continue;
+
+        item.Status = await GetCredentialStatus(context.HolderId, item, credential.DateExpire);
+        result.Add(item);
+      }
 
       return result;
     }
@@ -235,17 +243,21 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
     #region Private Members
     /// <summary>
     /// Resolve lifecycle status from the issuer; wallet acceptance does not establish revocation state.
-    /// Missing correlation or an unavailable issuer leaves the status unknown.
+    /// Confirmed revocation takes precedence over signed expiry. Without a known expiry,
+    /// missing correlation or an unavailable issuer leaves the status unknown.
     /// </summary>
-    private async Task<CredentialStatus> GetCredentialStatus(string holderId, Credential credential)
+    private async Task<CredentialStatus> GetCredentialStatus(string holderId, Credential credential, DateTimeOffset? dateExpire)
     {
+      var expired = dateExpire.HasValue && dateExpire.Value <= DateTimeOffset.UtcNow;
+      var fallback = expired ? CredentialStatus.Expired : CredentialStatus.Unknown;
+
       if (!credential.Attributes.TryGetValue(SSISchemaService.SchemaAttribute_Internal_ReferentClient, out var referent) ||
-        string.IsNullOrWhiteSpace(referent)) return CredentialStatus.Unknown;
+        string.IsNullOrWhiteSpace(referent)) return fallback;
 
       var mapping = _tracking.Find(holderId, new(SSISchemaService.SchemaAttribute_Internal_ReferentClient, referent));
       if (mapping == null || mapping.WalletCredentialId != credential.Id || mapping.PresetMappingId != credential.SchemaId ||
         string.IsNullOrWhiteSpace(mapping.IssuanceId) || string.IsNullOrWhiteSpace(mapping.IssuerCredentialId))
-        return CredentialStatus.Unknown;
+        return fallback;
 
       IssuanceResponse issuance;
       try
@@ -256,23 +268,23 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
       {
         if (_logger.IsEnabled(LogLevel.Warning))
           _logger.LogWarning("Unable to resolve credential lifecycle status; issuer returned HTTP {statusCode}", ex.StatusCode);
-        return CredentialStatus.Unknown;
+        return fallback;
       }
 
       var issued = issuance.Credentials?.SingleOrDefault(item => item.Id == mapping.IssuerCredentialId);
       if (issued == null || !Enum.TryParse<IssuerCredentialStatus>(issued.Status, true, out var status))
-        return CredentialStatus.Unknown;
+        return fallback;
 
       switch (status)
       {
         case IssuerCredentialStatus.Issued:
-          return CredentialStatus.Issued;
+          return expired ? CredentialStatus.Expired : CredentialStatus.Issued;
 
         case IssuerCredentialStatus.Revoked:
           return CredentialStatus.Revoked;
 
         case IssuerCredentialStatus.Offered:
-          return CredentialStatus.Unknown;
+          return fallback;
 
         default:
           throw new NotSupportedException($"Issuer credential status '{status}' is not supported");

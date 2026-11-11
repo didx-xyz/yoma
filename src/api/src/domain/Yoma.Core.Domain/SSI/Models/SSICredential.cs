@@ -4,7 +4,7 @@ namespace Yoma.Core.Domain.SSI.Models
   {
     /// <summary>
     /// Detail-only verification presentation status, separate from the provider lifecycle status.
-    /// Currently a compatibility placeholder; actual credential verification is not yet performed.
+    /// Relies on provider issuance/receipt verification and current lifecycle checks, not a fresh proof.
     /// </summary>
     public CredentialVerificationStatus VerificationStatus { get; set; }
   }

@@ -41,6 +41,62 @@ namespace Yoma.Core.Test.SSI.DidxMe
 
     #region Tests
     [Theory]
+    [InlineData("issued", -1, CredentialStatus.Expired)]
+    [InlineData("issued", 0, CredentialStatus.Expired)]
+    [InlineData("issued", 1, CredentialStatus.Issued)]
+    [InlineData("issued", null, CredentialStatus.Issued)]
+    [InlineData("revoked", -1, CredentialStatus.Revoked)]
+    [InlineData("offered", -1, CredentialStatus.Expired)]
+    [InlineData(null, -1, CredentialStatus.Expired)]
+    public async Task WalletExpiryAndRevocationResolveConsistentlyForListAndDetail(string? issuerStatus,
+      int? expiryDays, CredentialStatus expected)
+    {
+      using var http = new HttpTest().WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
+      var fixture = new Fixture(http) { UseDefaultWalletResponses = false };
+      fixture.AddAcceptedMapping().DeliveryCompleted = false;
+      var credential = JObject.FromObject(Fixture.WalletCredential(WalletId));
+      if (expiryDays.HasValue) credential["exp"] = DateTimeOffset.UtcNow.AddDays(expiryDays.Value).ToString("O");
+
+      http.ForCallsTo("https://wallet.test/api/v2/credentials?*")
+        .RespondWithJson(new { data = new[] { credential } });
+      http.ForCallsTo("https://wallet.test/api/v2/credentials/" + WalletId)
+        .RespondWithJson(new { data = credential });
+      http.ForCallsTo("https://creds.test/api/v1/issuances/revoke-session").RespondWithJson(new
+      {
+        data = new
+        {
+          id = "revoke-session",
+          credentials = new[] { new { id = "revoke-credential", status = issuerStatus } }
+        }
+      });
+
+      Assert.Equal(expected, Assert.Single((await fixture.Client.ListCredentials(HolderId))!).Status);
+      Assert.Equal(expected, (await fixture.Client.GetCredentialById(HolderId, WalletId)).Status);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task KnownExpiryRemainsInvalidWithoutIssuerStatus(bool hasMapping)
+    {
+      using var http = new HttpTest().WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
+      var fixture = new Fixture(http) { UseDefaultWalletResponses = false };
+      if (hasMapping) fixture.AddAcceptedMapping().DeliveryCompleted = false;
+      var credential = JObject.FromObject(Fixture.WalletCredential(WalletId));
+      credential["exp"] = DateTimeOffset.UtcNow.AddDays(-1).ToString("O");
+
+      http.ForCallsTo("https://wallet.test/api/v2/credentials?*")
+        .RespondWithJson(new { data = new[] { credential } });
+      http.ForCallsTo("https://wallet.test/api/v2/credentials/" + WalletId)
+        .RespondWithJson(new { data = credential });
+      http.ForCallsTo("https://creds.test/api/v1/issuances/revoke-session").RespondWith(status: 503);
+
+      Assert.Equal(CredentialStatus.Expired, Assert.Single((await fixture.Client.ListCredentials(HolderId))!).Status);
+      Assert.Equal(CredentialStatus.Expired, (await fixture.Client.GetCredentialById(HolderId, WalletId)).Status);
+      if (!hasMapping) http.ShouldNotHaveCalled("https://creds.test/api/v1/issuances/*");
+    }
+
+    [Theory]
     [InlineData("issued", CredentialStatus.Issued)]
     [InlineData("revoked", CredentialStatus.Revoked)]
     [InlineData("offered", CredentialStatus.Unknown)]

@@ -32,6 +32,7 @@ namespace Yoma.Core.Test.SSI
     [InlineData(CredentialStatus.Unknown)]
     [InlineData(CredentialStatus.Issued)]
     [InlineData(CredentialStatus.Revoked)]
+    [InlineData(CredentialStatus.Expired)]
     public async Task ListAndDetailPreserveProviderStatus(CredentialStatus status)
     {
       var fixture = new Fixture(SchemaType.YoID, null, null);
@@ -48,8 +49,9 @@ namespace Yoma.Core.Test.SSI
     [Theory]
     [InlineData(CredentialStatus.Issued, CredentialVerificationStatus.Verified)]
     [InlineData(CredentialStatus.Revoked, CredentialVerificationStatus.Invalid)]
+    [InlineData(CredentialStatus.Expired, CredentialVerificationStatus.Invalid)]
     [InlineData(CredentialStatus.Unknown, CredentialVerificationStatus.Unknown)]
-    public async Task VerificationPlaceholderIsDetailOnlyAndRespectsLifecycle(CredentialStatus status,
+    public async Task VerificationStatusIsDetailOnlyAndRespectsLifecycle(CredentialStatus status,
       CredentialVerificationStatus expected)
     {
       var fixture = new Fixture(SchemaType.YoID, null, null);
@@ -75,7 +77,7 @@ namespace Yoma.Core.Test.SSI
     }
 
     [Fact]
-    public async Task UndefinedLifecycleCannotReceiveAVerifiedPlaceholder()
+    public async Task UndefinedLifecycleCannotReceiveAVerifiedStatus()
     {
       var fixture = new Fixture(SchemaType.YoID, null, null);
       fixture.Credential.Status = (CredentialStatus)999;
@@ -123,6 +125,7 @@ namespace Yoma.Core.Test.SSI
     [InlineData(CredentialStatus.Unknown)]
     [InlineData(CredentialStatus.Issued)]
     [InlineData(CredentialStatus.Revoked)]
+    [InlineData(CredentialStatus.Expired)]
     public void ListAndDetailSerializeLifecycleStatusAsAnEnumName(CredentialStatus status)
     {
       var settings = new JsonSerializerSettings { ContractResolver = new CamelCasePropertyNamesContractResolver() };
