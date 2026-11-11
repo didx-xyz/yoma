@@ -80,10 +80,10 @@ namespace Yoma.Core.Test.SSI
         tenantStatuses.Setup(value => value.GetByName(It.IsAny<string>())).Returns(new SSITenantCreationStatus { Id = Guid.Empty });
         var participations = new Mock<IRepositoryBatchedWithNavigationAndCustomFieldFilter<Domain.MyOpportunity.Models.MyOpportunity>>();
         participations.Setup(value => value.Query()).Returns(context.MyOpportunity.Select(value => new Domain.MyOpportunity.Models.MyOpportunity
-          { Id = value.Id, UserId = value.UserId, OrganizationId = value.Opportunity.OrganizationId }));
+        { Id = value.Id, UserId = value.UserId, OrganizationId = value.Opportunity.OrganizationId }));
         var tenants = new Mock<IRepository<SSITenantCreation>>();
         tenants.Setup(value => value.Query()).Returns(context.SSITenantCreation.Select(value => new SSITenantCreation
-          { Id = value.Id, StatusId = value.StatusId, EntityType = value.EntityType, UserId = value.UserId, OrganizationId = value.OrganizationId, TenantId = value.TenantId }));
+        { Id = value.Id, StatusId = value.StatusId, EntityType = value.EntityType, UserId = value.UserId, OrganizationId = value.OrganizationId, TenantId = value.TenantId }));
         var service = new SSICredentialService(Options.Create(new AppSettings { SSISchemaFullNameYoID = "YoID|Default" }),
           Mock.Of<ISSISchemaService>(), statuses.Object, repository, types.Object, tenantStatuses.Object, tenants.Object,
           participations.Object, new Infrastructure.Database.Core.Services.ExecutionStrategyService(context));

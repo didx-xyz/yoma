@@ -57,7 +57,10 @@ namespace Yoma.Core.Test.SSI
       using var fixture = new Fixture();
       fixture.Http.ForCallsTo("*wallet/credentials/credential").RespondWithJson(new
       {
-        credential_id = "credential", schema_id = AnonCredsSchemaId, rev_reg_id = "registry", cred_rev_id = "1",
+        credential_id = "credential",
+        schema_id = AnonCredsSchemaId,
+        rev_reg_id = "registry",
+        cred_rev_id = "1",
         attrs = new Dictionary<string, string>()
       });
       fixture.Http.ForCallsTo("*wallet/credentials/credential/revocation-status").RespondWithJson(new { revoked });
@@ -74,7 +77,10 @@ namespace Yoma.Core.Test.SSI
       using var fixture = new Fixture();
       fixture.Http.ForCallsTo("*wallet/credentials/credential").RespondWithJson(new
       {
-        credential_id = "credential", schema_id = AnonCredsSchemaId, rev_reg_id = "registry", cred_rev_id = "1",
+        credential_id = "credential",
+        schema_id = AnonCredsSchemaId,
+        rev_reg_id = "registry",
+        cred_rev_id = "1",
         attrs = new Dictionary<string, string>()
       });
       fixture.Http.ForCallsTo("*wallet/credentials/credential/revocation-status").RespondWith(status: (int)status);
