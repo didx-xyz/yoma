@@ -52,6 +52,26 @@ namespace Yoma.Core.Domain.SSI
     Revoked
   }
 
+  public enum CredentialVerificationStatus
+  {
+    /// <summary>
+    /// Verification has not established a result, including when the credential's status is unknown.
+    /// This is not a failed verification.
+    /// </summary>
+    Unknown,
+
+    /// <summary>
+    /// Positive verification presentation result. Temporarily assumed for issued credentials
+    /// until actual verification is integrated; not evidence of a completed cryptographic check.
+    /// </summary>
+    Verified,
+
+    /// <summary>
+    /// The credential cannot pass verification, including confirmed revocation.
+    /// </summary>
+    Invalid
+  }
+
   public enum CredentialIssuanceStatus
   {
     Pending,

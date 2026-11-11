@@ -51,6 +51,8 @@ ticket was removed.
 
 YoID profile replacement adds `status` (`Unknown` / `Issued` / `Revoked`) to wallet list and detail responses. Revoked wallet copies remain visible until deletion succeeds, including alongside their issued replacement if cleanup fails. The provider resolves lifecycle status; unavailable status remains `Unknown`. Jason must render status tags and retain both entries by native credential ID; see the [replacement UI handover](./YOM-1309-use-didxme-for-yoma-wallets-and-credential-issuance/handoffs/2026-11-11-c.md#jason--wallet-status-tags). Opportunity credentials remain historical snapshots.
 
+Cards use lifecycle status. Detail adds a separate `verificationStatus` for its badge: temporarily Verified for Issued, Invalid for Revoked and Unknown otherwise, as requested for UI preparation. Actual verification is not implemented; the temporary badge must not be used as proof or authorization. Follow-up verification belongs on detail viewing, not every list entry. The linked UI handover owns the full contract and limitations.
+
 Two custom-field source keys changed while retaining definition identity and display labels:
 `EntrepreneurshipProgrammeOtherDescription` becomes `EntrepreneurshipProgrammeOther`, and
 `EntrepreneurshipRegistrationReference` becomes `EntrepreneurshipRegistrationRef`.

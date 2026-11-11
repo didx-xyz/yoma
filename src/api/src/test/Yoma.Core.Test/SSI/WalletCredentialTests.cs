@@ -45,6 +45,44 @@ namespace Yoma.Core.Test.SSI
       fixture.AssertReadsOnlyIssuedSchema();
     }
 
+    [Theory]
+    [InlineData(CredentialStatus.Issued, CredentialVerificationStatus.Verified)]
+    [InlineData(CredentialStatus.Revoked, CredentialVerificationStatus.Invalid)]
+    [InlineData(CredentialStatus.Unknown, CredentialVerificationStatus.Unknown)]
+    public async Task VerificationPlaceholderIsDetailOnlyAndRespectsLifecycle(CredentialStatus status,
+      CredentialVerificationStatus expected)
+    {
+      var fixture = new Fixture(SchemaType.YoID, null, null);
+      fixture.Credential.Status = status;
+
+      var list = await fixture.Service.SearchUserCredentials(new SSIWalletSearchFilter { PageNumber = 1, PageSize = 10 });
+      var detail = await fixture.Service.GetUserCredentialById(fixture.Credential.Id);
+
+      Assert.Equal(expected, detail.VerificationStatus);
+      Assert.Equal(status, detail.Status);
+
+      var settings = new JsonSerializerSettings { ContractResolver = new CamelCasePropertyNamesContractResolver() };
+      settings.Converters.Add(new StrictStringEnumConverter { AllowIntegerValues = true, RejectUndefinedValues = true });
+
+      var listJson = JObject.Parse(JsonConvert.SerializeObject(Assert.Single(list.Items!), settings));
+      var detailJson = JObject.Parse(JsonConvert.SerializeObject(detail, settings));
+
+      Assert.False(listJson.ContainsKey("verificationStatus"));
+      Assert.Equal(expected.ToString(), detailJson.Value<string>("verificationStatus"));
+      Assert.Equal(status.ToString(), listJson.Value<string>("status"));
+      Assert.Equal(status.ToString(), detailJson.Value<string>("status"));
+      fixture.AssertReadsOnlyIssuedSchema();
+    }
+
+    [Fact]
+    public async Task UndefinedLifecycleCannotReceiveAVerifiedPlaceholder()
+    {
+      var fixture = new Fixture(SchemaType.YoID, null, null);
+      fixture.Credential.Status = (CredentialStatus)999;
+
+      await Assert.ThrowsAsync<NotSupportedException>(() => fixture.Service.GetUserCredentialById(fixture.Credential.Id));
+    }
+
     [Fact]
     public async Task WalletShowsIssuedReplacementAlongsideRevokedCopy()
     {

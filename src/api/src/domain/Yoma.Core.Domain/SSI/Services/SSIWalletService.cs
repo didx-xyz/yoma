@@ -52,7 +52,29 @@ namespace Yoma.Core.Domain.SSI.Services
 
       var item = await _ssiProviderClient.GetCredentialById(GetUserTenantId(), id);
 
-      return await ParseCredential<SSICredential>(item);
+      var result = await ParseCredential<SSICredential>(item);
+
+      // TODO YOM-1309: replace the temporary issued-credential assumption with actual verification
+      // on detail reads only. Never use this presentation placeholder to authorize a proof or action.
+      switch (result.Status)
+      {
+        case CredentialStatus.Issued:
+          result.VerificationStatus = CredentialVerificationStatus.Verified;
+          break;
+
+        case CredentialStatus.Revoked:
+          result.VerificationStatus = CredentialVerificationStatus.Invalid;
+          break;
+
+        case CredentialStatus.Unknown:
+          result.VerificationStatus = CredentialVerificationStatus.Unknown;
+          break;
+
+        default:
+          throw new NotSupportedException($"Credential status '{result.Status}' not supported");
+      }
+
+      return result;
     }
 
     public async Task<SSIWalletSearchResults> SearchUserCredentials(SSIWalletSearchFilter filter)
