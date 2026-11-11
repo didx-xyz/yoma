@@ -31,7 +31,6 @@ namespace Yoma.Core.Test.SSI
       second.DateModified = first.DateModified;
       var ordered = new[] { first, second }.OrderBy(item => item.Id).ToList();
 
-      Assert.True(fixture.Service.HasReplayIssuanceSchedule());
       Assert.Same(ordered[0], Assert.Single(fixture.Service.ListReplayIssuanceSchedule(1, [])));
       Assert.Same(ordered[1], Assert.Single(fixture.Service.ListReplayIssuanceSchedule(1, [ordered[0].Id])));
       Assert.Empty(fixture.Service.ListReplayIssuanceSchedule(1, [first.Id, second.Id]));

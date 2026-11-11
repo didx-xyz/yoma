@@ -223,6 +223,8 @@ assert_json '.tenantAlias == "yoma" and .serviceName == "me-creds" and (.meCreds
 log 'Issuer client and project created or verified; existing credentials were reused.'
 
 stage='local issuance webhook'
+# TODO (YOM-1315): Use the registration response for the signing secret once supported.
+# Coordinate deployed automation with SRE; manual setup remains supported. Reuse existing registrations.
 # The public provider API registers endpoints but does not return signing secrets.
 # Registration uses the issuer token; local endpoint/secret reads use the webhook service token.
 # Local-only bootstrap access reads the existing endpoint secret without rotating it.

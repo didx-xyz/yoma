@@ -16,6 +16,7 @@ provided through the approved team handoff, not this public repository.
 
 ## Tasks
 
+- [ ] [YOM-1315 — Automate didx:me webhook setup](https://linear.app/didx/issue/YOM-1315/automate-didxme-webhook-setup): optional follow-up once the supported registration response includes the signing secret. Confirm repeat-run handling for existing registrations and agree deployed execution/secret storage with SRE; current local automation remains local-only. Dev/Stage are registered and working. Use manual Prod registration if automation is not ready; not a release blocker.
 - [x] Prepare and verify the standalone Local platform.
 - [x] Integrate readiness checks and Local initialization into Yoma's existing startup pattern.
 - [x] Synchronize only the integration section of ignored Local settings.
@@ -32,6 +33,7 @@ provided through the approved team handoff, not this public repository.
 
 ## Decisions
 
+- 2026-11-11: Track webhook setup automation as a low-priority backlog item, dependent on release and verification of registration returning the signing secret. Robbie reported the upstream change is in progress; availability and response contract have not been verified. Dev/Stage are already registered and working; Prod can use automation if ready, otherwise manual setup. No release blocker or current runtime/configuration change. Robbie tagged on YOM-1315 for coordination.
 - Keep the platform independent; no mono source changes or embedded Yoma-stack deployment.
 - Local initialization is not a deployed provisioning mechanism.
 - 2026-11-09: Keep the existing Keycloak provider versions and release URLs. Retry transient

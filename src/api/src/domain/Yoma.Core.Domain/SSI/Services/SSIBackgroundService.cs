@@ -56,7 +56,8 @@ namespace Yoma.Core.Domain.SSI.Services
   /// portable way to delete its credentials, or use tenant deletion as a Replay shortcut.
   /// </para>
   /// <para>
-  /// Issuance ordering: process Replay cleanup before dispatching ordinary Pending issuance.
+  /// Issuance ordering: attempt Replay cleanup before dispatching ordinary Pending issuance.
+  /// Failed cleanup is skipped for the rest of that run; it does not block other Pending rows.
   /// A Replay row is not eligible for issuance. Resolve its existing holder TenantId through the
   /// entity's tenant mapping, then identify the old credential by that tenant and CredentialId,
   /// checking the issuance ID/client referent. Opportunity holders resolve through MyOpportunity;
@@ -76,8 +77,9 @@ namespace Yoma.Core.Domain.SSI.Services
   /// <para>
   /// Only after deletion or verified absence succeeds may cleanup atomically clear CredentialId,
   /// SchemaVersion, ErrorReason and RetryCount and change Replay to Pending, retaining DateIssued.
-  /// Cleanup failures stay Replay with the old identity/date; the normal issuance error/retry path
-  /// must not promote them to Pending. A timeout or authentication failure is not verified absence.
+  /// Cleanup failures use the normal error/retry policy, retaining the old identity/date/version.
+  /// Eligible retries return to Replay, never Pending; exhausted retries remain Error for review.
+  /// A timeout or authentication failure is not verified absence.
   /// Cleanup must be idempotent and resumable after remote deletion/local-save failure, use the
   /// existing job lock/shutdown boundaries and prevent cleanup and issuance racing for one item.
   /// The provider store and Yoma database remain independent: persist the identity/date checkpoint,
@@ -534,14 +536,8 @@ namespace Yoma.Core.Domain.SSI.Services
           var replay = items.Count != 0;
           if (!replay)
           {
-            // Failed/skipped cleanup remains Replay. Do not let the normal retry flow or job
-            // ordering issue replacements before the complete cleanup phase has finished.
-            if (_ssiCredentialService.HasReplayIssuanceSchedule())
-            {
-              if (_logger.IsEnabled(LogLevel.Warning)) _logger.LogWarning("SSI issuance deferred: Replay cleanup is incomplete");
-              break;
-            }
-
+            // Failed cleanup remains Replay or Error and is excluded from Pending selection. Successfully
+            // cleaned rows and unrelated Pending work can proceed without waiting for those failures.
             items = _ssiCredentialService.ListPendingIssuanceSchedule(_scheduleJobOptions.SSICredentialIssuanceScheduleBatchSize, [.. itemIdsToSkip]);
           }
           if (items.Count == 0) break;
@@ -755,7 +751,7 @@ namespace Yoma.Core.Domain.SSI.Services
                   {
                     if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed SSI credential {phase} for schema type '{schemaType}' and item with id '{id}': {errorMessage}", replay ? "Replay cleanup" : "issuance", item.SchemaType, item.Id, ex.Message);
 
-                    item.Status = replay ? CredentialIssuanceStatus.Replay : CredentialIssuanceStatus.Error;
+                    item.Status = CredentialIssuanceStatus.Error;
                     item.ErrorReason = ex.Message;
                     await credentialService.UpdateScheduleIssuance(item);
                     Interlocked.Increment(ref failedCount);
@@ -936,28 +932,7 @@ namespace Yoma.Core.Domain.SSI.Services
         return;
       }
 
-      if (schema.ArtifactType != artifactType)
-        throw new InvalidOperationException($"Artifact type mismatch detected for existing schema '{schemaFullName}': Requested '{artifactType.ToDescription()}' vs. Existing '{schema.ArtifactType.ToDescription()}'");
-
-      // Create/Update always adds compatible system properties. Include these in the expected set,
-      // but compare only public entity attributes: internal attributes are not returned in Entities.
-      // Full-set comparison detects removals as well as additions; ordering alone never creates a version.
-      // Signed names are case-sensitive contracts: the CF PascalCase change must create a version.
-      var expectedAttributes = attributes
-        .Concat(_ssiSchemaEntityService.List(schema.Type, schema.TypeContext)
-          .SelectMany(entity => entity.Properties?.Where(property => property.System) ?? [])
-          .Select(property => property.AttributeName))
-        .Select(attribute => attribute.Trim())
-        .ToHashSet(StringComparer.Ordinal);
-
-      var existingAttributes = schema.Entities
-        .SelectMany(entity => (entity.Properties?.Select(property => property.AttributeName) ?? [])
-          .Concat(entity.CustomFields?.Select(customField => customField.AttributeName) ?? []))
-        .Select(attribute => attribute.Trim())
-        .ToHashSet(StringComparer.Ordinal);
-
-      if (expectedAttributes.SetEquals(existingAttributes)) return;
-
+      // Schema management owns normalization and change detection for both seeding and admin updates.
       await _ssiSchemaService.Update(new SSISchemaRequestUpdate
       {
         Name = schema.Name,

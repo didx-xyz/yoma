@@ -177,17 +177,21 @@ namespace Yoma.Core.Domain.SSI.Services
             throw new ArgumentNullException(nameof(item), "Error reason required");
 
           item.ErrorReason = item.ErrorReason?.Trim();
-          // Version describes a successfully issued credential only. A retry resolves the latest version of the
-          // schema name committed at scheduling.
-          item.SchemaVersion = null;
+          var previous = _ssiCredentialIssuanceRepository.Query().Single(o => o.Id == item.Id);
+          var retryStatus = previous.Status == CredentialIssuanceStatus.Replay
+            ? CredentialIssuanceStatus.Replay : CredentialIssuanceStatus.Pending;
+          // Cleanup retries retain the old credential/version; only successful cleanup permits Pending.
+          // Ordinary issuance retries resolve the latest version of the scheduled schema name.
+          if (retryStatus == CredentialIssuanceStatus.Pending) item.SchemaVersion = null;
+          item.RetryCount = previous.RetryCount;
           item.RetryCount = (byte?)(item.RetryCount + 1) ?? 0; //1st attempt not counted as a retry
 
           //retry attempts specified and exceeded (-1: infinite retries)
           if (_appSettings.SSIMaximumRetryAttempts == 0 || //no retries
             (_appSettings.SSIMaximumRetryAttempts > 0 && item.RetryCount > _appSettings.SSIMaximumRetryAttempts)) break;
 
-          item.StatusId = _ssiCredentialIssuanceStatusService.GetByName(CredentialIssuanceStatus.Pending.ToString()).Id;
-          item.Status = CredentialIssuanceStatus.Pending;
+          item.StatusId = _ssiCredentialIssuanceStatusService.GetByName(retryStatus.ToString()).Id;
+          item.Status = retryStatus;
           break;
 
         default:
@@ -212,11 +216,6 @@ namespace Yoma.Core.Domain.SSI.Services
         .Take(batchSize)];
     }
 
-    public bool HasReplayIssuanceSchedule()
-    {
-      var statusId = _ssiCredentialIssuanceStatusService.GetByName(CredentialIssuanceStatus.Replay.ToString()).Id;
-      return _ssiCredentialIssuanceRepository.Query().Any(item => item.StatusId == statusId);
-    }
     #endregion
   }
 }

@@ -33,8 +33,7 @@ namespace Yoma.Core.Test.SSI
     [InlineData(SchemaType.Opportunity)]
     public async Task SdJwtReplayPreservesFormatAndOriginalDateWithCapableProvider(SchemaType type)
     {
-      // The domain supports this format. didx:me still rejects background lookup/deletion until
-      // its separate authorization gap is solved; this fixture supplies those capabilities.
+      // Exercise the domain flow with a provider supporting background lookup and deletion.
       using var fixture = new Fixture(type, artifactType: ArtifactType.SDJWT);
 
       await fixture.Background.ProcessCredentialIssuance();
@@ -108,9 +107,15 @@ namespace Yoma.Core.Test.SSI
 
       Assert.Equal(CredentialIssuanceStatus.Replay, fixture.Item.Status);
       Assert.Equal("Authentication failed", fixture.Item.ErrorReason);
+      Assert.Equal((byte)0, fixture.Item.RetryCount);
       Assert.Single(fixture.Credentials);
       Assert.Empty(fixture.Requests);
       fixture.Provider.Verify(client => client.DeleteCredential(It.IsAny<string>(), It.IsAny<ArtifactType>(), It.IsAny<string>()), Times.Never);
+
+      await fixture.Background.ProcessCredentialIssuance();
+
+      Assert.Equal((byte)1, fixture.Item.RetryCount);
+      Assert.Equal(CredentialIssuanceStatus.Replay, fixture.Item.Status);
     }
 
     [Theory]
@@ -166,23 +171,142 @@ namespace Yoma.Core.Test.SSI
       Assert.Equal(seeded, DateTimeOffset.Parse(Assert.Single(fixture.Requests).Attributes[SSISchemaService.SchemaAttribute_Internal_DateIssued]));
     }
 
-    [Fact]
-    public async Task CleanupFailureKeepsIdentityAndReplayAndBlocksAllPendingIssuance()
+    [Theory]
+    [InlineData(1)]
+    [InlineData(3)]
+    public async Task CleanupFailureKeepsIdentityAndReplayWithoutBlockingOtherIssuance(int parallelism)
     {
-      using var fixture = new Fixture(SchemaType.Opportunity);
+      using var fixture = new Fixture(SchemaType.Opportunity, parallelism: parallelism);
       fixture.AddPending();
+      for (var index = 0; index < 24; index++) fixture.AddReplay();
       var oldId = fixture.Item.CredentialId;
       fixture.Provider.Setup(client => client.DeleteCredential("holder", fixture.Item.ArtifactType, oldId!))
         .ThrowsAsync(new InvalidOperationException("Provider unavailable"));
+      fixture.BeforeIssue = () => Assert.Equal(fixture.Item.Id,
+        Assert.Single(fixture.Items, item => item.Status == CredentialIssuanceStatus.Replay).Id);
 
       await fixture.Background.ProcessCredentialIssuance();
 
       Assert.Equal(CredentialIssuanceStatus.Replay, fixture.Item.Status);
       Assert.Equal(oldId, fixture.Item.CredentialId);
       Assert.Equal(fixture.OriginalDate, fixture.Item.DateIssued);
+      Assert.Equal("1.0", fixture.Item.SchemaVersion);
       Assert.Equal("Provider unavailable", fixture.Item.ErrorReason);
-      Assert.Empty(fixture.Requests);
+      Assert.Equal((byte)0, fixture.Item.RetryCount);
+      Assert.Equal(25, fixture.Requests.Count);
+      Assert.DoesNotContain(fixture.Requests, request => request.ClientReferent.Value == fixture.Item.Id.ToString());
+      Assert.All(fixture.Items.Where(item => item.Id != fixture.Item.Id), item =>
+      {
+        Assert.Equal(CredentialIssuanceStatus.Issued, item.Status);
+        Assert.Equal("1.1", item.SchemaVersion);
+        Assert.Null(item.RetryCount);
+      });
+      fixture.Provider.Verify(client => client.DeleteCredential("holder", fixture.Item.ArtifactType, oldId!), Times.Once);
       fixture.Lock.Verify(service => service.ReleaseLockAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+
+      await fixture.Background.ProcessCredentialIssuance();
+
+      Assert.Equal((byte)1, fixture.Item.RetryCount);
+      Assert.Equal(CredentialIssuanceStatus.Replay, fixture.Item.Status);
+      Assert.Equal(25, fixture.Requests.Count);
+      fixture.Provider.Verify(client => client.DeleteCredential("holder", fixture.Item.ArtifactType, oldId!), Times.Exactly(2));
+    }
+
+    [Theory]
+    [InlineData(2, null, 0, CredentialIssuanceStatus.Replay)]
+    [InlineData(2, 0, 1, CredentialIssuanceStatus.Replay)]
+    [InlineData(2, 2, 3, CredentialIssuanceStatus.Error)]
+    [InlineData(0, null, 0, CredentialIssuanceStatus.Error)]
+    [InlineData(-1, 8, 9, CredentialIssuanceStatus.Replay)]
+    public async Task CleanupFailuresFollowTheExistingRetryPolicy(int maximum, int? previous, int expected, CredentialIssuanceStatus expectedStatus)
+    {
+      using var fixture = new Fixture(SchemaType.YoID, maximumRetryAttempts: maximum);
+      fixture.Item.RetryCount = (byte?)previous;
+      var originalId = fixture.Item.CredentialId;
+      fixture.BeforeDelete = () =>
+      {
+        // Saving the identity/date checkpoint must not consume another retry.
+        Assert.Equal((byte?)previous, fixture.Item.RetryCount);
+        throw new InvalidOperationException("Provider unavailable");
+      };
+
+      await fixture.Background.ProcessCredentialIssuance();
+
+      Assert.Equal((byte)expected, fixture.Item.RetryCount);
+      Assert.Equal(expectedStatus, fixture.Item.Status);
+      Assert.Equal(originalId, fixture.Item.CredentialId);
+      Assert.Equal("1.0", fixture.Item.SchemaVersion);
+      Assert.Equal(fixture.OriginalDate, fixture.Item.DateIssued);
+      Assert.Empty(fixture.Requests);
+
+      fixture.BeforeDelete = () => Assert.Equal((byte)expected, fixture.Item.RetryCount);
+      await fixture.Background.ProcessCredentialIssuance();
+
+      if (expectedStatus == CredentialIssuanceStatus.Error)
+      {
+        Assert.Equal(CredentialIssuanceStatus.Error, fixture.Item.Status);
+        Assert.Equal((byte)expected, fixture.Item.RetryCount);
+        Assert.Single(fixture.Credentials);
+        Assert.Empty(fixture.Requests);
+        fixture.Provider.Verify(client => client.DeleteCredential("holder", fixture.Item.ArtifactType, originalId!), Times.Once);
+        return;
+      }
+
+      Assert.Equal(CredentialIssuanceStatus.Issued, fixture.Item.Status);
+      Assert.Null(fixture.Item.RetryCount);
+      Assert.Null(fixture.Item.ErrorReason);
+      Assert.Single(fixture.Requests);
+    }
+
+    [Fact]
+    public async Task IssuanceFailureAfterCleanupUsesPendingRetriesThenPermanentError()
+    {
+      using var fixture = new Fixture(SchemaType.YoID);
+      var originalId = fixture.Item.CredentialId;
+      fixture.Provider.Setup(client => client.IssueCredential(It.IsAny<CredentialIssuanceRequest>()))
+        .ThrowsAsync(new InvalidOperationException("Issuance unavailable"));
+
+      for (byte attempt = 0; attempt <= 3; attempt++)
+      {
+        await fixture.Background.ProcessCredentialIssuance();
+
+        Assert.Equal(attempt, fixture.Item.RetryCount);
+        Assert.Equal(attempt <= 2 ? CredentialIssuanceStatus.Pending : CredentialIssuanceStatus.Error, fixture.Item.Status);
+        Assert.Null(fixture.Item.SchemaVersion);
+        Assert.Null(fixture.Item.CredentialId);
+        Assert.Equal(fixture.OriginalDate, fixture.Item.DateIssued);
+      }
+
+      await fixture.Background.ProcessCredentialIssuance();
+
+      fixture.Provider.Verify(client => client.IssueCredential(It.IsAny<CredentialIssuanceRequest>()), Times.Exactly(4));
+      fixture.Provider.Verify(client => client.DeleteCredential("holder", fixture.Item.ArtifactType, originalId!), Times.Once);
+    }
+
+    [Fact]
+    public async Task FailedCleanupSaveCountsRetriesFromPersistedState()
+    {
+      using var fixture = new Fixture(SchemaType.YoID, maximumRetryAttempts: -1);
+      fixture.Item.RetryCount = 2;
+      fixture.BeforeSave = item =>
+      {
+        if (item.Status == CredentialIssuanceStatus.Pending) throw new InvalidOperationException("Local save failed");
+      };
+
+      await fixture.Background.ProcessCredentialIssuance();
+      await fixture.Background.ProcessCredentialIssuance();
+
+      Assert.Equal((byte)4, fixture.Item.RetryCount);
+      Assert.Equal(CredentialIssuanceStatus.Replay, fixture.Item.Status);
+      Assert.Empty(fixture.Requests);
+      Assert.Empty(fixture.Credentials);
+
+      fixture.BeforeSave = null;
+      await fixture.Background.ProcessCredentialIssuance();
+
+      Assert.Equal(CredentialIssuanceStatus.Issued, fixture.Item.Status);
+      Assert.Null(fixture.Item.RetryCount);
+      Assert.Single(fixture.Requests);
     }
 
     [Theory]
@@ -334,7 +458,8 @@ namespace Yoma.Core.Test.SSI
       #endregion Class Variables
 
       #region Constructor
-      public Fixture(SchemaType type, int parallelism = 1, CancellationToken stopping = default, ArtifactType? artifactType = null)
+      public Fixture(SchemaType type, int parallelism = 1, CancellationToken stopping = default, ArtifactType? artifactType = null,
+        int maximumRetryAttempts = 2)
       {
         var participation = new Domain.MyOpportunity.Models.MyOpportunity
         {
@@ -380,7 +505,7 @@ namespace Yoma.Core.Test.SSI
         {
           SSIEnabledEnvironments = "Local",
           YomaOrganizationName = "Yoma",
-          SSIMaximumRetryAttempts = 2,
+          SSIMaximumRetryAttempts = maximumRetryAttempts,
           SSIParallelism = new AppSettingsSSIParallelism { CredentialIssuance = parallelism }
         };
         var schema = new SSISchema
