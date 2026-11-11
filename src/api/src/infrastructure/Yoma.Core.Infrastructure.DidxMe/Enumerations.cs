@@ -10,6 +10,13 @@ namespace Yoma.Core.Infrastructure.DidxMe
     Deleted
   }
 
+  public enum IssuerCredentialStatus
+  {
+    Offered,
+    Issued,
+    Revoked
+  }
+
   public enum WalletCredentialStatus
   {
     Pending,

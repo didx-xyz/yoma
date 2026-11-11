@@ -359,6 +359,7 @@ namespace Yoma.Core.Domain.Entity.Services
       // check if user exists
       var isNew = !request.Id.HasValue;
       var result = !request.Id.HasValue ? new User { Id = Guid.NewGuid() } : GetById(request.Id.Value, false, false);
+      var profileHash = isNew ? null : result.ComputeProfileHash();
 
       var existingByEmail = GetByEmailOrNull(request.Email, false, false);
       if (existingByEmail != null && (isNew || result.Id != existingByEmail.Id))
@@ -398,7 +399,17 @@ namespace Yoma.Core.Domain.Entity.Services
       result.DateLastLogin = request.DateLastLogin;
       result.ExternalId = request.ExternalId;
 
-      result = isNew ? await _userRepository.Create(result) : await _userRepository.Update(result);
+      var profileChanged = !isNew && profileHash != result.ComputeProfileHash();
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+        result = isNew ? await _userRepository.Create(result) : await _userRepository.Update(result);
+
+        if (profileChanged) await _ssiCredentialService.ScheduleReissuance(result.Id);
+
+        scope.Complete();
+      });
 
       await PublishReferralProgressEvent(result, enqueueOutcomes, publishEvent);
 
@@ -427,6 +438,7 @@ namespace Yoma.Core.Domain.Entity.Services
           result.PhotoStorageType = blobObject.StorageType;
           result.PhotoKey = blobObject.Key;
           result = await _userRepository.Update(result);
+          await _ssiCredentialService.ScheduleReissuance(result.Id);
 
           if (currentPhotoId.HasValue)
             await _blobService.Archive(currentPhotoId.Value, blobObject); //preserve / archive previous photo as they might be referenced in credentials
@@ -463,6 +475,7 @@ namespace Yoma.Core.Domain.Entity.Services
         result.PhotoKey = null;
 
         result = await _userRepository.Update(result);
+        await _ssiCredentialService.ScheduleReissuance(result.Id);
 
         // Do not delete or archive the current photo.
         // Archive links a previous blob to a replacement blob via ParentId, which only applies when replacing a photo.

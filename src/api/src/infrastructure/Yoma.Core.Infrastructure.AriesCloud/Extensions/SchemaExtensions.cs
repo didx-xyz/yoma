@@ -63,6 +63,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
       {
         Id = o.Credential_id,
         SchemaId = o.Schema_id,
+        Status = GetCredentialStatus(o),
         Attributes = o.Attrs
       };
     }
@@ -73,12 +74,36 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
       {
         Id = o.Id.ToString(),
         SchemaId = o.SchemaId,
+        Status = CredentialStatus.Issued, // Locally issued JWS credentials have no revocation mechanism.
         Attributes = JsonConvert.DeserializeObject<Dictionary<string, string>>(o.Attributes) ?? []
       };
     }
     #endregion
 
     #region Private Members
+    private static CredentialStatus GetCredentialStatus(CredInfo credential)
+    {
+      switch (credential.Revocation_status)
+      {
+        case RevocationStatus.Active:
+          return CredentialStatus.Issued;
+
+        case RevocationStatus.Revoked:
+          return CredentialStatus.Revoked;
+
+        case RevocationStatus.NotChecked:
+        case RevocationStatus.CheckFailed:
+          return CredentialStatus.Unknown;
+
+        case null:
+          return string.IsNullOrWhiteSpace(credential.Rev_reg_id) && string.IsNullOrWhiteSpace(credential.Cred_rev_id)
+            ? CredentialStatus.Issued : CredentialStatus.Unknown;
+
+        default:
+          throw new NotSupportedException($"Credential revocation status '{credential.Revocation_status}' is not supported");
+      }
+    }
+
     private static List<Domain.SSI.Models.Provider.Schema> FilterByLatestVersion(bool latestVersion, List<Domain.SSI.Models.Provider.Schema> results)
     {
       if (latestVersion)

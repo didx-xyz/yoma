@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using Yoma.Core.Infrastructure.Umuzi.Entities;
 using Yoma.Core.Infrastructure.Shared.Converters;
 using Yoma.Core.Infrastructure.Shared.Interceptors;
+using Yoma.Core.Infrastructure.Umuzi.Entities;
 
 namespace Yoma.Core.Infrastructure.Umuzi.Context
 {

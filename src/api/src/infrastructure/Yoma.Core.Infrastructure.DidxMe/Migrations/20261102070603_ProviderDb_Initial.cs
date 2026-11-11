@@ -68,14 +68,14 @@ namespace Yoma.Core.Infrastructure.DidxMe.Migrations
           name: "IX_CredentialSchema_TenantAlias_Name_Version",
           schema: "DidxMe",
           table: "CredentialSchema",
-          columns: new[] { "TenantAlias", "Name", "Version" },
+          columns: ["TenantAlias", "Name", "Version"],
           unique: true);
 
       migrationBuilder.CreateIndex(
           name: "IX_CredentialSchema_TenantAlias_Vct",
           schema: "DidxMe",
           table: "CredentialSchema",
-          columns: new[] { "TenantAlias", "Vct" },
+          columns: ["TenantAlias", "Vct"],
           unique: true);
 
       migrationBuilder.CreateIndex(
@@ -88,7 +88,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Migrations
           name: "IX_Issuance_TenantAlias_TenantIdHolder_ClientReferentValue",
           schema: "DidxMe",
           table: "Issuance",
-          columns: new[] { "TenantAlias", "TenantIdHolder", "ClientReferentValue" });
+          columns: ["TenantAlias", "TenantIdHolder", "ClientReferentValue"]);
     }
 
     /// <inheritdoc />

@@ -134,6 +134,7 @@ namespace Yoma.Core.Domain.SSI.Services
         Id = item.Id,
         ArtifactType = schema.ArtifactType,
         SchemaType = schema.Type,
+        Status = item.Status,
         DateIssued = DateTimeHelper.TryParse(item.Attributes.SingleOrDefault(o => string.Equals(o.Key, SSISchemaService.SchemaAttribute_Internal_DateIssued, StringComparison.OrdinalIgnoreCase)).Value),
       };
 

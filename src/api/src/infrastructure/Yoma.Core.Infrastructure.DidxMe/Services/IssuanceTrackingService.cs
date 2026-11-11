@@ -1,10 +1,10 @@
-using Yoma.Core.Infrastructure.DidxMe.Interfaces;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Transactions;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Infrastructure.DidxMe.Interfaces;
 using Yoma.Core.Infrastructure.DidxMe.Models;
 
 namespace Yoma.Core.Infrastructure.DidxMe.Services

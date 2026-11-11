@@ -524,6 +524,7 @@ namespace Yoma.Core.Test.SSI
           new SSICredentialIssuanceStatus { Id = _statusIds[Enum.Parse<CredentialIssuanceStatus>(name)] });
         var repository = new Mock<IRepository<SSICredentialIssuance>>();
         repository.Setup(value => value.Query()).Returns(() => _items.Values.Select(Clone).AsQueryable());
+        repository.Setup(value => value.Query(Domain.Core.LockMode.Wait)).Returns(() => _items.Values.Select(Clone).AsQueryable());
         repository.Setup(value => value.Update(It.IsAny<SSICredentialIssuance>())).ReturnsAsync((SSICredentialIssuance item) =>
         {
           BeforeSave?.Invoke(item);
@@ -533,6 +534,8 @@ namespace Yoma.Core.Test.SSI
         var types = new Mock<ISSISchemaTypeService>();
         types.Setup(service => service.GetByName(SchemaType.Opportunity.ToString()))
           .Returns(new SSISchemaType { Id = type == SchemaType.Opportunity ? typeId : Guid.NewGuid() });
+        types.Setup(service => service.GetByName(nameof(SchemaType.YoID)))
+          .Returns(new SSISchemaType { Id = type == SchemaType.YoID ? typeId : Guid.NewGuid() });
         var tenantStatusId = Guid.NewGuid();
         var tenantStatuses = new Mock<ISSITenantCreationStatusService>();
         tenantStatuses.Setup(service => service.GetByName(TenantCreationStatus.Created.ToString())).Returns(new SSITenantCreationStatus { Id = tenantStatusId });
@@ -545,7 +548,7 @@ namespace Yoma.Core.Test.SSI
         var participations = new Mock<IRepositoryBatchedWithNavigationAndCustomFieldFilter<Domain.MyOpportunity.Models.MyOpportunity>>();
         participations.Setup(repository => repository.Query()).Returns(() => _participations.AsQueryable());
         var credentialService = new SSICredentialService(Options.Create(settings), schemas.Object, statuses.Object,
-          repository.Object, types.Object, tenantStatuses.Object, tenants.Object, participations.Object);
+          repository.Object, types.Object, tenantStatuses.Object, tenants.Object, participations.Object, CredentialTestHelper.ExecutionStrategy());
         Tenants.Setup(service => service.GetTenantId(EntityType.User, participation.UserId)).Returns("holder");
         Tenants.Setup(service => service.GetTenantIdOrNull(It.IsAny<EntityType>(), It.IsAny<Guid>())).Returns((EntityType entity, Guid _) => entity == EntityType.User ? "holder" : "issuer");
         var users = new Mock<IUserService>();

@@ -1,4 +1,3 @@
-using Yoma.Core.Infrastructure.DidxMe.Interfaces;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -6,6 +5,7 @@ using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Interfaces.Provider;
 using Yoma.Core.Domain.SSI.Models.Provider;
+using Yoma.Core.Infrastructure.DidxMe.Interfaces;
 using Yoma.Core.Infrastructure.DidxMe.Models;
 using Yoma.Core.Infrastructure.DidxMe.Services;
 
@@ -275,6 +275,77 @@ namespace Yoma.Core.Infrastructure.DidxMe.Client
 
     public Task<Credential?> GetCredentialByIdOrNull(string tenantId, ArtifactType artifactType, string id) =>
       _holder.GetCredentialByIdOrNull(tenantId, artifactType, id);
+
+    public bool SupportsCredentialRevocation(ArtifactType artifactType)
+    {
+      switch (artifactType)
+      {
+        case ArtifactType.SDJWT:
+          return true;
+
+        case ArtifactType.ACR:
+        case ArtifactType.JWS:
+          return false;
+
+        default:
+          throw new NotSupportedException($"Artifact type '{artifactType}' is not supported");
+      }
+    }
+
+    public async Task RevokeCredential(string tenantId, ArtifactType artifactType, string id,
+      KeyValuePair<string, string> clientReferent)
+    {
+      PresetService.ValidateArtifactType(artifactType);
+      ArgumentException.ThrowIfNullOrWhiteSpace(tenantId);
+      ArgumentException.ThrowIfNullOrWhiteSpace(id);
+
+      var mapping = _tracking.Find(tenantId, clientReferent)
+        ?? throw new InvalidOperationException("Revocation requires the original issuer tracking references");
+
+      if (mapping.WalletCredentialId != id || string.IsNullOrWhiteSpace(mapping.IssuerCredentialId) ||
+        string.IsNullOrWhiteSpace(mapping.IssuanceId))
+        throw new InvalidOperationException("The credential's issuer and holder references are incomplete or inconsistent");
+
+      var issuance = await _issuer.GetIssuance(mapping.IssuanceId);
+      var credential = issuance.Credentials.Single(value => value.Id == mapping.IssuerCredentialId);
+      var status = Enum.Parse<IssuerCredentialStatus>(credential.Status, true);
+
+      switch (status)
+      {
+        case IssuerCredentialStatus.Revoked:
+          return; // Remote success followed by a failed local save.
+
+        case IssuerCredentialStatus.Issued:
+          if (!credential.Revocable) throw new NotSupportedException("The issued credential cannot be revoked");
+          break;
+
+        case IssuerCredentialStatus.Offered:
+          throw new NotSupportedException("The issued credential cannot be revoked");
+
+        default:
+          throw new NotSupportedException($"Issuer credential status '{status}' is not supported");
+      }
+
+      await _issuer.RevokeCredential(credential.Id);
+
+      issuance = await _issuer.GetIssuance(mapping.IssuanceId);
+      credential = issuance.Credentials.Single(value => value.Id == mapping.IssuerCredentialId);
+
+      status = Enum.Parse<IssuerCredentialStatus>(credential.Status, true);
+
+      switch (status)
+      {
+        case IssuerCredentialStatus.Revoked:
+          break;
+
+        case IssuerCredentialStatus.Offered:
+        case IssuerCredentialStatus.Issued:
+          throw new InvalidOperationException("Credential revocation has not been confirmed");
+
+        default:
+          throw new NotSupportedException($"Issuer credential status '{status}' is not supported");
+      }
+    }
 
     public Task DeleteCredential(string tenantId, ArtifactType artifactType, string id) =>
       _holder.DeleteCredential(tenantId, artifactType, id);

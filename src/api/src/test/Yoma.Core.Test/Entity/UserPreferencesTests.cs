@@ -1,4 +1,3 @@
-using CsvWriter = CsvHelper.CsvWriter;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -6,9 +5,9 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
-using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Converters;
 using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
@@ -20,6 +19,7 @@ using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.Lookups.Services;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Models.Lookups;
+using CsvWriter = CsvHelper.CsvWriter;
 
 namespace Yoma.Core.Test.Entity
 {

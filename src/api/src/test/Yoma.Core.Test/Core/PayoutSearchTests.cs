@@ -6,8 +6,8 @@ using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Payout.Models;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Payout.Repositories;
-using UserEntity = Yoma.Core.Infrastructure.Database.Entity.Entities.User;
 using PayoutEntity = Yoma.Core.Infrastructure.Database.Payout.Entities.PayoutTransaction;
+using UserEntity = Yoma.Core.Infrastructure.Database.Entity.Entities.User;
 
 namespace Yoma.Core.Test.Core
 {

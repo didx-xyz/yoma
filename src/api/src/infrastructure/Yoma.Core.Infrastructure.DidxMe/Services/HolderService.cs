@@ -1,6 +1,7 @@
 using Flurl;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System.Security.Claims;
 using Yoma.Core.Domain.Core.Exceptions;
@@ -9,6 +10,7 @@ using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Domain.SSI.Models.Provider;
+using Yoma.Core.Domain.SSI.Services;
 using Yoma.Core.Infrastructure.DidxMe.Interfaces;
 using Yoma.Core.Infrastructure.DidxMe.Models;
 
@@ -24,6 +26,7 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
     private const string SubjectClaim = "sub";
     private const string BearerPrefix = Constants.HeaderAuthorizationValuePrefix + " ";
     private const string PaginationCursor = "page[after]";
+    private readonly ILogger<HolderService> _logger;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IIssuerClient _issuerClient;
     private readonly IWalletClient _wallet;
@@ -36,8 +39,10 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
     #region Constructor
     public HolderService(IHttpContextAccessor httpContextAccessor, IIssuerClient issuerClient,
       IWalletClient wallet, IPresetService presets, IIssuanceTrackingService tracking,
-      IRepositoryValueContainsWithNavigation<User> userRepository, IRepository<SSITenantCreation> tenantCreationRepository)
+      IRepositoryValueContainsWithNavigation<User> userRepository, IRepository<SSITenantCreation> tenantCreationRepository,
+      ILogger<HolderService> logger)
     {
+      _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
       _issuerClient = issuerClient ?? throw new ArgumentNullException(nameof(issuerClient));
       _wallet = wallet ?? throw new ArgumentNullException(nameof(wallet));
@@ -82,15 +87,28 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
       };
     }
 
-    public async Task<Credential> GetCredentialById(string tenantId, string id) =>
-      await GetCredential(await GetContext(tenantId), id);
+    public async Task<Credential> GetCredentialById(string tenantId, string id)
+    {
+      var context = await GetContext(tenantId);
+      var result = await GetCredential(context, id);
+      result.Status = await GetCredentialStatus(context.HolderId, result);
+      return result;
+    }
 
     public async Task<Credential> GetCredential(HolderContext context, string id) =>
       Map(await _wallet.GetCredential(context, id))
         ?? throw new EntityNotFoundException("The credential has no Yoma preset mapping");
 
-    public async Task<List<Credential>> ListCredentials(string tenantId) =>
-      [.. (await List(await GetContext(tenantId))).Select(Map).OfType<Credential>()];
+    public async Task<List<Credential>> ListCredentials(string tenantId)
+    {
+      var context = await GetContext(tenantId);
+      var result = (await List(context)).Select(Map).OfType<Credential>().ToList();
+
+      foreach (var credential in result)
+        credential.Status = await GetCredentialStatus(context.HolderId, credential);
+
+      return result;
+    }
 
     public async Task<Credential?> GetCredentialByClientReferentOrNull(string tenantId, ArtifactType artifactType,
       KeyValuePair<string, string> clientReferent)
@@ -215,6 +233,52 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
     #endregion
 
     #region Private Members
+    /// <summary>
+    /// Resolve lifecycle status from the issuer; wallet acceptance does not establish revocation state.
+    /// Missing correlation or an unavailable issuer leaves the status unknown.
+    /// </summary>
+    private async Task<CredentialStatus> GetCredentialStatus(string holderId, Credential credential)
+    {
+      if (!credential.Attributes.TryGetValue(SSISchemaService.SchemaAttribute_Internal_ReferentClient, out var referent) ||
+        string.IsNullOrWhiteSpace(referent)) return CredentialStatus.Unknown;
+
+      var mapping = _tracking.Find(holderId, new(SSISchemaService.SchemaAttribute_Internal_ReferentClient, referent));
+      if (mapping == null || mapping.WalletCredentialId != credential.Id || mapping.PresetMappingId != credential.SchemaId ||
+        string.IsNullOrWhiteSpace(mapping.IssuanceId) || string.IsNullOrWhiteSpace(mapping.IssuerCredentialId))
+        return CredentialStatus.Unknown;
+
+      IssuanceResponse issuance;
+      try
+      {
+        issuance = await _issuerClient.GetIssuance(mapping.IssuanceId);
+      }
+      catch (HttpClientException ex)
+      {
+        if (_logger.IsEnabled(LogLevel.Warning))
+          _logger.LogWarning("Unable to resolve credential lifecycle status; issuer returned HTTP {statusCode}", ex.StatusCode);
+        return CredentialStatus.Unknown;
+      }
+
+      var issued = issuance.Credentials?.SingleOrDefault(item => item.Id == mapping.IssuerCredentialId);
+      if (issued == null || !Enum.TryParse<IssuerCredentialStatus>(issued.Status, true, out var status))
+        return CredentialStatus.Unknown;
+
+      switch (status)
+      {
+        case IssuerCredentialStatus.Issued:
+          return CredentialStatus.Issued;
+
+        case IssuerCredentialStatus.Revoked:
+          return CredentialStatus.Revoked;
+
+        case IssuerCredentialStatus.Offered:
+          return CredentialStatus.Unknown;
+
+        default:
+          throw new NotSupportedException($"Issuer credential status '{status}' is not supported");
+      }
+    }
+
     private async Task<List<WalletCredential>> List(HolderContext context, WalletCredentialStatus status = WalletCredentialStatus.Accepted)
     {
       var result = new List<WalletCredential>();

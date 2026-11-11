@@ -1,5 +1,5 @@
-using Yoma.Core.Domain.Core;
 using System.Globalization;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Payout;
 using Yoma.Core.Domain.Payout.Models.Provider;
 using Yoma.Core.Infrastructure.IXO.YellowCard.Models;

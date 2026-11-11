@@ -9,6 +9,12 @@ namespace Yoma.Core.Domain.SSI.Models
     public SchemaType SchemaType { get; set; }
 
     /// <summary>
+    /// Credential lifecycle status resolved by the SSI provider.
+    /// This is not wallet acceptance status or a live proof-verification result.
+    /// </summary>
+    public CredentialStatus Status { get; set; }
+
+    /// <summary>
     /// Credential context for wallet card presentation, normalized from a mapped signed system attribute.
     /// Null when no supported context is present, including YoID. Never inferred from schema context
     /// or the current editable source entity; the schema type identifies the credential family.

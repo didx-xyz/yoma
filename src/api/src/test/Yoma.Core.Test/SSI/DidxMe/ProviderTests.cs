@@ -2,24 +2,24 @@ using Flurl.Http;
 using Flurl.Http.Newtonsoft;
 using Flurl.Http.Testing;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Moq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Security.Claims;
 using System.Net;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using Xunit;
-using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core;
-using Yoma.Core.Infrastructure.DidxMe;
 using Yoma.Core.Domain.Core.Exceptions;
+using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Domain.SSI.Models.Provider;
+using Yoma.Core.Infrastructure.DidxMe;
 using Yoma.Core.Infrastructure.DidxMe.Client;
 using Yoma.Core.Infrastructure.DidxMe.Interfaces;
 using Yoma.Core.Infrastructure.DidxMe.Models;
@@ -40,6 +40,175 @@ namespace Yoma.Core.Test.SSI.DidxMe
     #endregion
 
     #region Tests
+    [Theory]
+    [InlineData("issued", CredentialStatus.Issued)]
+    [InlineData("revoked", CredentialStatus.Revoked)]
+    [InlineData("offered", CredentialStatus.Unknown)]
+    [InlineData(null, CredentialStatus.Unknown)]
+    public async Task WalletListAndDetailUseIssuerLifecycleRatherThanAcceptance(string? issuerStatus, CredentialStatus expected)
+    {
+      using var http = new HttpTest().WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
+      var fixture = new Fixture(http) { UseDefaultWalletResponses = false };
+      fixture.AddAcceptedMapping();
+      http.ForCallsTo("https://wallet.test/api/v2/credentials?*")
+        .RespondWithJson(new { data = new[] { Fixture.WalletCredential(WalletId) } });
+      http.ForCallsTo("https://creds.test/api/v1/issuances/revoke-session").RespondWithJson(new
+      {
+        data = new
+        {
+          id = "revoke-session",
+          credentials = new[] { new { id = "revoke-credential", status = issuerStatus } }
+        }
+      });
+
+      Assert.Equal(expected, Assert.Single((await fixture.Client.ListCredentials(HolderId))!).Status);
+      Assert.Equal(expected, (await fixture.Client.GetCredentialById(HolderId, WalletId)).Status);
+      http.ShouldHaveCalled("https://creds.test/api/v1/issuances/revoke-session")
+        .WithVerb(HttpMethod.Get).WithHeader("Authorization", "Bearer issuer-test").Times(2);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task MissingOrMismatchedJournalLeavesWalletStatusUnknown(bool mismatched)
+    {
+      using var http = new HttpTest().WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
+      var fixture = new Fixture(http);
+      if (mismatched) fixture.AddAcceptedMapping().WalletCredentialId = "another-credential";
+      http.ForCallsTo("https://wallet.test/api/v2/credentials/" + WalletId)
+        .RespondWithJson(new { data = Fixture.WalletCredential(WalletId) });
+
+      var result = await fixture.Client.GetCredentialById(HolderId, WalletId);
+
+      Assert.Equal(WalletId, result.Id);
+      Assert.Equal(CredentialStatus.Unknown, result.Status);
+      http.ShouldNotHaveCalled("https://creds.test/api/v1/issuances/*");
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.NotFound)]
+    [InlineData(HttpStatusCode.ServiceUnavailable)]
+    public async Task IssuerStatusFailureDoesNotHideWalletCredential(HttpStatusCode status)
+    {
+      using var http = new HttpTest().WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
+      var fixture = new Fixture(http);
+      fixture.AddAcceptedMapping();
+      http.ForCallsTo("https://creds.test/api/v1/issuances/revoke-session").RespondWith(status: (int)status);
+
+      var result = await fixture.Client.GetCredentialById(HolderId, WalletId);
+
+      Assert.Equal(WalletId, result.Id);
+      Assert.Equal(CredentialStatus.Unknown, result.Status);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task RevocationConfirmsIssuerStatusAndRecoversAnAlreadyRevokedCredential(bool alreadyRevoked)
+    {
+      using var http = new HttpTest().WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
+      var fixture = new Fixture(http);
+      fixture.AddAcceptedMapping();
+
+      http.ForCallsTo("https://creds.test/api/v1/issuances/revoke-session").RespondWithJson(new
+      {
+        data = new
+        {
+          id = "revoke-session",
+          credentials = new[]
+          {
+            new
+            {
+              id = "revoke-credential",
+              status = alreadyRevoked ? "revoked" : "issued",
+              revocable = true
+            }
+          }
+        }
+      }).RespondWithJson(new
+      {
+        data = new
+        {
+          id = "revoke-session",
+          credentials = new[]
+          {
+            new
+            {
+              id = "revoke-credential",
+              status = "revoked",
+              revocable = true
+            }
+          }
+        }
+      });
+
+      http.ForCallsTo("https://creds.test/api/v1/credentials/revoke-credential/revoke")
+        .RespondWith(status: 204);
+
+      await fixture.Client.RevokeCredential(HolderId, ArtifactType.SDJWT, WalletId, new(ReferentAttribute, "scheduled-issuance"));
+
+      http.ShouldHaveCalled("https://creds.test/api/v1/issuances/revoke-session").Times(alreadyRevoked ? 1 : 2);
+      if (alreadyRevoked) http.ShouldNotHaveCalled("https://creds.test/api/v1/credentials/revoke-credential/revoke");
+      else http.ShouldHaveCalled("https://creds.test/api/v1/credentials/revoke-credential/revoke")
+        .WithVerb(HttpMethod.Post).WithHeader("Authorization", "Bearer issuer-test").Times(1);
+      http.ShouldNotHaveCalled("https://wallet.test/*");
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task RevocationRequiresMatchingIssuerAndWalletReferences(bool wrongWallet)
+    {
+      using var http = new HttpTest();
+      var fixture = new Fixture(http);
+
+      if (wrongWallet) fixture.AddAcceptedMapping().WalletCredentialId = "another-wallet-credential";
+
+      await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.Client.RevokeCredential(
+        HolderId, ArtifactType.SDJWT, WalletId, new(ReferentAttribute, "scheduled-issuance")));
+
+      Assert.Empty(http.CallLog);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task RevocationNeverTreatsAnUnconfirmedStatusAsSuccess(bool revocable)
+    {
+      using var http = new HttpTest().WithSettings(settings => settings.JsonSerializer = new NewtonsoftJsonSerializer());
+      var fixture = new Fixture(http);
+      fixture.AddAcceptedMapping();
+
+      http.ForCallsTo("https://creds.test/api/v1/issuances/revoke-session").RespondWithJson(new
+      {
+        data = new
+        {
+          id = "revoke-session",
+          credentials = new[]
+          {
+            new
+            {
+              id = "revoke-credential",
+              status = "issued",
+              revocable
+            }
+          }
+        }
+      });
+
+      http.ForCallsTo("https://creds.test/api/v1/credentials/revoke-credential/revoke").RespondWith(status: 204);
+
+      if (revocable)
+        await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.Client.RevokeCredential(
+          HolderId, ArtifactType.SDJWT, WalletId, new(ReferentAttribute, "scheduled-issuance")));
+      else
+        await Assert.ThrowsAsync<NotSupportedException>(() => fixture.Client.RevokeCredential(
+          HolderId, ArtifactType.SDJWT, WalletId, new(ReferentAttribute, "scheduled-issuance")));
+
+      if (revocable) http.ShouldHaveCalled("https://creds.test/api/v1/credentials/revoke-credential/revoke").Times(1);
+      else http.ShouldNotHaveCalled("https://creds.test/api/v1/credentials/revoke-credential/revoke");
+    }
+
     [Theory]
     [InlineData("MyOpportunity_EntrepreneurshipRegistrationReference")]
     [InlineData("Opportunity_EntrepreneurshipProgrammeOtherDescription")]
@@ -902,6 +1071,27 @@ namespace Yoma.Core.Test.SSI.DidxMe
       public bool SimulateAcceptance = true;
       public bool UseDefaultDeliveryResponse = true;
 
+      public IssuanceMapping AddAcceptedMapping()
+      {
+        var mapping = new IssuanceMapping
+        {
+          Id = Guid.NewGuid(),
+          TenantAlias = "yoma",
+          TenantIdHolder = HolderId,
+          TenantIdIssuer = OrganizationReferent,
+          PresetMappingId = "schema-1",
+          ClientReferentKey = ReferentAttribute,
+          ClientReferentValue = "scheduled-issuance",
+          IssuanceId = "revoke-session",
+          IssuerCredentialId = "revoke-credential",
+          WalletCredentialId = WalletId,
+          Status = nameof(IssuanceStatus.Accepted),
+          DeliveryCompleted = true
+        };
+        IssuanceMappings.Add(mapping);
+        return mapping;
+      }
+
       public Fixture(HttpTest http, ArtifactType artifactType = ArtifactType.SDJWT)
       {
         _artifactType = artifactType;
@@ -950,7 +1140,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
         strategy.Setup(value => value.ExecuteInExecutionStrategyAsync(It.IsAny<Func<Task>>(), true))
           .Returns((Func<Task> action, bool _) => action());
         Tracking = new IssuanceTrackingService(NullLogger<IssuanceTrackingService>.Instance, options, IssuanceMappingRepository.Object, strategy.Object);
-        var holder = new HolderService(accessor, issuer, wallet, presets, Tracking, users.Object, Repository(TenantCreations).Object);
+        var holder = new HolderService(accessor, issuer, wallet, presets, Tracking, users.Object, Repository(TenantCreations).Object, NullLogger<HolderService>.Instance);
         Client = new ProviderClient(options, presets, issuer, Tracking, holder, users.Object);
         IssuanceMappingRepository.Setup(value => value.Update(It.IsAny<IssuanceMapping>()))
           .ReturnsAsync((IssuanceMapping item) =>
@@ -987,6 +1177,16 @@ namespace Yoma.Core.Test.SSI.DidxMe
         }, 201);
         http.ForCallsTo("https://wallet.test/api/v2/orgs/credentials")
           .With(call => UseDefaultDeliveryResponse).RespondWithJson(new { data = (object?)null }, 201);
+        http.ForCallsTo("https://creds.test/api/v1/issuances/issuance-id")
+          .With(call => IssuanceMappings.Any(item => item.IssuanceId == "issuance-id" && item.Status == nameof(IssuanceStatus.Accepted)))
+          .RespondWithJson(new
+          {
+            data = new
+            {
+              id = "issuance-id",
+              credentials = new[] { new { id = "issuer-credential-id", status = "issued" } }
+            }
+          });
       }
 
       public CredentialIssuanceRequest Request() => new()

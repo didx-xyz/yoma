@@ -31,6 +31,27 @@ namespace Yoma.Core.Domain.SSI
     Error
   }
 
+  public enum CredentialStatus
+  {
+    /// <summary>
+    /// The provider could not establish the credential's current lifecycle status.
+    /// Do not treat this as confirmation that the credential is unrevoked.
+    /// </summary>
+    Unknown,
+
+    /// <summary>
+    /// The provider reports the credential as issued and not revoked, or it is non-revocable.
+    /// This does not replace expiry, signature or proof verification.
+    /// </summary>
+    Issued,
+
+    /// <summary>
+    /// The provider confirms credential revocation.
+    /// Its wallet copy remains visible with this status until deletion succeeds.
+    /// </summary>
+    Revoked
+  }
+
   public enum CredentialIssuanceStatus
   {
     Pending,
@@ -40,7 +61,11 @@ namespace Yoma.Core.Domain.SSI
     /// Same-provider credential cleanup scheduled by migration. Tenants/connections are preserved;
     /// only confirmed cleanup can release the schedule to Pending for normal issuance.
     /// </summary>
-    Replay
+    Replay,
+    Revoke,
+    Revoked,
+    Deleted,
+    Reissue
   }
 
   public enum SchemaEntityPropertySystemType

@@ -1,6 +1,6 @@
-using Yoma.Core.Infrastructure.Umuzi.Context;
 using Yoma.Core.Infrastructure.Shared.Entities;
 using Yoma.Core.Infrastructure.Shared.Repositories;
+using Yoma.Core.Infrastructure.Umuzi.Context;
 
 namespace Yoma.Core.Infrastructure.Umuzi.Repositories
 {

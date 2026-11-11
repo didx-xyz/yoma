@@ -757,7 +757,11 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .HasIndex(e => new { e.SchemaTypeId, e.UserId, e.OrganizationId, e.MyOpportunityId })
           .IsUnique()
           .AreNullsDistinct(false)
-          .HasFilter(null);
+          .HasFilter("\"ParentId\" IS NULL");
+
+      builder.Entity<SSICredentialIssuance>()
+          .HasIndex(e => e.ParentId)
+          .IsUnique();
       #endregion SSI
 
       #region Treasury

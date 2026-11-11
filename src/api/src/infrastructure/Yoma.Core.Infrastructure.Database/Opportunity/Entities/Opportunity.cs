@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using Yoma.Core.Domain.Opportunity;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Infrastructure.Database.Entity.Entities;
 using Yoma.Core.Infrastructure.Database.Lookups.Entities;
 using Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups;

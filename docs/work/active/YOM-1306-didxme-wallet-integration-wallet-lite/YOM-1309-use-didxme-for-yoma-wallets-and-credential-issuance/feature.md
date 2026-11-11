@@ -6,8 +6,8 @@
 - **Epic**: [YOM-1306](../README.md)
 - **Owner**: Adrian
 - **Areas**: API, provider adapter
-- **Status**: review — PR #2025 Stage Replay reconciled; retry follow-up ready to commit
-- **Branch**: `codex/yom-1309-replay-retry-isolation`
+- **Status**: review — YoID profile replacement reviewed and verified locally; approval and deployed verification pending
+- **Branch**: `feature/yom-1306-yoid-revocation-reissuance`
 
 ## Goal / Yoma Contract
 
@@ -38,7 +38,11 @@ security configuration and privileged workflows are held in the private engineer
 - [x] Prepare private Stage-only preset refresh and Replay tooling outside the repository, with guarded SQL and isolated PostgreSQL verification. Existing Admin schema Update creates clean versions without changing public attributes. No runtime workaround or Prod cutover migration change.
 - [ ] Review and execute that procedure on Stage after deployment/configuration verification, with workers paused and drained; confirm wallet results before restoring schedules.
 - [x] Share schema definitions through the existing distributed cache and coordinate cache population/provider writes with the existing ownership-checked distributed lock. Preserve domain reflection metadata and historical schema reads; leave PATCH versioning unchanged for Stage preparation.
-- [ ] Later phase: implement YoID replacement/revocation after phase 1 is verified. Background Replay is implemented in this phase; deployed verification remains outstanding.
+- [x] Implement background YoID profile replacement with retained parent history, confirmed revocation, replacement issuance and wallet cleanup. Reuse the existing retry policy and issuance process; ordinary Replay and opportunity snapshots remain unchanged.
+- [x] Share profile change detection between API profile updates and internal user upserts; unchanged saves/login timestamps do not queue work. Compare issued claims against the issued schema in the worker before requesting revocation.
+- [x] Verify the automated regression suite and apply the new migration to an isolated PostgreSQL database containing an issued credential.
+- [x] Review the uncommitted YoID replacement change and run live profile-change/revocation/reissuance tests against local didx:me, including unchanged/unrelated edits, provider status, retained history and retry recovery. See the [local test results](./handoffs/2026-11-11-c.md#live-local-docker-results).
+- [ ] Obtain commit/PR approval, coordinate wallet status tags with Jason and verify the replacement flow after deployment. Cryptographic proof validation has not been exercised.
 - [x] Scaffold and wire the infrastructure using Yoma conventions.
 - [x] Support SDJWT for both YoID and opportunity credentials.
 - [x] Persist schema/credential mappings while retaining domain identity contracts.
@@ -79,6 +83,12 @@ security configuration and privileged workflows are held in the private engineer
 - [x] Remove private integration-document versions from the feature history and delete the assessment file; coordinate collaborator resynchronization.
 
 ## Decisions
+
+- 2026-11-11 wallet review: lifecycle status comes from each provider adapter, not domain issuance history. Shared `CredentialStatus` is `Unknown` / `Issued` / `Revoked`. didx:me resolves the correlated issuer credential; Aries requests revocation checks for AnonCreds and reports non-revocable local JWS as issued. Missing correlation or failed status checks remain unknown. Keep native provider enums separate: wallet acceptance and issuer offers are different contracts. See the replacement handoff for read costs and UI handling.
+- 2026-11-11 review: use explicit `Reissue` status for queued attribute comparisons and their retries. Unchanged credentials return to `Issued`; changed credentials move to `Revoke`. Pending/Replay work retains its status and records the refresh marker until successful issuance promotes it to `Reissue`. The marker also protects a newer profile change from an older comparison.
+
+- 2026-11-11: Keep YoID profile replacement under YOM-1309. Profile/API, identity/import and photo changes only queue a durable comparison; existing profile ownership rules remain unchanged. Reuse Core hashing for the stored profile projection, excluding login/audit timestamps and resolved labels. The worker compares the current user with the signed claims using the **issued** schema. Fields introduced only in a newer schema do not trigger replacement.
+- 2026-11-11: Replacement uses a new issuance row and referent, linked by `ParentId`, and a new issue date. Confirm revocation before allowing that child to issue with the latest configured YoID schema version. Delete the old wallet copy after confirmed replacement, retain the old row and native ID, and show confirmed revocations in list/detail with `status: Revoked` until deletion succeeds, even if cleanup fails. Replay remains same-row cleanup/reissue with its original date. Unsupported adapters retain the existing YoID. See [replacement handoff](./handoffs/2026-11-11-c.md) for recovery limits and verification.
 
 - 2026-11-11 schema PATCH: Stage's explicit refresh and Replay are complete, so remove unconditional version creation for identical definitions. Seeding delegates to the same Update flow as admin PATCH; only private `UpsertSchema` owns change detection. Use the provider's latest-by-name lookup inside the existing distributed write lock, compare trimmed ordinal attribute sets after adding domain-owned system/internal fields and preserve artifact type. An unchanged update returns the current schema with HTTP 200 without provider upsert/cache invalidation; real changes retain the existing write/invalidation flow. No force-version flag or Stage-specific exception. This supersedes the earlier decision to retain unconditional PATCH versioning during Stage preparation.
 

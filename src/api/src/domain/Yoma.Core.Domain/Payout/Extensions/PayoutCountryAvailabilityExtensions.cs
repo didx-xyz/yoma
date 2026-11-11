@@ -1,5 +1,5 @@
-using Yoma.Core.Domain.Core;
 using FluentValidation;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Payout.Models;
 

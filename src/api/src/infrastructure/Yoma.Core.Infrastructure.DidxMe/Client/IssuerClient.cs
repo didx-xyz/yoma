@@ -132,6 +132,22 @@ namespace Yoma.Core.Infrastructure.DidxMe.Client
     }
 
     /// <summary>
+    /// Request issuer-side revocation; callers confirm the resulting status separately.
+    /// </summary>
+    public async Task RevokeCredential(string id)
+    {
+      ArgumentException.ThrowIfNullOrWhiteSpace(id);
+
+      var authHeader = await _authService.GetAuthHeader();
+
+      using var response = await Execute(() => _options.CredentialsBaseUri
+        .AppendPathSegments("v1", "credentials", id, "revoke")
+        .WithAuthHeader(authHeader)
+        .WithTimeout(TimeSpan.FromSeconds(_options.IssuerRequestTimeoutSeconds))
+        .PostAsync(), [HttpStatusCode.NoContent]);
+    }
+
+    /// <summary>
     /// Pushes the offer to the holder wallet with synchronous auto-approval. A successful response
     /// has data:null and confirms delivery, but supplies neither a wallet ID nor background access.
     /// The recipient is the verified Yoma external identifier; this endpoint cannot take a holder ID.

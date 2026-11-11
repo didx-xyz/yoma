@@ -15,8 +15,8 @@ using Yoma.Core.Domain.Payout;
 using Yoma.Core.Domain.Payout.Interfaces.Provider;
 using Yoma.Core.Domain.Payout.Models;
 using Yoma.Core.Domain.Payout.Models.Provider;
-using Yoma.Core.Infrastructure.IXO.YellowCard.Interfaces;
 using Yoma.Core.Infrastructure.IXO.YellowCard.Helpers;
+using Yoma.Core.Infrastructure.IXO.YellowCard.Interfaces;
 using Yoma.Core.Infrastructure.IXO.YellowCard.Models;
 using PayoutProvider = Yoma.Core.Domain.Payout.Provider;
 

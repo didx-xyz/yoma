@@ -1,11 +1,11 @@
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
-using Yoma.Core.Domain.Entity.Interfaces;
 using Moq;
+using Newtonsoft.Json;
 using Xunit;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.Opportunity;
