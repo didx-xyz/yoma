@@ -241,6 +241,17 @@ namespace Yoma.Core.Domain.SSI.Services
     {
       return await WithSchemaLock(async () =>
       {
+        // Shared by seeding and admin updates. Compare complete, case-sensitive attribute sets
+        // under the write lock so ordering and concurrent identical updates do not create versions.
+        var existing = await _ssiProviderClient.GetSchemaByNameOrNull(request.Name);
+        if (existing != null && existing.ArtifactType == request.ArtifactType &&
+          request.Attributes.Select(attribute => attribute.Trim()).ToHashSet(StringComparer.Ordinal)
+            .SetEquals(existing.AttributeNames.Select(attribute => attribute.Trim())))
+        {
+          await MarkSchemaMapped(schemaEntities, request.Attributes);
+          return existing;
+        }
+
         // Clear under the same lock as cache population. A provider may accept the write
         // before a later operation fails; readers must reload in that case too.
         await _distributedCacheService.RemoveAsync(CacheKey);

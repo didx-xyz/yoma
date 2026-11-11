@@ -588,33 +588,118 @@ namespace Yoma.Core.Test.SSI
       Assert.Equal(7, fixture.Schemas.Count);
     }
 
-    [Fact]
-    public async Task ExplicitUpdateVersionsUnchangedSchemasWhileAutomaticSeedingReusesThem()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task UnchangedUpdatesReuseSchemasIncludingReorderedAndImplicitSystemAttributes(bool sdJwt)
     {
       using var fixture = new Fixture();
-      fixture.Provider.Setup(provider => provider.GetDefaultArtifactType(It.IsAny<SchemaType>())).Returns(ArtifactType.SDJWT);
+      if (sdJwt) fixture.Provider.Setup(provider => provider.GetDefaultArtifactType(It.IsAny<SchemaType>())).Returns(ArtifactType.SDJWT);
       await fixture.Background.SeedSchemas();
       var originals = (await fixture.Service.List((SchemaType?)null)).ToList();
       Assert.Equal(6, originals.Count);
+      fixture.Provider.Invocations.Clear();
 
       foreach (var original in originals)
       {
         var updated = await fixture.Service.Update(new SSISchemaRequestUpdate
         {
           Name = original.Name,
-          Attributes = [.. Attributes(original)]
+          Attributes = [.. original.Entities.SelectMany(entity =>
+            (entity.Properties?.Where(property => !property.System).Select(property => property.AttributeName) ?? [])
+            .Concat(entity.CustomFields?.Select(field => field.AttributeName) ?? [])).Reverse()]
         });
 
         Assert.Equal(original.Name, updated.Name);
-        Assert.Equal(new Version(1, 1), updated.Version);
-        Assert.NotEqual(original.Id, updated.Id);
+        Assert.Equal(original.Version, updated.Version);
+        Assert.Equal(original.Id, updated.Id);
         Assert.True(Attributes(original).SetEquals(Attributes(updated)));
         Assert.Equal(original.Version, (await fixture.Service.GetById(original.Id)).Version);
       }
 
       await fixture.Background.SeedSchemas();
-      Assert.Equal(12, fixture.Schemas.Count);
+      Assert.Equal(6, fixture.Schemas.Count);
+      fixture.Provider.Verify(provider => provider.UpsertSchema(It.IsAny<SchemaRequest>()), Times.Never);
       fixture.AssertNoErrors();
+    }
+
+    [Fact]
+    public async Task AttributeAdditionsAndRemovalsVersionOnceAndPreserveHistory()
+    {
+      using var fixture = new Fixture();
+      var original = await fixture.Service.Create(new SSISchemaRequestCreate
+      {
+        TypeId = fixture.Entities.Single(entity => entity.Name == "Opportunity").Types!.Single().Id,
+        Name = "Changes",
+        ArtifactType = ArtifactType.SDJWT,
+        Attributes = ["Opportunity_Summary"]
+      });
+
+      var added = await fixture.Service.Update(new SSISchemaRequestUpdate
+      {
+        Name = original.Name,
+        Attributes = ["Opportunity_Summary", "Opportunity_Skills"]
+      });
+      var removed = await fixture.Service.Update(new SSISchemaRequestUpdate
+      {
+        Name = original.Name,
+        Attributes = ["Opportunity_Summary"]
+      });
+      var unchanged = await fixture.Service.Update(new SSISchemaRequestUpdate
+      {
+        Name = original.Name,
+        Attributes = ["Opportunity_Summary"]
+      });
+
+      Assert.Equal(new Version(1, 1), added.Version);
+      Assert.Equal(new Version(1, 2), removed.Version);
+      Assert.Equal(removed.Id, unchanged.Id);
+      Assert.Equal(3, fixture.Schemas.Count);
+      Assert.DoesNotContain("Opportunity_Skills", Attributes(await fixture.Service.GetById(original.Id)));
+      Assert.Contains("Opportunity_Skills", Attributes(await fixture.Service.GetById(added.Id)));
+      Assert.DoesNotContain("Opportunity_Skills", Attributes(removed));
+    }
+
+    [Fact]
+    public async Task ConcurrentIdenticalUpdatesCreateOnlyOneVersion()
+    {
+      using var fixture = new Fixture();
+      await fixture.Background.SeedSchemas();
+      fixture.Settings.CacheEnabledByCacheItemTypes = "Lookups";
+      var original = await fixture.Service.GetByFullName("YoID|Default");
+      var reading = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+      var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+      var reads = 0;
+      fixture.Provider.Setup(provider => provider.GetSchemaByNameOrNull(original.Name)).Returns(async () =>
+      {
+        if (Interlocked.Increment(ref reads) == 1)
+        {
+          reading.SetResult();
+          await release.Task;
+        }
+        return fixture.Schemas.Where(schema => schema.Name == original.Name).OrderByDescending(schema => schema.Version).FirstOrDefault();
+      });
+      fixture.Provider.Invocations.Clear();
+
+      var first = fixture.Service.Update(new SSISchemaRequestUpdate
+      {
+        Name = original.Name,
+        Attributes = ["User_DisplayName"]
+      });
+      await reading.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+      var second = fixture.CreateSchemaService().Update(new SSISchemaRequestUpdate
+      {
+        Name = original.Name,
+        Attributes = ["User_DisplayName"]
+      });
+      Assert.False(second.IsCompleted);
+      release.SetResult();
+
+      var results = await Task.WhenAll(first, second).WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+
+      Assert.Equal(results[0].Id, results[1].Id);
+      Assert.Equal(new Version(1, 1), results[0].Version);
+      fixture.Provider.Verify(provider => provider.UpsertSchema(It.IsAny<SchemaRequest>()), Times.Once);
     }
 
     [Fact]
@@ -1504,7 +1589,7 @@ namespace Yoma.Core.Test.SSI
       var updated = await fixture.Service.Update(new SSISchemaRequestUpdate
       {
         Name = original.Name,
-        Attributes = [.. Attributes(original)]
+        Attributes = ["Opportunity_Summary"]
       });
 
       Assert.Equal(updated.Id, (await otherService.GetByFullName(original.Name)).Id);
@@ -1573,7 +1658,7 @@ namespace Yoma.Core.Test.SSI
       var update = otherService.Update(new SSISchemaRequestUpdate
       {
         Name = original.Name,
-        Attributes = [.. Attributes(original)]
+        Attributes = ["User_DisplayName"]
       });
       Assert.False(update.IsCompleted);
       release.SetResult();
@@ -1608,7 +1693,7 @@ namespace Yoma.Core.Test.SSI
       await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.Service.Update(new SSISchemaRequestUpdate
       {
         Name = original.Name,
-        Attributes = [.. Attributes(original)]
+        Attributes = ["User_DisplayName"]
       }));
       Assert.Equal("accepted-before-response-failed", (await fixture.CreateSchemaService().GetByFullName(original.Name)).Id);
     }
@@ -1755,6 +1840,8 @@ namespace Yoma.Core.Test.SSI
         var factory = new Mock<ISSIProviderClientFactory>();
         factory.Setup(provider => provider.CreateClient()).Returns(Provider.Object);
         Provider.Setup(provider => provider.ListSchemas(It.IsAny<bool>())).ReturnsAsync(() => [.. Schemas]);
+        Provider.Setup(provider => provider.GetSchemaByNameOrNull(It.IsAny<string>())).ReturnsAsync((string name) =>
+          Schemas.Where(schema => schema.Name == name).OrderByDescending(schema => schema.Version).FirstOrDefault());
         Provider.Setup(provider => provider.GetDefaultArtifactType(SchemaType.Opportunity)).Returns(ArtifactType.JWS);
         Provider.Setup(provider => provider.GetDefaultArtifactType(SchemaType.YoID)).Returns(ArtifactType.ACR);
         RestoreProviderWrites();

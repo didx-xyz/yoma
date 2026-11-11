@@ -6,8 +6,8 @@
 - **Epic**: [YOM-1306](../README.md)
 - **Owner**: Adrian
 - **Areas**: API, provider adapter
-- **Status**: review — phase-1 implementation and local debug verification complete; deployment preparation pending
-- **Branch**: `feature/yom-1306-didxme-issuance-recovery-replay`
+- **Status**: review — PR #2025 Stage Replay reconciled; retry follow-up ready to commit
+- **Branch**: `codex/yom-1309-replay-retry-isolation`
 
 ## Goal / Yoma Contract
 
@@ -22,6 +22,10 @@ security configuration and privileged workflows are held in the private engineer
 
 ## Tasks
 
+- [x] Route Replay failures through the existing issuance Error/retry policy, preserving cleanup identity and retrying as Replay. Remove the global Pending issuance block; verify mixed batches, retry exhaustion, checkpoints and failed saves. See the [follow-up handoff](./handoffs/2026-11-11-b.md).
+- [ ] Commit and deploy the reviewed Replay retry follow-up.
+- [x] Reconcile the Stage Replay cohort against its private baseline: 599 replacements on v1.1, four known test-account exceptions, all 603 original dates preserved exactly. See the follow-up handoff for verification limits.
+- [x] Make unchanged schema PATCH return the existing latest version. Compare complete attributes and artifact type under the existing write lock; verify real additions/removals, implicit system fields, historical reads, shared cache and concurrent identical updates. Include in the same uncommitted follow-up.
 - [x] Undo the uncommitted revocation prototype and rename the follow-up branch for phase 1; source restored to the PR #2013 baseline.
 - [x] Prove authorized background holder access locally without a holder password or existing login; verify recovery lookup, deletion and replacement. Application integration and the VS job run are now verified; deployed configuration remains outstanding.
 - [x] Move Yoma token configuration/acquisition behind the identity-provider contract; preserve encrypted cache binding and separate interactive/background operations.
@@ -75,6 +79,10 @@ security configuration and privileged workflows are held in the private engineer
 - [x] Remove private integration-document versions from the feature history and delete the assessment file; coordinate collaborator resynchronization.
 
 ## Decisions
+
+- 2026-11-11 schema PATCH: Stage's explicit refresh and Replay are complete, so remove unconditional version creation for identical definitions. Seeding delegates to the same Update flow as admin PATCH; only private `UpsertSchema` owns change detection. Use the provider's latest-by-name lookup inside the existing distributed write lock, compare trimmed ordinal attribute sets after adding domain-owned system/internal fields and preserve artifact type. An unchanged update returns the current schema with HTTP 200 without provider upsert/cache invalidation; real changes retain the existing write/invalidation flow. No force-version flag or Stage-specific exception. This supersedes the earlier decision to retain unconditional PATCH versioning during Stage preparation.
+
+- 2026-11-11 Replay retries: use the existing Error branch in `UpdateScheduleIssuance` for both cleanup and issuance failures. Read the persisted status/count so cleanup failures retry as Replay, while issuance failures retry as Pending; apply the same configured limit and first-failure count of zero. Exhausted cleanup stays Error with its old credential identity/version/date. Checkpoints do not increment counts, and successful cleanup clears them. After attempting cleanup batches, skip failed items for that run and process eligible Pending work; one failed cleanup must not block other credentials. No migration, provider-specific exception handling or new retry policy.
 
 - 2026-11-11 shared schema cache: cache provider definitions in Valkey, not JSON-ignored domain reflection metadata. Cache hits remain unlocked; misses recheck/populate under the same lock used to invalidate and upsert. Clear before the provider write so partial success followed by failure cannot leave the previous snapshot cached. Use a fixed TTL bounded by the shorter existing lookup expiration setting, a five-minute non-renewing lease and a thirty-second acquisition timeout. No generation marker, new infrastructure or configuration. All replicas must run this change before relying on shared invalidation; thereafter schema updates do not require a separate pod roll. Already-running readers may finish their existing snapshot; lease expiry is not fenced against an overlong operation.
 

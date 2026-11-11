@@ -14,11 +14,9 @@ namespace Yoma.Core.Domain.SSI.Interfaces
     List<SSICredentialIssuance> ListPendingIssuanceSchedule(int batchSize, List<Guid> idsToSkip);
 
     /// <summary>
-    /// Cleanup work is selected independently of issuance readiness; failures remain Replay.
+    /// Cleanup work is selected independently of issuance readiness; eligible retries remain Replay.
     /// </summary>
     List<SSICredentialIssuance> ListReplayIssuanceSchedule(int batchSize, List<Guid> idsToSkip);
-
-    bool HasReplayIssuanceSchedule();
 
     Task UpdateScheduleIssuance(SSICredentialIssuance item);
   }
