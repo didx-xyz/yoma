@@ -31,7 +31,9 @@ security configuration and privileged workflows are held in the private engineer
 - [x] Verify the real VS job flow: signed acceptance, native wallet IDs, holder recovery, both credential families recovering with and without tracking rows, and Replay preserving the original issuance date. See the [local results](./handoffs/2026-11-10-e.md).
 - [x] Commit/push the phase-1 follow-up and open [draft PR #2025](https://github.com/didx-xyz/yoma/pull/2025).
 - [ ] Review the PR #2025 follow-up corrections and confirm the Linear review status/link; obtain approval before publishing further changes.
-- [ ] Prepare a separately reviewed Stage-only cleanup/reissuance procedure, preserving holders and original issuance dates. Confirm preset handling separately; do not add a forced-version workaround or change the existing Prod cutover migration.
+- [x] Prepare private Stage-only preset refresh and Replay tooling outside the repository, with guarded SQL and isolated PostgreSQL verification. Existing Admin schema Update creates clean versions without changing public attributes. No runtime workaround or Prod cutover migration change.
+- [ ] Review and execute that procedure on Stage after deployment/configuration verification, with workers paused and drained; confirm wallet results before restoring schedules.
+- [x] Share schema definitions through the existing distributed cache and coordinate cache population/provider writes with the existing ownership-checked distributed lock. Preserve domain reflection metadata and historical schema reads; leave PATCH versioning unchanged for Stage preparation.
 - [ ] Later phase: implement YoID replacement/revocation after phase 1 is verified. Background Replay is implemented in this phase; deployed verification remains outstanding.
 - [x] Scaffold and wire the infrastructure using Yoma conventions.
 - [x] Support SDJWT for both YoID and opportunity credentials.
@@ -73,6 +75,10 @@ security configuration and privileged workflows are held in the private engineer
 - [x] Remove private integration-document versions from the feature history and delete the assessment file; coordinate collaborator resynchronization.
 
 ## Decisions
+
+- 2026-11-11 shared schema cache: cache provider definitions in Valkey, not JSON-ignored domain reflection metadata. Cache hits remain unlocked; misses recheck/populate under the same lock used to invalidate and upsert. Clear before the provider write so partial success followed by failure cannot leave the previous snapshot cached. Use a fixed TTL bounded by the shorter existing lookup expiration setting, a five-minute non-renewing lease and a thirty-second acquisition timeout. No generation marker, new infrastructure or configuration. All replicas must run this change before relying on shared invalidation; thereafter schema updates do not require a separate pod roll. Already-running readers may finish their existing snapshot; lease expiry is not fenced against an overlong operation.
+
+- 2026-11-11 Stage preparation: use the existing Admin schema Update API to explicitly create new versions with unchanged domain attributes; startup comparison cannot detect removal of an infrastructure-only attribute. Preserve historical preset mappings for wallet decoding/Replay. Convert legacy domain tracking IDs to known wallet IDs, or NULL for validated reference recovery, only in the reviewed Stage cohort. Pause workers and complete the rollout on every replica before preparation. One-off operator tooling stays outside the repository; see the [handoff](./handoffs/2026-11-11-a.md).
 
 - 2026-11-10 final review follow-up: acknowledge and log a conflicting acceptance event without replacing its confirmed wallet ID; persistence failures still propagate for retry. Reuse the resolved holder context during issuance without narrowing the recovery scan. Align token invalidation with the acquisition lock budget and preserve the original wallet failure if cache cleanup fails. Retain the existing Keycloak options registration: Adrian rejected isolated timeout validation; positive configuration remains an operator requirement. See the [follow-up handoff](./handoffs/2026-11-10-h.md).
 

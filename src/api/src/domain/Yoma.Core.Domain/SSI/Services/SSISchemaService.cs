@@ -1,5 +1,4 @@
 using FluentValidation;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
@@ -21,13 +20,20 @@ namespace Yoma.Core.Domain.SSI.Services
   {
     #region Class Variables
     private readonly AppSettings _appSettings;
-    private readonly IMemoryCache _memoryCache;
+    private readonly IDistributedCacheService _distributedCacheService;
+    private readonly IDistributedLockService _distributedLockService;
     private readonly ISSIProviderClient _ssiProviderClient;
     private readonly ISSISchemaEntityService _ssiSchemaEntityService;
     private readonly ICustomFieldDefinitionService _customFieldDefinitionService;
     private readonly ISSISchemaTypeService _ssiSchemaTypeService;
     private readonly SchemaRequestValidatorCreate _schemaRequestValidatorCreate;
     private readonly SchemaRequestValidatorUpdate _schemaRequestValidatorUpdate;
+
+    private static readonly string CacheKey = CacheHelper.GenerateKey<Schema>();
+    private const string LockIdentifier = "ssi_schema_cache";
+    // Includes provider calls and local persistence. The existing lock does not renew its lease.
+    private static readonly TimeSpan LockDuration = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan LockAcquireTimeout = TimeSpan.FromSeconds(30);
 
     public static readonly char[] SchemaName_SystemCharacters = [':'];
     public const char SchemaName_TypeDelimiter = '|';
@@ -39,7 +45,8 @@ namespace Yoma.Core.Domain.SSI.Services
 
     #region Constructor
     public SSISchemaService(IOptions<AppSettings> appSettings,
-        IMemoryCache memoryCache,
+        IDistributedCacheService distributedCacheService,
+        IDistributedLockService distributedLockService,
         ISSIProviderClientFactory ssiProviderClientFactory,
         ISSISchemaEntityService ssiSchemaEntityService,
         ICustomFieldDefinitionService customFieldDefinitionService,
@@ -48,7 +55,8 @@ namespace Yoma.Core.Domain.SSI.Services
         SchemaRequestValidatorUpdate schemaRequestValidatorUpdate)
     {
       _appSettings = appSettings.Value;
-      _memoryCache = memoryCache;
+      _distributedCacheService = distributedCacheService;
+      _distributedLockService = distributedLockService;
       _ssiProviderClient = ssiProviderClientFactory.CreateClient();
       _ssiSchemaEntityService = ssiSchemaEntityService;
       _customFieldDefinitionService = customFieldDefinitionService;
@@ -128,15 +136,12 @@ namespace Yoma.Core.Domain.SSI.Services
       //prefix internal attributes
       request.Attributes.InsertRange(0, SchemaAttributes_Internal);
 
-      var schema = await _ssiProviderClient.UpsertSchema(new SchemaRequest
+      var schema = await UpsertSchema(new SchemaRequest
       {
         Name = request.Name,
         ArtifactType = schemaExisting.ArtifactType, //preserve existing artifact store; switching of artifact stores only allowed with 'Create'
         Attributes = request.Attributes
-      });
-
-      await MarkSchemaMapped(schemaEntities, request.Attributes);
-      _memoryCache.Remove(CacheHelper.GenerateKey<SSISchema>());
+      }, schemaEntities);
 
       return ConvertToSSISchema(schema);
     }
@@ -176,15 +181,12 @@ namespace Yoma.Core.Domain.SSI.Services
       //prefix internal attributes
       request.Attributes.InsertRange(0, SchemaAttributes_Internal);
 
-      var schema = await _ssiProviderClient.UpsertSchema(new SchemaRequest
+      var schema = await UpsertSchema(new SchemaRequest
       {
         Name = nameFull,
         ArtifactType = request.ArtifactType,
         Attributes = request.Attributes
-      });
-
-      await MarkSchemaMapped(schemaEntities, request.Attributes);
-      _memoryCache.Remove(CacheHelper.GenerateKey<SSISchema>());
+      }, schemaEntities);
 
       return ConvertToSSISchema(schema);
     }
@@ -225,21 +227,50 @@ namespace Yoma.Core.Domain.SSI.Services
     #endregion
 
     #region Private Members
+    private async Task<T> WithSchemaLock<T>(Func<Task<T>> action) where T : class
+    {
+      T? result = null;
+      if (!await _distributedLockService.TryRunWithLockAsync(LockIdentifier, LockDuration, LockAcquireTimeout,
+        async () => { result = await action(); }))
+        throw new TimeoutException("Schema management is busy; please try again");
+
+      return result ?? throw new InvalidOperationException("Schema operation returned no result");
+    }
+
+    private async Task<Schema> UpsertSchema(SchemaRequest request, List<SSISchemaEntity> schemaEntities)
+    {
+      return await WithSchemaLock(async () =>
+      {
+        // Clear under the same lock as cache population. A provider may accept the write
+        // before a later operation fails; readers must reload in that case too.
+        await _distributedCacheService.RemoveAsync(CacheKey);
+        var schema = await _ssiProviderClient.UpsertSchema(request);
+        await MarkSchemaMapped(schemaEntities, request.Attributes);
+        return schema;
+      });
+    }
+
+    private async Task<List<Schema>> ListProviderSchemasCached()
+    {
+      if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
+        return await _ssiProviderClient.ListSchemas(false) ?? [];
+
+      // Cache only provider definitions. Domain models have JSON-ignored reflection metadata
+      // needed for issuance and must be assembled from the existing entity lookups on each read.
+      var cached = await _distributedCacheService.GetAsync<List<Schema>>(CacheKey);
+      if (cached != null) return cached;
+
+      // Fast cache hits do not extend the TTL. Bound the shared snapshot by both lookup limits.
+      var expiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
+      var absoluteExpiration = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
+      return await WithSchemaLock(() => _distributedCacheService.GetOrCreateAsync(CacheKey,
+        async () => await _ssiProviderClient.ListSchemas(false) ?? [],
+        absoluteExpirationRelativeToNow: expiration < absoluteExpiration ? expiration : absoluteExpiration));
+    }
+
     private async Task<List<SSISchema>> ListCached(bool latestVersion)
     {
-      List<SSISchema> results;
-
-      if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
-        results = await ListInternal();
-      else
-      {
-        results = await _memoryCache.GetOrCreateAsync(CacheHelper.GenerateKey<SSISchema>(), async entry =>
-        {
-          entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
-          entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
-          return await ListInternal();
-        }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(SSISchema)}s'");
-      }
+      var results = await ListInternal();
 
       if (latestVersion)
       {
@@ -253,7 +284,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
     private async Task<List<SSISchema>> ListInternal()
     {
-      var schemas = await _ssiProviderClient.ListSchemas(false);
+      var schemas = await ListProviderSchemasCached();
 
       var results = new List<SSISchema>();
 
@@ -389,7 +420,7 @@ namespace Yoma.Core.Domain.SSI.Services
     /// cannot share a transaction, so local flags are updated in one atomic batch. Schema listing derives mappings from the provider
     /// and reapplies missing flags, self-healing if the local update exceptionally failed after the provider accepted the schema.
     /// </summary>
-    private async Task MarkSchemaMapped(List<SSISchemaEntity> schemaEntities, List<string> attributeNames)
+    private async Task MarkSchemaMapped(List<SSISchemaEntity> schemaEntities, ICollection<string> attributeNames)
     {
       var definitionIds = schemaEntities
         .SelectMany(entity => entity.CustomFields ?? [])
