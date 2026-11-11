@@ -1,13 +1,13 @@
 using Microsoft.EntityFrameworkCore;
-using Moq;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
+using Moq;
+using Xunit;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Opportunity.Models.Lookups;
 using Yoma.Core.Domain.Opportunity.Services.Lookups;
-using Yoma.Core.Domain.Core.Extensions;
-using Xunit;
 
 namespace Yoma.Core.Test.Core
 {

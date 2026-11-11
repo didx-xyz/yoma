@@ -6,6 +6,8 @@ namespace Yoma.Core.Domain.SSI.Models.Provider
 
     public string SchemaId { get; set; } = null!;
 
+    public CredentialStatus Status { get; set; }
+
     public IDictionary<string, string> Attributes { get; set; } = null!;
   }
 }

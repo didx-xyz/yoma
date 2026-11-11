@@ -1,13 +1,13 @@
 using FluentValidation;
-using Yoma.Core.Domain.Core.Validators;
 using Moq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Xunit;
 using Yoma.Core.Domain.Core;
-using Yoma.Core.Domain.Entity.Validators;
+using Yoma.Core.Domain.Core.Validators;
 using Yoma.Core.Domain.Entity.Extensions;
 using Yoma.Core.Domain.Entity.Models;
+using Yoma.Core.Domain.Entity.Validators;
 using Yoma.Core.Domain.Lookups.Interfaces;
 
 namespace Yoma.Core.Test.Entity

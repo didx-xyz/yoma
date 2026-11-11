@@ -49,6 +49,25 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
     #endregion
 
     #region Public Members
+    public bool SupportsCredentialRevocation(ArtifactType artifactType)
+    {
+      switch (artifactType)
+      {
+        case ArtifactType.ACR:
+        case ArtifactType.JWS:
+        case ArtifactType.SDJWT:
+          return false;
+
+        default:
+          throw new NotSupportedException($"Artifact type '{artifactType}' is not supported");
+      }
+    }
+
+    public Task RevokeCredential(string tenantId, ArtifactType artifactType, string id, KeyValuePair<string, string> clientReferent)
+    {
+      throw new NotSupportedException("YoID revocation is not supported by the Aries adapter");
+    }
+
     public ArtifactType GetDefaultArtifactType(Domain.SSI.SchemaType schemaType) => schemaType switch
     {
       Domain.SSI.SchemaType.YoID => ArtifactType.ACR,
@@ -175,7 +194,28 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         case ArtifactType.ACR:
           try
           {
-            var credential = await _clientFactory.CreateTenantClient(tenantId).GetCredentialByIdAsync(id);
+            var client = _clientFactory.CreateTenantClient(tenantId);
+            var credential = await client.GetCredentialByIdAsync(id);
+            if (credential != null && !string.IsNullOrWhiteSpace(credential.Rev_reg_id))
+            {
+              try
+              {
+                var revocation = await client.GetCredentialRevocationStatusAsync(id, null, null);
+                credential.Revocation_status = revocation?.Revoked switch
+                {
+                  true => RevocationStatus.Revoked,
+                  false => RevocationStatus.Active,
+                  null => RevocationStatus.NotChecked
+                };
+              }
+              catch (Aries.CloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
+              {
+                // Failure to check revocation, including 404, does not establish wallet absence.
+                credential.Revocation_status = RevocationStatus.CheckFailed;
+                if (_logger.IsEnabled(LogLevel.Warning))
+                  _logger.LogWarning("Unable to resolve credential revocation status; provider returned HTTP {statusCode}", ex.StatusCode);
+              }
+            }
             return credential?.ToCredential()
               ?? throw new DataInconsistencyException("Provider returned an empty credential response instead of confirmed absence");
           }
@@ -246,7 +286,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
       //var paginationEnabled = start.HasValue || count.HasValue;
 
       //anon credentials
-      var anonCredentials = await client.GetCredentialsAsync();
+      var anonCredentials = await client.GetCredentialsAsync(checkRevoked: true);
 
       //jws credentials
       var query = _credentialRepository.Query().Where(o => o.TargetTenantId == tenantId && o.ArtifactType == ArtifactType.JWS.ToString());

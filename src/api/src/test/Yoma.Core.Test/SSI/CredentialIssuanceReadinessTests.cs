@@ -194,7 +194,7 @@ namespace Yoma.Core.Test.SSI
         ParticipationRepository.Setup(repository => repository.Query()).Returns(() => Participations.AsQueryable());
         Service = new SSICredentialService(Options.Create(new AppSettings()), Mock.Of<ISSISchemaService>(),
           statuses.Object, Repository.Object, types.Object, tenantStatuses.Object,
-          TenantRepository.Object, ParticipationRepository.Object);
+          TenantRepository.Object, ParticipationRepository.Object, CredentialTestHelper.ExecutionStrategy());
       }
 
       public SSICredentialIssuance AddOpportunity(bool ready)

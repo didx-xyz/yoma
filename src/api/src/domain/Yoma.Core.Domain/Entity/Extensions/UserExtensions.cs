@@ -1,9 +1,41 @@
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Entity.Models;
 
 namespace Yoma.Core.Domain.Entity.Extensions
 {
   public static class UserExtensions
   {
+    /// <summary>
+    /// Detects changes to stored profile values without treating a login, audit update or
+    /// resolved lookup label as a profile edit. The background job separately checks whether
+    /// any changed values appear on the issued YoID; this hash is only a scheduling guard.
+    /// </summary>
+    public static string ComputeProfileHash(this User user)
+    {
+      ArgumentNullException.ThrowIfNull(user);
+
+      return HashHelper.ComputeSHA256Hash(HashHelper.SerializeForHashing(new
+      {
+        user.Username,
+        user.Email,
+        user.EmailConfirmed,
+        user.FirstName,
+        user.Surname,
+        user.DisplayName,
+        user.PhoneNumber,
+        user.PhoneNumberConfirmed,
+        user.CountryId,
+        user.Region,
+        user.City,
+        user.Coordinates,
+        user.LocationSource,
+        user.EducationId,
+        user.GenderId,
+        user.DateOfBirth,
+        user.PhotoId
+      }));
+    }
+
     /// <summary>
     /// Resolves genuine account verification methods from confirmed contacts and social login.
     /// Social login uses the same recorded-provider check as referrals. Absence is unknown,

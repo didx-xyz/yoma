@@ -540,6 +540,7 @@ namespace Yoma.Core.Test.SSI
         statuses.Setup(service => service.GetByName(It.IsAny<string>()))
           .Returns((string name) => new SSICredentialIssuanceStatus { Id = statusIds[Enum.Parse<CredentialIssuanceStatus>(name)] });
         Repository.Setup(repository => repository.Query()).Returns(() => Items.AsQueryable());
+        Repository.Setup(repository => repository.Query(Domain.Core.LockMode.Wait)).Returns(() => Items.AsQueryable());
         Repository.Setup(repository => repository.Update(It.IsAny<SSICredentialIssuance>()))
           .ReturnsAsync((SSICredentialIssuance item) => item);
         var participation = new Domain.MyOpportunity.Models.MyOpportunity
@@ -573,7 +574,7 @@ namespace Yoma.Core.Test.SSI
           schemaTypes.Object,
           tenantStatuses.Object,
           tenantRepository.Object,
-          participationRepository.Object);
+          participationRepository.Object, CredentialTestHelper.ExecutionStrategy());
 
         var tenants = Tenants;
         tenants.Setup(service => service.GetTenantIdOrNull(It.IsAny<EntityType>(), It.IsAny<Guid>())).Returns("tenant");

@@ -12,6 +12,8 @@ namespace Yoma.Core.Infrastructure.DidxMe.Interfaces
 
     Task<IssuanceResponse> GetIssuance(string id);
 
+    Task RevokeCredential(string id);
+
     Task Deliver(string externalId, string offerUri);
 
     Task<Holder?> GetHolderOrNull(string externalId);

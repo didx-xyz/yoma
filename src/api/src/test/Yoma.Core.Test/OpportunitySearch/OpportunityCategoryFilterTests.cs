@@ -1,10 +1,10 @@
+using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
 using System.Security.Claims;
-using FluentValidation;
 using Xunit;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -14,8 +14,8 @@ using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
-using Yoma.Core.Domain.Notification.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
+using Yoma.Core.Domain.Notification.Interfaces;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Models;
@@ -26,8 +26,8 @@ using Yoma.Core.Domain.PartnerSync.Interfaces.Lookups;
 using Yoma.Core.Domain.SSI.Interfaces;
 using Yoma.Core.Domain.Treasury.Interfaces;
 using Category = Yoma.Core.Domain.Opportunity.Models.Lookups.OpportunityCategory;
-using OrganizationStatus = Yoma.Core.Domain.Entity.OrganizationStatus;
 using OpportunityModel = Yoma.Core.Domain.Opportunity.Models.Opportunity;
+using OrganizationStatus = Yoma.Core.Domain.Entity.OrganizationStatus;
 
 namespace Yoma.Core.Test.OpportunitySearch
 {

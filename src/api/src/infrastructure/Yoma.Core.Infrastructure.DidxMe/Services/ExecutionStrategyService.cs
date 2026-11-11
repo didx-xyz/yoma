@@ -1,5 +1,5 @@
-using Yoma.Core.Infrastructure.DidxMe.Interfaces;
 using Yoma.Core.Infrastructure.DidxMe.Context;
+using Yoma.Core.Infrastructure.DidxMe.Interfaces;
 using Yoma.Core.Infrastructure.Shared.Services;
 
 namespace Yoma.Core.Infrastructure.DidxMe.Services

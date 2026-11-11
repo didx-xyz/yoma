@@ -11,6 +11,10 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Entities
   [Index(nameof(SchemaTypeId), nameof(ArtifactType), nameof(SchemaName), nameof(StatusId), nameof(DateCreated), nameof(DateModified))]
   public class SSICredentialIssuance : Shared.Entities.BaseEntity<Guid>
   {
+    [ForeignKey(nameof(ParentId))]
+    public Guid? ParentId { get; set; }
+    public SSICredentialIssuance? Parent { get; set; }
+
     [Required]
     [ForeignKey("SchemaTypeId")]
     public Guid SchemaTypeId { get; set; }
@@ -53,6 +57,12 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Entities
     public string? ErrorReason { get; set; }
 
     public byte? RetryCount { get; set; }
+
+    public DateTimeOffset? DateRevoked { get; set; }
+
+    public DateTimeOffset? DateDeleted { get; set; }
+
+    public DateTimeOffset? DateRefreshRequested { get; set; }
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }

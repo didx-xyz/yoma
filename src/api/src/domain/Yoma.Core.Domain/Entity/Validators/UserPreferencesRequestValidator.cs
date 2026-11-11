@@ -1,6 +1,6 @@
 using FluentValidation;
-using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
+using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 

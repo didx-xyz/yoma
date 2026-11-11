@@ -1,18 +1,18 @@
 using Keycloak.AuthServices.Authentication;
 using Microsoft.AspNetCore.DataProtection;
-using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
 using System.Collections.Concurrent;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
-using Yoma.Core.Domain.IdentityProvider.Interfaces;
-using Yoma.Core.Infrastructure.Keycloak.Client;
-using Yoma.Core.Infrastructure.Keycloak.Models;
 using Yoma.Core.Domain.Core.Services;
+using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Infrastructure.DidxMe.Models;
 using Yoma.Core.Infrastructure.DidxMe.Services;
+using Yoma.Core.Infrastructure.Keycloak.Client;
+using Yoma.Core.Infrastructure.Keycloak.Models;
 
 namespace Yoma.Core.Test.SSI.DidxMe
 {

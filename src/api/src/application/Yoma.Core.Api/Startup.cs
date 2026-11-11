@@ -29,13 +29,13 @@ using Yoma.Core.Infrastructure.Bitly;
 using Yoma.Core.Infrastructure.Database;
 using Yoma.Core.Infrastructure.DidxMe;
 using Yoma.Core.Infrastructure.Emsi;
+using Yoma.Core.Infrastructure.IXO.YellowCard;
 using Yoma.Core.Infrastructure.Keycloak;
 using Yoma.Core.Infrastructure.SAYouth;
 using Yoma.Core.Infrastructure.SendGrid;
 using Yoma.Core.Infrastructure.Shared;
 using Yoma.Core.Infrastructure.Substack;
 using Yoma.Core.Infrastructure.Twilio;
-using Yoma.Core.Infrastructure.IXO.YellowCard;
 using Yoma.Core.Infrastructure.Zlto;
 
 namespace Yoma.Core.Api

@@ -24,6 +24,7 @@ using Yoma.Core.Domain.Referral;
 using Yoma.Core.Domain.Referral.Interfaces;
 using Yoma.Core.Domain.Referral.Models;
 using Yoma.Core.Domain.Reward.Interfaces;
+using Yoma.Core.Domain.SSI.Interfaces;
 
 namespace Yoma.Core.Domain.Entity.Services
 {
@@ -31,6 +32,7 @@ namespace Yoma.Core.Domain.Entity.Services
   {
     #region Class Variables
     private readonly ILogger<UserProfileService> _logger;
+    private readonly ISSICredentialService _ssiCredentialService;
     private readonly IIdentityProviderClient _identityProviderClient;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IUserService _userService;
@@ -78,8 +80,10 @@ namespace Yoma.Core.Domain.Entity.Services
         UserPreferencesRequestValidator userPreferencesRequestValidator,
         IRepositoryValueContainsWithNavigation<User> userRepository,
         IRepository<UserPreferences> userPreferencesRepository,
-        IExecutionStrategyService executionStrategyService)
+        IExecutionStrategyService executionStrategyService,
+        ISSICredentialService ssiCredentialService)
     {
+      _ssiCredentialService = ssiCredentialService ?? throw new ArgumentNullException(nameof(ssiCredentialService));
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _identityProviderClient = (identityProviderClientFactory ?? throw new ArgumentNullException(nameof(identityProviderClientFactory))).CreateClient();
       _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
@@ -345,6 +349,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       var result = _userService.GetCurrentUser(true, true);
       var username = result.Username;
+      var profileHash = result.ComputeProfileHash();
 
       if (!result.ExternalId.HasValue)
         throw new InvalidOperationException($"External id expected for user with id '{result.Id}'");
@@ -378,6 +383,8 @@ namespace Yoma.Core.Domain.Entity.Services
       result.EmailConfirmed = emailUpdated ? false : string.IsNullOrEmpty(result.Email) ? null : result.EmailConfirmed ?? false;
       result.PhoneNumberConfirmed = string.IsNullOrEmpty(result.PhoneNumber) ? null : result.PhoneNumberConfirmed ?? false;
 
+      var profileChanged = profileHash != result.ComputeProfileHash();
+
       //failsafe
       if (string.IsNullOrEmpty(result.Email) && string.IsNullOrEmpty(result.PhoneNumber))
         throw new InvalidOperationException("Email or phone number is required");
@@ -409,6 +416,7 @@ namespace Yoma.Core.Domain.Entity.Services
         };
 
         if (result.YoIDOnboarded != true) await _userService.YoIDOnboard(result);
+        else if (profileChanged) await _ssiCredentialService.ScheduleReissuance(result.Id);
 
         await _identityProviderClient.UpdateUser(requestIdentityProvider);
 

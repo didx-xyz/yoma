@@ -2,8 +2,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Globalization;
 using Yoma.Core.Domain.Core;
@@ -21,7 +19,6 @@ using Yoma.Core.Domain.SSI.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces.Lookups;
 using Yoma.Core.Domain.SSI.Interfaces.Provider;
 using Yoma.Core.Domain.SSI.Models;
-using Yoma.Core.Domain.SSI.Models.Lookups;
 using Yoma.Core.Domain.SSI.Models.Provider;
 
 namespace Yoma.Core.Domain.SSI.Services
@@ -534,15 +531,24 @@ namespace Yoma.Core.Domain.SSI.Services
 
           var items = _ssiCredentialService.ListReplayIssuanceSchedule(_scheduleJobOptions.SSICredentialIssuanceScheduleBatchSize, [.. itemIdsToSkip]);
           var replay = items.Count != 0;
+          var reissuance = false;
+
           if (!replay)
+          {
+            items = _ssiCredentialService.ListPendingReissuanceSchedule(_scheduleJobOptions.SSICredentialIssuanceScheduleBatchSize, [.. itemIdsToSkip]);
+            reissuance = items.Count != 0;
+          }
+
+          if (!replay && !reissuance)
           {
             // Failed cleanup remains Replay or Error and is excluded from Pending selection. Successfully
             // cleaned rows and unrelated Pending work can proceed without waiting for those failures.
             items = _ssiCredentialService.ListPendingIssuanceSchedule(_scheduleJobOptions.SSICredentialIssuanceScheduleBatchSize, [.. itemIdsToSkip]);
           }
+
           if (items.Count == 0) break;
 
-          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing SSI credential {phase} batch with {count} items", replay ? "Replay cleanup" : "issuance", items.Count);
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing SSI credential {phase} batch with {count} items", replay ? "Replay cleanup" : reissuance ? "reissuance" : "issuance", items.Count);
 
           var tasks = new List<Task>();
           try
@@ -581,6 +587,33 @@ namespace Yoma.Core.Domain.SSI.Services
                       await ReplayCredential(item, credentialService, tenantService, myOpportunityService, providerClient,
                         cancellationToken);
                       Interlocked.Increment(ref replayCount);
+                      return;
+                    }
+
+                    if (reissuance)
+                    {
+                      await ReissueCredential(item, credentialService, schemaService, userService, tenantService, providerClient,
+                        customFieldDefinitionService, customFieldValueService);
+
+                      // A concurrent profile update leaves a new check for the next run.
+                      switch (item.Status)
+                      {
+                        case CredentialIssuanceStatus.Reissue:
+                        case CredentialIssuanceStatus.Issued:
+                          itemIdsToSkip.Add(item.Id);
+                          break;
+
+                        case CredentialIssuanceStatus.Pending:
+                        case CredentialIssuanceStatus.Error:
+                        case CredentialIssuanceStatus.Replay:
+                        case CredentialIssuanceStatus.Revoke:
+                        case CredentialIssuanceStatus.Revoked:
+                        case CredentialIssuanceStatus.Deleted:
+                          break;
+
+                        default:
+                          throw new NotSupportedException($"Credential issuance status '{item.Status}' is not supported");
+                      }
                       return;
                     }
 
@@ -649,11 +682,11 @@ namespace Yoma.Core.Domain.SSI.Services
                           switch (entityType)
                           {
                             case Type t when t == typeof(User):
-                              ReflectEntityValues(request, entity, t, user, customFieldDefinitionService, customFieldValueService);
+                              SSICredentialAttributeHelper.ReflectEntityValues(request, entity, t, user, customFieldDefinitionService, customFieldValueService);
                               break;
 
                             case Type t when t == typeof(Organization):
-                              ReflectEntityValues(request, entity, t, organization, customFieldDefinitionService, customFieldValueService);
+                              SSICredentialAttributeHelper.ReflectEntityValues(request, entity, t, organization, customFieldDefinitionService, customFieldValueService);
                               break;
 
                             default:
@@ -702,11 +735,11 @@ namespace Yoma.Core.Domain.SSI.Services
                           switch (entityType)
                           {
                             case Type t when t == typeof(Opportunity.Models.Opportunity):
-                              ReflectEntityValues(request, entity, t, opportunity, customFieldDefinitionService, customFieldValueService);
+                              SSICredentialAttributeHelper.ReflectEntityValues(request, entity, t, opportunity, customFieldDefinitionService, customFieldValueService);
                               break;
 
                             case Type t when t == typeof(MyOpportunity.Models.MyOpportunity):
-                              ReflectEntityValues(request, entity, t, myOpportunity, customFieldDefinitionService, customFieldValueService);
+                              SSICredentialAttributeHelper.ReflectEntityValues(request, entity, t, myOpportunity, customFieldDefinitionService, customFieldValueService);
                               break;
 
                             default:
@@ -749,7 +782,7 @@ namespace Yoma.Core.Domain.SSI.Services
                   // guard stop dispatch rather than exhausting the queue's per-credential retries.
                   catch (Exception ex) when (!job.IsStopping && ex is not ObjectDisposedException)
                   {
-                    if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed SSI credential {phase} for schema type '{schemaType}' and item with id '{id}': {errorMessage}", replay ? "Replay cleanup" : "issuance", item.SchemaType, item.Id, ex.Message);
+                    if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed SSI credential {phase} for schema type '{schemaType}' and item with id '{id}': {errorMessage}", replay ? "Replay cleanup" : reissuance ? "reissuance" : "issuance", item.SchemaType, item.Id, ex.Message);
 
                     item.Status = CredentialIssuanceStatus.Error;
                     item.ErrorReason = ex.Message;
@@ -798,6 +831,98 @@ namespace Yoma.Core.Domain.SSI.Services
     #endregion
 
     #region Private Members
+    /// <summary>
+    /// Check the issued claims, revoke a stale credential, then remove its wallet copy after replacement.
+    /// Each confirmed transition is persisted so retries resume without replacing history.
+    /// </summary>
+    private static async Task ReissueCredential(SSICredentialIssuance item, ISSICredentialService credentialService,
+      ISSISchemaService schemaService, IUserService userService, ISSITenantService tenantService,
+      ISSIProviderClient providerClient, ICustomFieldDefinitionService definitionService, ICustomFieldValueService valueService)
+    {
+      var userId = item.UserId ?? throw new InvalidOperationException("Credential holder user required");
+      var referent = new KeyValuePair<string, string>(SSISchemaService.SchemaAttribute_Internal_ReferentClient, item.Id.ToString());
+
+      switch (item.Status)
+      {
+        case CredentialIssuanceStatus.Reissue:
+          if (!providerClient.SupportsCredentialRevocation(item.ArtifactType))
+          {
+            await credentialService.ProcessReissuance(item, false);
+            return; // Unsupported adapters preserve the existing credential.
+          }
+
+          var tenantId = tenantService.GetTenantId(EntityType.User, userId);
+          var credential = await providerClient.GetCredentialByIdOrNull(tenantId, item.ArtifactType,
+            item.CredentialId ?? throw new InvalidOperationException("Issued credential ID required"))
+            ?? throw new InvalidOperationException("The issued credential is absent; reconcile it before replacement");
+
+          if (!credential.Attributes.TryGetValue(referent.Key, out var value) || value != referent.Value)
+            throw new InvalidOperationException("The credential does not match its issuance referent");
+
+          // The issued schema defines stale claims; newly added schema fields do not trigger replacement.
+          var schema = await schemaService.GetById(credential.SchemaId);
+          AssertIssuanceSchemaApplicable(schema, item);
+
+          if (schema.Version.ToString() != item.SchemaVersion)
+            throw new InvalidOperationException("The credential schema version differs from its issuance record");
+
+          var user = userService.GetById(userId, true, true);
+          user.DisplayName ??= user.Username;
+
+          var expected = new CredentialIssuanceRequest
+          {
+            ArtifactType = item.ArtifactType,
+            Attributes = []
+          };
+
+          var userEntities = schema.Entities.Where(entity => Type.GetType(entity.TypeName) == typeof(User)).ToList();
+
+          foreach (var entity in userEntities)
+            SSICredentialAttributeHelper.ReflectEntityValues(expected, entity, typeof(User), user, definitionService, valueService);
+
+          var changed = userEntities.SelectMany(entity => entity.Properties ?? []).Any(property =>
+          {
+            expected.Attributes.TryGetValue(property.AttributeName, out var current);
+            credential.Attributes.TryGetValue(property.AttributeName, out var issued);
+
+            return !string.Equals(current, issued, StringComparison.Ordinal);
+          });
+
+          await credentialService.ProcessReissuance(item, changed);
+          break;
+
+        case CredentialIssuanceStatus.Revoke:
+          await providerClient.RevokeCredential(tenantService.GetTenantId(EntityType.User, userId), item.ArtifactType,
+            item.CredentialId ?? throw new InvalidOperationException("Credential ID required for revocation"), referent);
+
+          item.DateRevoked = DateTimeOffset.UtcNow;
+          item.Status = CredentialIssuanceStatus.Revoked;
+
+          await credentialService.UpdateScheduleIssuance(item);
+          break;
+
+        case CredentialIssuanceStatus.Revoked:
+          await providerClient.DeleteCredential(tenantService.GetTenantId(EntityType.User, userId), item.ArtifactType,
+            item.CredentialId ?? throw new InvalidOperationException("Credential ID required for deletion"));
+
+          item.DateDeleted = DateTimeOffset.UtcNow;
+          item.Status = CredentialIssuanceStatus.Deleted;
+
+          await credentialService.UpdateScheduleIssuance(item);
+          break;
+
+        case CredentialIssuanceStatus.Pending:
+        case CredentialIssuanceStatus.Issued:
+        case CredentialIssuanceStatus.Error:
+        case CredentialIssuanceStatus.Replay:
+        case CredentialIssuanceStatus.Deleted:
+          throw new InvalidOperationException($"Reissuance cannot process a credential with status '{item.Status}'");
+
+        default:
+          throw new NotSupportedException($"Credential issuance status '{item.Status}' is not supported");
+      }
+    }
+
     /// <summary>
     /// Keep the original identity/date durable until confirmed cleanup. Repeating a successful remote
     /// deletion after a local failure is safe; ordinary issuance only sees the final Pending transition.
@@ -945,115 +1070,6 @@ namespace Yoma.Core.Domain.SSI.Services
     /// omit optional values without content; ACR credentials retain an "n/a" placeholder because AnonCreds requires
     /// every schema attribute to have a value. Wallet retrieval supports both representations.
     /// </summary>
-    private static void ReflectEntityValues<T>(CredentialIssuanceRequest request, SSISchemaEntity schemaEntity, Type type, T entity,
-      ICustomFieldDefinitionService customFieldDefinitionService, ICustomFieldValueService customFieldValueService)
-      where T : class
-    {
-      foreach (var prop in schemaEntity.Properties ?? [])
-      {
-        var propNameParts = prop.Name.Split('.');
-        if (propNameParts.Length == 0 || propNameParts.Length > 2)
-          throw new InvalidOperationException($"Entity '{schemaEntity.Name}' has an property with no name or a multi-part property are more than one level deep");
-
-        var multiPart = propNameParts.Length > 1;
-
-        var propValue = string.Empty;
-        var propInfo = type.GetProperty(propNameParts.First())
-            ?? throw new InvalidOperationException($"Entity property '{prop.Name}' not found in entity '{schemaEntity.Name}'");
-
-        var propValueObject = propInfo.GetValue(entity);
-        if (prop.Required && propValueObject == null)
-          throw new InvalidOperationException($"Entity property '{prop.Name}' marked as required but is null");
-        if (propValueObject == null)
-        {
-          MapOptionalCredentialAttributeWithoutValue(request, prop.AttributeName);
-          continue;
-        }
-
-        if (multiPart)
-        {
-          var valList = propValueObject as IList
-              ?? throw new InvalidOperationException($"Multi-part property '{prop.Name}''s parent is not of type List<>");
-
-          if (prop.Required && valList.Count == 0)
-            throw new InvalidOperationException($"Entity property '{prop.Name}' marked as required but is an empty list");
-
-          var items = valList
-               .Cast<object>()
-               .Where(item => item != null)
-               .Select(item =>
-               {
-                 var skillType = item.GetType();
-                 var nameProperty = skillType.GetProperty(propNameParts.Last());
-                 if (nameProperty != null)
-                 {
-                   return nameProperty.GetValue(item)?.ToString();
-                 }
-                 return null;
-               })
-                .Select(name => name?.Trim())
-                .Where(name => !string.IsNullOrEmpty(name))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .Select(name => new SSICredentialAttributeItem { Name = name! })
-               .ToList();
-
-          if (prop.Required && items.Count == 0)
-            throw new InvalidOperationException($"Entity property '{prop.Name}' marked as required but contains no values");
-          if (items.Count == 0)
-          {
-            MapOptionalCredentialAttributeWithoutValue(request, prop.AttributeName);
-            continue;
-          }
-
-          // Complex properties are stored as JSON within the provider's string attribute contract. Wallet rendering
-          // normalizes both this representation and historical comma-delimited values into the same display contract.
-          propValue = JsonConvert.SerializeObject(items);
-        }
-        else if (propValueObject is Enum flags && flags.GetType().IsDefined(typeof(FlagsAttribute), false))
-        {
-          // Keep the domain's combined flags value, but use the existing signed list contract
-          // for credential presentation. None has no selected items and follows optionality.
-          var items = flags.GetFlags()
-            .Select(flag => new SSICredentialAttributeItem { Name = flag.ToDescription() })
-            .ToList();
-
-          if (items.Count == 0)
-          {
-            if (prop.Required)
-              throw new InvalidOperationException($"Entity property '{prop.Name}' marked as required but has no selected flags");
-            MapOptionalCredentialAttributeWithoutValue(request, prop.AttributeName);
-            continue;
-          }
-
-          propValue = JsonConvert.SerializeObject(items);
-        }
-        else
-        {
-          // New credentials use culture-independent values. Wallet retrieval retains a current-culture fallback for
-          // credentials issued before this normalization, when DateTime values were serialized by the API host culture.
-          propValue = propValueObject switch
-          {
-            DateTimeOffset value => value.ToString("O", CultureInfo.InvariantCulture),
-            DateTime value => value.ToString("O", CultureInfo.InvariantCulture),
-            IFormattable value => value.ToString(null, CultureInfo.InvariantCulture),
-            _ => propValueObject.ToString()
-          };
-          propValue = propValue?.Trim();
-          if (string.IsNullOrEmpty(propValue))
-          {
-            if (prop.Required)
-              throw new InvalidOperationException($"Entity property '{prop.Name}' marked as required but has no value");
-            MapOptionalCredentialAttributeWithoutValue(request, prop.AttributeName);
-            continue;
-          }
-        }
-
-        request.Attributes.Add(prop.AttributeName, propValue);
-      }
-
-      MapCustomFieldValues(request, schemaEntity, entity, customFieldDefinitionService, customFieldValueService);
-    }
-
     /// <summary>
     /// TODO [CF / SSI]: Remove this method, its call and Opportunity.Difficulty once remaining
     /// queued/custom schemas no longer select the legacy mapping. New defaults already omit it.
@@ -1081,70 +1097,6 @@ namespace Yoma.Core.Domain.SSI.Services
       return valueService.ResolveDisplayValues(definition, value).SingleOrDefault();
     }
 
-    /// <summary>
-    /// Maps dynamic custom fields by stable definition keys without CLR reflection.
-    /// </summary>
-    private static void MapCustomFieldValues<T>(CredentialIssuanceRequest request, SSISchemaEntity schemaEntity, T entity,
-      ICustomFieldDefinitionService customFieldDefinitionService, ICustomFieldValueService customFieldValueService)
-      where T : class
-    {
-      if (schemaEntity.CustomFields == null || schemaEntity.CustomFields.Count == 0) return;
-
-      if (!Enum.TryParse<CustomFieldEntityType>(schemaEntity.Name, true, out var entityType))
-        throw new InvalidOperationException($"Schema entity '{schemaEntity.Name}' does not support custom fields");
-
-      var values = entity switch
-      {
-        Opportunity.Models.Opportunity opportunity => opportunity.CustomFields,
-        MyOpportunity.Models.MyOpportunity myOpportunity => myOpportunity.CustomFields,
-        _ => throw new InvalidOperationException($"Entity '{schemaEntity.Name}' does not support custom fields")
-      };
-
-      foreach (var customField in schemaEntity.CustomFields)
-      {
-        var definition = customFieldDefinitionService.GetByKey(entityType, customField.Key, true, false);
-        var value = values?.SingleOrDefault(item => string.Equals(item.Key, customField.Key, StringComparison.OrdinalIgnoreCase));
-        var valuesDisplay = value == null ? [] : customFieldValueService.ResolveDisplayValues(definition, value);
-
-        if (customField.Required && valuesDisplay.Count == 0)
-          throw new InvalidOperationException($"Custom field '{customField.Key}' marked as required but has no value");
-        if (valuesDisplay.Count == 0)
-        {
-          MapOptionalCredentialAttributeWithoutValue(request, customField.AttributeName);
-          continue;
-        }
-
-        // Custom-field credentials are new, so multi-select values use the structured provider representation from
-        // inception. JWS and SD-JWT omit optional fields without values; ACR supplies its required placeholder.
-        request.Attributes.Add(customField.AttributeName, valuesDisplay.Count switch
-        {
-          _ when customField.SupportsMultiple == true => JsonConvert.SerializeObject(
-            valuesDisplay.Select(name => new SSICredentialAttributeItem { Name = name })),
-          _ => valuesDisplay.Single()
-        });
-      }
-    }
-
-    /// <summary>
-    /// JWS and SD-JWT payloads can omit an optional schema attribute. AnonCreds definitions cannot, so ACR uses the
-    /// established "n/a" placeholder while preserving the domain-level distinction that the value is optional.
-    /// </summary>
-    private static void MapOptionalCredentialAttributeWithoutValue(CredentialIssuanceRequest request, string attributeName)
-    {
-      switch (request.ArtifactType)
-      {
-        case ArtifactType.JWS:
-        case ArtifactType.SDJWT:
-          return;
-
-        case ArtifactType.ACR:
-          request.Attributes.Add(attributeName, "n/a");
-          return;
-
-        default:
-          throw new InvalidOperationException($"Artifact type '{request.ArtifactType}' not supported");
-      }
-    }
     #endregion
   }
 }

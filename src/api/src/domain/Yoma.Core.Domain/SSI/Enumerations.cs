@@ -31,6 +31,53 @@ namespace Yoma.Core.Domain.SSI
     Error
   }
 
+  public enum CredentialStatus
+  {
+    /// <summary>
+    /// The provider could not establish the credential's current lifecycle status.
+    /// Do not treat this as confirmation that the credential is unrevoked.
+    /// </summary>
+    Unknown,
+
+    /// <summary>
+    /// The provider reports the credential as issued and not revoked, or it is non-revocable,
+    /// and any declared credential expiry has not passed. This is not a fresh proof verification.
+    /// </summary>
+    Issued,
+
+    /// <summary>
+    /// The provider confirms credential revocation.
+    /// Its wallet copy remains visible with this status until deletion succeeds.
+    /// </summary>
+    Revoked,
+
+    /// <summary>
+    /// The credential's signed expiry has passed. Confirmed revocation takes precedence.
+    /// Its wallet copy remains visible while stored by the provider.
+    /// </summary>
+    Expired
+  }
+
+  public enum CredentialVerificationStatus
+  {
+    /// <summary>
+    /// Verification has not established a result, including when the credential's status is unknown.
+    /// This is not a failed verification.
+    /// </summary>
+    Unknown,
+
+    /// <summary>
+    /// Wallet display result relying on the provider's issuance/receipt verification and current
+    /// lifecycle checks. This is not a fresh signature check or a verified presentation.
+    /// </summary>
+    Verified,
+
+    /// <summary>
+    /// The credential is invalid for use due to confirmed revocation or expiry.
+    /// </summary>
+    Invalid
+  }
+
   public enum CredentialIssuanceStatus
   {
     Pending,
@@ -40,7 +87,11 @@ namespace Yoma.Core.Domain.SSI
     /// Same-provider credential cleanup scheduled by migration. Tenants/connections are preserved;
     /// only confirmed cleanup can release the schedule to Pending for normal issuance.
     /// </summary>
-    Replay
+    Replay,
+    Revoke,
+    Revoked,
+    Deleted,
+    Reissue
   }
 
   public enum SchemaEntityPropertySystemType

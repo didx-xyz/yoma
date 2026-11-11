@@ -11,6 +11,11 @@ namespace Yoma.Core.Domain.SSI.Models
     /// </summary>
     public Guid Id { get; set; }
 
+    /// <summary>
+    /// Previous credential issuance replaced by this row. Replay retains the same row.
+    /// </summary>
+    public Guid? ParentId { get; set; }
+
     public Guid SchemaTypeId { get; set; }
 
     public SchemaType SchemaType { get; set; }
@@ -56,6 +61,21 @@ namespace Yoma.Core.Domain.SSI.Models
     public string? ErrorReason { get; set; }
 
     public byte? RetryCount { get; set; }
+
+    /// <summary>
+    /// Confirmed issuer revocation; retained even if replacement or wallet cleanup fails.
+    /// </summary>
+    public DateTimeOffset? DateRevoked { get; set; }
+
+    /// <summary>
+    /// Confirmed removal from the wallet. The issuance history itself is retained.
+    /// </summary>
+    public DateTimeOffset? DateDeleted { get; set; }
+
+    /// <summary>
+    /// Durable profile-change check; changes during issuance are checked after delivery.
+    /// </summary>
+    public DateTimeOffset? DateRefreshRequested { get; set; }
 
     public DateTimeOffset DateCreated { get; set; }
 

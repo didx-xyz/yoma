@@ -18,6 +18,18 @@ namespace Yoma.Core.Domain.SSI.Interfaces
     /// </summary>
     List<SSICredentialIssuance> ListReplayIssuanceSchedule(int batchSize, List<Guid> idsToSkip);
 
+    /// <summary>
+    /// Schedule credential reissuance following a profile change.
+    /// </summary>
+    Task ScheduleReissuance(Guid userId);
+
+    /// <summary>
+    /// Process credential reissuance based on whether the issued attribute values have changed.
+    /// </summary>
+    Task ProcessReissuance(SSICredentialIssuance item, bool changed);
+
+    List<SSICredentialIssuance> ListPendingReissuanceSchedule(int batchSize, List<Guid> idsToSkip);
+
     Task UpdateScheduleIssuance(SSICredentialIssuance item);
   }
 }

@@ -6,6 +6,7 @@ using Newtonsoft.Json.Serialization;
 using System.Security.Claims;
 using Xunit;
 using Yoma.Core.Domain.Core.Converters;
+using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Models;
@@ -27,6 +28,116 @@ namespace Yoma.Core.Test.SSI
     #endregion Class Variables
 
     #region Tests
+    [Theory]
+    [InlineData(CredentialStatus.Unknown)]
+    [InlineData(CredentialStatus.Issued)]
+    [InlineData(CredentialStatus.Revoked)]
+    [InlineData(CredentialStatus.Expired)]
+    public async Task ListAndDetailPreserveProviderStatus(CredentialStatus status)
+    {
+      var fixture = new Fixture(SchemaType.YoID, null, null);
+      fixture.Credential.Status = status;
+
+      var list = await fixture.Service.SearchUserCredentials(new SSIWalletSearchFilter { PageNumber = 1, PageSize = 10 });
+
+      Assert.Equal(status, Assert.Single(list.Items!).Status);
+      Assert.Equal(1, list.TotalCount);
+      Assert.Equal(status, (await fixture.Service.GetUserCredentialById(fixture.Credential.Id)).Status);
+      fixture.AssertReadsOnlyIssuedSchema();
+    }
+
+    [Theory]
+    [InlineData(CredentialStatus.Issued, CredentialVerificationStatus.Verified)]
+    [InlineData(CredentialStatus.Revoked, CredentialVerificationStatus.Invalid)]
+    [InlineData(CredentialStatus.Expired, CredentialVerificationStatus.Invalid)]
+    [InlineData(CredentialStatus.Unknown, CredentialVerificationStatus.Unknown)]
+    public async Task VerificationStatusIsDetailOnlyAndRespectsLifecycle(CredentialStatus status,
+      CredentialVerificationStatus expected)
+    {
+      var fixture = new Fixture(SchemaType.YoID, null, null);
+      fixture.Credential.Status = status;
+
+      var list = await fixture.Service.SearchUserCredentials(new SSIWalletSearchFilter { PageNumber = 1, PageSize = 10 });
+      var detail = await fixture.Service.GetUserCredentialById(fixture.Credential.Id);
+
+      Assert.Equal(expected, detail.VerificationStatus);
+      Assert.Equal(status, detail.Status);
+
+      var settings = new JsonSerializerSettings { ContractResolver = new CamelCasePropertyNamesContractResolver() };
+      settings.Converters.Add(new StrictStringEnumConverter { AllowIntegerValues = true, RejectUndefinedValues = true });
+
+      var listJson = JObject.Parse(JsonConvert.SerializeObject(Assert.Single(list.Items!), settings));
+      var detailJson = JObject.Parse(JsonConvert.SerializeObject(detail, settings));
+
+      Assert.False(listJson.ContainsKey("verificationStatus"));
+      Assert.Equal(expected.ToString(), detailJson.Value<string>("verificationStatus"));
+      Assert.Equal(status.ToString(), listJson.Value<string>("status"));
+      Assert.Equal(status.ToString(), detailJson.Value<string>("status"));
+      fixture.AssertReadsOnlyIssuedSchema();
+    }
+
+    [Fact]
+    public async Task UndefinedLifecycleCannotReceiveAVerifiedStatus()
+    {
+      var fixture = new Fixture(SchemaType.YoID, null, null);
+      fixture.Credential.Status = (CredentialStatus)999;
+
+      await Assert.ThrowsAsync<NotSupportedException>(() => fixture.Service.GetUserCredentialById(fixture.Credential.Id));
+    }
+
+    [Fact]
+    public async Task WalletShowsIssuedReplacementAlongsideRevokedCopy()
+    {
+      var fixture = new Fixture(SchemaType.YoID, null, null);
+      fixture.Credential.Status = CredentialStatus.Revoked;
+
+      var replacement = new Domain.SSI.Models.Provider.Credential
+      {
+        Id = "replacement",
+        Status = CredentialStatus.Issued,
+        SchemaId = fixture.Credential.SchemaId,
+        Attributes = new Dictionary<string, string>()
+      };
+      fixture.Provider.Setup(client => client.ListCredentials("holder")).ReturnsAsync([fixture.Credential, replacement]);
+
+      var result = await fixture.Service.SearchUserCredentials(new SSIWalletSearchFilter { PageNumber = 1, PageSize = 10 });
+
+      Assert.Equal(2, result.TotalCount);
+      Assert.Equal(CredentialStatus.Revoked, result.Items!.Single(item => item.Id == fixture.Credential.Id).Status);
+      Assert.Equal(CredentialStatus.Issued, result.Items!.Single(item => item.Id == replacement.Id).Status);
+    }
+
+    [Fact]
+    public async Task DeletedCredentialIsNotReconstructedFromIssuanceHistory()
+    {
+      var fixture = new Fixture(SchemaType.YoID, null, null);
+      fixture.Provider.Setup(client => client.ListCredentials("holder")).ReturnsAsync([]);
+      fixture.Provider.Setup(client => client.GetCredentialById("holder", fixture.Credential.Id))
+        .ThrowsAsync(new EntityNotFoundException("Credential not found"));
+
+      var result = await fixture.Service.SearchUserCredentials(new SSIWalletSearchFilter { PageNumber = 1, PageSize = 10 });
+
+      Assert.Empty(result.Items!);
+      await Assert.ThrowsAsync<EntityNotFoundException>(() => fixture.Service.GetUserCredentialById(fixture.Credential.Id));
+    }
+
+    [Theory]
+    [InlineData(CredentialStatus.Unknown)]
+    [InlineData(CredentialStatus.Issued)]
+    [InlineData(CredentialStatus.Revoked)]
+    [InlineData(CredentialStatus.Expired)]
+    public void ListAndDetailSerializeLifecycleStatusAsAnEnumName(CredentialStatus status)
+    {
+      var settings = new JsonSerializerSettings { ContractResolver = new CamelCasePropertyNamesContractResolver() };
+      settings.Converters.Add(new StrictStringEnumConverter { AllowIntegerValues = true, RejectUndefinedValues = true });
+
+      foreach (var credential in new SSICredentialBase[] { new SSICredentialInfo { Status = status }, new SSICredential { Status = status } })
+      {
+        var json = JObject.Parse(JsonConvert.SerializeObject(credential, settings));
+        Assert.Equal(status.ToString(), json.Value<string>("status"));
+      }
+    }
+
     [Fact]
     public void SharedPresentationOrdersCommonSectionsBeforeCustomGroupsWithoutChangingFieldOrder()
     {
@@ -148,10 +259,11 @@ namespace Yoma.Core.Test.SSI
       public Mock<ISSIProviderClient> Provider { get; } = new(MockBehavior.Strict);
       public Mock<ISSISchemaService> Schemas { get; } = new(MockBehavior.Strict);
       public SSIWalletService Service { get; }
+      public Guid UserId { get; } = Guid.NewGuid();
 
       public Fixture(SchemaType schemaType, string? context, string? signedType)
       {
-        var user = new User { Id = Guid.NewGuid(), Username = "wallet-test" };
+        var user = new User { Id = UserId, Username = "wallet-test" };
         var users = new Mock<IUserService>(MockBehavior.Strict);
         users.Setup(service => service.GetCurrentUser(false, false, It.IsAny<bool>())).Returns(user);
         var tenants = new Mock<ISSITenantService>(MockBehavior.Strict);

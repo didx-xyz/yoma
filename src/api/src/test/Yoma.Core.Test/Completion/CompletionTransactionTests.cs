@@ -32,8 +32,8 @@ using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.PartnerSync.Interfaces;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces;
-using Participation = Yoma.Core.Domain.MyOpportunity.Models.MyOpportunity;
 using OpportunityModel = Yoma.Core.Domain.Opportunity.Models.Opportunity;
+using Participation = Yoma.Core.Domain.MyOpportunity.Models.MyOpportunity;
 
 namespace Yoma.Core.Test.Completion
 {

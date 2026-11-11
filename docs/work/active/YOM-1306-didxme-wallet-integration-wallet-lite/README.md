@@ -4,8 +4,8 @@
 
 - **Epic**: [YOM-1306](https://linear.app/didx/issue/YOM-1306)
 - **Owners**: Adrian (API), Jason (web), Robbie/SRE (environments)
-- **Status**: in-progress — initial integration deployed to Stage; phase-1 follow-up pending
-- **Branch**: `feature/yom-1306-didxme-issuance-recovery-replay`
+- **Status**: in-progress — Stage recovery/Replay verified; YoID profile replacement in review
+- **Branch**: `feature/yom-1306-yoid-revocation-reissuance`
 
 ## Goal
 
@@ -45,9 +45,13 @@ ticket was removed.
   the existing Aries implementation is retained. See code summaries for Yoma compatibility logic.
 - Wallet filtering, ordering and paging remain in the domain. No pagination redesign is included.
 - Encrypted holder caching is implemented; deployed multi-instance verification remains open.
-- Recovery and Replay are implemented and verified locally; deployed validation and Stage preparation remain release gates.
+- Recovery and Replay have been verified locally and reconciled on Stage. YoID profile replacement is a separate change under YOM-1309; review and live local replacement/status/retry tests passed. Approval and deployed verification remain pending.
 
 ## Cross-area Handoff
+
+YoID profile replacement adds `status` (`Unknown` / `Issued` / `Revoked` / `Expired`) to wallet list and detail responses. Revoked wallet copies remain visible until deletion succeeds, including alongside their issued replacement if cleanup fails. The provider resolves lifecycle status; unavailable status remains `Unknown` unless a known signed expiry establishes `Expired`. Jason must render status tags and retain both entries by native credential ID; see the [replacement UI handover](./YOM-1309-use-didxme-for-yoma-wallets-and-credential-issuance/handoffs/2026-11-11-c.md#jason--wallet-status-tags). Opportunity credentials remain historical snapshots.
+
+Cards use lifecycle status. Detail adds `verificationStatus`: Verified for Issued, Invalid for Revoked/Expired and Unknown otherwise. This display result relies on provider issuance/receipt verification and current lifecycle checks; it is not a fresh signature check or a verified presentation. No per-view cryptographic re-verification is planned. Proof acceptance remains a separate operation. The linked UI handover owns the full contract.
 
 Two custom-field source keys changed while retaining definition identity and display labels:
 `EntrepreneurshipProgrammeOtherDescription` becomes `EntrepreneurshipProgrammeOther`, and

@@ -16,5 +16,9 @@ namespace Yoma.Core.Infrastructure.DidxMe.Models
     public string Id { get; set; } = null!;
 
     public string Format { get; set; } = null!;
+
+    public string Status { get; set; } = null!;
+
+    public bool Revocable { get; set; }
   }
 }

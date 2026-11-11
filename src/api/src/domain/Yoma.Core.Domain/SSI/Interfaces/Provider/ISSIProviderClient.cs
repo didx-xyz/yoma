@@ -5,6 +5,16 @@ namespace Yoma.Core.Domain.SSI.Interfaces.Provider
   public interface ISSIProviderClient
   {
     /// <summary>
+    /// Whether this adapter can revoke the credential format before replacement.
+    /// </summary>
+    bool SupportsCredentialRevocation(ArtifactType artifactType);
+
+    /// <summary>
+    /// Revoke the exact issued credential. Success confirms revocation, not wallet deletion.
+    /// </summary>
+    Task RevokeCredential(string tenantId, ArtifactType artifactType, string id, KeyValuePair<string, string> clientReferent);
+
+    /// <summary>
     /// Selects the provider's default credential format for a schema family. Seeding follows the
     /// explicitly registered provider; this does not convert existing credentials or queue state.
     /// </summary>

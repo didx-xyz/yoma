@@ -5,9 +5,9 @@ using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
-using Yoma.Core.Test.Core.Fixtures;
 using Yoma.Core.Domain.Core.Services;
 using Yoma.Core.Domain.Lookups.Interfaces;
+using Yoma.Core.Test.Core.Fixtures;
 
 namespace Yoma.Core.Test.Core
 {

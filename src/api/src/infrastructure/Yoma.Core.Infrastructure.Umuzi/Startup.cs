@@ -7,14 +7,14 @@ using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Provider;
+using Yoma.Core.Infrastructure.Shared;
+using Yoma.Core.Infrastructure.Shared.Interceptors;
 using Yoma.Core.Infrastructure.Umuzi.Client;
 using Yoma.Core.Infrastructure.Umuzi.Context;
 using Yoma.Core.Infrastructure.Umuzi.Interfaces;
 using Yoma.Core.Infrastructure.Umuzi.Models;
 using Yoma.Core.Infrastructure.Umuzi.Repositories;
 using Yoma.Core.Infrastructure.Umuzi.Services;
-using Yoma.Core.Infrastructure.Shared;
-using Yoma.Core.Infrastructure.Shared.Interceptors;
 
 namespace Yoma.Core.Infrastructure.Umuzi
 {

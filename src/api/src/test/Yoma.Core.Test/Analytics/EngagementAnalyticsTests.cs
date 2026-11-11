@@ -24,9 +24,9 @@ using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.SSI.Interfaces.Lookups;
 using Yoma.Core.Domain.SSI.Models;
+using Gender = Yoma.Core.Domain.Core.Gender;
 using Participation = Yoma.Core.Domain.MyOpportunity.Models.MyOpportunity;
 using ParticipationAction = Yoma.Core.Domain.MyOpportunity.Action;
-using Gender = Yoma.Core.Domain.Core.Gender;
 using VerificationStatus = Yoma.Core.Domain.MyOpportunity.VerificationStatus;
 
 namespace Yoma.Core.Test.Analytics

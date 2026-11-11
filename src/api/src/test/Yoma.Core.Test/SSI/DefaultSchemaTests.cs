@@ -16,11 +16,8 @@ using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
-using Yoma.Core.Infrastructure.Database.Migrations;
-using Yoma.Core.Test.Core.Fixtures;
-using Yoma.Core.Test.SSI.Fixtures;
-using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Extensions;
+using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Helpers;
@@ -33,6 +30,9 @@ using Yoma.Core.Domain.SSI.Models.Provider;
 using Yoma.Core.Domain.SSI.Services;
 using Yoma.Core.Domain.SSI.Services.Lookups;
 using Yoma.Core.Domain.SSI.Validators;
+using Yoma.Core.Infrastructure.Database.Migrations;
+using Yoma.Core.Test.Core.Fixtures;
+using Yoma.Core.Test.SSI.Fixtures;
 
 namespace Yoma.Core.Test.SSI
 {
@@ -381,7 +381,7 @@ namespace Yoma.Core.Test.SSI
       var service = new SSICredentialService(Options.Create(fixture.Settings), fixture.Service,
         status.Object, repository.Object, Mock.Of<ISSISchemaTypeService>(), Mock.Of<ISSITenantCreationStatusService>(),
         Mock.Of<IRepository<SSITenantCreation>>(),
-        Mock.Of<IRepositoryBatchedWithNavigationAndCustomFieldFilter<Domain.MyOpportunity.Models.MyOpportunity>>());
+        Mock.Of<IRepositoryBatchedWithNavigationAndCustomFieldFilter<Domain.MyOpportunity.Models.MyOpportunity>>(), CredentialTestHelper.ExecutionStrategy());
 
       await service.ScheduleIssuance("Opportunity|Default", Guid.NewGuid());
       var original = Assert.Single(schedules);
@@ -1864,7 +1864,7 @@ namespace Yoma.Core.Test.SSI
       {
         var type = entity.GetType();
         var schemaEntity = schema.Entities.Single(item => item.Name == type.Name);
-        var method = typeof(SSIBackgroundService).GetMethod("ReflectEntityValues", BindingFlags.Static | BindingFlags.NonPublic)!;
+        var method = typeof(Yoma.Core.Domain.SSI.Helpers.SSICredentialAttributeHelper).GetMethod("ReflectEntityValues", BindingFlags.Static | BindingFlags.Public)!;
         method.MakeGenericMethod(type).Invoke(null,
           [request, schemaEntity, type, entity, _definitionService.Object, _valueService.Object]);
       }

@@ -16,6 +16,7 @@ using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Models.Provider;
 using Yoma.Core.Infrastructure.AriesCloud.Client;
+using Yoma.Core.Infrastructure.AriesCloud.Extensions;
 using Yoma.Core.Infrastructure.AriesCloud.Interfaces;
 
 namespace Yoma.Core.Test.SSI
@@ -28,6 +29,78 @@ namespace Yoma.Core.Test.SSI
     #endregion Class Variables
 
     #region Tests
+    [Theory]
+    [InlineData(RevocationStatus.Active, CredentialStatus.Issued)]
+    [InlineData(RevocationStatus.Revoked, CredentialStatus.Revoked)]
+    [InlineData(RevocationStatus.NotChecked, CredentialStatus.Unknown)]
+    [InlineData(RevocationStatus.CheckFailed, CredentialStatus.Unknown)]
+    [InlineData(null, CredentialStatus.Unknown)]
+    public async Task WalletListRequestsRevocationChecksAndPreservesResults(RevocationStatus? status, CredentialStatus expected)
+    {
+      using var fixture = new Fixture();
+      fixture.Http.ForCallsTo("*wallet/credentials?*").RespondWithJson(new
+      {
+        results = new[] { new CredInfo { Credential_id = "credential", Schema_id = AnonCredsSchemaId,
+          Rev_reg_id = "registry", Cred_rev_id = "1", Revocation_status = status, Attrs = new Dictionary<string, string>() } }
+      });
+
+      Assert.Equal(expected, Assert.Single((await fixture.Client.ListCredentials("tenant"))!).Status);
+      fixture.Http.ShouldHaveCalled("*wallet/credentials?*").WithQueryParam("check_revoked", "true").Times(1);
+    }
+
+    [Theory]
+    [InlineData(true, CredentialStatus.Revoked)]
+    [InlineData(false, CredentialStatus.Issued)]
+    [InlineData(null, CredentialStatus.Unknown)]
+    public async Task WalletDetailChecksProviderRevocation(bool? revoked, CredentialStatus expected)
+    {
+      using var fixture = new Fixture();
+      fixture.Http.ForCallsTo("*wallet/credentials/credential").RespondWithJson(new
+      {
+        credential_id = "credential",
+        schema_id = AnonCredsSchemaId,
+        rev_reg_id = "registry",
+        cred_rev_id = "1",
+        attrs = new Dictionary<string, string>()
+      });
+      fixture.Http.ForCallsTo("*wallet/credentials/credential/revocation-status").RespondWithJson(new { revoked });
+
+      Assert.Equal(expected, (await fixture.Client.GetCredentialById("tenant", "credential")).Status);
+      fixture.Http.ShouldHaveCalled("*wallet/credentials/credential/revocation-status").Times(1);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.NotFound)]
+    [InlineData(HttpStatusCode.ServiceUnavailable)]
+    public async Task FailedRevocationCheckDoesNotMeanWalletCredentialIsAbsent(HttpStatusCode status)
+    {
+      using var fixture = new Fixture();
+      fixture.Http.ForCallsTo("*wallet/credentials/credential").RespondWithJson(new
+      {
+        credential_id = "credential",
+        schema_id = AnonCredsSchemaId,
+        rev_reg_id = "registry",
+        cred_rev_id = "1",
+        attrs = new Dictionary<string, string>()
+      });
+      fixture.Http.ForCallsTo("*wallet/credentials/credential/revocation-status").RespondWith(status: (int)status);
+
+      var result = await fixture.Client.GetCredentialById("tenant", "credential");
+
+      Assert.Equal("credential", result.Id);
+      Assert.Equal(CredentialStatus.Unknown, result.Status);
+    }
+
+    [Fact]
+    public void NonRevocableAnonCredentialIsIssuedAndUncheckedRevocableCredentialIsUnknown()
+    {
+      var credential = new CredInfo { Credential_id = "credential", Attrs = new Dictionary<string, string>() };
+      Assert.Equal(CredentialStatus.Issued, credential.ToCredential().Status);
+
+      credential.Rev_reg_id = "registry";
+      Assert.Equal(CredentialStatus.Unknown, credential.ToCredential().Status);
+    }
+
     [Fact]
     public async Task RejectsSdJwtBeforeAnyProviderRequestOrLocalWrite()
     {

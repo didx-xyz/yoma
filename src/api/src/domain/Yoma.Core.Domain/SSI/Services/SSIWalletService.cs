@@ -52,7 +52,18 @@ namespace Yoma.Core.Domain.SSI.Services
 
       var item = await _ssiProviderClient.GetCredentialById(GetUserTenantId(), id);
 
-      return await ParseCredential<SSICredential>(item);
+      var result = await ParseCredential<SSICredential>(item);
+
+      // The provider owns receipt verification and lifecycle checks. This wallet display result
+      // does not replace verification of a presentation when the credential is used.
+      result.VerificationStatus = result.Status switch
+      {
+        CredentialStatus.Issued => CredentialVerificationStatus.Verified,
+        CredentialStatus.Revoked or CredentialStatus.Expired => CredentialVerificationStatus.Invalid,
+        CredentialStatus.Unknown => CredentialVerificationStatus.Unknown,
+        _ => throw new NotSupportedException($"Credential status '{result.Status}' not supported"),
+      };
+      return result;
     }
 
     public async Task<SSIWalletSearchResults> SearchUserCredentials(SSIWalletSearchFilter filter)
@@ -134,6 +145,7 @@ namespace Yoma.Core.Domain.SSI.Services
         Id = item.Id,
         ArtifactType = schema.ArtifactType,
         SchemaType = schema.Type,
+        Status = item.Status,
         DateIssued = DateTimeHelper.TryParse(item.Attributes.SingleOrDefault(o => string.Equals(o.Key, SSISchemaService.SchemaAttribute_Internal_DateIssued, StringComparison.OrdinalIgnoreCase)).Value),
       };
 

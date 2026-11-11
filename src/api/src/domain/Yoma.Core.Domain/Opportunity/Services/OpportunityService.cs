@@ -7,7 +7,6 @@ using System.Globalization;
 using System.Transactions;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
-using Yoma.Core.Domain.Opportunity.Helpers;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
@@ -27,6 +26,7 @@ using Yoma.Core.Domain.Notification.Interfaces;
 using Yoma.Core.Domain.Notification.Models;
 using Yoma.Core.Domain.Opportunity.Events;
 using Yoma.Core.Domain.Opportunity.Extensions;
+using Yoma.Core.Domain.Opportunity.Helpers;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Models;
@@ -35,8 +35,8 @@ using Yoma.Core.Domain.PartnerSync.Interfaces;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Lookups;
 using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Helpers;
-using Yoma.Core.Domain.Treasury.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces;
+using Yoma.Core.Domain.Treasury.Interfaces;
 
 namespace Yoma.Core.Domain.Opportunity.Services
 {

@@ -11,6 +11,7 @@ using Yoma.Core.Api.Controllers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity;
+using Yoma.Core.Domain.Entity.Extensions;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Models;
@@ -24,8 +25,8 @@ using Yoma.Core.Domain.Payout.Interfaces;
 using Yoma.Core.Domain.Referral.Events;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces;
-using Yoma.Core.Infrastructure.IXO.YellowCard.Interfaces;
 using Yoma.Core.Infrastructure.DidxMe.Interfaces;
+using Yoma.Core.Infrastructure.IXO.YellowCard.Interfaces;
 using Yoma.Core.Infrastructure.Keycloak.Models;
 
 namespace Yoma.Core.Test.Core
@@ -33,6 +34,49 @@ namespace Yoma.Core.Test.Core
   public class KeycloakWebhookTests
   {
     #region Recovery and Existing Users
+    [Fact]
+    public async Task RepeatedLoginWithoutProfileChangesDoesNotQueueYoIDRefresh()
+    {
+      using var fixture = new Fixture();
+      fixture.AddUser(linked: true);
+
+      await fixture.Deliver("LOGIN");
+      await fixture.Deliver("LOGIN");
+
+      fixture.VerifyProfileRefresh(Times.Never());
+      Assert.Equal(2, fixture.History.Count);
+    }
+
+    [Fact]
+    public async Task ChangedContactQueuesOnceAndAnUnchangedLoginDoesNotQueueAgain()
+    {
+      using var fixture = new Fixture();
+      fixture.AddUser(linked: true);
+      fixture.KeycloakUser.Email = "changed@example.org";
+      fixture.KeycloakUser.Username = fixture.KeycloakUser.Email;
+
+      await fixture.Deliver("LOGIN");
+      await fixture.Deliver("LOGIN");
+
+      fixture.VerifyProfileRefresh(Times.Once());
+      Assert.Equal(2, fixture.History.Count);
+    }
+
+    [Fact]
+    public async Task UnlinkedUserProfileUpdateQueuesRefreshButAnIdenticalImportDoesNot()
+    {
+      using var fixture = new Fixture();
+      var user = fixture.AddUser(linked: false);
+      var request = user.ToUserRequest();
+      request.Surname = "Changed";
+
+      await fixture.UserService.Object.Upsert(request, false, true);
+      await fixture.UserService.Object.Upsert(request, false, true);
+
+      Assert.Equal("Changed", user.Surname);
+      fixture.VerifyProfileRefresh(Times.Once());
+    }
+
     [Theory]
     [InlineData("LOGIN", false)]
     [InlineData("LOGIN", true)]
@@ -824,7 +868,7 @@ namespace Yoma.Core.Test.Core
           Mock.Of<IRepository<UserPreferenceLanguage>>(),
           Mock.Of<IRepository<UserPreferenceEngagementType>>(),
           history.Object,
-          Mock.Of<IExecutionStrategyService>(),
+          SSI.CredentialTestHelper.ExecutionStrategy(),
           _mediator.Object);
 
         UserService.Setup(o => o.GetByExternalIdOrNull(It.IsAny<Guid>(), false, false))
@@ -944,10 +988,15 @@ namespace Yoma.Core.Test.Core
       public void VerifyNoOnboardingOrPayoutCalls()
       {
         Assert.Empty(_tenant.Invocations);
-        Assert.Empty(_credential.Invocations);
+        _credential.Verify(service => service.ScheduleIssuance(It.IsAny<string>(), It.IsAny<Guid>()), Times.Never);
         Assert.Empty(Payout.Invocations);
         UserService.Verify(o => o.YoIDOnboard(It.IsAny<User>()), Times.Never);
         UserService.Verify(o => o.YoIDOnboard(It.IsAny<string>()), Times.Never);
+      }
+
+      public void VerifyProfileRefresh(Times times)
+      {
+        _credential.Verify(service => service.ScheduleReissuance(It.IsAny<Guid>()), times);
       }
 
       public void VerifyLog(LogLevel level, string message, Times times)

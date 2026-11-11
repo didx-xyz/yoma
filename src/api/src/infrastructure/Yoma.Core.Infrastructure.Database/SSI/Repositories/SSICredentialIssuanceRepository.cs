@@ -26,6 +26,7 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories
       return _context.SSICredentialIssuance.Select(entity => new SSICredentialIssuance
       {
         Id = entity.Id,
+        ParentId = entity.ParentId,
         SchemaTypeId = entity.SchemaTypeId,
         SchemaType = Enum.Parse<Domain.SSI.SchemaType>(entity.SchemaType.Name, true),
         ArtifactType = Enum.Parse<ArtifactType>(entity.ArtifactType, true),
@@ -40,6 +41,9 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories
         DateIssued = entity.DateIssued,
         ErrorReason = entity.ErrorReason,
         RetryCount = entity.RetryCount,
+        DateRevoked = entity.DateRevoked,
+        DateDeleted = entity.DateDeleted,
+        DateRefreshRequested = entity.DateRefreshRequested,
         DateCreated = entity.DateCreated,
         DateModified = entity.DateModified
       });
@@ -53,6 +57,7 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories
       var entity = new Entities.SSICredentialIssuance
       {
         Id = item.Id,
+        ParentId = item.ParentId,
         SchemaTypeId = item.SchemaTypeId,
         ArtifactType = item.ArtifactType.ToString(),
         SchemaName = item.SchemaName,
@@ -65,6 +70,9 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories
         DateIssued = item.DateIssued,
         ErrorReason = item.ErrorReason,
         RetryCount = item.RetryCount,
+        DateRevoked = item.DateRevoked,
+        DateDeleted = item.DateDeleted,
+        DateRefreshRequested = item.DateRefreshRequested,
         DateCreated = item.DateCreated,
         DateModified = item.DateModified
       };
@@ -90,6 +98,9 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories
       entity.StatusId = item.StatusId;
       entity.ErrorReason = item.ErrorReason;
       entity.RetryCount = item.RetryCount;
+      entity.DateRevoked = item.DateRevoked;
+      entity.DateDeleted = item.DateDeleted;
+      entity.DateRefreshRequested = item.DateRefreshRequested;
       entity.DateModified = item.DateModified;
 
       await _context.SaveChangesAsync();
