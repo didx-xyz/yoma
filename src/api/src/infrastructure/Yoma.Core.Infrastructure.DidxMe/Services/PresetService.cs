@@ -56,10 +56,9 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
           .GroupBy(item => item.Name)
           .Select(group => group.OrderByDescending(item => item.Version).First());
 
-      return schemas
+      return [.. schemas
         .OrderBy(item => item.Name)
-        .ThenBy(item => item.Version)
-        .ToList();
+        .ThenBy(item => item.Version)];
     }
 
     public CredentialPresetMapping? GetMappingOrNull(string id)

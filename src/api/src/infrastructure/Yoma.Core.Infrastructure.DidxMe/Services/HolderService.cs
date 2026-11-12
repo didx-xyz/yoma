@@ -275,20 +275,13 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
       if (issued == null || !Enum.TryParse<IssuerCredentialStatus>(issued.Status, true, out var status))
         return fallback;
 
-      switch (status)
+      return status switch
       {
-        case IssuerCredentialStatus.Issued:
-          return expired ? CredentialStatus.Expired : CredentialStatus.Issued;
-
-        case IssuerCredentialStatus.Revoked:
-          return CredentialStatus.Revoked;
-
-        case IssuerCredentialStatus.Offered:
-          return fallback;
-
-        default:
-          throw new NotSupportedException($"Issuer credential status '{status}' is not supported");
-      }
+        IssuerCredentialStatus.Issued => expired ? CredentialStatus.Expired : CredentialStatus.Issued,
+        IssuerCredentialStatus.Revoked => CredentialStatus.Revoked,
+        IssuerCredentialStatus.Offered => fallback,
+        _ => throw new NotSupportedException($"Issuer credential status '{status}' is not supported"),
+      };
     }
 
     private async Task<List<WalletCredential>> List(HolderContext context, WalletCredentialStatus status = WalletCredentialStatus.Accepted)

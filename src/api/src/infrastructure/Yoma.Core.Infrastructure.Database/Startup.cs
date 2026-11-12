@@ -90,6 +90,10 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddScoped<IRepository<CustomFieldOption>, CustomFieldOptionRepository>();
       services.AddScoped<IRepository<CustomFieldValue>, CustomFieldValueRepository>();
       services.AddScoped<IRepositoryBatched<DownloadSchedule>, DownloadScheduleRepository>();
+      // Only Yoma's application database registers this shared interface, consumed by domain services.
+      // Other infrastructure providers register and inject their own concrete ExecutionStrategyService.
+      // Registering a provider against this interface overrides Yoma's handler (last registration wins),
+      // causing transaction/retry cleanup to clear the provider's tracker instead of ApplicationDbContext.
       services.AddScoped<IExecutionStrategyService, ExecutionStrategyService>();
       #endregion Core
 

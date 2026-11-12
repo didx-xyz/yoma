@@ -86,7 +86,9 @@ namespace Yoma.Core.Infrastructure.DidxMe
       services.AddScoped<IPresetService, PresetService>();
       services.AddScoped<IHolderService, HolderService>();
       services.AddScoped<IWebhookParser, WebhookParser>();
-      services.AddScoped<IProviderExecutionStrategyService, ExecutionStrategyService>();
+      // Register concretely so this provider cannot override the application database
+      // IExecutionStrategyService registration and clear the wrong context after rollback.
+      services.AddScoped<ExecutionStrategyService>();
       services.AddScoped<IIssuanceTrackingService, IssuanceTrackingService>();
 
       // Provider
