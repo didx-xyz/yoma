@@ -6,8 +6,8 @@
 - **Epic**: [YOM-1306](../README.md)
 - **Owner**: Adrian
 - **Areas**: API, provider adapter
-- **Status**: review — YoID profile replacement reviewed and verified locally; approval and deployed verification pending
-- **Branch**: `feature/yom-1306-yoid-revocation-reissuance`
+- **Status**: review — PR #2027 merged; shared list/detail verification follow-up prepared for review
+- **Branch**: `feat/yom-1309-wallet-list-verification`
 
 ## Goal / Yoma Contract
 
@@ -43,7 +43,7 @@ security configuration and privileged workflows are held in the private engineer
 - [x] Verify the automated regression suite and apply the new migration to an isolated PostgreSQL database containing an issued credential.
 - [x] Review the uncommitted YoID replacement change and run live profile-change/revocation/reissuance tests against local didx:me, including unchanged/unrelated edits, provider status, retained history and retry recovery. See the [local test results](./handoffs/2026-11-11-c.md#live-local-docker-results).
 - [ ] Obtain commit/PR approval, coordinate wallet status tags with Jason and verify the replacement flow after deployment. Cryptographic proof validation has not been exercised.
-- [x] Separate list lifecycle badges from detail verification status: Issued maps to Verified, Revoked/Expired to Invalid and Unknown to Unknown. See the [UI handover](./handoffs/2026-11-11-c.md#jason--wallet-status-tags).
+- [x] Expose lifecycle and verification status on both list and detail through their shared base model and mapping: Issued maps to Verified, Revoked/Expired to Invalid and Unknown to Unknown. See the [UI handover](./handoffs/2026-11-11-c.md#jason--wallet-status-tags).
 - [x] Resolve wallet validity through provider receipt verification plus current revocation and signed-expiry checks; no repeated cryptographic verification on view. Presentation/proof verification remains separate.
 - [x] Scaffold and wire the infrastructure using Yoma conventions.
 - [x] Support SDJWT for both YoID and opportunity credentials.
@@ -85,6 +85,8 @@ security configuration and privileged workflows are held in the private engineer
 - [x] Remove private integration-document versions from the feature history and delete the assessment file; coordinate collaborator resynchronization.
 
 ## Decisions
+
+- 2026-11-12: expose VerificationStatus on SSICredentialBase and populate it in the shared credential parser. List and detail use identical lifecycle mapping without extra provider/database reads or cryptographic work. This supersedes the detail-only response decision; detail JSON and provider adapters remain unchanged. See [the follow-up handoff](./handoffs/2026-11-12-a.md).
 
 - 2026-11-11, PR #2027 CI follow-up: repeated e2e runs failed before tests started because the hosted runner could not resolve its Azure Ubuntu package mirror. Use the official HTTPS Ubuntu archive/security mirrors in the disposable e2e runner's existing apt mirror list before Playwright installs dependencies. Keep test execution and apt signature verification unchanged; hosted validation is pending the next push.
 
