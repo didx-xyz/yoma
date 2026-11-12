@@ -263,6 +263,8 @@ namespace Yoma.Core.Domain.Entity.Services
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
       request.PhoneNumber = request.PhoneNumber?.NormalizePhoneNumber(true) ?? string.Empty;
+      request.FirstName = request.FirstName?.RemoveSpecialCharacters(UserExtensions.UserTextProhibitedCharacters(), normalizeWhitespace: true)!;
+      request.Surname = request.Surname?.RemoveSpecialCharacters(UserExtensions.UserTextProhibitedCharacters(), normalizeWhitespace: true)!;
 
       //either 'Phone Number' or 'Email' is required
       await _userRequestCreateProfileValidator.ValidateAndThrowAsync(request);
@@ -344,6 +346,9 @@ namespace Yoma.Core.Domain.Entity.Services
     public async Task<UserProfile> Update(UserRequestUpdateProfile request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+      request.FirstName = request.FirstName?.RemoveSpecialCharacters(UserExtensions.UserTextProhibitedCharacters(), normalizeWhitespace: true)!;
+      request.Surname = request.Surname?.RemoveSpecialCharacters(UserExtensions.UserTextProhibitedCharacters(), normalizeWhitespace: true)!;
 
       await _userRequestUpdateProfileValidator.ValidateAndThrowAsync(request);
 

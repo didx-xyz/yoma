@@ -1,9 +1,10 @@
+using System.Text.RegularExpressions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Entity.Models;
 
 namespace Yoma.Core.Domain.Entity.Extensions
 {
-  public static class UserExtensions
+  public static partial class UserExtensions
   {
     /// <summary>
     /// Detects changes to stored profile values without treating a login, audit update or
@@ -57,6 +58,14 @@ namespace Yoma.Core.Domain.Entity.Extensions
 
       user.AccountVerificationMethods = methods;
     }
+
+    /// <summary>
+    /// Character restrictions for free-text user names, aligned with Keycloak 26.4's
+    /// person-name-prohibited-characters rule. Contact fields and lookups use their own validation.
+    /// </summary>
+    // Java's default Cntrl class is ASCII, not the broader .NET Unicode control category.
+    [GeneratedRegex(@"[<>&""$%!#?§;*~/\\|^=\[\]{}()\x00-\x1F\x7F]")]
+    public static partial Regex UserTextProhibitedCharacters();
 
     public static void SetDisplayName(this User user)
     {
