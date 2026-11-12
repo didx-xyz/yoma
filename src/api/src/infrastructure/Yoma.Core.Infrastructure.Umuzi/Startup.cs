@@ -53,7 +53,9 @@ namespace Yoma.Core.Infrastructure.Umuzi
 
       // services
       services.AddSingleton<IUmuziAuthService, UmuziAuthService>();
-      services.AddScoped<IUmuziExecutionStrategyService, ExecutionStrategyService>();
+      // Register concretely so this provider cannot override the application database
+      // IExecutionStrategyService registration and clear the wrong context after rollback.
+      services.AddScoped<ExecutionStrategyService>();
       services.AddScoped<IOpportunityCatalogueBackgroundService, OpportunityCatalogueBackgroundService>();
 
       // clients
