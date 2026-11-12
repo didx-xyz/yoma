@@ -32,6 +32,9 @@ the BA field map is approved.
 
 ## Tasks
 
+- [x] Reproduce the November counter recurrence with provider registrations enabled; isolate JobJack/IXO execution strategies so application rollback cleanup reaches ApplicationDbContext. See [2026-11-12 handoff](./handoffs/2026-11-12-a.md).
+- [ ] Review/release the November handler-registration hotfix, audit Production totals, apply the separately reviewed count repair, and forward-port to master/Stage. No Production data changes were executed during preparation.
+
 - [x] Prepare the Production-first completion-counter hotfix from released `current`: separate metadata writes from completion/reward totals and reuse opt-in tracking cleanup at owning completion transaction boundaries. See [2026-10-28 handoff](./handoffs/2026-10-28-a.md).
 - [ ] Complete the current release after merged PR #2008: merge the CsvHelper 33.1.0 package correction first, then cut the Production release and forward-port to master/Stage. CsvHelper 34 migration and historical data audit/repair are separate follow-ups.
 
@@ -50,6 +53,10 @@ the BA field map is approved.
 - [ ] Re-run end-to-end API, CSV and partner mapping validation against the final definitions.
 
 ## Decisions
+
+- 2026-11-12 follow-up, explicitly requested by Adrian: standardise Umuzi on concrete registration/injection too. Remove its redundant provider-specific strategy interface; it still implements the shared contract through ExecutionStrategyServiceBase. This is consistency work, not another overriding registration defect. Regression checks include Umuzi after the application/provider registrations and verify its cleanup leaves other contexts intact.
+
+- 2026-11-12: The completion cleanup already introduced in PR #2008 is correct but can resolve the wrong context: JobJack and IXO PartnerSync still register their strategies against the shared domain interface after Database Startup. Register those strategies concretely and inject each into its own provider job, matching Alison/Jobberman/Aries/Substack. Keep the application interface owned by ApplicationDbContext, shared retry behavior unchanged, and provider databases independently scoped. A disposable PostgreSQL reproduction demonstrates lost counts and opportunity/organisation/Treasury lifetime and year totals after CSV-style rollback probes, failed batch items and transient retries; fixed wiring reconciles all three scenarios.
 
 - 2026-10-28 release review: defer the CsvHelper 34 rewrite to separately tested master/Stage work. Its namespaces, generated mapping, reader/writer APIs and behavior differ from 33; the unadapted upgrade does not compile. The Production correction restores only CsvHelper 33.1.0 and preserves all counter fixes and other committed package patches.
 

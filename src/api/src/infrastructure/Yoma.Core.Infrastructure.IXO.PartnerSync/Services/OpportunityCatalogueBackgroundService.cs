@@ -24,7 +24,7 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Services
     private readonly ScheduleJobOptions _scheduleJobOptions;
     private readonly IRepositoryBatched<Opportunity> _opportunityRepository;
     private readonly IDistributedLockService _distributedLockService;
-    private readonly IExecutionStrategyService _executionStrategyService;
+    private readonly ExecutionStrategyService _executionStrategyService;
     private readonly IIXOAuthService _ixoAuthService;
     #endregion
 
@@ -37,7 +37,7 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Services
       IOptions<ScheduleJobOptions> scheduleJobOptions,
       IRepositoryBatched<Opportunity> opportunityRepository,
       IDistributedLockService distributedLockService,
-      IExecutionStrategyService executionStrategyService,
+      ExecutionStrategyService executionStrategyService,
       IIXOAuthService ixoAuthService)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));

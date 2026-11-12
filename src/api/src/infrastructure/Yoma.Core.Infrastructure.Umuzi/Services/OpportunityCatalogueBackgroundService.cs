@@ -24,7 +24,7 @@ namespace Yoma.Core.Infrastructure.Umuzi.Services
     private readonly ScheduleJobOptions _scheduleJobOptions;
     private readonly IRepositoryBatched<Opportunity> _opportunityRepository;
     private readonly IDistributedLockService _distributedLockService;
-    private readonly IUmuziExecutionStrategyService _executionStrategyService;
+    private readonly ExecutionStrategyService _executionStrategyService;
     private readonly IUmuziAuthService _umuziAuthService;
     #endregion
 
@@ -37,7 +37,7 @@ namespace Yoma.Core.Infrastructure.Umuzi.Services
       IOptions<ScheduleJobOptions> scheduleJobOptions,
       IRepositoryBatched<Opportunity> opportunityRepository,
       IDistributedLockService distributedLockService,
-      IUmuziExecutionStrategyService executionStrategyService,
+      ExecutionStrategyService executionStrategyService,
       IUmuziAuthService umuziAuthService)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
