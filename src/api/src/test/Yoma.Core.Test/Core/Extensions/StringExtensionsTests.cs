@@ -1,10 +1,60 @@
+using System.Text.RegularExpressions;
 using Xunit;
 using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.Entity.Extensions;
 
 namespace Yoma.Core.Test.Core.Extensions
 {
   public class StringExtensionsTests
   {
+    [Theory]
+    [InlineData(false, "Café\tMenu & £5")]
+    [InlineData(true, "Café Menu & £5")]
+    public void RemoveSpecialCharacters_CustomExpressionOnlyRemovesSelectedCharacters(bool normalizeWhitespace, string expected)
+    {
+      var result = " Café\tMenu & £5<> ".RemoveSpecialCharacters(new Regex("[<>]"), normalizeWhitespace);
+
+      Assert.Equal(expected, result);
+    }
+
+    [Fact]
+    public void RemoveSpecialCharacters_DefaultBehaviorStillRemovesDiacriticsAndNonAlphanumericCharacters()
+    {
+      Assert.Equal("Jose OConnor", "José O'Connor".RemoveSpecialCharacters());
+    }
+
+    [Fact]
+    public void RemoveSpecialCharacters_NullExpressionThrows()
+    {
+      Assert.Throws<ArgumentNullException>(() => "text".RemoveSpecialCharacters(null!));
+    }
+
+    [Theory]
+    [InlineData("  José  ", "José")]
+    [InlineData("O'Connor", "O'Connor")]
+    [InlineData("D’Arcy-Smith", "D’Arcy-Smith")]
+    [InlineData("李 明", "李 明")]
+    [InlineData("محمد", "محمد")]
+    [InlineData("Jose\u0301", "José")]
+    [InlineData("A. B, C:D+E", "A. B, C:D+E")]
+    [InlineData("Anne\r\n\tMarie\u0085\u2028\u2029Smith", "Anne Marie Smith")]
+    [InlineData(" Jo<>&\"$%!#?§;*~/\\|^=[]{}()\0\u0001\u007fhn ", "John")]
+    [InlineData("<>&\"$%!#?§;*~/\\|^=[]{}()", "")]
+    [InlineData("", "")]
+    public void RemoveSpecialCharacters_UserText_RemovesOnlyProhibitedCharactersAndNormalizesWhitespace(string input, string expected)
+    {
+      var result = input.RemoveSpecialCharacters(UserExtensions.UserTextProhibitedCharacters(), normalizeWhitespace: true);
+
+      Assert.Equal(expected, result);
+      Assert.Equal(result, result.RemoveSpecialCharacters(UserExtensions.UserTextProhibitedCharacters(), normalizeWhitespace: true));
+    }
+
+    [Fact]
+    public void RemoveSpecialCharacters_UserText_NullInputThrows()
+    {
+      Assert.Throws<ArgumentNullException>(() => ((string)null!).RemoveSpecialCharacters(UserExtensions.UserTextProhibitedCharacters(), normalizeWhitespace: true));
+    }
+
     [Theory]
     [InlineData("event-123", "event-123")]
     [InlineData("event\r\nforged", "eventforged")]
