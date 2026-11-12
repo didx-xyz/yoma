@@ -51,7 +51,7 @@ namespace Yoma.Core.Test.SSI
     [InlineData(CredentialStatus.Revoked, CredentialVerificationStatus.Invalid)]
     [InlineData(CredentialStatus.Expired, CredentialVerificationStatus.Invalid)]
     [InlineData(CredentialStatus.Unknown, CredentialVerificationStatus.Unknown)]
-    public async Task VerificationStatusIsDetailOnlyAndRespectsLifecycle(CredentialStatus status,
+    public async Task ListAndDetailVerificationStatusRespectLifecycleWithoutExtraProviderCalls(CredentialStatus status,
       CredentialVerificationStatus expected)
     {
       var fixture = new Fixture(SchemaType.YoID, null, null);
@@ -60,6 +60,7 @@ namespace Yoma.Core.Test.SSI
       var list = await fixture.Service.SearchUserCredentials(new SSIWalletSearchFilter { PageNumber = 1, PageSize = 10 });
       var detail = await fixture.Service.GetUserCredentialById(fixture.Credential.Id);
 
+      Assert.Equal(expected, Assert.Single(list.Items!).VerificationStatus);
       Assert.Equal(expected, detail.VerificationStatus);
       Assert.Equal(status, detail.Status);
 
@@ -69,11 +70,15 @@ namespace Yoma.Core.Test.SSI
       var listJson = JObject.Parse(JsonConvert.SerializeObject(Assert.Single(list.Items!), settings));
       var detailJson = JObject.Parse(JsonConvert.SerializeObject(detail, settings));
 
-      Assert.False(listJson.ContainsKey("verificationStatus"));
+      Assert.Equal(expected.ToString(), listJson.Value<string>("verificationStatus"));
+      Assert.False(listJson.ContainsKey("attributes"));
       Assert.Equal(expected.ToString(), detailJson.Value<string>("verificationStatus"));
       Assert.Equal(status.ToString(), listJson.Value<string>("status"));
       Assert.Equal(status.ToString(), detailJson.Value<string>("status"));
       fixture.AssertReadsOnlyIssuedSchema();
+      fixture.Provider.Verify(client => client.ListCredentials("holder"), Times.Once);
+      fixture.Provider.Verify(client => client.GetCredentialById("holder", fixture.Credential.Id), Times.Once);
+      fixture.Provider.VerifyNoOtherCalls();
     }
 
     [Fact]
@@ -83,6 +88,8 @@ namespace Yoma.Core.Test.SSI
       fixture.Credential.Status = (CredentialStatus)999;
 
       await Assert.ThrowsAsync<NotSupportedException>(() => fixture.Service.GetUserCredentialById(fixture.Credential.Id));
+      await Assert.ThrowsAsync<NotSupportedException>(() => fixture.Service.SearchUserCredentials(
+        new SSIWalletSearchFilter { PageNumber = 1, PageSize = 10 }));
     }
 
     [Fact]

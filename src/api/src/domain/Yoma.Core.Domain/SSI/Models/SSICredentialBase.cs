@@ -15,6 +15,12 @@ namespace Yoma.Core.Domain.SSI.Models
     public CredentialStatus Status { get; set; }
 
     /// <summary>
+    /// Verification presentation status for list and detail, separate from the provider lifecycle status.
+    /// Relies on provider issuance/receipt verification and current lifecycle checks, not a fresh proof.
+    /// </summary>
+    public CredentialVerificationStatus VerificationStatus { get; set; }
+
+    /// <summary>
     /// Credential context for wallet card presentation, normalized from a mapped signed system attribute.
     /// Null when no supported context is present, including YoID. Never inferred from schema context
     /// or the current editable source entity; the schema type identifies the credential family.
