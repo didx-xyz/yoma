@@ -147,6 +147,23 @@ namespace Yoma.Core.Domain.Core.Extensions
     }
 
     /// <summary>
+    /// Removes only characters matched by the supplied expression, preserving other characters
+    /// and diacritics. Optionally replaces whitespace with spaces before removal.
+    /// The result is normalized and trimmed; callers still validate required values.
+    /// </summary>
+    public static string RemoveSpecialCharacters(this string input, Regex charactersToRemove, bool normalizeWhitespace = false)
+    {
+      ArgumentNullException.ThrowIfNull(input, nameof(input));
+      ArgumentNullException.ThrowIfNull(charactersToRemove, nameof(charactersToRemove));
+
+      var result = normalizeWhitespace
+        ? new string([.. input.Select(character => char.IsWhiteSpace(character) ? ' ' : character)])
+        : input;
+
+      return charactersToRemove.Replace(result, string.Empty).NormalizeTrim();
+    }
+
+    /// <summary>
     /// Normalizes and trims a string, then truncates it to the specified maximum length.
     /// </summary>
     /// <param name="input">The string to process.</param>

@@ -279,6 +279,8 @@ namespace Yoma.Core.Domain.Entity.Services
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
       request.PhoneNumber = request.PhoneNumber?.NormalizePhoneNumber(true);
+      request.FirstName = request.FirstName?.RemoveSpecialCharacters(UserExtensions.UserTextProhibitedCharacters(), normalizeWhitespace: true).NormalizeNullableValue();
+      request.Surname = request.Surname?.RemoveSpecialCharacters(UserExtensions.UserTextProhibitedCharacters(), normalizeWhitespace: true).NormalizeNullableValue();
 
       await _userRequestValidator.ValidateAndThrowAsync(request);
 
