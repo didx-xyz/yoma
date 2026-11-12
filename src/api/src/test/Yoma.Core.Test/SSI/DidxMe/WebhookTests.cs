@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -8,6 +9,7 @@ using Xunit;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Infrastructure.DidxMe;
+using Yoma.Core.Infrastructure.DidxMe.Context;
 using Yoma.Core.Infrastructure.DidxMe.Interfaces;
 using Yoma.Core.Infrastructure.DidxMe.Models;
 using Yoma.Core.Infrastructure.DidxMe.Services;
@@ -22,7 +24,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
     [InlineData("Unknown")]
     public async Task InvalidStoredStatusFailsBeforeMutation(string status)
     {
-      var fixture = new Fixture();
+      using var fixture = new Fixture();
       fixture.Mapping.Status = status;
       var invoked = false;
 
@@ -77,7 +79,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
     [Fact]
     public async Task AcceptanceBeforeDeliveryReturnsSurvivesDuplicateAndLateEvents()
     {
-      var fixture = new Fixture();
+      using var fixture = new Fixture();
       await fixture.Service.Accept("session-test", "wallet-test");
       await fixture.Service.Update(fixture.Mapping.Id, item => item.DeliveryCompleted = true);
       await fixture.Service.Accept("session-test", "wallet-test");
@@ -99,7 +101,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
     [Fact]
     public async Task UnknownSessionsAreIgnoredAndPersistenceFailureIsNotAcknowledged()
     {
-      var fixture = new Fixture();
+      using var fixture = new Fixture();
       await fixture.Service.Accept("unknown", "wallet-test");
       fixture.Repository.Verify(value => value.Update(It.IsAny<IssuanceMapping>()), Times.Never);
       fixture.Repository.Setup(value => value.Update(It.IsAny<IssuanceMapping>())).ThrowsAsync(new InvalidOperationException("Database unavailable"));
@@ -109,7 +111,7 @@ namespace Yoma.Core.Test.SSI.DidxMe
     [Fact]
     public async Task InlineWaitObservesAcceptanceWrittenByAnotherRequest()
     {
-      var fixture = new Fixture();
+      using var fixture = new Fixture();
       var waiting = fixture.Service.WaitForWalletId(fixture.Mapping.Id, TestContext.Current.CancellationToken);
       Assert.False(waiting.IsCompleted);
       await fixture.Service.Accept("session-test", "wallet-test");
@@ -118,8 +120,14 @@ namespace Yoma.Core.Test.SSI.DidxMe
     #endregion
 
     #region Fixtures
-    private sealed class Fixture
+    private sealed class Fixture : IDisposable
     {
+      // Repositories remain mocked; the real strategy only uses this context for execution and cleanup.
+      private readonly ProviderDbContext _context = new(new DbContextOptionsBuilder<ProviderDbContext>()
+        .UseNpgsql("Host=127.0.0.1;Database=unused;Username=unused").Options);
+
+      public void Dispose() => _context.Dispose();
+
       public IssuanceMapping Mapping { get; } = new()
       {
         Id = Guid.NewGuid(),
@@ -138,14 +146,12 @@ namespace Yoma.Core.Test.SSI.DidxMe
         Repository.Setup(value => value.Query()).Returns(() => new[] { Mapping }.AsQueryable());
         Repository.Setup(value => value.Query(It.IsAny<LockMode>())).Returns(() => new[] { Mapping }.AsQueryable());
         Repository.Setup(value => value.Update(It.IsAny<IssuanceMapping>())).ReturnsAsync((IssuanceMapping item) => item);
-        var strategy = new Mock<IProviderExecutionStrategyService>();
-        strategy.Setup(value => value.ExecuteInExecutionStrategyAsync(It.IsAny<Func<Task>>(), true))
-          .Returns((Func<Task> action, bool _) => action());
+        var strategy = new ExecutionStrategyService(_context);
         Service = new IssuanceTrackingService(Logger.Object, Options.Create(new ProviderOptions
         {
           TenantAlias = "yoma",
           Webhook = new WebhookOptions { PollIntervalMilliseconds = 1 }
-        }), Repository.Object, strategy.Object);
+        }), Repository.Object, strategy);
       }
     }
     #endregion

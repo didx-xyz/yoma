@@ -19,12 +19,12 @@ namespace Yoma.Core.Infrastructure.DidxMe.Services
     private readonly ILogger<IssuanceTrackingService> _logger;
     private readonly ProviderOptions _options;
     private readonly IRepository<IssuanceMapping> _repository;
-    private readonly IProviderExecutionStrategyService _executionStrategy;
+    private readonly ExecutionStrategyService _executionStrategy;
     #endregion
 
     #region Constructor
     public IssuanceTrackingService(ILogger<IssuanceTrackingService> logger, IOptions<ProviderOptions> options, IRepository<IssuanceMapping> repository,
-      IProviderExecutionStrategyService executionStrategy)
+      ExecutionStrategyService executionStrategy)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _options = (options ?? throw new ArgumentNullException(nameof(options))).Value;

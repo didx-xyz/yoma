@@ -600,7 +600,7 @@ namespace Yoma.Core.Domain.Entity.Services
       if (statusCurrent != result.Status)
         await _mediator.Publish(new OrganizationStatusChangedEvent(result));
 
-      await UpdateAdminRoles(adminIds.Union(result.Administrators?.Select(o => o.Id) ?? []).ToList());
+      await UpdateAdminRoles([.. adminIds.Union(result.Administrators?.Select(o => o.Id) ?? [])]);
 
       return result;
     }
