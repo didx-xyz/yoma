@@ -24,6 +24,7 @@ import { AvatarImage } from "~/components/AvatarImage";
 import CustomModal from "~/components/Common/CustomModal";
 import Suspense from "~/components/Common/Suspense";
 import CredentialAttributes from "~/components/Credentials/CredentialAttributes";
+import { CredentialStatusBadge } from "~/components/Credentials/CredentialStatusBadge";
 import { PassportCredentials } from "~/components/Credentials/PassportCredentials";
 import YoID from "~/components/Layout/YoID";
 import NoRowsMessage from "~/components/NoRowsMessage";
@@ -262,6 +263,21 @@ const MyPassport: NextPageWithLayout<{
                         contract — these come from the credential's system properties, not from its
                         schema attributes, and carry no presentation metadata. */}
                   <ul className="divide-y divide-gray-200">
+                    <li className="py-4">
+                      <div className="flex justify-between text-sm">
+                        <p className="font-semibold text-gray-500 md:w-64">
+                          Status
+                        </p>
+                        {/* Same mapping as the card's pill (YOM-1310): the API's wallet display
+                              verdict with its lifecycle reason. Not a fresh proof check. */}
+                        <div id="credential-detail-status">
+                          <CredentialStatusBadge
+                            credential={activeCredential}
+                            variant="full"
+                          />
+                        </div>
+                      </div>
+                    </li>
                     <li className="py-4">
                       <div className="flex justify-between text-sm">
                         <p className="font-semibold text-gray-500 md:w-64">

@@ -1,7 +1,7 @@
 import Image from "next/image";
-import { IoMdCheckmark } from "react-icons/io";
 import Moment from "react-moment";
 import type { SSICredentialInfo } from "~/api/models/credential";
+import { CredentialStatusBadge } from "~/components/Credentials/CredentialStatusBadge";
 import {
   CARD_ACTION_CLASS,
   CARD_BAND_CLASS,
@@ -24,6 +24,12 @@ import { typeBadgeClass, typeBandClass } from "~/lib/typeColours";
 // Opportunity's type (YOM-1277), resolved once per group by `credentialTypeKey`; a credential
 // with neither is Other. Colours are the type palette shared with discovery and the YoID
 // opportunity cards (`lib/typeColours.ts`).
+//
+// The status pill (YOM-1310) is bound to the API's `verificationStatus` / `status` — it was a
+// fixed "Verified" before PR #2028 exposed them. Revoked or expired copies stay on the list
+// (the API keeps them until cleanup) and read "Invalid"; an older API or an unresolved status
+// reads "Unverified". The article is keyed and addressed by the credential's own id, so a
+// revoked YoID and its issued replacement can sit side by side.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const CredentialCard: React.FC<{
@@ -33,7 +39,10 @@ export const CredentialCard: React.FC<{
   label: string;
   onOpen: (credential: SSICredentialInfo) => void;
 }> = ({ credential, typeKey, label, onOpen }) => (
-  <article className="shadow-custom flex h-full flex-col rounded-xl bg-white">
+  <article
+    data-credential-id={credential.id}
+    className="shadow-custom flex h-full flex-col rounded-xl bg-white"
+  >
     <div
       className={`${CARD_BAND_CLASS} rounded-t-xl ${typeBandClass(typeKey)}`}
     >
@@ -56,10 +65,7 @@ export const CredentialCard: React.FC<{
         <span className={`${CARD_CHIP_CLASS} ${typeBadgeClass(typeKey)}`}>
           {label}
         </span>
-        <span className="bg-green-light text-green flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold">
-          <IoMdCheckmark className="h-3 w-3" aria-hidden />
-          Verified
-        </span>
+        <CredentialStatusBadge credential={credential} />
       </div>
       <h3 className={CARD_TITLE_CLASS}>{credential.title}</h3>
       <p className="h-4 truncate text-xs leading-4 font-semibold text-black">

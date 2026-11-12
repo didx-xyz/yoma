@@ -142,10 +142,39 @@ export interface SSICredential extends SSICredentialBase {
   attributes: SSICredentialAttribute[] | null;
 }
 
+/**
+ * Lifecycle status the SSI provider resolved for the credential (YOM-1309). Enum *name* on the
+ * wire. `Unknown` means the provider could not establish it — not that the credential is fine.
+ */
+export enum CredentialStatus {
+  Unknown,
+  Issued,
+  Revoked,
+  Expired,
+}
+
+/**
+ * The wallet's display verdict, derived by the API from `CredentialStatus` (Issued → Verified,
+ * Revoked/Expired → Invalid, Unknown → Unknown). It relies on the provider's issuance/receipt
+ * verification and lifecycle checks; it is not a fresh signature check and must never authorise an
+ * action.
+ */
+export enum CredentialVerificationStatus {
+  Unknown,
+  Verified,
+  Invalid,
+}
+
 export interface SSICredentialBase {
   id: string;
   artifactType: ArtifactType | string; //NB: string
   schemaType: SchemaType | string; //NB: string
+  /**
+   * Optional only because a response from an API older than PR #2028 omits both fields. The UI
+   * treats absence as unspecified (`Unknown`), never as Verified.
+   */
+  status?: CredentialStatus | string; //NB: string
+  verificationStatus?: CredentialVerificationStatus | string; //NB: string
   /**
    * The Opportunity Type name (`Learning`, `ImpactAction`, …) normalized from the credential's
    * signed system claim (YOM-1277). Null for YoID — identified by `schemaType` — and for an
