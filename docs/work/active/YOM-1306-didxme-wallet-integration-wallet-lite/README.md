@@ -30,7 +30,7 @@ and environment receipts belong in the approved private team handoff, not Markdo
 | [YOM-1307 — Environments](./YOM-1307-provision-didxme-environments-for-yoma/feature.md) | Adrian / SRE | review |
 | [YOM-1308 — Identity integration](./YOM-1308-federate-yoma-identities-with-didxme-wallet-lite/feature.md) | Adrian / Jason | in-progress |
 | [YOM-1309 — Provider adapter](./YOM-1309-use-didxme-for-yoma-wallets-and-credential-issuance/feature.md) | Adrian | review |
-| [YOM-1310 — Participant wallet](https://linear.app/didx/issue/YOM-1310) | Jason | planning |
+| [YOM-1310 — Participant wallet](./YOM-1310-show-didxme-credentials-in-the-yoma-wallet/feature.md) | Jason | in-progress |
 
 Feature files own detailed task status. YOM-1306 is the canonical root; the redundant earlier
 ticket was removed.
