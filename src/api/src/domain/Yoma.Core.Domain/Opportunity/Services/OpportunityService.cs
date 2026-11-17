@@ -1280,16 +1280,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         ModifiedByUserId = user.Id
       };
 
-      if (result.DateEnd.HasValue)
-      {
-        var commitmentIntervalInDays = result.TimeIntervalToDays();
-        if (commitmentIntervalInDays.HasValue)
-        {
-          var dateEndMin = result.DateStart.AddDays(commitmentIntervalInDays.Value - 1); // count today as the 1st day
-          if (dateEndMin > result.DateEnd.Value)
-            throw new ValidationException($"The end date for the opportunity must be on or after {dateEndMin.Date}, based on the specified start date and commitment interval");
-        }
-      }
+      AssertAvailabilityDates(result);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -1496,16 +1487,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       result.ExternalId = !string.IsNullOrEmpty(request.ExternalId) ? request.ExternalId : result.ExternalId;
       result.ModifiedByUserId = user.Id;
 
-      if (result.DateEnd.HasValue)
-      {
-        var commitmentIntervalInDays = result.TimeIntervalToDays();
-        if (commitmentIntervalInDays.HasValue)
-        {
-          var dateEndMin = result.DateStart.AddDays(commitmentIntervalInDays.Value - 1); // count today as the 1st day
-          if (dateEndMin > result.DateEnd.Value)
-            throw new ValidationException($"The end date for the opportunity must be on or after {dateEndMin.Date}, based on the specified start date and commitment interval");
-        }
-      }
+      AssertAvailabilityDates(result);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -2311,6 +2293,35 @@ namespace Yoma.Core.Domain.Opportunity.Services
         });
 
       return (result, isNew ? EventType.Create : EventType.Update);
+    }
+
+    private static void AssertAvailabilityDates(Models.Opportunity opportunity)
+    {
+      if (!opportunity.DateEnd.HasValue) return;
+
+      switch (opportunity.Type)
+      {
+        // Job availability is an application window, not the duration of employment.
+        case Type.Job:
+          return;
+
+        case Type.Learning:
+        case Type.ImpactAction:
+        case Type.Event:
+        case Type.Entrepreneurship:
+        case Type.Other:
+          break;
+
+        default:
+          throw new NotSupportedException($"Opportunity type '{opportunity.Type}' is not supported");
+      }
+
+      var commitmentIntervalInDays = opportunity.TimeIntervalToDays();
+      if (!commitmentIntervalInDays.HasValue) return;
+
+      var dateEndMin = opportunity.DateStart.AddDays(commitmentIntervalInDays.Value - 1); // count today as the 1st day
+      if (dateEndMin > opportunity.DateEnd.Value)
+        throw new ValidationException($"The end date for the opportunity must be on or after {dateEndMin:yyyy-MM-dd}, based on the specified start date and commitment interval");
     }
 
     // TODO(YOM-1244): Replace type-specific cross-field rules with declarative CF configuration in a future phase.
