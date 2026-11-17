@@ -1975,7 +1975,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       if (!request.DateEnd.HasValue)
       {
         var now = DateTimeOffset.UtcNow;
-        request.DateEnd = opportunity.DateEnd.HasValue && opportunity.DateEnd.Value <= now ? opportunity.DateEnd.Value : now;
+        // A placement can occur after applications close; the deadline is not its completion date.
+        request.DateEnd = opportunity.Type != Opportunity.Type.Job && opportunity.DateEnd.HasValue && opportunity.DateEnd.Value <= now
+          ? opportunity.DateEnd.Value
+          : now;
       }
 
       if (request.DateStart.HasValue || request.CommitmentInterval != null) return;
@@ -2005,7 +2008,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       if (request.DateEnd.HasValue)
       {
-        if (opportunity.DateEnd.HasValue && request.DateEnd.Value > opportunity.DateEnd.Value)
+        // Job placement timing is independent of the application deadline.
+        if (opportunity.Type != Opportunity.Type.Job && opportunity.DateEnd.HasValue && request.DateEnd.Value > opportunity.DateEnd.Value)
           throw new ValidationException($"End date cannot be later than the opportunity end date of '{opportunity.DateEnd.Value:yyyy-MM-dd}'");
 
         if (request.DateEnd.Value > DateTimeOffset.UtcNow.ToEndOfDay())

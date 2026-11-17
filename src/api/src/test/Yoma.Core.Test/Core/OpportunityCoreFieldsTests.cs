@@ -214,6 +214,20 @@ namespace Yoma.Core.Test.Core
     }
 
     [Fact]
+    public void ManualJobStillRequiresApplicationDeadline()
+    {
+      var validator = CreateValidator();
+      var request = new OpportunityRequestCreate { TypeId = JobId, DateStart = DateTimeOffset.UtcNow.Date };
+
+      Assert.Contains(validator.Validate(request, options => options.IncludeRuleSets("default", "Manual")).Errors,
+        error => error.PropertyName == nameof(request.DateEnd));
+
+      request.DateEnd = request.DateStart;
+      Assert.DoesNotContain(validator.Validate(request, options => options.IncludeRuleSets("default", "Manual")).Errors,
+        error => error.PropertyName == nameof(request.DateEnd));
+    }
+
+    [Fact]
     public void JobsCannotOfferZltoButCanHaveSalaryWithoutAReward()
     {
       var request = new OpportunityRequestCreate { TypeId = JobId, Incentivized = true };

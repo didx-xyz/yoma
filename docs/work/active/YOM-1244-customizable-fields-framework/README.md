@@ -31,6 +31,7 @@ definitions to the BA-approved set (YOM-1264) without a code change.
 
 | Feature | Ticket | Area | Status |
 | --- | --- | --- | --- |
+| [Job availability validation](./YOM-1320-bug-availability-end-date-is-validated-against-the-commitment-interval/feature.md) | [YOM-1320](https://linear.app/didx/issue/YOM-1320) | api | review |
 | [Pending submission type protection](./YOM-1312-opportunity-approval-workflow-allowing-changes-to-submitted/feature.md) | [YOM-1312](https://linear.app/didx/issue/YOM-1312) | api | review |
 
 YOM-1312 blocks opportunity **type changes only** while youth submissions await approval.
