@@ -45,10 +45,12 @@ keycloak:
     ref: develop
 
   extraEnv: |-
+    # -XX:-UseBASE64Intrinsics mitigates Java4Shell (CVE-2026-114938): https://calif.io/java4shell
     - name: JAVA_OPTS_APPEND
       value: >-
         -XX:+UseContainerSupport
         -XX:MaxRAMPercentage=50.0
+        -XX:-UseBASE64Intrinsics
         -Djgroups.dns.query={{ include "keycloak.fullname" . }}-headless
         -Djava.awt.headless=true
     # - name: KC_DB_URL_HOST
