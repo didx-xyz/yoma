@@ -462,6 +462,8 @@ jobs:
       HELMFILE_VERSION: v1.5.1
       HELM_VERSION: v4.2.0
       TAG: ${{ needs.docker-push.outputs.image_version }}
+      # helmfile-action uses this to look up Helm v4 plugin release assets
+      GITHUB_TOKEN: ${{ github.token }}
 
     concurrency:
       group: ${{ github.workflow }}-deploy-${{ github.event_name == 'release' && 'prod' || (github.event_name == 'push' && github.event.repository.default_branch == github.ref_name) && 'stage' || 'dev' }}
