@@ -233,10 +233,12 @@ keycloak:
   cache:
     stack: custom
   extraEnv: |-
+    # -XX:-UseBASE64Intrinsics mitigates Java4Shell (CVE-2026-114938): https://calif.io/java4shell
     - name: JAVA_OPTS_APPEND
       value: >-
         -XX:+UseContainerSupport
         -XX:MaxRAMPercentage=75.0
+        -XX:-UseBASE64Intrinsics
         -Djava.awt.headless=true
     - name: KC_CACHE
       value: ispn
