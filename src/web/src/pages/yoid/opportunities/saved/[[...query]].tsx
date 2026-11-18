@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
 import Head from "next/head";
 import router from "next/router";
 import { type ParsedUrlQuery } from "node:querystring";
@@ -34,7 +33,7 @@ import { PaginationInfoComponent } from "~/components/PaginationInfo";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { CARD_GRID_CLASS } from "~/lib/card";
 import { PAGE_SIZE } from "~/lib/constants";
-import { authOptions } from "~/server/auth";
+import { getServerAuthSession } from "~/server/auth";
 import { type NextPageWithLayout } from "../../../_app";
 
 interface IParams extends ParsedUrlQuery {
@@ -94,7 +93,7 @@ const searchSavedOpportunitiesWithProgress = async (
 };
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerAuthSession(context);
 
   // 👇 ensure authenticated
   if (!session) {

@@ -1,6 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
@@ -84,14 +83,14 @@ import {
 } from "~/lib/constants";
 import { getSafeUrl } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
-import { authOptions } from "~/server/auth";
+import { getServerAuthSession } from "~/server/auth";
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { returnUrl } = context.query;
 
   // 👇 ensure authenticated and authorized
-  const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerAuthSession(context);
   if (!session) {
     return {
       props: {

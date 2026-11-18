@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
@@ -77,7 +76,7 @@ import {
 import { DATE_FORMAT_HUMAN, PAGE_SIZE, THEME_BLUE } from "~/lib/constants";
 import { getSafeUrl, utcToDateInput } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
-import { authOptions } from "~/server/auth";
+import { getServerAuthSession } from "~/server/auth";
 
 const getErrorStatus = (error: unknown): number | null => {
   if (!axios.isAxiosError(error)) return null;
@@ -86,7 +85,7 @@ const getErrorStatus = (error: unknown): number | null => {
 
 // SSR is used only to establish auth state — the filters come from router.query.
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerAuthSession(context);
   const { returnUrl } = context.query;
 
   if (!session) {

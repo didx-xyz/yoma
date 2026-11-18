@@ -1,11 +1,10 @@
 import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { type ReactElement } from "react";
 import MainLayout from "~/components/Layout/Main";
-import { authOptions } from "~/server/auth";
+import { getServerAuthSession } from "~/server/auth";
 import { type NextPageWithLayout } from "~/pages/_app";
 import Link from "next/link";
 import { PageBackground } from "~/components/PageBackground";
@@ -34,7 +33,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   let errorCode = null;
 
   // 👇 ensure authenticated and authorized
-  const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerAuthSession(context);
   if (!session) {
     return {
       props: {

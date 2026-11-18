@@ -2,7 +2,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import moment from "moment";
 import type { GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
@@ -94,7 +93,7 @@ import {
 } from "~/lib/constants";
 import { getTimeOfDayAndEmoji, utcToDateInput } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
-import { authOptions } from "~/server/auth";
+import { getServerAuthSession } from "~/server/auth";
 
 export interface OrganizationSearchFilterSummaryViewModel {
   organizations: string[] | null;
@@ -139,7 +138,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     pageSSO: pageSSO ? parseInt(pageSSO.toString()) : 1,
   };
 
-  const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerAuthSession(context);
   let errorCode = null;
 
   // 👇 ensure authenticated

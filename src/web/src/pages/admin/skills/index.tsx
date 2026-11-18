@@ -5,7 +5,6 @@ import {
   useQuery,
 } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, useMemo, type ReactElement } from "react";
@@ -44,7 +43,7 @@ import { PAGE_SIZE, ROLE_ADMIN } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { getThemeFromRole } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
-import { authOptions } from "~/server/auth";
+import { getServerAuthSession } from "~/server/auth";
 
 /**
  * Skills has no status tabs and nothing to filter on beyond the search term, so the pattern
@@ -62,7 +61,7 @@ const SKILL_FILTER_SPEC: ListPageFilterSpec = {
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { returnUrl } = context.query;
-  const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerAuthSession(context);
   const queryClient = new QueryClient(config);
   const errorCode = null;
 

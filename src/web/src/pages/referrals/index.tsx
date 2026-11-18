@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import { type GetServerSidePropsContext } from "next";
 import Link from "next/link";
-import { getServerSession } from "next-auth";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
 import Image from "next/image";
@@ -58,11 +57,11 @@ import {
 import { toLogSafeError } from "~/lib/apiErrorUtils";
 import { COUNTRY_ID_WW, PAGE_SIZE, THEME_WHITE } from "~/lib/constants";
 import { screenWidthAtom, userProfileAtom } from "~/lib/store";
-import { authOptions } from "~/server/auth";
+import { getServerAuthSession } from "~/server/auth";
 import type { NextPageWithLayout } from "../_app";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerAuthSession(context);
 
   let userProfileServer: UserProfile | null = null;
   if (session) {

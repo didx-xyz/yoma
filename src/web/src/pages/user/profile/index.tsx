@@ -1,6 +1,5 @@
 import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
 import type { GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { type ReactElement } from "react";
@@ -24,10 +23,10 @@ import { hasPreviousRoute } from "~/lib/previousRoute";
 import { config } from "~/lib/react-query-config";
 import { getSafeUrl } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
-import { authOptions } from "~/server/auth";
+import { getServerAuthSession } from "~/server/auth";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerAuthSession(context);
 
   if (!session) {
     return {

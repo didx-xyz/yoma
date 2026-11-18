@@ -1,7 +1,6 @@
 import { QueryClient, dehydrate } from "@tanstack/react-query";
 import axios from "axios";
 import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
 import Link from "next/link";
 import router from "next/router";
 import { type ParsedUrlQuery } from "querystring";
@@ -30,7 +29,7 @@ import { OPPORTUNITIES_SEARCH_URL } from "~/lib/constants";
 import { cameFrom } from "~/lib/previousRoute";
 import { config } from "~/lib/react-query-config";
 import type { NextPageWithLayout } from "~/pages/_app";
-import { type User, authOptions } from "~/server/auth";
+import { type User, getServerAuthSession } from "~/server/auth";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -40,7 +39,7 @@ interface IParams extends ParsedUrlQuery {
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { opportunityId } = context.params as IParams;
   const queryClient = new QueryClient(config);
-  const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerAuthSession(context);
   let errorCode = null;
   let dataOpportunityInfo: OpportunityInfo | null = null;
 

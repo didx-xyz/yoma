@@ -1,7 +1,6 @@
 import { QueryClient, dehydrate, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
@@ -37,7 +36,7 @@ import { DATE_FORMAT_HUMAN, PAGE_SIZE } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
-import { authOptions, type User } from "~/server/auth";
+import { getServerAuthSession, type User } from "~/server/auth";
 import { LinkActions, LinkActionOptions } from "~/components/Links/LinkActions";
 
 interface IParams extends ParsedUrlQuery {
@@ -49,7 +48,7 @@ interface IParams extends ParsedUrlQuery {
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id, linkId } = context.params as IParams;
   const { valueContains, usage, page } = context.query;
-  const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerAuthSession(context);
   const queryClient = new QueryClient(config);
   let errorCode = null;
 

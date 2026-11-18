@@ -2,7 +2,6 @@ import { QueryClient, dehydrate } from "@tanstack/react-query";
 import { type AxiosError } from "axios";
 import { useSetAtom } from "jotai";
 import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState, type ReactElement } from "react";
@@ -38,11 +37,11 @@ import { config } from "~/lib/react-query-config";
 import { userProfileAtom } from "~/lib/store";
 import type { OrganizationRequestViewModel } from "~/models/organisation";
 import { type NextPageWithLayout } from "~/pages/_app";
-import { authOptions } from "~/server/auth";
+import { getServerAuthSession } from "~/server/auth";
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerAuthSession(context);
 
   // 👇 ensure authenticated
   if (!session) {

@@ -1,6 +1,5 @@
 import axios from "axios";
 import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -35,7 +34,7 @@ import { UserInitialsAvatar } from "~/components/User/UserInitialsAvatar";
 import { DATE_FORMAT_HUMAN, PAGE_SIZE, THEME_BLUE } from "~/lib/constants";
 import { getSafeUrl } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
-import { authOptions } from "~/server/auth";
+import { getServerAuthSession } from "~/server/auth";
 
 const getErrorStatus = (error: unknown): number | null => {
   if (!axios.isAxiosError(error)) return null;
@@ -46,7 +45,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as { id: string };
   const { query, page, status, valueContains, userId, returnUrl } =
     context.query;
-  const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerAuthSession(context);
 
   if (!session) {
     return {

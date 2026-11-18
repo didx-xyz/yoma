@@ -6,7 +6,6 @@ import {
 } from "@tanstack/react-query";
 import { useAtomValue, useSetAtom } from "jotai";
 import type { GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
 import Head from "next/head";
 import router from "next/router";
 import { useCallback, type ReactElement } from "react";
@@ -27,10 +26,10 @@ import analytics from "~/lib/analytics";
 import { config } from "~/lib/react-query-config";
 import { userProfileAtom } from "~/lib/store";
 import type { NextPageWithLayout } from "~/pages/_app";
-import { authOptions } from "~/server/auth";
+import { getServerAuthSession } from "~/server/auth";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerAuthSession(context);
 
   if (!session) {
     return {

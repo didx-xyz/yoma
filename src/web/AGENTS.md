@@ -40,6 +40,11 @@ pnpm test:e2e:gaps      # list test.fixme() bypasses (must match known-gaps.md)
 - Run web tooling through mise (`mise x -- pnpm exec …`). The shell's bare `node` is v20, which
   pnpm 11 rejects.
 - Never run `next build` (or `pnpm build`) while the dev server is running: they share `.next`.
+- Server-side session reads go through `getServerAuthSession(context)` from `~/server/auth` — never
+  `getServerSession(...)` from `next-auth` directly in `pages/**` or `lib/**`. Each `getServerSession`
+  call appends another ~6 KB copy of the chunked session cookie to `Set-Cookie`; the wrapper resolves
+  the session once per request so a page plus its `ApiServer` prefetches sends one copy. Five copies
+  put org-admin responses over the AWS load balancer's 32 KB header limit → 502 (YOM-1322, YOM-176).
 
 ## End-to-end tests (Playwright)
 
