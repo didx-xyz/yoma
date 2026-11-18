@@ -1,13 +1,12 @@
 import { QueryClient, dehydrate } from "@tanstack/react-query";
 import axios from "axios";
 import type { GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
 import type { ParsedUrlQuery } from "querystring";
 import { type ReactElement } from "react";
 import { performActionInstantVerificationManual } from "~/api/services/myOpportunities";
 import MainLayout from "~/components/Layout/Main";
 import { type NextPageWithLayout } from "~/pages/_app";
-import { authOptions } from "~/server/auth";
+import { getServerAuthSession } from "~/server/auth";
 import { type ErrorResponseItem } from "~/api/models/common";
 import { config } from "~/lib/react-query-config";
 import { IoMdCheckmarkCircle, IoMdFlame } from "react-icons/io";
@@ -34,7 +33,7 @@ enum OpportunityAction {
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { linkId } = context.params as IParams;
   const queryClient = new QueryClient(config);
-  const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerAuthSession(context);
   let errors = null;
   let action = OpportunityAction.Login;
   let opportunityInfo = null;

@@ -3,8 +3,7 @@ import MainLayout from "~/components/Layout/Main";
 import { type NextPageWithLayout } from "~/pages/_app";
 import Link from "next/link";
 import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
-import { authOptions } from "~/server/auth";
+import { getServerAuthSession } from "~/server/auth";
 import {
   ROLE_ADMIN,
   THEME_BLUE,
@@ -15,7 +14,7 @@ import {
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerAuthSession(context);
 
   // 👇 ensure authenticated
   if (!session) {

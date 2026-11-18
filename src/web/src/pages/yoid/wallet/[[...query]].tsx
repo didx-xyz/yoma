@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Link from "next/link";
 import router from "next/router";
@@ -50,11 +49,11 @@ import { YOID_TABS, walletPreview } from "~/components/YoID/yoidTabs";
 import { CARD_GRID_CLASS } from "~/lib/card";
 import { PAGE_SIZE } from "~/lib/constants";
 import { userProfileAtom } from "~/lib/store";
-import { authOptions } from "~/server/auth";
+import { getServerAuthSession } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerAuthSession(context);
 
   // 👇 ensure authenticated
   if (!session) {

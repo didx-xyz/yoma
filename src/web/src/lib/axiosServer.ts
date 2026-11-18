@@ -3,9 +3,8 @@ import {
   type GetStaticPropsContext,
   type GetServerSidePropsContext,
 } from "next";
-import { getServerSession, type Session } from "next-auth";
 import { env } from "~/env.mjs";
-import { authOptions } from "~/server/auth";
+import { getServerAuthSession } from "~/server/auth";
 import { toLogSafeError } from "./apiErrorUtils";
 
 function isGetServerSidePropsContext(
@@ -25,26 +24,15 @@ const ApiServer = (
     baseURL: env.API_BASE_URL,
   });
 
-  let lastSession: Session | null = null;
-
   instance.interceptors.request.use(
     async (request) => {
-      // for server-side requests, get the session from the request
-      if (isGetServerSidePropsContext(context)) {
-        if (
-          lastSession == null ||
-          Date.now() > Date.parse(lastSession.expires)
-        ) {
-          lastSession = await getServerSession(
-            context.req,
-            context.res,
-            authOptions,
-          );
-        }
-      }
+      // for server-side requests, reuse the session already resolved for this request
+      const session = isGetServerSidePropsContext(context)
+        ? await getServerAuthSession(context)
+        : null;
 
-      if (lastSession) {
-        request.headers.Authorization = `Bearer ${lastSession.accessToken}`;
+      if (session) {
+        request.headers.Authorization = `Bearer ${session.accessToken}`;
       } else {
         request.headers.Authorization = undefined;
       }

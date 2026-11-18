@@ -3,7 +3,6 @@ import { QueryClient, dehydrate, useQueryClient } from "@tanstack/react-query";
 import axios, { type AxiosError } from "axios";
 import moment from "moment";
 import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -156,7 +155,7 @@ import {
   utcToDateInput,
 } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
-import { authOptions, type User } from "~/server/auth";
+import { getServerAuthSession, type User } from "~/server/auth";
 
 // `rewardType` is the one source of truth for ZLTO (it replaced the former `showZltoReward`
 // toggle); `showZltoRewardPool` remains the optional pool limit within a ZLTO reward.
@@ -289,7 +288,7 @@ interface IParams extends ParsedUrlQuery {
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id, opportunityId } = context.params as IParams;
-  const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerAuthSession(context);
   const queryClient = new QueryClient(config);
   let errorCode = null;
 

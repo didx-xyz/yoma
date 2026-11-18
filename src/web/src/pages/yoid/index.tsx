@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 import type { GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
 import { env } from "process";
 import {
   useCallback,
@@ -49,7 +48,7 @@ import {
 import { MAXINT32 } from "~/lib/constants";
 import { userProfileAtom } from "~/lib/store";
 import type { NextPageWithLayout } from "~/pages/_app";
-import { authOptions } from "~/server/auth";
+import { getServerAuthSession } from "~/server/auth";
 
 /** The fixed navbar plus the layout's sticky chip bar: what a jumped-to section clears. */
 const STICKY_OFFSET_PX = 80 + 56;
@@ -70,7 +69,7 @@ const SECTIONS: { id: YoIDSectionId; toneClass: string }[] = [
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerAuthSession(context);
 
   // 👇 ensure authenticated
   if (!session) {

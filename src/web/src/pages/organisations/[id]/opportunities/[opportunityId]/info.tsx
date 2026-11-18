@@ -2,7 +2,6 @@ import { QueryClient, dehydrate } from "@tanstack/react-query";
 import axios from "axios";
 import { useAtomValue } from "jotai";
 import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "node:querystring";
@@ -61,7 +60,7 @@ import { config } from "~/lib/react-query-config";
 import { currentOrganisationInactiveAtom } from "~/lib/store";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
-import { authOptions, type User } from "~/server/auth";
+import { getServerAuthSession, type User } from "~/server/auth";
 import PullSyncBadge from "~/components/Opportunity/Badges/PullSyncBadge";
 
 interface IParams extends ParsedUrlQuery {
@@ -73,7 +72,7 @@ interface IParams extends ParsedUrlQuery {
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id, opportunityId } = context.params as IParams;
-  const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerAuthSession(context);
   const queryClient = new QueryClient(config);
   let errorCode = null;
 

@@ -1,6 +1,5 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { env } from "process";
@@ -47,7 +46,7 @@ import {
   credentialTypeLabel,
   typeBadgeClass,
 } from "~/lib/typeColours";
-import { authOptions } from "~/server/auth";
+import { getServerAuthSession } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
 
 /**
@@ -61,7 +60,7 @@ const PASSPORT_PAGE_SIZE = PAGE_SIZE_MEDIUM;
 const NO_TYPES: OpportunityType[] = [];
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerAuthSession(context);
 
   // 👇 ensure authenticated
   if (!session) {

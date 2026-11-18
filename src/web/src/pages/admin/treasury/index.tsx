@@ -1,7 +1,6 @@
 import { dehydrate, QueryClient } from "@tanstack/react-query";
 import axios, { type AxiosError } from "axios";
 import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, useMemo, useState, type ReactElement } from "react";
@@ -48,11 +47,11 @@ import type { FinancialYearAssessment } from "~/lib/treasury/financialYear";
 import { mapTreasuryServerErrors } from "~/lib/treasury/serverErrors";
 import { getThemeFromRole } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
-import { authOptions } from "~/server/auth";
+import { getServerAuthSession } from "~/server/auth";
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerAuthSession(context);
   const queryClient = new QueryClient(config);
   let errorCode = null;
 

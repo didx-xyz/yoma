@@ -7,7 +7,6 @@ import {
 } from "@tanstack/react-query";
 import { type AxiosError } from "axios";
 import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
 import router from "next/router";
 import { type ParsedUrlQuery } from "querystring";
 import {
@@ -24,7 +23,7 @@ import z from "zod";
 import MainLayout from "~/components/Layout/Main";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
-import { authOptions, type User } from "~/server/auth";
+import { getServerAuthSession, type User } from "~/server/auth";
 import { PageBackground } from "~/components/PageBackground";
 import Link from "next/link";
 import { IoMdArrowRoundBack, IoMdLock } from "react-icons/io";
@@ -116,7 +115,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   let errorCode = null;
 
   // 👇 ensure authenticated and authorized
-  const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerAuthSession(context);
   if (!session) {
     return {
       props: {

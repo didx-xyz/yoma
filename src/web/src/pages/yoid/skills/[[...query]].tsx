@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Link from "next/link";
 import { type ReactElement } from "react";
@@ -21,11 +20,11 @@ import {
 } from "~/components/YoID/YoIDSkeletons";
 import { YOID_TABS } from "~/components/YoID/yoidTabs";
 import { OPPORTUNITIES_SEARCH_URL } from "~/lib/constants";
-import { type User, authOptions } from "~/server/auth";
+import { type User, getServerAuthSession } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerAuthSession(context);
 
   // 👇 ensure authenticated
   if (!session) {

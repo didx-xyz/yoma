@@ -1,5 +1,4 @@
 import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
 import Head from "next/head";
 import type { ReactElement } from "react";
 import MainLayout from "~/components/Layout/Main";
@@ -8,11 +7,11 @@ import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { UnderConstruction } from "~/components/Status/UnderConstruction";
 import { ROLE_ADMIN, THEME_BLUE } from "~/lib/constants";
-import { authOptions } from "~/server/auth";
+import { getServerAuthSession } from "~/server/auth";
 
 // ⚠️ SSR: Admin only, like every other /admin page
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerAuthSession(context);
   if (!session) return { props: { error: 401 } };
   if (!session.user?.roles.includes(ROLE_ADMIN))
     return { props: { error: 403 } };

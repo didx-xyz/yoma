@@ -4,6 +4,7 @@ import {
   type DefaultSession,
   type DefaultUser,
   type NextAuthOptions,
+  type Session,
 } from "next-auth";
 import { type DefaultJWT } from "next-auth/jwt";
 import KeycloakProvider from "next-auth/providers/keycloak";
@@ -391,13 +392,30 @@ async function getYomaUserProfile(
 }
 
 /**
- * Wrapper for `getServerSession` so that you don't need to import the `authOptions` in every file.
+ * Resolves the NextAuth session once per incoming request and reuses it for every later call
+ * (page `getServerSideProps`, every `ApiServer` request interceptor, ...).
+ *
+ * Each `getServerSession` call re-encodes the JWT and *appends* another copy of the chunked
+ * `next-auth.session-token` cookie to `Set-Cookie`. A page that prefetched four API queries thus
+ * sent five copies (~6.5 KB each) and the AWS load balancer rejects responses whose headers exceed
+ * 32 KB with a 502. Keyed on `req` so concurrent calls inside a `Promise.all` share the in-flight
+ * promise.
  *
  * @see https://next-auth.js.org/configuration/nextjs
  */
+const sessionByRequest = new WeakMap<
+  GetServerSidePropsContext["req"],
+  Promise<Session | null>
+>();
+
 export const getServerAuthSession = (ctx: {
   req: GetServerSidePropsContext["req"];
   res: GetServerSidePropsContext["res"];
 }) => {
-  return getServerSession(ctx.req, ctx.res, authOptions);
+  let session = sessionByRequest.get(ctx.req);
+  if (!session) {
+    session = getServerSession(ctx.req, ctx.res, authOptions);
+    sessionByRequest.set(ctx.req, session);
+  }
+  return session;
 };
