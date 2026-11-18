@@ -7,7 +7,7 @@
 - **Ticket**: [YOM-1322](https://linear.app/didx/issue/YOM-1322)
 - **Owner**: Jason
 - **Areas**: web
-- **Status**: review — fix verified locally, PR pending
+- **Status**: review — PR #2039
 - **Started**: 2026-11-18
 
 ## Problem / Goal
@@ -56,8 +56,8 @@ Net effect: one `Set-Cookie` pair per response regardless of how many API calls 
 - [x] Migrate `ApiServer` and all 42 pages
 - [x] Re-run the loop: 10 → 2 `Set-Cookie` lines, 32.9 KB → 6.8 KB (orgAdmin)
 - [x] `tsc`, eslint, prettier clean; `e2e/youth/profile.spec.ts` green
-- [ ] Linear ticket created and linked here
-- [ ] PR opened, ticket → In Review
+- [x] Linear ticket created and linked here
+- [x] PR opened, ticket → In Review
 - [ ] Robbie: confirm ALB access logs at 2026-11-18 08:12:59–08:13:00 SAST show the 502 as a target
       response-header rejection (closes the loop on the hypothesis; not blocking)
 
@@ -73,5 +73,5 @@ Net effect: one `Set-Cookie` pair per response regardless of how many API calls 
 ## Links
 
 - Ticket: [YOM-1322](https://linear.app/didx/issue/YOM-1322)
-- PRs:
+- PRs: [#2039](https://github.com/didx-xyz/yoma/pull/2039)
 - Related: [YOM-176](https://linear.app/didx/issue/YOM-176) — 2024 occurrence, same mechanism
