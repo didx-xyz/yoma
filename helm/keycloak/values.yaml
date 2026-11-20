@@ -1,37 +1,31 @@
 fullnameOverride: keycloak
 
+# Traefik Middlewares, named `<fullname>-<key>`. Ingresses reference them by key in `middlewares`.
+middlewares:
+  # Sends the bare admin host to Keycloak's base path.
+  app-root:
+    redirectRegex:
+      regex: ^https?://([^/]+)/$
+      replacement: https://${1}/auth
+
 ingress:
   internal:
     enabled: false
-    annotations:
-      nginx.ingress.kubernetes.io/proxy-buffer-size: 128k
-      nginx.ingress.kubernetes.io/proxy-busy-buffers-size: 128k
-      nginx.ingress.kubernetes.io/proxy-buffering: "on"
-      nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
-    className: nginx-internal
+    className: traefik-internal
     rules:
       - host: example.com
         paths:
           - path: /auth
   internal-admin:
     enabled: false
-    annotations:
-      nginx.ingress.kubernetes.io/app-root: /auth
-      nginx.ingress.kubernetes.io/proxy-buffer-size: 128k
-      nginx.ingress.kubernetes.io/proxy-busy-buffers-size: 128k
-      nginx.ingress.kubernetes.io/proxy-buffering: "on"
-      nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
-    className: nginx-internal
+    className: traefik-internal
+    middlewares:
+      - app-root
     rules:
       - host: auth.example.com
   external:
     enabled: false
-    annotations:
-      nginx.ingress.kubernetes.io/proxy-buffer-size: 128k
-      nginx.ingress.kubernetes.io/proxy-busy-buffers-size: 128k
-      nginx.ingress.kubernetes.io/proxy-buffering: "on"
-      nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
-    className: nginx-external
+    className: traefik-external
     rules:
       - host: "{{ .Values.keycloak.ingressDomain }}"
         paths:

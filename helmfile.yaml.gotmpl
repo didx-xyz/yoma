@@ -29,8 +29,8 @@ environments:
 ---
 repositories:
 {{ if eq .Environment.Name "local" }}
-  - name: ingress-nginx
-    url: https://kubernetes.github.io/ingress-nginx
+  - name: traefik
+    url: https://traefik.github.io/charts
 {{ end }}
   - name: codecentric
     url: https://codecentric.github.io/helm-charts
@@ -41,11 +41,11 @@ repositories:
 ---
 releases:
 {{ if eq .Environment.Name "local" }}
-  - name: ingress-nginx
-    namespace: ingress-nginx
-    # https://github.com/kubernetes/ingress-nginx/tree/main/charts/ingress-nginx
-    chart: ingress-nginx/ingress-nginx
-    version: 4.12.1
+  - name: traefik
+    namespace: traefik
+    # https://github.com/traefik/traefik-helm-chart
+    chart: traefik/traefik
+    version: 42.4.0
 {{ end }}
   - name: keycloak
     labels:

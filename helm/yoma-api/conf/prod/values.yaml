@@ -6,27 +6,28 @@ image:
   # Overrides the image tag whose default is the chart appVersion.
   tag: "master"
 
+middlewares:
+  cors:
+    headers:
+      accessControlAllowOriginList:
+        - https://yoma.world
+
 ingress:
   internal:
     enabled: true
-    className: nginx-internal
-    annotations:
-      nginx.ingress.kubernetes.io/enable-cors: "true"
-      nginx.ingress.kubernetes.io/cors-allow-origin: "https://yoma.world"
     rules:
       - host: api.yoma.world
   external:
     enabled: true
-    className: nginx-external
-    annotations:
-      nginx.ingress.kubernetes.io/enable-cors: "true"
-      nginx.ingress.kubernetes.io/cors-allow-origin: "https://yoma.world"
-      nginx.ingress.kubernetes.io/server-snippet: |
-        if ($request_uri ~* "^/hangfire") {
-          return 403;
-        }
     rules:
       - host: api.yoma.world
+  external-hangfire:
+    enabled: true
+    rules:
+      - host: api.yoma.world
+        paths:
+          - path: /(?i)hangfire
+            pathType: ImplementationSpecific
 
 env:
   ASPNETCORE_ENVIRONMENT: "Production"
