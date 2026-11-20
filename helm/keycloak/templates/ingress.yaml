@@ -19,9 +19,21 @@ metadata:
     {{- with .labels }}
     {{- include "common.tplvalues.render" (dict "value" . "context" $) | nindent 4 }}
     {{- end }}
-  {{- with .annotations }}
+  {{- if or .annotations .middlewares }}
   annotations:
+    {{- with .annotations }}
     {{- include "common.tplvalues.render" (dict "value" . "context" $) | nindent 4 }}
+    {{- end }}
+    {{- with .middlewares }}
+    {{- $refs := list }}
+    {{- range . }}
+    {{- if not (hasKey $.Values.middlewares .) }}
+    {{- fail (printf "ingress %s: middleware %q is not defined in .Values.middlewares" $key .) }}
+    {{- end }}
+    {{- $refs = append $refs (printf "%s-%s-%s@kubernetescrd" $.Release.Namespace (include "keycloak.fullname" $) .) }}
+    {{- end }}
+    traefik.ingress.kubernetes.io/router.middlewares: {{ join "," $refs | quote }}
+    {{- end }}
   {{- end }}
 spec:
 {{- if .tls }}

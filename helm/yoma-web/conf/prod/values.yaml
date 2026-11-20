@@ -11,32 +11,25 @@ env:
   NEXT_PUBLIC_PASSPORT_ENABLED: true
   NEXT_PUBLIC_REFERRALS_ENABLED: true
 
+middlewares:
+  # Sends the old hosts to yoma.world, keeping the path and query.
+  redirect-legacy-hosts:
+    redirectRegex:
+      regex: ^https?://(?:app\.yoma\.world|app\.yoma\.africa|partner\.yoma\.world|www\.yoma\.world)/(.*)
+      replacement: https://yoma.world/${1}
+      permanent: true
+  # Sends the old sign-in pages to the yoma.world home page.
+  redirect-legacy-auth:
+    redirectRegex:
+      regex: ^https?://[^/]+/(?:register|login|employer/auth/login)$
+      replacement: https://yoma.world
+      permanent: true
+
 ingress:
   internal:
-    annotations:
-      nginx.ingress.kubernetes.io/proxy-buffering: "on"
-      nginx.ingress.kubernetes.io/proxy-buffers-number: "4"
-      nginx.ingress.kubernetes.io/proxy-buffer-size: 512k
-      nginx.ingress.kubernetes.io/proxy-busy-buffers-size: 512k
-      nginx.ingress.kubernetes.io/configuration-snippet: |-
-        if ($host = 'app.yoma.world') {
-          rewrite ^ https://yoma.world$request_uri permanent;
-        }
-        if ($host = 'app.yoma.africa') {
-          rewrite ^ https://yoma.world$request_uri permanent;
-        }
-        if ($host = 'partner.yoma.world') {
-          rewrite ^ https://yoma.world$request_uri permanent;
-        }
-        if ($request_uri = '/register') {
-          rewrite ^ https://yoma.world permanent;
-        }
-        if ($request_uri = '/login') {
-          rewrite ^ https://yoma.world permanent;
-        }
-        if ($request_uri = '/employer/auth/login') {
-          rewrite ^ https://yoma.world permanent;
-        }
+    middlewares:
+      - redirect-legacy-hosts
+      - redirect-legacy-auth
     rules:
       - host: yoma.world
       - host: app.yoma.world
@@ -44,33 +37,9 @@ ingress:
       - host: app.yoma.africa
   external:
     enabled: true
-    annotations:
-      nginx.ingress.kubernetes.io/proxy-buffering: "on"
-      nginx.ingress.kubernetes.io/proxy-buffers-number: "4"
-      nginx.ingress.kubernetes.io/proxy-buffer-size: 512k
-      nginx.ingress.kubernetes.io/proxy-busy-buffers-size: 512k
-      nginx.ingress.kubernetes.io/configuration-snippet: |-
-        if ($host = 'app.yoma.world') {
-          rewrite ^ https://yoma.world$request_uri permanent;
-        }
-        if ($host = 'app.yoma.africa') {
-          rewrite ^ https://yoma.world$request_uri permanent;
-        }
-        if ($host = 'partner.yoma.world') {
-          rewrite ^ https://yoma.world$request_uri permanent;
-        }
-        if ($host = 'www.yoma.world') {
-          rewrite ^ https://yoma.world$request_uri permanent;
-        }
-        if ($request_uri = '/register') {
-          rewrite ^ https://yoma.world permanent;
-        }
-        if ($request_uri = '/login') {
-          rewrite ^ https://yoma.world permanent;
-        }
-        if ($request_uri = '/employer/auth/login') {
-          rewrite ^ https://yoma.world permanent;
-        }
+    middlewares:
+      - redirect-legacy-hosts
+      - redirect-legacy-auth
     rules:
       - host: yoma.world
       - host: app.yoma.world

@@ -1,11 +1,15 @@
+middlewares:
+  csp:
+    headers:
+      customResponseHeaders:
+        Content-Security-Policy: "frame-ancestors 'self' https://{{ .Values.keycloak.ingressDomain }}; frame-src 'self'; object-src 'none';"
+
 ingress:
   internal:
     enabled: true
-    className: nginx
-    annotations:
-      nginx.ingress.kubernetes.io/configuration-snippet: |-
-        more_clear_headers "Content-Security-Policy";
-        add_header Content-Security-Policy "frame-ancestors 'self' https://{{ .Values.keycloak.ingressDomain }}; frame-src 'self'; object-src 'none';" always;
+    className: traefik
+    middlewares:
+      - csp
     rules:
       - host: "{{ .Values.keycloak.ingressDomain }}"
         paths:
@@ -16,10 +20,8 @@ ingress:
 
   external:
     enabled: false
-    annotations:
-      nginx.ingress.kubernetes.io/configuration-snippet: |-
-        more_clear_headers "Content-Security-Policy";
-        add_header Content-Security-Policy "frame-ancestors 'self' https://{{ .Values.keycloak.ingressDomain }}; frame-src 'self'; object-src 'none';" always;
+    middlewares:
+      - csp
     rules:
       - host: "{{ .Values.keycloak.ingressDomain }}"
         paths:

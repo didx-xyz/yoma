@@ -61,10 +61,13 @@ service:
   #   essif:
   #     port: 7004
 
+# Traefik Middlewares, named `<fullname>-<key>`. Ingresses reference them by key in `middlewares`.
+middlewares: {}
+
 ingress:
   internal:
     enabled: false
-    className: nginx-internal
+    className: traefik-internal
     annotations: {}
     rules:
       - host: example.com

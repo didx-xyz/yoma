@@ -6,27 +6,29 @@ image:
   # Overrides the image tag whose default is the chart appVersion.
   tag: "master"
 
+middlewares:
+  cors:
+    headers:
+      accessControlAllowOriginList:
+        - https://stage.yoma.world
+        - https://yoma-six.vercel.app
+
 ingress:
   internal:
     enabled: true
-    className: nginx-internal
-    annotations:
-      nginx.ingress.kubernetes.io/enable-cors: "true"
-      nginx.ingress.kubernetes.io/cors-allow-origin: "https://stage.yoma.world,https://yoma-six.vercel.app"
     rules:
       - host: v3api.stage.yoma.world
   external:
     enabled: true
-    className: nginx-external
-    annotations:
-      nginx.ingress.kubernetes.io/enable-cors: "true"
-      nginx.ingress.kubernetes.io/cors-allow-origin: "https://stage.yoma.world,https://yoma-six.vercel.app"
-      nginx.ingress.kubernetes.io/server-snippet: |
-        if ($request_uri ~* "^/hangfire") {
-          return 403;
-        }
     rules:
       - host: v3api.stage.yoma.world
+  external-hangfire:
+    enabled: true
+    rules:
+      - host: v3api.stage.yoma.world
+        paths:
+          - path: /(?i)hangfire
+            pathType: ImplementationSpecific
 
 env:
   ASPNETCORE_ENVIRONMENT: "Staging"

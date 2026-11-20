@@ -1,0 +1,11 @@
+{{- range $name, $spec := .Values.middlewares }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ printf "%s-%s" (include "keycloak.fullname" $) $name }}
+  labels:
+    {{- include "keycloak.labels" $ | nindent 4 }}
+spec:
+  {{- include "common.tplvalues.render" (dict "value" $spec "context" $) | nindent 2 }}
+{{- end }}
