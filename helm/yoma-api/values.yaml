@@ -99,6 +99,12 @@ middlewares:
     ipAllowList:
       sourceRange:
         - 255.255.255.255/32
+  # Traefik's 403 has no Content-Type, and with `nosniff` browsers offer it as a
+  # download. List this before `deny-all` so it labels that response.
+  text-plain:
+    headers:
+      customResponseHeaders:
+        Content-Type: text/plain; charset=utf-8
 
 # Traefik streams request and response bodies, so TUS uploads need no buffering settings.
 ingress:
@@ -130,6 +136,7 @@ ingress:
     annotations:
       traefik.ingress.kubernetes.io/router.pathmatcher: PathRegexp
     middlewares:
+      - text-plain
       - deny-all
     rules:
       - host: example.com
