@@ -721,6 +721,40 @@ clients:
       - phone
       - offline_access
       - microprofile-jwt
+  # Redirect URIs are a JSON array, e.g. '["https://a/cb","https://b/cb"]'.
+  # Post-logout URIs are one string joined with ##, e.g. 'https://a/out*##https://b/out*'.
+  - clientId: ixo-auth-hub
+    name: ixo-auth-hub
+    description: IXO Auth Hub SSO Partner (private client)
+    enabled: $(env:CLIENT_IXO_AUTH_HUB_ENABLED)
+    clientAuthenticatorType: client-secret
+    secret: $(env:CLIENT_IXO_AUTH_HUB_SECRET)
+    protocol: openid-connect
+    publicClient: false
+    bearerOnly: false
+    standardFlowEnabled: true
+    implicitFlowEnabled: false
+    directAccessGrantsEnabled: false
+    serviceAccountsEnabled: false
+    consentRequired: false
+    frontchannelLogout: false
+    fullScopeAllowed: false
+    redirectUris: $(env:CLIENT_IXO_AUTH_HUB_REDIRECT_URIS)
+    webOrigins: []
+    attributes:
+      post.logout.redirect.uris: "$(env:CLIENT_IXO_AUTH_HUB_POST_LOGOUT_REDIRECT_URIS)"
+      pkce.code.challenge.method: S256
+      id.token.signed.response.alg: RS256
+      standard.token.exchange.enabled: "false"
+      oidc.ciba.grant.enabled: "false"
+      oauth2.device.authorization.grant.enabled: "false"
+      use.refresh.tokens: "true"
+    defaultClientScopes:
+      - basic
+      - profile
+      - email
+      - phone
+    optionalClientScopes: []
   - id: ff74b115-0fdb-4a94-9e05-7459601ae7ee
     clientId: maza-app
     name: maza-app

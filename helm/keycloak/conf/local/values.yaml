@@ -147,6 +147,8 @@ config-cli:
     CLIENT_ATINGI_URL_POST_LOGOUT_REDIRECT: https://keycloak-preprod.enovationaws.com/realms/master/broker/yoma-prod/endpoint
     CLIENT_GOODWALL_URL: https://dev.goodlab.io
     CLIENT_GOODWALL_URL_REDIRECT: goodwallauth://yomaredirect
+    CLIENT_IXO_AUTH_HUB_REDIRECT_URIS: '["https://dev.auth.ixo.earth/api/auth/sso/callback/yoma","https://test.auth.ixo.earth/api/auth/sso/callback/yoma"]'
+    CLIENT_IXO_AUTH_HUB_POST_LOGOUT_REDIRECT_URIS: "https://dev.auth.ixo.earth/api/auth/sso/logged-out*##https://test.auth.ixo.earth/api/auth/sso/logged-out*"
     CLIENT_MINI_SASS_URL: http://localhost:5000
     CLIENT_MINI_SASS_URL_REDIRECT: http://localhost:5000/authentication/api/yoma/callback
     CLIENT_P2E_GLOBAL_URL_REDIRECT: https://learningpassport.b2clogin.com/learningpassport.onmicrosoft.com/oauth2/authresp
