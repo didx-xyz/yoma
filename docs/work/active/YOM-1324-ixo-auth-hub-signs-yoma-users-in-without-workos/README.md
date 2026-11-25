@@ -5,7 +5,7 @@
 - **Epic**: [YOM-1324](https://linear.app/didx/issue/YOM-1324)
 - **Owners**: Robbie (keycloak)
 - **Areas**: keycloak
-- **Status**: in-progress — waiting on client secrets
+- **Status**: review
 - **Started**: 2026-11-25
 - **Branch**: `feature/yom-1324-ixo-auth-hub-signs-yoma-users-in-without`
 
@@ -17,7 +17,7 @@ IXO's Auth Hub signs Yoma users in through WorkOS, which uses the `ixo-webos` Ke
 
 | Folder | Ticket | Area | Status |
 | --- | --- | --- | --- |
-| [`YOM-1324-ixo-auth-hub-signs-yoma-users-in-without-workos/`](./YOM-1324-ixo-auth-hub-signs-yoma-users-in-without-workos/feature.md) | [YOM-1324](https://linear.app/didx/issue/YOM-1324) | keycloak | in-progress |
+| [`YOM-1324-ixo-auth-hub-signs-yoma-users-in-without-workos/`](./YOM-1324-ixo-auth-hub-signs-yoma-users-in-without-workos/feature.md) | [YOM-1324](https://linear.app/didx/issue/YOM-1324) | keycloak | review |
 
 ## Out of Scope (whole epic)
 

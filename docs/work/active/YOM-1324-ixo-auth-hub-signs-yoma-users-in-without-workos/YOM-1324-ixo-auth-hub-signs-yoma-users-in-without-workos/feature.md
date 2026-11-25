@@ -7,7 +7,7 @@
 - **Ticket**: [YOM-1324](https://linear.app/didx/issue/YOM-1324)
 - **Owner**: Robbie
 - **Areas**: keycloak
-- **Status**: in-progress — client secrets for Dev, Stage and Prod not yet in `secrets.yaml`
+- **Status**: review — PR #2044 deployed to Dev; Prod disabled until IXO tests on Stage
 - **Started**: 2026-11-25
 
 ## Problem / Goal
@@ -37,8 +37,9 @@ Local, Dev and Stage use IXO's non-production hubs (`dev.auth.ixo.earth`, `test.
 - [x] Add the client to the realm export
 - [x] Add env values for compose, Local, Dev, Stage and Prod
 - [x] Verify on the local compose stack (see Decisions, 2026-11-25)
-- [ ] Add `CLIENT_IXO_AUTH_HUB_SECRET` to Dev, Stage and Prod `secrets.yaml` (Robbie)
-- [ ] Deploy to Stage and send IXO the Stage client ID and secret
+- [x] Add `CLIENT_IXO_AUTH_HUB_SECRET` to Local, Dev, Stage and Prod `secrets.yaml`
+- [x] Deploy to Dev
+- [ ] Merge PR #2044, which deploys to Stage, then send IXO the Stage client ID and secret
 - [ ] IXO tests on Stage
 - [ ] Enable on Prod (`CLIENT_IXO_AUTH_HUB_ENABLED: "true"`) and send the Prod secret
 
@@ -69,5 +70,5 @@ Local, Dev and Stage use IXO's non-production hubs (`dev.auth.ixo.earth`, `test.
 
 - Epic: [YOM-1324](../README.md)
 - Ticket: [YOM-1324](https://linear.app/didx/issue/YOM-1324)
-- PRs:
+- PRs: [#2044](https://github.com/didx-xyz/yoma/pull/2044)
 - Related: YOM-1298 and YOM-1300 (`ixo-webos`), YOM-1299 (`offline_access` and SSO sessions)
