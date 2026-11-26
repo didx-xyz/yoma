@@ -7,7 +7,7 @@
 - **Ticket**: [YOM-1324](https://linear.app/didx/issue/YOM-1324)
 - **Owner**: Robbie
 - **Areas**: keycloak
-- **Status**: review — PR #2044 deployed to Dev; Prod disabled until IXO tests on Stage
+- **Status**: review — enabled in Prod on master; awaiting the `current` cherry-pick and patch release
 - **Started**: 2026-11-25
 
 ## Problem / Goal
@@ -25,7 +25,7 @@ The client is in `src/keycloak/exports/01-yoma-realm.yaml`, after `ixo-webos`. P
 
 | Env var | Where | Value |
 | --- | --- | --- |
-| `CLIENT_IXO_AUTH_HUB_ENABLED` | `helm/keycloak/values.yaml`, `conf/prod/values.yaml`, compose | `"true"` by default, `"false"` in Prod |
+| `CLIENT_IXO_AUTH_HUB_ENABLED` | `helm/keycloak/values.yaml`, compose | `"true"` |
 | `CLIENT_IXO_AUTH_HUB_REDIRECT_URIS` | `conf/{local,dev,stage,prod}/values.yaml`, compose | JSON array |
 | `CLIENT_IXO_AUTH_HUB_POST_LOGOUT_REDIRECT_URIS` | same | one string joined with `##` |
 | `CLIENT_IXO_AUTH_HUB_SECRET` | `conf/{dev,stage,prod}/secrets.yaml` under `config-cli.secrets`, compose | per environment |
@@ -39,9 +39,10 @@ Local, Dev and Stage use IXO's non-production hubs (`dev.auth.ixo.earth`, `test.
 - [x] Verify on the local compose stack (see Decisions, 2026-11-25)
 - [x] Add `CLIENT_IXO_AUTH_HUB_SECRET` to Local, Dev, Stage and Prod `secrets.yaml`
 - [x] Deploy to Dev
-- [ ] Merge PR #2044, which deploys to Stage, then send IXO the Stage client ID and secret
-- [ ] IXO tests on Stage
-- [ ] Enable on Prod (`CLIENT_IXO_AUTH_HUB_ENABLED: "true"`) and send the Prod secret
+- [x] Merge PR #2044, which deploys to Stage, then send IXO the Stage client ID and secret
+- [x] IXO tests on Stage (IXO confirmed on 2026-11-26)
+- [x] Enable on Prod by removing the `CLIENT_IXO_AUTH_HUB_ENABLED: "false"` override
+- [ ] Cherry-pick the client and the Prod enable into `current`, cut a patch release, and send IXO the Prod secret
 
 ## Decisions
 
