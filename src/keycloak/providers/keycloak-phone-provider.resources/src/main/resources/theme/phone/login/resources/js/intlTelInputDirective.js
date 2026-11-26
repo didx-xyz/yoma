@@ -1,3 +1,15 @@
+// intl-tel-input >= 27.0.1 calls Object.hasOwn (ES2022) during intlTelInput(el, ...); older
+// Android WebViews / Safari < 15.4 lack it and the phone input would never initialise.
+if (typeof Object.hasOwn !== "function") {
+  Object.defineProperty(Object, "hasOwn", {
+    value: function (obj, key) {
+      return Object.prototype.hasOwnProperty.call(Object(obj), key);
+    },
+    configurable: true,
+    writable: true,
+  });
+}
+
 // intl-tel-input v29 (bundled with its libphonenumber utils, see intlTelInputWithUtils.min.js).
 // Options below pin the v25 behaviour the templates were written against; v26-v29 changed the
 // defaults (separate dial code, strict mode, international display, fixed-line accepted).

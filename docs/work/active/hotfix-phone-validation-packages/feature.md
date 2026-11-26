@@ -36,7 +36,7 @@ Root cause of the Uganda rejections (verified by running both jars): Keycloak's 
 - 2026-11-26: Directive pins the v25 behaviour explicitly (`numberDisplayFormat: "NATIONAL"`, `separateDialCode: false`, `strictMode: false`, `countrySelectorMode: "DROPDOWN"`, `allowedNumberTypes: ["MOBILE"]`) because v26–v29 flipped those defaults. Adopting the new defaults (separate dial code, strict typing) is a UX change for a separate ticket. `geoIpLookup` → promise-based `initialCountryLookup`, falling back to `za` on failure as before.
 - 2026-11-26: Keycloak serves theme resources under a path keyed to the Keycloak build with a 30-day cache, so `intlTelInput.css` and `flags*.webp` keep their filenames but get `?v=29.5.12`; `styles.css` bumped to `?v=20261126`. `globe*.webp` removed (v26 bakes an SVG into the JS).
 - 2026-11-26: Only the two rebuilt jars that changed (`keycloak-phone-provider.jar`, `keycloak-phone-provider.resources.jar`) are committed; the other three rebuild byte-differently but have no source change.
-- 2026-11-26: intl-tel-input ≥ 27.0.1 requires `Object.hasOwn` (Chrome/Edge 93+, Safari 15.4+, Firefox 92+). Older Android WebViews would throw at init; no polyfill added, flagged for review.
+- 2026-11-26: intl-tel-input ≥ 27.0.1 calls `Object.hasOwn` (ES2022) inside `intlTelInput(el, …)`; Adrian reproduced the init failure where it is missing. `intlTelInputDirective.js` now defines a fallback before the directive registers, and the four templates load it as `intlTelInputDirective.js?v=29.5.12` so cached v25 init code is never paired with the v29 library (review finding, commit after `65e2ad08fb`).
 
 ## Links
 

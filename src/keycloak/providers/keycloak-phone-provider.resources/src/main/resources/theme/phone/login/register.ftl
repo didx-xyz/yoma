@@ -11,7 +11,7 @@
     <script src="${url.resourcesPath}/js/passwordEnhancementsDirective.js"></script>
     <script src="${url.resourcesPath}/js/otp-input.directive.js"></script>
     <script src="${url.resourcesPath}/js/intlTelInputWithUtils.min.js"></script>
-    <script src="${url.resourcesPath}/js/intlTelInputDirective.js"></script>
+    <script src="${url.resourcesPath}/js/intlTelInputDirective.js?v=29.5.12"></script>
 
     <!-- Login/Register Tabs -->
     <ul class="nav-pills kc-tabs" role="tablist">

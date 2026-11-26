@@ -7,7 +7,7 @@
       <script src="${url.resourcesPath}/js/vue.min.js"></script>
       <script src="${url.resourcesPath}/js/axios.min.js"></script>
       <script src="${url.resourcesPath}/js/intlTelInputWithUtils.min.js"></script>
-      <script src="${url.resourcesPath}/js/intlTelInputDirective.js"></script>
+      <script src="${url.resourcesPath}/js/intlTelInputDirective.js?v=29.5.12"></script>
       <script src="${url.resourcesPath}/js/otp-input.directive.js"></script>
 
       <div id="vue-app">
