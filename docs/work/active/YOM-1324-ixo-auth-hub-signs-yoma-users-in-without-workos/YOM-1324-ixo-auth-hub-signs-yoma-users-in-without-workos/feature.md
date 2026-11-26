@@ -71,5 +71,5 @@ Local, Dev and Stage use IXO's non-production hubs (`dev.auth.ixo.earth`, `test.
 
 - Epic: [YOM-1324](../README.md)
 - Ticket: [YOM-1324](https://linear.app/didx/issue/YOM-1324)
-- PRs: [#2044](https://github.com/didx-xyz/yoma/pull/2044)
+- PRs: [#2044](https://github.com/didx-xyz/yoma/pull/2044), [#2047](https://github.com/didx-xyz/yoma/pull/2047) (Prod enable)
 - Related: YOM-1298 and YOM-1300 (`ixo-webos`), YOM-1299 (`offline_access` and SSO sessions)
