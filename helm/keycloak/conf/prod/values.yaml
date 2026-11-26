@@ -105,7 +105,6 @@ config-cli:
     CLIENT_IXO_URL_REDIRECT: https://jambo.yoma.impacts.exchange/auth/passkey
     CLIENT_IXO_WEBOS_URL: https://auth.workos.com
     CLIENT_IXO_WEBOS_URL_REDIRECT: https://auth.workos.com/sso/oidc/LxFOvIFBGFi1ZGTFxY8hfQGlN/callback
-    CLIENT_IXO_AUTH_HUB_ENABLED: "false"
     CLIENT_IXO_AUTH_HUB_REDIRECT_URIS: '["https://auth.ixo.earth/api/auth/sso/callback/yoma"]'
     CLIENT_IXO_AUTH_HUB_POST_LOGOUT_REDIRECT_URIS: "https://auth.ixo.earth/api/auth/sso/logged-out*"
     CLIENT_UNICEF_KENYA_ENABLED: "false"
