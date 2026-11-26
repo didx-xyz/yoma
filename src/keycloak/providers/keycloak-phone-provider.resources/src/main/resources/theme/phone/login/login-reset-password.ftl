@@ -4,10 +4,10 @@
         ${msg("emailForgotTitle")}
     <#elseif section = "form">
         <#if supportPhone??>
-          <link rel="stylesheet" href="${url.resourcesPath}/css/intlTelInput.css">
+          <link rel="stylesheet" href="${url.resourcesPath}/css/intlTelInput.css?v=29.5.12">
           <script src="${url.resourcesPath}/js/vue.min.js"></script>
           <script src="${url.resourcesPath}/js/axios.min.js"></script>
-          <script src="${url.resourcesPath}/js/intlTelInput.min.js"></script>
+          <script src="${url.resourcesPath}/js/intlTelInputWithUtils.min.js"></script>
           <script src="${url.resourcesPath}/js/intlTelInputDirective.js"></script>
           <script src="${url.resourcesPath}/js/otp-input.directive.js"></script>
 
