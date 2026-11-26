@@ -31,7 +31,7 @@
     "daisyui": "^5.5.19",
     "file-saver": "^2.0.5",
     "jotai": "^2.20.0",
-    "libphonenumber-js": "^1.13.1",
+    "libphonenumber-js": "^1.13.17",
     "moment": "^2.30.1",
     "next": "16.2.6",
     "next-auth": "^4.24.14",
